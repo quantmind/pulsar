@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Object Data Mapper &mdash; pulsar 0.8.0-beta.6 documentation</title>
+    <title>Object Data Mapper &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.6',
+        VERSION:     '0.8.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.6 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="next" title="Pulsar-ds Server" href="pulsar.html" />
     <link rel="prev" title="Datastore Clients" href="clients.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="clients.html" title="Datastore Clients"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.6 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
     </div>
@@ -84,10 +84,10 @@ and retrieving data asynchronously.</p>
 <li>Built on top of pulsar <a class="reference internal" href="clients.html#data-stores"><em>data store client api</em></a></li>
 <li>Presents a method of associating user-defined Python classes with data-stores
 <strong>collections</strong>/<strong>tables</strong></li>
-<li>An instance of a <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> is mapped into an <strong>item</strong>/<strong>rows</strong>
+<li>An instance of a <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> is mapped into an <strong>item</strong>/<strong>row</strong>
 in its corresponding collection/table.</li>
-<li>Allows the use different stores for different models</li>
-<li>Design to be fast and lightweight</li>
+<li>Allows the use of different stores for different models</li>
+<li>Design to be fast, lightweight and non-intrusive</li>
 </ul>
 </div>
 <div class="section" id="getting-started">
@@ -549,6 +549,22 @@ primary key of <tt class="docutils literal"><span class="pre">instance</span></t
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.data.odm.transaction.Transaction.commit">
+<tt class="descname">commit</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/transaction.html#Transaction.commit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.transaction.Transaction.commit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commit the transaction.</p>
+<p>This method can be invoked once only otherwise an
+<tt class="xref py py-class docutils literal"><span class="pre">InvalidOperation</span></tt> occurs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> which results in this transaction</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.data.odm.transaction.Transaction.wait">
 <tt class="descname">wait</tt><big>(</big><em>callback=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/transaction.html#Transaction.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.transaction.Transaction.wait" title="Permalink to this definition">¶</a></dt>
 <dd><p>Waits for the transaction have finished.</p>
@@ -560,7 +576,7 @@ primary key of <tt class="docutils literal"><span class="pre">instance</span></t
 has finished. The function receives one parameter only, the
 transaction.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a></td>
 </tr>
 </tbody>
 </table>

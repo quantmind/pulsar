@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Testing &mdash; pulsar 0.8.0-beta.6 documentation</title>
+    <title>Testing &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.6',
+        VERSION:     '0.8.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.6 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../index.html" />
     <link rel="next" title="Data Stores" href="data/index.html" />
     <link rel="prev" title="Distributed Task Queue" href="tasks.html" /> 
 </head>
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="tasks.html" title="Distributed Task Queue"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.6 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -126,11 +126,7 @@ class methods is available, it is run just before
 all tests functions are run and the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase.tearDownClass" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">tearDownClass()</span></tt></a>,
 if available, is run just after all tests functions are run.</p>
 <p>An example test case:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># This import is equivalent in python2.6 to</span>
-<span class="c">#     import unittest2 as unittest</span>
-<span class="c"># Otherwise it is the same as</span>
-<span class="c">#     import unittest</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">unittest</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">unittest</span>
 
 <span class="k">class</span> <span class="nc">MyTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
 

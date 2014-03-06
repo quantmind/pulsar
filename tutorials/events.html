@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Events &mdash; pulsar 0.8.0-beta.6 documentation</title>
+    <title>Events &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.6',
+        VERSION:     '0.8.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.6 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Signal Handling" href="signal.html" />
     <link rel="prev" title="Actor messages" href="messages.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="messages.html" title="Actor messages"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.6 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -107,7 +107,7 @@ referred to this type of event as a <strong>may times event</strong>.</p>
 <span id="id2"></span><h2>One time event<a class="headerlink" href="#one-time-event" title="Permalink to this headline">¶</a></h2>
 <p>As the name says, the <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><tt class="xref py py-class docutils literal"><span class="pre">OneTime</span></tt></a> is a special event which
 can be fired once only. Firing a <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><tt class="xref py py-class docutils literal"><span class="pre">OneTime</span></tt></a> event multiple
-times will result in a <tt class="xref py py-class docutils literal"><span class="pre">InavlidStateError</span></tt> raised.</p>
+times will cause an <tt class="xref py py-class docutils literal"><span class="pre">InavlidStateError</span></tt> to be raised.</p>
 <p>A <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><tt class="xref py py-class docutils literal"><span class="pre">OneTime</span></tt></a> event is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> and
 therefore you can yield it in a coroutine to wait until it get fired.</p>
 </div>

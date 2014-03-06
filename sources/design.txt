@@ -6,9 +6,8 @@
 Design
 =====================
 
-Pulsar implements two layers of components on top the python :mod:`asyncio`
-module, for building a vast array
-of parallel and asynchronous applications.:
+Pulsar implements two layers of components on top of python :mod:`asyncio`
+module:
 
 * :ref:`The actor layer <design-actor>` provides parallel execution in
   processes and threads and uses the :mod:`asyncio` module
@@ -19,8 +18,8 @@ of parallel and asynchronous applications.:
 .. _async-object:
 
 Async Objects
-~~~~~~~~~~~~~~~~~
-Introduced in pulsar 0.8, an asynchronous object is any instance which expose
+=====================
+Introduced in pulsar 0.8, an asynchronous object is any instance which exposes
 the :attr:`~.AsyncObject._loop` attribute.
 This attribute is the :ref:`event loop <asyncio-event-loop>` where
 the instance performs its asynchronous operations, whatever they may be.
@@ -35,9 +34,17 @@ For example this is a class for valid async objects::
         def __init__(self, loop=None):
             self._loop = loop or get_event_loop() or new_event_loop()
 
+Properties:
 
-Asynchronous objects can use the :func:`.in_loop` and
-:func:`.task` decorators for their methods.
+* Several classes in pulsar are async objects, for example: :class:`.Actor`,
+  :class:`.Connection`, :class:`.ProtocolConsumer`, :class:`.Store`
+  and so forth
+* A :class:`~asyncio.Future` is an async object
+* However an async object **is not** necessarily a :class:`~asyncio.Future`
+* They can use the :func:`.in_loop` and :func:`.task` decorators for
+  their methods
+* Pulsar provides the :class:`.AsyncObject` signature class,
+  however it is not a requirement to derive from it
 
 .. note::
 

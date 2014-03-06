@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Asynchronous Content &mdash; pulsar 0.8.0-beta.6 documentation</title>
+    <title>Asynchronous Content &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.6',
+        VERSION:     '0.8.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.6 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Utilities" href="tools.html" />
     <link rel="prev" title="Response Middleware" href="response.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="response.html" title="Response Middleware"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.6 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -488,7 +488,8 @@ Head element. The head element is accessed via the
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.Head.meta">
 <tt class="descname">meta</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.meta" title="Permalink to this definition">¶</a></dt>
-<dd><p>A container of <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> <tt class="docutils literal"><span class="pre">meta</span></tt> tags. To add new meta tags use the
+<dd><p>A container of <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> <tt class="docutils literal"><span class="pre">meta</span></tt> tags.
+To add new meta tags use the
 <a class="reference internal" href="#pulsar.apps.wsgi.content.Head.add_meta" title="pulsar.apps.wsgi.content.Head.add_meta"><tt class="xref py py-meth docutils literal"><span class="pre">add_meta()</span></tt></a> method rather than accessing the <a class="reference internal" href="#pulsar.apps.wsgi.content.Head.meta" title="pulsar.apps.wsgi.content.Head.meta"><tt class="xref py py-attr docutils literal"><span class="pre">meta</span></tt></a>
 attribute directly.</p>
 </dd></dl>
@@ -517,7 +518,7 @@ this attribute. You can add relative paths:</p>
 </div>
 <p>as well as absolute paths:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">html</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-    <span class="s">&#39;https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js&#39;</span><span class="p">)</span>
+    <span class="s">&#39;https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>

@@ -46,7 +46,7 @@ Create store
 Start store
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: start_store
+.. autofunction:: pulsar.apps.data.stores.pulsards.startds.start_store
 
 
 Register a new store

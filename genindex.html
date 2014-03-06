@@ -10,7 +10,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Index &mdash; pulsar 0.8.0-beta.6 documentation</title>
+    <title>Index &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -20,7 +20,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.8.0-beta.6',
+        VERSION:     '0.8.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -30,7 +30,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.6 documentation" href="index.html" /> 
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="index.html" /> 
 </head>
  <body>
 
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">pulsar 0.8.0-beta.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -129,6 +129,10 @@
       <dd><dl>
         
   <dt><a href="tutorials/udp.html#examples.echoudp.manage.Echo._loop">(examples.echoudp.manage.Echo attribute)</a>
+  </dt>
+
+        
+  <dt><a href="apps/tasks.html#pulsar.apps.tasks.backend.TaskConsumer._loop">(pulsar.apps.tasks.backend.TaskConsumer attribute)</a>
   </dt>
 
         
@@ -889,6 +893,10 @@
   </dt>
 
       
+  <dt><a href="apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.commit">commit() (pulsar.apps.data.odm.transaction.Transaction method)</a>
+  </dt>
+
+      
   <dt><a href="api/actor.html#pulsar.async.concurrency.Concurrency">Concurrency (class in pulsar.async.concurrency)</a>
   </dt>
 
@@ -1499,6 +1507,10 @@
   </dt>
 
       
+  <dt><a href="apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.finish_task">finish_task() (pulsar.apps.tasks.backend.TaskBackend method)</a>
+  </dt>
+
+      
   <dt><a href="api/protocols.html#pulsar.async.protocols.ProtocolConsumer.finished">finished() (pulsar.async.protocols.ProtocolConsumer method)</a>
   </dt>
 
@@ -1528,12 +1540,12 @@
   <dt><a href="api/utilities.html#pulsar.utils.httpurl.Headers.flat">flat() (pulsar.utils.httpurl.Headers method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.flatatt">flatatt() (pulsar.apps.wsgi.content.Html method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.flush">flush() (pulsar.apps.data.odm.mapper.Mapper method)</a>
   </dt>
@@ -1967,6 +1979,10 @@
   </dt>
 
       
+  <dt><a href="api/exceptions.html#pulsar.utils.exceptions.InvalidOperation">InvalidOperation</a>
+  </dt>
+
+      
   <dt><a href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.ipaddress">ipaddress (pulsar.apps.wsgi.wrappers.WsgiRequest attribute)</a>
   </dt>
 
@@ -2002,12 +2018,12 @@
   <dt><a href="api/utilities.html#pulsar.utils.config.Setting.is_global">is_global (pulsar.utils.config.Setting attribute)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="api/utilities.html#pulsar.utils.httpurl.HttpParser.is_headers_complete">is_headers_complete() (pulsar.utils.httpurl.HttpParser method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.is_leaf">is_leaf (pulsar.apps.wsgi.route.Route attribute)</a>
   </dt>
@@ -2965,7 +2981,7 @@
   </dt>
 
       
-  <dt><a href="design.html#module-pulsar">pulsar (module)</a>, <a href="tutorials/coroutine.html#module-pulsar">[1]</a>, <a href="tutorials/wsgi.html#module-pulsar">[2]</a>, <a href="apps/shell.html#module-pulsar">[3]</a>, <a href="faq.html#module-pulsar">[4]</a>
+  <dt><a href="faq.html#module-pulsar">pulsar (module)</a>, <a href="design.html#module-pulsar">[1]</a>, <a href="tutorials/wsgi.html#module-pulsar">[2]</a>, <a href="tutorials/coroutine.html#module-pulsar">[3]</a>, <a href="apps/shell.html#module-pulsar">[4]</a>
   </dt>
 
       
@@ -3160,6 +3176,10 @@
 
       
   <dt><a href="api/protocols.html#module-pulsar.async.protocols">pulsar.async.protocols (module)</a>
+  </dt>
+
+      
+  <dt><a href="api/async.html#module-pulsar.async.threads">pulsar.async.threads (module)</a>
   </dt>
 
       
@@ -3525,19 +3545,17 @@
   </dt>
 
       
+  <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.route.route">route (class in pulsar.apps.wsgi.route)</a>
+  </dt>
+
+      
   <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route">Route (class in pulsar.apps.wsgi.route)</a>
   </dt>
 
       
-  <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.route.route">route (class in pulsar.apps.wsgi.route)</a>
+  <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.route">route (pulsar.apps.wsgi.routers.Router attribute)</a>
   </dt>
 
-      <dd><dl>
-        
-  <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.route">(pulsar.apps.wsgi.routers.Router attribute)</a>
-  </dt>
-
-      </dl></dd>
       
   <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router">Router (class in pulsar.apps.wsgi.routers)</a>
   </dt>
@@ -3874,12 +3892,12 @@
   <dt><a href="tutorials/calculator.html#examples.calculator.manage.Site">Site (class in examples.calculator.manage)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.sitemap">sitemap() (pulsar.apps.wsgi.routers.Router method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="api/utilities.html#pulsar.utils.structures.skiplist.Skiplist">Skiplist (class in pulsar.utils.structures.skiplist)</a>
   </dt>
@@ -3975,7 +3993,7 @@
   </dt>
 
       
-  <dt><a href="apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.start_store">start_store() (in module pulsar.apps.data.stores.pulsards.base)</a>
+  <dt><a href="apps/data/clients.html#pulsar.apps.data.stores.pulsards.startds.start_store">start_store() (in module pulsar.apps.data.stores.pulsards.startds)</a>
   </dt>
 
       
@@ -4089,6 +4107,10 @@
   </dt>
 
       
+  <dt><a href="api/async.html#pulsar.async.threads.ThreadPool.submit">submit() (pulsar.async.threads.ThreadPool method)</a>
+  </dt>
+
+      
   <dt><a href="apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.PubSub.subscribe">subscribe() (pulsar.apps.data.stores.pulsards.base.PubSub method)</a>
   </dt>
 
@@ -4190,6 +4212,10 @@
 
       
   <dt><a href="apps/test.html#pulsar.apps.test.TestSuite">TestSuite (class in pulsar.apps.test)</a>
+  </dt>
+
+      
+  <dt><a href="api/async.html#pulsar.async.threads.ThreadPool">ThreadPool (class in pulsar.async.threads)</a>
   </dt>
 
       

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Datastore Clients &mdash; pulsar 0.8.0-beta.6 documentation</title>
+    <title>Datastore Clients &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.6',
+        VERSION:     '0.8.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.6 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="next" title="Object Data Mapper" href="odm.html" />
     <link rel="prev" title="Data Stores" href="index.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="index.html" title="Data Stores"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.6 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
     </div>
@@ -142,8 +142,8 @@ initialisation method.</li>
 <div class="section" id="start-store">
 <h3>Start store<a class="headerlink" href="#start-store" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="pulsar.apps.data.stores.pulsards.base.start_store">
-<tt class="descclassname">pulsar.apps.data.stores.pulsards.base.</tt><tt class="descname">start_store</tt><big>(</big><em>url</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#start_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.start_store" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.data.stores.pulsards.startds.start_store">
+<tt class="descclassname">pulsar.apps.data.stores.pulsards.startds.</tt><tt class="descname">start_store</tt><big>(</big><em>url</em>, <em>workers=0</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/startds.html#start_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.startds.start_store" title="Permalink to this definition">¶</a></dt>
 <dd><p>Equivalent to <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.create_store" title="pulsar.apps.data.stores.pulsards.base.create_store"><tt class="xref py py-func docutils literal"><span class="pre">create_store()</span></tt></a> for most cases excepts when the
 <tt class="docutils literal"><span class="pre">url</span></tt> is for a pulsar store not yet started.</p>
 <p>In this case, the a <a class="reference internal" href="pulsar.html#pulsar.apps.data.server.server.PulsarDS" title="pulsar.apps.data.server.server.PulsarDS"><tt class="xref py py-class docutils literal"><span class="pre">PulsarDS</span></tt></a> is started.</p>
@@ -300,7 +300,7 @@ By default it does nothing.</p>
 <dl class="class">
 <dt id="pulsar.apps.data.stores.pulsards.base.PubSub">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.pulsards.base.</tt><tt class="descname">PubSub</tt><big>(</big><em>store</em>, <em>protocol=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#PubSub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.PubSub" title="Permalink to this definition">¶</a></dt>
-<dd><p>Asynchronous Publish/Subscriber handler interface.</p>
+<dd><p>A Publish/Subscriber interface.</p>
 <p>A <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.PubSub" title="pulsar.apps.data.stores.pulsards.base.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler is never initialised directly, instead,
 the <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.Store.pubsub" title="pulsar.apps.data.stores.pulsards.base.Store.pubsub"><tt class="xref py py-meth docutils literal"><span class="pre">pubsub()</span></tt></a> method of a data <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.Store" title="pulsar.apps.data.stores.pulsards.base.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
 is used.</p>

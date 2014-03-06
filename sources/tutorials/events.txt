@@ -42,7 +42,7 @@ One time event
 =====================
 As the name says, the :class:`.OneTime` is a special event which
 can be fired once only. Firing a :class:`.OneTime` event multiple
-times will result in a :class:`InavlidStateError` raised.
+times will cause an :class:`~asyncio.InavlidStateError` to be raised.
 
 A :class:`.OneTime` event is a specialised :class:`~asyncio.Future` and
 therefore you can yield it in a coroutine to wait until it get fired.

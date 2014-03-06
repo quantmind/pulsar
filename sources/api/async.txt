@@ -6,7 +6,16 @@
 Asynchonous API
 ==================
 
-The ``pulsar.Future`` class is an alias for :class:`.asyncio.Future`
+Pulsar asynchronous api is built on top of the new python :mod:`asyncio`
+module, therefore ``pulsar.Future`` class is an alias for
+:class:`.asyncio.Future`.
+
+However, pulsar can run on python 2.7 and 3.3+ using the same code base.
+To achieve this, pulsar uses a specialised :class:`asyncio.Task` class
+with the following features:
+
+* works with both ``yield`` and ``yield from``
+* tolerant of synchronous values
 
 
 Async object interface
@@ -85,9 +94,8 @@ Run in loop
 Async Decorators
 =====================
 
-Both the :func:`in_loop` and :func:`in_loop_thread` can be applied to
-member functions of classes for wich instances expose the ``_loop``
-attribute (an instance of an event loop).
+Both the :func:`task` and :func:`in_loop` decorator can be applied to
+member functions of :ref:`async objects <async-object>`.
 
 
 task
@@ -98,3 +106,18 @@ task
 In loop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: in_loop
+
+
+.. module:: pulsar.async.threads
+
+Executor
+================
+
+Classes used by pulsar to create event loop executors.
+
+Thread pool
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: ThreadPool
+   :members:
+   :member-order: bysource

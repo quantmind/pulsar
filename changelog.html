@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Release Notes &mdash; pulsar 0.8.0-beta.6 documentation</title>
+    <title>Release Notes &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.8.0-beta.6',
+        VERSION:     '0.8.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.6 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
 </head>
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.8.0-beta.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -74,8 +74,8 @@
             
   <div class="section" id="release-notes">
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-8-0">
-<h2>Ver. 0.8.0<a class="headerlink" href="#ver-0-8-0" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-8-0-2014-mar-06">
+<h2>Ver. 0.8.0 - 2014-Mar-06<a class="headerlink" href="#ver-0-8-0-2014-mar-06" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><strong>Backward incompatible version</strong></li>
 <li><strong>Asyncio Integration</strong><ul>
@@ -161,6 +161,9 @@ main distribution.</li>
 <a class="reference internal" href="apps/test.html#pulsar.apps.test.utils.run_on_arbiter" title="pulsar.apps.test.utils.run_on_arbiter"><tt class="xref py py-func docutils literal"><span class="pre">run_on_arbiter()</span></tt></a> decorator.</li>
 <li>The <a class="reference internal" href="apps/shell.html#apps-shell"><em>shell application</em></a> runs on a worker thread in the
 arbiter domain.</li>
+<li>The <a class="reference internal" href="api/application.html#pulsar.apps.Configurator.start" title="pulsar.apps.Configurator.start"><tt class="xref py py-meth docutils literal"><span class="pre">Configurator.start()</span></tt></a> method returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
+called back once the applications in the configurator are running.</li>
+<li>Added a new script for building releases for pypi (<tt class="docutils literal"><span class="pre">buildrelease.py</span></tt>)</li>
 </ul>
 </li>
 <li><strong>1,166 regression tests</strong>, <strong>91% coverage</strong>.</li>
@@ -266,7 +269,7 @@ deferred&#8217;s callbacks without affecting the result.</li>
 <li><strong>Actors</strong>:<ul>
 <li>Added <a class="reference internal" href="settings.html#setting-thread-workers"><em>&#8211;thread_workers</em></a> config option
 for controlling the default number of workers in actor thread pools.</li>
-<li>New asynchronous <tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt> for CPU bound operations.</li>
+<li>New asynchronous <a class="reference internal" href="api/async.html#pulsar.async.threads.ThreadPool" title="pulsar.async.threads.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt></a> for CPU bound operations.</li>
 <li><a class="reference internal" href="design.html#actor-hooks"><em>Actor&#8217;s hooks can be asynchronous</em></a>.</li>
 </ul>
 </li>
@@ -580,7 +583,7 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Release Notes</a><ul>
-<li><a class="reference internal" href="#ver-0-8-0">Ver. 0.8.0</a></li>
+<li><a class="reference internal" href="#ver-0-8-0-2014-mar-06">Ver. 0.8.0 - 2014-Mar-06</a></li>
 <li><a class="reference internal" href="#ver-0-7-4-2013-dec-22">Ver. 0.7.4 - 2013-Dec-22</a></li>
 <li><a class="reference internal" href="#ver-0-7-3-2013-dec-12">Ver. 0.7.3 - 2013-Dec-12</a></li>
 <li><a class="reference internal" href="#ver-0-7-2-2013-oct-16">Ver. 0.7.2 - 2013-Oct-16</a></li>
