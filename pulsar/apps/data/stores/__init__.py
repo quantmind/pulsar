@@ -1,3 +1,6 @@
 from . import redis
 from .pulsards import *
-from .mongodb import *
+try:
+    from .mongodb import *
+except ImportError:
+    pass
