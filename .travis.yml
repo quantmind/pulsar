@@ -18,6 +18,7 @@ install:
 
 services:
   - redis-server
+  - mongodb
 
 script:
   - python -m covrun --pep8
