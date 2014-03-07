@@ -103,17 +103,6 @@ class EventLoop(asyncio.SelectorEventLoop):
         self.logger = logger or LOGGER
         self.call_soon(set_as_loop, self)
 
-    def __repr__(self):
-        return self.name
-    __str__ = __repr__
-
-    @property
-    def name(self):
-        if self.is_running():
-            return self.__class__.__name__
-        else:
-            return '%s <not running>' % self.__class__.__name__
-
     def run_in_executor(self, executor, callback, *args):
         return run_in_executor(self, executor, callback, *args)
 
@@ -131,5 +120,6 @@ def loop_thread_id(loop):
     '''Thread ID of the running ``loop``.
     '''
     waiter = asyncio.Future(loop=loop)
-    loop.call_soon(lambda: waiter.set_result(current_thread().ident))
+    loop.call_soon_threadsafe(
+        lambda: waiter.set_result(current_thread().ident))
     return waiter

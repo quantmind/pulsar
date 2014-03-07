@@ -1,3 +1,8 @@
+Ver. 0.8.1 - Development
+===========================
+* Added :mod:`pulsar.apps.greenio` application for writing asynchronous code
+  using the greenlet library.
+
 Ver. 0.8.0 - 2014-Mar-06
 ===========================
 * **Backward incompatible version**
