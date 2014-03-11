@@ -4,150 +4,10 @@ from pulsar import EventHandler
 from pulsar.utils.pep import native_str
 from pulsar.utils.importer import import_module
 
-from .query import AbstractQuery, Query, QueryError
 from .transaction import Transaction, ModelDictionary
 from .model import ModelType
+from .manager import Manager
 from ..stores import create_store
-
-
-class Manager(AbstractQuery):
-    '''Used by the :class:`.Mapper` to link a data :class:`.Store` collection
-    with a :class:`.Model`.
-
-    For example::
-
-        from pulsar.apps.data import odm
-
-        class MyModel(odm.Model):
-            group = odm.SymbolField()
-            flag = odm.BooleanField()
-
-        models = odm.Mapper()
-        models.register(MyModel)
-
-        manager = models[MyModel]
-
-    A :class:`.Model` can specify a :ref:`custom manager <custom-manager>` by
-    creating a :class:`Manager` subclass with additional methods::
-
-        class MyModelManager(odm.Manager):
-
-            def special_query(self, **kwargs):
-                ...
-
-    At this point we need to tell the model about the custom manager, and we do
-    so by setting the ``manager_class`` class attribute in the
-    :class:`.Model`::
-
-        class MyModel(odm.Model):
-            ...
-
-            manager_class = MyModelManager
-
-    .. attribute:: _model
-
-        The :class:`.Model` associated with this manager
-
-    .. attribute:: _store
-
-        The :class:`.Store` associated with this manager
-
-    .. attribute:: _mapper
-
-        The :class:`.Mapper` where this :class:`.Manager` is registered
-    '''
-    query_class = Query
-
-    def __init__(self, model, store=None, read_store=None, mapper=None):
-        self._model = model
-        self._store = store
-        self._read_store = read_store or store
-        self._mapper = mapper
-
-    @property
-    def _meta(self):
-        return self._model._meta
-
-    @property
-    def _loop(self):
-        return self._store._loop
-
-    def __str__(self):
-        if self._store:
-            return '{0}({1} - {2})'.format(self.__class__.__name__,
-                                           self._meta,
-                                           self._store)
-        else:
-            return '{0}({1})'.format(self.__class__.__name__, self._meta)
-    __repr__ = __str__
-
-    def __call__(self, *args, **kwargs):
-        '''Create a new model without commiting to database.
-        '''
-        return self._model(*args, **kwargs)
-
-    def query(self):
-        return self.query_class(self)
-
-    def create_table(self):
-        return self._store.create_table(self._model)
-
-    #    QUERY IMPLEMENTATION
-    def get(self, *args, **kw):
-        if len(args) == 1:
-            return self._read_store.get_model(self._model, args[0])
-        elif args:
-            raise QueryError("'get' expected at most 1 argument, %s given" %
-                             len(args))
-        else:
-            qs = self.filter(**kw)
-            return self._get(qs)
-            raise NotImplementedError
-
-    def filter(self, **kwargs):
-        return self.query().filter(**kwargs)
-
-    def exclude(self, **kwargs):
-        return self.query().exclude(**kwargs)
-
-    def union(self, *queries):
-        return self.query().exclude(*queries)
-
-    def intersect(self, *queries):
-        return self.query().intersect(*queries)
-
-    def where(self, *expressions):
-        return self.query().where(*expressions)
-
-    def count(self):
-        return self.query().count()
-
-    def all(self):
-        return self.query().all()
-
-    def begin(self):
-        '''Begin a new :class:`.Transaction`.'''
-        return self._mapper.begin()
-
-    def new(self, *args, **kwargs):
-        '''Create a new instance of :attr:`_model` and commit to server.
-        '''
-        with self._mapper.begin() as t:
-            t.add(self._model(*args, **kwargs))
-        return t.wait(self._get_instance)
-    insert = new
-
-    def save(self, instance):
-        '''Save an existing ``instance`` of :attr:`_model`.
-        '''
-        with self._mapper.begin() as t:
-            t.add(instance)
-        return t.wait()
-    update = save
-
-    ##    INTERNAL
-    def _get_instance(self, transaction):
-        return transaction
 
 
 class Mapper(EventHandler):
@@ -252,9 +112,14 @@ tutorial for information.'''
         return Transaction(self)
 
     def set_search_engine(self, engine):
-        '''Set the search ``engine`` for this :class:`Mapper`.'''
+        '''The :class:`.SearchEngine` for this :class:`.Mapper`.
+
+        This must be created by users.
+        Check :ref:`full text search <tutorial-search>`
+        tutorial for information.'''
         self._search_engine = engine
-        self._search_engine.set_mapper(self)
+        if engine:
+            self._search_engine.set_mapper(self)
 
     def register(self, model, store=None, read_store=None,
                  include_related=True, **params):
@@ -464,38 +329,3 @@ if no managers were removed.'''
                                              include_related=include_related,
                                              exclude=exclude):
                     yield m
-
-
-class LazyProxy(object):
-    '''Base class for lazy descriptors.
-
-    .. attribute:: field
-
-        The :class:`Field` which create this descriptor. Either a
-        :class:`ForeignKey` or a :class:`StructureField`.
-    '''
-    def __init__(self, field):
-        self.field = field
-
-    def __repr__(self):
-        return self.field.name
-    __str__ = __repr__
-
-    @property
-    def name(self):
-        return self.field.name
-
-    def load(self, instance, session):
-        '''Load the lazy data for this descriptor.'''
-        raise NotImplementedError
-
-    def load_from_manager(self, manager):
-        raise NotImplementedError('cannot access %s from manager' % self)
-
-    def __get__(self, instance, instance_type=None):
-        if not self.field.class_field:
-            if instance is None:
-                return self
-            return self.load(instance, instance.session)
-        else:
-            return self

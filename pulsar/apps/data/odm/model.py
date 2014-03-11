@@ -4,7 +4,7 @@ from copy import copy
 from base64 import b64encode
 from collections import Mapping
 
-from pulsar import ImproperlyConfigured, Event
+from pulsar import ImproperlyConfigured
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import ispy3k, iteritems
 
@@ -13,10 +13,8 @@ try:
 except ImportError:
     CModelBase = None
 
-from .fields import Field, AutoIdField
-
-
-class_prepared = Event()
+from .manager import class_prepared, makeManyToManyRelatedManager
+from .fields import Field, AutoIdField, ForeignKey, CompositeIdField
 
 
 def get_fields(bases, attrs):
@@ -54,11 +52,10 @@ class ModelMeta(object):
     To override default behaviour you can specify the ``Meta`` class
     as an inner class of :class:`.Model` in the following way::
 
-        from datetime import datetime
-        from stdnet import odm
+        from pulsar.apps.data import odm
 
-        class MyModel(odm.StdModel):
-            timestamp = odm.DateTimeField(default = datetime.now)
+        class MyModel(odm.Model):
+            timestamp = odm.FloatField()
             ...
 
             class Meta:
@@ -89,13 +86,13 @@ class ModelMeta(object):
 
     .. attribute:: name
 
-        Usually it is the :class:`Model` class name in lower-case, but it
+        Usually it is the :class:`.Model` class name in lower-case, but it
         can be customised.
 
     .. attribute:: app_label
 
         Unless specified it is the name of the directory or file
-        (if at top level) containing the :class:`Model` definition. It can be
+        (if at top level) containing the :class:`.Model` definition. It can be
         customised.
 
     .. attribute:: table_name
@@ -157,8 +154,10 @@ class ModelMeta(object):
         self.scalarfields = []
         self.manytomany = []
         self.indices = []
+        self.manytomany = []
         self.dfields = {}
         self.converters = {}
+        self.related = {}
         self.model._meta = self
         self.app_label = make_app_label(model, app_label)
         self.name = (name or model.__name__).lower()
@@ -226,8 +225,8 @@ class ModelMeta(object):
 
     def is_valid(self, instance):
         '''Perform validation for *instance* and stores serialized data,
-indexes and errors into local cache.
-Return ``True`` if the instance is ready to be saved to database.'''
+        indexes and errors into local cache.
+        Return ``True`` if the instance is ready to be saved to database.'''
         dbdata = instance.dbdata
         data = dbdata['cleaned_data'] = {}
         errors = dbdata['errors'] = {}
@@ -420,6 +419,46 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
                         except Exception:
                             value = b64encode(value).decode('utf-8')
                     yield key, value
+
+    @classmethod
+    def _many2many_through_model(cls, field):
+        field.relmodel = cls
+        if not field.related_name:
+            field.related_name = '%s_set' % field.model._meta.name
+        name_model = field.model._meta.name
+        name_relmodel = field.relmodel._meta.name
+        # The two models are the same.
+        if name_model == name_relmodel:
+            name_relmodel += '2'
+        through = field.through
+        # Create the through model
+        if through is None:
+            name = '{0}_{1}'.format(name_model, name_relmodel)
+
+            class Meta:
+                app_label = field.model._meta.app_label
+            through = ModelType(name, (StdModel,), {'Meta': Meta})
+            field.through = through
+        # The first field
+        field1 = ForeignKey(field.model,
+                            related_name=field.name,
+                            related_manager_class=makeManyToManyRelatedManager(
+                                field.relmodel,
+                                name_model,
+                                name_relmodel)
+                            )
+        field1.register_with_model(name_model, through)
+        # The second field
+        field2 = ForeignKey(field.relmodel,
+                            related_name=field.related_name,
+                            related_manager_class=makeManyToManyRelatedManager(
+                                field.model,
+                                name_relmodel,
+                                name_model)
+                            )
+        field2.register_with_model(name_relmodel, through)
+        pk = CompositeIdField(name_model, name_relmodel)
+        pk.register_with_model('id', through)
 
 
 PyModel = Model

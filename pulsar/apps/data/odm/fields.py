@@ -1,10 +1,22 @@
 import pickle
 from base64 import b64encode
+from datetime import date, datetime
 
 from pulsar.utils.html import UnicodeMixin
+from pulsar.utils.numbers import date2timestamp
+
+from .manager import (OneToManyRelatedManager, load_relmodel, LazyForeignKey,
+                      OdmError)
 
 
-class FieldError(RuntimeError):
+NONE_EMPTY = (None, '', b'')
+
+
+class FieldError(OdmError):
+    pass
+
+
+class FieldValueError(ValueError):
     pass
 
 
@@ -19,24 +31,15 @@ class Field(UnicodeMixin):
 
     .. attribute:: index
 
-        Probably the most important field attribute, it establish if
-        the field creates indexes for queries.
-        If you don't need to query the field you should set this value to
-        ``False``, it will save you memory.
+        Some data stores requires to create indixes when performing specific
+        queries.
 
-        .. note:: if ``index`` is set to ``False`` executing queries
-                  against the field will
-                  throw a :class:`stdnet.QuerySetError` exception.
-                  No database queries are allowed for non indexed fields
-                  as a design decision (explicit better than implicit).
-
-        Default ``True``.
+        Default ``False``.
 
     .. attribute:: unique
 
         If ``True``, the field must be unique throughout the model.
-        In this case :attr:`Field.index` is also ``True``.
-        Enforced at :class:`stdnet.BackendDataServer` level.
+        In this case :attr:`~Field.index` is also ``True``.
 
         Default ``False``.
 
@@ -75,9 +78,9 @@ class Field(UnicodeMixin):
         method at runtime. For most field, its value is the same as the
         :attr:`name`. It is the field sorted in the backend database.
 
-    .. attribute:: model
+    .. attribute:: _meta
 
-        The :class:`.Model` holding the field.
+        The :class:`.ModelMeta` holding the field.
         Created by the ``odm`` at runtime.
 
     .. attribute:: charset
@@ -133,7 +136,6 @@ class Field(UnicodeMixin):
             self.index = False
         self._meta = None
         self.name = None
-        self.model = None
         self._default = extras.pop('default', self._default)
         self._handle_extras(**extras)
         self.creation_counter = Field.creation_counter
@@ -147,7 +149,6 @@ class Field(UnicodeMixin):
         assert not self.name, 'Field %s is already registered' % self
         self.name = name
         self.attname = self.get_attname()
-        self.model = model
         self._meta = meta = model._meta
         meta.dfields[name] = self
         if self.to_python:
@@ -235,6 +236,48 @@ class FloatField(Field):
             return None
     to_store = to_python
     to_json = to_python
+
+
+class DateField(Field):
+    repr_type = 'numeric'
+
+    def to_python(self, value, backend=None):
+        if value not in NONE_EMPTY:
+            if isinstance(value, date):
+                if isinstance(value, datetime):
+                    value = value.date()
+            else:
+                value = datetime.fromtimestamp(float(value)).date()
+            return value
+        else:
+            return self.get_default()
+
+    def to_store(self, value, backend=None):
+        if value not in NONE_EMPTY:
+            if isinstance(value, date):
+                value = date2timestamp(value)
+            else:
+                raise FieldValueError('%s not a valid date' % value)
+        return value
+    to_json = to_store
+
+    def _handle_extras(self, auto_now=False, **extras):
+        self.auto_now = auto_now
+        super(DateField, self)._handle_extras(**extras)
+
+
+class DateTimeField(DateField):
+
+    def to_python(self, value, backend=None):
+        if value not in NONE_EMPTY:
+            if isinstance(value, date):
+                if not isinstance(value, datetime):
+                    value = datetime(value.year, value.month, value.day)
+            else:
+                value = datetime.fromtimestamp(float(value))
+            return value
+        else:
+            return self.get_default()
 
 
 class PickleField(Field):
@@ -353,6 +396,84 @@ behaviour and how the field is stored in the back-end server.
             return (name, None)
 
 
+class ForeignKey(Field):
+    '''A :class:`.Field` defining a :ref:`one-to-many <one-to-many>`
+    objects relationship.
+    Requires a positional argument: the :class:`.Model` to which the model
+    is related. For example::
+
+        class Folder(odm.Model):
+            name = odm.CharField()
+
+        class File(odm.Model):
+            folder = odm.ForeignKey(Folder, related_name='files')
+
+    To create a recursive relationship, an object that has a many-to-one
+    relationship with itself use::
+
+        odm.ForeignKey('self')
+
+    Behind the scenes, stdnet appends "_id" to the field name to create
+    its field name in the back-end data-server. In the above example,
+    the database field for the ``File`` model will have a ``folder_id`` field.
+
+    .. attribute:: related_name
+
+        Optional name to use for the relation from the related object
+        back to ``self``.
+    '''
+    proxy_class = LazyForeignKey
+    related_manager_class = OneToManyRelatedManager
+
+    def __init__(self, model, related_name=None, related_manager_class=None,
+                 **kwargs):
+        if related_manager_class:
+            self.related_manager_class = related_manager_class
+        if not model:
+            raise FieldError('Model not specified')
+        super(ForeignKey, self).__init__(**kwargs)
+        self.relmodel = model
+        self.related_name = related_name
+
+    def register_with_related_model(self):
+        # add the RelatedManager proxy to the model holding the field
+        # setattr(self.model, self.name, self.proxy_class(self))
+        # self._meta.related[self.name] =
+        load_relmodel(self, self._set_relmodel)
+
+    def _set_relmodel(self, relmodel, **kw):
+        self._relmeta = meta = relmodel._meta
+        if not self.related_name:
+            self.related_name = '%s_%s_set' % (self._meta.name, self.name)
+        if (self.related_name not in meta.related and
+                self.related_name not in meta.dfields):
+            self._relmeta.related[self.related_name] = self
+        else:
+            raise FieldError('Duplicated related name "{0} in model "{1}" '
+                             'and field {2}'.format(self.related_name,
+                                                    meta, self))
+
+    def get_attname(self):
+        return '%s_id' % self.name
+
+    def get_value(self, instance, *bits):
+        related = getattr(instance, self.name)
+        return related.get_attr_value(JSPLITTER.join(bits)
+                                      ) if bits else related
+
+    def set_value(self, instance, value):
+        if isinstance(value, self.relmodel):
+            setattr(instance, self.name, value)
+            return value
+        else:
+            return super(ForeignKey, self).set_value(instance, value)
+
+    def register_with_model(self, name, model):
+        super(ForeignKey, self).register_with_model(name, model)
+        if not model._meta.abstract:
+            self.register_with_related_model()
+
+
 class CompositeIdField(Field):
     '''This field can be used when an instance of a model is uniquely
     identified by a combination of two or more :class:`Field` in the model
@@ -393,3 +514,71 @@ class CompositeIdField(Field):
             fields.append(field)
         self.fields = tuple(fields)
         return super(CompositeIdField, self).register_with_model(name, model)
+
+
+class ManyToManyField(Field):
+    '''A :ref:`many-to-many <many-to-many>` relationship.
+Like :class:`ForeignKey`, it requires a positional argument, the class
+to which the model is related and it accepts **related_name** as extra
+argument.
+
+.. attribute:: related_name
+
+    Optional name to use for the relation from the related object
+    back to ``self``. For example::
+
+        class Group(odm.StdModel):
+            name = odm.SymbolField(unique=True)
+
+        class User(odm.StdModel):
+            name = odm.SymbolField(unique=True)
+            groups = odm.ManyToManyField(Group, related_name='users')
+
+    To use it::
+
+        >>> g = Group(name='developers').save()
+        >>> g.users.add(User(name='john').save())
+        >>> u.users.add(User(name='mark').save())
+
+    and to remove::
+
+        >>> u.following.remove(User.objects.get(name='john'))
+
+.. attribute:: through
+
+    An optional :class:`StdModel` to use for creating the many-to-many
+    relationship can be passed to the constructor, via the **through** keyword.
+    If such a model is not passed, under the hood, a :class:`ManyToManyField`
+    creates a new *model* with name constructed from the field name
+    and the model holding the field. In the example above it would be
+    *group_user*.
+    This model contains two :class:`ForeignKeys`, one to model holding the
+    :class:`ManyToManyField` and the other to the *related_model*.
+
+'''
+    def __init__(self, model, through=None, related_name=None, **kwargs):
+        self.through = through
+        self.relmodel = model
+        self.related_name = related_name
+        super(ManyToManyField, self).__init__(model, **kwargs)
+
+    def register_with_model(self, name, model):
+        super(ManyToManyField, self).register_with_model(name, model)
+        if not model._meta.abstract:
+            load_relmodel(self, self._set_relmodel)
+
+    def _set_relmodel(self, relmodel):
+        relmodel._manytomany_through_model(self)
+
+    def get_attname(self):
+        return None
+
+    def todelete(self):
+        return False
+
+    def add_to_fields(self):
+        #A many to many field is a dummy field. All it does it provides a proxy
+        #for the through model. Remove it from the fields dictionary
+        #and addit to the list of many_to_many
+        self._meta.dfields.pop(self.name)
+        self._meta.manytomany.append(self.name)
