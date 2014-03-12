@@ -26,7 +26,7 @@ except ImportError:  # pragma nocover
     import sys
     sys.path.append('../../')
 
-from pulsar.apps.data import PulsarDS
+from pulsar.apps.ds import PulsarDS
 
 
 if __name__ == '__main__':  # pragma nocover

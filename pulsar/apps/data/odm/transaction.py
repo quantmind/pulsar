@@ -5,7 +5,7 @@ from pulsar.utils.structures import OrderedDict
 
 from .model import Model
 
-from ..stores import Command
+from ..store import Command
 
 
 class ModelDictionary(dict):

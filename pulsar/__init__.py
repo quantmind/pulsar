@@ -60,4 +60,6 @@ if os.environ.get('pulsar_setup_running') != 'yes':
 
     del get_version
     # Import data stores
+    from .apps.data import stores
+    del stores
     from .apps.data import data_stores

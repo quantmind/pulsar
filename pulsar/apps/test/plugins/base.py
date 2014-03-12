@@ -3,21 +3,13 @@ from pulsar.utils.httpurl import iteritems
 from pulsar.apps.test.result import Plugin
 
 
-__all__ = ['WrapTest',
-           'TestOption',
-           'TestPlugin']
+__all__ = ['WrapTest', 'TestPlugin']
 
 
 def as_test_setting(setting):
     setting.app = 'test'
     setting.section = "Test"
     return setting
-
-
-class TestOption(pulsar.Setting):
-    virtual = True
-    app = 'test'
-    section = "Test"
 
 
 class WrapTest(object):

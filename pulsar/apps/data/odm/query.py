@@ -94,7 +94,7 @@ class Query(object):
     _unions = None
     _intersections = None
     _where = None
-    _execution = None
+    _compiled = None
 
     def __init__(self, manager):
         self._manager = manager
@@ -195,16 +195,16 @@ class Query(object):
         return self.compiled().all()
 
     def compiled(self):
-        if not self._execution:
-            self._execution = self._manager._read_store.compile_query(self)
-        return self._execution
+        if not self._compiled:
+            self._compiled = self._manager._read_store.compile_query(self)
+        return self._compiled
 
     def _clone(self):
         cls = self.__class__
         q = cls.__new__(cls)
         d = q.__dict__
         for name, value in self.__dict__.items():
-            if name not in ('_execution',):
+            if name not in ('_compiled',):
                 if isinstance(value, (list, dict)):
                     value = copy(value)
                 d[name] = value
@@ -259,3 +259,17 @@ def get_lookups(attname, field_lookups):
         lookups = []
         field_lookups[attname] = lookups
     return lookups
+
+
+class CompiledQuery(object):
+
+    def __init__(self, store, query):
+        self._store = store
+        self._query = query
+
+    def all(self):
+        '''Fetch all matching elements for the server.
+
+        Return a :class:`~asyncio.Future`
+        '''
+        raise NotImplementedError

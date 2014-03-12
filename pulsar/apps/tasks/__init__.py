@@ -62,8 +62,9 @@ import time
 import pulsar
 from pulsar import command
 from pulsar.utils.config import section_docs
-from pulsar.apps.data import (start_store, create_store,
-                              DEFAULT_PULSAR_STORE_ADDRESS)
+from pulsar.apps.data import create_store
+from pulsar.apps.data.stores import start_store
+from pulsar.apps.ds import DEFAULT_PULSAR_STORE_ADDRESS
 
 from .models import *
 from .backend import *

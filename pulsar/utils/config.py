@@ -601,6 +601,12 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         return self.copy()
 
 
+class TestOption(Setting):
+    virtual = True
+    app = 'test'
+    section = "Test"
+
+
 def validate_bool(val):
     if isinstance(val, bool):
         return val

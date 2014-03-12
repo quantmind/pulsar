@@ -10,9 +10,9 @@ from hashlib import sha1
 import pulsar
 from pulsar.utils.structures import mapping_iterator, Zset
 from pulsar.utils.pep import native_str, zip, ispy3k, iteritems
+from pulsar.apps.ds import COMMANDS_INFO
 
 from .pubsub import PubSub
-from ...server import COMMANDS_INFO
 
 
 if ispy3k:

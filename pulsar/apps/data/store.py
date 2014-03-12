@@ -16,6 +16,15 @@ from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
+__all__ = ['Command',
+           'Store',
+           'Compiler',
+           'PubSub',
+           'PubSubClient',
+           'parse_store_url',
+           'create_store',
+           'register_store',
+           'data_stores']
 
 data_stores = {}
 
@@ -64,6 +73,18 @@ class Store(Producer):
     data from remote data servers such as redis, couchdb and so forth.
     A :class:`Store` should not be created directly, the high level
     :func:`.create_store` function should be used instead.
+
+    .. attribute:: _host
+
+        The remote host, tuple or string
+
+    .. attribute:: _user
+
+        The user name
+
+    .. attribute:: _password
+
+        The user password
     '''
     compiler_class = None
     default_manager = None

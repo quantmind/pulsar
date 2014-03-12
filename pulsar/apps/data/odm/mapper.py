@@ -7,7 +7,7 @@ from pulsar.utils.importer import import_module
 from .transaction import Transaction, ModelDictionary
 from .model import ModelType
 from .manager import Manager
-from ..stores import create_store
+from ..store import create_store
 
 
 class Mapper(EventHandler):

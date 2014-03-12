@@ -39,3 +39,4 @@ located in the :mod:`pulsar.apps` module.
    apps/websockets
    apps/http
    apps/pulse
+   apps/ds

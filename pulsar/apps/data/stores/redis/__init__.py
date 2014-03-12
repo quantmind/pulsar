@@ -1,4 +1,9 @@
-from ..pulsards import store, register_store
+from pulsar.apps.data import register_store
+
+from ..pulsards import store
+
+
+__all__ = ['RedisStore']
 
 
 class RedisStore(store.PulsarStore):
@@ -6,4 +11,4 @@ class RedisStore(store.PulsarStore):
 
 
 register_store('redis',
-               'pulsar.apps.data.stores.redis.RedisStore')
+               'pulsar.apps.data.stores.RedisStore')

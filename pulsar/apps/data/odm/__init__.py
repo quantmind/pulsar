@@ -9,4 +9,5 @@ from .fields import (Field, CharField, FloatField, IntegerField, PickleField,
 from .model import Model
 from .transaction import ModelDictionary
 from .mapper import Mapper, Manager
+from .query import CompiledQuery
 from .searchengine import register_serachengine, search_engine, SearchEngine

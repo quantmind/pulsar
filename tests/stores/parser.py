@@ -2,8 +2,8 @@ from random import randint
 import unittest
 
 import pulsar
-from pulsar.apps.data import (redis_parser, ResponseError, NoScriptError,
-                              InvalidResponse)
+from pulsar.apps.ds import (redis_parser, ResponseError, NoScriptError,
+                            InvalidResponse)
 
 
 def lua_nested_table(nesting, s=100):

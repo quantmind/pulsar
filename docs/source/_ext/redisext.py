@@ -5,7 +5,7 @@ from inspect import isfunction
 from sphinx.util.compat import Directive
 from docutils import nodes, statemachine
 
-from pulsar.apps.data import COMMANDS_INFO
+from pulsar.apps.ds import COMMANDS_INFO
 from pulsar.utils.structures import OrderedDict
 
 targetid = "redis_commands"

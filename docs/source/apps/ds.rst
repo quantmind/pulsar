@@ -4,7 +4,7 @@
 Pulsar-ds Server
 ===============================
 
-.. automodule:: pulsar.apps.data.server.server
+.. automodule:: pulsar.apps.ds.server
 
 
 Commands

@@ -3,13 +3,12 @@ import unittest
 from pulsar.apps.data import create_store
 
 
-class d:
-#class TestMongoDbStore(unittest.TestCase):
+class TestMongoDbStore(unittest.TestCase):
     store = None
 
     @classmethod
     def setUpClass(cls):
-        addr = 'mongodb://127.0.0.1:27017/pulsar_testing'
+        addr = 'mongodb://%s' % cls.cfg.mongodb_server
         cls.store = create_store(addr)
 
     @classmethod
@@ -19,7 +18,7 @@ class d:
         pass
 
     def test_aggregate(self):
-        db = yield self.store.database()
+        client = self.store.client()
         test = db.test1
         id1 = yield test.insert({"src": "Twitter", "content": "bla bla"},
                                 safe=True)

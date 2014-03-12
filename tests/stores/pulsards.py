@@ -7,8 +7,8 @@ import pulsar
 from pulsar import new_event_loop
 from pulsar.utils.security import random_string
 from pulsar.utils.structures import Zset
-from pulsar.apps.data import (PulsarDS, create_store, redis_parser,
-                              ResponseError)
+from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
+from pulsar.apps.data import create_store
 
 
 class Listener:

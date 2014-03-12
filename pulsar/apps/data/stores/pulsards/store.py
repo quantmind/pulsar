@@ -2,11 +2,11 @@ from functools import partial
 
 from pulsar import coroutine_return, task, Connection, Pool, get_actor
 from pulsar.utils.pep import to_string
+from pulsar.apps.data import register_store, Store, Command
+from pulsar.apps.ds import redis_parser
 
-from .base import register_store, Store, Command
 from .client import Client, Pipeline, Consumer, ResponseError
 from .pubsub import PubSub
-from ...server import redis_parser
 
 
 class PulsarStoreConnection(Connection):

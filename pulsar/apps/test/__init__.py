@@ -293,9 +293,10 @@ from functools import partial
 import pulsar
 from pulsar import multi_async
 from pulsar.apps import tasks
-from pulsar.apps.data import PulsarDS, create_store
+from pulsar.apps.data import create_store
+from pulsar.apps.ds import PulsarDS
 from pulsar.utils.log import lazyproperty
-from pulsar.utils.config import section_docs
+from pulsar.utils.config import section_docs, TestOption
 from pulsar.utils.pep import default_timer, to_string
 
 from .case import mock
@@ -437,7 +438,7 @@ class RedisServer(TestOption):
     flags = ['--redis-server']
     meta = "CONNECTION_STRING"
     default = '127.0.0.1:6379/9'
-    desc = 'Connection string for the redis server used in during testing'
+    desc = 'Connection string for the redis server used during testing'
 
 
 pyver = '%s.%s' % (sys.version_info[:2])
