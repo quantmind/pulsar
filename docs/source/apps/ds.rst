@@ -1,7 +1,9 @@
 .. _pulsar-data-store:
 
+.. module:: pulsar.apps.ds
+
 ===============================
-Pulsar-ds Server
+Pulsar Data Store Server
 ===============================
 
 .. automodule:: pulsar.apps.ds.server

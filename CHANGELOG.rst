@@ -2,8 +2,9 @@ Ver. 0.8.1 - Development
 ===========================
 * Added :mod:`pulsar.apps.greenio` application for writing asynchronous code
   using the greenlet library.
-* Moved :class:`.PulsarDS` server into its own :class:`pulsar.apps.ds`
+* Moved :class:`.PulsarDS` server into its own :mod:`pulsar.apps.ds`
   module.
+* The task application can run on redis
 
 Ver. 0.8.0 - 2014-Mar-06
 ===========================

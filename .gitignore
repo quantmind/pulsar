@@ -27,3 +27,4 @@ extensions/lua/lua.c
 extensions/lib/lib.c
 .coveralls.yml
 *.rdb
+config.py

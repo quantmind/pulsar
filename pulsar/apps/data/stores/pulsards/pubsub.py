@@ -25,10 +25,10 @@ class PubsubProtocol(Protocol):
                     command = response[0]
                     if command == b'message':
                         response = response[1:3]
-                        self.handler.fire_event('on_message', response)
+                        self.handler.broadcast(response)
                     elif command == b'pmessage':
                         response = response[2:4]
-                        self.handler.fire_event('on_message', response)
+                        self.handler.broadcast(response)
             else:
                 raise response
             response = parser.get()

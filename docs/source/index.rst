@@ -40,3 +40,4 @@ located in the :mod:`pulsar.apps` module.
    apps/http
    apps/pulse
    apps/ds
+   apps/greenio

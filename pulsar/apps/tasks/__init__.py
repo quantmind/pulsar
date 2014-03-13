@@ -108,7 +108,7 @@ class TaskBackendConnection(TaskSetting):
     default = ""
     meta = 'CONNECTION_STRING'
     desc = '''\
-        Connection string for the backend storing :class:`.Task`.
+        Connection string for the backend storing tasks.
 
         If the value is not available (default) it uses as fallback the
         :ref:`data_store <setting-data_store>` value. If still not

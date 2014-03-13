@@ -240,22 +240,25 @@ class PubSubClient(object):
         raise NotImplementedError
 
 
-class PubSub(EventHandler):
+class PubSub(object):
     '''A Publish/Subscriber interface.
 
     A :class:`PubSub` handler is never initialised directly, instead,
     the :meth:`~Store.pubsub` method of a data :class:`.Store`
     is used.
 
-    To listen for messages you can bind to the ``on_message`` event::
+    To listen for messages one adds clients to the handler::
+
+        def do_somethind(channel, message):
+            ...
 
         pubsub = client.pubsub()
-        pubsub.bind_event('on_message', handle_messages)
+        pubsub.add_client(do_somethind)
         pubsub.subscribe('mychannel')
 
-    You can bind as many handlers to the ``on_message`` event as you like.
-    The handlers receive one parameter only, a two-elements tuple
-    containing the ``channel`` and the ``message``.
+    You can add as many listening clients as you like. Clients are functions
+    which receive two parameters only, the ``channel`` sending the message
+    and the ``message``.
 
     A :class:`PubSub` handler can be used to publish messages too::
 
@@ -264,7 +267,6 @@ class PubSub(EventHandler):
     An additional ``protocol`` object can be supplied. The protocol must
     implement the ``encode`` and ``decode`` methods.
     '''
-    MANY_TIMES_EVENTS = ('on_message',)
 
     def __init__(self, store, protocol=None):
         super(PubSub, self).__init__()
@@ -273,7 +275,6 @@ class PubSub(EventHandler):
         self._protocol = protocol
         self._connection = None
         self._clients = set()
-        self.bind_event('on_message', self._broadcast)
 
     def publish(self, channel, message):
         '''Publish a new ``message`` to a ``channel``.
@@ -336,7 +337,7 @@ class PubSub(EventHandler):
         self._clients.discard(client)
 
     ##    INTERNALS
-    def _broadcast(self, response):
+    def broadcast(self, response):
         '''Broadcast ``message`` to all :attr:`clients`.'''
         remove = set()
         channel = to_string(response[0])

@@ -212,21 +212,26 @@ class EventHandler(AsyncObject):
                 callbacks = events[name]
                 self.bind_event(name, events[name])
 
-    def fire_event(self, name, arg=None, **kwargs):
+    def fire_event(self, name, *args, **kwargs):
         """Dispatches ``arg`` or ``self`` to event ``name`` listeners.
 
         * If event at ``name`` is a one-time event, it makes sure that it was
           not fired before.
 
-        :param arg: optional argument passed as positional parameter to the
+        :param args: optional argument passed as positional parameter to the
             event handler.
         :param kwargs: optional key-valued parameters to pass to the event
             handler. Can only be used for
             :ref:`many times events <many-times-event>`.
         :return: the :class:`Event` fired
         """
-        if arg is None:
+        if not args:
             arg = self
+        elif len(args) == 1:
+            arg = args[0]
+        else:
+            raise TypeError('fire_event expected at most 1 argument got %s' %
+                            len(args))
         event = self.event(name)
         if event:
             try:

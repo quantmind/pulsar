@@ -1,3 +1,7 @@
+'''
+Greenlet support facilitates the integration of synchronous
+third-party libraries into pulsar asynchronous framework.
+'''
 from socket import error, socket
 
 import asyncio

@@ -539,12 +539,16 @@ class TestSuite(tasks.TaskQueue):
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
         # Create a datastore for this test suite
-        server = PulsarDS(bind='127.0.0.1:0', workers=0,
-                          key_value_save=[],
-                          name='%s_store' % self.name)
-        yield server()
-        store = create_store('pulsar://%s:%s' % (server.cfg.addresses[0]),
-                             pool_size=2)
+        if not self.cfg.task_backend:
+            server = PulsarDS(bind='127.0.0.1:0', workers=0,
+                              key_value_save=[],
+                              name='%s_store' % self.name)
+            yield server()
+            address = 'pulsar://%s:%s' % server.cfg.addresses[0]
+        else:
+            address = self.cfg.task_backend
+
+        store = create_store(address, pool_size=2, loop=monitor._loop)
         self.get_backend(store)
         loader = self.loader
         tags = self.cfg.labels

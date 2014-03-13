@@ -225,16 +225,6 @@ class Task(odm.Model):
         return LazyString(self.info)
 
 
-class TaskClient(PubSubClient):
-
-    def __init__(self, be):
-        self._be = be
-
-    def __call__(self, channel, message):
-        name = self._be.event_name(channel)
-        self._be.fire_event(name, message)
-
-
 class TaskBackend(EventHandler):
     '''A backend class for running :class:`.Task`.
     A :class:`TaskBackend` is responsible for creating tasks and put them
@@ -433,7 +423,7 @@ class TaskBackend(EventHandler):
         '''Create a publish/subscribe handler from the backend :attr:`store`.
         '''
         pubsub = self.store.pubsub()
-        pubsub.add_client(TaskClient(self))
+        pubsub.add_client(self)
         # pubsub channels names from event names
         channels = tuple((self.channel(name) for name in self.events))
         pubsub.subscribe(*channels)
@@ -694,6 +684,11 @@ class TaskBackend(EventHandler):
         # corresponsding to the input ``task_id``.
         # If a callback is not available, it must have been fired already
         self.wait_for_task(task_id)
+
+    def __call__(self, channel, message):
+        # PubSub callback
+        name = self.event_name(channel)
+        self.fire_event(name, message)
 
 
 class SchedulerEntry(object):

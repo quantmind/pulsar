@@ -15,11 +15,14 @@ To run a stand alone server create a script with the following code::
 
 More information on the :ref:`pulsar data store example <tutorials-pulsards>`.
 
+Check out these benchmarks_
+
+.. _benchmarks: https://gist.github.com/lsbardel/8068579
 
 Implementation
 ===========================
 
-Key Value Store Application
+Pulsar Data Store Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: PulsarDS

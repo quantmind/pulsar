@@ -2,6 +2,7 @@ import unittest
 
 from pulsar import coroutine_return, multi_async
 from pulsar.apps.data import create_store
+from pulsar.apps.data.stores import CouchDbError
 
 
 class TestStoreWithDb(object):
@@ -12,7 +13,7 @@ class TestStoreWithDb(object):
     def name(cls, name):
         '''A modified database name
         '''
-        return ('%s_%s' % (cls.cfg.exc_id, name)).lower()
+        return ('test_%s_%s' % (cls.cfg.exc_id, name)).lower()
 
     @classmethod
     def createdb(cls, name, store=None):
@@ -65,12 +66,12 @@ class TestCouchDbStore(TestStoreWithDb, unittest.TestCase):
         result = yield self.createdb('a')
         self.assertTrue(result['ok'])
 
-class d:
     def test_createdb_illegal(self):
-        client = self.default_store.client()
+        client = self.store.client()
         yield self.async.assertRaises(CouchDbError,
                                       client.createdb, 'bla.foo')
 
+class d:
     def test_delete_non_existent_db(self):
         client = self.default_store.client()
         name = ('r%s' % random_string()).lower()

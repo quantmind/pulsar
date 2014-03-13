@@ -1045,18 +1045,14 @@ class RedisCommands(StoreMixin):
 
     def test_publish(self):
         pubsub = self.client.pubsub()
-        self.called = False
-
-        def check_message(message):
-            self.assertEqual(message[0], b'chat')
-            self.assertEqual(message[1], b'Hello')
-            self.called = True
-
-        pubsub.bind_event('on_message', check_message)
+        listener = Listener()
+        pubsub.add_client(listener)
         yield pubsub.subscribe('chat')
         result = yield pubsub.publish('chat', 'Hello')
         self.assertTrue(result >= 0)
-        self.assertTrue(self.called)
+        channel, message = yield listener.get()
+        self.assertEqual(channel, 'chat')
+        self.assertEqual(message, b'Hello')
 
     def test_pattern_subscribe(self):
         #switched off for redis. Issue #95
