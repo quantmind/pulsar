@@ -243,7 +243,7 @@ list/tuple of callabacks or (callback, erroback) tuples.</p>
 
 <dl class="method">
 <dt id="pulsar.async.events.EventHandler.fire_event">
-<tt class="descname">fire_event</tt><big>(</big><em>name</em>, <em>arg=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler.fire_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler.fire_event" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">fire_event</tt><big>(</big><em>name</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler.fire_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler.fire_event" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatches <tt class="docutils literal"><span class="pre">arg</span></tt> or <tt class="docutils literal"><span class="pre">self</span></tt> to event <tt class="docutils literal"><span class="pre">name</span></tt> listeners.</p>
 <ul class="simple">
 <li>If event at <tt class="docutils literal"><span class="pre">name</span></tt> is a one-time event, it makes sure that it was
@@ -254,7 +254,7 @@ not fired before.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>arg</strong> &#8211; optional argument passed as positional parameter to the
+<li><strong>args</strong> &#8211; optional argument passed as positional parameter to the
 event handler.</li>
 <li><strong>kwargs</strong> &#8211; optional key-valued parameters to pass to the event
 handler. Can only be used for

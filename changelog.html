@@ -74,6 +74,16 @@
             
   <div class="section" id="release-notes">
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="ver-0-8-1-development">
+<h2>Ver. 0.8.1 - Development<a class="headerlink" href="#ver-0-8-1-development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Added <a class="reference internal" href="apps/greenio.html#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.greenio</span></tt></a> application for writing asynchronous code
+using the greenlet library.</li>
+<li>Moved <a class="reference internal" href="apps/ds.html#pulsar.apps.ds.server.PulsarDS" title="pulsar.apps.ds.server.PulsarDS"><tt class="xref py py-class docutils literal"><span class="pre">PulsarDS</span></tt></a> server into its own <a class="reference internal" href="apps/ds.html#module-pulsar.apps.ds" title="pulsar.apps.ds"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.ds</span></tt></a>
+module.</li>
+<li>The task application can run on redis</li>
+</ul>
+</div>
 <div class="section" id="ver-0-8-0-2014-mar-06">
 <h2>Ver. 0.8.0 - 2014-Mar-06<a class="headerlink" href="#ver-0-8-0-2014-mar-06" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -123,10 +133,10 @@ the identity of a running application. This is useful during testing.</li>
 </li>
 <li><strong>New data store module</strong><ul>
 <li>New <a class="reference internal" href="apps/data/index.html#module-pulsar.apps.data" title="pulsar.apps.data"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.data</span></tt></a> module for managing asynchronous data stores.</li>
-<li>Two stores available: <a class="reference external" href="http://redis.io/">redis</a> and <a class="reference internal" href="apps/data/pulsar.html#pulsar-data-store"><em>pulsar-ds</em></a>.</li>
-<li>Additional stores can be created by subclassing the <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store" title="pulsar.apps.data.stores.pulsards.base.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
-abstract class and registering it via the <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.register_store" title="pulsar.apps.data.stores.pulsards.base.register_store"><tt class="xref py py-func docutils literal"><span class="pre">register_store()</span></tt></a> function.</li>
-<li>The <a class="reference internal" href="apps/data/pulsar.html#pulsar-data-store"><em>pulsar-ds</em></a> is a python implementation of
+<li>Two stores available: <a class="reference external" href="http://redis.io/">redis</a> and <a class="reference internal" href="apps/ds.html#pulsar-data-store"><em>pulsar-ds</em></a>.</li>
+<li>Additional stores can be created by subclassing the <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
+abstract class and registering it via the <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.register_store" title="pulsar.apps.data.store.register_store"><tt class="xref py py-func docutils literal"><span class="pre">register_store()</span></tt></a> function.</li>
+<li>The <a class="reference internal" href="apps/ds.html#pulsar-data-store"><em>pulsar-ds</em></a> is a python implementation of
 the popular redis server. It implements most redis commands including
 scripting.</li>
 </ul>
@@ -583,6 +593,7 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Release Notes</a><ul>
+<li><a class="reference internal" href="#ver-0-8-1-development">Ver. 0.8.1 - Development</a></li>
 <li><a class="reference internal" href="#ver-0-8-0-2014-mar-06">Ver. 0.8.0 - 2014-Mar-06</a></li>
 <li><a class="reference internal" href="#ver-0-7-4-2013-dec-22">Ver. 0.7.4 - 2013-Dec-22</a></li>
 <li><a class="reference internal" href="#ver-0-7-3-2013-dec-12">Ver. 0.7.3 - 2013-Dec-12</a></li>

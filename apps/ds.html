@@ -9,30 +9,29 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Pulsar-ds Server &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>Pulsar Data Store Server &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
-    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
-    <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
+        URL_ROOT:    '../',
         VERSION:     '0.8.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="../../static/jquery.js"></script>
-    <script type="text/javascript" src="../../static/underscore.js"></script>
-    <script type="text/javascript" src="../../static/doctools.js"></script>
-    <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../index.html" />
-    <link rel="up" title="Data Stores" href="index.html" />
-    <link rel="next" title="Redis and Pulsar-ds Client" href="redis.html" />
-    <link rel="prev" title="Object Data Mapper" href="odm.html" /> 
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../index.html" />
+    <link rel="next" title="Greenlet Support" href="greenio.html" />
+    <link rel="prev" title="Django Application" href="pulse.html" /> 
 </head>
  <body>
 
@@ -42,19 +41,18 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="../../genindex.html" title="General Index"
+          <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../../py-modindex.html" title="Python Module Index"
+          <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="redis.html" title="Redis and Pulsar-ds Client"
+          <a href="greenio.html" title="Greenlet Support"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="odm.html" title="Object Data Mapper"
+          <a href="pulse.html" title="Django Application"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -62,7 +60,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/data/pulsar.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/apps/ds.html">release docs here</a>.
         </p>
     
 </div>
@@ -74,8 +72,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-pulsar.apps.data.server.server">
-<span id="pulsar-ds-server"></span><span id="pulsar-data-store"></span><h1>Pulsar-ds Server<a class="headerlink" href="#module-pulsar.apps.data.server.server" title="Permalink to this headline">¶</a></h1>
+  <span class="target" id="module-pulsar.apps.ds"><span id="pulsar-data-store"></span></span><div class="section" id="module-pulsar.apps.ds.server">
+<span id="pulsar-data-store-server"></span><h1>Pulsar Data Store Server<a class="headerlink" href="#module-pulsar.apps.ds.server" title="Permalink to this headline">¶</a></h1>
 <p>Pulsar-ds is a python implementation of the popular <a class="reference external" href="http://redis.io/">redis</a>
 data store. It uses pulsar asynchronous framework to create a
 single-threaded workers responding to TCP-requests in the same way
@@ -87,23 +85,24 @@ as redis does.</p>
     <span class="n">PulsarDS</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>More information on the <a class="reference internal" href="../../tutorials/pulsards.html#tutorials-pulsards"><em>pulsar data store example</em></a>.</p>
+<p>More information on the <a class="reference internal" href="../tutorials/pulsards.html#tutorials-pulsards"><em>pulsar data store example</em></a>.</p>
+<p>Check out these <a class="reference external" href="https://gist.github.com/lsbardel/8068579">benchmarks</a></p>
 <div class="section" id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="key-value-store-application">
-<h3>Key Value Store Application<a class="headerlink" href="#key-value-store-application" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h3>Pulsar Data Store Server<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.apps.data.server.server.PulsarDS">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.server.server.</tt><tt class="descname">PulsarDS</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/server/server.html#PulsarDS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.server.server.PulsarDS" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> serving a pulsar datastore.</p>
+<dt id="pulsar.apps.ds.server.PulsarDS">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ds.server.</tt><tt class="descname">PulsarDS</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ds/server.html#PulsarDS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ds.server.PulsarDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> serving a pulsar datastore.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="storage">
 <h3>Storage<a class="headerlink" href="#storage" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.apps.data.server.server.Storage">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.server.server.</tt><tt class="descname">Storage</tt><big>(</big><em>server</em>, <em>cfg</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/server/server.html#Storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.server.server.Storage" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.ds.server.Storage">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ds.server.</tt><tt class="descname">Storage</tt><big>(</big><em>server</em>, <em>cfg</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ds/server.html#Storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ds.server.Storage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Implement redis commands.</p>
 </dd></dl>
 
@@ -165,8 +164,8 @@ as redis does.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../index.html">
-  <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+<a href="../index.html">
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -182,11 +181,11 @@ as redis does.</p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Pulsar-ds Server</a><ul>
+<li><a class="reference internal" href="#">Pulsar Data Store Server</a><ul>
 <li><a class="reference internal" href="#implementation">Implementation</a><ul>
-<li><a class="reference internal" href="#key-value-store-application">Key Value Store Application</a></li>
+<li><a class="reference internal" href="#id1">Pulsar Data Store Server</a></li>
 <li><a class="reference internal" href="#storage">Storage</a></li>
 </ul>
 </li>
@@ -209,19 +208,19 @@ as redis does.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="odm.html"
-                        title="previous chapter">Object Data Mapper</a></p>
+  <p class="topless"><a href="pulse.html"
+                        title="previous chapter">Django Application</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="redis.html"
-                        title="next chapter">Redis and Pulsar-ds Client</a></p>
+  <p class="topless"><a href="greenio.html"
+                        title="next chapter">Greenlet Support</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../../sources/apps/data/pulsar.txt"
+    <li><a href="../sources/apps/ds.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
-    <form class="search" action="../../search.html" method="get">
+    <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />

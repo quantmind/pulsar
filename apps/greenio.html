@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Django Application &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>Greenlet Support &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -30,8 +30,7 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../index.html" />
-    <link rel="next" title="Pulsar Data Store Server" href="ds.html" />
-    <link rel="prev" title="Asynchronous HTTP client" href="http.html" /> 
+    <link rel="prev" title="Pulsar Data Store Server" href="ds.html" /> 
 </head>
  <body>
 
@@ -48,9 +47,6 @@
              >modules</a> |</li>
         <li class="right" >
           <a href="ds.html" title="Pulsar Data Store Server"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="http.html" title="Asynchronous HTTP client"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
@@ -60,7 +56,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/pulse.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/apps/greenio.html">release docs here</a>.
         </p>
     
 </div>
@@ -72,21 +68,10 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-pulsar.apps.pulse">
-<span id="django-application"></span><span id="apps-pulse"></span><h1>Django Application<a class="headerlink" href="#module-pulsar.apps.pulse" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#module-pulsar.apps.pulse" title="pulsar.apps.pulse"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pulse</span></tt></a> module is a django application for running
-a django web site with pulsar. Add it to the list of your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>:</p>
-<div class="highlight-python"><pre>INSTALLED_APPS = (
-    ...,
-    &#x27;pulsar.apps.pulse&#x27;,
-    ...
-)</pre>
-</div>
-<p>and run the site via the <tt class="docutils literal"><span class="pre">pulse</span></tt> command:</p>
-<div class="highlight-python"><pre>python manage.py pulse</pre>
-</div>
-<p>Check the <a class="reference internal" href="../tutorials/django.html#tutorials-django"><em>django chat example</em></a> for a django chat
-application served by a multiprocessing pulsar server.</p>
+  <div class="section" id="module-pulsar.apps.greenio">
+<span id="greenlet-support"></span><span id="greenio"></span><h1>Greenlet Support<a class="headerlink" href="#module-pulsar.apps.greenio" title="Permalink to this headline">¶</a></h1>
+<p>Greenlet support facilitates the integration of synchronous
+third-party libraries into pulsar asynchronous framework.</p>
 </div>
 
 
@@ -113,14 +98,11 @@ application served by a multiprocessing pulsar server.</p>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
   <h4>Previous topic</h4>
-  <p class="topless"><a href="http.html"
-                        title="previous chapter">Asynchronous HTTP client</a></p>
-  <h4>Next topic</h4>
   <p class="topless"><a href="ds.html"
-                        title="next chapter">Pulsar Data Store Server</a></p>
+                        title="previous chapter">Pulsar Data Store Server</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/apps/pulse.txt"
+    <li><a href="../sources/apps/greenio.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

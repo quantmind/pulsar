@@ -4,7 +4,7 @@
 Datastore Clients
 =====================
 
-.. automodule:: pulsar.apps.data.stores.pulsards.base
+.. automodule:: pulsar.apps.data.store
 
 Implement a Store
 ==================
