@@ -289,7 +289,8 @@
 
 <span class="sd">        This method create a new task for function ``func`` and adds it to</span>
 <span class="sd">        the queue.</span>
-<span class="sd">        Return a :class:`.Future` called back once the task has finished.</span>
+<span class="sd">        Return a :class:`~asyncio.Future` called back once the task</span>
+<span class="sd">        has finished.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span><span class="p">:</span>

@@ -12,4 +12,4 @@ Data Stores
 
    clients
    odm
-   redis
+   stores

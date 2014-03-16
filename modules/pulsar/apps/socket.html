@@ -376,9 +376,9 @@
 
 </div></div>
 <div class="viewcode-block" id="UdpSocketServer"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.UdpSocketServer">[docs]</a><span class="k">class</span> <span class="nc">UdpSocketServer</span><span class="p">(</span><span class="n">SocketServer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`.SocketServer` which serve application on a UDP sockets.</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`.SocketServer` which serves application on a UDP sockets.</span>
 
-<span class="sd">    It bind a socket to a given address and listen for requests. The request</span>
+<span class="sd">    It binds a socket to a given address and listen for requests. The request</span>
 <span class="sd">    handler is constructed from the callable passed during initialisation.</span>
 
 <span class="sd">    .. attribute:: address</span>
@@ -419,7 +419,7 @@
         <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;sockets&#39;</span><span class="p">:</span> <span class="n">monitor</span><span class="o">.</span><span class="n">sockets</span><span class="p">})</span>
 
 <div class="viewcode-block" id="UdpSocketServer.server_factory"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.UdpSocketServer.server_factory">[docs]</a>    <span class="k">def</span> <span class="nf">server_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a :class:`.UdpServer`.</span>
+        <span class="sd">&#39;&#39;&#39;By default returns a new :class:`.DatagramServer`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">DatagramServer</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
@@ -427,7 +427,7 @@
 <div class="viewcode-block" id="UdpSocketServer.create_server"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.UdpSocketServer.create_server">[docs]</a>    <span class="k">def</span> <span class="nf">create_server</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create the Server which will listen for requests.</span>
 
-<span class="sd">        :return: a :class:`.UdpServer`.</span>
+<span class="sd">        :return: the server obtained from :meth:`server_factory`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
         <span class="n">max_requests</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">max_requests</span>

@@ -208,6 +208,11 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
+<div class="viewcode-block" id="Store.ping"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.ping">[docs]</a>    <span class="k">def</span> <span class="nf">ping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Used to check if the data server is available</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
 <div class="viewcode-block" id="Store.client"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.client">[docs]</a>    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get a client for the Store if implemented</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -219,7 +224,10 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="Store.create_database"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.create_database">[docs]</a>    <span class="k">def</span> <span class="nf">create_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbname</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a new database in this store if implemented</span>
+        <span class="sd">&#39;&#39;&#39;Create a new database in this store</span>
+
+<span class="sd">        By default it does nothing, stores must implement this method</span>
+<span class="sd">        only if they support database creation.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
@@ -234,13 +242,20 @@
 
     <span class="c">#    ODM SUPPORT</span>
     <span class="c">#######################</span></div>
-<div class="viewcode-block" id="Store.create_table"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="Store.create_table"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">remove_existing</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create the table for ``model``.</span>
 
 <span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
 <span class="sd">        By default it does nothing.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="Store.drop_table"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.drop_table">[docs]</a>    <span class="k">def</span> <span class="nf">drop_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">remove_existing</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Drop the table for ``model``.</span>
+
+<span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
+<span class="sd">        Must be implemented.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="Store.execute_transaction"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.execute_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">execute_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Execute a list of ``commands`` in a :class:`.Transaction`.</span>
@@ -268,6 +283,16 @@
 <span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="Store.model_data"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.model_data">[docs]</a>    <span class="k">def</span> <span class="nf">model_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;A generator of field/value pair for the store</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">to_store</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
 
     <span class="c">#    INTERNALS</span>
     <span class="c">#######################</span></div>
@@ -310,22 +335,25 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
-<div class="viewcode-block" id="PubSub"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.PubSub">[docs]</a><span class="k">class</span> <span class="nc">PubSub</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
+<div class="viewcode-block" id="PubSub"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.PubSub">[docs]</a><span class="k">class</span> <span class="nc">PubSub</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A Publish/Subscriber interface.</span>
 
 <span class="sd">    A :class:`PubSub` handler is never initialised directly, instead,</span>
 <span class="sd">    the :meth:`~Store.pubsub` method of a data :class:`.Store`</span>
 <span class="sd">    is used.</span>
 
-<span class="sd">    To listen for messages you can bind to the ``on_message`` event::</span>
+<span class="sd">    To listen for messages one adds clients to the handler::</span>
+
+<span class="sd">        def do_somethind(channel, message):</span>
+<span class="sd">            ...</span>
 
 <span class="sd">        pubsub = client.pubsub()</span>
-<span class="sd">        pubsub.bind_event(&#39;on_message&#39;, handle_messages)</span>
+<span class="sd">        pubsub.add_client(do_somethind)</span>
 <span class="sd">        pubsub.subscribe(&#39;mychannel&#39;)</span>
 
-<span class="sd">    You can bind as many handlers to the ``on_message`` event as you like.</span>
-<span class="sd">    The handlers receive one parameter only, a two-elements tuple</span>
-<span class="sd">    containing the ``channel`` and the ``message``.</span>
+<span class="sd">    You can add as many listening clients as you like. Clients are functions</span>
+<span class="sd">    which receive two parameters only, the ``channel`` sending the message</span>
+<span class="sd">    and the ``message``.</span>
 
 <span class="sd">    A :class:`PubSub` handler can be used to publish messages too::</span>
 
@@ -334,7 +362,6 @@
 <span class="sd">    An additional ``protocol`` object can be supplied. The protocol must</span>
 <span class="sd">    implement the ``encode`` and ``decode`` methods.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;on_message&#39;</span><span class="p">,)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">PubSub</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
@@ -343,7 +370,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_protocol</span> <span class="o">=</span> <span class="n">protocol</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clients</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_message&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_broadcast</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PubSub.publish"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.PubSub.publish">[docs]</a>    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Publish a new ``message`` to a ``channel``.</span>
@@ -406,7 +432,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_clients</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
 
     <span class="c">##    INTERNALS</span></div>
-    <span class="k">def</span> <span class="nf">_broadcast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+<div class="viewcode-block" id="PubSub.broadcast"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.PubSub.broadcast">[docs]</a>    <span class="k">def</span> <span class="nf">broadcast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Broadcast ``message`` to all :attr:`clients`.&#39;&#39;&#39;</span>
         <span class="n">remove</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">channel</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -424,7 +450,7 @@
                 <span class="n">remove</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clients</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">remove</span><span class="p">)</span>
 
-</div>
+</div></div>
 <span class="k">def</span> <span class="nf">parse_store_url</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
     <span class="n">scheme</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">fr</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="k">assert</span> <span class="ow">not</span> <span class="n">fr</span><span class="p">,</span> <span class="s">&#39;store url must not have fragment, found </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">fr</span>

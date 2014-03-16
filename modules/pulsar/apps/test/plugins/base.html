@@ -74,21 +74,13 @@
 <span class="kn">from</span> <span class="nn">pulsar.apps.test.result</span> <span class="kn">import</span> <span class="n">Plugin</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;WrapTest&#39;</span><span class="p">,</span>
-           <span class="s">&#39;TestOption&#39;</span><span class="p">,</span>
-           <span class="s">&#39;TestPlugin&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;WrapTest&#39;</span><span class="p">,</span> <span class="s">&#39;TestPlugin&#39;</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">as_test_setting</span><span class="p">(</span><span class="n">setting</span><span class="p">):</span>
     <span class="n">setting</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="s">&#39;test&#39;</span>
     <span class="n">setting</span><span class="o">.</span><span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Test&quot;</span>
     <span class="k">return</span> <span class="n">setting</span>
-
-
-<span class="k">class</span> <span class="nc">TestOption</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
-    <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="n">app</span> <span class="o">=</span> <span class="s">&#39;test&#39;</span>
-    <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Test&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">WrapTest</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>

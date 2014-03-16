@@ -165,7 +165,7 @@ can be found at the python <tt class="docutils literal"><span class="pre">dotted
 <dl class="class">
 <dt id="pulsar.apps.data.store.Store">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">Store</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for an asynchronous <a class="reference internal" href="#data-stores"><em>data stores</em></a>.</p>
+<dd><p>Base class for an asynchronous <a class="reference internal" href="stores.html#data-stores"><em>data stores</em></a>.</p>
 <p>It is an <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> for accessing and retrieving
 data from remote data servers such as redis, couchdb and so forth.
 A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> should not be created directly, the high level
@@ -197,7 +197,7 @@ A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="puls
 <dl class="attribute">
 <dt id="pulsar.apps.data.store.Store.database">
 <tt class="descname">database</tt><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Database name associated with this store.</p>
+<dd><p>Database name/number associated with this store.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -226,7 +226,7 @@ A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="puls
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.Store.ping">
-<tt class="descname">ping</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.data.store.Store.ping" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">ping</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.ping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used to check if the data server is available</p>
 </dd></dl>
 
@@ -271,6 +271,14 @@ By default it does nothing.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.data.store.Store.drop_table">
+<tt class="descname">drop_table</tt><big>(</big><em>model</em>, <em>remove_existing=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.drop_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.drop_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop the table for <tt class="docutils literal"><span class="pre">model</span></tt>.</p>
+<p>This method is used by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.
+Must be implemented.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.data.store.Store.execute_transaction">
 <tt class="descname">execute_transaction</tt><big>(</big><em>commands</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.execute_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.execute_transaction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute a list of <tt class="docutils literal"><span class="pre">commands</span></tt> in a <a class="reference internal" href="odm.html#pulsar.apps.data.odm.transaction.Transaction" title="pulsar.apps.data.odm.transaction.Transaction"><tt class="xref py py-class docutils literal"><span class="pre">Transaction</span></tt></a>.</p>
@@ -298,6 +306,12 @@ By default it does nothing.</p>
 </tbody>
 </table>
 <p>This method is used by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.store.Store.model_data">
+<tt class="descname">model_data</tt><big>(</big><em>model</em>, <em>action</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.model_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.model_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A generator of field/value pair for the store</p>
 </dd></dl>
 
 </dd></dl>
@@ -420,7 +434,7 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.data.st
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.broadcast">
-<tt class="descname">broadcast</tt><big>(</big><em>response</em><big>)</big><a class="headerlink" href="#pulsar.apps.data.store.PubSub.broadcast" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">broadcast</tt><big>(</big><em>response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.broadcast" title="Permalink to this definition">¶</a></dt>
 <dd><p>Broadcast <tt class="docutils literal"><span class="pre">message</span></tt> to all <tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt>.</p>
 </dd></dl>
 

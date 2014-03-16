@@ -507,7 +507,7 @@
 
 <span class="c"># This works for Python 2 and Python 3</span>
 <div class="viewcode-block" id="Setting"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Setting">[docs]</a><span class="k">class</span> <span class="nc">Setting</span><span class="p">(</span><span class="n">SettingMeta</span><span class="p">(</span><span class="s">&#39;BaseSettings&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nb">object</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;virtual&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
-    <span class="sd">&#39;&#39;&#39;Class for creating :ref:`pulsar settings &lt;pulsar.utils.config&gt;`.</span>
+    <span class="sd">&#39;&#39;&#39;Class for creating :ref:`pulsar settings &lt;settings&gt;`.</span>
 
 <span class="sd">    Most parameters can be specified on the command line,</span>
 <span class="sd">    all of them on a ``config`` file.</span>
@@ -575,7 +575,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nargs</span> <span class="o">=</span> <span class="n">nargs</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">nargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">short</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">short</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">desc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">desc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">desc</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">short</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">:</span>
@@ -585,6 +584,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">creation_count</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;order&#39;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">creation_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="bp">False</span>
 
     <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -650,7 +650,8 @@
         <span class="sd">&#39;&#39;&#39;Copy this :class:`SettingBase`&#39;&#39;&#39;</span>
         <span class="n">setting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">)</span>
         <span class="n">setting</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">)</span>
-        <span class="n">setting</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c"># Keep the modified flag?</span>
+        <span class="c"># setting.modified = False</span>
         <span class="k">if</span> <span class="n">prefix</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">setting</span><span class="o">.</span><span class="n">is_global</span><span class="p">:</span>
             <span class="n">flags</span> <span class="o">=</span> <span class="n">setting</span><span class="o">.</span><span class="n">flags</span>
             <span class="k">if</span> <span class="n">flags</span> <span class="ow">and</span> <span class="n">flags</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;--&#39;</span><span class="p">):</span>
@@ -669,6 +670,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 </div>
+<span class="k">class</span> <span class="nc">TestOption</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
+    <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="s">&#39;test&#39;</span>
+    <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Test&quot;</span>
+
+
 <span class="k">def</span> <span class="nf">validate_bool</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">val</span>

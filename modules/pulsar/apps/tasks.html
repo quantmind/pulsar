@@ -68,16 +68,14 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.tasks</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;To get started, follow the these simple guidelines:</span>
+<span class="sd">&#39;&#39;&#39;To get started, follow these guidelines:</span>
 
-<span class="sd">* Create the script which runs your application, in the</span>
+<span class="sd">* Create a script which runs your application, in the</span>
 <span class="sd">  :ref:`taskqueue tutorial &lt;tutorials-taskqueue&gt;` the script is called</span>
 <span class="sd">  ``manage.py``.</span>
 <span class="sd">* Create the modules where :ref:`jobs &lt;app-taskqueue-job&gt;` are implemented. It</span>
 <span class="sd">  can be a directory containing several submodules as explained in the</span>
 <span class="sd">  :ref:`task paths parameter &lt;app-tasks_path&gt;`.</span>
-<span class="sd">* Write a simple :class:`.PeriodicJob` class with a</span>
-<span class="sd">  :ref:`callable method &lt;job-callable&gt;`</span>
 <span class="sd">* Run your script, sit back and relax.</span>
 
 <span class="sd">.. _app-taskqueue-config:</span>
@@ -127,16 +125,6 @@
 
 <span class="sd">  Default: ``5``.</span>
 
-<span class="sd">.. _app-taskqueue-app:</span>
-
-<span class="sd">Task queue application</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
-
-<span class="sd">.. autoclass:: TaskQueue</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
-
-
 <span class="sd">.. _celery: http://celeryproject.org/</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -144,8 +132,9 @@
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">command</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="p">(</span><span class="n">start_store</span><span class="p">,</span> <span class="n">create_store</span><span class="p">,</span>
-                              <span class="n">DEFAULT_PULSAR_STORE_ADDRESS</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.data.stores</span> <span class="kn">import</span> <span class="n">start_store</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="kn">import</span> <span class="n">DEFAULT_PULSAR_STORE_ADDRESS</span>
 
 <span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.backend</span> <span class="kn">import</span> <span class="o">*</span>
@@ -189,7 +178,7 @@
     <span class="n">default</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="s">&#39;CONNECTION_STRING&#39;</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
-<span class="s">        Connection string for the backend storing :class:`.Task`.</span>
+<span class="s">        Connection string for the backend storing tasks.</span>
 
 <span class="s">        If the value is not available (default) it uses as fallback the</span>
 <span class="s">        :ref:`data_store &lt;setting-data_store&gt;` value. If still not</span>
@@ -224,7 +213,7 @@
 
 
 <div class="viewcode-block" id="TaskQueue"><a class="viewcode-back" href="../../../apps/tasks.html#pulsar.apps.tasks.TaskQueue">[docs]</a><span class="k">class</span> <span class="nc">TaskQueue</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`.Application` for consuming task.Tasks.</span>
+    <span class="sd">&#39;&#39;&#39;A pulsar :class:`.Application` for consuming :class:`.Task`.</span>
 
 <span class="sd">    This application can also schedule periodic tasks when the</span>
 <span class="sd">    :ref:`schedule_periodic &lt;setting-schedule_periodic&gt;` flag is ``True``.</span>
@@ -232,9 +221,7 @@
     <span class="n">backend</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;The :class:`.TaskBackend` for this task queue.</span>
 
-<span class="sd">    Available once the :class:`TaskQueue` has</span>
-<span class="sd">    started (when the :meth:`monitor_start` method is invoked by the</span>
-<span class="sd">    :class:`.Monitor` running it).</span>
+<span class="sd">    Available once the :class:`.TaskQueue` has started.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;tasks&#39;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tasks&#39;</span><span class="p">,),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
@@ -242,8 +229,8 @@
 <div class="viewcode-block" id="TaskQueue.monitor_start"><a class="viewcode-back" href="../../../apps/tasks.html#pulsar.apps.tasks.TaskQueue.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Starts running the task queue in ``monitor``.</span>
 
-<span class="sd">        It calles the :attr:`.Application.callable` (if available)</span>
-<span class="sd">        and create the :attr:`backend`.</span>
+<span class="sd">        It calls the :attr:`.Application.callable` (if available)</span>
+<span class="sd">        and create the :attr:`~.TaskQueue.backend`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">callable</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">callable</span><span class="p">()</span>
@@ -255,19 +242,23 @@
 <div class="viewcode-block" id="TaskQueue.monitor_task"><a class="viewcode-back" href="../../../apps/tasks.html#pulsar.apps.tasks.TaskQueue.monitor_task">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Override the :meth:`~.Application.monitor_task` callback.</span>
 
-<span class="sd">        Check if the :attr:`backend` needs to schedule new tasks.</span>
+<span class="sd">        Check if the :attr:`~.TaskQueue.backend` needs to schedule new tasks.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="ow">and</span> <span class="n">monitor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">next_run</span> <span class="o">&lt;=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">tick</span><span class="p">()</span>
 </div>
+    <span class="k">def</span> <span class="nf">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
     <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">get_backend</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">worker</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">worker</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
         <span class="c"># makes sure workers are only consuming tasks, not scheduling.</span>

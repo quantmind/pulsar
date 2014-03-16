@@ -95,13 +95,13 @@
 
 
 <span class="k">def</span> <span class="nf">concurrency</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">actor_class</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Function invoked by the :class:`Arbiter` or a :class:`Monitor` when</span>
-<span class="sd">spawning a new :class:`Actor`. It created a :class:`Concurrency` instance</span>
-<span class="sd">which handle the initialisation and the life of an :class:`Actor`.</span>
+    <span class="sd">&#39;&#39;&#39;Function invoked by the :class:`.Arbiter` or a :class:`.Monitor` when</span>
+<span class="sd">spawning a new :class:`.Actor`. It created a :class:`.Concurrency` instance</span>
+<span class="sd">which handle the initialisation and the life of an :class:`.Actor`.</span>
 
 <span class="sd">:parameter kind: Type of concurrency.</span>
-<span class="sd">:parameter monitor: The monitor (or arbiter) managing the :class:`Actor`.</span>
-<span class="sd">:return: a :class:`Councurrency` instance.</span>
+<span class="sd">:parameter monitor: The monitor (or arbiter) managing the :class:`.Actor`.</span>
+<span class="sd">:return: a :class:`.Councurrency` instance.</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">maker</span> <span class="o">=</span> <span class="n">concurrency_models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">maker</span><span class="p">:</span>
@@ -112,18 +112,18 @@
 
 
 <div class="viewcode-block" id="Concurrency"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency">[docs]</a><span class="k">class</span> <span class="nc">Concurrency</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Actor :class:`Concurrency`.</span>
+    <span class="sd">&#39;&#39;&#39;Actor :class:`.Concurrency`.</span>
 
 <span class="sd">    Responsible for the actual spawning of actors according to a</span>
 <span class="sd">    concurrency implementation. Instances are picklable</span>
-<span class="sd">    and are shared between the :class:`Actor` and its</span>
-<span class="sd">    :class:`ActorProxyMonitor`.</span>
+<span class="sd">    and are shared between the :class:`.Actor` and its</span>
+<span class="sd">    :class:`.ActorProxyMonitor`.</span>
 <span class="sd">    This is an abstract class, derived classes must implement the</span>
 <span class="sd">    ``start`` method.</span>
 
 <span class="sd">    :param concurrency: string indicating the concurrency implementation.</span>
 <span class="sd">        Valid choices are ``monitor``, ``process``, ``thread``.</span>
-<span class="sd">    :param actor_class: :class:`Actor` or one of its subclasses.</span>
+<span class="sd">    :param actor_class: :class:`.Actor` or one of its subclasses.</span>
 <span class="sd">    :param timeout: timeout in seconds for the actor.</span>
 <span class="sd">    :param kwargs: additional key-valued arguments to be passed to the actor</span>
 <span class="sd">        constructor.</span>
@@ -186,14 +186,13 @@
         <span class="sd">&#39;&#39;&#39;Perform the hand shake for ``actor``</span>
 
 <span class="sd">        The hand shake occurs when the ``actor`` is in starting state.</span>
+<span class="sd">        It performs the following actions:</span>
 
-<span class="sd">        It performs the following actions</span>
+<span class="sd">        * set the ``actor`` as the actor of the current thread</span>
+<span class="sd">        * bind two additional callbacks to the ``start`` event</span>
+<span class="sd">        * fire the ``start`` event</span>
 
-<span class="sd">        * Set the ``actor`` as the actor of the current thread</span>
-<span class="sd">        * Bind two additional callbacks to the ``start` event</span>
-<span class="sd">        * Fire the ``start`` event</span>
-
-<span class="sd">        If the hand shake is succesful, the actor will eventually</span>
+<span class="sd">        If the hand shake is successful, the actor will eventually</span>
 <span class="sd">        results in a running state.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">try</span><span class="p">:</span>
@@ -242,8 +241,8 @@
         <span class="sd">&#39;&#39;&#39;Implement the :ref:`actor period task &lt;actor-periodic-task&gt;`.</span>
 
 <span class="sd">        This is an internal method called periodically by the</span>
-<span class="sd">        :attr:`Actor._loop` to ping the actor monitor.</span>
-<span class="sd">        If successful return a :class:`.Future` called</span>
+<span class="sd">        :attr:`.Actor._loop` to ping the actor monitor.</span>
+<span class="sd">        If successful return a :class:`asyncio.Future` called</span>
 <span class="sd">        back with the acknowledgement from the monitor.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">next_periodic_task</span> <span class="o">=</span> <span class="bp">None</span>
@@ -262,10 +261,12 @@
         <span class="k">return</span> <span class="n">ack</span>
 </div>
 <div class="viewcode-block" id="Concurrency.stop"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Gracefully stop the ``actor``.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Gracefully stop the ``actor``.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">state</span> <span class="o">&lt;=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span><span class="p">:</span>
             <span class="c"># The actor has not started the stopping process. Starts it now.</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">STOPPING</span>
+            <span class="n">actor</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="n">actor</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s">&#39;exit_code&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -291,7 +292,7 @@
         <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">_stop_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Exit from the :class:`Actor` domain.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Exit from the :class:`.Actor` domain.&#39;&#39;&#39;</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">CLOSE</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Closing mailbox&#39;</span><span class="p">)</span>
@@ -302,9 +303,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_switch_to_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">exc</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">exc</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">actor</span><span class="o">.</span><span class="n">state</span> <span class="o">&lt;</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span><span class="p">:</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_acknowledge_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -349,9 +350,9 @@
 <span class="c">############################################################################</span>
 <span class="c">##    CONCURRENCY IMPLEMENTATIONS</span>
 <div class="viewcode-block" id="MonitorConcurrency"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.MonitorConcurrency">[docs]</a><span class="k">class</span> <span class="nc">MonitorConcurrency</span><span class="p">(</span><span class="n">MonitorMixin</span><span class="p">,</span> <span class="n">Concurrency</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;:class:`Concurrency` class for a :class:`Monitor`.</span>
+    <span class="sd">&#39;&#39;&#39;:class:`.Concurrency` class for a :class:`.Monitor`.</span>
 
-<span class="sd">    Monitors live in the **mainthread** of the master process and</span>
+<span class="sd">    Monitors live in the **main thread** of the master process and</span>
 <span class="sd">    therefore do not require to be spawned.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">setup_event_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
@@ -367,8 +368,8 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 <div class="viewcode-block" id="MonitorConcurrency.periodic_task"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.MonitorConcurrency.periodic_task">[docs]</a>    <span class="k">def</span> <span class="nf">periodic_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Override the :meth:`Concurrency.periodic_task` to implement</span>
-<span class="sd">        the :class:`Monitor` :ref:`periodic task &lt;actor-periodic-task&gt;`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Override the :meth:`.Concurrency.periodic_task` to implement</span>
+<span class="sd">        the :class:`.Monitor` :ref:`periodic task &lt;actor-periodic-task&gt;`.&#39;&#39;&#39;</span>
         <span class="n">interval</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">next_periodic_task</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
@@ -405,7 +406,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_install_signals</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="ArbiterConcurrency.create_mailbox"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.ArbiterConcurrency.create_mailbox">[docs]</a>    <span class="k">def</span> <span class="nf">create_mailbox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Override :meth:`Concurrency.create_mailbox` to create the</span>
+        <span class="sd">&#39;&#39;&#39;Override :meth:`.Concurrency.create_mailbox` to create the</span>
 <span class="sd">        mailbox server.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">mailbox</span> <span class="o">=</span> <span class="n">TcpServer</span><span class="p">(</span><span class="n">MailboxProtocol</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
@@ -418,8 +419,8 @@
         <span class="k">return</span> <span class="n">mailbox</span>
 </div>
 <div class="viewcode-block" id="ArbiterConcurrency.periodic_task"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.ArbiterConcurrency.periodic_task">[docs]</a>    <span class="k">def</span> <span class="nf">periodic_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Override the :meth:`Concurrency.periodic_task` to implement</span>
-<span class="sd">        the :class:`Arbiter` :ref:`periodic task &lt;actor-periodic-task&gt;`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Override the :meth:`.Concurrency.periodic_task` to implement</span>
+<span class="sd">        the :class:`.Arbiter` :ref:`periodic task &lt;actor-periodic-task&gt;`.&#39;&#39;&#39;</span>
         <span class="n">interval</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">next_periodic_task</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>

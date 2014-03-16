@@ -68,12 +68,12 @@
             
   <h1>Source code for pulsar.async.clients</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Queue</span><span class="p">,</span> <span class="n">QueueFull</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">is_socket_closed</span>
 
-<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">AsyncObject</span>
+<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">future_timeout</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Producer</span>
-<span class="kn">from</span> <span class="nn">.queues</span> <span class="kn">import</span> <span class="n">Queue</span><span class="p">,</span> <span class="n">Full</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Pool&#39;</span><span class="p">,</span> <span class="s">&#39;PoolConnection&#39;</span><span class="p">,</span> <span class="s">&#39;AbstractClient&#39;</span><span class="p">,</span> <span class="s">&#39;AbstractUdpClient&#39;</span><span class="p">]</span>
@@ -83,8 +83,7 @@
     <span class="sd">&#39;&#39;&#39;An asynchronous pool of open connections.</span>
 
 <span class="sd">    Open connections are either :attr:`in_use` or :attr:`available`</span>
-<span class="sd">    to be used. Available connection are placed in an</span>
-<span class="sd">    asynchronous  :class:`.Queue`.</span>
+<span class="sd">    to be used. Available connection are placed in an :class:`asyncio.Queue`.</span>
 
 <span class="sd">    This class is not thread safe.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -92,7 +91,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_creator</span> <span class="o">=</span> <span class="n">creator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">timeout</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">,</span> <span class="n">maxsize</span><span class="o">=</span><span class="n">pool_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">pool_size</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">_loop</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -124,7 +123,7 @@
 </div>
     <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">connection</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">connection</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span>
+            <span class="k">return</span> <span class="n">connection</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">_queue</span>
         <span class="k">return</span> <span class="bp">True</span>
 
 <div class="viewcode-block" id="Pool.connect"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.Pool.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -153,32 +152,38 @@
 </div>
     <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">&gt;=</span> <span class="n">queue</span><span class="o">.</span><span class="n">_maxsize</span> <span class="ow">or</span> <span class="n">queue</span><span class="o">.</span><span class="n">qsize</span><span class="p">():</span>
-            <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">)</span>
-            <span class="c"># None signal that a connection was removed form the queue</span>
-            <span class="c"># Go again</span>
-            <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
+        <span class="c"># grab the connection without waiting, important!</span>
+        <span class="k">if</span> <span class="n">queue</span><span class="o">.</span><span class="n">qsize</span><span class="p">():</span>
+            <span class="n">connection</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">get_nowait</span><span class="p">()</span>
+        <span class="c"># wait for one to be available</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">&gt;=</span> <span class="n">queue</span><span class="o">.</span><span class="n">_maxsize</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">:</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">future_timeout</span><span class="p">(</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">is_socket_closed</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">sock</span><span class="p">):</span>
-                    <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                    <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>   <span class="c"># must create a new connection</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_creator</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
             <span class="k">finally</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="c"># None signal that a connection was removed form the queue</span>
+        <span class="c"># Go again</span>
+        <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_socket_closed</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">sock</span><span class="p">):</span>
+                <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conn</span><span class="p">,</span> <span class="n">discard</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="bp">None</span> <span class="k">if</span> <span class="n">discard</span> <span class="k">else</span> <span class="n">conn</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">Full</span><span class="p">:</span>
+            <span class="k">except</span> <span class="n">QueueFull</span><span class="p">:</span>
                 <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
 

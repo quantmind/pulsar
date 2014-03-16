@@ -81,7 +81,7 @@
 <span class="kn">from</span> <span class="nn">.monitor</span> <span class="kn">import</span> <span class="n">PoolMixin</span><span class="p">,</span> <span class="n">Monitor</span><span class="p">,</span> <span class="n">_spawn_actor</span>
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">multi_async</span>
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">set_actor</span>
-<span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actor_proxy_deferred</span>
+<span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actor_proxy_future</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;spawn&#39;</span><span class="p">,</span> <span class="s">&#39;Arbiter&#39;</span><span class="p">]</span>
@@ -102,7 +102,7 @@
 
 </div>
 <div class="viewcode-block" id="spawn"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.arbiter.spawn">[docs]</a><span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Spawn a new :class:`Actor` and return an :class:`.ActorProxyFuture`.</span>
+    <span class="sd">&#39;&#39;&#39;Spawn a new :class:`.Actor` and return an :class:`.ActorProxyFuture`.</span>
 
 <span class="sd">    This method can be used from any :class:`.Actor`.</span>
 <span class="sd">    If not in the :class:`.Arbiter` domain, the method sends a request</span>
@@ -118,7 +118,7 @@
 <span class="sd">    * ``name`` the actor name</span>
 <span class="sd">    * :ref:`actor hooks &lt;actor-hooks&gt;` such as ``start``, ``stopping``</span>
 <span class="sd">      and ``stop``</span>
-<span class="sd">    * ``actor_class`` a custom :class:`Actor` subclass (never used)</span>
+<span class="sd">    * ``actor_class`` a custom :class:`.Actor` subclass (never used)</span>
 
 <span class="sd">    :return: an :class:`.ActorProxyFuture`.</span>
 
@@ -143,7 +143,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">Arbiter</span><span class="p">):</span>
         <span class="c"># send the request to the arbiter</span>
         <span class="n">future</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;spawn&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">actor_proxy_deferred</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">actor_proxy_future</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -208,12 +208,11 @@
 <div class="viewcode-block" id="Arbiter"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.arbiter.Arbiter">[docs]</a><span class="k">class</span> <span class="nc">Arbiter</span><span class="p">(</span><span class="n">PoolMixin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The Arbiter drives pulsar servers.</span>
 
-<span class="sd">    It is the most important a :class:`Actor` and :class:`PoolMixin` in</span>
+<span class="sd">    It is the most important a :class:`.Actor` and :class:`.PoolMixin` in</span>
 <span class="sd">    pulsar concurrent framework. It is used as singleton</span>
-<span class="sd">    in the main process and it manages one or more :class:`Monitor`.</span>
-<span class="sd">    It runs the main :class:`EventLoop` of your concurrent application.</span>
-<span class="sd">    It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor</span>
-<span class="sd">    and the tornado_ eventloop.</span>
+<span class="sd">    in the main process and it manages one or more :class:`.Monitor`.</span>
+<span class="sd">    It runs the main :ref:`event loop &lt;asyncio-event-loop&gt;` of your</span>
+<span class="sd">    concurrent application.</span>
 
 <span class="sd">    Users access the arbiter (in the arbiter process domain) by the</span>
 <span class="sd">    high level api::</span>
@@ -221,10 +220,6 @@
 <span class="sd">        import pulsar</span>
 
 <span class="sd">        arbiter = pulsar.arbiter()</span>
-
-<span class="sd">    .. _gunicorn: http://gunicorn.org/</span>
-<span class="sd">    .. _twisted: http://twistedmatrix.com/trac/</span>
-<span class="sd">    .. _tornado: http://www.tornadoweb.org/</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">pidfile</span> <span class="o">=</span> <span class="bp">None</span>
 
@@ -240,12 +235,12 @@
     <span class="c"># ARBITER HIGH LEVEL API</span>
     <span class="c">########################################################################</span>
 <div class="viewcode-block" id="Arbiter.add_monitor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.arbiter.Arbiter.add_monitor">[docs]</a>    <span class="k">def</span> <span class="nf">add_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor_name</span><span class="p">,</span> <span class="n">monitor_class</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Add a new :class:`Monitor` to the :class:`Arbiter`.</span>
+        <span class="sd">&#39;&#39;&#39;Add a new :class:`.Monitor` to the :class:`Arbiter`.</span>
 
-<span class="sd">        :param monitor_class: a :class:`pulsar.Monitor` class.</span>
+<span class="sd">        :param monitor_class: a :class:`.Monitor` class.</span>
 <span class="sd">        :param monitor_name: a unique name for the monitor.</span>
 <span class="sd">        :param kwargs: dictionary of key-valued parameters for the monitor.</span>
-<span class="sd">        :return: the :class:`pulsar.Monitor` added.</span>
+<span class="sd">        :return: the :class:`.Monitor` added.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">monitor_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registered</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;Monitor &quot;</span><span class="si">%s</span><span class="s">&quot; already available&#39;</span> <span class="o">%</span> <span class="n">monitor_name</span><span class="p">)</span>
@@ -258,7 +253,7 @@
         <span class="k">return</span> <span class="n">m</span>
 </div>
 <div class="viewcode-block" id="Arbiter.close_monitors"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.arbiter.Arbiter.close_monitors">[docs]</a>    <span class="k">def</span> <span class="nf">close_monitors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Close all :class:`Monitor` at once.</span>
+        <span class="sd">&#39;&#39;&#39;Close all :class:`.Monitor` at once.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">multi_async</span><span class="p">((</span><span class="n">m</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">monitors</span><span class="p">))))</span>
 </div>

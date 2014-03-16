@@ -281,6 +281,11 @@
 <span class="sd">    :param exc: the exception</span>
 <span class="sd">    :return: a :class:`.WsgiResponse`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="n">exc_info</span> <span class="o">=</span> <span class="n">exc</span>
+        <span class="n">exc</span> <span class="o">=</span> <span class="n">exc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">request</span> <span class="o">=</span> <span class="n">wsgi_request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
     <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">handle_wsgi_error</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
@@ -293,7 +298,7 @@
     <span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
     <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">500</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Unhandled exception during HTTP response </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
-                        <span class="n">path</span><span class="p">,</span> <span class="n">dump_environ</span><span class="p">(</span><span class="n">environ</span><span class="p">),</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                        <span class="n">path</span><span class="p">,</span> <span class="n">dump_environ</span><span class="p">(</span><span class="n">environ</span><span class="p">),</span> <span class="n">exc_info</span><span class="o">=</span><span class="n">exc_info</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;HTTP </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">)</span> <span class="ow">or</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">REDIRECT_CODES</span><span class="p">:</span>

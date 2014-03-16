@@ -102,21 +102,28 @@
 
 <span class="sd">.. autofunction:: run_test_server</span>
 
-<span class="sd">check redis</span>
+<span class="sd">check server</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~</span>
 
-<span class="sd">.. autofunction:: check_redis</span>
+<span class="sd">.. autofunction:: check_server</span>
 
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isclass</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Future</span>
 
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">unittest.case</span> <span class="kn">import</span> <span class="n">_ExpectedFailure</span> <span class="k">as</span> <span class="n">ExpectedFailure</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">ExpectedFailure</span> <span class="o">=</span> <span class="bp">None</span>
+
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">future_timeout</span><span class="p">,</span>
-                    <span class="n">TcpServer</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">)</span>
+                    <span class="n">TcpServer</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span>
+                    <span class="n">format_traceback</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.async.proxy</span> <span class="kn">import</span> <span class="n">ActorProxyFuture</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">module_attribute</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
@@ -130,15 +137,27 @@
            <span class="s">&#39;show_leaks&#39;</span><span class="p">,</span>
            <span class="s">&#39;hide_leaks&#39;</span><span class="p">,</span>
            <span class="s">&#39;run_test_server&#39;</span><span class="p">,</span>
-           <span class="s">&#39;check_redis&#39;</span><span class="p">]</span>
+           <span class="s">&#39;check_server&#39;</span><span class="p">]</span>
 
 
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.test&#39;</span><span class="p">)</span>
 <span class="n">NOT_TEST_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;setUp&#39;</span><span class="p">,</span> <span class="s">&#39;tearDown&#39;</span><span class="p">,</span> <span class="s">&#39;_pre_setup&#39;</span><span class="p">,</span> <span class="s">&#39;_post_teardown&#39;</span><span class="p">,</span>
                     <span class="s">&#39;setUpClass&#39;</span><span class="p">,</span> <span class="s">&#39;tearDownClass&#39;</span><span class="p">,</span> <span class="s">&#39;run_test_server&#39;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">TestCallable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">TestFailure</span><span class="p">:</span>
 
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exc</span> <span class="o">=</span> <span class="n">exc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">format_traceback</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">TestCallable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Responsible for actually running a test function.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">istest</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">test</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span> <span class="o">=</span> <span class="n">method_name</span>
@@ -154,24 +173,24 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">actor</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">future_timeout</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">future_timeout</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="k">else</span> <span class="n">result</span>
 
     <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="c"># Coroutine to run an asynchronous test function</span>
+        <span class="n">__skip_traceback__</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="n">test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">istest</span><span class="p">:</span>
             <span class="n">test</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">before_test_function_run</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
         <span class="n">inject_async_assert</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
         <span class="n">test_function</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">)</span>
+        <span class="n">failure</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">test_function</span><span class="p">()</span>
+            <span class="k">yield</span> <span class="n">test_function</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">exc</span>
+            <span class="n">failure</span> <span class="o">=</span> <span class="n">TestFailure</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">istest</span><span class="p">:</span>
-            <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">after_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+            <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">after_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">SafeTest</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -241,9 +260,22 @@
 
 </div>
 <div class="viewcode-block" id="sequential"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.sequential">[docs]</a><span class="k">def</span> <span class="nf">sequential</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Decorator for a :class:`unittest.TestCase` which cause</span>
+    <span class="sd">&#39;&#39;&#39;Decorator for a :class:`~unittest.TestCase` which cause</span>
 <span class="sd">    its test functions to run sequentially rather than in an</span>
 <span class="sd">    asynchronous fashion.</span>
+
+<span class="sd">    Typical usage::</span>
+
+<span class="sd">        import unittest</span>
+
+<span class="sd">        from pulsar.apps.test import sequential</span>
+
+<span class="sd">        @sequenatial</span>
+<span class="sd">        class MyTests(unittest.TestCase):</span>
+<span class="sd">            ...</span>
+
+<span class="sd">    You can also run test functions sequentially when using the</span>
+<span class="sd">    :ref:`sequential &lt;apps-test-sequential&gt;` flag in the command line.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">cls</span><span class="o">.</span><span class="n">_sequential_execution</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="k">return</span> <span class="n">cls</span>
@@ -251,10 +283,10 @@
 </div>
 <div class="viewcode-block" id="AsyncAssert"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.AsyncAssert">[docs]</a><span class="k">class</span> <span class="nc">AsyncAssert</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A `descriptor`_ added by the :ref:`test-suite` to all python</span>
-<span class="sd">    :class:`unittest.TestCase` loaded.</span>
+<span class="sd">    :class:`~unittest.TestCase` loaded.</span>
 
 <span class="sd">    It can be used to invoke the same ``assertXXX`` methods available in</span>
-<span class="sd">    the :class:`unittest.TestCase` in an asynchronous fashion.</span>
+<span class="sd">    the :class:`~unittest.TestCase` in an asynchronous fashion.</span>
 
 <span class="sd">    The descriptor is available via the ``async`` attribute.</span>
 <span class="sd">    For example::</span>
@@ -296,11 +328,11 @@
 
 </div>
 <div class="viewcode-block" id="ActorTestMixin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin">[docs]</a><span class="k">class</span> <span class="nc">ActorTestMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A mixin for :class:`unittest.TestCase`.</span>
+    <span class="sd">&#39;&#39;&#39;A mixin for :class:`~unittest.TestCase`.</span>
 
 <span class="sd">    Useful for classes testing spawning of actors.</span>
 <span class="sd">    Make sure this is the first class you derive from, before the</span>
-<span class="sd">    unittest.TestCase, so that the tearDown method is overwritten.</span>
+<span class="sd">    :class:`~unittest.TestCase`, so that the tearDown method is overwritten.</span>
 
 <span class="sd">    .. attribute:: concurrency</span>
 
@@ -388,19 +420,30 @@
         <span class="n">server</span><span class="o">.</span><span class="n">stop_serving</span><span class="p">()</span>
 
 </div>
-<div class="viewcode-block" id="check_redis"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.check_redis">[docs]</a><span class="k">def</span> <span class="nf">check_redis</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Check if redis server is available at the address specified</span>
-<span class="sd">    by the :ref:`redis server &lt;setting-redis_server&gt;` config value.</span>
+<div class="viewcode-block" id="check_server"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.check_server">[docs]</a><span class="k">def</span> <span class="nf">check_server</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Check if server ``name`` is available at the address specified</span>
+<span class="sd">    ``&lt;name&gt;_server`` config value.</span>
 
 <span class="sd">    :rtype: boolean</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">addr</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;redis_server&#39;</span><span class="p">)</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">cfg</span>
+    <span class="n">cfgname</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_server&#39;</span> <span class="o">%</span> <span class="n">name</span>
+    <span class="n">addr</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_server&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">://&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">addr</span><span class="p">:</span>
+        <span class="n">addr</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">://</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
     <span class="n">sync_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">new_event_loop</span><span class="p">())</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">sync_store</span><span class="o">.</span><span class="n">client</span><span class="p">()</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
+        <span class="n">sync_store</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">True</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">False</span></div>
+        <span class="k">return</span> <span class="bp">False</span>
+
+</div>
+<span class="k">def</span> <span class="nf">is_expected_failure</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">ExpectedFailure</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">ExpectedFailure</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default</span>
 </pre></div>
 
           </div>

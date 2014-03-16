@@ -69,8 +69,7 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.tasks.rpc</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">send</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">get_application</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
 
 <span class="kn">from</span> <span class="nn">.backend</span> <span class="kn">import</span> <span class="n">Task</span><span class="p">,</span> <span class="n">TaskNotAvailable</span>
@@ -81,11 +80,6 @@
 
 <span class="k">def</span> <span class="nf">task_to_json</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">task</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">is_failure</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
-            <span class="n">err</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">trace</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">TaskNotAvailable</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">rpc</span><span class="o">.</span><span class="n">InvalidParams</span><span class="p">(</span>
-                    <span class="s">&#39;Job &quot;</span><span class="si">%s</span><span class="s">&quot; is not available.&#39;</span> <span class="o">%</span> <span class="n">err</span><span class="o">.</span><span class="n">task_name</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
             <span class="n">task</span> <span class="o">=</span> <span class="p">[</span><span class="n">task_to_json</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">task</span><span class="p">]</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">Task</span><span class="p">):</span>
@@ -174,7 +168,7 @@
     <span class="c">##    INTERNALS</span></div>
     <span class="k">def</span> <span class="nf">task_backend</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span><span class="p">:</span>
-            <span class="n">app</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_application</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">taskqueue</span><span class="p">)</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">get_application</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">taskqueue</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">get_backend</span><span class="p">()</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span><span class="p">)</span>
 
@@ -198,7 +192,7 @@
         <span class="k">return</span> <span class="p">{}</span>
 </div>
     <span class="k">def</span> <span class="nf">_rq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">taskqueue</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">taskqueue</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

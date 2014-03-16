@@ -94,14 +94,14 @@ pulsar:</p>
 </li>
 <li><p class="first">A <a class="reference internal" href="#coroutine"><em>coroutine</em></a>, a generator which consumes values.
 For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_result</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span>
 
 <span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
     <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
     <span class="o">...</span>
     <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
     <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
-    <span class="n">coroutine_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>a coroutine is obtained by calling the generator function:</p>

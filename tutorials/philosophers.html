@@ -76,83 +76,8 @@
             
   <div class="section" id="dining-philosophers">
 <span id="id1"></span><h1>Dining Philosophers<a class="headerlink" href="#dining-philosophers" title="Permalink to this headline">¶</a></h1>
-<p>The code for this example is located in the <a class="reference internal" href="#module-examples.philosophers.manage" title="examples.philosophers.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.philosophers.manage</span></tt></a>
+<p>The code for this example is located in the <tt class="xref py py-mod docutils literal"><span class="pre">examples.philosophers.manage</span></tt>
 module.</p>
-<span class="target" id="module-examples.philosophers.manage"></span><p>The dining <a class="reference external" href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">philosophers</a> problem is an example problem often used in
-concurrent algorithm design to illustrate synchronisation issues and
-techniques for resolving them.</p>
-<div class="section" id="the-problem">
-<h2>The problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h2>
-<p>Five silent philosophers sit at a round table with each a bowl of spaghetti.
-A fork <tt class="docutils literal"><span class="pre">f</span></tt> is placed between each pair of adjacent philosophers <tt class="docutils literal"><span class="pre">P</span></tt>:</p>
-<div class="highlight-python"><pre>    P     P
-    O  f  O
-   f       f
-P O         O P
-    f     f
-       O
-       P</pre>
-</div>
-<p>Each philosopher <tt class="docutils literal"><span class="pre">P</span></tt> must alternately think and eat from his bowl <tt class="docutils literal"><span class="pre">O</span></tt>.
-Eating is not limited by the amount of spaghetti left: assume an infinite
-supply.</p>
-<p>However, a philosopher can only eat while holding both the fork <tt class="docutils literal"><span class="pre">f</span></tt> to
-the left and the fork to the right.
-Each philosopher can pick up an adjacent fork, when available, and put it down,
-when holding it. These are separate actions: forks must be picked up and put
-down one by one.</p>
-<p>This implementation will just work. No starvation or dead-lock.</p>
-<p>There are two parameters:</p>
-<ul class="simple">
-<li>Average eating period, the higher the more time is spend eating.</li>
-<li>Average waiting period, the higher the more frequent philosophers
-get a chance to eat.</li>
-</ul>
-<p>To run the example, type:</p>
-<div class="highlight-python"><pre>pulsar manage.py</pre>
-</div>
-</div>
-<div class="section" id="implementation">
-<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="examples.philosophers.manage.DiningPhilosophers">
-<em class="property">class </em><tt class="descclassname">examples.philosophers.manage.</tt><tt class="descname">DiningPhilosophers</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/examples/philosophers/manage.html#DiningPhilosophers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="examples.philosophers.manage.DiningPhilosophers.worker_info">
-<tt class="descname">worker_info</tt><big>(</big><em>philosopher</em>, <em>info=None</em><big>)</big><a class="reference internal" href="../modules/examples/philosophers/manage.html#DiningPhilosophers.worker_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers.worker_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override <a class="reference internal" href="../api/application.html#pulsar.apps.Application.worker_info" title="pulsar.apps.Application.worker_info"><tt class="xref py py-meth docutils literal"><span class="pre">worker_info()</span></tt></a> to provide
-information about the philosopher.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="examples.philosophers.manage.DiningPhilosophers.take_action">
-<tt class="descname">take_action</tt><big>(</big><em>philosopher</em><big>)</big><a class="reference internal" href="../modules/examples/philosophers/manage.html#DiningPhilosophers.take_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers.take_action" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <tt class="docutils literal"><span class="pre">philosopher</span></tt> performs one of these two actions:</p>
-<ul class="simple">
-<li>eat, if it has both forks and than <a class="reference internal" href="#examples.philosophers.manage.DiningPhilosophers.release_forks" title="examples.philosophers.manage.DiningPhilosophers.release_forks"><tt class="xref py py-meth docutils literal"><span class="pre">release_forks()</span></tt></a>.</li>
-<li>try to <a class="reference internal" href="#examples.philosophers.manage.DiningPhilosophers.pickup_fork" title="examples.philosophers.manage.DiningPhilosophers.pickup_fork"><tt class="xref py py-meth docutils literal"><span class="pre">pickup_fork()</span></tt></a>, if he has less than 2 forks.</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="examples.philosophers.manage.DiningPhilosophers.pickup_fork">
-<tt class="descname">pickup_fork</tt><big>(</big><em>philosopher</em><big>)</big><a class="reference internal" href="../modules/examples/philosophers/manage.html#DiningPhilosophers.pickup_fork"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers.pickup_fork" title="Permalink to this definition">¶</a></dt>
-<dd><p>The philosopher has less than two forks.</p>
-<p>Check if forks are available.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="examples.philosophers.manage.DiningPhilosophers.release_forks">
-<tt class="descname">release_forks</tt><big>(</big><em>philosopher</em><big>)</big><a class="reference internal" href="../modules/examples/philosophers/manage.html#DiningPhilosophers.release_forks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers.release_forks" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <tt class="docutils literal"><span class="pre">philosopher</span></tt> has just eaten and is ready to release both
-forks.</p>
-<p>This method release them, one by one, by sending the <tt class="docutils literal"><span class="pre">put_down</span></tt>
-action to the monitor.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
 </div>
 
 
@@ -178,15 +103,6 @@ action to the monitor.</p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Dining Philosophers</a><ul>
-<li><a class="reference internal" href="#the-problem">The problem</a></li>
-<li><a class="reference internal" href="#implementation">Implementation</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
   <p class="topless"><a href="django.html"
                         title="previous chapter">Django with Pulsar</a></p>

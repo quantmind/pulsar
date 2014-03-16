@@ -74,7 +74,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span><span class="p">,</span> <span class="nb">range</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 
-<span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actor_proxy_deferred</span>
+<span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actor_proxy_future</span>
 <span class="kn">from</span> <span class="nn">.actor</span> <span class="kn">import</span> <span class="n">Actor</span>
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">async_while</span>
 <span class="kn">from</span> <span class="nn">.concurrency</span> <span class="kn">import</span> <span class="n">concurrency</span>
@@ -137,9 +137,9 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">actor_proxy</span><span class="o">.</span><span class="n">monitor</span> <span class="o">=</span> <span class="n">monitor</span>
         <span class="n">monitor</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">[</span><span class="n">actor_proxy</span><span class="o">.</span><span class="n">aid</span><span class="p">]</span> <span class="o">=</span> <span class="n">actor_proxy</span>
-        <span class="n">deferred</span> <span class="o">=</span> <span class="n">actor_proxy_deferred</span><span class="p">(</span><span class="n">actor_proxy</span><span class="p">)</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">actor_proxy_future</span><span class="p">(</span><span class="n">actor_proxy</span><span class="p">)</span>
         <span class="n">actor_proxy</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">deferred</span>
+        <span class="k">return</span> <span class="n">future</span>
 
 
 <div class="viewcode-block" id="PoolMixin"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin">[docs]</a><span class="k">class</span> <span class="nc">PoolMixin</span><span class="p">(</span><span class="n">Actor</span><span class="p">):</span>
@@ -152,12 +152,12 @@
 <span class="sd">    .. attribute:: managed_actors</span>
 
 <span class="sd">        dictionary with keys given by actor&#39;s ids and values by</span>
-<span class="sd">        :class:`ActorProxyMonitor` instances. These are the actors</span>
+<span class="sd">        :class:`.ActorProxyMonitor` instances. These are the actors</span>
 <span class="sd">        managed by the pool.</span>
 
 <span class="sd">    .. attribute:: terminated_actors</span>
 
-<span class="sd">        list of :class:`ActorProxyMonitor` which have been terminated</span>
+<span class="sd">        list of :class:`.ActorProxyMonitor` which have been terminated</span>
 <span class="sd">        (the remote actor did not have a cleaned shutdown).</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">CLOSE_TIMEOUT</span> <span class="o">=</span> <span class="mi">30000000000000</span>
@@ -222,12 +222,12 @@
 </div>
 <div class="viewcode-block" id="PoolMixin.manage_actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.manage_actor">[docs]</a>    <span class="k">def</span> <span class="nf">manage_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;If an actor failed to notify itself to the arbiter for more than</span>
-<span class="sd">the timeout, stop the actor.</span>
+<span class="sd">        the timeout, stop the actor.</span>
 
-<span class="sd">:param actor: the :class:`Actor` to manage.</span>
-<span class="sd">:param stop: if ``True``, stop the actor.</span>
-<span class="sd">:return: if the actor is alive 0 if it is not.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        :param actor: the :class:`Actor` to manage.</span>
+<span class="sd">        :param stop: if ``True``, stop the actor.</span>
+<span class="sd">        :return: if the actor is alive 0 if it is not.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="n">stop</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
@@ -273,8 +273,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">spawn</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="PoolMixin.stop_actors"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.stop_actors">[docs]</a>    <span class="k">def</span> <span class="nf">stop_actors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Maintain the number of workers by spawning or killing</span>
-<span class="sd">as required.&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;Maintain the number of workers by spawning or killing as required</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
             <span class="n">num_to_kill</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_to_kill</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
@@ -291,21 +291,21 @@
 
 </div></div>
 <div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="n">PoolMixin</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A monitor is a **very** special :class:`Actor`.</span>
+    <span class="sd">&#39;&#39;&#39;A monitor is a **very** special :class:`.Actor`.</span>
 
-<span class="sd">    it is a :class:`PoolMixin` which shares the same :class:`EventLoop`</span>
-<span class="sd">    with the :class:`Arbiter` and therefore lives in the main thread</span>
+<span class="sd">    it is a :class:`.PoolMixin` which shares the same event loop</span>
+<span class="sd">    with the :class:`.Arbiter` and therefore lives in the main thread</span>
 <span class="sd">    of the master process domain.</span>
 
-<span class="sd">    The Arbiter manages monitors which in turn manage a set of :class:`Actor`</span>
+<span class="sd">    The Arbiter manages monitors which in turn manage a set of :class:`.Actor`</span>
 <span class="sd">    performing similar tasks.</span>
 
 <span class="sd">    In other words, you may have a monitor managing actors for serving HTTP</span>
 <span class="sd">    requests on a given port, another monitor managing actors consuming tasks</span>
-<span class="sd">    from a task queue and so forth. You can think of :class:`Monitor` as</span>
-<span class="sd">    managers of pools of :class:`Actor`.</span>
+<span class="sd">    from a task queue and so forth. You can think of :class:`.Monitor` as</span>
+<span class="sd">    managers of pools of :class:`.Actor`.</span>
 
-<span class="sd">    Monitors are created by invoking the :meth:`Arbiter.add_monitor`</span>
+<span class="sd">    Monitors are created by invoking the :meth:`.Arbiter.add_monitor`</span>
 <span class="sd">    functions and not by directly invoking the constructor. Therefore</span>
 <span class="sd">    adding a new monitor to the arbiter follows the pattern::</span>
 
@@ -321,8 +321,9 @@
         <span class="k">return</span> <span class="bp">True</span>
 
 <div class="viewcode-block" id="Monitor.monitor_task"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.Monitor.monitor_task">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Monitor specific task called by the :meth:`Monitor.periodic_task`.</span>
+        <span class="sd">&#39;&#39;&#39;Monitor specific task.</span>
 
+<span class="sd">        Called by the :meth:`.MonitorConcurrency.periodic_task` method.</span>
 <span class="sd">        By default it does nothing. Override if you need to.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">pass</span>

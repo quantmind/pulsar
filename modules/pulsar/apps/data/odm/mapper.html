@@ -70,156 +70,16 @@
   <h1>Source code for pulsar.apps.data.odm.mapper</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">ismodule</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">EventHandler</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">multi_async</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">native_str</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">import_module</span>
 
-<span class="kn">from</span> <span class="nn">.query</span> <span class="kn">import</span> <span class="n">AbstractQuery</span><span class="p">,</span> <span class="n">Query</span><span class="p">,</span> <span class="n">QueryError</span>
 <span class="kn">from</span> <span class="nn">.transaction</span> <span class="kn">import</span> <span class="n">Transaction</span><span class="p">,</span> <span class="n">ModelDictionary</span>
 <span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">ModelType</span>
-<span class="kn">from</span> <span class="nn">..stores</span> <span class="kn">import</span> <span class="n">create_store</span>
+<span class="kn">from</span> <span class="nn">.manager</span> <span class="kn">import</span> <span class="n">Manager</span>
+<span class="kn">from</span> <span class="nn">..store</span> <span class="kn">import</span> <span class="n">create_store</span>
 
 
-<div class="viewcode-block" id="Manager"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Manager">[docs]</a><span class="k">class</span> <span class="nc">Manager</span><span class="p">(</span><span class="n">AbstractQuery</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Used by the :class:`.Mapper` to link a data :class:`.Store` collection</span>
-<span class="sd">    with a :class:`.Model`.</span>
-
-<span class="sd">    For example::</span>
-
-<span class="sd">        from pulsar.apps.data import odm</span>
-
-<span class="sd">        class MyModel(odm.Model):</span>
-<span class="sd">            group = odm.SymbolField()</span>
-<span class="sd">            flag = odm.BooleanField()</span>
-
-<span class="sd">        models = odm.Mapper()</span>
-<span class="sd">        models.register(MyModel)</span>
-
-<span class="sd">        manager = models[MyModel]</span>
-
-<span class="sd">    A :class:`.Model` can specify a :ref:`custom manager &lt;custom-manager&gt;` by</span>
-<span class="sd">    creating a :class:`Manager` subclass with additional methods::</span>
-
-<span class="sd">        class MyModelManager(odm.Manager):</span>
-
-<span class="sd">            def special_query(self, **kwargs):</span>
-<span class="sd">                ...</span>
-
-<span class="sd">    At this point we need to tell the model about the custom manager, and we do</span>
-<span class="sd">    so by setting the ``manager_class`` class attribute in the</span>
-<span class="sd">    :class:`.Model`::</span>
-
-<span class="sd">        class MyModel(odm.Model):</span>
-<span class="sd">            ...</span>
-
-<span class="sd">            manager_class = MyModelManager</span>
-
-<span class="sd">    .. attribute:: _model</span>
-
-<span class="sd">        The :class:`.Model` associated with this manager</span>
-
-<span class="sd">    .. attribute:: _store</span>
-
-<span class="sd">        The :class:`.Store` associated with this manager</span>
-
-<span class="sd">    .. attribute:: _mapper</span>
-
-<span class="sd">        The :class:`.Mapper` where this :class:`.Manager` is registered</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">query_class</span> <span class="o">=</span> <span class="n">Query</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">read_store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mapper</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">store</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_read_store</span> <span class="o">=</span> <span class="n">read_store</span> <span class="ow">or</span> <span class="n">store</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span> <span class="o">=</span> <span class="n">mapper</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">_meta</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">_loop</span>
-
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&#39;{0}({1} - {2})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
-                                           <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span>
-                                           <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&#39;{0}({1})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">)</span>
-    <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
-
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a new model without commiting to database.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
-<div class="viewcode-block" id="Manager.create_table"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Manager.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
-
-    <span class="c">#    QUERY IMPLEMENTATION</span></div>
-    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_store</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="n">args</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">QueryError</span><span class="p">(</span><span class="s">&quot;&#39;get&#39; expected at most 1 argument, </span><span class="si">%s</span><span class="s"> given&quot;</span> <span class="o">%</span>
-                             <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">qs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">exclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="o">*</span><span class="n">queries</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">intersect</span><span class="p">(</span><span class="o">*</span><span class="n">queries</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">where</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">expressions</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">*</span><span class="n">expressions</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-
-<div class="viewcode-block" id="Manager.begin"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Manager.begin">[docs]</a>    <span class="k">def</span> <span class="nf">begin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Begin a new :class:`.Transaction`.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span>
-</div>
-<div class="viewcode-block" id="Manager.new"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Manager.new">[docs]</a>    <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a new instance of :attr:`_model` and commit to server.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
-            <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_instance</span><span class="p">)</span></div>
-    <span class="n">insert</span> <span class="o">=</span> <span class="n">new</span>
-
-<div class="viewcode-block" id="Manager.save"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Manager.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Save an existing ``instance`` of :attr:`_model`.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
-            <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span></div>
-    <span class="n">update</span> <span class="o">=</span> <span class="n">save</span>
-
-    <span class="c">##    INTERNAL</span>
-    <span class="k">def</span> <span class="nf">_get_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">transaction</span>
-
-</div>
 <div class="viewcode-block" id="Mapper"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper">[docs]</a><span class="k">class</span> <span class="nc">Mapper</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A mapper is a mapping of :class:`.Model` to a :class:`.Manager`.</span>
 
@@ -280,7 +140,7 @@
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Mapper.default_store"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.default_store">[docs]</a>    <span class="k">def</span> <span class="nf">default_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The default :class:`.Store` for this :class:`Mapper`.</span>
+        <span class="sd">&#39;&#39;&#39;The default :class:`.Store` for this :class:`.Mapper`.</span>
 
 <span class="sd">        Used when calling the :meth:`register` method without explicitly</span>
 <span class="sd">        passing a :class:`.Store`.</span>
@@ -294,9 +154,11 @@
 </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Mapper.search_engine"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.search_engine">[docs]</a>    <span class="k">def</span> <span class="nf">search_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`SearchEngine` for this :class:`Mapper`. This</span>
-<span class="sd">must be created by users. Check :ref:`full text search &lt;tutorial-search&gt;`</span>
-<span class="sd">tutorial for information.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`SearchEngine` for this :class:`.Mapper`.</span>
+
+<span class="sd">        This must be created by users.</span>
+<span class="sd">        Check :ref:`full text search &lt;tutorial-search&gt;`</span>
+<span class="sd">        tutorial for information.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span>
 </div>
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -322,9 +184,14 @@
         <span class="k">return</span> <span class="n">Transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Mapper.set_search_engine"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.set_search_engine">[docs]</a>    <span class="k">def</span> <span class="nf">set_search_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Set the search ``engine`` for this :class:`Mapper`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`.SearchEngine` for this :class:`.Mapper`.</span>
+
+<span class="sd">        This must be created by users.</span>
+<span class="sd">        Check :ref:`full text search &lt;tutorial-search&gt;`</span>
+<span class="sd">        tutorial for information.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span> <span class="o">=</span> <span class="n">engine</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span><span class="o">.</span><span class="n">set_mapper</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">engine</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span><span class="o">.</span><span class="n">set_mapper</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Mapper.register"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">read_store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">include_related</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
@@ -447,11 +314,21 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_register_applications</span><span class="p">(</span><span class="n">applications</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span>
                                                 <span class="n">stores</span><span class="p">))</span>
 </div>
-<div class="viewcode-block" id="Mapper.create_all"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.create_all">[docs]</a>    <span class="k">def</span> <span class="nf">create_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Mapper.create_tables"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.create_tables">[docs]</a>    <span class="k">def</span> <span class="nf">create_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remove_existing</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Loop though :attr:`registered_models` and issue the</span>
-<span class="sd">        :meth:`Manager.create_all` method.&#39;&#39;&#39;</span>
+<span class="sd">        :meth:`.Manager.create_table` method.&#39;&#39;&#39;</span>
+        <span class="n">executed</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">manager</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">manager</span><span class="o">.</span><span class="n">create_all</span><span class="p">()</span>
+            <span class="n">executed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">manager</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="n">remove_existing</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Mapper.drop_tables"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.drop_tables">[docs]</a>    <span class="k">def</span> <span class="nf">drop_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Loop though :attr:`registered_models` and issue the</span>
+<span class="sd">        :meth:`.Manager.drop_table` method.&#39;&#39;&#39;</span>
+        <span class="n">executed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">manager</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">executed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">manager</span><span class="o">.</span><span class="n">drop_table</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
 
     <span class="c"># PRIVATE METHODS</span></div>
     <span class="k">def</span> <span class="nf">_register_applications</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">applications</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span> <span class="n">stores</span><span class="p">):</span>
@@ -533,42 +410,7 @@
                 <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_iterator</span><span class="p">(</span><span class="n">app</span><span class="p">,</span>
                                              <span class="n">include_related</span><span class="o">=</span><span class="n">include_related</span><span class="p">,</span>
                                              <span class="n">exclude</span><span class="o">=</span><span class="n">exclude</span><span class="p">):</span>
-                    <span class="k">yield</span> <span class="n">m</span>
-
-</div></div>
-<span class="k">class</span> <span class="nc">LazyProxy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Base class for lazy descriptors.</span>
-
-<span class="sd">    .. attribute:: field</span>
-
-<span class="sd">        The :class:`Field` which create this descriptor. Either a</span>
-<span class="sd">        :class:`ForeignKey` or a :class:`StructureField`.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">field</span> <span class="o">=</span> <span class="n">field</span>
-
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">name</span>
-    <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">name</span>
-
-    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Load the lazy data for this descriptor.&#39;&#39;&#39;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="k">def</span> <span class="nf">load_from_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;cannot access </span><span class="si">%s</span><span class="s"> from manager&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">instance_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">class_field</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">session</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span>
+                    <span class="k">yield</span> <span class="n">m</span></div></div>
 </pre></div>
 
           </div>

@@ -114,6 +114,10 @@
            <span class="s">&#39;AsyncObject&#39;</span><span class="p">]</span>
 
 
+<span class="k">class</span> <span class="nc">FutureTypeError</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;raised when invoking ``async`` on a wrong type.&#39;&#39;&#39;</span>
+
+
 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">asyncio</span><span class="p">,</span> <span class="s">&#39;Return&#39;</span><span class="p">):</span>
     <span class="n">Return</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Return</span>
 
@@ -180,18 +184,18 @@
 
 
 <div class="viewcode-block" id="chain_future"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.chain_future">[docs]</a><span class="k">def</span> <span class="nf">chain_future</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">errback</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">next</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Chain a :class:`.Future` to an existing ``future``.</span>
+    <span class="sd">&#39;&#39;&#39;Chain a :class:`asyncio.Future` to an existing ``future``.</span>
 
-<span class="sd">    This function `chain` a ``next`` future to an existing ``future``.</span>
+<span class="sd">    This function `chain` the ``next`` future to an existing ``future``.</span>
 <span class="sd">    When the input ``future`` receive a result the optional</span>
 <span class="sd">    ``callback`` is executed and its result set as the results of ``next``.</span>
 <span class="sd">    If an exception occurs the optional ``errback`` is executed.</span>
 
-<span class="sd">    :param future: the original :class:`.Future`</span>
+<span class="sd">    :param future: the original :class:`asyncio.Future`</span>
 <span class="sd">    :param callback: optional callback to execute on the result of ``future``</span>
 <span class="sd">    :param errback: optional callback to execute on the exception of ``future``</span>
-<span class="sd">    :param next: optional :class:`.Future` to chain. If not provided a new</span>
-<span class="sd">        future is created</span>
+<span class="sd">    :param next: optional :class:`asyncio.Future` to chain.</span>
+<span class="sd">        If not provided a new future is created</span>
 <span class="sd">    :param timeout: optional timeout to set on ``next``</span>
 <span class="sd">    :return: the future ``next``</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -261,8 +265,6 @@
 <span class="sd">    Equivalent to the ``asyncio.async`` function but returns a</span>
 <span class="sd">    :class:`.Future`. Raises :class:`.FutureTypeError` if ``value``</span>
 <span class="sd">    is not a generator nor a :class:`.Future`.</span>
-
-<span class="sd">    This function can be overwritten by the :func:`set_async` function.</span>
 
 <span class="sd">    :parameter coro_or_future: the value to convert to a :class:`.Future`.</span>
 <span class="sd">    :parameter loop: optional :class:`.EventLoop`.</span>
@@ -353,10 +355,121 @@
     <span class="k">return</span> <span class="n">_</span>
 
 </div>
-<span class="k">class</span> <span class="nc">FutureTypeError</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;raised when invoking ``async`` on a wrong type.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="multi_async"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.multi_async">[docs]</a><span class="k">def</span> <span class="nf">multi_async</span><span class="p">(</span><span class="n">iterable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Utility to convert an ``iterable`` over possible asynchronous</span>
+<span class="sd">    components into a :class:`~asyncio.Future` which results in an iterable</span>
+<span class="sd">    of results.</span>
 
+<span class="sd">    The ``iterable`` can be:</span>
 
+<span class="sd">    * a ``list``, ``tuple`` or a ``generator``: in this case</span>
+<span class="sd">      the returned future will result in a ``list``</span>
+<span class="sd">    * a :class:`~collections.abc.Mapping` instance: in this case</span>
+<span class="sd">      the returned future will result in a ``dict``</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">MultiFuture</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">iterable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="async_while"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.async_while">[docs]</a><span class="k">def</span> <span class="nf">async_while</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">while_clause</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;The asynchronous equivalent of ``while while_clause(*args):``</span>
+
+<span class="sd">    Use this function within a :ref:`coroutine &lt;coroutine&gt;` when you need</span>
+<span class="sd">    to wait ``while_clause`` to be satisfied.</span>
+
+<span class="sd">    :parameter timeout: a timeout in seconds after which this function stop.</span>
+<span class="sd">    :parameter while_clause: while clause callable.</span>
+<span class="sd">    :parameter args: optional arguments to pass to the ``while_clause``</span>
+<span class="sd">        callable.</span>
+<span class="sd">    :return: A :class:`.Future`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">loop</span> <span class="o">=</span> <span class="n">get_event_loop</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_</span><span class="p">():</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">di</span> <span class="o">=</span> <span class="mf">0.1</span>
+        <span class="n">interval</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">while_clause</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">result</span><span class="p">:</span>
+            <span class="n">interval</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">interval</span><span class="o">+</span><span class="n">di</span><span class="p">,</span> <span class="n">MAX_ASYNC_WHILE</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">TimeoutError</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">if</span> <span class="n">timeout</span> <span class="ow">and</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">timeout</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">while_clause</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="n">_</span><span class="p">(),</span> <span class="n">loop</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Bench"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.Bench">[docs]</a><span class="k">class</span> <span class="nc">Bench</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Execute a given number of asynchronous requests and wait for results.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&#39;&#39;&#39;The :meth:`~asyncio.BaseEventLoop.time` when the execution starts&#39;&#39;&#39;</span>
+    <span class="n">finish</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&#39;&#39;&#39;The :meth:`~asyncio.BaseEventLoop.time` when the execution finishes&#39;&#39;&#39;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="sd">&#39;&#39;&#39;Tuple of results&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="n">times</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Bench.taken"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.Bench.taken">[docs]</a>    <span class="k">def</span> <span class="nf">taken</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The total time taken for execution</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">finish</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finish</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span>
+</div>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">MultiFuture</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">times</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_done</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">finish</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+</div>
+<div class="viewcode-block" id="AsyncObject"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.AsyncObject">[docs]</a><span class="k">class</span> <span class="nc">AsyncObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Interface for :ref:`async objects &lt;async-object&gt;`</span>
+
+<span class="sd">    .. attribute:: _loop</span>
+
+<span class="sd">        The event loop associated with this object</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">_logger</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_loop</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="AsyncObject.logger"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.AsyncObject.logger">[docs]</a>    <span class="k">def</span> <span class="nf">logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The logger for this object</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="s">&#39;logger&#39;</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AsyncObject.timeit"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.AsyncObject.timeit">[docs]</a>    <span class="k">def</span> <span class="nf">timeit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Useful utility for benchmarking an asynchronous ``method``.</span>
+
+<span class="sd">        :param method: the name of the ``method`` to execute</span>
+<span class="sd">        :param times: number of times to execute the ``method``</span>
+<span class="sd">        :param args: positional arguments to pass to the ``method``</span>
+<span class="sd">        :param kwargs: key-valued arguments to pass to the ``method``</span>
+<span class="sd">        :return: a :class:`~asyncio.Future` which results in a :class:`Bench`</span>
+<span class="sd">            object if successful</span>
+
+<span class="sd">        The usage is simple::</span>
+
+<span class="sd">            &gt;&gt;&gt; b = self.timeit(&#39;asyncmethod&#39;, 100)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bench</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+</div></div>
 <span class="k">class</span> <span class="nc">Task</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Task</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A modified ``asyncio`` :class:`.Task`.</span>
 
@@ -413,7 +526,7 @@
                         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_must_cancel</span><span class="p">:</span>
                             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fut_waiter</span><span class="o">.</span><span class="n">cancel</span><span class="p">():</span>
                                 <span class="bp">self</span><span class="o">.</span><span class="n">_must_cancel</span> <span class="o">=</span> <span class="bp">False</span>
-                    <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">elif</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                         <span class="c"># transfer control to the event loop</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
@@ -423,117 +536,26 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">_current_tasks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
         <span class="bp">self</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">_wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fut</span><span class="p">,</span> <span class="n">inthread</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">inthread</span> <span class="ow">or</span> <span class="n">fut</span><span class="o">.</span><span class="n">_loop</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">:</span>
-            <span class="nb">super</span><span class="p">(</span><span class="n">Task</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_wakeup</span><span class="p">(</span><span class="n">fut</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span><span class="p">,</span> <span class="n">fut</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="multi_async"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.multi_async">[docs]</a><span class="k">def</span> <span class="nf">multi_async</span><span class="p">(</span><span class="n">iterable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;This is an utility function to convert an ``iterable`` into a</span>
-<span class="sd">    :class:`MultiFuture` element.&#39;&#39;&#39;</span>
-    <span class="k">return</span> <span class="n">MultiFuture</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">iterable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-</div>
-<div class="viewcode-block" id="async_while"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.async_while">[docs]</a><span class="k">def</span> <span class="nf">async_while</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">while_clause</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;The asynchronous equivalent of ``while while_clause(*args):``</span>
-
-<span class="sd">    Use this function within a :ref:`coroutine &lt;coroutine&gt;` when you need</span>
-<span class="sd">    to wait ``while_clause`` to be satisfied.</span>
-
-<span class="sd">    :parameter timeout: a timeout in seconds after which this function stop.</span>
-<span class="sd">    :parameter while_clause: while clause callable.</span>
-<span class="sd">    :parameter args: optional arguments to pass to the ``while_clause``</span>
-<span class="sd">        callable.</span>
-<span class="sd">    :return: A :class:`.Future`.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">loop</span> <span class="o">=</span> <span class="n">get_event_loop</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">_</span><span class="p">():</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">di</span> <span class="o">=</span> <span class="mf">0.1</span>
-        <span class="n">interval</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">while_clause</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-        <span class="k">while</span> <span class="n">result</span><span class="p">:</span>
-            <span class="n">interval</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">interval</span><span class="o">+</span><span class="n">di</span><span class="p">,</span> <span class="n">MAX_ASYNC_WHILE</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">inthread</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inthread</span> <span class="ow">or</span> <span class="n">future</span><span class="o">.</span><span class="n">_loop</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">TimeoutError</span><span class="p">:</span>
-                <span class="k">pass</span>
-            <span class="k">if</span> <span class="n">timeout</span> <span class="ow">and</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">timeout</span><span class="p">:</span>
-                <span class="k">break</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">while_clause</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="n">_</span><span class="p">(),</span> <span class="n">loop</span><span class="p">)</span>
-
-</div>
-<div class="viewcode-block" id="Bench"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.Bench">[docs]</a><span class="k">class</span> <span class="nc">Bench</span><span class="p">:</span>
-    <span class="n">start</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">finish</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="n">times</span>
-
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="Bench.taken"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.Bench.taken">[docs]</a>    <span class="k">def</span> <span class="nf">taken</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">finish</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finish</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span>
-</div>
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">MultiFuture</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">times</span><span class="p">)))</span>
-        <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_done</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">finish</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">result</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-</div>
-<div class="viewcode-block" id="AsyncObject"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.AsyncObject">[docs]</a><span class="k">class</span> <span class="nc">AsyncObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Interface for :ref:`async objects &lt;async-object&gt;`</span>
-
-<span class="sd">    .. attribute:: _loop</span>
-
-<span class="sd">        The event loop associated with this object</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">_logger</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_loop</span> <span class="o">=</span> <span class="bp">None</span>
-
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="AsyncObject.logger"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.AsyncObject.logger">[docs]</a>    <span class="k">def</span> <span class="nf">logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The logger for this object</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="s">&#39;logger&#39;</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="AsyncObject.timeit"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.AsyncObject.timeit">[docs]</a>    <span class="k">def</span> <span class="nf">timeit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Useful utility for timing and asynchronous ``method``.</span>
-
-<span class="sd">        The usage is simple::</span>
-
-<span class="sd">            &gt;&gt;&gt; self.timeit(&#39;asyncmethod&#39;, 100)</span>
-
-<span class="sd">        Returns a :class:`.Future` which results in a :class:`Bench`</span>
-<span class="sd">        object is successful</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">bench</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">exc</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">CancelledError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">exc</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wakeup</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span> <span class="o">=</span> <span class="bp">None</span>
 
 
-<span class="c">############################################################### MultiFuture</span></div></div>
+<span class="c">############################################################### MultiFuture</span>
 <span class="k">class</span> <span class="nc">MultiFuture</span><span class="p">(</span><span class="n">Future</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`.Future` for a ``collection`` of asynchronous objects.</span>
-
-<span class="sd">    The ``collection`` can be either a ``list`` or a ``dict``.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">MultiFuture</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_deferred</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_futures</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_failures</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_raise_on_error</span> <span class="o">=</span> <span class="n">raise_on_error</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">:</span>
@@ -548,7 +570,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">==</span> <span class="n">_PENDING</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_set_item</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">maybe_async</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">))</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_deferred</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_futures</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
                     <span class="n">value</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_future_done</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check</span><span class="p">()</span>
 
@@ -558,11 +580,11 @@
 
     <span class="c">###    INTERNALS</span>
     <span class="k">def</span> <span class="nf">_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deferred</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">==</span> <span class="n">_PENDING</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_futures</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">==</span> <span class="n">_PENDING</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_future_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">future</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_deferred</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_futures</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_get_set_item</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check</span><span class="p">()</span>
 
@@ -572,7 +594,7 @@
                 <span class="n">exc</span> <span class="o">=</span> <span class="n">as_exception</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raise_on_error</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_deferred</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_futures</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
                         <span class="k">return</span>
                     <span class="k">else</span><span class="p">:</span>

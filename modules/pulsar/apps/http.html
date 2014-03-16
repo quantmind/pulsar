@@ -285,7 +285,7 @@
                                   <span class="n">JSON_CONTENT_TYPES</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.plugins</span> <span class="kn">import</span> <span class="p">(</span><span class="n">handle_cookies</span><span class="p">,</span> <span class="n">handle_100</span><span class="p">,</span> <span class="n">handle_101</span><span class="p">,</span> <span class="n">handle_redirect</span><span class="p">,</span>
-                      <span class="n">Tunneling</span><span class="p">,</span> <span class="n">TooManyRedirects</span><span class="p">,</span> <span class="n">request_again</span><span class="p">)</span>
+                      <span class="n">Tunneling</span><span class="p">,</span> <span class="n">TooManyRedirects</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">Auth</span><span class="p">,</span> <span class="n">HTTPBasicAuth</span><span class="p">,</span> <span class="n">HTTPDigestAuth</span>
 
@@ -521,7 +521,8 @@
 
     <span class="k">def</span> <span class="nf">new_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                                              <span class="n">decompress</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decompress</span><span class="p">)</span>
+                                              <span class="n">decompress</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decompress</span><span class="p">,</span>
+                                              <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">set_proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheme</span><span class="p">,</span> <span class="o">*</span><span class="n">host</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">and</span> <span class="n">scheme</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -708,6 +709,7 @@
     <span class="n">_data_sent</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_status_code</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_cookies</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">request_again</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="n">ProtocolConsumer</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;on_headers&#39;</span><span class="p">,)</span>
 
     <span class="nd">@property</span>
@@ -753,8 +755,6 @@
     <span class="k">def</span> <span class="nf">is_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">:</span>
             <span class="k">return</span> <span class="ow">not</span> <span class="n">is_succesful</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">is_failure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
 
@@ -1047,7 +1047,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;DELETE&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </div>
     <span class="nd">@task</span>
-<div class="viewcode-block" id="HttpClient.request"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpClient.request"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Constructs and sends a request to a remote server.</span>
 
 <span class="sd">        It returns a :class:`.Future` which results in a</span>
@@ -1080,18 +1080,21 @@
             <span class="c"># bind request-specific events</span>
             <span class="n">consumer</span><span class="o">.</span><span class="n">bind_events</span><span class="p">(</span><span class="o">**</span><span class="n">request</span><span class="o">.</span><span class="n">inp_params</span><span class="p">)</span>
             <span class="n">consumer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">consumer</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="n">wait</span> <span class="ow">or</span> <span class="s">&#39;post_request&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">ProtocolConsumer</span><span class="p">):</span>
-                <span class="n">consumer</span> <span class="o">=</span> <span class="n">response</span>
+            <span class="n">consumer</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+            <span class="k">if</span> <span class="n">consumer</span><span class="o">.</span><span class="n">request_again</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">consumer</span><span class="o">.</span><span class="n">request_again</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">consumer</span><span class="o">.</span><span class="n">request_again</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">consumer</span><span class="o">.</span><span class="n">request_again</span><span class="p">,</span> <span class="n">ProtocolConsumer</span><span class="p">):</span>
+                    <span class="n">consumer</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">request_again</span>
             <span class="n">headers</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">headers</span>
             <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">headers</span> <span class="ow">or</span>
                     <span class="ow">not</span> <span class="n">headers</span><span class="o">.</span><span class="n">has</span><span class="p">(</span><span class="s">&#39;connection&#39;</span><span class="p">,</span> <span class="s">&#39;keep-alive&#39;</span><span class="p">)</span> <span class="ow">or</span>
                     <span class="n">consumer</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">101</span><span class="p">):</span>
                 <span class="n">conn</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">request_again</span><span class="p">):</span>
-            <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">response</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">consumer</span><span class="o">.</span><span class="n">request_again</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">request_again</span>
+            <span class="n">consumer</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">consumer</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="HttpClient.close"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close all connections.</span>
@@ -1156,6 +1159,7 @@
     <span class="k">def</span> <span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="p">):</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="o">=</span><span class="n">ssl</span><span class="p">)</span>
+        <span class="c"># Wait for the connection made event</span>
         <span class="k">yield</span> <span class="n">connection</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">)</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span></div>
 </pre></div>

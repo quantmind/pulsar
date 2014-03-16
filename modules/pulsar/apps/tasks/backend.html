@@ -82,37 +82,6 @@
 <span class="sd">which, in turns, invoke the :class:`TaskBackend.start` method</span>
 <span class="sd">to start pulling tasks form the distributed task queue.</span>
 
-<span class="sd">Implementation</span>
-<span class="sd">~~~~~~~~~~~~~~~~~</span>
-<span class="sd">When creating a new :class:`TaskBackend` there are six methods which must</span>
-<span class="sd">be implemented:</span>
-
-<span class="sd">* The :meth:`~TaskBackend.get_task` method, invoked when retrieving</span>
-<span class="sd">  a :class:`Task` from the backend server.</span>
-<span class="sd">* The :meth:`~TaskBackend.get_tasks` method, invoked when retrieving</span>
-<span class="sd">  a group of :class:`Task` from the backend server.</span>
-<span class="sd">* The :meth:`~TaskBackend.save_task` method, invoked when creating</span>
-<span class="sd">  or updating a :class:`Task`.</span>
-<span class="sd">* The :meth:`~TaskBackend.delete_tasks` method, invoked when deleting</span>
-<span class="sd">  a bunch of :class:`Task`.</span>
-<span class="sd">* The :meth:`~TaskBackend.flush` method, invoked flushing a backend (remove</span>
-<span class="sd">  all tasks and clear the task queue).</span>
-
-<span class="sd">For example::</span>
-
-<span class="sd">    from pulsar.apps import tasks</span>
-
-<span class="sd">    class TaskBackend(tasks.TaskBackend):</span>
-<span class="sd">        ...</span>
-
-<span class="sd">Once the custom task backend is implemented it must be registered::</span>
-
-<span class="sd">    tasks.task_backends[&#39;mybackend&#39;] = TaskBackend</span>
-
-<span class="sd">And the backend will be selected via::</span>
-
-<span class="sd">    --task-backend mybackend://host:port</span>
-
 <span class="sd">.. _task-state:</span>
 
 <span class="sd">Task states</span>
@@ -120,15 +89,12 @@
 
 <span class="sd">A :class:`Task` can have one of the following :attr:`~.Task.status` string:</span>
 
-<span class="sd">* ``PENDING`` A task waiting to be queued for execution.</span>
-<span class="sd">* ``QUEUED`` A task queued but not yet executed.</span>
-<span class="sd">* ``RETRY`` A task is retrying calculation.</span>
-<span class="sd">* ``STARTED`` task where execution has started.</span>
-<span class="sd">* ``REVOKED`` the task execution has been revoked. One possible reason could be</span>
-<span class="sd">  the task has timed out.</span>
-<span class="sd">* ``UNKNOWN`` task execution is unknown.</span>
-<span class="sd">* ``FAILURE`` task execution has finished with failure.</span>
-<span class="sd">* ``SUCCESS`` task execution has finished with success.</span>
+<span class="sd">* ``QUEUED = 6`` A task queued but not yet executed.</span>
+<span class="sd">* ``STARTED = 5`` task where execution has started.</span>
+<span class="sd">* ``RETRY = 4`` A task is retrying calculation.</span>
+<span class="sd">* ``REVOKED = 3`` the task execution has been revoked (or timed-out).</span>
+<span class="sd">* ``FAILURE = 2`` task execution has finished with failure.</span>
+<span class="sd">* ``SUCCESS = 1`` task execution has finished with success.</span>
 
 <span class="sd">.. _task-run-state:</span>
 
@@ -150,8 +116,35 @@
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">A :class:`TaskBackend` broadcast :class:`Task` state into three different</span>
-<span class="sd">channels via the :attr:`~TaskBackend.pubsub` handler.</span>
+<span class="sd">channels via the a :meth:`~.Store.pubsub` handler.</span>
 
+
+<span class="sd">Implementation</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~</span>
+<span class="sd">When creating a new :class:`TaskBackend` there are three methods which must</span>
+<span class="sd">be implemented:</span>
+
+<span class="sd">* The :meth:`~TaskBackend.get_task` method, invoked when retrieving</span>
+<span class="sd">  a :class:`Task` from the backend server.</span>
+<span class="sd">* The :meth:`~TaskBackend.maybe_queue_task` method, invoked when a new</span>
+<span class="sd">  class:`.Task` is created and ready to be queued.</span>
+<span class="sd">* The :meth:`~TaskBackend.finish_task` method, invoked when a</span>
+<span class="sd">  :class:`.Task` reaches a :ref:`ready state &lt;task-ready-state&gt;`.</span>
+
+<span class="sd">For example::</span>
+
+<span class="sd">    from pulsar.apps import tasks</span>
+
+<span class="sd">    class TaskBackend(tasks.TaskBackend):</span>
+<span class="sd">        ...</span>
+
+<span class="sd">Once the custom task backend is implemented it must be registered::</span>
+
+<span class="sd">    tasks.task_backends[&#39;mybackend&#39;] = TaskBackend</span>
+
+<span class="sd">And the backend will be selected via::</span>
+
+<span class="sd">    --task-backend mybackend://host:port</span>
 
 <span class="sd">.. _redis: http://redis.io/</span>
 <span class="sd">&#39;&#39;&#39;</span>
@@ -229,29 +222,35 @@
 <span class="sd">    Instances of this consumer are created by the :class:`TaskBackend` when</span>
 <span class="sd">    a task is executed.</span>
 
+<span class="sd">    .. attribute:: _loop</span>
+
+<span class="sd">        the :ref:`queue-based loop &lt;queue-based-loop&gt;` of the thread</span>
+<span class="sd">        executing the task.</span>
+
 <span class="sd">    .. attribute:: task_id</span>
 
 <span class="sd">        the :attr:`Task.id` being consumed.</span>
 
 <span class="sd">    .. attribute:: job</span>
 
-<span class="sd">        the :ref:`Job &lt;apps-taskqueue-job&gt;` which generated the :attr:`task`.</span>
+<span class="sd">        the :class:`.Job` which generated the task.</span>
 
 <span class="sd">    .. attribute:: worker</span>
 
-<span class="sd">        the :class:`.Actor` running the task worker.</span>
+<span class="sd">        the :class:`.Actor` executing the task.</span>
 
 <span class="sd">    .. attribute:: backend</span>
 
-<span class="sd">        Access to the :class:`TaskBackend`. This is useful when creating</span>
+<span class="sd">        The :class:`.TaskBackend`. This is useful when creating</span>
 <span class="sd">        tasks from within a :ref:`job callable &lt;job-callable&gt;`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">get_request_loop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">logger</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">worker</span> <span class="o">=</span> <span class="n">worker</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">job</span> <span class="o">=</span> <span class="n">job</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span> <span class="o">=</span> <span class="n">task_id</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_request_loop</span><span class="p">()</span><span class="o">.</span><span class="n">logger</span>
 
 </div>
 <div class="viewcode-block" id="Task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.Task">[docs]</a><span class="k">class</span> <span class="nc">Task</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
@@ -297,16 +296,6 @@
         <span class="k">return</span> <span class="n">LazyString</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
 
 </div>
-<span class="k">class</span> <span class="nc">TaskClient</span><span class="p">(</span><span class="n">PubSubClient</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">be</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_be</span> <span class="o">=</span> <span class="n">be</span>
-
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_be</span><span class="o">.</span><span class="n">event_name</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_be</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="TaskBackend"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend">[docs]</a><span class="k">class</span> <span class="nc">TaskBackend</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A backend class for running :class:`.Task`.</span>
 <span class="sd">    A :class:`TaskBackend` is responsible for creating tasks and put them</span>
@@ -367,6 +356,10 @@
                  <span class="n">poll_timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">store</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TaskBackend</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span>
+                                          <span class="n">many_times_events</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;task_queued&#39;</span><span class="p">,</span>
+                                                             <span class="s">&#39;task_started&#39;</span><span class="p">,</span>
+                                                             <span class="s">&#39;task_done&#39;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_paths</span> <span class="o">=</span> <span class="n">task_paths</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backlog</span> <span class="o">=</span> <span class="n">backlog</span>
@@ -379,10 +372,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">Mapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Task</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">TaskBackend</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span>
-                                          <span class="n">many_times_events</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;task_queued&#39;</span><span class="p">,</span>
-                                                             <span class="s">&#39;task_started&#39;</span><span class="p">,</span>
-                                                             <span class="s">&#39;task_done&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pubsub</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_periodic</span><span class="p">:</span>
@@ -443,7 +433,7 @@
 <span class="sd">            in the task callable.</span>
 <span class="sd">        :return: a :class:`.Future` resulting in a task id on success.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
+        <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span>
         <span class="k">if</span> <span class="n">jobname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registry</span><span class="p">:</span>
             <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">jobname</span><span class="p">]</span>
             <span class="n">task_id</span><span class="p">,</span> <span class="n">lock_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_task_ids</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
@@ -476,57 +466,65 @@
         <span class="sd">&#39;&#39;&#39;Asynchronously wait for a task with ``task_id`` to have finished</span>
 <span class="sd">        its execution.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="c"># make sure pubsub is implemented</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
-
-        <span class="k">def</span> <span class="nf">_</span><span class="p">():</span>
+        <span class="c"># This coroutine is run on the worker event loop</span>
+        <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="n">task_id</span><span class="p">):</span>
             <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">task</span><span class="p">:</span>
                 <span class="n">task_id</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
                 <span class="n">callbacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span>
                 <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>  <span class="c"># task done, simply return it</span>
-                    <span class="n">when_done</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">when_done</span><span class="p">:</span>
-                        <span class="n">when_done</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="n">done</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                        <span class="n">done</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">when_done</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">when_done</span><span class="p">:</span>
-                        <span class="c"># No deferred, create one</span>
-                        <span class="n">callbacks</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">when_done</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
-                    <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">when_done</span>
+                    <span class="n">done</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+                        <span class="c"># No future, create one</span>
+                        <span class="n">callbacks</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">done</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+                    <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">done</span>
                 <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
-        <span class="n">fut</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">_</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">timeout</span><span class="p">:</span>
-            <span class="n">future_timeout</span><span class="p">(</span><span class="n">fut</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">fut</span>
+        <span class="n">fut</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="n">task_id</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">future_timeout</span><span class="p">(</span><span class="n">fut</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span> <span class="k">if</span> <span class="n">timeout</span> <span class="k">else</span> <span class="n">fut</span>
 </div>
     <span class="k">def</span> <span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 
+<div class="viewcode-block" id="TaskBackend.get_pubsub"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.get_pubsub">[docs]</a>    <span class="k">def</span> <span class="nf">get_pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a publish/subscribe handler from the backend :attr:`store`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
+        <span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="c"># pubsub channels names from event names</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">))</span>
+        <span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="o">*</span><span class="n">channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;task_done&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_done_callback</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pubsub</span>
+
     <span class="c">########################################################################</span>
     <span class="c">##    ABSTRACT METHODS</span>
-    <span class="c">########################################################################</span>
+    <span class="c">########################################################################</span></div>
 <div class="viewcode-block" id="TaskBackend.maybe_queue_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.maybe_queue_task">[docs]</a>    <span class="k">def</span> <span class="nf">maybe_queue_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Actually queue a ``task`` if possible.</span>
+        <span class="sd">&#39;&#39;&#39;Actually queue a :class:`.Task` if possible.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
-<div class="viewcode-block" id="TaskBackend.get_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.get_task">[docs]</a>    <span class="k">def</span> <span class="nf">get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">when_done</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="TaskBackend.get_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.get_task">[docs]</a>    <span class="k">def</span> <span class="nf">get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Asynchronously retrieve a :class:`Task` from a ``task_id``.</span>
 
 <span class="sd">        :param task_id: the ``id`` of the task to retrieve.</span>
-<span class="sd">        :param when_done: if ``True`` return only when the task is in a</span>
-<span class="sd">            ready state.</span>
 <span class="sd">        :return: a :class:`Task` or ``None``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="TaskBackend.finish_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.finish_task">[docs]</a>    <span class="k">def</span> <span class="nf">finish_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">lock_id</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</div>
-<div class="viewcode-block" id="TaskBackend.pubsub"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.pubsub">[docs]</a>    <span class="k">def</span> <span class="nf">pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The publish/subscribe handler.</span>
+        <span class="sd">&#39;&#39;&#39;Invoked at the end of task execution.</span>
+
+<span class="sd">        The :class:`.Task` with ``task_id`` has been executed (either</span>
+<span class="sd">        successfully or not) or has been revoked. This method perform</span>
+<span class="sd">        backend specific operations.</span>
+
+<span class="sd">        Must be implemented by subclasses.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
@@ -539,17 +537,14 @@
     <span class="c">##    START/CLOSE METHODS FOR TASK WORKERS</span>
     <span class="c">########################################################################</span></div>
 <div class="viewcode-block" id="TaskBackend.start"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;invoked by the task queue ``worker`` when it starts.</span>
-
-<span class="sd">        The ``worker`` registers the</span>
-<span class="sd">        :meth:`may_pool_task` callback in its event loop.</span>
+        <span class="sd">&#39;&#39;&#39;Invoked by the task queue ``worker`` when it starts.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="ow">is</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">may_pool_task</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;started polling tasks&#39;</span><span class="p">)</span>
         <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span>
 </div>
-<div class="viewcode-block" id="TaskBackend.close"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+<div class="viewcode-block" id="TaskBackend.close"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close this :class:`TaskBackend`.</span>
 
 <span class="sd">        Invoked by the :class:`.Actor` when stopping.</span>
@@ -558,7 +553,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;stopped polling tasks&#39;</span><span class="p">)</span>
-            <span class="c">#self.pubsub.close()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="c">#self.store.close()</span>
 </div>
 <div class="viewcode-block" id="TaskBackend.generate_task_ids"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.generate_task_ids">[docs]</a>    <span class="k">def</span> <span class="nf">generate_task_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
@@ -568,7 +563,7 @@
 <span class="sd">        :parameter kwargs: dictionary of key-valued parameters passed to the</span>
 <span class="sd">            :ref:`job callable &lt;job-callable&gt;` method.</span>
 <span class="sd">        :return: a two-elements tuple containing the unique id and an</span>
-<span class="sd">            identifier for overlapping tasks if the :attr:`can_overlap`</span>
+<span class="sd">            identifier for overlapping tasks if the :attr:`.Job.can_overlap`</span>
 <span class="sd">            results in ``False``.</span>
 
 <span class="sd">        Called by the :ref:`TaskBackend &lt;apps-taskqueue-backend&gt;` when</span>
@@ -671,7 +666,7 @@
                     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_concurrent_tasks</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Processed </span><span class="si">%s</span><span class="s"> tasks. Restarting.&#39;</span><span class="p">,</span>
                                             <span class="bp">self</span><span class="o">.</span><span class="n">processed</span><span class="p">)</span>
-                        <span class="n">worker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                        <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
                         <span class="n">coroutine_return</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task</span><span class="p">()</span>
@@ -689,7 +684,7 @@
         <span class="c"># Asynchronous execution of a Task. This method is called</span>
         <span class="c"># on a separate thread of execution from the worker event loop thread.</span>
         <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="n">worker</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
-        <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
+        <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span>
         <span class="n">task_id</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
         <span class="n">lock_id</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;lock_id&#39;</span><span class="p">)</span>
         <span class="n">time_ended</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -709,7 +704,7 @@
                     <span class="n">task</span><span class="o">.</span><span class="n">clear_update</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">states</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span>
                                       <span class="n">time_started</span><span class="o">=</span><span class="n">time_ended</span><span class="p">,</span>
                                       <span class="n">worker</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
-                    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
                     <span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">(</span><span class="s">&#39;task_started&#39;</span><span class="p">),</span> <span class="n">task_id</span><span class="p">)</span>
                     <span class="c"># This may block for a while</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">job</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -730,10 +725,10 @@
         <span class="n">task</span><span class="o">.</span><span class="n">clear_update</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">time_ended</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
                           <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">concurrent_tasks</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">finish_task</span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span> <span class="n">lock_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finish_task</span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span> <span class="n">lock_id</span><span class="p">)</span>
         <span class="c">#</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;finished </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">task_info</span><span class="p">)</span>
         <span class="c"># publish into the task_done channel</span>
@@ -759,11 +754,12 @@
         <span class="c"># dictionary. If so fire the callback with the ``task`` instance</span>
         <span class="c"># corresponsding to the input ``task_id``.</span>
         <span class="c"># If a callback is not available, it must have been fired already</span>
-        <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">task</span><span class="p">:</span>
-            <span class="n">when_done</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">task</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">],</span> <span class="bp">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">when_done</span><span class="p">:</span>
-                <span class="n">when_done</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_task</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="c"># PubSub callback</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_name</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="SchedulerEntry"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.SchedulerEntry">[docs]</a><span class="k">class</span> <span class="nc">SchedulerEntry</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -854,16 +850,6 @@
     <span class="k">def</span> <span class="nf">store_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">client</span><span class="p">()</span>
 
-    <span class="nd">@lazymethod</span>
-    <span class="k">def</span> <span class="nf">pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
-        <span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">TaskClient</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-        <span class="c"># pubsub channels names from event names</span>
-        <span class="n">channels</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">))</span>
-        <span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="o">*</span><span class="n">channels</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;task_done&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_done_callback</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">pubsub</span>
-
     <span class="k">def</span> <span class="nf">maybe_queue_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
         <span class="n">free</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span>
@@ -880,7 +866,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">coroutine_return</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">when_done</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">task_id</span><span class="p">:</span>
             <span class="n">inq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">(</span><span class="s">&#39;inqueue&#39;</span><span class="p">)</span>

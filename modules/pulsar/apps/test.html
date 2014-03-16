@@ -118,22 +118,20 @@
 
 <span class="sd">Writing a Test Case</span>
 <span class="sd">===========================</span>
-<span class="sd">Only subclasses of  ``unittest.TestCase`` are collected by this application.</span>
+<span class="sd">Only subclasses of  :class:`~unittest.TestCase` are collected by this</span>
+<span class="sd">application.</span>
 <span class="sd">When running a test, pulsar looks for two extra method: ``_pre_setup`` and</span>
 <span class="sd">``_post_teardown``. If the former is available, it is run just before the</span>
-<span class="sd">``setUp`` method while if the latter is available, it is run</span>
-<span class="sd">just after the ``tearDown`` method. In addition, if the ``setUpClass``</span>
+<span class="sd">:meth:`~unittest.TestCase.setUp` method while if the latter is available,</span>
+<span class="sd">it is run just after the :meth:`~unittest.TestCase.tearDown` method.</span>
+<span class="sd">In addition, if the :meth:`~unittest.TestCase.setUpClass`</span>
 <span class="sd">class methods is available, it is run just before</span>
-<span class="sd">all tests functions are run and the ``tearDownClass``, if available, is run</span>
-<span class="sd">just after all tests functions are run.</span>
+<span class="sd">all tests functions are run and the :meth:`~unittest.TestCase.tearDownClass`,</span>
+<span class="sd">if available, is run just after all tests functions are run.</span>
 
 <span class="sd">An example test case::</span>
 
-<span class="sd">    # This import is equivalent in python2.6 to</span>
-<span class="sd">    #     import unittest2 as unittest</span>
-<span class="sd">    # Otherwise it is the same as</span>
-<span class="sd">    #     import unittest</span>
-<span class="sd">    from pulsar.apps.test import unittest</span>
+<span class="sd">    import unittest</span>
 
 <span class="sd">    class MyTest(unittest.TestCase):</span>
 
@@ -147,7 +145,7 @@
 <span class="sd">.. note::</span>
 
 <span class="sd">    Test functions are asynchronous, when they return a generator or a</span>
-<span class="sd">    :class:`.Future`, synchronous, when they return anything else.</span>
+<span class="sd">    :class:`~asyncio.Future`, synchronous, when they return anything else.</span>
 
 <span class="sd">.. _apps-test-loading:</span>
 
@@ -163,7 +161,7 @@
 <span class="sd">        TestSuite(modules=(&#39;tests&#39;,</span>
 <span class="sd">                          (&#39;examples&#39;,&#39;tests&#39;))).start()</span>
 
-<span class="sd">The :class:`TestSuite` loads tests via the :class:`loader.TestLoader` class.</span>
+<span class="sd">The :class:`TestSuite` loads tests via the :class:`~loader.TestLoader` class.</span>
 
 <span class="sd">In the context of explaining the rules for loading tests, we refer to</span>
 <span class="sd">an ``object`` as</span>
@@ -175,7 +173,7 @@
 
 <span class="sd">* Directories that aren&#39;t packages are not inspected. This means that if a</span>
 <span class="sd">  directory does not have a ``__init__.py`` file, it won&#39;t be inspected.</span>
-<span class="sd">* Any class that is a ``unittest.TestCase`` subclass is collected.</span>
+<span class="sd">* Any class that is a :class:`~unittest.TestCase` subclass is collected.</span>
 <span class="sd">* If an ``object`` starts with ``_`` or ``.`` it won&#39;t be collected,</span>
 <span class="sd">  nor will any ``objects`` it contains.</span>
 <span class="sd">* If an ``object`` defines a ``__test__`` attribute that does not evaluate to</span>
@@ -237,7 +235,7 @@
 
 <span class="sd">sequential</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~</span>
-<span class="sd">By default, test functions within a :class:`unittest.TestCase`</span>
+<span class="sd">By default, test functions within a :class:`~unittest.TestCase`</span>
 <span class="sd">are run in asynchronous fashion. This means that several test functions</span>
 <span class="sd">may be executed at once depending on their return values.</span>
 <span class="sd">By specifying the :ref:`--sequential &lt;setting-sequential&gt;` command line option,</span>
@@ -247,7 +245,7 @@
 <span class="sd">    python runtests.py --sequential</span>
 
 <span class="sd">Alternatively, if you need to specify a Testcase which always runs its test</span>
-<span class="sd">functions in a sequential way, you can use the :func:`sequential` decorator::</span>
+<span class="sd">functions in a sequential way, you can use the :func:`.sequential` decorator::</span>
 
 <span class="sd">    from pulsar.apps.test import unittest, sequential</span>
 
@@ -365,9 +363,10 @@
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">multi_async</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">tasks</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">PulsarDS</span><span class="p">,</span> <span class="n">create_store</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="kn">import</span> <span class="n">PulsarDS</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">lazyproperty</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span><span class="p">,</span> <span class="n">TestOption</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">default_timer</span><span class="p">,</span> <span class="n">to_string</span>
 
 <span class="kn">from</span> <span class="nn">.case</span> <span class="kn">import</span> <span class="n">mock</span>
@@ -504,23 +503,6 @@
 <span class="s">    To see the exception the log level must be at least error.&quot;&quot;&quot;</span>
 
 
-<span class="k">class</span> <span class="nc">TestCoveralls</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;coveralls&#39;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--coveralls&#39;</span><span class="p">]</span>
-    <span class="n">action</span> <span class="o">=</span> <span class="s">&#39;store_true&#39;</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Send coverage report to coveralls.io.&quot;&quot;&quot;</span>
-
-
-<span class="k">class</span> <span class="nc">RedisServer</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;redis_server&#39;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--redis-server&#39;</span><span class="p">]</span>
-    <span class="n">meta</span> <span class="o">=</span> <span class="s">&quot;CONNECTION_STRING&quot;</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="s">&#39;127.0.0.1:6379/9&#39;</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;Connection string for the redis server used in during testing&#39;</span>
-
-
 <span class="n">pyver</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
 
 
@@ -559,12 +541,9 @@
 <div class="viewcode-block" id="TestSuite.new_runner"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.new_runner">[docs]</a>    <span class="k">def</span> <span class="nf">new_runner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The :class:`.TestRunner` driving test cases.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">unittest</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s">&#39;python </span><span class="si">%s</span><span class="s"> requires unittest2 library for &#39;</span>
-                              <span class="s">&#39;pulsar test suite application&#39;</span> <span class="o">%</span> <span class="n">pyver</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mock</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s">&#39;python </span><span class="si">%s</span><span class="s"> requires mock library for pulsar &#39;</span>
-                              <span class="s">&#39;test suite application&#39;</span> <span class="o">%</span> <span class="n">pyver</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ExitTest</span><span class="p">(</span><span class="s">&#39;python </span><span class="si">%s</span><span class="s"> requires mock library for pulsar &#39;</span>
+                           <span class="s">&#39;test suite application&#39;</span> <span class="o">%</span> <span class="n">pyver</span><span class="p">)</span>
         <span class="n">result_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;result_class&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">stream</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="n">runner</span> <span class="o">=</span> <span class="n">TestRunner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">result_class</span><span class="p">)</span>
@@ -588,11 +567,14 @@
         <span class="k">return</span> <span class="n">TestLoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">modules</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arbiter</span><span class="p">):</span>
-        <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">stream</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span>
+        <span class="k">except</span> <span class="n">ExitTest</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">False</span>
         <span class="n">stream</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">stream</span>
         <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
-        <span class="n">redis_server</span> <span class="o">=</span> <span class="s">&#39;redis://</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">redis_server</span>
-        <span class="n">arbiter</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;redis_server&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">redis_server</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">list_labels</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
             <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">labels</span>
             <span class="k">if</span> <span class="n">tags</span><span class="p">:</span>
@@ -617,12 +599,16 @@
 <div class="viewcode-block" id="TestSuite.monitor_start"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When the monitor starts load all test classes into the queue&#39;&#39;&#39;</span>
         <span class="c"># Create a datastore for this test suite</span>
-        <span class="n">server</span> <span class="o">=</span> <span class="n">PulsarDS</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="s">&#39;127.0.0.1:0&#39;</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                          <span class="n">key_value_save</span><span class="o">=</span><span class="p">[],</span>
-                          <span class="n">name</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_store&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="n">server</span><span class="p">()</span>
-        <span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;pulsar://</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-                             <span class="n">pool_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">task_backend</span><span class="p">:</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="n">PulsarDS</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="s">&#39;127.0.0.1:0&#39;</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                              <span class="n">key_value_save</span><span class="o">=</span><span class="p">[],</span>
+                              <span class="n">name</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_store&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">server</span><span class="p">()</span>
+            <span class="n">address</span> <span class="o">=</span> <span class="s">&#39;pulsar://</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">server</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">task_backend</span>
+
+        <span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
         <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span>
         <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">labels</span>

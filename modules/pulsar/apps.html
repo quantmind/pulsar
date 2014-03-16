@@ -177,7 +177,6 @@
 
 <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">start_event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_event</span>
-    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_event</span>
     <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
         <span class="n">start_event</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="k">return</span>
@@ -186,7 +185,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_params&#39;</span><span class="p">,</span> <span class="n">monitor_params</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">monitor_info</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="n">monitor_stopping</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">,</span> <span class="n">monitor_stop</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">when_monitor_start</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">monitor_task</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -195,7 +193,8 @@
             <span class="k">yield</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="n">start_event</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+        <span class="n">start_event</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">start_event</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
@@ -204,13 +203,6 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-    <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 
@@ -236,7 +228,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">application</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_info</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_stop</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
 
 
@@ -426,12 +417,16 @@
 <div class="viewcode-block" id="Configurator.start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Invoked the application callable method and start</span>
 <span class="sd">        the :class:`.Arbiter` if it wasn&#39;t already started.</span>
+
+<span class="sd">        It returns a :class:`~asyncio.Future` called back once the</span>
+<span class="sd">        application/applications are running. It returns ``None`` if</span>
+<span class="sd">        called more than once.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">on_start</span> <span class="o">=</span> <span class="bp">self</span><span class="p">()</span>
         <span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">arbiter</span> <span class="ow">and</span> <span class="n">on_start</span><span class="p">:</span>
             <span class="n">arbiter</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="n">on_start</span>
 </div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Configurator.create_config"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.create_config">[docs]</a>    <span class="k">def</span> <span class="nf">create_config</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -551,10 +546,6 @@
 <div class="viewcode-block" id="Application.worker_stopping"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_stopping">[docs]</a>    <span class="k">def</span> <span class="nf">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Added to the ``stopping`` :ref:`worker hook &lt;actor-hooks&gt;`.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-</div>
-<div class="viewcode-block" id="Application.worker_stop"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_stop">[docs]</a>    <span class="k">def</span> <span class="nf">worker_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Added to the ``stop`` :ref:`worker hook &lt;actor-hooks&gt;`.&#39;&#39;&#39;</span>
-        <span class="k">pass</span>
 
     <span class="c"># MONITOR CALLBACKS</span></div>
 <div class="viewcode-block" id="Application.actorparams"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.actorparams">[docs]</a>    <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -577,13 +568,9 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
-<div class="viewcode-block" id="Application.monitor_stop"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_stop">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Callback by the monitor on stop.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">pass</span>
-</div>
 <div class="viewcode-block" id="Application.monitor_task"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_task">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Callback by the monitor at each event loop.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Executed by the :class:`.Monitor` serving this application</span>
+<span class="sd">        at each event loop.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
     <span class="k">def</span> <span class="nf">arbiter_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -640,10 +627,9 @@
 <span class="sd">        The list is lazily loaded from the :meth:`build` method.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c"># Add non-default settings values to the list of cfg params</span>
+            <span class="c"># Add modified settings values to the list of cfg params</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(((</span><span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span>
-                                    <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span>
-                                    <span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">s</span><span class="o">.</span><span class="n">default</span><span class="p">))</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">modified</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">apps</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">())</span>

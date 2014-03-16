@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Testing &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>Test Suite &mdash; pulsar 0.8.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -73,7 +73,7 @@
           <div class="body">
             
   <div class="section" id="module-pulsar.apps.test">
-<span id="testing"></span><span id="apps-test"></span><h1>Testing<a class="headerlink" href="#module-pulsar.apps.test" title="Permalink to this headline">¶</a></h1>
+<span id="test-suite"></span><span id="apps-test"></span><h1>Test Suite<a class="headerlink" href="#module-pulsar.apps.test" title="Permalink to this headline">¶</a></h1>
 <p>The <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> is a testing framework for both synchronous and
 asynchronous applications and for running tests in parallel
 on multiple threads or processes.
@@ -347,8 +347,8 @@ It uses the <a class="reference external" href="http://python.readthedocs.org/en
 </div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="test-suite">
-<h3>Test Suite<a class="headerlink" href="#test-suite" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h3>Test Suite<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.TestSuite">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestSuite</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite" title="Permalink to this definition">¶</a></dt>
@@ -749,6 +749,81 @@ as class attributes.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="populate">
+<h3>Populate<a class="headerlink" href="#populate" title="Permalink to this headline">¶</a></h3>
+<p>A useful function for populating random data:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">populate</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">populate</span><span class="p">(</span><span class="s">&#39;string&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>gives you a list of 100 random strings</p>
+<dl class="function">
+<dt id="pulsar.apps.test.populate.populate">
+<tt class="descclassname">pulsar.apps.test.populate.</tt><tt class="descname">populate</tt><big>(</big><em>datatype='string'</em>, <em>size=10</em>, <em>start=None</em>, <em>end=None</em>, <em>converter=None</em>, <em>choice_from=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/populate.html#populate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.populate.populate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility function for populating lists with random data.</p>
+<p>Useful when populating database with data for fuzzy testing.</p>
+<p>Supported data-types</p>
+<ul>
+<li><dl class="first docutils">
+<dt><em>string</em></dt>
+<dd><p class="first">For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s">&#39;string&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="last">create a 100 elements list with random strings
+with random length between 3 and 10</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>date</em></dt>
+<dd><p class="first">For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="n">populate</span><span class="p">(</span><span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">1997</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())</span>
+</pre></div>
+</div>
+<p class="last">create a 200 elements list with random datetime.date objects
+between <em>start</em> and <em>end</em></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>integer</em></dt>
+<dd><p class="first">For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s">&#39;integer&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="last">create a 200 elements list with random integers between <tt class="docutils literal"><span class="pre">start</span></tt>
+and <tt class="docutils literal"><span class="pre">end</span></tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>float</em></dt>
+<dd><p class="first">For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s">&#39;float&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="last">create a 200 elements list with random floats between <tt class="docutils literal"><span class="pre">start</span></tt> and
+<tt class="docutils literal"><span class="pre">end</span></tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>choice</em> (elements of an iterable)</dt>
+<dd><p class="first">For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s">&#39;choice&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">choice_from</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;pippo&#39;</span><span class="p">,</span><span class="s">&#39;pluto&#39;</span><span class="p">,</span><span class="s">&#39;blob&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p class="last">create a 200 elements list with random elements from <tt class="docutils literal"><span class="pre">choice_from</span></tt></p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="module-pulsar.apps.test.utils">
 <span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-pulsar.apps.test.utils" title="Permalink to this headline">¶</a></h2>
@@ -763,8 +838,8 @@ context domain.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="id1">
-<h3>sequential<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3>sequential<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.test.utils.sequential">
 <tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">sequential</tt><big>(</big><em>cls</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#sequential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.sequential" title="Permalink to this definition">¶</a></dt>
@@ -851,7 +926,7 @@ For example:</p>
 <h3>check server<a class="headerlink" href="#check-server" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.test.utils.check_server">
-<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">check_server</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pulsar.apps.test.utils.check_server" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">check_server</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#check_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.check_server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if server <tt class="docutils literal"><span class="pre">name</span></tt> is available at the address specified
 <tt class="docutils literal"><span class="pre">&lt;name&gt;_server</span></tt> config value.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -893,7 +968,7 @@ For example:</p>
 <br>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Testing</a><ul>
+<li><a class="reference internal" href="#">Test Suite</a><ul>
 <li><a class="reference internal" href="#introduction">Introduction</a></li>
 <li><a class="reference internal" href="#writing-a-test-case">Writing a Test Case</a></li>
 <li><a class="reference internal" href="#loading-tests">Loading Tests</a></li>
@@ -909,17 +984,18 @@ For example:</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#api">API</a><ul>
-<li><a class="reference internal" href="#test-suite">Test Suite</a></li>
+<li><a class="reference internal" href="#id1">Test Suite</a></li>
 <li><a class="reference internal" href="#module-pulsar.apps.test.loader">Test Loader</a></li>
 <li><a class="reference internal" href="#plugin">Plugin</a></li>
 <li><a class="reference internal" href="#test-runner">Test Runner</a></li>
 <li><a class="reference internal" href="#test-result">Test Result</a></li>
 <li><a class="reference internal" href="#test-plugin">Test Plugin</a></li>
+<li><a class="reference internal" href="#populate">Populate</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.apps.test.utils">Utilities</a><ul>
 <li><a class="reference internal" href="#run-on-arbiter">run on arbiter</a></li>
-<li><a class="reference internal" href="#id1">sequential</a></li>
+<li><a class="reference internal" href="#id2">sequential</a></li>
 <li><a class="reference internal" href="#actortestmixin">ActorTestMixin</a></li>
 <li><a class="reference internal" href="#asyncassert">AsyncAssert</a></li>
 <li><a class="reference internal" href="#run-test-server">run test server</a></li>

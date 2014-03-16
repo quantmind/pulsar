@@ -90,8 +90,8 @@
 <span class="kn">from</span> <span class="nn">wsgiref.handlers</span> <span class="kn">import</span> <span class="n">format_date_time</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">in_loop</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">raise_error_trace</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">in_loop</span><span class="p">,</span> <span class="n">chain_future</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">reraise</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">has_empty_content</span><span class="p">,</span>
                                   <span class="n">host_and_port_default</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">,</span>
                                   <span class="n">urlparse</span><span class="p">,</span> <span class="n">iri_to_uri</span><span class="p">,</span> <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
@@ -181,7 +181,7 @@
     <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxbuf</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return bytes in the buffer.</span>
 
-<span class="sd">        If the stream is not yet ready, return a :class:`.Future`</span>
+<span class="sd">        If the stream is not yet ready, return a :class:`asyncio.Future`</span>
 <span class="sd">        which results in the bytes read.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span><span class="p">:</span>
@@ -189,9 +189,10 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getvalue</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">maxbuf</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">then</span><span class="p">()</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="o">=</span> <span class="n">chain_future</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span><span class="p">,</span>
                     <span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getvalue</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">maxbuf</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span>
 
@@ -436,7 +437,7 @@
                     <span class="c"># if exc_info is provided, and the HTTP headers have</span>
                     <span class="c"># already been sent, start_response must raise an error,</span>
                     <span class="c"># and should re-raise using the exc_info tuple</span>
-                    <span class="n">raise_error_trace</span><span class="p">(</span><span class="n">exc_info</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">exc_info</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="n">reraise</span><span class="p">(</span><span class="o">*</span><span class="n">exc_info</span><span class="p">)</span>
             <span class="k">finally</span><span class="p">:</span>
                 <span class="c"># Avoid circular reference</span>
                 <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
@@ -500,7 +501,7 @@
                         <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">response</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc_info</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc_info</span><span class="p">)</span>
                 <span class="c">#</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">response</span>
@@ -532,7 +533,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
             <span class="k">finally</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">response</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">):</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">response</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>

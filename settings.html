@@ -264,6 +264,20 @@ application.</p>
 <p>Use the python redis parser rather the C implementation.</p>
 <p>Mainly used for benchmarking purposes.</p>
 </div>
+<div class="section" id="redis-server">
+<span id="setting-redis-server"></span><h3>redis_server<a class="headerlink" href="#redis-server" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">redis_server</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--redis-server</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'127.0.0.1:6379/9'</span></tt></p>
+<p>Default connection string for the redis server</p>
+</div>
+<div class="section" id="couchdb-server">
+<span id="setting-couchdb-server"></span><h3>couchdb_server<a class="headerlink" href="#couchdb-server" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">couchdb_server</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--couchdb-server</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'http+couchdb://127.0.0.1:5984/testing'</span></tt></p>
+<p>Default connection string for the couchdb server</p>
+</div>
 </div>
 <div class="section" id="worker-processes">
 <span id="setting-section-worker-processes"></span><h2>Worker Processes<a class="headerlink" href="#worker-processes" title="Permalink to this headline">¶</a></h2>
@@ -476,18 +490,58 @@ after 60 sec if at least 10000 keys changed</p>
 <p>The filename where to dump the DB.</p>
 </div>
 </div>
+<div class="section" id="task-consumer">
+<span id="setting-section-task-consumer"></span><h2>Task Consumer<a class="headerlink" href="#task-consumer" title="Permalink to this headline">¶</a></h2>
+<p>This section covers configuration parameters used by CPU bound type
+applications such as the <a class="reference internal" href="apps/tasks.html#apps-taskqueue"><em>distributed task queue</em></a> and
+the <a class="reference internal" href="apps/test.html#apps-test"><em>test suite</em></a>.</p>
+<div class="section" id="concurrent-tasks">
+<span id="setting-concurrent-tasks"></span><h3>concurrent_tasks<a class="headerlink" href="#concurrent-tasks" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">concurrent_tasks</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--concurrent-tasks</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">5</span></tt></p>
+<p>The maximum number of concurrent tasks for a worker.</p>
+<p>When a task worker reach this number it stops polling for more tasks
+until one or more task finish. It should only affect task queues under
+significant load.
+Must be a positive integer. Generally set in the range of 5-10.</p>
+</div>
+<div class="section" id="task-backend">
+<span id="setting-task-backend"></span><h3>task_backend<a class="headerlink" href="#task-backend" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">task_backend</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--task-backend</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt></p>
+<p>Connection string for the backend storing tasks.</p>
+<p>If the value is not available (default) it uses as fallback the
+<a class="reference internal" href="#setting-data-store"><em>data_store</em></a> value. If still not
+set, it uses the <tt class="docutils literal"><span class="pre">pulsar://127.0.0.1:6410/1</span></tt> value.</p>
+</div>
+<div class="section" id="task-paths">
+<span id="setting-task-paths"></span><h3>task_paths<a class="headerlink" href="#task-paths" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">task_paths</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">[]</span></tt></p>
+<p>List of python dotted paths where tasks are located.</p>
+<p>This parameter can only be specified during initialization or in a
+<a class="reference internal" href="#setting-config"><em>config file</em></a>.</p>
+</div>
+<div class="section" id="schedule-periodic">
+<span id="setting-schedule-periodic"></span><h3>schedule_periodic<a class="headerlink" href="#schedule-periodic" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">schedule_periodic</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--schedule-periodic</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>Enable scheduling of periodic tasks.</p>
+<p>If enabled, <a class="reference internal" href="apps/tasks.html#pulsar.apps.tasks.models.PeriodicJob" title="pulsar.apps.tasks.models.PeriodicJob"><tt class="xref py py-class docutils literal"><span class="pre">PeriodicJob</span></tt></a> will produce
+tasks according to their schedule.</p>
+</div>
+</div>
 <div class="section" id="test">
 <span id="setting-section-test"></span><h2>Test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h2>
 <p>This section covers configuration parameters used by the
 <a class="reference internal" href="apps/test.html#apps-test"><em>Asynchronous/Parallel test suite</em></a>.</p>
-<div class="section" id="couchdb-server">
-<span id="setting-couchdb-server"></span><h3>couchdb_server<a class="headerlink" href="#couchdb-server" title="Permalink to this headline">¶</a></h3>
-<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
-<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">couchdb_server</span></tt></p>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--couchdb-server</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'http+couchdb://127.0.0.1:5984/testing'</span></tt></p>
-<p>Connection string for the couchdb server used during testing</p>
-</div>
 <div class="section" id="verbosity">
 <span id="setting-verbosity"></span><h3>verbosity<a class="headerlink" href="#verbosity" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
@@ -573,62 +627,6 @@ flag disable it.</p>
 <p>To see the exception the log level must be at least error.</p>
 </div></blockquote>
 </div>
-<div class="section" id="redis-server">
-<span id="setting-redis-server"></span><h3>redis_server<a class="headerlink" href="#redis-server" title="Permalink to this headline">¶</a></h3>
-<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
-<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">redis_server</span></tt></p>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--redis-server</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'127.0.0.1:6379/9'</span></tt></p>
-<p>Connection string for the redis server used during testing</p>
-</div>
-</div>
-<div class="section" id="task-consumer">
-<span id="setting-section-task-consumer"></span><h2>Task Consumer<a class="headerlink" href="#task-consumer" title="Permalink to this headline">¶</a></h2>
-<p>This section covers configuration parameters used by CPU bound type
-applications such as the <a class="reference internal" href="apps/tasks.html#apps-taskqueue"><em>distributed task queue</em></a> and
-the <a class="reference internal" href="apps/test.html#apps-test"><em>test suite</em></a>.</p>
-<div class="section" id="concurrent-tasks">
-<span id="setting-concurrent-tasks"></span><h3>concurrent_tasks<a class="headerlink" href="#concurrent-tasks" title="Permalink to this headline">¶</a></h3>
-<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
-<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">concurrent_tasks</span></tt></p>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--concurrent-tasks</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">5</span></tt></p>
-<p>The maximum number of concurrent tasks for a worker.</p>
-<p>When a task worker reach this number it stops polling for more tasks
-until one or more task finish. It should only affect task queues under
-significant load.
-Must be a positive integer. Generally set in the range of 5-10.</p>
-</div>
-<div class="section" id="task-backend">
-<span id="setting-task-backend"></span><h3>task_backend<a class="headerlink" href="#task-backend" title="Permalink to this headline">¶</a></h3>
-<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
-<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">task_backend</span></tt></p>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--task-backend</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt></p>
-<p>Connection string for the backend storing <a class="reference internal" href="apps/tasks.html#pulsar.apps.tasks.backend.Task" title="pulsar.apps.tasks.backend.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>.</p>
-<p>If the value is not available (default) it uses as fallback the
-<a class="reference internal" href="#setting-data-store"><em>data_store</em></a> value. If still not
-set, it uses the <tt class="docutils literal"><span class="pre">pulsar://127.0.0.1:6410/1</span></tt> value.</p>
-</div>
-<div class="section" id="task-paths">
-<span id="setting-task-paths"></span><h3>task_paths<a class="headerlink" href="#task-paths" title="Permalink to this headline">¶</a></h3>
-<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
-<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">task_paths</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">[]</span></tt></p>
-<p>List of python dotted paths where tasks are located.</p>
-<p>This parameter can only be specified during initialization or in a
-<a class="reference internal" href="#setting-config"><em>config file</em></a>.</p>
-</div>
-<div class="section" id="schedule-periodic">
-<span id="setting-schedule-periodic"></span><h3>schedule_periodic<a class="headerlink" href="#schedule-periodic" title="Permalink to this headline">¶</a></h3>
-<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
-<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">schedule_periodic</span></tt></p>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--schedule-periodic</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
-<p>Enable scheduling of periodic tasks.</p>
-<p>If enabled, <a class="reference internal" href="apps/tasks.html#pulsar.apps.tasks.models.PeriodicJob" title="pulsar.apps.tasks.models.PeriodicJob"><tt class="xref py py-class docutils literal"><span class="pre">PeriodicJob</span></tt></a> will produce
-tasks according to their schedule.</p>
-</div>
 </div>
 <div class="section" id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
@@ -690,6 +688,8 @@ tasks according to their schedule.</p>
 <li><a class="reference internal" href="#exc-id">exc_id</a></li>
 <li><a class="reference internal" href="#selector">selector</a></li>
 <li><a class="reference internal" href="#redis-py-parser">redis_py_parser</a></li>
+<li><a class="reference internal" href="#redis-server">redis_server</a></li>
+<li><a class="reference internal" href="#couchdb-server">couchdb_server</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#worker-processes">Worker Processes</a><ul>
@@ -725,8 +725,14 @@ tasks according to their schedule.</p>
 <li><a class="reference internal" href="#key-value-filename">key_value_filename</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#task-consumer">Task Consumer</a><ul>
+<li><a class="reference internal" href="#concurrent-tasks">concurrent_tasks</a></li>
+<li><a class="reference internal" href="#task-backend">task_backend</a></li>
+<li><a class="reference internal" href="#task-paths">task_paths</a></li>
+<li><a class="reference internal" href="#schedule-periodic">schedule_periodic</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#test">Test</a><ul>
-<li><a class="reference internal" href="#couchdb-server">couchdb_server</a></li>
 <li><a class="reference internal" href="#verbosity">verbosity</a></li>
 <li><a class="reference internal" href="#test-timeout">test_timeout</a></li>
 <li><a class="reference internal" href="#labels">labels</a></li>
@@ -736,14 +742,6 @@ tasks according to their schedule.</p>
 <li><a class="reference internal" href="#sequential">sequential</a></li>
 <li><a class="reference internal" href="#show-leaks">show_leaks</a></li>
 <li><a class="reference internal" href="#log-failures">log_failures</a></li>
-<li><a class="reference internal" href="#redis-server">redis_server</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#task-consumer">Task Consumer</a><ul>
-<li><a class="reference internal" href="#concurrent-tasks">concurrent_tasks</a></li>
-<li><a class="reference internal" href="#task-backend">task_backend</a></li>
-<li><a class="reference internal" href="#task-paths">task_paths</a></li>
-<li><a class="reference internal" href="#schedule-periodic">schedule_periodic</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#utilities">Utilities</a></li>

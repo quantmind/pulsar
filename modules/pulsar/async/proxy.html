@@ -134,7 +134,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span>
 
 
-<span class="k">def</span> <span class="nf">actor_proxy_deferred</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">actor_proxy_future</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="bp">self</span> <span class="o">=</span> <span class="n">ActorProxyFuture</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">future</span> <span class="ow">is</span> <span class="bp">None</span>
@@ -149,12 +149,12 @@
 <div class="viewcode-block" id="ActorProxyFuture"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyFuture">[docs]</a><span class="k">class</span> <span class="nc">ActorProxyFuture</span><span class="p">(</span><span class="n">Future</span><span class="p">,</span> <span class="n">ActorIdentity</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`.Future` for an :class:`.ActorProxy`.</span>
 
-<span class="sd">    The callback will be an :class:`ActorProxy` which will be received once</span>
+<span class="sd">    The callback will be an :class:`.ActorProxy` which will be received once</span>
 <span class="sd">    the remote :class:`.Actor` is fully functional.</span>
 
 <span class="sd">    .. attribute:: aid</span>
 
-<span class="sd">        The the remote :attr:`Actor` id</span>
+<span class="sd">        The the remote :attr:`.Actor` id</span>
 
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -166,7 +166,7 @@
 
 </div>
 <div class="viewcode-block" id="ActorProxy"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxy">[docs]</a><span class="k">class</span> <span class="nc">ActorProxy</span><span class="p">(</span><span class="n">ActorIdentity</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A proxy for a remote :class:`Actor`.</span>
+    <span class="sd">&#39;&#39;&#39;A proxy for a remote :class:`.Actor`.</span>
 
 <span class="sd">    This is a lightweight class which delegates function calls to the</span>
 <span class="sd">    underlying remote object.</span>
@@ -185,11 +185,11 @@
 
 <span class="sd">    .. attribute:: aid</span>
 
-<span class="sd">        Unique ID for the remote :class:`Actor`</span>
+<span class="sd">        Unique ID for the remote :class:`.Actor`</span>
 
 <span class="sd">    .. attribute:: address</span>
 
-<span class="sd">        the socket address of the underlying :attr:`Actor.mailbox`.</span>
+<span class="sd">        the socket address of the underlying :attr:`.Actor.mailbox`.</span>
 
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impl</span><span class="p">):</span>
@@ -215,25 +215,25 @@
 
 </div>
 <div class="viewcode-block" id="ActorProxyMonitor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor">[docs]</a><span class="k">class</span> <span class="nc">ActorProxyMonitor</span><span class="p">(</span><span class="n">ActorProxy</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A specialised :class:`ActorProxy` class.</span>
+    <span class="sd">&#39;&#39;&#39;A specialised :class:`.ActorProxy` class.</span>
 
 <span class="sd">    It contains additional information about the remote underlying</span>
-<span class="sd">    :class:`pulsar.Actor`. Instances of this class serialise into</span>
-<span class="sd">    :class:`ActorProxy`.</span>
+<span class="sd">    :class:`.Actor`. Instances of this class serialise into</span>
+<span class="sd">    :class:`.ActorProxy`.</span>
 
-<span class="sd">    The :class:`ActorProxyMonitor` is special since it lives in the</span>
-<span class="sd">    :class:`Arbiter` domain and it is used by the :class:`Arbiter`</span>
-<span class="sd">    (or a :class:`Monitor`) to monitor the state of the spawned actor.</span>
+<span class="sd">    The :class:`.ActorProxyMonitor` is special since it lives in the</span>
+<span class="sd">    :class:`.Arbiter` domain and it is used by the :class:`.Arbiter`</span>
+<span class="sd">    (or a :class:`.Monitor`) to monitor the state of the spawned actor.</span>
 
 <span class="sd">    .. attribute:: impl</span>
 
-<span class="sd">        The :class:`Concurrency` instance for the remote :class:`Actor`. This</span>
+<span class="sd">        The :class:`.Concurrency` instance for the remote :class:`.Actor`. This</span>
 <span class="sd">        dictionary is constantly updated by the remote actor by sending the</span>
 <span class="sd">        :ref:`info message &lt;actor_info_command&gt;`.</span>
 
 <span class="sd">    .. attribute:: info</span>
 
-<span class="sd">        Dictionary of information regarding the remote :class:`Actor`</span>
+<span class="sd">        Dictionary of information regarding the remote :class:`.Actor`</span>
 
 <span class="sd">    .. attribute:: mailbox</span>
 
@@ -241,7 +241,7 @@
 <span class="sd">        :ref:`actor handshake &lt;handshake&gt;` between the actor and the monitor</span>
 <span class="sd">        has completed. The :attr:`mailbox` is a server-side</span>
 <span class="sd">        :class:`.MailboxProtocol` instance and it is used</span>
-<span class="sd">        by the :func:`send` function to send messages to the remote actor.</span>
+<span class="sd">        by the :func:`.send` function to send messages to the remote actor.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">monitor</span> <span class="o">=</span> <span class="bp">None</span>
 
@@ -256,7 +256,7 @@
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="ActorProxyMonitor.notified"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor.notified">[docs]</a>    <span class="k">def</span> <span class="nf">notified</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Last time this :class:`ActorProxyMonitor` was notified by the</span>
+        <span class="sd">&#39;&#39;&#39;Last time this :class:`.ActorProxyMonitor` was notified by the</span>
 <span class="sd">        remote actor.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;last_notified&#39;</span><span class="p">)</span>
 </div>
@@ -266,7 +266,7 @@
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="ActorProxyMonitor.proxy"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor.proxy">[docs]</a>    <span class="k">def</span> <span class="nf">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`ActorProxy` for this monitor.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`.ActorProxy` for this monitor.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">ActorProxy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
