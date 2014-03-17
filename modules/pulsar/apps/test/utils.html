@@ -137,7 +137,8 @@
            <span class="s">&#39;show_leaks&#39;</span><span class="p">,</span>
            <span class="s">&#39;hide_leaks&#39;</span><span class="p">,</span>
            <span class="s">&#39;run_test_server&#39;</span><span class="p">,</span>
-           <span class="s">&#39;check_server&#39;</span><span class="p">]</span>
+           <span class="s">&#39;check_server&#39;</span><span class="p">,</span>
+           <span class="s">&#39;dont_run_with_thread&#39;</span><span class="p">]</span>
 
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.test&#39;</span><span class="p">)</span>
@@ -439,6 +440,19 @@
         <span class="k">return</span> <span class="bp">False</span>
 
 </div>
+<span class="k">def</span> <span class="nf">dont_run_with_thread</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Decorator for disabling process based test cases when the test suite</span>
+<span class="sd">    runs in threading, rather than processing, mode.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">unittest</span><span class="o">.</span><span class="n">skipUnless</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">,</span>
+                                <span class="s">&#39;Run only when concurrency is process&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">d</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+
 <span class="k">def</span> <span class="nf">is_expected_failure</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">ExpectedFailure</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">ExpectedFailure</span><span class="p">)</span>

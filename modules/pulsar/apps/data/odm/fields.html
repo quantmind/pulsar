@@ -82,10 +82,10 @@
 <span class="n">NONE_EMPTY</span> <span class="o">=</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">FieldError</span><span class="p">(</span><span class="n">OdmError</span><span class="p">):</span>
+<div class="viewcode-block" id="FieldError"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.FieldError">[docs]</a><span class="k">class</span> <span class="nc">FieldError</span><span class="p">(</span><span class="n">OdmError</span><span class="p">):</span>
     <span class="k">pass</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">FieldValueError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
     <span class="k">pass</span>
 
@@ -101,7 +101,7 @@
 
 <span class="sd">    .. attribute:: index</span>
 
-<span class="sd">        Some data stores requires to create indixes when performing specific</span>
+<span class="sd">        Some data stores requires to create indexes when performing specific</span>
 <span class="sd">        queries.</span>
 
 <span class="sd">        Default ``False``.</span>
@@ -116,12 +116,12 @@
 <span class="sd">    .. attribute:: primary_key</span>
 
 <span class="sd">        If ``True``, this field is the primary key for the model.</span>
+
 <span class="sd">        A primary key field has the following properties:</span>
 
-<span class="sd">        * :attr:`Field.unique` is also ``True``.</span>
-<span class="sd">        * There can be only one in a model.</span>
-<span class="sd">        * It&#39;s attribute name in the model must be **id**.</span>
-<span class="sd">        * If not specified a :class:`AutoIdField` will be added.</span>
+<span class="sd">        * :attr:`~Field.unique` is also ``True``</span>
+<span class="sd">        * There can be only one in a model</span>
+<span class="sd">        * If not specified a :class:`.AutoIdField` will be added</span>
 
 <span class="sd">        Default ``False``.</span>
 
@@ -133,8 +133,7 @@
 
 <span class="sd">    .. attribute:: default</span>
 
-<span class="sd">        Default value for this field. It can be a callable attribute with</span>
-<span class="sd">        arity 0.</span>
+<span class="sd">        Default value for this field. It can be a callable attribute.</span>
 
 <span class="sd">        Default ``None``.</span>
 
@@ -178,18 +177,20 @@
 
 <span class="sd">        Default ``False``.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">to_python</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">to_store</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">index</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_default</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">creation_counter</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                  <span class="n">index</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">as_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">extras</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">foreign_keys</span> <span class="o">=</span> <span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span> <span class="o">=</span> <span class="n">primary_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span> <span class="k">if</span> <span class="n">primary_key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span>
+                            <span class="n">primary_key</span><span class="p">)</span>
         <span class="n">index</span> <span class="o">=</span> <span class="n">index</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span>
-        <span class="k">if</span> <span class="n">primary_key</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">unique</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="bp">True</span>
@@ -232,7 +233,7 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">scalarfields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">indexes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Field.get_attname"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.Field.get_attname">[docs]</a>    <span class="k">def</span> <span class="nf">get_attname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Generate the :attr:`attname` at runtime&#39;&#39;&#39;</span>
@@ -241,6 +242,14 @@
     <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">value</span>
 
+<div class="viewcode-block" id="Field.get_default"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.Field.get_default">[docs]</a>    <span class="k">def</span> <span class="nf">get_default</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Default value for this :class:`.Field`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span> <span class="s">&#39;__call__&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default</span>
+</div>
     <span class="k">def</span> <span class="nf">_handle_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">extras</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Callback to hadle extra arguments during initialization.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">error_extras</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
@@ -264,7 +273,7 @@
 
 </div>
 <span class="k">class</span> <span class="nc">AutoIdField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
-    <span class="k">pass</span>
+    <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">True</span>
 
 
 <div class="viewcode-block" id="IntegerField"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.IntegerField">[docs]</a><span class="k">class</span> <span class="nc">IntegerField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
@@ -354,15 +363,20 @@
 
     <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">store</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">decode_bytes</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">to_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">store</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">encode_bytes</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">value</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">None</span>
 
@@ -559,13 +573,13 @@
 <span class="sd">    Check the :ref:`composite id tutorial &lt;tutorial-compositeid&gt;` for more</span>
 <span class="sd">    information and tips on how to use it.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="nb">type</span> <span class="o">=</span> <span class="s">&#39;composite&#39;</span>
+    <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">CompositeIdField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">FieldError</span><span class="p">(</span><span class="s">&#39;At least tow fields are required by composite &#39;</span>
+            <span class="k">raise</span> <span class="n">FieldError</span><span class="p">(</span><span class="s">&#39;At least two fields are required by composite &#39;</span>
                              <span class="s">&#39;CompositeIdField&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="o">*</span><span class="n">bits</span><span class="p">):</span>
@@ -578,8 +592,9 @@
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">FieldError</span><span class="p">(</span><span class="s">&#39;Composite id field &quot;</span><span class="si">%s</span><span class="s">&quot; in in &quot;</span><span class="si">%s</span><span class="s">&quot; model.&#39;</span> <span class="o">%</span>
-                                 <span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">FieldError</span><span class="p">(</span>
+                    <span class="s">&#39;Composite id field &quot;</span><span class="si">%s</span><span class="s">&quot; not in in &quot;</span><span class="si">%s</span><span class="s">&quot; model.&#39;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="p">))</span>
             <span class="n">field</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
             <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>

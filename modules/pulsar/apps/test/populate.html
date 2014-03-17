@@ -87,13 +87,15 @@
 <div class="viewcode-block" id="populate"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.populate.populate">[docs]</a><span class="k">def</span> <span class="nf">populate</span><span class="p">(</span><span class="n">datatype</span><span class="o">=</span><span class="s">&#39;string&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
              <span class="n">converter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">choice_from</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Utility function for populating lists with random data.</span>
-<span class="sd">    Useful for populating database with data for fuzzy testing.</span>
+
+<span class="sd">    Useful when populating database with data for fuzzy testing.</span>
+
 <span class="sd">    Supported data-types</span>
 
 <span class="sd">    * *string*</span>
 <span class="sd">        For example::</span>
 
-<span class="sd">            populate(&#39;string&#39;,100, min_len=3, max_len=10)</span>
+<span class="sd">            populate(&#39;string&#39;, 100, min_len=3, max_len=10)</span>
 
 <span class="sd">        create a 100 elements list with random strings</span>
 <span class="sd">        with random length between 3 and 10</span>
@@ -102,7 +104,7 @@
 <span class="sd">        For example::</span>
 
 <span class="sd">            from datetime import date</span>
-<span class="sd">            populate(&#39;date&#39;,200, start = date(1997,1,1), end = date.today())</span>
+<span class="sd">            populate(&#39;date&#39;, 200, start=date(1997,1,1), end=date.today())</span>
 
 <span class="sd">        create a 200 elements list with random datetime.date objects</span>
 <span class="sd">        between *start* and *end*</span>
@@ -110,23 +112,25 @@
 <span class="sd">    * *integer*</span>
 <span class="sd">        For example::</span>
 
-<span class="sd">            populate(&#39;integer&#39;,200, start = 0, end = 1000)</span>
+<span class="sd">            populate(&#39;integer&#39;, 200, start=0, end=1000)</span>
 
-<span class="sd">        create a 200 elements list with random int between *start* and *end*</span>
+<span class="sd">        create a 200 elements list with random integers between ``start``</span>
+<span class="sd">        and ``end``</span>
 
 <span class="sd">    * *float*</span>
 <span class="sd">        For example::</span>
 
-<span class="sd">            populate(&#39;float&#39;, 200, start = 0, end = 10)</span>
+<span class="sd">            populate(&#39;float&#39;, 200, start=0, end=10)</span>
 
-<span class="sd">        create a 200 elements list with random floats between *start* and *end*</span>
+<span class="sd">        create a 200 elements list with random floats between ``start`` and</span>
+<span class="sd">        ``end``</span>
 
 <span class="sd">    * *choice* (elements of an iterable)</span>
 <span class="sd">        For example::</span>
 
-<span class="sd">            populate(&#39;choice&#39;, 200, choice_from = [&#39;pippo&#39;,&#39;pluto&#39;,&#39;blob&#39;])</span>
+<span class="sd">            populate(&#39;choice&#39;, 200, choice_from=[&#39;pippo&#39;,&#39;pluto&#39;,&#39;blob&#39;])</span>
 
-<span class="sd">        create a 200 elements list with random elements from *choice_from*.</span>
+<span class="sd">        create a 200 elements list with random elements from ``choice_from``</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">converter</span> <span class="o">=</span> <span class="n">converter</span> <span class="ow">or</span> <span class="n">def_converter</span>

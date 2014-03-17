@@ -89,7 +89,6 @@ and <a class="reference internal" href="../ds.html#pulsar-data-store"><em>pulsar
 <span id="couchdb"></span><h2>CouchDb<a class="headerlink" href="#module-pulsar.apps.data.stores.couchdb.store" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="http://couchdb.apache.org/">CouchDB</a> document store:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;http+couchdb://localhost:5984/mydb&#39;</span><span class="p">)</span>
-<span class="n">couch</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">client</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="section" id="models">
@@ -107,32 +106,26 @@ are stored in exactly the same database.</p>
 <em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.couchdb.store.</tt><tt class="descname">CouchDBStore</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.info">
-<tt class="descname">info</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.info" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">info</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Information about the running server</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.ping">
-<tt class="descname">ping</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.ping" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">ping</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.ping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Information about the running server</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_design">
-<tt class="descname">create_design</tt><big>(</big><em>name</em>, <em>views</em>, <em>language=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_design" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">create_design</tt><big>(</big><em>name</em>, <em>views</em>, <em>language=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.create_design"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_design" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new design document</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.delete_design">
-<tt class="descname">delete_design</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.delete_design" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">delete_design</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.delete_design"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.delete_design" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete an existing design document at <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.drop_table">
-<tt class="descname">drop_table</tt><big>(</big><em>model</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.drop_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.drop_table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Drop model table by simply removing model design views</p>
 </dd></dl>
 
 <dl class="method">
@@ -157,9 +150,21 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.all_databases">
+<tt class="descname">all_databases</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.all_databases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.all_databases" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of all databases</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.update_documents">
 <tt class="descname">update_documents</tt><big>(</big><em>dbname</em>, <em>documents</em>, <em>new_edits=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.update_documents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.update_documents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bulk update/insert of documents in a database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.drop_table">
+<tt class="descname">drop_table</tt><big>(</big><em>model</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.drop_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.drop_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop model table by simply removing model design views</p>
 </dd></dl>
 
 <dl class="method">

@@ -180,7 +180,7 @@
 </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Store.database"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.database">[docs]</a>    <span class="k">def</span> <span class="nf">database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Database name associated with this store.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Database name/number associated with this store.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span>
 </div>
     <span class="nd">@property</span>
@@ -239,6 +239,22 @@
 <div class="viewcode-block" id="Store.flush"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Flush the store.&#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+<div class="viewcode-block" id="Store.encode_bytes"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.encode_bytes">[docs]</a>    <span class="k">def</span> <span class="nf">encode_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Encode bytes ``data``</span>
+
+<span class="sd">        :param data: a bytes string</span>
+<span class="sd">        :return: bytes or string</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">data</span>
+</div>
+<div class="viewcode-block" id="Store.dencode_bytes"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.dencode_bytes">[docs]</a>    <span class="k">def</span> <span class="nf">dencode_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Decode bytes ``data``</span>
+
+<span class="sd">        :param data: bytes or string</span>
+<span class="sd">        :return: bytes</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">data</span>
 
     <span class="c">#    ODM SUPPORT</span>
     <span class="c">#######################</span></div>
@@ -264,13 +280,19 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
-    <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<div class="viewcode-block" id="Store.compile_query"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.compile_query">[docs]</a>    <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Compile the :class:`.Query` ``query``.</span>
 
+<span class="sd">        Method required by the :class:`Object data mapper &lt;odm&gt;`.</span>
+
+<span class="sd">        :return: an instance of :class:`.CompiledQuery` if implemented</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
 <div class="viewcode-block" id="Store.get_model"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.get_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">pkvalue</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Fetch an instance of a ``model`` with primary key ``pkvalue``.</span>
 
-<span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
+<span class="sd">        This method required by the :ref:`object data mapper &lt;odm&gt;`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
@@ -284,7 +306,12 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">False</span>
 </div>
-<div class="viewcode-block" id="Store.model_data"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.model_data">[docs]</a>    <span class="k">def</span> <span class="nf">model_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="n">instance</span>
+
+    <span class="k">def</span> <span class="nf">model_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;A generator of field/value pair for the store</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span>
@@ -293,6 +320,12 @@
                 <span class="n">value</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">to_store</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="Store.model_data"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.model_data">[docs]</a>    <span class="k">def</span> <span class="nf">model_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Generator of ``field, value`` pair for the data store.</span>
+
+<span class="sd">        By default invokes the :class:`.ModelMeta.store_data` method.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">store_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="c">#    INTERNALS</span>
     <span class="c">#######################</span></div>

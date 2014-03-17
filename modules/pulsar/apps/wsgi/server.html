@@ -108,8 +108,14 @@
 <span class="n">MAX_CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
 
 
+<span class="k">class</span> <span class="nc">FakeConnection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span>
+
+
 <div class="viewcode-block" id="test_wsgi_environ"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.test_wsgi_environ">[docs]</a><span class="k">def</span> <span class="nf">test_wsgi_environ</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                      <span class="n">secure</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+                      <span class="n">secure</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An function to create a WSGI environment dictionary for testing.</span>
 
 <span class="sd">    :param url: the resource in the ``PATH_INFO``.</span>
@@ -128,6 +134,8 @@
     <span class="n">request_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>
     <span class="n">stream</span> <span class="o">=</span> <span class="n">StreamReader</span><span class="p">(</span><span class="n">request_headers</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="n">extra</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">extra</span><span class="p">[</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FakeConnection</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="s">&#39;777.777.777.777:8080&#39;</span><span class="p">,</span>
                         <span class="n">headers</span><span class="p">,</span> <span class="n">https</span><span class="o">=</span><span class="n">secure</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span><span class="p">)</span>
 

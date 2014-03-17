@@ -350,6 +350,21 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
+<span class="sd">Populate</span>
+<span class="sd">~~~~~~~~~~~~~</span>
+
+<span class="sd">A useful function for populating random data::</span>
+
+<span class="sd">    from pulsar.apps.test import populate</span>
+
+<span class="sd">    data = populate(&#39;string&#39;, 100)</span>
+
+<span class="sd">gives you a list of 100 random strings</span>
+
+
+<span class="sd">.. autofunction:: pulsar.apps.test.populate.populate</span>
+
+
 <span class="sd">Utilities</span>
 <span class="sd">================</span>
 
@@ -379,28 +394,11 @@
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">pep8_run</span>
 
 
+<span class="n">pyver</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+
 <span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Test&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">This section covers configuration parameters used by the</span>
 <span class="s">:ref:`Asynchronous/Parallel test suite &lt;apps-test&gt;`.&#39;&#39;&#39;</span>
-
-
-<span class="k">def</span> <span class="nf">dont_run_with_thread</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Decorator for disabling process baaed test cases when the test suite</span>
-<span class="sd">    runs in threading, rather than processing, mode.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">unittest</span><span class="o">.</span><span class="n">skipUnless</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">,</span>
-                                <span class="s">&#39;Run only when concurrency is process&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">d</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">obj</span>
-
-
-<span class="k">def</span> <span class="nf">mute_failure</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">failure</span><span class="p">):</span>
-    <span class="c">#TODO: add test flag to control muting</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">test</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">log_failures</span><span class="p">:</span>
-        <span class="n">maybe_failure</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span><span class="o">.</span><span class="n">mute</span><span class="p">()</span>
 
 
 <span class="k">class</span> <span class="nc">ExitTest</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -487,23 +485,6 @@
 <span class="s">    Run the garbage collector before a process-based actor dies and shows</span>
 <span class="s">    the memory leak report.</span>
 <span class="s">    &quot;&quot;&quot;</span>
-
-
-<span class="k">class</span> <span class="nc">TestLogFailures</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;log_failures&quot;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--log-failures&#39;</span><span class="p">]</span>
-    <span class="n">action</span> <span class="o">=</span> <span class="s">&#39;store_true&#39;</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Don&#39;t mute exceptions.</span>
-
-<span class="s">    Tested exception are usually muted via mute_failure function. This</span>
-<span class="s">    flag disable it.</span>
-
-<span class="s">    To see the exception the log level must be at least error.&quot;&quot;&quot;</span>
-
-
-<span class="n">pyver</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
 
 
 <div class="viewcode-block" id="TestSuite"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite">[docs]</a><span class="k">class</span> <span class="nc">TestSuite</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">TaskQueue</span><span class="p">):</span>
@@ -680,7 +661,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;All tests have finished.&#39;</span><span class="p">)</span>
                 <span class="n">time_taken</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span>
                 <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tests</span><span class="p">:</span>
-                    <span class="n">runner</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="p">[</span><span class="s">&#39;result&#39;</span><span class="p">])</span>
+                    <span class="n">runner</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;result&#39;</span><span class="p">))</span>
                 <span class="n">runner</span><span class="o">.</span><span class="n">on_end</span><span class="p">()</span>
                 <span class="n">runner</span><span class="o">.</span><span class="n">printSummary</span><span class="p">(</span><span class="n">time_taken</span><span class="p">)</span>
                 <span class="c"># Shut down the arbiter</span>
