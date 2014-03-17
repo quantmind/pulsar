@@ -24,14 +24,19 @@ The first step is to create a :class:`.Model` to play with::
     from pulsar.apps.data import odm
 
     class User(odm.Model):
-        id = odm.CharField(primary_key=True)
-        username = odm.CharField()
+        username = odm.CharField(index=True)
         password = odm.CharField()
-        email = odm.CharField()
+        email = odm.CharField(index=True)
+        is_active = odm.BoolField(default=True)
 
 
 Mapper & Managers
 =======================
+
+A :class:`.Model` such as the ``User`` class defined above has no information
+regarding database, it is purely a dictionary with additional information
+about fields.
+
 
 .. _odm-registration:
 
@@ -87,11 +92,21 @@ and, importantly, it reduces to zero the imports one has to write on python
 modules using your application, in other words it makes your application
 less dependent on the actual implementation of :class:`StdModel`.
 
+Create an instance
+~~~~~~~~~~~~~~~~~~~~~~
+
+When creating a new instance of model the callable method its registered
+:class:`.Manager` should be used::
+
+    pippo = models.user(username='pippo', email='pippo@bla.com')
+
+``pippo`` is a instance not yet persistent in the data store.
+
 
 Multiple backends
-=========================
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :class:`Router` allows to use your models in several different back-ends
+The :class:`.Mapper` allows to use your models in several different back-ends
 without changing the way you query your data. In addition it allows to
 specify different back-ends for ``write`` operations and for ``read`` only
 operations.
@@ -105,13 +120,15 @@ the following way::
 
 .. _custom-manager:
 
-Custom Managers
+Custom managers
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-When a :class:`Router` registers a :class:`StdModel`, it creates a new
-instance of a :class:`Manager` and add it to the dictionary of managers.
+When a :class:`.Mapper` registers a :class:`.Model`, it creates a new
+instance of a :class:`.Manager` and add it to the dictionary of managers.
 It is possible to supply a custom manager class by specifying the
-``manager_class`` attribute on the :class:`StdModel`::
+``manager_class`` attribute on the :class:`.Model`::
+
+    from pulsar.apps.data import odm
 
     class CustomManager(odm.Manager):
 
@@ -119,10 +136,14 @@ It is possible to supply a custom manager class by specifying the
             return self.query().filter(...)
 
 
-    class MyModel(odm.StdModel):
+    class MyModel(odm.Model):
         ...
 
         manager_class = CustomManager
+
+
+Quering Data
+==================
 
 
 
@@ -213,5 +234,31 @@ ForeignKey
 ~~~~~~~~~~~~~~~
 
 .. autoclass:: ForeignKey
+   :members:
+   :member-order: bysource
+
+
+FieldError
+~~~~~~~~~~~~~~~
+
+.. autoclass:: FieldError
+   :members:
+   :member-order: bysource
+
+
+.. module:: pulsar.apps.data.odm.query
+
+Query
+~~~~~~~~~~~
+
+.. autoclass:: Query
+   :members:
+   :member-order: bysource
+
+
+Compiled Query
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: CompiledQuery
    :members:
    :member-order: bysource

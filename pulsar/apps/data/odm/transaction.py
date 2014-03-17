@@ -65,7 +65,7 @@ class TransactionStore(object):
 
 
 class Transaction(EventHandler):
-    '''Transaction class for pipelining commands to :class:`.Store`.
+    '''Transaction class for pipelining commands to a :class:`.Store`.
 
     A :class:`Transaction` is usually obtained via the :meth:`.Mapper.begin`
     method::
@@ -129,7 +129,7 @@ class Transaction(EventHandler):
         ts.commands.append(Command(args))
         return self
 
-    def add(self, model):
+    def add(self, model, action=None):
         '''Add a ``model`` to the transaction.
 
         :parameter model: a :class:`.Model` instance. It must be registered
@@ -138,18 +138,9 @@ class Transaction(EventHandler):
         '''
         manager = self.mapper[model]
         ts = self.tstore(manager._store)
-        ts.commands.append(Command(model, Command.INSERT))
-        return self
-
-    def insert(self, instance):
-        '''Insert a new model ``instance`` into the transaction.
-
-        The operation in the backend server is an INSERT, therefore if the
-        primary key of ``instance`` is already available an error occurs.
-        '''
-        sm = self.model(instance)
-        sm._new.append(instance)
-        return self
+        action = action or Command.INSERT
+        ts.commands.append(Command(model, action))
+        return model
 
     def update(self, instance_or_query, **kw):
         '''Update an ``instance`` or a ``query``'''
@@ -184,12 +175,13 @@ class Transaction(EventHandler):
         This method can be invoked once only otherwise an
         :class:`.InvalidOperation` occurs.
 
-        :return: a :class:`~asyncio.Future` which results in this transaction
+        :return: a :class:`~asyncio.Future` which results in the list
+            of  transaction
         '''
         if self._executed is None:
-            fut = multi_async((store.execute_transaction(commands) for
-                               store, commands in iteritems(self._commands)))
-            self._executed = fut
+            executed = dict(((store, store.execute_transaction(commands)) for
+                             store, commands in iteritems(self._commands)))
+            self._executed = multi_async(executed, loop=self._loop)
             return self._executed
         else:
             raise InvalidOperation('Transaction already executed.')

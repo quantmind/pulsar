@@ -188,23 +188,23 @@ class Task(odm.Model):
     id = odm.CharField(primary_key=True)
     '''Task unique identifier.
     '''
-    lock_id = odm.CharField(unique=True)
+    lock_id = odm.CharField(required=False)
     name = odm.CharField(index=True)
     time_queued = odm.FloatField()
-    time_started = odm.FloatField()
-    time_ended = odm.FloatField()
+    time_started = odm.FloatField(required=False)
+    time_ended = odm.FloatField(required=False)
     '''The timestamp indicating when this has finished.
     '''
-    expiry = odm.FloatField()
+    expiry = odm.FloatField(required=False)
     '''The timestamp indicating when this task expires.
 
     If the task is not started before this value it is ``REVOKED``.
     '''
-    status = odm.IntegerField()
+    status = odm.IntegerField(index=True)
     '''flag indicating the :ref:`task status <task-state>`
     '''
-    kwargs = odm.PickleField()
-    result = odm.PickleField()
+    kwargs = odm.PickleField(required=False)
+    result = odm.PickleField(required=False)
 
     def done(self):
         '''Return ``True`` if the :class:`Task` has finshed.

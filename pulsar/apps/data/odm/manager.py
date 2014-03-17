@@ -1,4 +1,4 @@
-from pulsar import Event
+from pulsar import Event, wait_complete
 
 from .query import AbstractQuery, Query, QueryError
 
@@ -105,13 +105,23 @@ class Manager(AbstractQuery):
         '''
         return self._model(*args, **kwargs)
 
-    def query(self):
-        return self.query_class(self)
+    def create_table(self, remove_existing=False):
+        '''Create the table/collection for the :attr:`_model`
+        '''
+        return self._store.create_table(self._model,
+                                        remove_existing=remove_existing)
 
-    def create_table(self):
-        return self._store.create_table(self._model)
+    def drop_table(self):
+        '''Drop the table/collection for the :attr:`_model`
+        '''
+        return self._store.drop_table(self._model)
 
     #    QUERY IMPLEMENTATION
+    def query(self):
+        '''Build a :class:`.Query` object
+        '''
+        return self.query_class(self)
+
     def get(self, *args, **kw):
         if len(args) == 1:
             return self._read_store.get_model(self._model, args[0])
@@ -124,6 +134,8 @@ class Manager(AbstractQuery):
             raise NotImplementedError
 
     def filter(self, **kwargs):
+        '''Build a :class:`.Query` object with filtering clauses
+        '''
         return self.query().filter(**kwargs)
 
     def exclude(self, **kwargs):
@@ -148,25 +160,27 @@ class Manager(AbstractQuery):
         '''Begin a new :class:`.Transaction`.'''
         return self._mapper.begin()
 
-    def new(self, *args, **kwargs):
+    @wait_complete
+    def create(self, *args, **kwargs):
         '''Create a new instance of :attr:`_model` and commit to server.
         '''
         with self._mapper.begin() as t:
-            t.add(self._model(*args, **kwargs))
-        return t.wait(self._get_instance)
+            model = t.add(self(*args, **kwargs))
+        return t.wait(lambda t: model)
+    new = create
     insert = new
 
+    @wait_complete
     def save(self, instance):
         '''Save an existing ``instance`` of :attr:`_model`.
+
+        If the instance already contain the primary key this is considered
+        and update, otherwise an insert.
         '''
         with self._mapper.begin() as t:
             t.add(instance)
-        return t.wait()
+        return t.wait(lambda t: instance)
     update = save
-
-    ##    INTERNAL
-    def _get_instance(self, transaction):
-        return transaction
 
 
 def load_relmodel(field, callback):

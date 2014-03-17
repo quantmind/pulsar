@@ -37,8 +37,14 @@ __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 MAX_CHUNK_SIZE = 65536
 
 
+class FakeConnection(object):
+
+    def __init__(self, loop=None):
+        self._loop = loop
+
+
 def test_wsgi_environ(path='/', method=None, headers=None, extra=None,
-                      secure=False):
+                      secure=False, loop=None):
     '''An function to create a WSGI environment dictionary for testing.
 
     :param url: the resource in the ``PATH_INFO``.
@@ -57,6 +63,8 @@ def test_wsgi_environ(path='/', method=None, headers=None, extra=None,
     request_headers = Headers(headers, kind='client')
     headers = Headers()
     stream = StreamReader(request_headers, parser)
+    extra = extra or {}
+    extra['pulsar.connection'] = FakeConnection(loop=loop)
     return wsgi_environ(stream, ('127.0.0.1', 8060), '777.777.777.777:8080',
                         headers, https=secure, extra=extra)
 

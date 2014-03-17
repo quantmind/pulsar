@@ -39,6 +39,7 @@ __all__ = ['Future',
            'async_while',
            'in_loop',
            'task',
+           'wait_complete',
            'chain_future',
            'ASYNC_OBJECTS',
            'future_result_exc',
@@ -140,19 +141,23 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
     def _callback(fut):
         try:
             try:
-                result = fut.result()
-            except Exception as exc:
+                exc = future.exception()
+            except CancelledError as e:
+                exc = e
+            if exc:
                 if errback:
+                    exc = None
                     result = errback(result)
-                else:
-                    raise
             else:
+                result = future.result()
                 if callback:
                     result = callback(result)
         except Exception as exc:
             next.set_exception(exc)
         else:
-            if isinstance(result, Future):
+            if exc:
+                next.set_exception(exc)
+            elif isinstance(result, Future):
                 chain(result, next=next)
             else:
                 next.set_result(result)
@@ -247,6 +252,24 @@ def task(method):
         task_factory = getattr(loop, 'task_factory', Task)
         coro = method(self, *args, **kwargs)
         future = task_factory(coro, loop=loop)
+        if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
+            return loop.run_until_complete(future)
+        else:
+            return future
+
+    return _
+
+
+def wait_complete(method):
+    '''Decorator to wait for a ``method`` to complete.
+
+    It only affects asynchronous object with a local event loop.
+    The ``method`` must return a :class:`~asyncio.Future`.
+    '''
+    @wraps(method)
+    def _(self, *args, **kwargs):
+        loop = self._loop
+        future = method(self, *args, **kwargs)
         if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
             return loop.run_until_complete(future)
         else:
@@ -412,7 +435,6 @@ class Task(asyncio.Task):
     _current_tasks = {}
 
     def _step(self, value=None, exc=None):
-        __skip_traceback__ = True
         assert not self.done(), \
             '_step(): already done: {!r}, {!r}, {!r}'.format(self, value, exc)
         if self._must_cancel:
@@ -503,7 +525,8 @@ class MultiFuture(Future):
                 if isinstance(value, Future):
                     self._futures[key] = value
                     value.add_done_callback(partial(self._future_done, key))
-        self._check()
+        if self._state == _PENDING:
+            self._check()
 
     @property
     def failures(self):
@@ -511,13 +534,14 @@ class MultiFuture(Future):
 
     ###    INTERNALS
     def _check(self):
-        if not self._futures and self._state == _PENDING:
+        if not self._futures:
             self.set_result(self._stream)
 
     def _future_done(self, key, future):
         self._futures.pop(key, None)
-        self._get_set_item(key, future)
-        self._check()
+        if self._state == _PENDING:
+            self._get_set_item(key, future)
+            self._check()
 
     def _get_set_item(self, key, value):
         if isinstance(value, Future):

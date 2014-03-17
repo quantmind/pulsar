@@ -1,7 +1,7 @@
 .. _apps-test:
 
 ===========
-Testing
+Test Suite
 ===========
 
 .. automodule:: pulsar.apps.test

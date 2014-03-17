@@ -1,11 +1,11 @@
 '''Tests the taskqueue redis backend.'''
 import unittest
 
-from pulsar.apps.test import check_redis
+from pulsar.apps.test import check_server
 
 from . import test_pulsards
 
-OK = check_redis()
+OK = check_server('redis')
 
 
 @unittest.skipUnless(OK, 'Requires a running redis server')

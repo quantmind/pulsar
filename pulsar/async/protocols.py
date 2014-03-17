@@ -168,8 +168,8 @@ class ProtocolConsumer(EventHandler):
         if self._request is not None:
             try:
                 self.start_request()
-            except Exception:
-                self.finished(sys.exc_info())
+            except Exception as exc:
+                self.finished(exc=exc)
 
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.

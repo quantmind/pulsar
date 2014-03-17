@@ -70,6 +70,9 @@ class PulsarStore(Store):
     def pubsub(self, protocol=None):
         return PubSub(self, protocol=protocol)
 
+    def ping(self):
+        return self.client().ping()
+
     @task
     def execute(self, *args, **options):
         connection = yield self._pool.connect()
@@ -120,15 +123,25 @@ class PulsarStore(Store):
                 model = command.args
                 pkvalue = model.pkvalue()
                 key = self.basekey(model._meta, pkvalue)
-                pipe.hmset(key, model._to_store(self))
+                pipe.hmset(key, self.model_data(model, action))
             else:
                 raise NotImplementedError
-        return pipe.commit()
+        response = yield pipe.commit()
+        for command in transaction.commands:
+            if command.action == Command.INSERT:
+                model = command.args
+                model._stored = model.id
 
     def get_model(self, model, pk):
         key = '%s%s:%s' % (self.namespace, model._meta.table_name,
                            to_string(pk))
-        return self.execute('hgetall', key, factory=model)
+        return self.execute('hgetall', key,
+                            factory=partial(self._get_model, model))
+
+    def _get_model(self, model, *args, **kwargs):
+        instance = model(*args, **kwargs)
+        instance._stored = instance.id
+        return instance
 
     def compile_query(self, query):
         compiled = CompiledQuery(self.pipeline())

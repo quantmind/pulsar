@@ -451,7 +451,8 @@ class HttpRequest(RequestBase):
 
     def new_parser(self):
         self.parser = self.client.http_parser(kind=1,
-                                              decompress=self.decompress)
+                                              decompress=self.decompress,
+                                              method=self.method)
 
     def set_proxy(self, scheme, *host):
         if not host and scheme is None:

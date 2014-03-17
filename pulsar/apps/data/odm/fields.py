@@ -31,7 +31,7 @@ class Field(UnicodeMixin):
 
     .. attribute:: index
 
-        Some data stores requires to create indixes when performing specific
+        Some data stores requires to create indexes when performing specific
         queries.
 
         Default ``False``.
@@ -46,12 +46,12 @@ class Field(UnicodeMixin):
     .. attribute:: primary_key
 
         If ``True``, this field is the primary key for the model.
+
         A primary key field has the following properties:
 
-        * :attr:`Field.unique` is also ``True``.
-        * There can be only one in a model.
-        * It's attribute name in the model must be **id**.
-        * If not specified a :class:`AutoIdField` will be added.
+        * :attr:`~Field.unique` is also ``True``
+        * There can be only one in a model
+        * If not specified a :class:`.AutoIdField` will be added
 
         Default ``False``.
 
@@ -63,8 +63,7 @@ class Field(UnicodeMixin):
 
     .. attribute:: default
 
-        Default value for this field. It can be a callable attribute with
-        arity 0.
+        Default value for this field. It can be a callable attribute.
 
         Default ``None``.
 
@@ -108,18 +107,20 @@ class Field(UnicodeMixin):
 
         Default ``False``.
     '''
+    primary_key = False
     to_python = None
     to_store = None
     index = False
     _default = None
     creation_counter = 0
 
-    def __init__(self, unique=False, primary_key=False, required=True,
+    def __init__(self, unique=False, primary_key=None, required=True,
                  index=None, hidden=None, as_cache=False, **extras):
         self.foreign_keys = ()
-        self.primary_key = primary_key
+        self.primary_key = (self.primary_key if primary_key is None else
+                            primary_key)
         index = index if index is not None else self.index
-        if primary_key:
+        if self.primary_key:
             self.unique = True
             self.required = True
             self.index = True
@@ -162,7 +163,7 @@ class Field(UnicodeMixin):
         '''
         self._meta.scalarfields.append(self)
         if self.index:
-            self._meta.indices.append(self)
+            self._meta.indexes.append(self)
 
     def get_attname(self):
         '''Generate the :attr:`attname` at runtime'''
@@ -170,6 +171,14 @@ class Field(UnicodeMixin):
 
     def to_json(self, value, store=None):
         return value
+
+    def get_default(self):
+        '''Default value for this :class:`.Field`
+        '''
+        if hasattr(self._default, '__call__'):
+            return self._default()
+        else:
+            return self._default
 
     def _handle_extras(self, **extras):
         '''Callback to hadle extra arguments during initialization.'''
@@ -194,7 +203,7 @@ class CharField(Field):
 
 
 class AutoIdField(Field):
-    pass
+    primary_key = True
 
 
 class IntegerField(Field):
@@ -287,7 +296,7 @@ class PickleField(Field):
             try:
                 return pickle.loads(value)
             except Exception:
-                return None
+                return value
 
     def to_store(self, value, store=None):
         if value is not None:
@@ -489,13 +498,13 @@ class CompositeIdField(Field):
     Check the :ref:`composite id tutorial <tutorial-compositeid>` for more
     information and tips on how to use it.
     '''
-    type = 'composite'
+    primary_key = True
 
     def __init__(self, *fields, **kwargs):
         super(CompositeIdField, self).__init__(**kwargs)
         self.fields = fields
         if len(self.fields) < 2:
-            raise FieldError('At least tow fields are required by composite '
+            raise FieldError('At least two fields are required by composite '
                              'CompositeIdField')
 
     def get_value(self, instance, *bits):
@@ -508,8 +517,9 @@ class CompositeIdField(Field):
         fields = []
         for field in self.fields:
             if field not in model._meta.dfields:
-                raise FieldError('Composite id field "%s" in in "%s" model.' %
-                                 (field, model._meta))
+                raise FieldError(
+                    'Composite id field "%s" not in in "%s" model.' %
+                    (field, model._meta))
             field = model._meta.dfields[field]
             fields.append(field)
         self.fields = tuple(fields)

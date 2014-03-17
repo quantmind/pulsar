@@ -14,7 +14,12 @@ except ImportError:
     CModelBase = None
 
 from .manager import class_prepared, makeManyToManyRelatedManager
-from .fields import Field, AutoIdField, ForeignKey, CompositeIdField
+from .fields import (Field, AutoIdField, ForeignKey, CompositeIdField,
+                     FieldError, NONE_EMPTY)
+
+model_attributes = set(('_access_cache', '_modified', '_stored'))
+private_fields = set(('Type',) + tuple(model_attributes))
+primary_keys = ('id', '_id', 'ID', '_ID')
 
 
 def get_fields(bases, attrs):
@@ -102,7 +107,7 @@ class ModelMeta(object):
     .. attribute:: ordering
 
         Optional name of a :class:`Field` in the :attr:`model`.
-        If provided, model indices will be sorted with respect to the value
+        If provided, model indexes will be sorted with respect to the value
         of the specified field. It can also be a :class:`autoincrement`
         instance.
         Check the :ref:`sorting <sorting>` documentation for more details.
@@ -123,18 +128,18 @@ class ModelMeta(object):
         :class:`.StructureField`.
         The order is the same as in the :class:`Model` definition.
 
-    .. attribute:: indices
+    .. attribute:: indexes
 
-        List of :class:`Field` which are indices (:attr:`Field.index` attribute
-        set to ``True``).
+        List of :class:`.Field` which are indexes (:attr:`~.Field.index`
+        attribute set to ``True``).
 
     .. attribute:: pk
 
-        The :class:`Field` representing the primary key.
+        The :class:`.Field` representing the primary key.
 
     .. attribute:: related
 
-        Dictionary of :class:`related.RelatedManager` for the :attr:`model`.
+        Dictionary of :class:`.RelatedManager` for the :attr:`model`.
         It is created at runtime by the object data mapper.
 
     .. attribute:: manytomany
@@ -153,7 +158,7 @@ class ModelMeta(object):
         self.abstract = abstract
         self.scalarfields = []
         self.manytomany = []
-        self.indices = []
+        self.indexes = []
         self.manytomany = []
         self.dfields = {}
         self.converters = {}
@@ -163,56 +168,49 @@ class ModelMeta(object):
         self.name = (name or model.__name__).lower()
         if not table_name:
             if self.app_label:
-                table_name = '{0}.{1}'.format(self.app_label, self.name)
+                table_name = '%s_%s' % (self.app_label, self.name)
             else:
                 table_name = self.name
         self.table_name = table_name
         #
         # Check if PK field exists
         pk = None
-        pkname = pkname or 'id'
+        pkname = pkname or primary_keys[0]
         scalarfields = []
         for name in fields:
             field = fields[name]
+            if name in private_fields:
+                raise FieldError("%s is a reserved field name" % name)
             if field.primary_key:
                 if pk is not None:
                     raise FieldError("Primary key already available %s."
                                      % name)
                 pk = field
                 pkname = name
+            elif name in primary_keys:
+                raise FieldError('%s is a reserved field name for primary keys'
+                                 % name)
         if pk is None and not self.abstract:
             # ID field not available, create one
-            pk = AutoIdField(primary_key=True)
+            pk = AutoIdField()
         if not self.abstract:
             fields.pop(pkname, None)
-            pk.register_with_model(pkname, model)
             for name, field in fields.items():
                 field.register_with_model(name, model)
+            pk.register_with_model(pkname, model)
         self.ordering = None
         if ordering:
             self.ordering = self.get_sorting(ordering, ImproperlyConfigured)
-
-    def load_state(self, obj, state=None, backend=None):
-        if state:
-            pkvalue, loadedfields, data = state
-            pk = self.pk
-            pkvalue = pk.to_python(pkvalue, backend)
-            setattr(obj, pk.attname, pkvalue)
-            if loadedfields is not None:
-                loadedfields = tuple(loadedfields)
-            obj._loadedfields = loadedfields
-            for field in obj.loadedfields():
-                value = field.value_from_data(obj, data)
-                setattr(obj, field.attname, field.to_python(value, backend))
-            if backend or ('__dbdata__' in data and
-                           data['__dbdata__'][pk.name] == pkvalue):
-                obj.dbdata[pk.name] = pkvalue
 
     def __repr__(self):
         return self.table_name
 
     def __str__(self):
         return self.__repr__()
+
+    @property
+    def _meta(self):
+        return self
 
     def pkname(self):
         '''Primary key name. A shortcut for ``self.pk.name``.'''
@@ -223,30 +221,38 @@ class ModelMeta(object):
         '''
         return self.pk.to_python(value, backend)
 
-    def is_valid(self, instance):
-        '''Perform validation for *instance* and stores serialized data,
-        indexes and errors into local cache.
-        Return ``True`` if the instance is ready to be saved to database.'''
-        dbdata = instance.dbdata
-        data = dbdata['cleaned_data'] = {}
-        errors = dbdata['errors'] = {}
-        #Loop over scalar fields first
-        for field, value in instance.fieldvalue_pairs():
-            name = field.attname
-            try:
-                svalue = field.set_get_value(instance, value)
-            except Exception as e:
-                errors[name] = str(e)
-            else:
-                if (svalue is None or svalue is '') and field.required:
-                    errors[name] = ("Field '{0}' is required for '{1}'."
-                                    .format(name, self))
-                else:
-                    if isinstance(svalue, dict):
-                        data.update(svalue)
-                    elif svalue is not None:
-                        data[name] = svalue
-        return len(errors) == 0
+    def store_data(self, instance, store):
+        '''Generator of ``field, value`` pair for the data ``store``.
+
+        Perform validation for ``instance`` and can raise :class:`.FieldError`
+        if invalid values are stored in ``instance``.
+        '''
+        fields = instance._meta.dfields
+        if instance._stored is None:
+            for field in fields.values():
+                name = field.attname
+                value = instance.get(name)
+                if field.to_store:
+                    value = field.to_store(value, store)
+                if (value in NONE_EMPTY) and field.required:
+                    raise FieldError("Field '%s' is required for '%s'." %
+                                     (name, self))
+                if isinstance(value, dict):
+                    for key, v in value.items():
+                        yield key, v
+                elif value is not None:
+                    yield name, value
+            for name in (set(instance) - set(fields)):
+                value = instance[name]
+                if value is not None:
+                    yield name, value
+        else:
+            for name in instance:
+                value = instance[name]
+                if name in fields:
+                    value = fields[name].to_store(value, store)
+                if value is not None:
+                    yield name, value
 
     def get_sorting(self, sortby, errorClass=None):
         desc = False
@@ -314,6 +320,8 @@ class ModelType(type(dict)):
             meta = meta or {}
         cls.extend_meta(meta, attrs)
         fields = get_fields(bases, attrs)
+        if '__slots__' not in attrs:
+            attrs['__slots__'] = tuple(model_attributes)
         new_class = super(ModelType, cls).__new__(cls, name, bases, attrs)
         ModelMeta(new_class, fields, **meta)
         class_prepared.fire(new_class)
@@ -327,19 +335,26 @@ class ModelType(type(dict)):
 
 
 class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
-    '''A model is a python ``dict`` which represents and item (row)
-    in a data-store collection (table).
+    '''A model is a python ``dict`` which represents and item/row
+    in a data-store collection/table.
+
+    .. attribute:: _modified
+
+        The set of fields modified after creation
     '''
     abstract = True
 
     def __init__(self, *args, **kwargs):
         self._access_cache = set()
-        self._modified = 0
+        self._stored = None
+        self._modified = None
         self.update(*args, **kwargs)
-        self._modified = 0
+        self._modified = set()
 
     def __getitem__(self, field):
         field = mstr(field)
+        if field in primary_keys:
+            field = self._meta.pkname()
         value = super(Model, self).__getitem__(field)
         if field not in self._access_cache:
             self._access_cache.add(field)
@@ -350,9 +365,15 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
 
     def __setitem__(self, field, value):
         field = mstr(field)
-        self._access_cache.discard(field)
+        if field in primary_keys:
+            field = self._meta.pkname()
+        if self._modified is not None:
+            self._access_cache.discard(field)
+            self._add_modified(field, value)
         super(Model, self).__setitem__(field, value)
-        self._modified = 1
+
+    def __getattr__(self, field):
+        return self.__getitem__(field)
 
     def get(self, field, default=None):
         try:
@@ -363,28 +384,15 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
     def update(self, *args, **kwargs):
         if len(args) == 1:
             iterable = args[0]
-            if isinstance(iterable, Mapping):
-                iterable = iteritems(iterable)
-            super(Model, self).update(((mstr(k), v)
-                                       for k, v in iterable))
-            self._modified = 1
+            super(Model, self).update(self._update_modify(iterable))
         elif args:
             raise TypeError('expected at most 1 arguments, got %s' % len(args))
         if kwargs:
-            super(Model, self).update(**kwargs)
-            self._modified = 1
-
-    def clear(self):
-        if self:
-            self._modified = 1
-            super(Model, self).clear()
+            super(Model, self).update(self._update_modify(kwargs))
 
     def clear_update(self, *args, **kwargs):
         self.clear()
         self.update(*args, **kwargs)
-
-    def to_store(self, store):
-        return dict(self._to_store(store))
 
     def to_json(self):
         '''Return a JSON serialisable dictionary representation.
@@ -397,13 +405,6 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
             return self[pk]
 
     ##    INTERNALS
-    def _to_store(self, store):
-        for key, value in iteritems(self):
-            if key in self._meta.dfields:
-                value = self._meta.dfields[key].to_store(value, store)
-            if value is not None:
-                yield key, value
-
     def _to_json(self):
         pk = self.pkvalue()
         if pk:
@@ -419,6 +420,22 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
                         except Exception:
                             value = b64encode(value).decode('utf-8')
                     yield key, value
+
+    def _update_modify(self, iterable):
+        if isinstance(iterable, Mapping):
+            iterable = iteritems(iterable)
+        for name, value in iterable:
+            field = mstr(name)
+            if self._modified is not None:
+                self._add_modified(field, value)
+            yield field, value
+
+    def _add_modified(self, field, value):
+        if field in self:
+            if super(Model, self).__getitem__(field) != value:
+                self._modified.add(field)
+        else:
+            self._modified.add(field)
 
     @classmethod
     def _many2many_through_model(cls, field):

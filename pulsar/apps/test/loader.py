@@ -8,10 +8,9 @@ import os
 import re
 import sys
 import unittest
+from importlib import import_module
 
-from pulsar.utils.importer import import_module
-
-from .case import LOGGER
+from .utils import LOGGER
 
 
 __all__ = ['TestLoader']

@@ -1,9 +1,9 @@
 from pulsar import new_event_loop
 
-from .pulsards import unittest, Odm
+from .pulsards import unittest, StoreMixin, Odm
 
 
-class TestRedisODM(Odm, unittest.TestCase):
+class TestRedisODM(StoreMixin, Odm, unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):

@@ -280,6 +280,21 @@ Test Plugin
    :members:
    :member-order: bysource
 
+Populate
+~~~~~~~~~~~~~
+
+A useful function for populating random data::
+
+    from pulsar.apps.test import populate
+
+    data = populate('string', 100)
+
+gives you a list of 100 random strings
+
+
+.. autofunction:: pulsar.apps.test.populate.populate
+
+
 Utilities
 ================
 
@@ -309,28 +324,11 @@ from .wsgi import *
 from .pep import pep8_run
 
 
+pyver = '%s.%s' % (sys.version_info[:2])
+
 section_docs['Test'] = '''
 This section covers configuration parameters used by the
 :ref:`Asynchronous/Parallel test suite <apps-test>`.'''
-
-
-def dont_run_with_thread(obj):
-    '''Decorator for disabling process baaed test cases when the test suite
-    runs in threading, rather than processing, mode.
-    '''
-    actor = pulsar.get_actor()
-    if actor:
-        d = unittest.skipUnless(actor.cfg.concurrency == 'process',
-                                'Run only when concurrency is process')
-        return d(obj)
-    else:
-        return obj
-
-
-def mute_failure(test, failure):
-    #TODO: add test flag to control muting
-    if not test.cfg.log_failures:
-        maybe_failure(failure).mute()
 
 
 class ExitTest(Exception):
@@ -419,31 +417,6 @@ class TestShowLeaks(TestOption):
     """
 
 
-class TestLogFailures(TestOption):
-    name = "log_failures"
-    flags = ['--log-failures']
-    action = 'store_true'
-    default = False
-    validator = pulsar.validate_bool
-    desc = """Don't mute exceptions.
-
-    Tested exception are usually muted via mute_failure function. This
-    flag disable it.
-
-    To see the exception the log level must be at least error."""
-
-
-class RedisServer(TestOption):
-    name = 'redis_server'
-    flags = ['--redis-server']
-    meta = "CONNECTION_STRING"
-    default = '127.0.0.1:6379/9'
-    desc = 'Connection string for the redis server used during testing'
-
-
-pyver = '%s.%s' % (sys.version_info[:2])
-
-
 class TestSuite(tasks.TaskQueue):
     '''An asynchronous test suite which works like a task queue.
 
@@ -513,8 +486,6 @@ class TestSuite(tasks.TaskQueue):
             return False
         stream = arbiter.stream
         stream.writeln(sys.version)
-        redis_server = 'redis://%s' % self.cfg.redis_server
-        arbiter.cfg.params['redis_server'] = redis_server
         if self.cfg.list_labels:    # pragma    nocover
             tags = self.cfg.labels
             if tags:
@@ -620,7 +591,7 @@ class TestSuite(tasks.TaskQueue):
                 self.logger.info('All tests have finished.')
                 time_taken = default_timer() - self._time_start
                 for task in tests:
-                    runner.add(task['result'])
+                    runner.add(task.get('result'))
                 runner.on_end()
                 runner.printSummary(time_taken)
                 # Shut down the arbiter

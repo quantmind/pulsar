@@ -24,14 +24,14 @@ pulsar:
 * A :ref:`coroutine <coroutine>`, a generator which consumes values.
   For example::
 
-      from pulsar import coroutine_result
+      from pulsar import coroutine_return
 
       def my_async_generator(...):
           yield something_but_dont_care_what_it_returns()
           ...
           bla = yield something_and_care_what_it_returns()
           result = yield do_something(bla)
-          coroutine_result(result)
+          coroutine_return(result)
 
   a coroutine is obtained by calling the generator function::
 

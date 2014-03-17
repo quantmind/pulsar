@@ -7,6 +7,7 @@ def int_or_float(v):
     return i if v == i else v
 
 
+JSPLITTER = '__'
 pass_through = lambda x: x
 str_lower_case = lambda x: to_string(x).lower()
 range_lookups = {
@@ -210,11 +211,49 @@ class Query(object):
                 d[name] = value
         return q
 
+
+class CompiledQuery(object):
+    '''A signature class for implementing a :class:`.Query` in a
+    pulsar data :class:`.Store`.
+
+    .. attribute:: _query
+
+        The underlying :class:`.Query`
+
+    .. attribute:: _store
+
+        The :class:`.Store` executing the :attr:`query`
+    '''
+    def __init__(self, store, query):
+        self._store = store
+        self._query = query
+        self._build()
+
+    @property
+    def _meta(self):
+        return self._query._meta
+
+    def count(self):
+        '''Count the number of elements matching the :attr:`query`.
+        '''
+        raise NotImplementedError
+
+    def all(self):
+        '''Fetch all matching elements for the server.
+
+        Return a :class:`~asyncio.Future`
+        '''
+        raise NotImplementedError
+
+    def _build(self):
+        '''Compile the :attr:`query`
+        '''
+        raise NotImplementedError
+
     def aggregate(self, kwargs):
         '''Aggregate lookup parameters.'''
-        JSPLITTER = '__'
         meta = self._meta
-        store = self._manager._read_store
+        store = self._store
         fields = meta.dfields
         field_lookups = {}
         for name, value in iteritems(kwargs):
@@ -259,17 +298,3 @@ def get_lookups(attname, field_lookups):
         lookups = []
         field_lookups[attname] = lookups
     return lookups
-
-
-class CompiledQuery(object):
-
-    def __init__(self, store, query):
-        self._store = store
-        self._query = query
-
-    def all(self):
-        '''Fetch all matching elements for the server.
-
-        Return a :class:`~asyncio.Future`
-        '''
-        raise NotImplementedError

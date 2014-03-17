@@ -110,7 +110,7 @@ class Store(Producer):
 
     @property
     def database(self):
-        '''Database name associated with this store.'''
+        '''Database name/number associated with this store.'''
         return self._database
 
     @property
@@ -138,6 +138,11 @@ class Store(Producer):
         '''
         raise NotImplementedError
 
+    def ping(self):
+        '''Used to check if the data server is available
+        '''
+        raise NotImplementedError
+
     def client(self):
         '''Get a client for the Store if implemented
         '''
@@ -149,7 +154,10 @@ class Store(Producer):
         raise NotImplementedError
 
     def create_database(self, dbname, **kw):
-        '''Create a new database in this store if implemented
+        '''Create a new database in this store
+
+        By default it does nothing, stores must implement this method
+        only if they support database creation.
         '''
         raise NotImplementedError
 
@@ -164,13 +172,20 @@ class Store(Producer):
 
     #    ODM SUPPORT
     #######################
-    def create_table(self, model):
+    def create_table(self, model, remove_existing=False):
         '''Create the table for ``model``.
 
         This method is used by the :ref:`object data mapper <odm>`.
         By default it does nothing.
         '''
-        pass
+
+    def drop_table(self, model, remove_existing=False):
+        '''Drop the table for ``model``.
+
+        This method is used by the :ref:`object data mapper <odm>`.
+        Must be implemented.
+        '''
+        raise NotImplementedError
 
     def execute_transaction(self, commands):
         '''Execute a list of ``commands`` in a :class:`.Transaction`.
@@ -180,12 +195,18 @@ class Store(Producer):
         raise NotImplementedError
 
     def compile_query(self, query):
+        '''Compile the :class:`.Query` ``query``.
+
+        Method required by the :class:`Object data mapper <odm>`.
+
+        :return: an instance of :class:`.CompiledQuery` if implemented
+        '''
         raise NotImplementedError
 
     def get_model(self, model, pkvalue):
         '''Fetch an instance of a ``model`` with primary key ``pkvalue``.
 
-        This method is used by the :ref:`object data mapper <odm>`.
+        This method required by the :ref:`object data mapper <odm>`.
         '''
         raise NotImplementedError
 
@@ -198,6 +219,22 @@ class Store(Producer):
         This method is used by the :ref:`object data mapper <odm>`.
         '''
         return False
+
+    def model_data(self, model, action):
+        '''A generator of field/value pair for the store
+        '''
+        fields = model._meta.dfields
+        for key, value in model.items():
+            if key in fields:
+                value = fields[key].to_store(value, self)
+            if value is not None:
+                yield key, value
+
+    def model_data(self, model, action):
+        '''Generator of ``field, value`` pair for the data store.
+
+        By default invokes the :class:`.ModelMeta.store_data` method.'''
+        return model._meta.store_data(model, self)
 
     #    INTERNALS
     #######################

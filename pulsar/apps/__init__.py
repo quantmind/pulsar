@@ -450,12 +450,9 @@ class Application(Configurator):
         if monitor is None and (not actor or actor.is_arbiter()):
             self.cfg.on_start()
             self.logger = self.cfg.configured_logger()
-            if not actor:   # arbiter not available
-                # This application is starts the arbiter
-                cfg = Config()
-                cfg.update(self.arbiter_params())
-                actor = pulsar.arbiter(cfg=cfg)
-                self.cfg.set('exc_id', actor.cfg.exc_id)
+            actor = actor or pulsar.arbiter()
+            self.update_arbiter_params(actor)
+            self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
                 start = Future(loop=actor._loop)
                 actor.bind_event('start', partial(self._add_monitor, start))
@@ -504,9 +501,12 @@ class Application(Configurator):
         at each event loop.'''
         pass
 
-    def arbiter_params(self):
-        return dict(((s.name, s.value) for s in self.cfg.settings.values()
-                     if s.is_global))
+    def update_arbiter_params(self, arbiter):
+        for s in self.cfg.settings.values():
+            if s.is_global and s.modified:
+                a = arbiter.cfg.settings[s.name]
+                if not a.modified:
+                    a.set(s.value)
 
     #   INTERNALS
     def _add_monitor(self, start, arbiter, exc=None):

@@ -16,13 +16,15 @@ def_converter = lambda x: x
 def populate(datatype='string', size=10, start=None, end=None,
              converter=None, choice_from=None, **kwargs):
     '''Utility function for populating lists with random data.
-    Useful for populating database with data for fuzzy testing.
+
+    Useful when populating database with data for fuzzy testing.
+
     Supported data-types
 
     * *string*
         For example::
 
-            populate('string',100, min_len=3, max_len=10)
+            populate('string', 100, min_len=3, max_len=10)
 
         create a 100 elements list with random strings
         with random length between 3 and 10
@@ -31,7 +33,7 @@ def populate(datatype='string', size=10, start=None, end=None,
         For example::
 
             from datetime import date
-            populate('date',200, start = date(1997,1,1), end = date.today())
+            populate('date', 200, start=date(1997,1,1), end=date.today())
 
         create a 200 elements list with random datetime.date objects
         between *start* and *end*
@@ -39,23 +41,25 @@ def populate(datatype='string', size=10, start=None, end=None,
     * *integer*
         For example::
 
-            populate('integer',200, start = 0, end = 1000)
+            populate('integer', 200, start=0, end=1000)
 
-        create a 200 elements list with random int between *start* and *end*
+        create a 200 elements list with random integers between ``start``
+        and ``end``
 
     * *float*
         For example::
 
-            populate('float', 200, start = 0, end = 10)
+            populate('float', 200, start=0, end=10)
 
-        create a 200 elements list with random floats between *start* and *end*
+        create a 200 elements list with random floats between ``start`` and
+        ``end``
 
     * *choice* (elements of an iterable)
         For example::
 
-            populate('choice', 200, choice_from = ['pippo','pluto','blob'])
+            populate('choice', 200, choice_from=['pippo','pluto','blob'])
 
-        create a 200 elements list with random elements from *choice_from*.
+        create a 200 elements list with random elements from ``choice_from``
     '''
     data = []
     converter = converter or def_converter

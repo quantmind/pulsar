@@ -805,7 +805,7 @@ class HttpParser(object):
 
     2011 (c) Benoit Chesneau <benoitc@e-engura.org>
     '''
-    def __init__(self, kind=2, decompress=False):
+    def __init__(self, kind=2, decompress=False, method=None):
         self.decompress = decompress
         # errors vars
         self.errno = None
@@ -813,7 +813,7 @@ class HttpParser(object):
         # protected variables
         self._buf = []
         self._version = None
-        self._method = None
+        self._method = method
         self._status_code = None
         self._status = None
         self._reason = None

@@ -1,8 +1,12 @@
-from pulsar import new_event_loop
+import unittest
 
-from .pulsards import unittest, Odm
+from pulsar import new_event_loop, data_stores
+
+from . import Odm
 
 
+@unittest.skipUnless('mongodb' in data_stores,
+                     'Requires pymong and a running mongodb')
 class TestMongodbODM(Odm, unittest.TestCase):
 
     @classmethod

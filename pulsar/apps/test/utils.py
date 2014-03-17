@@ -31,10 +31,10 @@ run test server
 
 .. autofunction:: run_test_server
 
-check redis
+check server
 ~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: check_redis
+.. autofunction:: check_server
 
 '''
 import gc
@@ -66,7 +66,8 @@ __all__ = ['run_on_arbiter',
            'show_leaks',
            'hide_leaks',
            'run_test_server',
-           'check_redis']
+           'check_server',
+           'dont_run_with_thread']
 
 
 LOGGER = logging.getLogger('pulsar.test')
@@ -349,19 +350,36 @@ def run_test_server(protocol_factory, loop, address=None, **kw):
         server.stop_serving()
 
 
-def check_redis():
-    '''Check if redis server is available at the address specified
-    by the :ref:`redis server <setting-redis_server>` config value.
+def check_server(name):
+    '''Check if server ``name`` is available at the address specified
+    ``<name>_server`` config value.
 
     :rtype: boolean
     '''
-    addr = get_actor().cfg.get('redis_server')
+    cfg = get_actor().cfg
+    cfgname = '%s_server' % name
+    addr = cfg.get('%s_server' % name)
+    if ('%s://' % name) not in addr:
+        addr = '%s://%s' % (name, addr)
     sync_store = create_store(addr, loop=new_event_loop())
     try:
-        sync_store.client().ping()
+        sync_store.ping()
         return True
     except Exception:
         return False
+
+
+def dont_run_with_thread(obj):
+    '''Decorator for disabling process based test cases when the test suite
+    runs in threading, rather than processing, mode.
+    '''
+    actor = pulsar.get_actor()
+    if actor:
+        d = unittest.skipUnless(actor.cfg.concurrency == 'process',
+                                'Run only when concurrency is process')
+        return d(obj)
+    else:
+        return obj
 
 
 def is_expected_failure(exc, default=False):

@@ -6,7 +6,7 @@ from pulsar import multi_async, coroutine_return
 from pulsar.utils.pep import ispy3k
 from pulsar.apps import tasks
 
-from .utils import TestFunction, TestFailure, is_expected_failure, LOGGER
+from .utils import TestFunction, TestFailure, is_expected_failure
 
 if ispy3k:
     from unittest import mock
@@ -146,9 +146,9 @@ class Test(tasks.Job):
         :param add_err: if ``True`` the error is added to the list of errors
         :return: a tuple containing the ``error`` and the ``exc_info``
         '''
+        if not isinstance(failure, TestFailure):
+            failure = TestFailure(failure)
         if add_err:
-            if not isinstance(failure, TestFailure):
-                failure = TestFailure(failure)
             if is_expected_failure(failure.exc, expecting_failure):
                 runner.addExpectedFailure(test, failure)
             elif isinstance(failure.exc, test.failureException):
@@ -156,5 +156,5 @@ class Test(tasks.Job):
             else:
                 runner.addError(test, failure)
         else:
-            LOGGER.exception('exception')
+            self.logger.error(''.join(failure.trace))
         return failure

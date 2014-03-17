@@ -9,7 +9,7 @@ from pulsar import (send, get_actor, CommandNotFound, async_while, TcpServer,
                     coroutine_return, Connection)
 from pulsar.utils.pep import pickle, default_timer
 from pulsar.apps.test import (ActorTestMixin, run_on_arbiter,
-                              dont_run_with_thread, mute_failure)
+                              dont_run_with_thread)
 
 from examples.echo.manage import Echo, EchoServerProtocol
 

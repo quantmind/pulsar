@@ -1,6 +1,6 @@
 from inspect import ismodule
 
-from pulsar import EventHandler
+from pulsar import EventHandler, multi_async, wait_complete
 from pulsar.utils.pep import native_str
 from pulsar.utils.importer import import_module
 
@@ -70,7 +70,7 @@ class Mapper(EventHandler):
 
     @property
     def default_store(self):
-        '''The default :class:`.Store` for this :class:`Mapper`.
+        '''The default :class:`.Store` for this :class:`.Mapper`.
 
         Used when calling the :meth:`register` method without explicitly
         passing a :class:`.Store`.
@@ -84,19 +84,24 @@ class Mapper(EventHandler):
 
     @property
     def search_engine(self):
-        '''The :class:`SearchEngine` for this :class:`Mapper`. This
-must be created by users. Check :ref:`full text search <tutorial-search>`
-tutorial for information.'''
+        '''The :class:`SearchEngine` for this :class:`.Mapper`.
+
+        This must be created by users.
+        Check :ref:`full text search <tutorial-search>`
+        tutorial for information.'''
         return self._search_engine
 
     def __repr__(self):
-        return '%s %s' % (self.__class__.__name.__, self._registered_models)
+        return '%s %s' % (self.__class__.__name__, self._registered_models)
 
     def __str__(self):
         return str(self._registered_models)
 
     def __contains__(self, model):
         return model in self._registered_models
+
+    def __iter__(self):
+        return iter(self._registered_models)
 
     def __getitem__(self, model):
         return self._registered_models[model]
@@ -242,11 +247,23 @@ if no managers were removed.'''
         return list(self._register_applications(applications, models,
                                                 stores))
 
-    def create_all(self):
+    @wait_complete
+    def create_tables(self, remove_existing=False):
         '''Loop though :attr:`registered_models` and issue the
-        :meth:`Manager.create_all` method.'''
+        :meth:`.Manager.create_table` method.'''
+        executed = []
         for manager in self._registered_models.values():
-            manager.create_all()
+            executed.append(manager.create_table(remove_existing))
+        return multi_async(executed, loop=self._loop)
+
+    @wait_complete
+    def drop_tables(self):
+        '''Loop though :attr:`registered_models` and issue the
+        :meth:`.Manager.drop_table` method.'''
+        executed = []
+        for manager in self._registered_models.values():
+            executed.append(manager.drop_table())
+        return multi_async(executed, loop=self._loop)
 
     # PRIVATE METHODS
     def _register_applications(self, applications, models, stores):
