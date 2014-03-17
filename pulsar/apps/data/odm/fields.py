@@ -229,10 +229,10 @@ class BooleanField(Field):
     to_json = to_python
 
     def to_store(self, value, store=None):
-        try:
+        if value not in NONE_EMPTY:
             return 1 if value else 0
-        except Exception:
-            return None
+        else:
+            return self.get_default()
 
 
 class FloatField(Field):
@@ -293,15 +293,20 @@ class PickleField(Field):
 
     def to_python(self, value, store=None):
         if value is not None:
-            try:
+            if store:
+                value = store.decode_bytes(value)
+            if isinstance(value, bytes):
                 return pickle.loads(value)
-            except Exception:
+            else:
                 return value
 
     def to_store(self, value, store=None):
         if value is not None:
             try:
-                return pickle.dumps(value, protocol=2)
+                value = pickle.dumps(value, protocol=2)
+                if store:
+                    value = store.encode_bytes(value)
+                return value
             except Exception:
                 return None
 

@@ -12,7 +12,7 @@ class User(odm.Model):
     is_active = odm.BooleanField(index=True, default=True)
     can_login = odm.BooleanField(index=True, default=True)
     is_superuser = odm.BooleanField(index=True, default=False)
-    data = odm.JSONField()
+    data = odm.JSONField(required=False)
 
 
 class StoreTest(object):

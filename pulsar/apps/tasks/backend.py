@@ -79,6 +79,7 @@ And the backend will be selected via::
 '''
 import sys
 import time
+from functools import partial
 from datetime import datetime, timedelta
 from hashlib import sha1
 
@@ -654,7 +655,7 @@ class TaskBackend(EventHandler):
         task.clear_update(id=task_id, time_ended=time.time(),
                           status=status, result=result)
         try:
-            self.models.task.update(task)
+            yield self.models.task.update(task)
         finally:
             self.concurrent_tasks.discard(task_id)
             self.finish_task(task_id, lock_id)
@@ -818,9 +819,11 @@ class PulsarTaskBackend(TaskBackend):
 
     def get_tasks(self, ids):
         base = self.models.task._meta.table_name
-        pipeline = self.models.task._read_store.pipeline()
+        store = self.models.task._read_store
+        pipeline = store.pipeline()
         for pk in ids:
-            pipeline.hgetall('%s:%s' % (base, pk), factory=Task)
+            pipeline.hgetall('%s:%s' % (base, pk),
+                             factory=partial(store.build_model, Task))
         return pipeline.commit()
 
     def flush(self):

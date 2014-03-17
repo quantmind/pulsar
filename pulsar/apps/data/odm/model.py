@@ -17,9 +17,9 @@ from .manager import class_prepared, makeManyToManyRelatedManager
 from .fields import (Field, AutoIdField, ForeignKey, CompositeIdField,
                      FieldError, NONE_EMPTY)
 
-model_attributes = set(('_access_cache', '_modified', '_stored'))
+model_attributes = set(('_access_cache', '_modified', '_store'))
 private_fields = set(('Type',) + tuple(model_attributes))
-primary_keys = ('id', '_id', 'ID', '_ID')
+primary_keys = ('id', '_id', 'ID', '_ID', 'pk', 'PK', '_pk')
 
 
 def get_fields(bases, attrs):
@@ -228,13 +228,14 @@ class ModelMeta(object):
         if invalid values are stored in ``instance``.
         '''
         fields = instance._meta.dfields
-        if instance._stored is None:
+        if instance._store is None:
             for field in fields.values():
                 name = field.attname
-                value = instance.get(name)
+                value = instance.get_raw(name)
                 if field.to_store:
                     value = field.to_store(value, store)
-                if (value in NONE_EMPTY) and field.required:
+                if ((value in NONE_EMPTY) and field.required and
+                        not isinstance(field, AutoIdField)):
                     raise FieldError("Field '%s' is required for '%s'." %
                                      (name, self))
                 if isinstance(value, dict):
@@ -346,7 +347,7 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
 
     def __init__(self, *args, **kwargs):
         self._access_cache = set()
-        self._stored = None
+        self._store = None
         self._modified = None
         self.update(*args, **kwargs)
         self._modified = set()
@@ -378,6 +379,12 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
     def get(self, field, default=None):
         try:
             return self.__getitem__(field)
+        except KeyError:
+            return default
+
+    def get_raw(self, field, default=None):
+        try:
+            return super(Model, self).__getitem__(field)
         except KeyError:
             return default
 

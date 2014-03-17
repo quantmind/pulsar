@@ -59,25 +59,19 @@ class Test(tasks.Job):
             error = yield self._run(runner, testcls, 'setUpClass',
                                     add_err=False)
         # run the tests
-        if not error:
-            if sequential:
-                # Loop over all test cases in class
-                for test in all_tests:
-                    yield self.run_test(test, runner)
-            else:
-                all = (self.run_test(test, runner) for test in all_tests)
-                yield multi_async(all, loop=loop)
-        else:
+        if sequential:
+            # Loop over all test cases in class
             for test in all_tests:
-                runner.startTest(test)
-                self.add_failure(test, runner, error)
-                runner.stopTest(test)
+                yield self.run_test(test, runner, error)
+        else:
+            all = (self.run_test(test, runner, error) for test in all_tests)
+            yield multi_async(all, loop=loop)
         if not skip_tests:
             yield self._run(runner, testcls, 'tearDownClass', add_err=False)
         runner.stopTestClass(testcls)
         coroutine_return(runner.result)
 
-    def run_test(self, test, runner):
+    def run_test(self, test, runner, error=None):
         '''Run a ``test`` function using the following algorithm
 
         * Run :meth:`_pre_setup` method if available in :attr:`testcls`.
@@ -86,7 +80,7 @@ class Test(tasks.Job):
         * Run :meth:`tearDown` method in :attr:`testcls`.
         * Run :meth:`_post_teardown` method if available in :attr:`testcls`.
         '''
-        err = None
+        error_added = False
         try:
             runner.startTest(test)
             testMethod = getattr(test, test._testMethodName)
@@ -97,21 +91,25 @@ class Test(tasks.Job):
                           getattr(testMethod,
                                   '__unittest_skip_why__', ''))
                 runner.addSkip(test, reason)
-                err = True
+                error = True
+            elif error:
+                self.add_failure(test, runner, error)
+                error_added = True
             else:
-                err = yield self._run(runner, test, '_pre_setup')
-                if not err:
-                    err = yield self._run(runner, test, 'setUp')
-                    if not err:
-                        err = yield self._run(runner, test,
-                                              test._testMethodName)
-                    err = yield self._run(runner, test, 'tearDown', err)
-                err = yield self._run(runner, test, '_post_teardown', err)
-                runner.stopTest(test)
-        except Exception as error:
-            self.add_failure(test, runner, error, err)
+                error = yield self._run(runner, test, '_pre_setup')
+                if not error:
+                    error = yield self._run(runner, test, 'setUp')
+                    if not error:
+                        error = yield self._run(runner, test,
+                                                test._testMethodName)
+                    error = yield self._run(runner, test, 'tearDown', error)
+                error = yield self._run(runner, test, '_post_teardown', error)
+            runner.stopTest(test)
+        except Exception as exc:
+            if not error_added:
+                self.add_failure(test, runner, exc, error)
         else:
-            if not err:
+            if not error:
                 runner.addSuccess(test)
 
     def _run(self, runner, test, methodName, previous=None, add_err=True):

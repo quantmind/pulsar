@@ -71,6 +71,11 @@ class Manager(AbstractQuery):
 
         The :class:`.Store` associated with this manager
 
+    .. attribute:: _read_store
+
+        The :class:`.Store` associated with this manager for
+        read-only operations
+
     .. attribute:: _mapper
 
         The :class:`.Mapper` where this :class:`.Manager` is registered
@@ -171,8 +176,8 @@ class Manager(AbstractQuery):
     insert = new
 
     @wait_complete
-    def save(self, instance):
-        '''Save an existing ``instance`` of :attr:`_model`.
+    def update(self, instance):
+        '''Update an existing ``instance`` of :attr:`_model`.
 
         If the instance already contain the primary key this is considered
         and update, otherwise an insert.
@@ -180,7 +185,7 @@ class Manager(AbstractQuery):
         with self._mapper.begin() as t:
             t.add(instance)
         return t.wait(lambda t: instance)
-    update = save
+    save = update
 
 
 def load_relmodel(field, callback):

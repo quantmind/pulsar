@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from pulsar.utils.pep import to_string
 
 
@@ -22,8 +24,16 @@ range_lookups = {
     'istartswith': str_lower_case,
     'iendswith': str_lower_case}
 
+lookup_value = namedtuple('lookup_value', 'lookup value')
+
 
 class QueryError(Exception):
+    pass
+
+
+class ModelNotFound(QueryError):
+    '''Raised when a :meth:`.Manager.get` method does not find any model
+    '''
     pass
 
 
@@ -244,6 +254,21 @@ class CompiledQuery(object):
         Return a :class:`~asyncio.Future`
         '''
         raise NotImplementedError
+
+    def models(self, data):
+        '''Build a list of models from a list of dictionaries.
+
+        Uses the :meth:`.Store.build_model` method
+
+        :param data: list of dictionaries
+        :return: a list of models
+        '''
+        models = []
+        build = self._store.build_model
+        model = self._meta.model
+        for params in data:
+            models.append(build(model, params))
+        return models
 
     def _build(self):
         '''Compile the :attr:`query`

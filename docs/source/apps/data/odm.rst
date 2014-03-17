@@ -168,7 +168,7 @@ Model Meta
    :member-order: bysource
 
 
-.. module:: pulsar.apps.data.odm.mapper
+.. module:: pulsar.apps.data.odm.manager
 
 Manager
 ~~~~~~~~~~~~~~~
@@ -177,6 +177,8 @@ Manager
    :members:
    :member-order: bysource
 
+
+.. module:: pulsar.apps.data.odm.mapper
 
 Mapper
 ~~~~~~~~~~~~~~~

@@ -170,6 +170,22 @@ class Store(Producer):
         '''Flush the store.'''
         raise NotImplementedError
 
+    def encode_bytes(self, data):
+        '''Encode bytes ``data``
+
+        :param data: a bytes string
+        :return: bytes or string
+        '''
+        return data
+
+    def dencode_bytes(self, data):
+        '''Decode bytes ``data``
+
+        :param data: bytes or string
+        :return: bytes
+        '''
+        return data
+
     #    ODM SUPPORT
     #######################
     def create_table(self, model, remove_existing=False):
@@ -219,6 +235,11 @@ class Store(Producer):
         This method is used by the :ref:`object data mapper <odm>`.
         '''
         return False
+
+    def build_model(self, model, *args, **kwargs):
+        instance = model(*args, **kwargs)
+        instance._store = self
+        return instance
 
     def model_data(self, model, action):
         '''A generator of field/value pair for the store

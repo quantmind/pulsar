@@ -5,12 +5,16 @@ class CauchDbQuery(odm.CompiledQuery):
     '''Implements the CompiledQuery for couchdb
     '''
     def _build(self):
-        query = self.query
+        self.aggregated = []
+        query = self._query
         if query._excludes:
             raise NotImplementedError
         if query._filters:
-            aggregated = self.aggregate(query._filters)
+            self.aggregated.append(self.aggregate(query._filters))
+
+    def all(self):
+        if self.aggregated:
+            raise NotImplementedError
         else:
-            aggregated = 0
-        for aggregate in aggregated:
-            pass
+            query = yield self._store.query_model_view(self._meta, 'all')
+        return self.models((q['value'] for q in query['rows']))

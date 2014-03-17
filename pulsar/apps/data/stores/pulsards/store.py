@@ -110,6 +110,8 @@ class PulsarStore(Store):
         '''Execute a :class:`.Transaction`
         '''
         pipe = self.pipeline()
+        update_insert = set((Command.INSERT, Command.UPDATE))
+        #
         # loop through models
         for tmodel in transaction.models():
             if tmodel.dirty:
@@ -119,7 +121,7 @@ class PulsarStore(Store):
             action = command.action
             if not action:
                 pipe.execute(*command.args)
-            elif action == Command.INSERT:
+            elif action in update_insert:
                 model = command.args
                 pkvalue = model.pkvalue()
                 key = self.basekey(model._meta, pkvalue)
@@ -130,18 +132,13 @@ class PulsarStore(Store):
         for command in transaction.commands:
             if command.action == Command.INSERT:
                 model = command.args
-                model._stored = model.id
+                model._store = self
 
     def get_model(self, model, pk):
         key = '%s%s:%s' % (self.namespace, model._meta.table_name,
                            to_string(pk))
         return self.execute('hgetall', key,
-                            factory=partial(self._get_model, model))
-
-    def _get_model(self, model, *args, **kwargs):
-        instance = model(*args, **kwargs)
-        instance._stored = instance.id
-        return instance
+                            factory=partial(self.build_model, model))
 
     def compile_query(self, query):
         compiled = CompiledQuery(self.pipeline())

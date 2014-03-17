@@ -23,12 +23,15 @@ CouchDBStore
 
 .. _CouchDB: http://couchdb.apache.org/
 '''
+from base64 import b64encode, b64decode
 from asyncio import Lock
 
 from pulsar import coroutine_return, task, multi_async, ImproperlyConfigured
 from pulsar.apps.http import HttpClient
 from pulsar.apps.data import Store, Command, register_store
 from pulsar.utils.pep import zip
+
+from pulsar.apps.data import odm
 
 from .query import CauchDbQuery
 
@@ -78,6 +81,7 @@ class CouchDBStore(Store):
     def scheme(self):
         return self._scheme
 
+    # COUCHDB operation
     def info(self):
         '''Information about the running server
         '''
@@ -97,6 +101,34 @@ class CouchDBStore(Store):
         return
         return self.request('delete', self._database, '_design', name)
 
+    def create_database(self, dbname=None, **kw):
+        '''Create a new database
+
+        :param dbname: optional database name. If not provided
+            the :attr:`~Store._database` is created instead.
+        '''
+        return self.request('put', dbname or self._database)
+
+    def delete_database(self, dbname=None):
+        '''Delete a database ``dbname``
+        '''
+        return self.request('delete', dbname or self._database)
+
+    def all_databases(self):
+        '''The list of all databases
+        '''
+        return self.request('get', '_all_dbs')
+
+    def update_document(self, document):
+        return self.request('post', self._database, **document)
+
+    def update_documents(self, dbname, documents, new_edits=True):
+        '''Bulk update/insert of documents in a database
+        '''
+        return self.request('post', dbname, '_bulk_docs', docs=documents,
+                            new_edits=new_edits)
+
+    # ODM
     def create_table(self, model, remove_existing=False):
         # Build views
         meta = model._meta
@@ -114,28 +146,6 @@ class CouchDBStore(Store):
         '''Drop model table by simply removing model design views'''
         return self.delete_design(model._meta.table_name)
 
-    def create_database(self, dbname=None, **kw):
-        '''Create a new database
-
-        :param dbname: optional database name. If not provided
-            the :attr:`~Store._database` is created instead.
-        '''
-        return self.request('put', dbname or self._database)
-
-    def delete_database(self, dbname=None):
-        '''Delete a database ``dbname``
-        '''
-        return self.request('delete', dbname or self._database)
-
-    def update_document(self, document):
-        return self.request('post', self._database, **document)
-
-    def update_documents(self, dbname, documents, new_edits=True):
-        '''Bulk update/insert of documents in a database
-        '''
-        return self.request('post', dbname, '_bulk_docs', docs=documents,
-                            new_edits=new_edits)
-
     def execute_transaction(self, transaction):
         '''Execute a ``transaction``
         '''
@@ -143,7 +153,6 @@ class CouchDBStore(Store):
         for tmodel in transaction.models():
             if tmodel.dirty:
                 raise NotImplementedError
-
         updates = []
         models = []
         update_insert = set((Command.INSERT, Command.UPDATE))
@@ -161,9 +170,39 @@ class CouchDBStore(Store):
             executed = yield self.update_documents(self._database, updates)
             for doc, model in zip(executed, models):
                 model['id'] = doc['id']
+                model._store = self
+
+    @task
+    def get_model(self, model, pkvalue):
+        try:
+            data = yield self.request('get', self._database, pkvalue)
+        except CouchDbError:
+            raise odm.ModelNotFound(pkvalue)
+        else:
+            coroutine_return(self.build_model(model, data))
+
+    def query_model_view(self, model, view_name, key=None):
+        meta = model._meta
+        kwargs = {}
+        if key:
+            kwargs['key'] = json.dumps(key)
+        return self.request('get', self._database, '_design', meta.table_name,
+                            '_view', view_name, **kwargs)
 
     def compile_query(self, query):
         return CauchDbQuery(self, query)
+
+    def build_model(self, model, *args, **kwargs):
+        pkname = model._meta.pkname()
+        if args:
+            params = args[0]
+            if pkname not in params:
+                params[pkname] = params.pop('_id')
+            params.pop('_rev')
+            params.pop('Type')
+        instance = model(*args, **kwargs)
+        instance._store = self
+        return instance
 
     # INTERNALS
     @task
@@ -198,6 +237,12 @@ class CouchDBStore(Store):
                 raise couch_db_error(**data)
             else:
                 coroutine_return(data)
+
+    def encode_bytes(self, data):
+        return b64encode(data).decode(self._encoding)
+
+    def dencode_bytes(self, data):
+        return b64decode(data.encode(self._encoding))
 
     def model_data(self, model, action):
         '''A generator of field/value pair for the store

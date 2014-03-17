@@ -506,6 +506,7 @@ class Task(asyncio.Task):
 
 ############################################################### MultiFuture
 class MultiFuture(Future):
+
     def __init__(self, loop, data, type=None, raise_on_error=True):
         super(MultiFuture, self).__init__(loop=loop)
         self._futures = {}
@@ -520,13 +521,13 @@ class MultiFuture(Future):
             data = enumerate(data)
         self._stream = type()
         for key, value in data:
-            if self._state == _PENDING:
-                value = self._get_set_item(key, maybe_async(value, self._loop))
-                if isinstance(value, Future):
-                    self._futures[key] = value
-                    value.add_done_callback(partial(self._future_done, key))
-        if self._state == _PENDING:
-            self._check()
+            value = self._get_set_item(key, maybe_async(value, self._loop))
+            if isinstance(value, Future):
+                self._futures[key] = value
+                value.add_done_callback(partial(self._future_done, key))
+            elif self._state != _PENDING:
+                break
+        self._check()
 
     @property
     def failures(self):
@@ -534,14 +535,17 @@ class MultiFuture(Future):
 
     ###    INTERNALS
     def _check(self):
-        if not self._futures:
+        if not self._futures and self._state == _PENDING:
             self.set_result(self._stream)
 
-    def _future_done(self, key, future):
-        self._futures.pop(key, None)
-        if self._state == _PENDING:
-            self._get_set_item(key, future)
-            self._check()
+    def _future_done(self, key, future, inthread=False):
+        if inthread or future._loop is self._loop:
+            self._futures.pop(key, None)
+            if self._state == _PENDING:
+                self._get_set_item(key, future)
+                self._check()
+        else:
+            self._loop.call_soon(self._future_done, key, future, True)
 
     def _get_set_item(self, key, value):
         if isinstance(value, Future):

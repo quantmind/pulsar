@@ -1,4 +1,5 @@
 import os
+from random import choice
 
 from pulsar.apps.data import odm
 from pulsar.apps.test import populate
@@ -11,7 +12,7 @@ def populate_from_file(size, path):
     path = p.join(p.dirname(p.dirname(p.abspath(__file__))), 'data', path)
     with open(path) as f:
         all = f.read()
-    all = all.split('\n')
+    all = [a for a in all.split('\n') if a]
     return populate('choice', size, choice_from=all)
 
 
@@ -37,7 +38,6 @@ class QueryTest(StoreTest):
 
     @classmethod
     def tearDownClass(cls):
-        return
         return cls.models.default_store.delete_database()
 
     @classmethod
@@ -54,7 +54,7 @@ class QueryTest(StoreTest):
                 domains = iter(email_domains)
                 while email in emails:
                     domain = next(domains)
-                    email = '%s.%s@%s' % (name, surname, domain)
+                    email = ('%s.%s@%s' % (name, surname, domain)).lower()
                 base = ('%s%s' % (surname[0], name)).lower()
                 username = base
                 count = 0
@@ -64,7 +64,7 @@ class QueryTest(StoreTest):
                 usernames.add(username)
                 emails.add(email)
                 t.add(user(first_name=name, last_name=surname, email=email,
-                           username=username, active=True))
+                           username=username))
         return t.wait()
 
     def test_user_model(self):
@@ -74,7 +74,26 @@ class QueryTest(StoreTest):
         self.assertTrue('id' in indexes)
 
     def test_query_all(self):
+        store = self.models.user._read_store
         query = self.models.user.query()
         self.assertIsInstance(query, odm.Query)
         all = yield query.all()
         self.assertTrue(all)
+        self.assertEqual(len(all), self.sizes[self.cfg.size])
+        for model in all:
+            self.assertEqual(model._store, store)
+            self.assertTrue(model['first_name'])
+            self.assertTrue(model['last_name'])
+            self.assertTrue(model['email'])
+            self.assertEqual(model['can_login'], True)
+            self.assertEqual(model['is_active'], True)
+            self.assertEqual(model['is_superuser'], False)
+
+    def test_get(self):
+        all = yield self.models.user.query().all()
+        m1 = choice(all)
+        i1 = yield self.models.user.get(m1.id)
+        self.assertEqual(m1, i1)
+        yield self.async.assertRaises(odm.ModelNotFound,
+                                      self.models.user.get, 'kkkkk')
+
