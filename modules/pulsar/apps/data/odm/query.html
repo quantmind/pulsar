@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.data.odm.query &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.8.1-beta.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../../../index.html" />
+    <link rel="up" title="pulsar.apps" href="../../../apps.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+          <li><a href="../../../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/data/odm/query.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.data.odm.query</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
+
+
+<span class="k">def</span> <span class="nf">int_or_float</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">i</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">i</span> <span class="k">else</span> <span class="n">v</span>
+
+
+<span class="n">JSPLITTER</span> <span class="o">=</span> <span class="s">&#39;__&#39;</span>
+<span class="n">pass_through</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+<span class="n">str_lower_case</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">to_string</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<span class="n">range_lookups</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;gt&#39;</span><span class="p">:</span> <span class="n">int_or_float</span><span class="p">,</span>
+    <span class="s">&#39;ge&#39;</span><span class="p">:</span> <span class="n">int_or_float</span><span class="p">,</span>
+    <span class="s">&#39;lt&#39;</span><span class="p">:</span> <span class="n">int_or_float</span><span class="p">,</span>
+    <span class="s">&#39;le&#39;</span><span class="p">:</span> <span class="n">int_or_float</span><span class="p">,</span>
+    <span class="s">&#39;contains&#39;</span><span class="p">:</span> <span class="n">pass_through</span><span class="p">,</span>
+    <span class="s">&#39;startswith&#39;</span><span class="p">:</span> <span class="n">pass_through</span><span class="p">,</span>
+    <span class="s">&#39;endswith&#39;</span><span class="p">:</span> <span class="n">pass_through</span><span class="p">,</span>
+    <span class="s">&#39;icontains&#39;</span><span class="p">:</span> <span class="n">str_lower_case</span><span class="p">,</span>
+    <span class="s">&#39;istartswith&#39;</span><span class="p">:</span> <span class="n">str_lower_case</span><span class="p">,</span>
+    <span class="s">&#39;iendswith&#39;</span><span class="p">:</span> <span class="n">str_lower_case</span><span class="p">}</span>
+
+<span class="n">lookup_value</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;lookup_value&#39;</span><span class="p">,</span> <span class="s">&#39;lookup value&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">QueryError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AbstractQuery</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">_meta</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">exclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">where</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">expressions</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+
+<span class="k">def</span> <span class="nf">query_op</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Decorator for a :class:`Query` operation.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">__name__</span>
+
+    <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">has_query</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clone</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">QueryError</span><span class="p">(</span><span class="s">&#39;Cannot use &quot;</span><span class="si">%s</span><span class="s">&quot; query with </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">))</span>
+
+    <span class="n">_</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">__doc__</span>
+    <span class="n">_</span><span class="o">.</span><span class="n">__name__</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">return</span> <span class="n">_</span>
+
+
+<span class="k">def</span> <span class="nf">update_dict</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a</span>
+
+
+<span class="k">def</span> <span class="nf">update_tuple</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+
+
+<div class="viewcode-block" id="Query"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query">[docs]</a><span class="k">class</span> <span class="nc">Query</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A query for data in a model store.</span>
+
+<span class="sd">    A :class:`Query` is produced in terms of a given :class:`.Manager`,</span>
+<span class="sd">    using the :meth:`~.Manager.query` method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">_filters</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_joins</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_excludes</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_unions</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_intersections</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_where</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_compiled</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">_read_store</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span><span class="o">.</span><span class="n">_meta</span>
+
+    <span class="nd">@query_op</span>
+<div class="viewcode-block" id="Query.filter"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a new :class:`Query` with additional clauses.</span>
+
+<span class="sd">        The clauses corresponds to ``where`` or ``limit`` in a</span>
+<span class="sd">        ``SQL SELECT`` statement.</span>
+
+<span class="sd">        :params kwargs: dictionary of limiting clauses.</span>
+
+<span class="sd">        For example::</span>
+
+<span class="sd">            qs = manager.query().filter(group=&#39;planet&#39;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filters</span> <span class="o">=</span> <span class="n">update_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filters</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+    <span class="nd">@query_op</span>
+<div class="viewcode-block" id="Query.exclude"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.exclude">[docs]</a>    <span class="k">def</span> <span class="nf">exclude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a new :class:`Query` with additional clauses.</span>
+
+<span class="sd">        The clauses correspond to ``EXCEPT`` in a ``SQL SELECT`` statement.</span>
+
+<span class="sd">        Using an equivalent example to the :meth:`filter` method::</span>
+
+<span class="sd">            qs = manager.query()</span>
+<span class="sd">            result1 = qs.exclude(group=&#39;planet&#39;)</span>
+<span class="sd">            result2 = qs.exclude(group=(&#39;planet&#39;,&#39;stars&#39;))</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_excludes</span> <span class="o">=</span> <span class="n">update_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excludes</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+    <span class="nd">@query_op</span>
+<div class="viewcode-block" id="Query.union"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.union">[docs]</a>    <span class="k">def</span> <span class="nf">union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a new :class:`Query` obtained form unions.</span>
+
+<span class="sd">        :param queries: positional :class:`Query` parameters to create an</span>
+<span class="sd">            union with.</span>
+<span class="sd">        For example, lets say we want to have the union</span>
+<span class="sd">        of two queries obtained from the :meth:`filter` method::</span>
+
+<span class="sd">            query = mymanager.query()</span>
+<span class="sd">            qs = query.filter(field1=&#39;bla&#39;).union(query.filter(field2=&#39;foo&#39;))</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">queries</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_unions</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unions</span><span class="p">,</span> <span class="n">queries</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+    <span class="nd">@query_op</span>
+<div class="viewcode-block" id="Query.intersect"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.intersect">[docs]</a>    <span class="k">def</span> <span class="nf">intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a new :class:`Query` obtained form intersection.</span>
+
+<span class="sd">        :param queries: positional :class:`Query` parameters to create an</span>
+<span class="sd">            intersection with.</span>
+<span class="sd">        For example, lets say we want to have the intersection</span>
+<span class="sd">        of two queries obtained from the :meth:`filter` method::</span>
+
+<span class="sd">            query = mymanager.query()</span>
+<span class="sd">            q1 = query.filter(field2=&#39;foo&#39;)</span>
+<span class="sd">            qs = query.filter(field1=&#39;bla&#39;).intersect(q1)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">queries</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intersections</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intersections</span><span class="p">,</span> <span class="n">queries</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+    <span class="nd">@query_op</span>
+    <span class="k">def</span> <span class="nf">where</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">expressions</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">expressions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_where</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_where</span><span class="p">,</span> <span class="n">expressions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@query_op</span>
+    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+<div class="viewcode-block" id="Query.count"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.count">[docs]</a>    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Count the number of objects selected by this :class:`Query`.</span>
+
+<span class="sd">        This method is efficient since the :class:`Query` does not</span>
+<span class="sd">        receive any data from the server apart from the number of</span>
+<span class="sd">        matched elements.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Query.all"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.all">[docs]</a>    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;All objects selected by this :class:`Query`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">compiled</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compiled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compiled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span><span class="o">.</span><span class="n">_read_store</span><span class="o">.</span><span class="n">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compiled</span>
+
+    <span class="k">def</span> <span class="nf">_clone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">__dict__</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;_compiled&#39;</span><span class="p">,):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)):</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">q</span>
+
+</div>
+<div class="viewcode-block" id="CompiledQuery"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.CompiledQuery">[docs]</a><span class="k">class</span> <span class="nc">CompiledQuery</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A signature class for implementing a :class:`.Query` in a</span>
+<span class="sd">    pulsar data :class:`.Store`.</span>
+
+<span class="sd">    .. attribute:: _query</span>
+
+<span class="sd">        The underlying :class:`.Query`</span>
+
+<span class="sd">    .. attribute:: _store</span>
+
+<span class="sd">        The :class:`.Store` executing the :attr:`query`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_query</span> <span class="o">=</span> <span class="n">query</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="o">.</span><span class="n">_meta</span>
+
+<div class="viewcode-block" id="CompiledQuery.count"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.CompiledQuery.count">[docs]</a>    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Count the number of elements matching the :attr:`query`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+<div class="viewcode-block" id="CompiledQuery.all"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.CompiledQuery.all">[docs]</a>    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Fetch all matching elements for the server.</span>
+
+<span class="sd">        Return a :class:`~asyncio.Future`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+<div class="viewcode-block" id="CompiledQuery.models"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.CompiledQuery.models">[docs]</a>    <span class="k">def</span> <span class="nf">models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model</span>
+        <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">models</span>
+</div>
+    <span class="k">def</span> <span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Compile the :attr:`query`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+<div class="viewcode-block" id="CompiledQuery.aggregate"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.CompiledQuery.aggregate">[docs]</a>    <span class="k">def</span> <span class="nf">aggregate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Aggregate lookup parameters.&#39;&#39;&#39;</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">dfields</span>
+        <span class="n">field_lookups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">bits</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">JSPLITTER</span><span class="p">)</span>
+            <span class="n">field_name</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">QueryError</span><span class="p">((</span><span class="s">&#39;Could not filter on model &quot;</span><span class="si">%s</span><span class="s">&quot;. Field &#39;</span>
+                                  <span class="s">&#39;&quot;</span><span class="si">%s</span><span class="s">&quot; does not exist.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)))</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
+            <span class="n">attname</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">attname</span>
+            <span class="n">lookup</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">bits</span><span class="p">:</span>
+                <span class="n">bits</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">bits</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;in&#39;</span><span class="p">:</span>
+                    <span class="n">bits</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">range_lookups</span><span class="p">:</span>
+                    <span class="n">lookup</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="n">remaining</span> <span class="o">=</span> <span class="n">JSPLITTER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">lookup</span><span class="p">:</span>  <span class="c"># this is a range lookup</span>
+                    <span class="n">attname</span><span class="p">,</span> <span class="n">nested</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get_lookup</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span>
+                                                       <span class="n">QuerySetError</span><span class="p">)</span>
+                    <span class="n">lookups</span> <span class="o">=</span> <span class="n">get_lookups</span><span class="p">(</span><span class="n">attname</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">)</span>
+                    <span class="n">lookups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lookup_value</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">nested</span><span class="p">)))</span>
+                    <span class="k">continue</span>
+                <span class="k">elif</span> <span class="n">remaining</span><span class="p">:</span>   <span class="c"># Not a range lookup, must be a nested filter</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">lookups</span> <span class="o">=</span> <span class="n">get_lookups</span><span class="p">(</span><span class="n">attname</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">)):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span><span class="p">,)</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Query</span><span class="p">):</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="n">lookup_value</span><span class="p">(</span><span class="s">&#39;query&#39;</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">compiled</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="n">lookup_value</span><span class="p">(</span><span class="s">&#39;value&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">to_store</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">store</span><span class="p">))</span>
+                <span class="n">lookups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">field_lookups</span>
+
+</div></div>
+<span class="k">def</span> <span class="nf">get_lookups</span><span class="p">(</span><span class="n">attname</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">):</span>
+    <span class="n">lookups</span> <span class="o">=</span> <span class="n">field_lookups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">attname</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lookups</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">lookups</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">field_lookups</span><span class="p">[</span><span class="n">attname</span><span class="p">]</span> <span class="o">=</span> <span class="n">lookups</span>
+    <span class="k">return</span> <span class="n">lookups</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../../../index.html">
+  <img class="logo" width="200" src="../../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2014, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>
