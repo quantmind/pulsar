@@ -270,7 +270,7 @@ Hooks
 An :class:`.Actor` exposes three :ref:`one time events <one-time-event>`
 which can be used to customise its behaviour and two
 :ref:`many times event <many-times-event>` used when accessing actor
-information and when the actor spawn ather actors.
+information and when the actor spawn other actors.
 Hooks are passed as key-valued parameters to the :func:`.spawn` function.
 
 **start**
