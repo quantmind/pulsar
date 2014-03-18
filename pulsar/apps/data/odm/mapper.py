@@ -126,13 +126,13 @@ class Mapper(EventHandler):
         if engine:
             self._search_engine.set_mapper(self)
 
-    def register(self, model, store=None, read_store=None,
+    def register(self, *models, store=None, read_store=None,
                  include_related=True, **params):
-        '''Register a :class:`.Model` with this :class:`Mapper`.
+        '''Register one or several :class:`.Model` with this :class:`Mapper`.
 
-        If the model was already registered it does nothing.
+        If a model was already registered it does nothing.
 
-        :param model: a :class:`.Model` class.
+        :param models: a list of :class:`.Model`
         :param store: a :class:`.Store` or a connection string.
         :param read_store: Optional :class:`.Store` for read
             operations. This is useful when the server has a master/slave
@@ -143,26 +143,27 @@ class Mapper(EventHandler):
             Default ``True``.
         :param params: Additional parameters for the :func:`.create_store`
             function.
-        :return: the number of models registered.
+        :return: a list models registered or a single model if there
+            was only one
         '''
         store = store or self._default_store
         store = create_store(store, **params)
         if read_store:
             read_store = create_store(read_store, *params)
-        registered = 0
-        for model in self.models_from_model(model,
-                                            include_related=include_related):
-            if model in self._registered_models:
-                continue
-            registered += 1
-            default_manager = store.default_manager or Manager
-            manager_class = getattr(model, 'manager_class', default_manager)
-            manager = manager_class(model, store, read_store, self)
-            self._registered_models[model] = manager
-            if model._meta.name not in self._registered_names:
-                self._registered_names[model._meta.name] = manager
-        if registered:
-            return store
+        registered = []
+        for model in models:
+            for model in self.models_from_model(
+                    model, include_related=include_related):
+                if model in self._registered_models:
+                    continue
+                registered.append(model)
+                default_manager = store.default_manager or Manager
+                manager_class = getattr(model, 'manager_class', default_manager)
+                manager = manager_class(model, store, read_store, self)
+                self._registered_models[model] = manager
+                if model._meta.name not in self._registered_names:
+                    self._registered_names[model._meta.name] = manager
+        return registered[0] if len(registered) == 1 else registered
 
     def from_uuid(self, uuid, session=None):
         '''Retrieve a :class:`.Model` from its universally unique identifier

@@ -1,9 +1,3 @@
-'''
-Pulsar is shipped with a :class:`.Store` implementation for redis_
-and :ref:`pulsard-ds <pulsar-data-store>` servers.
-
-.. _redis: http://redis.io/
-'''
 from itertools import chain
 from hashlib import sha1
 
@@ -204,8 +198,12 @@ class Consumer(pulsar.ProtocolConsumer):
                 self.finished(response)
 
 
-class Client(object):
-    '''Client for pulsar and redis stores.
+class RedisClient(object):
+    '''Client for :class:`.RedisStore`.
+
+    .. attribute:: store
+
+        The :class:`.RedisStore` for this client.
     '''
     def __init__(self, store):
         self.store = store
@@ -218,6 +216,8 @@ class Client(object):
         return PubSub(self.store, **kw)
 
     def pipeline(self):
+        '''Create a :class:`.Pipeline` for pipelining commands
+        '''
         return Pipeline(self.store)
 
     def execute(self, command, *args, **options):
@@ -275,11 +275,18 @@ class Client(object):
         Set any number of score, element-name pairs to the key ``name``. Pairs
         can be specified in two ways:
 
-        As *args, in the form of: score1, name1, score2, name2, ...
-        or as **kwargs, in the form of: name1=score1, name2=score2, ...
+        As ``*args``, in the form of::
 
-        The following example would add four values to the 'my-key' key:
-        redis.zadd('my-key', 1.1, 'name1', 2.2, 'name2', name3=3.3, name4=4.4)
+            score1, name1, score2, name2, ...
+
+        or as ``**kwargs``, in the form of::
+
+            name1=score1, name2=score2, ...
+
+        The following example would add four values to the 'my-key' key::
+
+            client.zadd('my-key', 1.1, 'name1', 2.2, 'name2',
+                        name3=3.3, name4=4.4)
         """
         pieces = []
         if args:
@@ -440,8 +447,9 @@ class Client(object):
         return self.execute(command, script, num_keys, *all)
 
 
-class Pipeline(Client):
-
+class Pipeline(RedisClient):
+    '''A :class:`.RedisClient` for pipelining commands
+    '''
     def __init__(self, store):
         self.store = store
         self.reset()

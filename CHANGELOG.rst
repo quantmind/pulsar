@@ -5,7 +5,8 @@ Ver. 0.8.1 - Development
 * Moved :class:`.PulsarDS` server into its own :mod:`pulsar.apps.ds`
   module.
 * The task application can run on redis.
-* MOre documentation for data stores.
+* Added support for couchdb_ datastore (alpha).
+* More documentation for data stores.
 
 Ver. 0.8.0 - 2014-Mar-06
 ===========================
@@ -462,3 +463,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _redis-py: https://github.com/andymccurdy/redis-py
 .. _ujson: https://pypi.python.org/pypi/ujson
 .. _asyncio: http://www.python.org/dev/peps/pep-3156/
+.. _cauchdb: http://couchdb.apache.org/

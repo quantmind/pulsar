@@ -17,9 +17,12 @@ from .manager import class_prepared, makeManyToManyRelatedManager
 from .fields import (Field, AutoIdField, ForeignKey, CompositeIdField,
                      FieldError, NONE_EMPTY)
 
-model_attributes = set(('_access_cache', '_modified', '_store'))
-private_fields = set(('Type',) + tuple(model_attributes))
-primary_keys = ('id', '_id', 'ID', '_ID', 'pk', 'PK', '_pk')
+
+primary_keys = ('id', 'ID', 'pk', 'PK')
+
+
+def is_private_field(field):
+    return field.startswith('_') or field == 'Type'
 
 
 def get_fields(bases, attrs):
@@ -78,7 +81,7 @@ class ModelMeta(object):
     :parameter attributes: Check the :attr:`attributes` attribute.
 
     This is the list of attributes and methods available. All attributes,
-    but the ones mantioned above, are initialized by the object relational
+    but the ones mentioned above, are initialised by the object relational
     mapper.
 
     .. attribute:: abstract
@@ -87,7 +90,8 @@ class ModelMeta(object):
 
     .. attribute:: model
 
-        :class:`Model` for which this class is the database metadata container.
+        :class:`Model` for which this class is the database metadata
+        container.
 
     .. attribute:: name
 
@@ -97,8 +101,8 @@ class ModelMeta(object):
     .. attribute:: app_label
 
         Unless specified it is the name of the directory or file
-        (if at top level) containing the :class:`.Model` definition. It can be
-        customised.
+        (if at top level) containing the :class:`.Model` definition.
+        It can be customised.
 
     .. attribute:: table_name
 
@@ -179,7 +183,7 @@ class ModelMeta(object):
         scalarfields = []
         for name in fields:
             field = fields[name]
-            if name in private_fields:
+            if is_private_field(name):
                 raise FieldError("%s is a reserved field name" % name)
             if field.primary_key:
                 if pk is not None:
@@ -230,7 +234,7 @@ class ModelMeta(object):
         fields = instance._meta.dfields
         if instance._store is None:
             for field in fields.values():
-                name = field.attname
+                name = field.store_name
                 value = instance.get_raw(name)
                 if field.to_store:
                     value = field.to_store(value, store)
@@ -255,60 +259,6 @@ class ModelMeta(object):
                 if value is not None:
                     yield name, value
 
-    def get_sorting(self, sortby, errorClass=None):
-        desc = False
-        if isinstance(sortby, autoincrement):
-            f = self.pk
-            return orderinginfo(sortby, f, desc, self.model, None, True)
-        elif sortby.startswith('-'):
-            desc = True
-            sortby = sortby[1:]
-        if sortby == self.pkname():
-            f = self.pk
-            return orderinginfo(f.attname, f, desc, self.model, None, False)
-        else:
-            if sortby in self.dfields:
-                f = self.dfields[sortby]
-                return orderinginfo(f.attname, f, desc, self.model,
-                                    None, False)
-            sortbys = sortby.split(JSPLITTER)
-            s0 = sortbys[0]
-            if len(sortbys) > 1 and s0 in self.dfields:
-                f = self.dfields[s0]
-                nested = f.get_sorting(JSPLITTER.join(sortbys[1:]), errorClass)
-                if nested:
-                    sortby = f.attname
-                return orderinginfo(sortby, f, desc, self.model, nested, False)
-        errorClass = errorClass or ValueError
-        raise errorClass('"%s" cannot order by attribute "%s". It is not a '
-                         'scalar field.' % (self, sortby))
-
-    def backend_fields(self, fields):
-        '''Return a two elements tuple containing a list
-of fields names and a list of field attribute names.'''
-        dfields = self.dfields
-        processed = set()
-        names = []
-        atts = []
-        pkname = self.pkname()
-        for name in fields:
-            if name == pkname or name in processed:
-                continue
-            elif name in dfields:
-                processed.add(name)
-                field = dfields[name]
-                names.append(field.name)
-                atts.append(field.attname)
-            else:
-                bname = name.split(JSPLITTER)[0]
-                if bname in dfields:
-                    field = dfields[bname]
-                    if field.type in ('json object', 'related object'):
-                        processed.add(name)
-                        names.append(name)
-                        atts.append(name)
-        return names, atts
-
 
 class ModelType(type(dict)):
     '''Model metaclass'''
@@ -322,7 +272,7 @@ class ModelType(type(dict)):
         cls.extend_meta(meta, attrs)
         fields = get_fields(bases, attrs)
         if '__slots__' not in attrs:
-            attrs['__slots__'] = tuple(model_attributes)
+            attrs['__slots__'] = ('privates',)
         new_class = super(ModelType, cls).__new__(cls, name, bases, attrs)
         ModelMeta(new_class, fields, **meta)
         class_prepared.fire(new_class)
@@ -339,21 +289,24 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
     '''A model is a python ``dict`` which represents and item/row
     in a data-store collection/table.
 
-    .. attribute:: _modified
+    .. attribute:: privates
 
-        The set of fields modified after creation
+        Dictionary of private values, not stored in the backend server.
+        Any field starting with underscore is considered a private values.
     '''
     abstract = True
 
     def __init__(self, *args, **kwargs):
-        self._access_cache = set()
-        self._store = None
-        self._modified = None
+        self.privates = {'_access_cache': set(),
+                         '_store': None,
+                         '_modified': None}
         self.update(*args, **kwargs)
-        self._modified = set()
+        self.privates['_modified'] = set()
 
     def __getitem__(self, field):
         field = mstr(field)
+        if is_private_field(field):
+            return self.privates[field]
         if field in primary_keys:
             field = self._meta.pkname()
         value = super(Model, self).__getitem__(field)
@@ -366,27 +319,52 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
 
     def __setitem__(self, field, value):
         field = mstr(field)
-        if field in primary_keys:
-            field = self._meta.pkname()
-        if self._modified is not None:
-            self._access_cache.discard(field)
-            self._add_modified(field, value)
-        super(Model, self).__setitem__(field, value)
+        if is_private_field(field):
+            self.privates[field] = value
+        else:
+            field, value = self._get_field_value(field, value)
+            super(Model, self).__setitem__(field, value)
 
     def __getattr__(self, field):
-        return self.__getitem__(field)
+        try:
+            return self.__getitem__(field)
+        except KeyError as e:
+            raise AttributeError(str(e))
 
     def get(self, field, default=None):
+        '''Get a value at ``field``
+        '''
         try:
             return self.__getitem__(field)
         except KeyError:
             return default
 
+    def set(self, field, value):
+        '''Set the ``value`` at ``field``
+        '''
+        self[field] = value
+
     def get_raw(self, field, default=None):
+        '''Get the raw value at ``field``
+
+        This function does not apply field conversion.
+        '''
         try:
             return super(Model, self).__getitem__(field)
         except KeyError:
             return default
+
+    def pop(self, *args):
+        '''Remove an item from the model
+        '''
+        if not args:
+            raise TypeError('pop expected at least 1 arguments, got 0')
+        else:
+            field = args[0]
+            if is_private_field(field):
+                return self.privates.pop(*args)
+            else:
+                return super(Model, self).pop(*args)
 
     def update(self, *args, **kwargs):
         if len(args) == 1:
@@ -431,18 +409,28 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
     def _update_modify(self, iterable):
         if isinstance(iterable, Mapping):
             iterable = iteritems(iterable)
-        for name, value in iterable:
-            field = mstr(name)
-            if self._modified is not None:
-                self._add_modified(field, value)
-            yield field, value
+        for field, value in iterable:
+            field = mstr(field)
+            if is_private_field(field):
+                self.privates[field] = value
+            else:
+                yield self._get_field_value(field, value)
 
-    def _add_modified(self, field, value):
-        if field in self:
-            if super(Model, self).__getitem__(field) != value:
+    def _get_field_value(self, field, value):
+        if field in primary_keys:
+            field = self._meta.pkname()
+        if field in self._meta.dfields:
+            f = self._meta.dfields[field]
+            value = f.get_value(self, value)
+            field = f.store_name
+        if self._modified is not None:
+            self._access_cache.discard(field)
+            if field in self:
+                if super(Model, self).__getitem__(field) != value:
+                    self._modified.add(field)
+            else:
                 self._modified.add(field)
-        else:
-            self._modified.add(field)
+        return field, value
 
     @classmethod
     def _many2many_through_model(cls, field):

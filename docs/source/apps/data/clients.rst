@@ -6,14 +6,48 @@ Datastore Clients
 
 .. automodule:: pulsar.apps.data.store
 
+Getting Started
+=====================
+
+.. _connection-string:
+
+Connection String
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The connection string is a way to specify the various parameters for the
+data store connection. All :class:`.Store` support a connection string
+of the form::
+
+    <scheme>://<username>:<password>@<host>/<database>?param1=...&param2=...
+
+
+backend to use. Redis supports the following
+parameters:
+
+* ``db``, the database number.
+* ``namespace``, the namespace for all the keys used by the backend.
+* ``password``, database password.
+* ``timeout``, connection timeout (0 is an asynchronous connection).
+
+A full connection string could be::
+
+    redis://127.0.0.1:6379?db=3&password=bla&namespace=test.&timeout=5
+
+
 Implement a Store
 ==================
 
 When implementing a new :class:`.Store` there are several methods which need
 to be covered:
 
-* :meth:`Store.connect` to create a new connection
-* :meth:`Store.execute` to execute a command on the store server
+* :meth:`~Store.ping` to check if the server is available
+* :meth:`~Store.connect` to create a new connection
+* :meth:`~Store.execute` to execute a command on the store server
+
+These additional methods must be implemented only if the store supports
+the :ref:`object data mapper <odm>`:
+
+* :meth:`~Store.execute_transaction` execute a transaction
 
 A new store needs to be registered via the :func:`register_store`
 function.

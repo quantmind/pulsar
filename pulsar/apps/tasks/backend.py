@@ -184,14 +184,14 @@ class TaskConsumer(object):
 
 
 class Task(odm.Model):
-    '''A model containing task execution data.
+    '''A data :class:`.Model` containing task execution data.
     '''
     id = odm.CharField(primary_key=True)
     '''Task unique identifier.
     '''
     lock_id = odm.CharField(required=False)
     name = odm.CharField(index=True)
-    time_queued = odm.FloatField()
+    time_queued = odm.FloatField(default=time.time)
     time_started = odm.FloatField(required=False)
     time_ended = odm.FloatField(required=False)
     '''The timestamp indicating when this has finished.
@@ -201,11 +201,11 @@ class Task(odm.Model):
 
     If the task is not started before this value it is ``REVOKED``.
     '''
-    status = odm.IntegerField(index=True)
+    status = odm.IntegerField(index=True, default=states.QUEUED)
     '''flag indicating the :ref:`task status <task-state>`
     '''
-    kwargs = odm.PickleField(required=False)
-    result = odm.PickleField(required=False)
+    kwargs = odm.PickleField()
+    result = odm.PickleField()
 
     def done(self):
         '''Return ``True`` if the :class:`Task` has finshed.

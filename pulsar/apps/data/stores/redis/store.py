@@ -5,14 +5,14 @@ from pulsar.utils.pep import to_string
 from pulsar.apps.data import register_store, Store, Command
 from pulsar.apps.ds import redis_parser
 
-from .client import Client, Pipeline, Consumer, ResponseError
+from .client import RedisClient, Pipeline, Consumer, ResponseError
 from .pubsub import PubSub
 
 
-class PulsarStoreConnection(Connection):
+class RedisStoreConnection(Connection):
 
     def __init__(self, *args, **kw):
-        super(PulsarStoreConnection, self).__init__(*args, **kw)
+        super(RedisStoreConnection, self).__init__(*args, **kw)
         self.parser = self._producer._parser_class()
 
     def execute(self, *args, **options):
@@ -26,10 +26,10 @@ class PulsarStoreConnection(Connection):
         return consumer.on_finished
 
 
-class PulsarStore(Store):
-    '''Pulsar :class:`.Store` implementation.
+class RedisStore(Store):
+    '''Redis :class:`.Store` implementation.
     '''
-    protocol_factory = partial(PulsarStoreConnection, Consumer)
+    protocol_factory = partial(RedisStoreConnection, Consumer)
     supported_queries = frozenset(('filter', 'exclude'))
 
     def _init(self, namespace=None, parser_class=None, pool_size=50,
@@ -60,11 +60,11 @@ class PulsarStore(Store):
         return (self._dns, self._encoding)
 
     def client(self):
-        '''Get a client for the Store'''
-        return Client(self)
+        '''Get a :class:`.RedisClient` for the Store'''
+        return RedisClient(self)
 
     def pipeline(self):
-        '''Get a client for the Store'''
+        '''Get a :class:`.Pipeline` for the Store'''
         return Pipeline(self)
 
     def pubsub(self, protocol=None):
@@ -132,13 +132,13 @@ class PulsarStore(Store):
         for command in transaction.commands:
             if command.action == Command.INSERT:
                 model = command.args
-                model._store = self
+                model['_store'] = self
 
-    def get_model(self, model, pk):
-        key = '%s%s:%s' % (self.namespace, model._meta.table_name,
+    def get_model(self, manager, pk):
+        key = '%s%s:%s' % (self.namespace, manager._meta.table_name,
                            to_string(pk))
         return self.execute('hgetall', key,
-                            factory=partial(self.build_model, model))
+                            factory=partial(self.build_model, manager))
 
     def compile_query(self, query):
         compiled = CompiledQuery(self.pipeline())
@@ -171,7 +171,3 @@ class CompiledQuery(object):
 
     def __init__(self, pipe, query):
         self.pipe = pipe
-
-
-register_store('pulsar',
-               'pulsar.apps.data.stores.pulsards.store.PulsarStore')

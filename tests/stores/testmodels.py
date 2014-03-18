@@ -1,18 +1,29 @@
 __test__ = False
+from datetime import datetime, timedelta
 
 from pulsar.apps.data import odm
+
+
+default_expiry = lambda: datetime.now() + timedelta(days=7)
 
 
 class User(odm.Model):
     username = odm.CharField(unique=True)
     password = odm.CharField(required=False, hidden=True)
-    first_name = odm.CharField(index=True)
-    last_name = odm.CharField(index=True)
-    email = odm.CharField(unique=True)
-    is_active = odm.BooleanField(index=True, default=True)
-    can_login = odm.BooleanField(index=True, default=True)
-    is_superuser = odm.BooleanField(index=True, default=False)
-    data = odm.JSONField(required=False)
+    first_name = odm.CharField(required=False, index=True)
+    last_name = odm.CharField(required=False, index=True)
+    email = odm.CharField(required=False, unique=True)
+    is_active = odm.BooleanField(default=True)
+    can_login = odm.BooleanField(default=True)
+    is_superuser = odm.BooleanField(default=False)
+    data = odm.JSONField()
+
+
+class Session(odm.Model):
+    '''A session model with a hash table as data store.'''
+    data = odm.JSONField()
+    expiry = odm.DateTimeField(default=default_expiry)
+    user = odm.ForeignKey(User)
 
 
 class StoreTest(object):

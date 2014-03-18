@@ -1,4 +1,5 @@
 import pickle
+from functools import partial
 from base64 import b64encode
 from datetime import date, datetime
 
@@ -71,11 +72,11 @@ class Field(UnicodeMixin):
 
         Field name, created by the ``odm`` at runtime.
 
-    .. attribute:: attname
+    .. attribute:: store_name
 
-        The attribute name for the field, created by the :meth:`get_attname`
+        The name for the field, created by the :meth:`get_store_name`
         method at runtime. For most field, its value is the same as the
-        :attr:`name`. It is the field sorted in the backend database.
+        :attr:`name`. It is the field stored in the backend database.
 
     .. attribute:: _meta
 
@@ -108,17 +109,20 @@ class Field(UnicodeMixin):
         Default ``False``.
     '''
     primary_key = False
+    required = True
     to_python = None
     to_store = None
     index = False
     _default = None
     creation_counter = 0
 
-    def __init__(self, unique=False, primary_key=None, required=True,
+    def __init__(self, unique=False, primary_key=None, required=None,
                  index=None, hidden=None, as_cache=False, **extras):
         self.foreign_keys = ()
         self.primary_key = (self.primary_key if primary_key is None else
                             primary_key)
+        if required is None:
+            required = self.required
         index = index if index is not None else self.index
         if self.primary_key:
             self.unique = True
@@ -149,7 +153,7 @@ class Field(UnicodeMixin):
         function users should never call.'''
         assert not self.name, 'Field %s is already registered' % self
         self.name = name
-        self.attname = self.get_attname()
+        self.store_name = self.get_store_name()
         self._meta = meta = model._meta
         meta.dfields[name] = self
         if self.to_python:
@@ -165,9 +169,12 @@ class Field(UnicodeMixin):
         if self.index:
             self._meta.indexes.append(self)
 
-    def get_attname(self):
-        '''Generate the :attr:`attname` at runtime'''
+    def get_store_name(self):
+        '''Generate the :attr:`store_name` at runtime'''
         return self.name
+
+    def get_value(self, instance, value):
+        return value
 
     def to_json(self, value, store=None):
         return value
@@ -207,6 +214,7 @@ class AutoIdField(Field):
 
 
 class IntegerField(Field):
+    index = True
     repr_type = 'numeric'
 
     def to_python(self, value, store=None):
@@ -214,11 +222,18 @@ class IntegerField(Field):
             return int(value)
         except Exception:
             return None
-    to_store = to_python
+
+    def to_store(self, value, store=None):
+        if value not in NONE_EMPTY:
+            return int(value)
+        else:
+            return self.get_default()
+
     to_json = to_python
 
 
 class BooleanField(Field):
+    index = True
     repr_type = 'bool'
 
     def to_python(self, value, store=None):
@@ -236,6 +251,7 @@ class BooleanField(Field):
 
 
 class FloatField(Field):
+    index = True
     repr_type = 'numeric'
 
     def to_python(self, value, store=None):
@@ -243,8 +259,13 @@ class FloatField(Field):
             return float(value)
         except Exception:
             return None
-    to_store = to_python
     to_json = to_python
+
+    def to_store(self, value, store=None):
+        if value not in NONE_EMPTY:
+            return float(value)
+        else:
+            return self.get_default()
 
 
 class DateField(Field):
@@ -267,7 +288,8 @@ class DateField(Field):
                 value = date2timestamp(value)
             else:
                 raise FieldValueError('%s not a valid date' % value)
-        return value
+        else:
+            return self.get_default()
     to_json = to_store
 
     def _handle_extras(self, auto_now=False, **extras):
@@ -290,6 +312,8 @@ class DateTimeField(DateField):
 
 
 class PickleField(Field):
+    required = False
+    index = False
 
     def to_python(self, value, store=None):
         if value is not None:
@@ -321,61 +345,64 @@ class PickleField(Field):
 
 class JSONField(CharField):
     '''A JSON field which implements automatic conversion to
-and from an object and a JSON string. It is the responsability of the
-user making sure the object is JSON serializable.
+    and from an object and a JSON string.
 
-There are few extra parameters which can be used to customize the
-behaviour and how the field is stored in the back-end server.
+    It is the responsability of the
+    user making sure the object is JSON serializable.
 
-:parameter encoder_class: The JSON class used for encoding.
+    There are few extra parameters which can be used to customize the
+    behaviour and how the field is stored in the back-end server.
 
-    Default: :class:`stdnet.utils.jsontools.JSONDateDecimalEncoder`.
+    :parameter encoder_class: The JSON class used for encoding.
 
-:parameter decoder_hook: A JSON decoder function.
+        Default: :class:`stdnet.utils.jsontools.JSONDateDecimalEncoder`.
 
-    Default: :class:`stdnet.utils.jsontools.date_decimal_hook`.
+    :parameter decoder_hook: A JSON decoder function.
 
-:parameter as_string: Set the :attr:`as_string` attribute.
+        Default: :class:`stdnet.utils.jsontools.date_decimal_hook`.
 
-    Default ``True``.
+    :parameter as_string: Set the :attr:`as_string` attribute.
 
-.. attribute:: as_string
+        Default ``True``.
 
-    A boolean indicating if data should be serialized
-    into a single JSON string or it should be used to create several
-    fields prefixed with the field name and the double underscore ``__``.
+    .. attribute:: as_string
 
-    Default ``True``.
+        A boolean indicating if data should be serialized
+        into a single JSON string or it should be used to create several
+        fields prefixed with the field name and the double underscore ``__``.
 
-    Effectively, a :class:`JSONField` with ``as_string`` attribute set to
-    ``False`` is a multifield, in the sense that it generates several
-    field-value pairs. For example, lets consider the following::
+        Default ``True``.
 
-        class MyModel(odm.StdModel):
-            name = odm.SymbolField()
-            data = odm.JSONField(as_string=False)
+        Effectively, a :class:`JSONField` with ``as_string`` attribute set to
+        ``False`` is a multifield, in the sense that it generates several
+        field-value pairs. For example, lets consider the following::
 
-    And::
+            class MyModel(odm.StdModel):
+                name = odm.SymbolField()
+                data = odm.JSONField(as_string=False)
 
-        >>> m = MyModel(name='bla',
-        ...             data={'pv': {'': 0.5, 'mean': 1, 'std': 3.5}})
-        >>> m.cleaned_data
-        {'name': 'bla', 'data__pv': 0.5, 'data__pv__mean': '1',
-         'data__pv__std': '3.5', 'data': '""'}
-        >>>
+        And::
 
-    The reason for setting ``as_string`` to ``False`` is to allow
-    the :class:`JSONField` to define several fields at runtime,
-    without introducing new :class:`Field` in your model class.
-    These fields behave exactly like standard fields and therefore you
-    can, for example, sort queries with respect to them::
+            >>> m = MyModel(name='bla',
+            ...             data={'pv': {'': 0.5, 'mean': 1, 'std': 3.5}})
+            >>> m.cleaned_data
+            {'name': 'bla', 'data__pv': 0.5, 'data__pv__mean': '1',
+             'data__pv__std': '3.5', 'data': '""'}
+            >>>
 
-        >>> MyModel.objects.query().sort_by('data__pv__std')
-        >>> MyModel.objects.query().sort_by('-data__pv')
+        The reason for setting ``as_string`` to ``False`` is to allow
+        the :class:`JSONField` to define several fields at runtime,
+        without introducing new :class:`Field` in your model class.
+        These fields behave exactly like standard fields and therefore you
+        can, for example, sort queries with respect to them::
 
-    which can be rather useful feature.
-'''
-    _default = {}
+            >>> MyModel.objects.query().sort_by('data__pv__std')
+            >>> MyModel.objects.query().sort_by('-data__pv')
+
+        which can be rather useful feature.
+    '''
+    required = False
+    index = False
 
     def to_python(self, value, backend=None):
         if value is None:
@@ -392,10 +419,10 @@ behaviour and how the field is stored in the back-end server.
 
     def value_from_data(self, instance, data):
         if self.as_string:
-            return data.pop(self.attname, None)
+            return data.pop(self.store_name, None)
         else:
             return flat_to_nested(data, instance=instance,
-                                  attname=self.attname,
+                                  store_name=self.store_name,
                                   loads=self.encoder.loads)
 
     def get_sorting(self, name, errorClass):
@@ -406,15 +433,16 @@ behaviour and how the field is stored in the back-end server.
             return super(JSONField, self).get_lookup(name, errorClass)
         else:
             if name:
-                name = JSPLITTER.join((self.attname, name))
+                name = JSPLITTER.join((self.store_name, name))
             return (name, None)
 
 
 class ForeignKey(Field):
     '''A :class:`.Field` defining a :ref:`one-to-many <one-to-many>`
     objects relationship.
-    Requires a positional argument: the :class:`.Model` to which the model
-    is related. For example::
+
+    It requires a positional argument representing the :class:`.Model`
+    to which the model containing this field is related. For example::
 
         class Folder(odm.Model):
             name = odm.CharField()
@@ -427,7 +455,8 @@ class ForeignKey(Field):
 
         odm.ForeignKey('self')
 
-    Behind the scenes, stdnet appends "_id" to the field name to create
+    Behind the scenes, the :ref:`odm <odm>` appends ``_id`` to the field
+    name to create
     its field name in the back-end data-server. In the above example,
     the database field for the ``File`` model will have a ``folder_id`` field.
 
@@ -436,6 +465,7 @@ class ForeignKey(Field):
         Optional name to use for the relation from the related object
         back to ``self``.
     '''
+    index = True
     proxy_class = LazyForeignKey
     related_manager_class = OneToManyRelatedManager
 
@@ -451,7 +481,7 @@ class ForeignKey(Field):
 
     def register_with_related_model(self):
         # add the RelatedManager proxy to the model holding the field
-        # setattr(self.model, self.name, self.proxy_class(self))
+        setattr(self._meta.model, self.name, self.proxy_class(self))
         # self._meta.related[self.name] =
         load_relmodel(self, self._set_relmodel)
 
@@ -467,20 +497,17 @@ class ForeignKey(Field):
                              'and field {2}'.format(self.related_name,
                                                     meta, self))
 
-    def get_attname(self):
+    def get_store_name(self):
         return '%s_id' % self.name
 
-    def get_value(self, instance, *bits):
-        related = getattr(instance, self.name)
-        return related.get_attr_value(JSPLITTER.join(bits)
-                                      ) if bits else related
-
-    def set_value(self, instance, value):
+    def get_value(self, instance, value):
         if isinstance(value, self.relmodel):
-            setattr(instance, self.name, value)
-            return value
+            id = value.id
+            if id:
+                instance['_%s' % self.name] = value
+            return id
         else:
-            return super(ForeignKey, self).set_value(instance, value)
+            return value
 
     def register_with_model(self, name, model):
         super(ForeignKey, self).register_with_model(name, model)
@@ -511,12 +538,6 @@ class CompositeIdField(Field):
         if len(self.fields) < 2:
             raise FieldError('At least two fields are required by composite '
                              'CompositeIdField')
-
-    def get_value(self, instance, *bits):
-        if bits:
-            raise AttributeError
-        values = tuple((getattr(instance, f.attname) for f in self.fields))
-        return hash(values)
 
     def register_with_model(self, name, model):
         fields = []
@@ -585,7 +606,7 @@ argument.
     def _set_relmodel(self, relmodel):
         relmodel._manytomany_through_model(self)
 
-    def get_attname(self):
+    def get_store_name(self):
         return None
 
     def todelete(self):

@@ -269,7 +269,7 @@ def wait_complete(method):
     @wraps(method)
     def _(self, *args, **kwargs):
         loop = self._loop
-        future = method(self, *args, **kwargs)
+        future = async(method(self, *args, **kwargs), loop=loop)
         if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
             return loop.run_until_complete(future)
         else:

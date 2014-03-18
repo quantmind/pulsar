@@ -219,10 +219,13 @@ class Store(Producer):
         '''
         raise NotImplementedError
 
-    def get_model(self, model, pkvalue):
+    def get_model(self, manager, pkvalue):
         '''Fetch an instance of a ``model`` with primary key ``pkvalue``.
 
         This method required by the :ref:`object data mapper <odm>`.
+
+        :param manager: the :class:`.Manager` calling this method
+        :param pkvalue: the primary key of the model to retrieve
         '''
         raise NotImplementedError
 
@@ -234,11 +237,11 @@ class Store(Producer):
 
         This method is used by the :ref:`object data mapper <odm>`.
         '''
-        return False
+        return True
 
-    def build_model(self, model, *args, **kwargs):
-        instance = model(*args, **kwargs)
-        instance._store = self
+    def build_model(self, manager, *args, **kwargs):
+        instance = manager(*args, **kwargs)
+        instance['_store'] = self
         return instance
 
     def model_data(self, model, action):
@@ -446,20 +449,31 @@ def parse_store_url(url):
 def create_store(url, loop=None, **kw):
     '''Create a new client :class:`Store` for a valid ``url``.
 
-    A valid ``url`` taks the following forms::
+    A valid ``url`` takes the following forms:
+
+    :ref:`Pulsar datastore <store_pulsar>`::
 
         pulsar://user:password@127.0.0.1:6410
-        redis://user:password@127.0.0.1:6500/11?namespace=testdb.
-        postgresql://user:password@127.0.0.1:6500/testdb
-        couchdb://user:password@127.0.0.1:6500/testdb
 
-    :param loop: optional event loop, if not provided it is obtained
-        via the ``get_event_loop`` method. If not loop is installed a bright
-        new event loop is created via the :func:`.new_event_loop`.
-        In the latter case the event loop is employed only for synchronous type
-        requests via the :meth:`~.EventLoop.run_until_complete` method.
-    :param kw: additional key-valued parameters to pass to the :class:`Store`
-        initialisation method.
+    :ref:`Redis <store_redis>`::
+
+        redis://user:password@127.0.0.1:6500/11?namespace=testdb
+
+    :ref:`CouchDb <store_couchdb>`::
+
+        couchdb://user:password@127.0.0.1:6500/testdb
+        https+couchdb://user:password@127.0.0.1:6500/testdb
+
+    :param loop: optional event loop, obtained by
+        :func:`~asyncio.get_event_loop` if not provided.
+        To create a synchronous client pass a new event loop created via
+        the :func:`~asyncio.new_event_loop`.
+        In the latter case the event loop is employed only for synchronous
+        type requests via the :meth:`~asyncio.BaseEventLoop.run_until_complete`
+        method.
+    :param kw: additional key-valued parameters to pass to the :class:`.Store`
+        initialisation method. These parameters are processed by the
+        :meth:`.Store._init` method.
     :return: a :class:`Store`.
     '''
     if isinstance(url, Store):

@@ -4,18 +4,23 @@
 Available Clients
 ====================
 
+.. _store_redis:
 
 Redis
 ================================
 
-.. automodule:: pulsar.apps.data.stores.pulsards.client
+.. automodule:: pulsar.apps.data.stores.redis
 
+
+.. _store_pulsar:
 
 PulsarDs
 ================================
 
-It is the same as redis.
+It has the same implementation as :ref:`redis client <store_redis>`.
 
+
+.. _store_couchdb:
 
 CouchDb
 ===========

@@ -27,6 +27,7 @@ from base64 import b64encode, b64decode
 from asyncio import Lock
 
 from pulsar import coroutine_return, task, multi_async, ImproperlyConfigured
+from pulsar.utils.system import json
 from pulsar.apps.http import HttpClient
 from pulsar.apps.data import Store, Command, register_store
 from pulsar.utils.pep import zip
@@ -70,7 +71,7 @@ all_count = '''function (doc) {{
 '''
 
 index_view = '''function (doc) {{
-    if(doc.Type == '{0}' && doc.{1}) emit(doc.{1}, doc);
+    if(doc.Type == '{0}' && doc.{1} !== undefined) emit(doc.{1}, doc);
 }};
 '''
 
@@ -138,7 +139,7 @@ class CouchDBStore(Store):
             if index.primary_key:
                 views['all'] = {'map': all_view.format(table)}
             else:
-                name = index.attname
+                name = index.store_name
                 views[name] = {'map': index_view.format(table, name)}
         return self.create_design(table, views)
 
@@ -169,40 +170,40 @@ class CouchDBStore(Store):
         if updates:
             executed = yield self.update_documents(self._database, updates)
             for doc, model in zip(executed, models):
-                model['id'] = doc['id']
-                model._store = self
+                if doc.get('ok'):
+                    model['id'] = doc['id']
+                    model['_rev'] = doc['rev']
+                    model['_store'] = self
 
     @task
-    def get_model(self, model, pkvalue):
+    def get_model(self, manager, pkvalue):
         try:
             data = yield self.request('get', self._database, pkvalue)
         except CouchDbError:
             raise odm.ModelNotFound(pkvalue)
         else:
-            coroutine_return(self.build_model(model, data))
+            coroutine_return(self.build_model(manager, data))
 
-    def query_model_view(self, model, view_name, key=None):
+    def query_model_view(self, model, view_name, key=None, keys=None):
         meta = model._meta
         kwargs = {}
         if key:
             kwargs['key'] = json.dumps(key)
+        elif keys:
+            kwargs['keys'] = json.dumps(keys)
         return self.request('get', self._database, '_design', meta.table_name,
                             '_view', view_name, **kwargs)
 
     def compile_query(self, query):
         return CauchDbQuery(self, query)
 
-    def build_model(self, model, *args, **kwargs):
-        pkname = model._meta.pkname()
+    def build_model(self, manager, *args, **kwargs):
+        pkname = manager._meta.pkname()
         if args:
             params = args[0]
             if pkname not in params:
                 params[pkname] = params.pop('_id')
-            params.pop('_rev')
-            params.pop('Type')
-        instance = model(*args, **kwargs)
-        instance._store = self
-        return instance
+        return super(CouchDBStore, self).build_model(manager, *args, **kwargs)
 
     # INTERNALS
     @task
@@ -254,9 +255,11 @@ class CouchDBStore(Store):
             yield _id if key == pkname else key, value
         yield 'Type', meta.table_name
 
-    def _init(self, headers=None, loop=None, **kw):
+    def _init(self, headers=None, loop=None, namespace=None, **kw):
         if not self._database:
-            self._database = 'defaultdb'
+            self._database = namespace or 'defaultdb'
+        elif namespace:
+            self._database = '%s_%s' % (self._database, namespace)
         bits =self._name.split('+')
         if len(bits) == 2:
             self._scheme = bits[0]

@@ -70,7 +70,7 @@ class QueryTest(StoreTest):
     def test_user_model(self):
         meta = self.models.user._meta
         self.assertEqual(len(meta.indexes), 8)
-        indexes = [f.attname for f in meta.indexes]
+        indexes = [f.store_name for f in meta.indexes]
         self.assertTrue('id' in indexes)
 
     def test_query_all(self):
@@ -96,4 +96,12 @@ class QueryTest(StoreTest):
         self.assertEqual(m1, i1)
         yield self.async.assertRaises(odm.ModelNotFound,
                                       self.models.user.get, 'kkkkk')
+
+    def test_filter_username(self):
+        all = yield self.models.user.query().all()
+        m1 = choice(all)
+        models = yield self.models.user.filter(username=m1.username).all()
+        self.assertTrue(models)
+        for model in models:
+            self.assertEqual(model.username, m1.username)
 

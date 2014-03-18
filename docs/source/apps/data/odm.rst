@@ -16,24 +16,40 @@ Features
 * Allows the use of different stores for different models
 * Design to be fast, lightweight and non-intrusive
 
+.. _odm-intro:
+
 Getting Started
 =========================
 
-The first step is to create a :class:`.Model` to play with::
+The first step is to create the two :class:`.Model` we are going to use
+throughout this tutorial::
+
+    from datetime import datetime, timedelta
 
     from pulsar.apps.data import odm
 
     class User(odm.Model):
         username = odm.CharField(index=True)
         password = odm.CharField()
-        email = odm.CharField(index=True)
+        email = odm.CharField(index=True, required=False)
         is_active = odm.BoolField(default=True)
+
+
+    class Session(odm.Model):
+        expiry = odm.DateTimeField(
+            default=lambda: datetime.now() + timedelta(days=7))
+        user = odm.ForeignKey(User)
+        data = odm.JSONField()
+
+
+The first model contains some basic information for a user, while the second
+represents a session (think of it as a web session for example).
 
 
 Mapper & Managers
 =======================
 
-A :class:`.Model` such as the ``User`` class defined above has no information
+A :class:`.Model`, such as the ``User`` class defined above, has no information
 regarding database, it is purely a dictionary with additional information
 about fields.
 
@@ -52,12 +68,11 @@ Registration is straightforward and it is achieved by::
 
     models = odm.Mapper('redis://127.0.0.1:6379/7')
 
-    models.register(User)
-    models.register(Group)
+    models.register(User, Session)
 
 The :ref:`connection string <connection-string>` passed as first argument when
-initialising a :class:`.Mapper`, is the default data store of that
-:class:`.Mapper`.
+initialising a :class:`.Mapper`, is the default :ref:`data store <data-stores>`
+of that :class:`.Mapper`.
 It is possible to register models to a different data-staores by passing
 a connection string to the :meth:`.Mapper.register` method::
 
@@ -69,6 +84,8 @@ Accessing managers
 Given a ``models`` :class:`.Mapper` there are two ways one can access a
 model :class:`.Manager` to perform database queries.
 
+.. _mapper-dict:
+
 * **Dictionary interface** is the most straightforward and intuitive way::
 
 
@@ -78,19 +95,22 @@ model :class:`.Manager` to perform database queries.
     # Create a new Instrument and save it to the backend server
     inst = models[Instrument].new(...)
 
+.. _mapper-dotted:
 
 * **Dotted notation** is an alternative and more pythonic way of achieving the
   same manager via an attribute of the :class:`.Mapper`, the attribute
-  name is given by the :class:`.Model` metaclass :class:`~Meta.name`.
+  name is given by the :class:`.Model` metaclass :attr:`~.ModelMeta.name`.
   It is, by default, the class name of the model in lower case::
 
       query = models.instrument.query()
       inst = models.instrument.new(...)
 
-This interface is less verbose than the :ref:`dictionary notation <router-dict>`
-and, importantly, it reduces to zero the imports one has to write on python
-modules using your application, in other words it makes your application
-less dependent on the actual implementation of :class:`StdModel`.
+The :ref:`dotted notation <mapper-dotted>` is less verbose than the
+:ref:`dictionary notation <mapper-dict>` and, importantly, it allows to
+access models and their managers without the need to directly
+import the model definition. All you need is the :class:`.Mapper`.
+In other words it makes your application
+less dependent on the actual implementation of a :class:`.Model`.
 
 Create an instance
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -142,8 +162,132 @@ It is possible to supply a custom manager class by specifying the
         manager_class = CustomManager
 
 
-Quering Data
+Querying Data
 ==================
+
+Relationships
+==================
+
+There are two :class:`.Field` which represent relationships between
+:class:`.Model`.
+
+
+.. _one-to-many:
+
+One-to-many
+~~~~~~~~~~~~~~
+
+The :ref:`Session model <odm-intro>` in our example,
+contains one :class:`.ForeignKey` field which represents a relationship
+between the ``Session`` model and
+the ``User`` model.
+
+In the context of relational databases a
+`foreign key <http://en.wikipedia.org/wiki/Foreign_key>`_ is
+a referential constraint between two tables.
+The same definition applies to pulsar odm. The field store the ``id`` of a
+related :class:`.Model` instance.
+
+**Key Properties**
+
+* Behind the scenes, stdnet appends ``_id`` to the field name to create its
+  field name in the back-end data-server. In other words, the
+  :ref:`Session model <odm-intro>` is mapped into a data-store
+  object with the following entries::
+
+        {'id': ...,
+         'user_id': ...,
+         'expiry': ...
+         'data': ...}
+
+* The attribute of a :class:`ForeignKey` can be used to access the related
+  object. Using the :ref:`router we created during registration <tutorial-registration>`
+  we get a position instance::
+
+        p = router.position.get(id=1)
+        p.instrument    # an instance of Instrument
+
+  The second statement is equivalent to::
+
+        router.instrument.query().get(id=p.instrument_id)
+
+  .. note::
+
+    The loading of the related object is done, **once only**, the first time
+    the attribute is accessed. This means, the first time you access a related
+    field on a model instance, there will be a roundtrip to the backend server.
+
+  Behind the scenes, this functionality is implemented by Python
+  descriptors_. This shouldn't really matter to you, but we point it out here
+  for the curious.
+
+* Depending on your application, sometimes it makes a lot of sense to use the
+  :ref:`load_related query method <performance-loadrelated>` to boost
+  performance when accessing many related fields.
+
+* When the object referenced by a :class:`ForeignKey` is deleted, stdnet also
+  deletes the object containing the :class:`ForeignKey` unless the
+  :class:`Field.required` attribute of the :class:`ForeignKey` field is set
+  to ``False``.
+
+
+
+.. _many-to-many:
+
+Many-to-many
+~~~~~~~~~~~~~~~~~~
+
+The :class:`ManyToManyField` can be used to create relationships between
+multiple elements of two models. It requires a positional argument, the class
+to which the model is related.
+
+Behind the scenes, stdnet creates an intermediary model to represent
+the many-to-many relationship. We refer to this as the ``through model``.
+
+Let's consider the following example::
+
+    class Group(odm.StdModel):
+        name = odm.SymbolField(unique=True)
+
+    class User(odm.StdModel):
+        name = odm.SymbolField(unique=True)
+        groups = odm.ManyToManyField(Group, related_name='users')
+
+Both the ``User`` class and instances of if have the ``groups`` attribute which
+is an instance of A many-to-may :class:`stdnet.odm.related.One2ManyRelatedManager`.
+Accessing the manager via the model class or an instance has different outcomes.
+
+
+.. _through-model:
+
+The through model
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Custom through model
+~~~~~~~~~~~~~~~~~~~~~~
+
+In most cases, the standard through model implemented by stdnet is
+all you need. However, sometimes you may need to associate data with the
+relationship between two models.
+
+For these situations, stdnet allows you to specify the model that will be used
+to govern the many-to-many relationship and pass it to the
+:class:`ManyToManyField` constructor via the ``through`` argument.
+Consider this simple example::
+
+    from stdnet import odm
+
+    class Element(odm.StdModel):
+        name = odm.SymbolField()
+
+    class CompositeElement(odm.StdModel):
+        weight = odm.FloatField()
+
+    class Composite(odm.StdModel):
+        name = odm.SymbolField()
+        elements = odm.ManyToManyField(Element, through=CompositeElement,
+                                       related_name='composites')
+
 
 
 

@@ -1,6 +1,6 @@
-from pulsar import Event, wait_complete
+from pulsar import Event, wait_complete, chain_future, add_callback
 
-from .query import AbstractQuery, Query, QueryError
+from .query import AbstractQuery, Query, QueryError, ModelNotFound
 
 
 RECURSIVE_RELATIONSHIP_CONSTANT = 'self'
@@ -108,7 +108,9 @@ class Manager(AbstractQuery):
     def __call__(self, *args, **kwargs):
         '''Create a new model without commiting to database.
         '''
-        return self._model(*args, **kwargs)
+        instance = self._model(*args, **kwargs)
+        instance['_mapper'] = self._mapper
+        return instance
 
     def create_table(self, remove_existing=False):
         '''Create the table/collection for the :attr:`_model`
@@ -127,16 +129,17 @@ class Manager(AbstractQuery):
         '''
         return self.query_class(self)
 
+    @wait_complete
     def get(self, *args, **kw):
+        '''Get a single model
+        '''
         if len(args) == 1:
-            return self._read_store.get_model(self._model, args[0])
+            return self._read_store.get_model(self, args[0])
         elif args:
             raise QueryError("'get' expected at most 1 argument, %s given" %
                              len(args))
         else:
-            qs = self.filter(**kw)
-            return self._get(qs)
-            raise NotImplementedError
+            return chain_future(self.filter(**kw).all(), self._get)
 
     def filter(self, **kwargs):
         '''Build a :class:`.Query` object with filtering clauses
@@ -186,6 +189,14 @@ class Manager(AbstractQuery):
             t.add(instance)
         return t.wait(lambda t: instance)
     save = update
+
+    def _get(self, data):
+        if len(data) == 1:
+            return data[0]
+        elif data:
+            raise QueryError('Expected one model got %s' % len(data))
+        else:
+            raise ModelNotFound
 
 
 def load_relmodel(field, callback):
@@ -238,48 +249,48 @@ class LazyProxy(object):
         raise NotImplementedError('cannot access %s from manager' % self)
 
     def __get__(self, instance, instance_type=None):
-        if not self.field.class_field:
-            if instance is None:
-                return self
-            return self.load(instance, instance.session)
-        else:
+        if instance is None:
             return self
+        return self.load(instance)
 
 
 class LazyForeignKey(LazyProxy):
-    '''Descriptor for a :class:`ForeignKey` field.'''
-    def load(self, instance, session=None, backend=None):
-        return instance._load_related_model(self.field)
+    '''Descriptor for a :class:`.ForeignKey` field.
+    '''
+    def load(self, instance):
+        field = self.field
+        key = '_%s' % field.name
+        if field.store_name in instance:
+            pk = instance[field.store_name]
+            value = instance.get(key)
+            if value is not None:
+                if value.id == pk:
+                    return value
+                else:
+                    instance.privates.pop(key)
+            mapper = instance.get('_mapper')
+            if mapper:
+                return add_callback(mapper[field.relmodel].get(pk),
+                                    lambda value: instance.set(key, value))
 
     def __set__(self, instance, value):
         if instance is None:
             raise AttributeError("%s must be accessed via instance" %
-                                 self._field.name)
+                                 self.field.name)
         field = self.field
+        key = '_%s' % field.name
         if value is not None and not isinstance(value, field.relmodel):
             raise ValueError(
                 'Cannot assign "%r": "%s" must be a "%s" instance.' %
                 (value, field, field.relmodel._meta.name))
-
-        cache_name = self.field.get_cache_name()
-        # If we're setting the value of a OneToOneField to None,
-        # we need to clear
-        # out the cache on any old related object. Otherwise, deleting the
-        # previously-related object will also cause this object to be deleted,
-        # which is wrong.
-        if value is None:
-            # Look up the previously-related object, which may still
-            # be available since we've not yet cleared out the related field.
-            related = getattr(instance, cache_name, None)
-            if related:
-                try:
-                    delattr(instance, cache_name)
-                except AttributeError:
-                    pass
-            setattr(instance, self.field.attname, None)
+        instance.pop(key, None)
+        if isinstance(value, field.relmodel):
+            instance[field.store_name] = value
+            instance[key] = value.id
         else:
-            setattr(instance, self.field.attname, value.pkvalue())
-            setattr(instance, cache_name, value)
+            instance.pop(field.store_name)
+            instance.pop(key)
+
 
 
 class RelatedManager(Manager):
