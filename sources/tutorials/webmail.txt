@@ -4,7 +4,7 @@
 Twisted Integration
 ======================
 
-.. automodule:: examples.webmail.tx
+.. automodule:: pulsar.apps.tx
 
 
 Web Mail

@@ -91,21 +91,33 @@ in its corresponding collection/table.</li>
 </ul>
 </div>
 <div class="section" id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<p>The first step is to create a <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> to play with:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">odm</span>
+<span id="odm-intro"></span><h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>The first step is to create the two <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> we are going to use
+throughout this tutorial:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">odm</span>
 
 <span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">username</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">password</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
-    <span class="n">email</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="n">is_active</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">BoolField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Session</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">expiry</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">))</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">JSONField</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>The first model contains some basic information for a user, while the second
+represents a session (think of it as a web session for example).</p>
 </div>
 <div class="section" id="mapper-managers">
 <h2>Mapper &amp; Managers<a class="headerlink" href="#mapper-managers" title="Permalink to this headline">¶</a></h2>
-<p>A <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> such as the <tt class="docutils literal"><span class="pre">User</span></tt> class defined above has no information
+<p>A <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a>, such as the <tt class="docutils literal"><span class="pre">User</span></tt> class defined above, has no information
 regarding database, it is purely a dictionary with additional information
 about fields.</p>
 <div class="section" id="registration">
@@ -118,13 +130,12 @@ Registration is straightforward and it is achieved by:</p>
 
 <span class="n">models</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">Mapper</span><span class="p">(</span><span class="s">&#39;redis://127.0.0.1:6379/7&#39;</span><span class="p">)</span>
 
-<span class="n">models</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
-<span class="n">models</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Group</span><span class="p">)</span>
+<span class="n">models</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">Session</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The <em class="xref std std-ref">connection string</em> passed as first argument when
-initialising a <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>, is the default data store of that
-<a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>.
+<p>The <a class="reference internal" href="clients.html#connection-string"><em>connection string</em></a> passed as first argument when
+initialising a <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>, is the default <a class="reference internal" href="stores.html#data-stores"><em>data store</em></a>
+of that <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>.
 It is possible to register models to a different data-staores by passing
 a connection string to the <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper.register" title="pulsar.apps.data.odm.mapper.Mapper.register"><tt class="xref py py-meth docutils literal"><span class="pre">Mapper.register()</span></tt></a> method:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">models</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MyModel</span><span class="p">,</span> <span class="s">&#39;redis://127.0.0.1:6379/8&#39;</span><span class="p">)</span>
@@ -135,7 +146,7 @@ a connection string to the <a class="reference internal" href="#pulsar.apps.data
 <h3>Accessing managers<a class="headerlink" href="#accessing-managers" title="Permalink to this headline">¶</a></h3>
 <p>Given a <tt class="docutils literal"><span class="pre">models</span></tt> <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a> there are two ways one can access a
 model <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager" title="pulsar.apps.data.odm.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">Manager</span></tt></a> to perform database queries.</p>
-<ul>
+<ul id="mapper-dict">
 <li><p class="first"><strong>Dictionary interface</strong> is the most straightforward and intuitive way:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># Create a Query for Instrument</span>
 <span class="n">query</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">Instrument</span><span class="p">]</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
@@ -145,9 +156,11 @@ model <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager"
 </pre></div>
 </div>
 </li>
+</ul>
+<ul id="mapper-dotted">
 <li><p class="first"><strong>Dotted notation</strong> is an alternative and more pythonic way of achieving the
 same manager via an attribute of the <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>, the attribute
-name is given by the <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> metaclass <tt class="xref py py-class docutils literal"><span class="pre">name</span></tt>.
+name is given by the <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> metaclass <a class="reference internal" href="#pulsar.apps.data.odm.model.ModelMeta.name" title="pulsar.apps.data.odm.model.ModelMeta.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a>.
 It is, by default, the class name of the model in lower case:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">query</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">instrument</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
 <span class="n">inst</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">instrument</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
@@ -155,10 +168,12 @@ It is, by default, the class name of the model in lower case:</p>
 </div>
 </li>
 </ul>
-<p>This interface is less verbose than the <em class="xref std std-ref">dictionary notation</em>
-and, importantly, it reduces to zero the imports one has to write on python
-modules using your application, in other words it makes your application
-less dependent on the actual implementation of <tt class="xref py py-class docutils literal"><span class="pre">StdModel</span></tt>.</p>
+<p>The <a class="reference internal" href="#mapper-dotted"><em>dotted notation</em></a> is less verbose than the
+<a class="reference internal" href="#mapper-dict"><em>dictionary notation</em></a> and, importantly, it allows to
+access models and their managers without the need to directly
+import the model definition. All you need is the <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>.
+In other words it makes your application
+less dependent on the actual implementation of a <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a>.</p>
 </div>
 <div class="section" id="create-an-instance">
 <h3>Create an instance<a class="headerlink" href="#create-an-instance" title="Permalink to this headline">¶</a></h3>
@@ -204,8 +219,115 @@ It is possible to supply a custom manager class by specifying the
 </div>
 </div>
 </div>
-<div class="section" id="quering-data">
-<h2>Quering Data<a class="headerlink" href="#quering-data" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="querying-data">
+<h2>Querying Data<a class="headerlink" href="#querying-data" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="relationships">
+<h2>Relationships<a class="headerlink" href="#relationships" title="Permalink to this headline">¶</a></h2>
+<p>There are two <a class="reference internal" href="#pulsar.apps.data.odm.fields.Field" title="pulsar.apps.data.odm.fields.Field"><tt class="xref py py-class docutils literal"><span class="pre">Field</span></tt></a> which represent relationships between
+<a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a>.</p>
+<div class="section" id="one-to-many">
+<span id="id1"></span><h3>One-to-many<a class="headerlink" href="#one-to-many" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="#odm-intro"><em>Session model</em></a> in our example,
+contains one <a class="reference internal" href="#pulsar.apps.data.odm.fields.ForeignKey" title="pulsar.apps.data.odm.fields.ForeignKey"><tt class="xref py py-class docutils literal"><span class="pre">ForeignKey</span></tt></a> field which represents a relationship
+between the <tt class="docutils literal"><span class="pre">Session</span></tt> model and
+the <tt class="docutils literal"><span class="pre">User</span></tt> model.</p>
+<p>In the context of relational databases a
+<a class="reference external" href="http://en.wikipedia.org/wiki/Foreign_key">foreign key</a> is
+a referential constraint between two tables.
+The same definition applies to pulsar odm. The field store the <tt class="docutils literal"><span class="pre">id</span></tt> of a
+related <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> instance.</p>
+<p><strong>Key Properties</strong></p>
+<ul>
+<li><p class="first">Behind the scenes, stdnet appends <tt class="docutils literal"><span class="pre">_id</span></tt> to the field name to create its
+field name in the back-end data-server. In other words, the
+<a class="reference internal" href="#odm-intro"><em>Session model</em></a> is mapped into a data-store
+object with the following entries:</p>
+<div class="highlight-python"><pre>{&#x27;id&#x27;: ...,
+ &#x27;user_id&#x27;: ...,
+ &#x27;expiry&#x27;: ...
+ &#x27;data&#x27;: ...}</pre>
+</div>
+</li>
+<li><p class="first">The attribute of a <tt class="xref py py-class docutils literal"><span class="pre">ForeignKey</span></tt> can be used to access the related
+object. Using the <em class="xref std std-ref">router we created during registration</em>
+we get a position instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">p</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">instrument</span>    <span class="c"># an instance of Instrument</span>
+</pre></div>
+</div>
+<p>The second statement is equivalent to:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">router</span><span class="o">.</span><span class="n">instrument</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">instrument_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The loading of the related object is done, <strong>once only</strong>, the first time
+the attribute is accessed. This means, the first time you access a related
+field on a model instance, there will be a roundtrip to the backend server.</p>
+</div>
+<p>Behind the scenes, this functionality is implemented by Python
+<a href="#id3"><span class="problematic" id="id4">descriptors_</span></a>. This shouldn&#8217;t really matter to you, but we point it out here
+for the curious.</p>
+</li>
+<li><p class="first">Depending on your application, sometimes it makes a lot of sense to use the
+<em class="xref std std-ref">load_related query method</em> to boost
+performance when accessing many related fields.</p>
+</li>
+<li><p class="first">When the object referenced by a <tt class="xref py py-class docutils literal"><span class="pre">ForeignKey</span></tt> is deleted, stdnet also
+deletes the object containing the <tt class="xref py py-class docutils literal"><span class="pre">ForeignKey</span></tt> unless the
+<tt class="xref py py-class docutils literal"><span class="pre">Field.required</span></tt> attribute of the <tt class="xref py py-class docutils literal"><span class="pre">ForeignKey</span></tt> field is set
+to <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="many-to-many">
+<span id="id2"></span><h3>Many-to-many<a class="headerlink" href="#many-to-many" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="xref py py-class docutils literal"><span class="pre">ManyToManyField</span></tt> can be used to create relationships between
+multiple elements of two models. It requires a positional argument, the class
+to which the model is related.</p>
+<p>Behind the scenes, stdnet creates an intermediary model to represent
+the many-to-many relationship. We refer to this as the <tt class="docutils literal"><span class="pre">through</span> <span class="pre">model</span></tt>.</p>
+<p>Let&#8217;s consider the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Group</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">StdModel</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">SymbolField</span><span class="p">(</span><span class="n">unique</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">StdModel</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">SymbolField</span><span class="p">(</span><span class="n">unique</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Group</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s">&#39;users&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Both the <tt class="docutils literal"><span class="pre">User</span></tt> class and instances of if have the <tt class="docutils literal"><span class="pre">groups</span></tt> attribute which
+is an instance of A many-to-may <tt class="xref py py-class docutils literal"><span class="pre">stdnet.odm.related.One2ManyRelatedManager</span></tt>.
+Accessing the manager via the model class or an instance has different outcomes.</p>
+</div>
+<div class="section" id="the-through-model">
+<span id="through-model"></span><h3>The through model<a class="headerlink" href="#the-through-model" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="custom-through-model">
+<h3>Custom through model<a class="headerlink" href="#custom-through-model" title="Permalink to this headline">¶</a></h3>
+<p>In most cases, the standard through model implemented by stdnet is
+all you need. However, sometimes you may need to associate data with the
+relationship between two models.</p>
+<p>For these situations, stdnet allows you to specify the model that will be used
+to govern the many-to-many relationship and pass it to the
+<tt class="xref py py-class docutils literal"><span class="pre">ManyToManyField</span></tt> constructor via the <tt class="docutils literal"><span class="pre">through</span></tt> argument.
+Consider this simple example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">stdnet</span> <span class="kn">import</span> <span class="n">odm</span>
+
+<span class="k">class</span> <span class="nc">Element</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">StdModel</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">SymbolField</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">CompositeElement</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">StdModel</span><span class="p">):</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">FloatField</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">Composite</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">StdModel</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">SymbolField</span><span class="p">()</span>
+    <span class="n">elements</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Element</span><span class="p">,</span> <span class="n">through</span><span class="o">=</span><span class="n">CompositeElement</span><span class="p">,</span>
+                                   <span class="n">related_name</span><span class="o">=</span><span class="s">&#39;composites&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </div>
 <div class="section" id="module-pulsar.apps.data.odm.model">
 <span id="api"></span><h2>API<a class="headerlink" href="#module-pulsar.apps.data.odm.model" title="Permalink to this headline">¶</a></h2>
@@ -217,9 +339,35 @@ It is possible to supply a custom manager class by specifying the
 <dd><p>A model is a python <tt class="docutils literal"><span class="pre">dict</span></tt> which represents and item/row
 in a data-store collection/table.</p>
 <dl class="attribute">
-<dt id="pulsar.apps.data.odm.model.Model._modified">
-<tt class="descname">_modified</tt><a class="headerlink" href="#pulsar.apps.data.odm.model.Model._modified" title="Permalink to this definition">¶</a></dt>
-<dd><p>The set of fields modified after creation</p>
+<dt id="pulsar.apps.data.odm.model.Model.privates">
+<tt class="descname">privates</tt><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.privates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of private values, not stored in the backend server.
+Any field starting with underscore is considered a private values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.odm.model.Model.get">
+<tt class="descname">get</tt><big>(</big><em>field</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a value at <tt class="docutils literal"><span class="pre">field</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.odm.model.Model.set">
+<tt class="descname">set</tt><big>(</big><em>field</em>, <em>value</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the <tt class="docutils literal"><span class="pre">value</span></tt> at <tt class="docutils literal"><span class="pre">field</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.odm.model.Model.get_raw">
+<tt class="descname">get_raw</tt><big>(</big><em>field</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model.get_raw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.get_raw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the raw value at <tt class="docutils literal"><span class="pre">field</span></tt></p>
+<p>This function does not apply field conversion.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.odm.model.Model.pop">
+<tt class="descname">pop</tt><big>(</big><em>*args</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.pop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an item from the model</p>
 </dd></dl>
 
 <dl class="method">
@@ -269,7 +417,7 @@ registered in the global models hashtable.</li>
 </tbody>
 </table>
 <p>This is the list of attributes and methods available. All attributes,
-but the ones mantioned above, are initialized by the object relational
+but the ones mentioned above, are initialised by the object relational
 mapper.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.data.odm.model.ModelMeta.abstract">
@@ -280,7 +428,8 @@ mapper.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.data.odm.model.ModelMeta.model">
 <tt class="descname">model</tt><a class="headerlink" href="#pulsar.apps.data.odm.model.ModelMeta.model" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> for which this class is the database metadata container.</p>
+<dd><p><a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> for which this class is the database metadata
+container.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -294,8 +443,8 @@ can be customised.</p>
 <dt id="pulsar.apps.data.odm.model.ModelMeta.app_label">
 <tt class="descname">app_label</tt><a class="headerlink" href="#pulsar.apps.data.odm.model.ModelMeta.app_label" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unless specified it is the name of the directory or file
-(if at top level) containing the <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> definition. It can be
-customised.</p>
+(if at top level) containing the <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> definition.
+It can be customised.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -388,13 +537,6 @@ information is useful during registration.</p>
 if invalid values are stored in <tt class="docutils literal"><span class="pre">instance</span></tt>.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pulsar.apps.data.odm.model.ModelMeta.backend_fields">
-<tt class="descname">backend_fields</tt><big>(</big><em>fields</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#ModelMeta.backend_fields"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.ModelMeta.backend_fields" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a two elements tuple containing a list
-of fields names and a list of field attribute names.</p>
-</dd></dl>
-
 </dd></dl>
 
 <span class="target" id="module-pulsar.apps.data.odm.manager"></span></div>
@@ -482,6 +624,12 @@ read-only operations</p>
 <dt id="pulsar.apps.data.odm.manager.Manager.query">
 <tt class="descname">query</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/manager.html#Manager.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.manager.Manager.query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build a <a class="reference internal" href="#pulsar.apps.data.odm.query.Query" title="pulsar.apps.data.odm.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.odm.manager.Manager.get">
+<tt class="descname">get</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/manager.html#Manager.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.manager.Manager.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a single model</p>
 </dd></dl>
 
 <dl class="method">
@@ -634,15 +782,15 @@ tutorial for information.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.mapper.Mapper.register">
-<tt class="descname">register</tt><big>(</big><em>model</em>, <em>store=None</em>, <em>read_store=None</em>, <em>include_related=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/mapper.html#Mapper.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.mapper.Mapper.register" title="Permalink to this definition">¶</a></dt>
-<dd><p>Register a <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> with this <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>.</p>
-<p>If the model was already registered it does nothing.</p>
+<tt class="descname">register</tt><big>(</big><em>*models</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/mapper.html#Mapper.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.mapper.Mapper.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register one or several <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> with this <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>.</p>
+<p>If a model was already registered it does nothing.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>model</strong> &#8211; a <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> class.</li>
+<li><strong>models</strong> &#8211; a list of <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a></li>
 <li><strong>store</strong> &#8211; a <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> or a connection string.</li>
 <li><strong>read_store</strong> &#8211; Optional <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> for read
 operations. This is useful when the server has a master/slave
@@ -656,7 +804,8 @@ function.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the number of models registered.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a list models registered or a single model if there
+was only one</p>
 </td>
 </tr>
 </tbody>
@@ -720,7 +869,7 @@ python dotted paths where models are implemented.</li>
 all models found in <em>applications</em> will be included.</li>
 <li><strong>stores</strong> &#8211; optional dictionary which map a model or an
 application to a store
-<em class="xref std std-ref">connection string</em>.</li>
+<a class="reference internal" href="clients.html#connection-string"><em>connection string</em></a>.</li>
 </ul>
 </td>
 </tr>
@@ -911,7 +1060,7 @@ transaction.</td>
 <h3>Field<a class="headerlink" href="#field" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.odm.fields.Field">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">Field</tt><big>(</big><em>unique=False</em>, <em>primary_key=None</em>, <em>required=True</em>, <em>index=None</em>, <em>hidden=None</em>, <em>as_cache=False</em>, <em>**extras</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#Field"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.Field" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">Field</tt><big>(</big><em>unique=False</em>, <em>primary_key=None</em>, <em>required=None</em>, <em>index=None</em>, <em>hidden=None</em>, <em>as_cache=False</em>, <em>**extras</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#Field"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.Field" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class of all <a class="reference internal" href="#module-pulsar.apps.data.odm" title="pulsar.apps.data.odm"><tt class="xref py py-mod docutils literal"><span class="pre">odm</span></tt></a> Fields.</p>
 <p>Each field is specified as a <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> class attribute.</p>
 <dl class="attribute">
@@ -964,11 +1113,11 @@ In this case <a class="reference internal" href="#pulsar.apps.data.odm.fields.Fi
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.data.odm.fields.Field.attname">
-<tt class="descname">attname</tt><a class="headerlink" href="#pulsar.apps.data.odm.fields.Field.attname" title="Permalink to this definition">¶</a></dt>
-<dd><p>The attribute name for the field, created by the <a class="reference internal" href="#pulsar.apps.data.odm.fields.Field.get_attname" title="pulsar.apps.data.odm.fields.Field.get_attname"><tt class="xref py py-meth docutils literal"><span class="pre">get_attname()</span></tt></a>
+<dt id="pulsar.apps.data.odm.fields.Field.store_name">
+<tt class="descname">store_name</tt><a class="headerlink" href="#pulsar.apps.data.odm.fields.Field.store_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name for the field, created by the <a class="reference internal" href="#pulsar.apps.data.odm.fields.Field.get_store_name" title="pulsar.apps.data.odm.fields.Field.get_store_name"><tt class="xref py py-meth docutils literal"><span class="pre">get_store_name()</span></tt></a>
 method at runtime. For most field, its value is the same as the
-<a class="reference internal" href="#pulsar.apps.data.odm.fields.Field.name" title="pulsar.apps.data.odm.fields.Field.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a>. It is the field sorted in the backend database.</p>
+<a class="reference internal" href="#pulsar.apps.data.odm.fields.Field.name" title="pulsar.apps.data.odm.fields.Field.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a>. It is the field stored in the backend database.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -1024,9 +1173,9 @@ function users should never call.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.odm.fields.Field.get_attname">
-<tt class="descname">get_attname</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#Field.get_attname"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.Field.get_attname" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate the <a class="reference internal" href="#pulsar.apps.data.odm.fields.Field.attname" title="pulsar.apps.data.odm.fields.Field.attname"><tt class="xref py py-attr docutils literal"><span class="pre">attname</span></tt></a> at runtime</p>
+<dt id="pulsar.apps.data.odm.fields.Field.get_store_name">
+<tt class="descname">get_store_name</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#Field.get_store_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.Field.get_store_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the <a class="reference internal" href="#pulsar.apps.data.odm.fields.Field.store_name" title="pulsar.apps.data.odm.fields.Field.store_name"><tt class="xref py py-attr docutils literal"><span class="pre">store_name</span></tt></a> at runtime</p>
 </dd></dl>
 
 <dl class="method">
@@ -1042,7 +1191,7 @@ function users should never call.</p>
 <h3>CharField<a class="headerlink" href="#charfield" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.odm.fields.CharField">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">CharField</tt><big>(</big><em>unique=False</em>, <em>primary_key=None</em>, <em>required=True</em>, <em>index=None</em>, <em>hidden=None</em>, <em>as_cache=False</em>, <em>**extras</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#CharField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.CharField" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">CharField</tt><big>(</big><em>unique=False</em>, <em>primary_key=None</em>, <em>required=None</em>, <em>index=None</em>, <em>hidden=None</em>, <em>as_cache=False</em>, <em>**extras</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#CharField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.CharField" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -1050,7 +1199,7 @@ function users should never call.</p>
 <h3>IntegerField<a class="headerlink" href="#integerfield" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.odm.fields.IntegerField">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">IntegerField</tt><big>(</big><em>unique=False</em>, <em>primary_key=None</em>, <em>required=True</em>, <em>index=None</em>, <em>hidden=None</em>, <em>as_cache=False</em>, <em>**extras</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#IntegerField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.IntegerField" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">IntegerField</tt><big>(</big><em>unique=False</em>, <em>primary_key=None</em>, <em>required=None</em>, <em>index=None</em>, <em>hidden=None</em>, <em>as_cache=False</em>, <em>**extras</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#IntegerField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.IntegerField" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -1058,7 +1207,7 @@ function users should never call.</p>
 <h3>FloatField<a class="headerlink" href="#floatfield" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.odm.fields.FloatField">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">FloatField</tt><big>(</big><em>unique=False</em>, <em>primary_key=None</em>, <em>required=True</em>, <em>index=None</em>, <em>hidden=None</em>, <em>as_cache=False</em>, <em>**extras</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#FloatField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.FloatField" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">FloatField</tt><big>(</big><em>unique=False</em>, <em>primary_key=None</em>, <em>required=None</em>, <em>index=None</em>, <em>hidden=None</em>, <em>as_cache=False</em>, <em>**extras</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#FloatField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.FloatField" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -1067,10 +1216,10 @@ function users should never call.</p>
 <dl class="class">
 <dt id="pulsar.apps.data.odm.fields.ForeignKey">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.fields.</tt><tt class="descname">ForeignKey</tt><big>(</big><em>model</em>, <em>related_name=None</em>, <em>related_manager_class=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/fields.html#ForeignKey"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.fields.ForeignKey" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.apps.data.odm.fields.Field" title="pulsar.apps.data.odm.fields.Field"><tt class="xref py py-class docutils literal"><span class="pre">Field</span></tt></a> defining a <em class="xref std std-ref">one-to-many</em>
-objects relationship.
-Requires a positional argument: the <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> to which the model
-is related. For example:</p>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.data.odm.fields.Field" title="pulsar.apps.data.odm.fields.Field"><tt class="xref py py-class docutils literal"><span class="pre">Field</span></tt></a> defining a <a class="reference internal" href="#one-to-many"><em>one-to-many</em></a>
+objects relationship.</p>
+<p>It requires a positional argument representing the <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a>
+to which the model containing this field is related. For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Folder</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
 
@@ -1083,7 +1232,8 @@ relationship with itself use:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">odm</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s">&#39;self&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Behind the scenes, stdnet appends &#8220;_id&#8221; to the field name to create
+<p>Behind the scenes, the <a class="reference internal" href="#odm"><em>odm</em></a> appends <tt class="docutils literal"><span class="pre">_id</span></tt> to the field
+name to create
 its field name in the back-end data-server. In the above example,
 the database field for the <tt class="docutils literal"><span class="pre">File</span></tt> model will have a <tt class="docutils literal"><span class="pre">folder_id</span></tt> field.</p>
 <dl class="attribute">
@@ -1120,7 +1270,7 @@ back to <tt class="docutils literal"><span class="pre">self</span></tt>.</p>
 <h3>Query<a class="headerlink" href="#query" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.odm.query.Query">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.query.</tt><tt class="descname">Query</tt><big>(</big><em>manager</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.query.</tt><tt class="descname">Query</tt><big>(</big><em>manager</em>, <em>store=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query" title="Permalink to this definition">¶</a></dt>
 <dd><p>A query for data in a model store.</p>
 <p>A <a class="reference internal" href="#pulsar.apps.data.odm.query.Query" title="pulsar.apps.data.odm.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> is produced in terms of a given <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager" title="pulsar.apps.data.odm.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">Manager</span></tt></a>,
 using the <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager.query" title="pulsar.apps.data.odm.manager.Manager.query"><tt class="xref py py-meth docutils literal"><span class="pre">query()</span></tt></a> method.</p>
@@ -1211,7 +1361,7 @@ matched elements.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.query.Query.all">
-<tt class="descname">all</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query.all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query.all" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">all</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query.all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query.all" title="Permalink to this definition">¶</a></dt>
 <dd><p>All objects selected by this <a class="reference internal" href="#pulsar.apps.data.odm.query.Query" title="pulsar.apps.data.odm.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a>.</p>
 </dd></dl>
 
@@ -1315,7 +1465,14 @@ pulsar data <a class="reference internal" href="clients.html#pulsar.apps.data.st
 <li><a class="reference internal" href="#custom-managers">Custom managers</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#quering-data">Quering Data</a></li>
+<li><a class="reference internal" href="#querying-data">Querying Data</a></li>
+<li><a class="reference internal" href="#relationships">Relationships</a><ul>
+<li><a class="reference internal" href="#one-to-many">One-to-many</a></li>
+<li><a class="reference internal" href="#many-to-many">Many-to-many</a></li>
+<li><a class="reference internal" href="#the-through-model">The through model</a></li>
+<li><a class="reference internal" href="#custom-through-model">Custom through model</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#module-pulsar.apps.data.odm.model">API</a><ul>
 <li><a class="reference internal" href="#model">Model</a></li>
 <li><a class="reference internal" href="#model-meta">Model Meta</a></li>

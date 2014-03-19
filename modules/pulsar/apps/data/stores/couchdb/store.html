@@ -97,9 +97,12 @@
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Lock</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.http</span> <span class="kn">import</span> <span class="n">HttpClient</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">Store</span><span class="p">,</span> <span class="n">Command</span><span class="p">,</span> <span class="n">register_store</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="nb">zip</span>
+
+<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">odm</span>
 
 <span class="kn">from</span> <span class="nn">.query</span> <span class="kn">import</span> <span class="n">CauchDbQuery</span>
 
@@ -138,7 +141,7 @@
 <span class="s">&#39;&#39;&#39;</span>
 
 <span class="n">index_view</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;function (doc) {{</span>
-<span class="s">    if(doc.Type == &#39;{0}&#39; &amp;&amp; doc.{1}) emit(doc.{1}, doc);</span>
+<span class="s">    if(doc.Type == &#39;{0}&#39; &amp;&amp; doc.{1} !== undefined) emit(doc.{1}, doc);</span>
 <span class="s">}};</span>
 <span class="s">&#39;&#39;&#39;</span>
 
@@ -206,7 +209,7 @@
             <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
                 <span class="n">views</span><span class="p">[</span><span class="s">&#39;all&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;map&#39;</span><span class="p">:</span> <span class="n">all_view</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">)}</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">attname</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">store_name</span>
                 <span class="n">views</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;map&#39;</span><span class="p">:</span> <span class="n">index_view</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">name</span><span class="p">)}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_design</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span>
 
@@ -237,19 +240,40 @@
         <span class="k">if</span> <span class="n">updates</span><span class="p">:</span>
             <span class="n">executed</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_documents</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">models</span><span class="p">):</span>
-                <span class="n">model</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">doc</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
-                <span class="n">model</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="bp">self</span>
+                <span class="k">if</span> <span class="n">doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;ok&#39;</span><span class="p">):</span>
+                    <span class="n">model</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">doc</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
+                    <span class="n">model</span><span class="p">[</span><span class="s">&#39;_rev&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">doc</span><span class="p">[</span><span class="s">&#39;rev&#39;</span><span class="p">]</span>
+                    <span class="n">model</span><span class="p">[</span><span class="s">&#39;_store&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
 </div>
-    <span class="k">def</span> <span class="nf">query_model_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">view_name</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="nd">@task</span>
+    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="n">pkvalue</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;get&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="n">pkvalue</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">CouchDbError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">odm</span><span class="o">.</span><span class="n">ModelNotFound</span><span class="p">(</span><span class="n">pkvalue</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build_model</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">query_model_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">view_name</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;keys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;get&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
                             <span class="s">&#39;_view&#39;</span><span class="p">,</span> <span class="n">view_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">CauchDbQuery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">pkname</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">pkname</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">pkname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">pkname</span><span class="p">]</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;_id&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">CouchDBStore</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">build_model</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="c"># INTERNALS</span>
     <span class="nd">@task</span>
@@ -301,9 +325,11 @@
             <span class="k">yield</span> <span class="n">_id</span> <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">pkname</span> <span class="k">else</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
         <span class="k">yield</span> <span class="s">&#39;Type&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span>
 </div>
-    <span class="k">def</span> <span class="nf">_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="s">&#39;defaultdb&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="n">namespace</span> <span class="ow">or</span> <span class="s">&#39;defaultdb&#39;</span>
+        <span class="k">elif</span> <span class="n">namespace</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="n">namespace</span><span class="p">)</span>
         <span class="n">bits</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_scheme</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>

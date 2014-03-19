@@ -31,7 +31,7 @@
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
-    <link rel="next" title="Asynchronous Shell" href="../shell.html" />
+    <link rel="next" title="Distributed Task Queue" href="../tasks.html" />
     <link rel="prev" title="Object Data Mapper" href="odm.html" /> 
 </head>
  <body>
@@ -48,7 +48,7 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../shell.html" title="Asynchronous Shell"
+          <a href="../tasks.html" title="Distributed Task Queue"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="odm.html" title="Object Data Mapper"
@@ -76,17 +76,141 @@
             
   <div class="section" id="available-clients">
 <span id="data-stores"></span><h1>Available Clients<a class="headerlink" href="#available-clients" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-pulsar.apps.data.stores.pulsards.client">
-<span id="redis"></span><h2>Redis<a class="headerlink" href="#module-pulsar.apps.data.stores.pulsards.client" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pulsar.apps.data.stores.redis">
+<span id="redis"></span><span id="store-redis"></span><h2>Redis<a class="headerlink" href="#module-pulsar.apps.data.stores.redis" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar is shipped with a <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> implementation for <a class="reference external" href="http://redis.io/">redis</a>
 and <a class="reference internal" href="../ds.html#pulsar-data-store"><em>pulsard-ds</em></a> servers.</p>
+<div class="section" id="redis-store">
+<h3>Redis Store<a class="headerlink" href="#redis-store" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.data.stores.redis.store.RedisStore">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.redis.store.</tt><tt class="descname">RedisStore</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Redis <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> implementation.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.data.stores.redis.store.RedisStore.namespace">
+<tt class="descname">namespace</tt><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.namespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.namespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>The prefix namespace to append to all transaction on keys</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.store.RedisStore.client">
+<tt class="descname">client</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a <a class="reference internal" href="#pulsar.apps.data.stores.redis.client.RedisClient" title="pulsar.apps.data.stores.redis.client.RedisClient"><tt class="xref py py-class docutils literal"><span class="pre">RedisClient</span></tt></a> for the Store</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.store.RedisStore.pipeline">
+<tt class="descname">pipeline</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a <a class="reference internal" href="#pulsar.apps.data.stores.redis.client.Pipeline" title="pulsar.apps.data.stores.redis.client.Pipeline"><tt class="xref py py-class docutils literal"><span class="pre">Pipeline</span></tt></a> for the Store</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.store.RedisStore.execute_transaction">
+<tt class="descname">execute_transaction</tt><big>(</big><em>transaction</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.execute_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.execute_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute a <a class="reference internal" href="odm.html#pulsar.apps.data.odm.transaction.Transaction" title="pulsar.apps.data.odm.transaction.Transaction"><tt class="xref py py-class docutils literal"><span class="pre">Transaction</span></tt></a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.store.RedisStore.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close all open connections.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.store.RedisStore.meta">
+<tt class="descname">meta</tt><big>(</big><em>meta</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract model metadata for lua script stdnet/lib/lua/odm.lua</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="redis-client">
+<h3>Redis Client<a class="headerlink" href="#redis-client" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.data.stores.redis.client.RedisClient">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.redis.client.</tt><tt class="descname">RedisClient</tt><big>(</big><em>store</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#RedisClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.RedisClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Client for <a class="reference internal" href="#pulsar.apps.data.stores.redis.store.RedisStore" title="pulsar.apps.data.stores.redis.store.RedisStore"><tt class="xref py py-class docutils literal"><span class="pre">RedisStore</span></tt></a>.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.data.stores.redis.RedisClient.store">
+<tt class="descname">store</tt><a class="headerlink" href="#pulsar.apps.data.stores.redis.RedisClient.store" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.apps.data.stores.redis.store.RedisStore" title="pulsar.apps.data.stores.redis.store.RedisStore"><tt class="xref py py-class docutils literal"><span class="pre">RedisStore</span></tt></a> for this client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.client.RedisClient.pipeline">
+<tt class="descname">pipeline</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#RedisClient.pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.RedisClient.pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <a class="reference internal" href="#pulsar.apps.data.stores.redis.client.Pipeline" title="pulsar.apps.data.stores.redis.client.Pipeline"><tt class="xref py py-class docutils literal"><span class="pre">Pipeline</span></tt></a> for pipelining commands</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.client.RedisClient.zadd">
+<tt class="descname">zadd</tt><big>(</big><em>name</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#RedisClient.zadd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.RedisClient.zadd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set any number of score, element-name pairs to the key <tt class="docutils literal"><span class="pre">name</span></tt>. Pairs
+can be specified in two ways:</p>
+<p>As <tt class="docutils literal"><span class="pre">*args</span></tt>, in the form of:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">score1</span><span class="p">,</span> <span class="n">name1</span><span class="p">,</span> <span class="n">score2</span><span class="p">,</span> <span class="n">name2</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>or as <tt class="docutils literal"><span class="pre">**kwargs</span></tt>, in the form of:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">name1</span><span class="o">=</span><span class="n">score1</span><span class="p">,</span> <span class="n">name2</span><span class="o">=</span><span class="n">score2</span><span class="p">,</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>The following example would add four values to the &#8216;my-key&#8217; key:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">client</span><span class="o">.</span><span class="n">zadd</span><span class="p">(</span><span class="s">&#39;my-key&#39;</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="s">&#39;name1&#39;</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="s">&#39;name2&#39;</span><span class="p">,</span>
+            <span class="n">name3</span><span class="o">=</span><span class="mf">3.3</span><span class="p">,</span> <span class="n">name4</span><span class="o">=</span><span class="mf">4.4</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.client.RedisClient.sort">
+<tt class="descname">sort</tt><big>(</big><em>key</em>, <em>start=None</em>, <em>num=None</em>, <em>by=None</em>, <em>get=None</em>, <em>desc=False</em>, <em>alpha=False</em>, <em>store=None</em>, <em>groups=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#RedisClient.sort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.RedisClient.sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort and return the list, set or sorted set at <tt class="docutils literal"><span class="pre">key</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">start</span></tt> and <tt class="docutils literal"><span class="pre">num</span></tt> allow for paging through the sorted data</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">by</span></tt> allows using an external key to weight and sort the items.</dt>
+<dd>Use an &#8220;*&#8221; to indicate where in the key the item value is located</dd>
+<dt><tt class="docutils literal"><span class="pre">get</span></tt> allows for returning items from external keys rather than the</dt>
+<dd>sorted data itself.  Use an &#8220;*&#8221; to indicate where int he key
+the item value is located</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">desc</span></tt> allows for reversing the sort</p>
+<p><tt class="docutils literal"><span class="pre">alpha</span></tt> allows for sorting lexicographically rather than numerically</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">store</span></tt> allows for storing the result of the sort into</dt>
+<dd>the key <tt class="docutils literal"><span class="pre">store</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">groups</span></tt> if set to True and if <tt class="docutils literal"><span class="pre">get</span></tt> contains at least two</dt>
+<dd>elements, sort will return a list of tuples, each containing the
+values fetched from the arguments to <tt class="docutils literal"><span class="pre">get</span></tt>.</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="redis-pipeline">
+<h3>Redis Pipeline<a class="headerlink" href="#redis-pipeline" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.data.stores.redis.client.Pipeline">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.redis.client.</tt><tt class="descname">Pipeline</tt><big>(</big><em>store</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#Pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.Pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.data.stores.redis.client.RedisClient" title="pulsar.apps.data.stores.redis.client.RedisClient"><tt class="xref py py-class docutils literal"><span class="pre">RedisClient</span></tt></a> for pipelining commands</p>
+<dl class="method">
+<dt id="pulsar.apps.data.stores.redis.client.Pipeline.commit">
+<tt class="descname">commit</tt><big>(</big><em>raise_on_error=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#Pipeline.commit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.Pipeline.commit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send commands to redis.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="pulsards">
-<h2>PulsarDs<a class="headerlink" href="#pulsards" title="Permalink to this headline">¶</a></h2>
-<p>It is the same as redis.</p>
+<span id="store-pulsar"></span><h2>PulsarDs<a class="headerlink" href="#pulsards" title="Permalink to this headline">¶</a></h2>
+<p>It has the same implementation as <a class="reference internal" href="#store-redis"><em>redis client</em></a>.</p>
 </div>
 <div class="section" id="module-pulsar.apps.data.stores.couchdb.store">
-<span id="couchdb"></span><h2>CouchDb<a class="headerlink" href="#module-pulsar.apps.data.stores.couchdb.store" title="Permalink to this headline">¶</a></h2>
+<span id="couchdb"></span><span id="store-couchdb"></span><h2>CouchDb<a class="headerlink" href="#module-pulsar.apps.data.stores.couchdb.store" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="http://couchdb.apache.org/">CouchDB</a> document store:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;http+couchdb://localhost:5984/mydb&#39;</span><span class="p">)</span>
 </pre></div>
@@ -217,7 +341,12 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Available Clients</a><ul>
-<li><a class="reference internal" href="#module-pulsar.apps.data.stores.pulsards.client">Redis</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.data.stores.redis">Redis</a><ul>
+<li><a class="reference internal" href="#redis-store">Redis Store</a></li>
+<li><a class="reference internal" href="#redis-client">Redis Client</a></li>
+<li><a class="reference internal" href="#redis-pipeline">Redis Pipeline</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#pulsards">PulsarDs</a></li>
 <li><a class="reference internal" href="#module-pulsar.apps.data.stores.couchdb.store">CouchDb</a><ul>
 <li><a class="reference internal" href="#models">Models</a></li>
@@ -232,8 +361,8 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
   <p class="topless"><a href="odm.html"
                         title="previous chapter">Object Data Mapper</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../shell.html"
-                        title="next chapter">Asynchronous Shell</a></p>
+  <p class="topless"><a href="../tasks.html"
+                        title="next chapter">Distributed Task Queue</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../sources/apps/data/stores.txt"

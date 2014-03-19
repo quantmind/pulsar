@@ -255,14 +255,14 @@
 
 </div>
 <div class="viewcode-block" id="Task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.Task">[docs]</a><span class="k">class</span> <span class="nc">Task</span><span class="p">(</span><span class="n">odm</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A model containing task execution data.</span>
+    <span class="sd">&#39;&#39;&#39;A data :class:`.Model` containing task execution data.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="nb">id</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="sd">&#39;&#39;&#39;Task unique identifier.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">lock_id</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">time_queued</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">time_queued</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
     <span class="n">time_started</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="n">time_ended</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="sd">&#39;&#39;&#39;The timestamp indicating when this has finished.</span>
@@ -272,11 +272,11 @@
 
 <span class="sd">    If the task is not started before this value it is ``REVOKED``.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">states</span><span class="o">.</span><span class="n">QUEUED</span><span class="p">)</span>
     <span class="sd">&#39;&#39;&#39;flag indicating the :ref:`task status &lt;task-state&gt;`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">PickleField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">PickleField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">PickleField</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">PickleField</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Task.done"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.Task.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return ``True`` if the :class:`Task` has finshed.</span>

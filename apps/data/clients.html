@@ -81,13 +81,41 @@ class which encapsulates the essential API for communicating and executing
 commands on remote servers.
 A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> can also implement several methods for managing
 the higher level <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="connection-string">
+<span id="id1"></span><h3>Connection String<a class="headerlink" href="#connection-string" title="Permalink to this headline">¶</a></h3>
+<p>The connection string is a way to specify the various parameters for the
+data store connection. All <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> support a connection string
+of the form:</p>
+<div class="highlight-python"><pre>&lt;scheme&gt;://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;/&lt;database&gt;?param1=...&amp;param2=...</pre>
+</div>
+<p>backend to use. Redis supports the following
+parameters:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">db</span></tt>, the database number.</li>
+<li><tt class="docutils literal"><span class="pre">namespace</span></tt>, the namespace for all the keys used by the backend.</li>
+<li><tt class="docutils literal"><span class="pre">password</span></tt>, database password.</li>
+<li><tt class="docutils literal"><span class="pre">timeout</span></tt>, connection timeout (0 is an asynchronous connection).</li>
+</ul>
+<p>A full connection string could be:</p>
+<div class="highlight-python"><pre>redis://127.0.0.1:6379?db=3&amp;password=bla&amp;namespace=test.&amp;timeout=5</pre>
+</div>
+</div>
+</div>
 <div class="section" id="implement-a-store">
 <h2>Implement a Store<a class="headerlink" href="#implement-a-store" title="Permalink to this headline">¶</a></h2>
 <p>When implementing a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> there are several methods which need
 to be covered:</p>
 <ul class="simple">
-<li><a class="reference internal" href="#pulsar.apps.data.store.Store.connect" title="pulsar.apps.data.store.Store.connect"><tt class="xref py py-meth docutils literal"><span class="pre">Store.connect()</span></tt></a> to create a new connection</li>
-<li><a class="reference internal" href="#pulsar.apps.data.store.Store.execute" title="pulsar.apps.data.store.Store.execute"><tt class="xref py py-meth docutils literal"><span class="pre">Store.execute()</span></tt></a> to execute a command on the store server</li>
+<li><a class="reference internal" href="#pulsar.apps.data.store.Store.ping" title="pulsar.apps.data.store.Store.ping"><tt class="xref py py-meth docutils literal"><span class="pre">ping()</span></tt></a> to check if the server is available</li>
+<li><a class="reference internal" href="#pulsar.apps.data.store.Store.connect" title="pulsar.apps.data.store.Store.connect"><tt class="xref py py-meth docutils literal"><span class="pre">connect()</span></tt></a> to create a new connection</li>
+<li><a class="reference internal" href="#pulsar.apps.data.store.Store.execute" title="pulsar.apps.data.store.Store.execute"><tt class="xref py py-meth docutils literal"><span class="pre">execute()</span></tt></a> to execute a command on the store server</li>
+</ul>
+<p>These additional methods must be implemented only if the store supports
+the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#pulsar.apps.data.store.Store.execute_transaction" title="pulsar.apps.data.store.Store.execute_transaction"><tt class="xref py py-meth docutils literal"><span class="pre">execute_transaction()</span></tt></a> execute a transaction</li>
 </ul>
 <p>A new store needs to be registered via the <a class="reference internal" href="#pulsar.apps.data.store.register_store" title="pulsar.apps.data.store.register_store"><tt class="xref py py-func docutils literal"><span class="pre">register_store()</span></tt></a>
 function.</p>
@@ -110,24 +138,32 @@ a valid <a class="reference internal" href="#pulsar.apps.data.store.PubSub" titl
 <dt id="pulsar.apps.data.store.create_store">
 <tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">create_store</tt><big>(</big><em>url</em>, <em>loop=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#create_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.create_store" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new client <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> for a valid <tt class="docutils literal"><span class="pre">url</span></tt>.</p>
-<p>A valid <tt class="docutils literal"><span class="pre">url</span></tt> taks the following forms:</p>
-<div class="highlight-python"><pre>pulsar://user:password@127.0.0.1:6410
-redis://user:password@127.0.0.1:6500/11?namespace=testdb.
-postgresql://user:password@127.0.0.1:6500/testdb
-couchdb://user:password@127.0.0.1:6500/testdb</pre>
+<p>A valid <tt class="docutils literal"><span class="pre">url</span></tt> takes the following forms:</p>
+<p><a class="reference internal" href="stores.html#store-pulsar"><em>Pulsar datastore</em></a>:</p>
+<div class="highlight-python"><pre>pulsar://user:password@127.0.0.1:6410</pre>
+</div>
+<p><a class="reference internal" href="stores.html#store-redis"><em>Redis</em></a>:</p>
+<div class="highlight-python"><pre>redis://user:password@127.0.0.1:6500/11?namespace=testdb</pre>
+</div>
+<p><a class="reference internal" href="stores.html#store-couchdb"><em>CouchDb</em></a>:</p>
+<div class="highlight-python"><pre>couchdb://user:password@127.0.0.1:6500/testdb
+https+couchdb://user:password@127.0.0.1:6500/testdb</pre>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>loop</strong> &#8211; optional event loop, if not provided it is obtained
-via the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> method. If not loop is installed a bright
-new event loop is created via the <tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt>.
-In the latter case the event loop is employed only for synchronous type
-requests via the <tt class="xref py py-meth docutils literal"><span class="pre">run_until_complete()</span></tt> method.</li>
+<li><strong>loop</strong> &#8211; optional event loop, obtained by
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.4)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a> if not provided.
+To create a synchronous client pass a new event loop created via
+the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.new_event_loop" title="(in Python v3.4)"><tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt></a>.
+In the latter case the event loop is employed only for synchronous
+type requests via the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.BaseEventLoop.run_until_complete" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">run_until_complete()</span></tt></a>
+method.</li>
 <li><strong>kw</strong> &#8211; additional key-valued parameters to pass to the <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
-initialisation method.</li>
+initialisation method. These parameters are processed by the
+<tt class="xref py py-meth docutils literal"><span class="pre">Store._init()</span></tt> method.</li>
 </ul>
 </td>
 </tr>
@@ -334,9 +370,21 @@ Must be implemented.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.Store.get_model">
-<tt class="descname">get_model</tt><big>(</big><em>model</em>, <em>pkvalue</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.get_model" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_model</tt><big>(</big><em>manager</em>, <em>pkvalue</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.get_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch an instance of a <tt class="docutils literal"><span class="pre">model</span></tt> with primary key <tt class="docutils literal"><span class="pre">pkvalue</span></tt>.</p>
 <p>This method required by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>manager</strong> &#8211; the <a class="reference internal" href="odm.html#pulsar.apps.data.odm.manager.Manager" title="pulsar.apps.data.odm.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">Manager</span></tt></a> calling this method</li>
+<li><strong>pkvalue</strong> &#8211; the primary key of the model to retrieve</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -518,6 +566,10 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.data.st
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Datastore Clients</a><ul>
+<li><a class="reference internal" href="#getting-started">Getting Started</a><ul>
+<li><a class="reference internal" href="#connection-string">Connection String</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#implement-a-store">Implement a Store</a></li>
 <li><a class="reference internal" href="#publish-subscribe">Publish/Subscribe</a></li>
 <li><a class="reference internal" href="#api">API</a><ul>

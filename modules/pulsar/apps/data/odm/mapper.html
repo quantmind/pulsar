@@ -196,13 +196,13 @@
         <span class="k">if</span> <span class="n">engine</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span><span class="o">.</span><span class="n">set_mapper</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Mapper.register"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">read_store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+<div class="viewcode-block" id="Mapper.register"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">models</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">read_store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">include_related</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Register a :class:`.Model` with this :class:`Mapper`.</span>
+        <span class="sd">&#39;&#39;&#39;Register one or several :class:`.Model` with this :class:`Mapper`.</span>
 
-<span class="sd">        If the model was already registered it does nothing.</span>
+<span class="sd">        If a model was already registered it does nothing.</span>
 
-<span class="sd">        :param model: a :class:`.Model` class.</span>
+<span class="sd">        :param models: a list of :class:`.Model`</span>
 <span class="sd">        :param store: a :class:`.Store` or a connection string.</span>
 <span class="sd">        :param read_store: Optional :class:`.Store` for read</span>
 <span class="sd">            operations. This is useful when the server has a master/slave</span>
@@ -213,26 +213,27 @@
 <span class="sd">            Default ``True``.</span>
 <span class="sd">        :param params: Additional parameters for the :func:`.create_store`</span>
 <span class="sd">            function.</span>
-<span class="sd">        :return: the number of models registered.</span>
+<span class="sd">        :return: a list models registered or a single model if there</span>
+<span class="sd">            was only one</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">store</span> <span class="o">=</span> <span class="n">store</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_store</span>
         <span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">read_store</span><span class="p">:</span>
             <span class="n">read_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">read_store</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">)</span>
-        <span class="n">registered</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models_from_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
-                                            <span class="n">include_related</span><span class="o">=</span><span class="n">include_related</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">registered</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">default_manager</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">default_manager</span> <span class="ow">or</span> <span class="n">Manager</span>
-            <span class="n">manager_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;manager_class&#39;</span><span class="p">,</span> <span class="n">default_manager</span><span class="p">)</span>
-            <span class="n">manager</span> <span class="o">=</span> <span class="n">manager_class</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">read_store</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="p">[</span><span class="n">model</span><span class="p">]</span> <span class="o">=</span> <span class="n">manager</span>
-            <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_names</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_registered_names</span><span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">manager</span>
-        <span class="k">if</span> <span class="n">registered</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">store</span>
+        <span class="n">registered</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models_from_model</span><span class="p">(</span>
+                    <span class="n">model</span><span class="p">,</span> <span class="n">include_related</span><span class="o">=</span><span class="n">include_related</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">registered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                <span class="n">default_manager</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">default_manager</span> <span class="ow">or</span> <span class="n">Manager</span>
+                <span class="n">manager_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;manager_class&#39;</span><span class="p">,</span> <span class="n">default_manager</span><span class="p">)</span>
+                <span class="n">manager</span> <span class="o">=</span> <span class="n">manager_class</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">read_store</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="p">[</span><span class="n">model</span><span class="p">]</span> <span class="o">=</span> <span class="n">manager</span>
+                <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_names</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_registered_names</span><span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="k">return</span> <span class="n">registered</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">registered</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">registered</span>
 </div>
 <div class="viewcode-block" id="Mapper.from_uuid"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.from_uuid">[docs]</a>    <span class="k">def</span> <span class="nf">from_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Retrieve a :class:`.Model` from its universally unique identifier</span>

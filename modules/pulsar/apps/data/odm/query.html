@@ -70,7 +70,8 @@
   <h1>Source code for pulsar.apps.data.odm.query</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">wait_complete</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">iteritems</span>
 
 
 <span class="k">def</span> <span class="nf">int_or_float</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
@@ -94,10 +95,16 @@
     <span class="s">&#39;istartswith&#39;</span><span class="p">:</span> <span class="n">str_lower_case</span><span class="p">,</span>
     <span class="s">&#39;iendswith&#39;</span><span class="p">:</span> <span class="n">str_lower_case</span><span class="p">}</span>
 
-<span class="n">lookup_value</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;lookup_value&#39;</span><span class="p">,</span> <span class="s">&#39;lookup value&#39;</span><span class="p">)</span>
+<span class="n">lookup_value</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;lookup_value&#39;</span><span class="p">,</span> <span class="s">&#39;type value&#39;</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">QueryError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">ModelNotFound</span><span class="p">(</span><span class="n">QueryError</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Raised when a :meth:`.Manager.get` method does not find any model</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">pass</span>
 
 
@@ -171,13 +178,21 @@
     <span class="n">_where</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_compiled</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span> <span class="o">=</span> <span class="n">manager</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">_read_store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">store</span> <span class="ow">or</span> <span class="n">manager</span><span class="o">.</span><span class="n">_read_store</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span><span class="o">.</span><span class="n">_meta</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_mapper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span><span class="o">.</span><span class="n">_mapper</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">_loop</span>
 
     <span class="nd">@query_op</span>
 <div class="viewcode-block" id="Query.filter"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -264,6 +279,7 @@
 <span class="sd">        matched elements.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 </div>
+    <span class="nd">@wait_complete</span>
 <div class="viewcode-block" id="Query.all"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.all">[docs]</a>    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;All objects selected by this :class:`Query`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -307,6 +323,14 @@
     <span class="k">def</span> <span class="nf">_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="o">.</span><span class="n">_meta</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="o">.</span><span class="n">_manager</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_mapper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="o">.</span><span class="n">_mapper</span>
+
 <div class="viewcode-block" id="CompiledQuery.count"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.CompiledQuery.count">[docs]</a>    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Count the number of elements matching the :attr:`query`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -320,13 +344,16 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="CompiledQuery.models"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.CompiledQuery.models">[docs]</a>    <span class="k">def</span> <span class="nf">models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model</span>
-        <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">instance</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-            <span class="n">instance</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span>
-            <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">models</span>
+        <span class="sd">&#39;&#39;&#39;Build a list of models from a list of dictionaries.</span>
+
+<span class="sd">        Uses the :meth:`.Store.build_model` method</span>
+
+<span class="sd">        :param data: list of dictionaries</span>
+<span class="sd">        :return: a list of models</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">build</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">build_model</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">build</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
 </div>
     <span class="k">def</span> <span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Compile the :attr:`query`</span>
@@ -346,7 +373,7 @@
                 <span class="k">raise</span> <span class="n">QueryError</span><span class="p">((</span><span class="s">&#39;Could not filter on model &quot;</span><span class="si">%s</span><span class="s">&quot;. Field &#39;</span>
                                   <span class="s">&#39;&quot;</span><span class="si">%s</span><span class="s">&quot; does not exist.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)))</span>
             <span class="n">field</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
-            <span class="n">attname</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">attname</span>
+            <span class="n">store_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">store_name</span>
             <span class="n">lookup</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">if</span> <span class="n">bits</span><span class="p">:</span>
                 <span class="n">bits</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">bits</span><span class="p">]</span>
@@ -356,14 +383,14 @@
                     <span class="n">lookup</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
                 <span class="n">remaining</span> <span class="o">=</span> <span class="n">JSPLITTER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">lookup</span><span class="p">:</span>  <span class="c"># this is a range lookup</span>
-                    <span class="n">attname</span><span class="p">,</span> <span class="n">nested</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get_lookup</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span>
-                                                       <span class="n">QuerySetError</span><span class="p">)</span>
-                    <span class="n">lookups</span> <span class="o">=</span> <span class="n">get_lookups</span><span class="p">(</span><span class="n">attname</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">)</span>
+                    <span class="n">store_name</span><span class="p">,</span> <span class="n">nested</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get_lookup</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span>
+                                                          <span class="n">QueryError</span><span class="p">)</span>
+                    <span class="n">lookups</span> <span class="o">=</span> <span class="n">get_lookups</span><span class="p">(</span><span class="n">store_name</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">)</span>
                     <span class="n">lookups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lookup_value</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">nested</span><span class="p">)))</span>
                     <span class="k">continue</span>
                 <span class="k">elif</span> <span class="n">remaining</span><span class="p">:</span>   <span class="c"># Not a range lookup, must be a nested filter</span>
                     <span class="n">value</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">lookups</span> <span class="o">=</span> <span class="n">get_lookups</span><span class="p">(</span><span class="n">attname</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">)</span>
+            <span class="n">lookups</span> <span class="o">=</span> <span class="n">get_lookups</span><span class="p">(</span><span class="n">store_name</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">)):</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span><span class="p">,)</span>
             <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
@@ -375,11 +402,11 @@
             <span class="k">return</span> <span class="n">field_lookups</span>
 
 </div></div>
-<span class="k">def</span> <span class="nf">get_lookups</span><span class="p">(</span><span class="n">attname</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">):</span>
-    <span class="n">lookups</span> <span class="o">=</span> <span class="n">field_lookups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">attname</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_lookups</span><span class="p">(</span><span class="n">store_name</span><span class="p">,</span> <span class="n">field_lookups</span><span class="p">):</span>
+    <span class="n">lookups</span> <span class="o">=</span> <span class="n">field_lookups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">store_name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">lookups</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">lookups</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">field_lookups</span><span class="p">[</span><span class="n">attname</span><span class="p">]</span> <span class="o">=</span> <span class="n">lookups</span>
+        <span class="n">field_lookups</span><span class="p">[</span><span class="n">store_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">lookups</span>
     <span class="k">return</span> <span class="n">lookups</span>
 </pre></div>
 

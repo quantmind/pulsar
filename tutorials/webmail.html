@@ -31,8 +31,8 @@
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="JSON-RPC Calculator" href="calculator.html" />
-    <link rel="prev" title="HTTP Proxy Server" href="proxy.html" /> 
+    <link rel="next" title="The Arbiter" href="actors.html" />
+    <link rel="prev" title="Udp Server and Client" href="udp.html" /> 
 </head>
  <body>
 
@@ -48,10 +48,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="calculator.html" title="JSON-RPC Calculator"
+          <a href="actors.html" title="The Arbiter"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="proxy.html" title="HTTP Proxy Server"
+          <a href="udp.html" title="Udp Server and Client"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
@@ -74,17 +74,14 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-examples.webmail.tx">
-<span id="twisted-integration"></span><span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#module-examples.webmail.tx" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pulsar.apps.tx">
+<span id="twisted-integration"></span><span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#module-pulsar.apps.tx" title="Permalink to this headline">¶</a></h1>
 <p>Pulsar concurrent framework and applications can be used with <a class="reference external" href="http://twistedmatrix.com/">twisted</a>, an
 event driven network engine for python. Twisted has implementation
 for several protocols which can be used in pulsar by importing the
-<tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tx</span></tt> module:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.tx</span> <span class="kn">import</span> <span class="n">twisted</span>
-</pre></div>
-</div>
+<a class="reference internal" href="#module-pulsar.apps.tx" title="pulsar.apps.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tx</span></tt></a> module.</p>
 <p>The implementation replaces the twisted reactor with a proxy for
-<tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt>.
+an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.4)"><em class="xref std std-ref">asyncio event loop</em></a>.
 Twisted Deferred and Failures are made compatible with pulsar
 by installing twisted asynchronous binding via the
 <a class="reference internal" href="../api/async.html#pulsar.async.futures.add_async_binding" title="pulsar.async.futures.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a> function.</p>
@@ -93,16 +90,16 @@ twisted implementation is switched off.</p>
 <div class="section" id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="examples.webmail.tx.check_twisted">
-<tt class="descclassname">examples.webmail.tx.</tt><tt class="descname">check_twisted</tt><big>(</big><em>deferred</em>, <em>loop</em><big>)</big><a class="reference internal" href="../modules/examples/webmail/tx.html#check_twisted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.tx.check_twisted" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.tx.check_twisted">
+<tt class="descclassname">pulsar.apps.tx.</tt><tt class="descname">check_twisted</tt><big>(</big><em>deferred</em>, <em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tx.html#check_twisted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tx.check_twisted" title="Permalink to this definition">¶</a></dt>
 <dd><p>Binding for twisted.</p>
 <p>Added to pulsar asynchronous engine via the <a class="reference internal" href="../api/async.html#pulsar.async.futures.add_async_binding" title="pulsar.async.futures.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a>
 function.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="examples.webmail.tx.PulsarReactor">
-<em class="property">class </em><tt class="descclassname">examples.webmail.tx.</tt><tt class="descname">PulsarReactor</tt><a class="reference internal" href="../modules/examples/webmail/tx.html#PulsarReactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.tx.PulsarReactor" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.tx.PulsarReactor">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tx.</tt><tt class="descname">PulsarReactor</tt><a class="reference internal" href="../modules/pulsar/apps/tx.html#PulsarReactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tx.PulsarReactor" title="Permalink to this definition">¶</a></dt>
 <dd><p>A twisted reactor which acts as a proxy to pulsar eventloop.</p>
 <p>The event loop is obtained via the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function.</p>
 </dd></dl>
@@ -140,8 +137,8 @@ mail_password=</pre>
 <dl class="class">
 <dt id="examples.webmail.manage.WsMail">
 <em class="property">class </em><tt class="descclassname">examples.webmail.manage.</tt><tt class="descname">WsMail</tt><a class="reference internal" href="../modules/examples/webmail/manage.html#WsMail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.manage.WsMail" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="../apps/websockets.html#websocket-handler"><em>Websocket handler</em></a> for fetching and
-sending mail via the twisted IMAP4 library.</p>
+<dd><p>A <a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a> handler for fetching and sending mail via the
+twisted IMAP4 library</p>
 <dl class="method">
 <dt id="examples.webmail.manage.WsMail.on_open">
 <tt class="descname">on_open</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/webmail/manage.html#WsMail.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.manage.WsMail.on_open" title="Permalink to this definition">¶</a></dt>
@@ -190,11 +187,11 @@ sending mail via the twisted IMAP4 library.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="proxy.html"
-                        title="previous chapter">HTTP Proxy Server</a></p>
+  <p class="topless"><a href="udp.html"
+                        title="previous chapter">Udp Server and Client</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="calculator.html"
-                        title="next chapter">JSON-RPC Calculator</a></p>
+  <p class="topless"><a href="actors.html"
+                        title="next chapter">The Arbiter</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/tutorials/webmail.txt"
