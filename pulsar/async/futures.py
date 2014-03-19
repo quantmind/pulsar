@@ -74,7 +74,9 @@ else:
 
 
 def coroutine_return(*value):
-    raise Return(*value)
+    error = Return(*value)
+    error.raised = True
+    raise error
 
 
 def add_errback(future, callback):
@@ -266,16 +268,15 @@ def wait_complete(method):
     '''Decorator to wait for a ``method`` to complete.
 
     It only affects asynchronous object with a local event loop.
-    The ``method`` must return a :class:`~asyncio.Future`.
     '''
     @wraps(method)
     def _(self, *args, **kwargs):
         loop = self._loop
-        future = async(method(self, *args, **kwargs), loop=loop)
+        result = method(self, *args, **kwargs)
         if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
-            return loop.run_until_complete(future)
+            return loop.run_until_complete(async(result, loop=loop))
         else:
-            return future
+            return result
 
     return _
 

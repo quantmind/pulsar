@@ -16,7 +16,7 @@ _sys_rng = SystemRandom()
 
 
 def gen_unique_id():
-    return str(uuid4())
+    return 'i%s' % uuid4().hex
 
 
 def gen_salt(length):

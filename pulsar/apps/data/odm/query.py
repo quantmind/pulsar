@@ -201,6 +201,11 @@ class Query(object):
     def join(self):
         raise NotImplementedError
 
+    def load_related(self, related, *fields):
+        '''It returns a new :class:`Query` that automatically
+        follows the foreign-key relationship ``related``'''
+        return self
+
     def count(self):
         '''Count the number of objects selected by this :class:`Query`.
 

@@ -235,9 +235,7 @@ class ModelMeta(object):
         if instance._store is None:
             for field in fields.values():
                 name = field.store_name
-                value = instance.get_raw(name)
-                if field.to_store:
-                    value = field.to_store(value, store)
+                value = field.to_store(instance.get_raw(name), store)
                 if ((value in NONE_EMPTY) and field.required and
                         not isinstance(field, AutoIdField)):
                     raise FieldError("Field '%s' is required for '%s'." %

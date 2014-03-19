@@ -26,7 +26,7 @@ CouchDBStore
 from base64 import b64encode, b64decode
 from asyncio import Lock
 
-from pulsar import coroutine_return, task, multi_async, ImproperlyConfigured
+from pulsar import coroutine_return, wait_complete, multi_async
 from pulsar.utils.system import json
 from pulsar.apps.http import HttpClient
 from pulsar.apps.data import Store, Command, register_store
@@ -34,30 +34,11 @@ from pulsar.utils.pep import zip
 
 from pulsar.apps.data import odm
 
-from .query import CauchDbQuery
+from .query import CauchDbQuery, CouchDbError, couch_db_error
 
 
 DEFAULT_HEADERS = {'Accept': 'application/json, text/plain; q=0.8',
                    'content-type': 'application/json'}
-
-
-class CouchDbError(Exception):
-
-    def __init__(self, error, reason):
-        self.error = error
-        super(CouchDbError, self).__init__(reason)
-
-
-class CouchDbNoDbError(CouchDbError):
-    pass
-
-
-error_classes = {'no_db_file': CouchDbNoDbError}
-
-
-def couch_db_error(error=None, reason=None, **params):
-    error_class = error_classes.get(reason, CouchDbError)
-    raise error_class(error, reason)
 
 
 all_view = '''function (doc) {{
@@ -75,6 +56,11 @@ index_view = '''function (doc) {{
 }};
 '''
 
+count_view = '''function (doc) {{
+    if(doc.Type == '{0}' && doc.{1} !== undefined) emit(doc.{1}, 1);
+}};
+'''
+
 class CouchDBStore(Store):
     _lock = None
 
@@ -89,19 +75,7 @@ class CouchDBStore(Store):
         return self.request('get')
     ping = info
 
-    def create_design(self, name, views, language=None, **kwargs):
-        '''Create a new design document
-        '''
-        return self.request('put', self._database, '_design', name,
-                            views=views,
-                            language=language or 'javascript', **kwargs)
-
-    def delete_design(self, name):
-        '''Delete an existing design document at ``name``.
-        '''
-        return
-        return self.request('delete', self._database, '_design', name)
-
+    # DATABASE OPERATIONS
     def create_database(self, dbname=None, **kw):
         '''Create a new database
 
@@ -120,6 +94,28 @@ class CouchDBStore(Store):
         '''
         return self.request('get', '_all_dbs')
 
+    # DESIGN VIEWS
+    def design_create(self, name, views, language=None, **kwargs):
+        '''Create a new design document
+        '''
+        return self.request('put', self._database, '_design', name,
+                            views=views,
+                            language=language or 'javascript', **kwargs)
+
+    @wait_complete
+    def design_delete(self, name):
+        '''Delete an existing design document at ``name``.
+        '''
+        response = yield self.request('head', self._database, '_design', name)
+        if response.status_code == 200:
+            rev = json.loads(response.headers['etag'])
+            yield self.request('delete', self._database, '_design', name,
+                               rev=rev)
+
+    def design_info(self, name):
+        return self.request('get', self._database, '_design', name, '_info')
+
+    # DOCUMENTS
     def update_document(self, document):
         return self.request('post', self._database, **document)
 
@@ -134,18 +130,26 @@ class CouchDBStore(Store):
         # Build views
         meta = model._meta
         table = meta.table_name
+        if remove_existing:
+            yield self.design_delete(table)
         views = {}
         for index in meta.indexes:
+            name = key = index.store_name
             if index.primary_key:
-                views['all'] = {'map': all_view.format(table)}
-            else:
-                name = index.store_name
-                views[name] = {'map': index_view.format(table, name)}
-        return self.create_design(table, views)
+                name = 'id'
+                key = '_id'
+            views[name] = {'map': index_view.format(table, key)}
+            views['%s_count' % name] = {'map': count_view.format(table, key),
+                                        'reduce': '_sum'}
+        result = yield self.design_create(table, views)
+        coroutine_return(result)
 
     def drop_table(self, model):
         '''Drop model table by simply removing model design views'''
-        return self.delete_design(model._meta.table_name)
+        return self.design_delete(model._meta.table_name)
+
+    def table_info(self, model):
+        return self.design_info(model._meta.table_name)
 
     def execute_transaction(self, transaction):
         '''Execute a ``transaction``
@@ -175,7 +179,7 @@ class CouchDBStore(Store):
                     model['_rev'] = doc['rev']
                     model['_store'] = self
 
-    @task
+    @wait_complete
     def get_model(self, manager, pkvalue):
         try:
             data = yield self.request('get', self._database, pkvalue)
@@ -184,13 +188,24 @@ class CouchDBStore(Store):
         else:
             coroutine_return(self.build_model(manager, data))
 
-    def query_model_view(self, model, view_name, key=None, keys=None):
+    def query_model_view(self, model, view_name, key=None, keys=None,
+                         group=None, limit=None):
+        '''Query an existing view
+
+        All view parameters here:
+
+        http://wiki.apache.org/couchdb/HTTP_view_API
+        '''
         meta = model._meta
         kwargs = {}
         if key:
             kwargs['key'] = json.dumps(key)
         elif keys:
             kwargs['keys'] = json.dumps(keys)
+        if group:
+            kwargs['group'] = 'true'
+        if limit:
+            kwargs['limit'] = int(limit)
         return self.request('get', self._database, '_design', meta.table_name,
                             '_view', view_name, **kwargs)
 
@@ -206,7 +221,7 @@ class CouchDBStore(Store):
         return super(CouchDBStore, self).build_model(manager, *args, **kwargs)
 
     # INTERNALS
-    @task
+    @wait_complete
     def request(self, method, *bits, **kwargs):
         '''Execute the HTTP request'''
         if self._password:

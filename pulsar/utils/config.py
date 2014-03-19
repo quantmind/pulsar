@@ -743,9 +743,8 @@ class HttpParser(Global):
     flags = ["--http-py-parser"]
     action = "store_true"
     default = False
-    desc = '''Set the python parser as default HTTP parser.
-
-    Only used for benchmarking pourposes.
+    desc = '''\
+        Set the python parser as default HTTP parser
     '''
 
     def on_start(self):

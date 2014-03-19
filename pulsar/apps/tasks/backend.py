@@ -86,6 +86,7 @@ from hashlib import sha1
 from pulsar import (task, async, EventHandler, PulsarException, get_logger,
                     Future, coroutine_return, get_request_loop)
 from pulsar.utils.pep import itervalues, to_string
+from pulsar.utils.security import gen_unique_id
 from pulsar.apps.data import create_store, PubSubClient, odm
 from pulsar.utils.log import (LocalMixin, lazyproperty, lazymethod,
                               LazyString)
@@ -502,7 +503,7 @@ class TaskBackend(EventHandler):
         can_overlap = job.can_overlap
         if hasattr(can_overlap, '__call__'):
             can_overlap = can_overlap(**kwargs)
-        tid = job.create_id(kwargs)
+        tid = gen_unique_id()
         if can_overlap:
             return tid, None
         else:

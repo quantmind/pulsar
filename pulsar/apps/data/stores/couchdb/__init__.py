@@ -1,4 +1,5 @@
-from .store import CouchDBStore, CouchDbError, CouchDbNoDbError
+from .query import CouchDbError, CouchDbNoDbError
+from .store import CouchDBStore
 
 from pulsar.utils.config import Global
 

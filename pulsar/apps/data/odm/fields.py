@@ -176,6 +176,9 @@ class Field(UnicodeMixin):
     def get_value(self, instance, value):
         return value
 
+    def to_store(self, value, store=None):
+        return value
+
     def to_json(self, value, store=None):
         return value
 
@@ -285,7 +288,7 @@ class DateField(Field):
     def to_store(self, value, backend=None):
         if value not in NONE_EMPTY:
             if isinstance(value, date):
-                value = date2timestamp(value)
+                return date2timestamp(value)
             else:
                 raise FieldValueError('%s not a valid date' % value)
         else:
@@ -506,6 +509,12 @@ class ForeignKey(Field):
             if id:
                 instance['_%s' % self.name] = value
             return id
+        else:
+            return value
+
+    def to_store(self, value, store):
+        if isinstance(value, self.relmodel):
+            return value.id
         else:
             return value
 

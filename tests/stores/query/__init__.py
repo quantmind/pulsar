@@ -21,8 +21,8 @@ email_domains = ['gmail.com', 'yahoo.com', 'bla.com', 'foo.com']
 
 class QueryTest(StoreTest):
 
-    sizes = {'tiny': 3,
-             'small': 7,
+    sizes = {'tiny': 10,
+             'small': 20,
              'normal': 50,
              'big': 1000,
              'huge': 10000}
@@ -101,7 +101,33 @@ class QueryTest(StoreTest):
         all = yield self.models.user.query().all()
         m1 = choice(all)
         models = yield self.models.user.filter(username=m1.username).all()
-        self.assertTrue(models)
-        for model in models:
-            self.assertEqual(model.username, m1.username)
+        self.assertEqual(len(models), 1)
+        self.assertEqual(models[0].username, m1.username)
+        #
+        m2 = m1
+        while m2.first_name == m1.first_name:
+            m2 = choice(all)
+        models = yield self.models.user.filter(username=(m1.username,
+                                                         m2.username)).all()
+        self.assertEqual(len(models), 2)
+        usernames = set((m.username for m in models))
+        self.assertEqual(usernames, set((m1.username, m2.username)))
+
+    def test_count_all(self):
+        N = yield self.models.user.query().count()
+        self.assertEqual(N, self.sizes[self.cfg.size])
+
+    def test_count_filter(self):
+        all = yield self.models.user.query().all()
+        m1 = choice(all)
+        N = yield self.models.user.filter(first_name=m1.first_name).count()
+        self.assertTrue(N)
+        self.assertTrue(N < self.sizes[self.cfg.size])
+        m2 = m1
+        while m2.first_name == m1.first_name:
+            m2 = choice(all)
+        N = yield self.models.user.filter(first_name=(m1.first_name,
+                                                      m2.first_name)).count()
+        self.assertTrue(N > 1)
+        self.assertTrue(N < self.sizes[self.cfg.size])
 

@@ -203,6 +203,11 @@ class Store(Producer):
         '''
         raise NotImplementedError
 
+    def table_info(self, model):
+        '''Information about the table/collection mapping ``model``
+        '''
+        pass
+
     def execute_transaction(self, commands):
         '''Execute a list of ``commands`` in a :class:`.Transaction`.
 

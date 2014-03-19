@@ -7,6 +7,7 @@ from pulsar.utils.importer import import_module
 from .transaction import Transaction, ModelDictionary
 from .model import ModelType
 from .manager import Manager
+from . import query
 from ..store import create_store
 
 
@@ -59,6 +60,7 @@ class Mapper(EventHandler):
     '''
     MANY_TIMES_EVENTS = ('pre_commit', 'pre_delete',
                          'post_commit', 'post_delete')
+    ModelNotFound = query.ModelNotFound
 
     def __init__(self, default_store, **kw):
         super(Mapper, self).__init__()
