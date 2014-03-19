@@ -136,9 +136,9 @@ Registration is straightforward and it is achieved by:</p>
 <p>The <a class="reference internal" href="clients.html#connection-string"><em>connection string</em></a> passed as first argument when
 initialising a <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>, is the default <a class="reference internal" href="stores.html#data-stores"><em>data store</em></a>
 of that <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>.
-It is possible to register models to a different data-staores by passing
-a connection string to the <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper.register" title="pulsar.apps.data.odm.mapper.Mapper.register"><tt class="xref py py-meth docutils literal"><span class="pre">Mapper.register()</span></tt></a> method:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">models</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MyModel</span><span class="p">,</span> <span class="s">&#39;redis://127.0.0.1:6379/8&#39;</span><span class="p">)</span>
+It is possible to register models to a different data-stores by passing
+a <tt class="docutils literal"><span class="pre">store</span></tt> parameter to the <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper.register" title="pulsar.apps.data.odm.mapper.Mapper.register"><tt class="xref py py-meth docutils literal"><span class="pre">Mapper.register()</span></tt></a> method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">models</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="s">&#39;redis://127.0.0.1:6379/8&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -149,10 +149,10 @@ model <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager"
 <ul id="mapper-dict">
 <li><p class="first"><strong>Dictionary interface</strong> is the most straightforward and intuitive way:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># Create a Query for Instrument</span>
-<span class="n">query</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">Instrument</span><span class="p">]</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+<span class="n">query</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">User</span><span class="p">]</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
 <span class="c">#</span>
 <span class="c"># Create a new Instrument and save it to the backend server</span>
-<span class="n">inst</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">Instrument</span><span class="p">]</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">inst</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">User</span><span class="p">]</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
@@ -162,8 +162,8 @@ model <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager"
 same manager via an attribute of the <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper" title="pulsar.apps.data.odm.mapper.Mapper"><tt class="xref py py-class docutils literal"><span class="pre">Mapper</span></tt></a>, the attribute
 name is given by the <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> metaclass <a class="reference internal" href="#pulsar.apps.data.odm.model.ModelMeta.name" title="pulsar.apps.data.odm.model.ModelMeta.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a>.
 It is, by default, the class name of the model in lower case:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">query</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">instrument</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
-<span class="n">inst</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">instrument</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">query</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+<span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
@@ -192,9 +192,9 @@ specify different back-ends for <tt class="docutils literal"><span class="pre">w
 operations.</p>
 <p>To specify a different back-end for read operations one registers a model in
 the following way:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">models</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Position</span><span class="p">,</span> <span class="s">&#39;redis://127.0.0.1:6379?db=8&amp;password=bla&#39;</span><span class="p">,</span>
-                <span class="s">&#39;redis://127.0.0.1:6380?db=1&#39;</span><span class="p">)</span>
-</pre></div>
+<div class="highlight-python"><pre>models.register(User,
+                store=&#x27;redis://127.0.0.1:6379/8,
+                read_store=&#x27;redis://127.0.0.1:6380/1&#x27;)</pre>
 </div>
 </div>
 <div class="section" id="custom-managers">
