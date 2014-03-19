@@ -62,13 +62,3 @@ How is inter-actor message passing implemented?
 
 Check the :ref:`actor messages documentation <tutorials-messages>`.
 
-
-Tips
--------------
-
-Pause execution asynchronously
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Within a :ref:`coroutine <coroutine>` you can pause execution by using
-the :func:`.async_sleep` function. The function switches task and resumes
-the coroutine after *timeout* seconds.

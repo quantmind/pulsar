@@ -99,6 +99,7 @@ def add_callback(future, callback):
         if not (fut._exception or fut.cancelled()):
             callback(fut.result())
 
+    future = async(future)
     future.add_done_callback(_call_back)
     return future
 
