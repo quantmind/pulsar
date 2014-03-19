@@ -1,3 +1,5 @@
+from asyncio import Future
+
 from pulsar.apps.data import odm
 from pulsar.apps.tasks import Task
 
@@ -36,7 +38,8 @@ class Odm(StoreTest):
         yield models.create_tables()
         task = yield models.task.create(id='bjbhjscbhj', name='foo')
         self.assertEqual(task['id'], 'bjbhjscbhj')
-        self.assertEqual(len(task), 2)
+        data = task.to_json()
+        self.assertEqual(len(data), 2)
         self.assertFalse(task._modified)
         yield models.drop_tables()
 
@@ -55,3 +58,12 @@ class Odm(StoreTest):
         self.assertEqual(session.user, user)
         user2 = yield session.user
         self.assertEqual(user, user2)
+        # Now lets reload the session
+        session = yield models.session.get(session.id)
+        self.assertEqual(session.user_id, user.id)
+        self.assertFalse('_user' in session)
+        user2 = session.user
+        self.assertIsInstance(user2, Future)
+        user2 = yield user2
+        self.assertEqual(user, user2)
+        self.assertTrue('_user' in session)

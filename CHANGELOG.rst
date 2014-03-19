@@ -5,7 +5,8 @@ Ver. 0.8.1 - Development
 * Moved :class:`.PulsarDS` server into its own :mod:`pulsar.apps.ds`
   module.
 * The task application can run on redis.
-* Added support for couchdb_ datastore (alpha).
+* Added support for :ref:`couchdb datastore <store_couchdb>` (alpha).
+* Added :ref:`twisted integration <tutorials-twisted>` (alpha).
 * More documentation for data stores.
 
 Ver. 0.8.0 - 2014-Mar-06

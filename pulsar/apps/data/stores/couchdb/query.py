@@ -1,3 +1,4 @@
+from pulsar import coroutine_return
 from pulsar.apps.data import odm
 
 
@@ -33,4 +34,4 @@ class CauchDbQuery(odm.CompiledQuery):
         else:
             query = yield self._store.query_model_view(self._meta, 'all')
             query = query['rows']
-        return self.models((q['value'] for q in query))
+        coroutine_return(self.models((q['value'] for q in query)))

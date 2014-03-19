@@ -73,10 +73,10 @@ Registration is straightforward and it is achieved by::
 The :ref:`connection string <connection-string>` passed as first argument when
 initialising a :class:`.Mapper`, is the default :ref:`data store <data-stores>`
 of that :class:`.Mapper`.
-It is possible to register models to a different data-staores by passing
-a connection string to the :meth:`.Mapper.register` method::
+It is possible to register models to a different data-stores by passing
+a ``store`` parameter to the :meth:`.Mapper.register` method::
 
-    models.register(MyModel, 'redis://127.0.0.1:6379/8')
+    models.register(User, store='redis://127.0.0.1:6379/8')
 
 
 Accessing managers
@@ -90,10 +90,10 @@ model :class:`.Manager` to perform database queries.
 
 
     # Create a Query for Instrument
-    query = models[Instrument].query()
+    query = models[User].query()
     #
     # Create a new Instrument and save it to the backend server
-    inst = models[Instrument].new(...)
+    inst = models[User].create(...)
 
 .. _mapper-dotted:
 
@@ -102,8 +102,8 @@ model :class:`.Manager` to perform database queries.
   name is given by the :class:`.Model` metaclass :attr:`~.ModelMeta.name`.
   It is, by default, the class name of the model in lower case::
 
-      query = models.instrument.query()
-      inst = models.instrument.new(...)
+      query = models.user.query()
+      user = models.user.create(...)
 
 The :ref:`dotted notation <mapper-dotted>` is less verbose than the
 :ref:`dictionary notation <mapper-dict>` and, importantly, it allows to
@@ -134,8 +134,9 @@ operations.
 To specify a different back-end for read operations one registers a model in
 the following way::
 
-    models.register(Position, 'redis://127.0.0.1:6379?db=8&password=bla',
-                    'redis://127.0.0.1:6380?db=1')
+    models.register(User,
+                    store='redis://127.0.0.1:6379/8,
+                    read_store='redis://127.0.0.1:6380/1')
 
 
 .. _custom-manager:

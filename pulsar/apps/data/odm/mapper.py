@@ -126,8 +126,7 @@ class Mapper(EventHandler):
         if engine:
             self._search_engine.set_mapper(self)
 
-    def register(self, *models, store=None, read_store=None,
-                 include_related=True, **params):
+    def register(self, *models, **params):
         '''Register one or several :class:`.Model` with this :class:`Mapper`.
 
         If a model was already registered it does nothing.
@@ -146,7 +145,9 @@ class Mapper(EventHandler):
         :return: a list models registered or a single model if there
             was only one
         '''
-        store = store or self._default_store
+        include_related = params.pop('include_related', True)
+        store = params.pop('store', None) or self._default_store
+        read_store = params.pop('read_store', None)
         store = create_store(store, **params)
         if read_store:
             read_store = create_store(read_store, *params)

@@ -49,8 +49,8 @@ from pulsar import get_actor
 from pulsar.apps.wsgi import Router, WsgiHandler, LazyWsgi, WSGIServer
 from pulsar.apps.ws import WS, WebSocket
 from pulsar.apps.rpc import PulsarServerCommands
-from pulsar.apps.data import (create_store, PubSubClient,
-                              DEFAULT_PULSAR_STORE_ADDRESS)
+from pulsar.apps.data import create_store, PubSubClient
+from pulsar.apps.ds import pulsards_url
 from pulsar.utils.system import json
 from pulsar.utils.pep import to_string
 
@@ -163,8 +163,7 @@ def server(callable=None, name=None, data_store=None, **params):
         actor = get_actor()
         if actor:
             data_store = actor.cfg.data_store
-        if not data_store:
-            data_store = 'pulsar://%s/3' % DEFAULT_PULSAR_STORE_ADDRESS
+        data_store = pulsards_url(data_store)
     return WSGIServer(callable=WebChat(name), name=name,
                       data_store=data_store, **params)
 

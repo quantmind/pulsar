@@ -87,6 +87,7 @@ def add_errback(future, callback):
             callback(CancelledError())
 
     future.add_done_callback(_error_back)
+    return future
 
 
 def add_callback(future, callback):
@@ -97,6 +98,7 @@ def add_callback(future, callback):
             callback(fut.result())
 
     future.add_done_callback(_call_back)
+    return future
 
 
 def future_timeout(future, timeout, exc_class=None):

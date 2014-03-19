@@ -248,16 +248,18 @@ class ModelMeta(object):
                 elif value is not None:
                     yield name, value
             for name in (set(instance) - set(fields)):
-                value = instance[name]
-                if value is not None:
-                    yield name, value
+                if not is_private_field(name):
+                    value = instance[name]
+                    if value is not None:
+                        yield name, value
         else:
             for name in instance:
-                value = instance[name]
-                if name in fields:
-                    value = fields[name].to_store(value, store)
-                if value is not None:
-                    yield name, value
+                if not is_private_field(name):
+                    value = instance[name]
+                    if name in fields:
+                        value = fields[name].to_store(value, store)
+                    if value is not None:
+                        yield name, value
 
 
 class ModelType(type(dict)):
@@ -271,8 +273,7 @@ class ModelType(type(dict)):
             meta = meta or {}
         cls.extend_meta(meta, attrs)
         fields = get_fields(bases, attrs)
-        if '__slots__' not in attrs:
-            attrs['__slots__'] = ('privates',)
+        attrs['__slots__'] = ('_access_cache', '_modified')
         new_class = super(ModelType, cls).__new__(cls, name, bases, attrs)
         ModelMeta(new_class, fields, **meta)
         class_prepared.fire(new_class)
@@ -289,24 +290,33 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
     '''A model is a python ``dict`` which represents and item/row
     in a data-store collection/table.
 
-    .. attribute:: privates
+    Fields values can be accessed via the dictionary interface::
 
-        Dictionary of private values, not stored in the backend server.
-        Any field starting with underscore is considered a private values.
+        model['field1']
+
+    or the dotted interface::
+
+        model.field1
+
+    which is equivalent to::
+
+        model.get('field1')
+
+    .. attribute:: _meta
+
+        Class attribute which represents the :class:`.ModelMeta`
+        for this model.
     '''
     abstract = True
 
     def __init__(self, *args, **kwargs):
-        self.privates = {'_access_cache': set(),
-                         '_store': None,
-                         '_modified': None}
+        self._access_cache = set()
+        self._modified = None
         self.update(*args, **kwargs)
-        self.privates['_modified'] = set()
+        self._modified = set()
 
     def __getitem__(self, field):
         field = mstr(field)
-        if is_private_field(field):
-            return self.privates[field]
         if field in primary_keys:
             field = self._meta.pkname()
         value = super(Model, self).__getitem__(field)
@@ -318,22 +328,25 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
         return value
 
     def __setitem__(self, field, value):
-        field = mstr(field)
-        if is_private_field(field):
-            self.privates[field] = value
-        else:
-            field, value = self._get_field_value(field, value)
-            super(Model, self).__setitem__(field, value)
+        field, value = self._get_field_value(field, value)
+        super(Model, self).__setitem__(field, value)
 
     def __getattr__(self, field):
         try:
             return self.__getitem__(field)
         except KeyError as e:
-            raise AttributeError(str(e))
+            return None
+
+    def __eq__(self, other):
+        if other.__class__ == self.__class__:
+            return self.id == other.id
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def get(self, field, default=None):
-        '''Get a value at ``field``
-        '''
         try:
             return self.__getitem__(field)
         except KeyError:
@@ -341,6 +354,10 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
 
     def set(self, field, value):
         '''Set the ``value`` at ``field``
+
+        Same as::
+
+            model[field] = value
         '''
         self[field] = value
 
@@ -354,18 +371,6 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
         except KeyError:
             return default
 
-    def pop(self, *args):
-        '''Remove an item from the model
-        '''
-        if not args:
-            raise TypeError('pop expected at least 1 arguments, got 0')
-        else:
-            field = args[0]
-            if is_private_field(field):
-                return self.privates.pop(*args)
-            else:
-                return super(Model, self).pop(*args)
-
     def update(self, *args, **kwargs):
         if len(args) == 1:
             iterable = args[0]
@@ -375,61 +380,51 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
         if kwargs:
             super(Model, self).update(self._update_modify(kwargs))
 
-    def clear_update(self, *args, **kwargs):
-        self.clear()
-        self.update(*args, **kwargs)
-
     def to_json(self):
         '''Return a JSON serialisable dictionary representation.
         '''
         return dict(self._to_json())
 
-    def pkvalue(self):
-        pk = self._meta.pk.name
-        if pk in self:
-            return self[pk]
-
     ##    INTERNALS
     def _to_json(self):
-        pk = self.pkvalue()
+        pk = self.get('id')
         if pk:
             yield self._meta.pk.name, pk
             for key in self:
-                value = self[key]
-                if value is not None:
-                    if key in self._meta.dfields:
-                        value = self._meta.dfields[key].to_json(value)
-                    elif isinstance(value, bytes):
-                        try:
-                            value = value.decode('utf-8')
-                        except Exception:
-                            value = b64encode(value).decode('utf-8')
-                    yield key, value
+                if not is_private_field(key):
+                    value = self[key]
+                    if value is not None:
+                        if key in self._meta.dfields:
+                            value = self._meta.dfields[key].to_json(value)
+                        elif isinstance(value, bytes):
+                            try:
+                                value = value.decode('utf-8')
+                            except Exception:
+                                value = b64encode(value).decode('utf-8')
+                        yield key, value
 
     def _update_modify(self, iterable):
         if isinstance(iterable, Mapping):
             iterable = iteritems(iterable)
         for field, value in iterable:
-            field = mstr(field)
-            if is_private_field(field):
-                self.privates[field] = value
-            else:
-                yield self._get_field_value(field, value)
+            yield self._get_field_value(field, value)
 
     def _get_field_value(self, field, value):
-        if field in primary_keys:
-            field = self._meta.pkname()
-        if field in self._meta.dfields:
-            f = self._meta.dfields[field]
-            value = f.get_value(self, value)
-            field = f.store_name
-        if self._modified is not None:
-            self._access_cache.discard(field)
-            if field in self:
-                if super(Model, self).__getitem__(field) != value:
+        field = mstr(field)
+        if not is_private_field(field):
+            if field in primary_keys:
+                field = self._meta.pkname()
+            if field in self._meta.dfields:
+                f = self._meta.dfields[field]
+                value = f.get_value(self, value)
+                field = f.store_name
+            if self._modified is not None:
+                self._access_cache.discard(field)
+                if field in self:
+                    if super(Model, self).__getitem__(field) != value:
+                        self._modified.add(field)
+                else:
                     self._modified.add(field)
-            else:
-                self._modified.add(field)
         return field, value
 
     @classmethod

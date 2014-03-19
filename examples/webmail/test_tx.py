@@ -10,7 +10,7 @@ from examples.echo.manage import server, EchoProtocol
 
 try:
     # This import must be done before importing twisted
-    from .tx import twisted
+    from pulsar.apps.tx import twisted
     from twisted.internet.protocol import Factory, Protocol
     from twisted.internet.defer import Deferred
     from twisted.internet.endpoints import TCP4ClientEndpoint

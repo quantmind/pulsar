@@ -61,7 +61,7 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 from pulsar import command, async
-from pulsar.apps import wsgi, ws, data
+from pulsar.apps import wsgi, ws, data, ds
 
 ############################# WEB INTERFACE
 media_libraries = {
@@ -290,21 +290,21 @@ class WsClient(data.PubSubClient):
 
 
 class server(pulsar.MultiApp):
-    '''Build a multi-app consisting on a taskqueue and a JSON-RPC server.
+    '''Build a multi-app consisting of
 
-    This class shows how to use the :class:`.MultiApp` utility for
-    starting several :ref:`pulsar applications <apps-framework>` at once.
+    * The :class:`.DiningPhilosophers` application
+    * A wsgi server for displaying actions on the browser
     '''
     cfg = pulsar.Config('Dining philosophers sit at a table around a bowl of '
                         'spaghetti and waits for available forks.',
-                        data_store=data.pulsards_url())
+                        data_store=ds.pulsards_url())
 
     def build(self):
-        #yield self.new_app(DiningPhilosophers)
+        yield self.new_app(DiningPhilosophers)
         #yield self.new_app(wsgi.WSGIServer, prefix='wsgi',
         #                   callable=PhilosophersWsgi(self.name))
-        yield self.new_app(wsgi.WSGIServer,
-                           callable=PhilosophersWsgi(self.name))
+        #yield self.new_app(wsgi.WSGIServer,
+        #                   callable=PhilosophersWsgi(self.name))
 
 
 if __name__ == '__main__':

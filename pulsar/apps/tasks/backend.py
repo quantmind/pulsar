@@ -631,10 +631,9 @@ class TaskBackend(EventHandler):
                 else:
                     logger.info('starting %s', task_info)
                     kwargs = task.get('kwargs') or {}
-                    task.clear_update(id=task_id, status=states.STARTED,
-                                      time_started=time_ended,
-                                      worker=worker.aid)
-                    self.models.task.update(task)
+                    self.models.task.update(id=task_id, status=states.STARTED,
+                                            time_started=time_ended,
+                                            worker=worker.aid)
                     pubsub.publish(self.channel('task_started'), task_id)
                     # This may block for a while
                     result = yield job(consumer, **kwargs)
@@ -652,10 +651,9 @@ class TaskBackend(EventHandler):
             result = str(exc)
             status = states.FAILURE
         #
-        task.clear_update(id=task_id, time_ended=time.time(),
-                          status=status, result=result)
         try:
-            yield self.models.task.update(task)
+            yield self.models.task.update(id=task_id, time_ended=time.time(),
+                                          status=status, result=result)
         finally:
             self.concurrent_tasks.discard(task_id)
             self.finish_task(task_id, lock_id)

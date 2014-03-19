@@ -1,6 +1,7 @@
 from pulsar import Event, wait_complete, chain_future, add_callback
 
 from .query import AbstractQuery, Query, QueryError, ModelNotFound
+from ..store import Command
 
 
 RECURSIVE_RELATIONSHIP_CONSTANT = 'self'
@@ -179,8 +180,28 @@ class Manager(AbstractQuery):
     insert = new
 
     @wait_complete
-    def update(self, instance):
+    def update(self, *instance, **kwargs):
         '''Update an existing ``instance`` of :attr:`_model`.
+
+        The instance must have already contain the primary key.
+        '''
+        if instance:
+            if len(instance) > 1:
+                raise TypeError('expected at most 1 arguments, got %s' %
+                                len(instance))
+            instance = instance[0]
+            instance.update(kwargs)
+        else:
+            instance = self(**kwargs)
+        if not instance.id:
+            raise ValueError('Cannot update. No primary key in %s' % instance)
+        with self._mapper.begin() as t:
+            t.add(instance, Command.UPDATE)
+        return t.wait(lambda t: instance)
+
+    @wait_complete
+    def save(self, instance):
+        '''Save an existing ``instance`` of :attr:`_model`.
 
         If the instance already contain the primary key this is considered
         and update, otherwise an insert.
@@ -188,7 +209,6 @@ class Manager(AbstractQuery):
         with self._mapper.begin() as t:
             t.add(instance)
         return t.wait(lambda t: instance)
-    save = update
 
     def _get(self, data):
         if len(data) == 1:
@@ -267,7 +287,7 @@ class LazyForeignKey(LazyProxy):
                 if value.id == pk:
                     return value
                 else:
-                    instance.privates.pop(key)
+                    instance.pop(key)
             mapper = instance.get('_mapper')
             if mapper:
                 return add_callback(mapper[field.relmodel].get(pk),
@@ -354,13 +374,13 @@ class ManyToManyRelatedManager(OneToManyRelatedManager):
     def session_instance(self, name, value, session, **kwargs):
         if self.related_instance is None:
             raise ManyToManyError('Cannot use "%s" method from class' % name)
-        elif not self.related_instance.pkvalue():
+        elif not self.related_instance.id:
             raise ManyToManyError('Cannot use "%s" method on a non persistent '
                                   'instance.' % name)
         elif not isinstance(value, self.formodel):
             raise ManyToManyError(
                 '%s is not an instance of %s' % (value, self.formodel._meta))
-        elif not value.pkvalue():
+        elif not value.id:
             raise ManyToManyError('Cannot use "%s" a non persistent instance.'
                                   % name)
         kwargs.update({self.name_formodel: value,
@@ -379,7 +399,7 @@ model for which this related manager is an attribute.'''
 elements contained by the field.'''
         s, instance = self.session_instance('remove', value, session)
         # update state so that the instance does look persistent
-        instance.get_state(iid=instance.pkvalue(), action='update')
+        instance.get_state(iid=instance.id, action='update')
         return s.delete(instance)
 
     def throughquery(self, session=None):

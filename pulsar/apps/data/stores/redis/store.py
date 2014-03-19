@@ -123,8 +123,7 @@ class RedisStore(Store):
                 pipe.execute(*command.args)
             elif action in update_insert:
                 model = command.args
-                pkvalue = model.pkvalue()
-                key = self.basekey(model._meta, pkvalue)
+                key = self.basekey(model._meta, model.id)
                 pipe.hmset(key, self.model_data(model, action))
             else:
                 raise NotImplementedError

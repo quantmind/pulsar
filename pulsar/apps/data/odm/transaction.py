@@ -46,7 +46,7 @@ class TransactionModel(object):
 
 
 class TransactionStore(object):
-    '''Transaction for a given store
+    '''Transaction for a given :class:`.Store`
     '''
     def __init__(self, store):
         self._store = store
@@ -139,13 +139,17 @@ class Transaction(EventHandler):
         manager = self.mapper[model]
         ts = self.tstore(manager._store)
         action = action or Command.INSERT
+        if action == Command.UPDATE:
+            model['_store'] = ts._store
+        elif action == Command.INSERT:
+            model.pop('_store', None)
         ts.commands.append(Command(model, action))
         return model
 
     def update(self, instance_or_query, **kw):
         '''Update an ``instance`` or a ``query``'''
         if isinstance(instance_or_query, Model):
-            pkvalue = instance_or_query.pkvalue()
+            pkvalue = instance_or_query.id
             data = dict(instance_or_query)
             data.update(kw)
         manager = self.mapper[model]
