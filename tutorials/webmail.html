@@ -80,6 +80,11 @@
 event driven network engine for python. Twisted has implementation
 for several protocols which can be used in pulsar by importing the
 <a class="reference internal" href="#module-pulsar.apps.tx" title="pulsar.apps.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tx</span></tt></a> module.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This is an experimental implementation, by any means complete.
+Use at your own risk</p>
+</div>
 <p>The implementation replaces the twisted reactor with a proxy for
 an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.4)"><em class="xref std std-ref">asyncio event loop</em></a>.
 Twisted Deferred and Failures are made compatible with pulsar

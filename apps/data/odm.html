@@ -338,23 +338,33 @@ Consider this simple example:</p>
 <em class="property">class </em><tt class="descclassname">pulsar.apps.data.odm.model.</tt><tt class="descname">Model</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model" title="Permalink to this definition">¶</a></dt>
 <dd><p>A model is a python <tt class="docutils literal"><span class="pre">dict</span></tt> which represents and item/row
 in a data-store collection/table.</p>
+<p>Fields values can be accessed via the dictionary interface:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="p">[</span><span class="s">&#39;field1&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>or the dotted interface:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="o">.</span><span class="n">field1</span>
+</pre></div>
+</div>
+<p>which is equivalent to:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;field1&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="attribute">
-<dt id="pulsar.apps.data.odm.model.Model.privates">
-<tt class="descname">privates</tt><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.privates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dictionary of private values, not stored in the backend server.
-Any field starting with underscore is considered a private values.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.odm.model.Model.get">
-<tt class="descname">get</tt><big>(</big><em>field</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a value at <tt class="docutils literal"><span class="pre">field</span></tt></p>
+<dt id="pulsar.apps.data.odm.model.Model._meta">
+<tt class="descname">_meta</tt><a class="headerlink" href="#pulsar.apps.data.odm.model.Model._meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class attribute which represents the <a class="reference internal" href="#pulsar.apps.data.odm.model.ModelMeta" title="pulsar.apps.data.odm.model.ModelMeta"><tt class="xref py py-class docutils literal"><span class="pre">ModelMeta</span></tt></a>
+for this model.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.model.Model.set">
 <tt class="descname">set</tt><big>(</big><em>field</em>, <em>value</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the <tt class="docutils literal"><span class="pre">value</span></tt> at <tt class="docutils literal"><span class="pre">field</span></tt></p>
+<p>Same as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">model</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -362,12 +372,6 @@ Any field starting with underscore is considered a private values.</p>
 <tt class="descname">get_raw</tt><big>(</big><em>field</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model.get_raw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.get_raw" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the raw value at <tt class="docutils literal"><span class="pre">field</span></tt></p>
 <p>This function does not apply field conversion.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.odm.model.Model.pop">
-<tt class="descname">pop</tt><big>(</big><em>*args</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/model.html#Model.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.model.Model.pop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove an item from the model</p>
 </dd></dl>
 
 <dl class="method">
@@ -666,14 +670,13 @@ read-only operations</p>
 <dt id="pulsar.apps.data.odm.manager.Manager.update">
 <tt class="descname">update</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/manager.html#Manager.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.manager.Manager.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update an existing <tt class="docutils literal"><span class="pre">instance</span></tt> of <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager._model" title="pulsar.apps.data.odm.manager.Manager._model"><tt class="xref py py-attr docutils literal"><span class="pre">_model</span></tt></a>.</p>
-<p>If the instance already contain the primary key this is considered
-and update, otherwise an insert.</p>
+<p>The instance must have already contain the primary key.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.manager.Manager.save">
 <tt class="descname">save</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.data.odm.manager.Manager.save" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update an existing <tt class="docutils literal"><span class="pre">instance</span></tt> of <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager._model" title="pulsar.apps.data.odm.manager.Manager._model"><tt class="xref py py-attr docutils literal"><span class="pre">_model</span></tt></a>.</p>
+<dd><p>Save an existing <tt class="docutils literal"><span class="pre">instance</span></tt> of <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager._model" title="pulsar.apps.data.odm.manager.Manager._model"><tt class="xref py py-attr docutils literal"><span class="pre">_model</span></tt></a>.</p>
 <p>If the instance already contain the primary key this is considered
 and update, otherwise an insert.</p>
 </dd></dl>
