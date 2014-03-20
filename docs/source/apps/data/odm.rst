@@ -169,6 +169,10 @@ It is possible to supply a custom manager class by specifying the
 Querying Data
 ==================
 
+Full text search
+~~~~~~~~~~~~~~~~~~~~
+
+
 Relationships
 ==================
 
@@ -233,7 +237,6 @@ related :class:`.Model` instance.
   deletes the object containing the :class:`ForeignKey` unless the
   :class:`Field.required` attribute of the :class:`ForeignKey` field is set
   to ``False``.
-
 
 
 .. _many-to-many:

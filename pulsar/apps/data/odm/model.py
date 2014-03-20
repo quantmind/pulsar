@@ -18,6 +18,8 @@ from .fields import (Field, AutoIdField, ForeignKey, CompositeIdField,
                      FieldError, NONE_EMPTY)
 from .query import OdmError
 
+from ..store import Command
+
 
 primary_keys = ('id', 'ID', 'pk', 'PK')
 
@@ -202,14 +204,14 @@ class ModelMeta(object):
         '''
         return self.pk.to_python(value, backend)
 
-    def store_data(self, instance, store):
+    def store_data(self, instance, store, action):
         '''Generator of ``field, value`` pair for the data ``store``.
 
         Perform validation for ``instance`` and can raise :class:`.FieldError`
         if invalid values are stored in ``instance``.
         '''
         fields = instance._meta.dfields
-        if instance._store is None:
+        if action == Command.INSERT:
             for field in fields.values():
                 name = field.store_name
                 value = field.to_store(instance.get_raw(name), store)

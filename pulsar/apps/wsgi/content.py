@@ -382,6 +382,10 @@ This is a shortcut for the :meth:`insert` method at index 0.
         else:
             return chain_future(stream, callback=self.to_string)
 
+    def __call__(self, request):
+        stream = multi_async(self.stream(request))
+        return chain_future(stream, callback=self.to_string)
+
 
 class Json(AsyncString):
     '''An :class:`AsyncString` which renders into a json string.

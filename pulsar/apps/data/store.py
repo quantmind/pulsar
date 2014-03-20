@@ -188,6 +188,9 @@ class Store(Producer):
         '''
         return data
 
+    def encode_bool(self, data):
+        return bool(data)
+
     def encode_json(self, data):
         return data
 
@@ -268,7 +271,7 @@ class Store(Producer):
         '''Generator of ``field, value`` pair for the data store.
 
         By default invokes the :class:`.ModelMeta.store_data` method.'''
-        return model._meta.store_data(model, self)
+        return model._meta.store_data(model, self, action)
 
     #    INTERNALS
     #######################
@@ -428,6 +431,7 @@ class PubSub(object):
 
 
 def parse_store_url(url):
+    assert url, 'No url given'
     scheme, host, path, query, fr = urlsplit(url)
     assert not fr, 'store url must not have fragment, found %s' % fr
     assert scheme, 'Scheme not provided'

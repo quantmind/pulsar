@@ -111,11 +111,11 @@ class Transaction(EventHandler):
         '''
         manager = self.mapper[model]
         ts = self.tstore(manager._store)
-        action = action or Command.INSERT
-        if action == Command.UPDATE:
-            model['_store'] = ts._store
-        elif action == Command.INSERT:
-            model.pop('_store', None)
+        if not action:
+            if '_rev' in model:
+                action = Command.UPDATE
+            else:
+                action = Command.INSERT
         ts.commands.append(Command(model, action))
         return model
 

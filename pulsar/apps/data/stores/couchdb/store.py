@@ -13,6 +13,14 @@ are stored in exactly the same database.
 To differentiate and query over different types of models, the
 ``Type`` field is added to the document representing a model.
 
+Queries
+===========
+
+Search
+==========
+
+https://github.com/rnewson/couchdb-lucene
+
 CouchDBStore
 =================
 
@@ -157,7 +165,6 @@ class CouchDBStore(Store):
                 if doc.get('ok'):
                     model['id'] = doc['id']
                     model['_rev'] = doc['rev']
-                    model['_store'] = self
                     model._modified.clear()
                 elif doc.get('error'):
                     errors.append(CouchDbError(doc['error'], doc['reason']))
@@ -260,13 +267,13 @@ class CouchDBStore(Store):
             yield _id, model.id
             yield '_deleted', True
         else:
-            for key, value in meta.store_data(model, self):
+            for key, value in meta.store_data(model, self, action):
                 yield _id if key == pkname else key, value
             yield 'Type', meta.table_name
         if '_rev' in model:
             yield '_rev', model['_rev']
 
-    def _init(self, headers=None, loop=None, namespace=None, **kw):
+    def _init(self, headers=None, namespace=None, **kw):
         if not self._database:
             self._database = namespace or 'defaultdb'
         elif namespace:

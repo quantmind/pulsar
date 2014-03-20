@@ -161,7 +161,8 @@ class Mapper(EventHandler):
                     continue
                 registered.append(model)
                 default_manager = store.default_manager or Manager
-                manager_class = getattr(model, 'manager_class', default_manager)
+                manager_class = getattr(model, 'manager_class',
+                                        default_manager)
                 manager = manager_class(model, store, read_store, self)
                 self._registered_models[model] = manager
                 if model._meta.name not in self._registered_names:
@@ -255,6 +256,10 @@ class Mapper(EventHandler):
         '''
         return list(self._register_applications(applications, models,
                                                 stores))
+
+    @wait_complete
+    def search(self, *kw):
+        raise NotImplementedError
 
     @wait_complete
     def create_tables(self, remove_existing=False):

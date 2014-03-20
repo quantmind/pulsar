@@ -10,4 +10,5 @@ from .model import Model
 from .transaction import ModelDictionary
 from .mapper import Mapper, Manager
 from .query import Query, CompiledQuery, OdmError, ModelNotFound, QueryError
-from .searchengine import register_serachengine, search_engine, SearchEngine
+from .searchengine import (register_searchengine, search_engine, SearchEngine,
+                           search_engines)

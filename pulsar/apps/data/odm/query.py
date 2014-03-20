@@ -210,6 +210,7 @@ class Query(object):
         follows the foreign-key relationship ``related``'''
         return self
 
+    @wait_complete
     def count(self):
         '''Count the number of objects selected by this :class:`Query`.
 
@@ -230,6 +231,7 @@ class Query(object):
         '''
         return self.compiled().delete()
 
+    # INTERNALS
     def compiled(self):
         if not self._compiled:
             self._compiled = self._manager._read_store.compile_query(self)

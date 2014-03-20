@@ -201,14 +201,10 @@ class Manager(AbstractQuery):
 
     @wait_complete
     def save(self, instance):
-        '''Save an existing ``instance`` of :attr:`_model`.
-
-        If the instance already contain the primary key this is considered
-        and update, otherwise an insert.
+        '''Save an ``instance`` of :attr:`_model`.
         '''
-        action = Command.UPDATE if self._store else Command.INSERT
         with self._mapper.begin() as t:
-            t.add(instance, action)
+            t.add(instance)
         return t.wait(lambda t: instance)
 
     @wait_complete

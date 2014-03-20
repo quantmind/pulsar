@@ -126,7 +126,7 @@ class RedisStore(Store):
         for command in transaction.commands:
             if command.action == Command.INSERT:
                 model = command.args
-                model['_store'] = self
+                model['_rev'] = 1
 
     def get_model(self, manager, pk):
         key = '%s%s:%s' % (self.namespace, manager._meta.table_name,

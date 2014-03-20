@@ -116,7 +116,7 @@ class Field(UnicodeMixin):
     creation_counter = 0
 
     def __init__(self, unique=False, primary_key=None, required=None,
-                 index=None, hidden=None, as_cache=False, **extras):
+                 index=None, hidden=False, as_cache=False, **extras):
         self.foreign_keys = ()
         self.primary_key = (self.primary_key if primary_key is None else
                             primary_key)
@@ -140,6 +140,7 @@ class Field(UnicodeMixin):
             self.index = False
         self._meta = None
         self.name = None
+        self.hidden = hidden
         self._default = extras.pop('default', self._default)
         self._handle_extras(**extras)
         self.creation_counter = Field.creation_counter
@@ -248,11 +249,10 @@ class BooleanField(Field):
             return None
     to_json = to_python
 
-    def to_store(self, value, store=None):
-        if value not in NONE_EMPTY:
-            return 1 if value else 0
-        else:
-            return self.get_default()
+    def to_store(self, value, store):
+        if value in NONE_EMPTY:
+            value = self.get_default()
+        return store.encode_bool(value)
 
 
 class FloatField(Field):

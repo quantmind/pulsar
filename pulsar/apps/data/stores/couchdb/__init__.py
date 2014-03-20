@@ -1,5 +1,6 @@
 from .query import CouchDbError, CouchDbNoDbError
 from .store import CouchDBStore
+from .search import CouchDBLuceneSearch
 
 from pulsar.utils.config import Global
 
