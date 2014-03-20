@@ -111,7 +111,6 @@ class Field(UnicodeMixin):
     primary_key = False
     required = True
     to_python = None
-    to_store = None
     index = False
     _default = None
     creation_counter = 0
@@ -177,7 +176,10 @@ class Field(UnicodeMixin):
         return value
 
     def to_store(self, value, store=None):
-        return value
+        if value in NONE_EMPTY:
+            return self.get_default()
+        else:
+            return value
 
     def to_json(self, value, store=None):
         return value
@@ -286,13 +288,12 @@ class DateField(Field):
             return self.get_default()
 
     def to_store(self, value, backend=None):
-        if value not in NONE_EMPTY:
-            if isinstance(value, date):
-                return date2timestamp(value)
-            else:
-                raise FieldValueError('%s not a valid date' % value)
-        else:
-            return self.get_default()
+        if value in NONE_EMPTY:
+            value = self.get_default()
+        if isinstance(value, date):
+            return date2timestamp(value)
+        elif value not in NONE_EMPTY:
+            raise FieldValueError('%s not a valid date' % value)
     to_json = to_store
 
     def _handle_extras(self, auto_now=False, **extras):
@@ -406,6 +407,11 @@ class JSONField(CharField):
     '''
     required = False
     index = False
+
+    def to_store(self, value, store):
+        if value is NONE_EMPTY:
+            value = self.get_default()
+        return store.encode_json(value)
 
     def to_python(self, value, backend=None):
         if value is None:

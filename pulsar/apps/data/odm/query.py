@@ -224,6 +224,12 @@ class Query(object):
         '''
         return self.compiled().all()
 
+    @wait_complete
+    def delete(self):
+        '''Delete all objects selected by this :class:`.Query`.
+        '''
+        return self.compiled().delete()
+
     def compiled(self):
         if not self._compiled:
             self._compiled = self._manager._read_store.compile_query(self)
@@ -276,7 +282,14 @@ class CompiledQuery(object):
         raise NotImplementedError
 
     def all(self):
-        '''Fetch all matching elements for the server.
+        '''Fetch all matching elements from the server.
+
+        Return a :class:`~asyncio.Future`
+        '''
+        raise NotImplementedError
+
+    def delete(self):
+        '''Delete all matching elements from the server.
 
         Return a :class:`~asyncio.Future`
         '''

@@ -196,20 +196,23 @@ class Mapper(EventHandler):
         results = []
         for manager in self._registered_models.values():
             m = manager._meta
-            if include is not None and not (m.modelkey in include or
+            if include is not None and not (m.table_name in include or
                                             m.app_label in include):
                 continue
-            if not (m.modelkey in exclude or m.app_label in exclude):
+            if not (m.table_name in exclude or m.app_label in exclude):
                 if dryrun:
-                    results.append(manager)
+                    result = yield manager.query().count()
                 else:
-                    results.append(manager.flush())
+                    result = yield manager.query().delete()
+                results.append((manager, result))
         return results
 
     def unregister(self, model=None):
         '''Unregister a ``model`` if provided, otherwise it unregister all
-registered models. Return a list of unregistered model managers or ``None``
-if no managers were removed.'''
+        registered models.
+
+        Return a list of unregistered model managers or ``None``
+        if no managers were removed.'''
         if model is not None:
             try:
                 manager = self._registered_models.pop(model)
@@ -224,14 +227,16 @@ if no managers were removed.'''
             return managers
 
     def register_applications(self, applications, models=None, stores=None):
-        '''A higher level registration functions for group of models located
+        '''A higher level registration method for group of models located
         on application modules.
-        It uses the :func:`model_iterator` function to iterate
-        through all :class:`.Model` models available in ``applications``
-        and register them using the :func:`register` low level method.
+
+        It uses the :meth:`model_iterator` method to iterate
+        through all :class:`.Model` available in ``applications``
+        and :meth:`register` them.
 
         :parameter applications: A String or a list of strings representing
-            python dotted paths where models are implemented.
+            python dotted paths where models are implemented. Can also be
+            a module or a list of modules.
         :parameter models: Optional list of models to include. If not provided
             all models found in *applications* will be included.
         :parameter stores: optional dictionary which map a model or an
@@ -242,10 +247,10 @@ if no managers were removed.'''
         For example::
 
 
-            mapper.register_application_models('mylib.myapp')
-            mapper.register_application_models(['mylib.myapp', 'another.path'])
-            mapper.register_application_models(pythonmodule)
-            mapper.register_application_models(['mylib.myapp',pythonmodule])
+            mapper.register_applications('mylib.myapp')
+            mapper.register_applications(['mylib.myapp', 'another.path'])
+            mapper.register_applications(pythonmodule)
+            mapper.register_applications(['mylib.myapp', pythonmodule])
 
         '''
         return list(self._register_applications(applications, models,
@@ -288,11 +293,17 @@ if no managers were removed.'''
 
     def valid_model(self, model):
         if isinstance(model, ModelType):
-            return hasattr(model, '_meta')
+            return not model._meta.abstract
         return False
 
     def models_from_model(self, model, include_related=False, exclude=None):
-        '''Generator of all model in model.'''
+        '''Generator of all model in model.
+
+        :param model: a :class:`.Model`
+        :param include_related: if ``True`` al related models to ``model``
+            are included
+        :param exclude: optional set of models to exclude
+        '''
         if exclude is None:
             exclude = set()
         if self.valid_model(model) and model not in exclude:

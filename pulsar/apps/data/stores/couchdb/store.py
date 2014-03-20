@@ -41,25 +41,11 @@ DEFAULT_HEADERS = {'Accept': 'application/json, text/plain; q=0.8',
                    'content-type': 'application/json'}
 
 
-all_view = '''function (doc) {{
-    if(doc.Type == '{0}') emit(null, doc);
-}};
-'''
-
-all_count = '''function (doc) {{
-    if(doc.Type == '{0}') emit(null, 1);
-}};
-'''
-
 index_view = '''function (doc) {{
-    if(doc.Type == '{0}' && doc.{1} !== undefined) emit(doc.{1}, doc);
+    if(doc.Type == '{0}' && doc.{1} !== undefined) emit(doc.{1}, doc._rev);
 }};
 '''
 
-count_view = '''function (doc) {{
-    if(doc.Type == '{0}' && doc.{1} !== undefined) emit(doc.{1}, 1);
-}};
-'''
 
 class CouchDBStore(Store):
     _lock = None
@@ -138,9 +124,8 @@ class CouchDBStore(Store):
             if index.primary_key:
                 name = 'id'
                 key = '_id'
-            views[name] = {'map': index_view.format(table, key)}
-            views['%s_count' % name] = {'map': count_view.format(table, key),
-                                        'reduce': '_sum'}
+            views[name] = {'map': index_view.format(table, key),
+                           'reduce': '_count'}
         result = yield self.design_create(table, views)
         coroutine_return(result)
 
@@ -189,7 +174,8 @@ class CouchDBStore(Store):
             coroutine_return(self.build_model(manager, data))
 
     def query_model_view(self, model, view_name, key=None, keys=None,
-                         group=None, limit=None):
+                         group=None, limit=None, include_docs=None,
+                         reduce=True, method=None):
         '''Query an existing view
 
         All view parameters here:
@@ -206,8 +192,12 @@ class CouchDBStore(Store):
             kwargs['group'] = 'true'
         if limit:
             kwargs['limit'] = int(limit)
-        return self.request('get', self._database, '_design', meta.table_name,
-                            '_view', view_name, **kwargs)
+        if include_docs:
+            kwargs['include_docs'] = 'true'
+        if not reduce:
+            kwargs['reduce'] = 'false'
+        return self.request(method or 'get', self._database, '_design',
+                            meta.table_name, '_view', view_name, **kwargs)
 
     def compile_query(self, query):
         return CauchDbQuery(self, query)

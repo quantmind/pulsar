@@ -14,6 +14,7 @@ from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
                     EventHandler, Producer)
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
+from pulsar.utils.system import json
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 __all__ = ['Command',
@@ -170,6 +171,7 @@ class Store(Producer):
         '''Flush the store.'''
         raise NotImplementedError
 
+    # encode/decode field values
     def encode_bytes(self, data):
         '''Encode bytes ``data``
 
@@ -184,6 +186,9 @@ class Store(Producer):
         :param data: bytes or string
         :return: bytes
         '''
+        return data
+
+    def encode_json(self, data):
         return data
 
     #    ODM SUPPORT

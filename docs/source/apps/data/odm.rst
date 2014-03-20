@@ -12,8 +12,9 @@ Features
 * Presents a method of associating user-defined Python classes with data-stores
   **collections**/**tables**
 * An instance of a :class:`.Model` is mapped into an **item**/**row**
-  in its corresponding collection/table.
-* Allows the use of different stores for different models
+  in its corresponding collection/table
+* It allows the use of :ref:`different stores for different models <odm-multiple-backends>`
+* Straightforward CRUD operations
 * Design to be fast, lightweight and non-intrusive
 
 .. _odm-intro:
@@ -122,6 +123,8 @@ When creating a new instance of model the callable method its registered
 
 ``pippo`` is a instance not yet persistent in the data store.
 
+
+.. _odm-multiple-backends:
 
 Multiple backends
 ~~~~~~~~~~~~~~~~~~~~~~~~

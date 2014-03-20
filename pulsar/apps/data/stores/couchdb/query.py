@@ -38,12 +38,15 @@ class CauchDbQuery(odm.CompiledQuery):
             self.aggregated = self.aggregate(query._filters)
 
     def count(self):
-        return self._query_view('count', group=bool(self.aggregated))
+        return self._query_view(group=bool(self.aggregated))
 
     def all(self):
-        return self._query_view()
+        return self._query_view(include_docs=True, reduce=False)
 
-    def _query_view(self, query_type=None, **kw):
+    def delete(self):
+        return self._query_view(self._delete, reduce=False)
+
+    def _query_view(self, callback=None, reduce=True, query_type=None, **kw):
         view = self._store.query_model_view
         keys = None
         if self.aggregated:
@@ -66,13 +69,19 @@ class CauchDbQuery(odm.CompiledQuery):
             view_name = '%s_%s' % (view_name, query_type)
         kw['keys'] = keys
         try:
-            result = yield view(self._meta, view_name, **kw)
+            result = yield view(self._meta, view_name, reduce=reduce, **kw)
         except CouchDbNoViewError:
-            raise odm.QueryError('Couchdb view for %s not available' %
-                                 view_name)
-        query = result['rows']
-        if query_type == 'count':
-            query = sum((q['value'] for q in query))
-        elif not query_type:
-            query = self.models((q['value'] for q in result['rows']))
+            raise odm.QueryError('Couchdb view for %s not available for %s' %
+                                 (view_name, self._meta))
+        if callback:
+            query = yield callback(result)
+        elif reduce:
+            query = sum((q['value'] for q in result['rows']))
+        else:
+            query = self.models((q['doc'] for q in result['rows']))
         coroutine_return(query)
+
+    def _delete(self, result):
+        docs = [{'_id': r['id'], '_rev': r['value'], '_deleted': True} for
+                r in result['rows']]
+        return self._store.update_documents(self._store._database, docs)

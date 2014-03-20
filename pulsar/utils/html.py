@@ -162,9 +162,18 @@ def capfirst(x):
 
 
 def nicename(name):
-    '''Make ``name`` a more user friendly string.'''
+    '''Make ``name`` a more user friendly string.
+
+    Capitalise the first letter and replace dash and underscores with a space
+    '''
     name = to_string(name)
     return capfirst(' '.join(name.replace('-', ' ').replace('_', ' ').split()))
+
+
+def plural(n, text, plural=None):
+    if n != 1:
+        text = plural or '%ss' % text
+    return '%d %s' % (n, text)
 
 
 class SafeString(string_type):

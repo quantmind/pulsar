@@ -68,18 +68,15 @@ class ModelMeta(object):
             ...
 
             class Meta:
-                ordering = '-timestamp'
                 name = 'custom'
 
 
     :parameter register: if ``True`` (default), this :class:`ModelMeta` is
         registered in the global models hashtable.
     :parameter abstract: Check the :attr:`abstract` attribute.
-    :parameter ordering: Check the :attr:`ordering` attribute.
     :parameter app_label: Check the :attr:`app_label` attribute.
     :parameter name: Check the :attr:`name` attribute.
-    :parameter table_name: Check the :attr:`table_name` attribute.
-    :parameter attributes: Check the :attr:`attributes` attribute.
+    :parameter table_name: Check the :attr:`table_name` attribute
 
     This is the list of attributes and methods available. All attributes,
     but the ones mentioned above, are initialised by the object relational
@@ -91,7 +88,7 @@ class ModelMeta(object):
 
     .. attribute:: model
 
-        :class:`Model` for which this class is the database metadata
+        :class:`Model` for which this instance is the database metadata
         container.
 
     .. attribute:: name
@@ -107,25 +104,11 @@ class ModelMeta(object):
 
     .. attribute:: table_name
 
-        The table_name which is by default given by ``app_label.name``.
-
-    .. attribute:: ordering
-
-        Optional name of a :class:`Field` in the :attr:`model`.
-        If provided, model indexes will be sorted with respect to the value
-        of the specified field. It can also be a :class:`autoincrement`
-        instance.
-        Check the :ref:`sorting <sorting>` documentation for more details.
-
-        Default: ``None``.
+        The table_name which is by default given by ``<app_label>_<name>``.
 
     .. attribute:: dfields
 
-        dictionary of :class:`Field` instances.
-
-    .. attribute:: fields
-
-        list of all :class:`Field` instances.
+        dictionary of all :class:`.Field` in :attr:`model`
 
     .. attribute:: scalarfields
 
@@ -151,14 +134,10 @@ class ModelMeta(object):
 
         List of :class:`ManyToManyField` names for the :attr:`model`. This
         information is useful during registration.
-
-    .. attribute:: attributes
-
-        Additional attributes for :attr:`model`.
     '''
     def __init__(self, model, fields, app_label=None, table_name=None,
-                 name=None, register=True, pkname=None, ordering=None,
-                 abstract=False, **kwargs):
+                 name=None, register=True, pkname=None, abstract=False,
+                 **kwargs):
         self.model = model
         self.abstract = abstract
         self.scalarfields = []
@@ -203,9 +182,6 @@ class ModelMeta(object):
             for name, field in fields.items():
                 field.register_with_model(name, model)
             pk.register_with_model(pkname, model)
-        self.ordering = None
-        if ordering:
-            self.ordering = self.get_sorting(ordering, ImproperlyConfigured)
 
     def __repr__(self):
         return self.table_name
@@ -241,10 +217,7 @@ class ModelMeta(object):
                         not isinstance(field, AutoIdField)):
                     raise FieldError("Field '%s' is required for '%s'." %
                                      (name, self))
-                if isinstance(value, dict):
-                    for key, v in value.items():
-                        yield key, v
-                elif value is not None:
+                if value is not None:
                     yield name, value
             for name in (set(instance) - set(fields)):
                 if not is_private_field(name):
@@ -280,7 +253,7 @@ class ModelType(type(dict)):
 
     @classmethod
     def extend_meta(cls, meta, attrs):
-        for name in ('register', 'abstract', 'attributes'):
+        for name in ('register', 'abstract'):
             if name in attrs:
                 meta[name] = attrs.pop(name)
 

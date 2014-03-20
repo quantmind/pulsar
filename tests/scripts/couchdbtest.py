@@ -1,3 +1,4 @@
+from pulsar.utils.security import gen_unique_id
 from pulsar.apps.data import odm
 from pulsar.apps.tasks import Task
 
@@ -13,11 +14,15 @@ models.register(Task)
 ok = models.create_tables()
 
 tasks = models.task
-task = tasks.create(name='bla')
-assert task.name == 'bla'
-task = tasks.create(name='foo')
-assert task.name == 'foo'
+task1 = tasks.create(name='bla', id=gen_unique_id())
+assert task1.name == 'bla'
+task2 = tasks.create(name='foo', id=gen_unique_id())
+assert task2.name == 'foo'
+task3 = tasks.create(name='foo', id=gen_unique_id())
+assert task3.name == 'foo'
 
 objs = store.table_info(Task)
+
+store.
+
 ok = models.drop_tables()
-print(objs)
