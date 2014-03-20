@@ -112,11 +112,6 @@ class RedisStore(Store):
         pipe = self.pipeline()
         update_insert = set((Command.INSERT, Command.UPDATE))
         #
-        # loop through models
-        for tmodel in transaction.models():
-            if tmodel.dirty:
-                raise NotImplementedError
-
         for command in transaction.commands:
             action = command.action
             if not action:

@@ -1,7 +1,6 @@
 from pulsar import (EventHandler, coroutine_return, InvalidOperation,
                     chain_future, multi_async)
 from pulsar.utils.pep import iteritems
-from pulsar.utils.structures import OrderedDict
 
 from .model import Model
 
@@ -29,39 +28,12 @@ class ModelDictionary(dict):
         return getattr(model, '_meta', model)
 
 
-class TransactionModel(object):
-    '''Transaction for a given model
-    '''
-    def __init__(self, manager):
-        self.manager = manager
-        self._new = []
-        self._deleted = OrderedDict()
-        self._delete_query = []
-        self._modified = OrderedDict()
-        self._queries = []
-
-    @property
-    def dirty(self):
-        return bool(self._new or self._modified)
-
-
 class TransactionStore(object):
     '''Transaction for a given :class:`.Store`
     '''
     def __init__(self, store):
         self._store = store
-        self._models = OrderedDict()
         self.commands = []
-
-    def model(self, manager):
-        sm = self._models.get(manager)
-        if sm is None:
-            sm = TransactionModel(manager)
-            self._models[manager] = sm
-        return sm
-
-    def models(self):
-        return self._models.values()
 
 
 class Transaction(EventHandler):
@@ -132,8 +104,9 @@ class Transaction(EventHandler):
     def add(self, model, action=None):
         '''Add a ``model`` to the transaction.
 
-        :parameter model: a :class:`.Model` instance. It must be registered
+        :param model: a :class:`.Model` instance. It must be registered
             with the :attr:`mapper` which created this :class:`Transaction`.
+        :param action: Optional CRUD action to perform
         :return: the ``model``.
         '''
         manager = self.mapper[model]
@@ -165,13 +138,6 @@ class Transaction(EventHandler):
         if store not in self._commands:
             self._commands[store] = TransactionStore(store)
         return self._commands[store]
-
-    def model(self, model, read=False):
-        '''Returns the :class:`TransactionModel` for ``model``
-        '''
-        manager = self.mapper[model]
-        ts = self.tstore(manager._read_store if read else manager._store)
-        return ts.model(manager)
 
     def commit(self):
         '''Commit the transaction.

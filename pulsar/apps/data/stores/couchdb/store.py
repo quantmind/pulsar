@@ -154,30 +154,30 @@ class CouchDBStore(Store):
     def execute_transaction(self, transaction):
         '''Execute a ``transaction``
         '''
-        # loop through models
-        for tmodel in transaction.models():
-            if tmodel.dirty:
-                raise NotImplementedError
         updates = []
         models = []
-        update_insert = set((Command.INSERT, Command.UPDATE))
         for command in transaction.commands:
             action = command.action
             if not action:
                 raise NotImplementedError
-            elif action in update_insert:
+            else:
                 model = command.args
                 updates.append(dict(self.model_data(model, action)))
                 models.append(model)
-            else:
-                raise NotImplementedError
+        #
         if updates:
             executed = yield self.update_documents(self._database, updates)
+            errors = []
             for doc, model in zip(executed, models):
                 if doc.get('ok'):
                     model['id'] = doc['id']
                     model['_rev'] = doc['rev']
                     model['_store'] = self
+                    model._modified.clear()
+                elif doc.get('error'):
+                    errors.append(CouchDbError(doc['error'], doc['reason']))
+            if errors:
+                raise errors[0]
 
     @wait_complete
     def get_model(self, manager, pkvalue):
@@ -266,9 +266,15 @@ class CouchDBStore(Store):
         meta = model._meta
         pkname = meta.pkname()
         _id = '_id'
-        for key, value in meta.store_data(model, self):
-            yield _id if key == pkname else key, value
-        yield 'Type', meta.table_name
+        if action == Command.DELETE:
+            yield _id, model.id
+            yield '_deleted', True
+        else:
+            for key, value in meta.store_data(model, self):
+                yield _id if key == pkname else key, value
+            yield 'Type', meta.table_name
+        if '_rev' in model:
+            yield '_rev', model['_rev']
 
     def _init(self, headers=None, loop=None, namespace=None, **kw):
         if not self._database:

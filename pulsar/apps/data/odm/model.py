@@ -16,6 +16,7 @@ except ImportError:
 from .manager import class_prepared, makeManyToManyRelatedManager
 from .fields import (Field, AutoIdField, ForeignKey, CompositeIdField,
                      FieldError, NONE_EMPTY)
+from .query import OdmError
 
 
 primary_keys = ('id', 'ID', 'pk', 'PK')
@@ -350,14 +351,17 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
         except KeyError:
             return default
 
-    def set(self, field, value):
+    def set(self, field, value, modify=True):
         '''Set the ``value`` at ``field``
 
-        Same as::
+        If ``modify`` is ``True``, this method is equivalent to::
 
             model[field] = value
         '''
-        self[field] = value
+        if modify:
+            self[field] = value
+        else:
+            super(Model, self).__setitem__(field, value)
 
     def get_raw(self, field, default=None):
         '''Get the raw value at ``field``
@@ -382,6 +386,24 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
         '''Return a JSON serialisable dictionary representation.
         '''
         return dict(self._to_json())
+
+    def save(self):
+        '''Commit changes to backend data store.
+        '''
+        mapper = self.get('_mapper')
+        if mapper:
+            return mapper[self._meta].save(self)
+        else:
+            raise OdmError('_mapper not available in %s' % self)
+
+    def delete(self):
+        '''Delete this model from backend data store
+        '''
+        mapper = self.get('_mapper')
+        if mapper:
+            return mapper[self._meta].delete(self)
+        else:
+            raise OdmError('_mapper not available in %s' % self)
 
     ##    INTERNALS
     def _to_json(self):

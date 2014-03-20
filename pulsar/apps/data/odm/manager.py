@@ -206,10 +206,20 @@ class Manager(AbstractQuery):
         If the instance already contain the primary key this is considered
         and update, otherwise an insert.
         '''
+        action = Command.UPDATE if self._store else Command.INSERT
         with self._mapper.begin() as t:
-            t.add(instance)
+            t.add(instance, action)
         return t.wait(lambda t: instance)
 
+    @wait_complete
+    def delete(self, instance):
+        '''Delete an existing ``instance`` of :attr:`_model`
+        '''
+        with self._mapper.begin() as t:
+            t.add(instance, Command.DELETE)
+        return t.wait(lambda t: instance)
+
+    # INTERNALS
     def _get(self, data):
         if len(data) == 1:
             return data[0]

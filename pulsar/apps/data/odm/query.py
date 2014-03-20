@@ -28,7 +28,11 @@ range_lookups = {
 lookup_value = namedtuple('lookup_value', 'type value')
 
 
-class QueryError(Exception):
+class OdmError(Exception):
+    pass
+
+
+class QueryError(OdmError):
     pass
 
 

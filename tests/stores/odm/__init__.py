@@ -67,3 +67,19 @@ class Odm(StoreTest):
         user2 = yield user2
         self.assertEqual(user, user2)
         self.assertTrue('_user' in session)
+
+    def test_save_delete(self):
+        models = self.mapper(User)
+        user = User(username='pippo')
+        self.assertRaises(odm.OdmError, user.save)
+        user = yield models.user.create(username='pippo')
+        self.assertFalse(user._modified)
+        user['random'] = 'hello'
+        self.assertTrue(user._modified)
+        yield user.save()
+        self.assertFalse(user._modified)
+        yield user.delete()
+        yield self.async.assertRaises(models.ModelNotFound,
+                                      models.user.get, user.id)
+
+

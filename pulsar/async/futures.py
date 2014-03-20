@@ -79,7 +79,7 @@ def coroutine_return(*value):
     raise error
 
 
-def add_errback(future, callback):
+def add_errback(future, callback, loop=None):
     '''Add a ``callback`` to a ``future`` executed only if an exception
     or cancellation has occurred.'''
     def _error_back(fut):
@@ -88,18 +88,19 @@ def add_errback(future, callback):
         elif fut.cancelled():
             callback(CancelledError())
 
+    future = async(future, loop=None)
     future.add_done_callback(_error_back)
     return future
 
 
-def add_callback(future, callback):
+def add_callback(future, callback, loop=None):
     '''Add a ``callback`` to ``future`` executed only if an exception
     has not occurred.'''
     def _call_back(fut):
         if not (fut._exception or fut.cancelled()):
             callback(fut.result())
 
-    future = async(future)
+    future = async(future, loop=None)
     future.add_done_callback(_call_back)
     return future
 
@@ -128,7 +129,7 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
     ``callback`` is executed and its result set as the results of ``next``.
     If an exception occurs the optional ``errback`` is executed.
 
-    :param future: the original :class:`asyncio.Future`
+    :param future: the original :class:`asyncio.Future` (can be a coroutine)
     :param callback: optional callback to execute on the result of ``future``
     :param errback: optional callback to execute on the exception of ``future``
     :param next: optional :class:`asyncio.Future` to chain.
@@ -136,6 +137,7 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
     :param timeout: optional timeout to set on ``next``
     :return: the future ``next``
     '''
+    future = async(future)
     if next is None:
         next = Future(loop=future._loop)
         if timeout and timeout > 0:
