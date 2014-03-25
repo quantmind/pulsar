@@ -1,4 +1,4 @@
-from pulsar import Event, wait_complete, chain_future, add_callback
+from pulsar import Event, wait_complete, chain_future, add_callback, task
 
 from .query import AbstractQuery, Query, QueryError, ModelNotFound
 from ..store import Command
@@ -113,11 +113,14 @@ class Manager(AbstractQuery):
         instance['_mapper'] = self._mapper
         return instance
 
+    @task
     def create_table(self, remove_existing=False):
         '''Create the table/collection for the :attr:`_model`
         '''
-        return self._store.create_table(self._model,
-                                        remove_existing=remove_existing)
+        yield self._store.create_table(self._model,
+                                       remove_existing=remove_existing)
+        if self._mapper.search_engine:
+            yield self._mapper.search_engine.create_table(self)
 
     def drop_table(self):
         '''Drop the table/collection for the :attr:`_model`

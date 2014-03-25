@@ -87,8 +87,10 @@ class Store(Producer):
 
         The user password
     '''
+    _scheme = None
     compiler_class = None
     default_manager = None
+    MANY_TIMES_EVENTS = ('request',)
 
     def __init__(self, name, host, loop, database=None,
                  user=None, password=None, encoding=None, **kw):
@@ -294,7 +296,10 @@ class Store(Producer):
         host = '%s%s' % (pre, host)
         path = '/%s' % self._database if self._database else ''
         query = urlencode(self._urlparams)
-        return urlunparse((self._name, host, path, '', query, ''))
+        scheme = self._name
+        if self._scheme:
+            scheme = '%s+%s' % (self._scheme, scheme)
+        return urlunparse((scheme, host, path, '', query, ''))
 
     def _build_pool(self):
         return Pool

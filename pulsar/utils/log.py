@@ -25,17 +25,6 @@ else:
 
 from .structures import AttributeDictionary
 
-NOLOG = 100
-
-LOG_LEVELS = {
-    "critical": logging.CRITICAL,
-    "error": logging.ERROR,
-    "warning": logging.WARNING,
-    "info": logging.INFO,
-    "debug": logging.DEBUG,
-    'none': None
-}
-
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -218,7 +207,7 @@ class Silence(logging.Handler):
         pass
 
 
-def configured_logger(logger, config=None, level=None, handlers=None):
+def configured_logger(name, config=None, level=None, handlers=None):
     '''Configured logger.
     '''
     with process_global('lock'):
@@ -231,6 +220,9 @@ def configured_logger(logger, config=None, level=None, handlers=None):
             original = logconfig
             process_global('_config_logging', logconfig, True)
         else:
+            loggers = logconfig.get('loggers')
+            if loggers and name in loggers:
+                return logging.getLogger(name)
             logconfig = deepcopy(logconfig)
             logconfig['disable_existing_loggers'] = False
             logconfig.pop('loggers', None)
@@ -255,18 +247,18 @@ def configured_logger(logger, config=None, level=None, handlers=None):
         else:
             handlers = handlers or ['console']
         level = logging.getLevelName(level)
-        if logger not in original['loggers']:
-            if 'loggers' not in logconfig:
-                logconfig['loggers'] = {}
-            l = {'level': level, 'handlers': handlers, 'propagate': False}
-            original['loggers'][logger] = l
-            logconfig['loggers'][logger] = l
+        if 'loggers' not in logconfig:
+            logconfig['loggers'] = {}
+        l = {'level': level, 'handlers': handlers, 'propagate': False}
+        original['loggers'][name] = l
+        logconfig['loggers'][name] = l
+        #
         if not original.get('root'):
             logconfig['root'] = {'handlers': handlers,
                                  'level': level}
         if logconfig:
             dictConfig(logconfig)
-        return logging.getLogger(logger)
+        return logging.getLogger(name)
 
 
 WHITE = 37

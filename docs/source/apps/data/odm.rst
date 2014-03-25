@@ -169,6 +169,8 @@ It is possible to supply a custom manager class by specifying the
 Querying Data
 ==================
 
+.. _odm-search:
+
 Full text search
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -413,5 +415,15 @@ Compiled Query
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: CompiledQuery
+   :members:
+   :member-order: bysource
+
+
+.. module:: pulsar.apps.data.odm.searchengine
+
+Search Engine
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SearchEngine
    :members:
    :member-order: bysource

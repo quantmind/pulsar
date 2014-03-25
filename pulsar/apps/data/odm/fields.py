@@ -21,10 +21,6 @@ class FieldValueError(ValueError):
     pass
 
 
-def get_field_type(field):
-    return getattr(field, 'repr_type', 'text')
-
-
 class Field(UnicodeMixin):
     '''Base class of all :mod:`.odm` Fields.
 
@@ -108,6 +104,7 @@ class Field(UnicodeMixin):
 
         Default ``False``.
     '''
+    repr_type = 'unknown'
     primary_key = False
     required = True
     to_python = None
@@ -205,6 +202,7 @@ class Field(UnicodeMixin):
 
 
 class CharField(Field):
+    repr_type = 'text'
 
     def to_python(self, value, store=None):
         if isinstance(value, bytes):
@@ -316,6 +314,7 @@ class DateTimeField(DateField):
 
 
 class PickleField(Field):
+    repr_type = 'bytes'
     required = False
     index = False
 
@@ -413,12 +412,15 @@ class JSONField(CharField):
             value = self.get_default()
         return store.encode_json(value)
 
-    def to_python(self, value, backend=None):
+    def to_python(self, value, store=None):
         if value is None:
             return self.get_default()
-        try:
-            return self.encoder.loads(value)
-        except TypeError:
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except TypeError:
+                return None
+        else:
             return value
 
     def serialise(self, value, lookup=None):

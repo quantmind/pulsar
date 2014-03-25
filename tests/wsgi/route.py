@@ -186,3 +186,16 @@ class Routes(unittest.TestCase):
         r = Route('add/<path:path>', {'path': ''})
         r2 = Route('bla/<id>/') + r
         self.assertEqual(r2.defaults, r.defaults)
+
+    def test_add_string(self):
+        r = Route('add/<path:path>', {'path': 'foo'})
+        r2 = r + 'bla'
+        self.assertEqual(r2.rule, 'add/<path:path>/bla')
+        self.assertEqual(str(r2), '/add/<path:path>/bla')
+        self.assertNotEqual(r2, '/add/<path:path>/bla')
+
+    def test_empty_url(self):
+        r = Route('')
+        self.assertEqual(r.rule, '')
+        self.assertEqual(r.url(), '/')
+        self.assertEqual(r.path, '/')

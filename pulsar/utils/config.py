@@ -31,7 +31,7 @@ from .internet import parse_address
 from .importer import import_system_file
 from .httpurl import HttpParser as PyHttpParser
 from .log import configured_logger
-from .pep import to_bytes, iteritems, native_str
+from .pep import to_bytes, iteritems, native_str, pickle
 
 
 __all__ = ['Config',
@@ -339,6 +339,9 @@ class Config(object):
         me.params = me.params.copy()
         return me
 
+    def clone(self):
+        return pickle.loads(pickle.dumps(self))
+
     def configured_logger(self, name=None):
         '''Configured logger.
         '''
@@ -351,22 +354,25 @@ class Config(object):
             loglevel = bits[-1]
             if len(bits) > 1:
                 namespace = '.'.join(bits[:-1])
-                if namespace == 'pulsar':
-                    default_loglevel = loglevel
             else:
-                if not default_loglevel:
-                    default_loglevel = loglevel
                 namespace = name
             if namespace in loggers:
                 continue
-            loggers[namespace] = configured_logger(namespace,
-                                                   config=self.logconfig,
-                                                   level=loglevel,
-                                                   handlers=loghandlers)
-        default_loglevel = default_loglevel or 'info'
+            logger = configured_logger(namespace,
+                                       config=self.logconfig,
+                                       level=loglevel,
+                                       handlers=loghandlers)
+            loggers[namespace] = logger
+            if namespace == 'pulsar' or default_loglevel is None:
+                default_loglevel = logger.level
+
+        default_loglevel = asyncio_loglevel = default_loglevel or 0
+        if asyncio_loglevel:
+            asyncio_loglevel = max(asyncio_loglevel,
+                                   logging._checkLevel('WARNING'))
         for namespace, loglevel in (('pulsar', default_loglevel),
                                     (name, default_loglevel),
-                                    ('asyncio', 'warning')):
+                                    ('asyncio', asyncio_loglevel)):
             if namespace not in loggers:
                 loggers[namespace] = configured_logger(namespace,
                                                        config=self.logconfig,
@@ -851,6 +857,7 @@ class Loglevel(Global):
     name = "loglevel"
     flags = ["--log-level"]
     nargs = '+'
+    validator = validate_list
     desc = '''
         The granularity of log outputs.
 

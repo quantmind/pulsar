@@ -30,33 +30,23 @@ class Mapper(EventHandler):
     The ``models`` instance in the above snippet can be set globally if
     one wishes to do so.
 
-    .. attribute:: pre_commit
+    A :class:`.Mapper` has four events:
 
-        A signal which can be used to register ``callbacks`` before instances
-        are committed::
+    * ``pre_commit``: fired before instances are committed::
 
-            models.pre_commit.bind(callback, sender=MyModel)
+            models.bind_event('pre_commit', callback)
 
-    .. attribute:: pre_delete
+    * ``pre_delete``: fired before instances are deleted::
 
-        A signal which can be used to register ``callbacks`` before instances
-        are deleted::
+            models.bind_event('pre_delete', callback)
 
-            models.pre_delete.bind(callback, sender=MyModel)
+    * ``pre_commit``: fired after instances are committed::
 
-    .. attribute:: post_commit
+            models.bind_event('post_commit', callback)
 
-        A signal which can be used to register ``callbacks`` after instances
-        are committed::
+    * ``post_delete``: fired after instances are deleted::
 
-            models.post_commit.bind(callback, sender=MyModel)
-
-    .. attribute:: post_delete
-
-        A signal which can be used to register ``callbacks`` after instances
-        are deleted::
-
-            models.post_delete.bind(callback, sender=MyModel)
+            models.bind_event('post_delete', callback)
     '''
     MANY_TIMES_EVENTS = ('pre_commit', 'pre_delete',
                          'post_commit', 'post_delete')
@@ -86,11 +76,13 @@ class Mapper(EventHandler):
 
     @property
     def search_engine(self):
-        '''The :class:`SearchEngine` for this :class:`.Mapper`.
+        '''The :class:`.SearchEngine` for this :class:`.Mapper`.
 
-        This must be created by users.
-        Check :ref:`full text search <tutorial-search>`
-        tutorial for information.'''
+        This must be created by users and intalled on a mapper via the
+        :meth:`set_search_engine` method.
+        Check :ref:`full text search <odm-search>`
+        tutorial for information.
+        '''
         return self._search_engine
 
     def __repr__(self):
@@ -119,11 +111,11 @@ class Mapper(EventHandler):
         return Transaction(self)
 
     def set_search_engine(self, engine):
-        '''The :class:`.SearchEngine` for this :class:`.Mapper`.
+        '''Set the :class:`.SearchEngine` for this :class:`.Mapper`.
 
-        This must be created by users.
-        Check :ref:`full text search <tutorial-search>`
-        tutorial for information.'''
+        Check :ref:`full text search <odm-search>`
+        tutorial for information.
+        '''
         self._search_engine = engine
         if engine:
             self._search_engine.set_mapper(self)
@@ -206,7 +198,7 @@ class Mapper(EventHandler):
                 else:
                     result = yield manager.query().delete()
                 results.append((manager, result))
-        return results
+        coroutine_return(results)
 
     def unregister(self, model=None):
         '''Unregister a ``model`` if provided, otherwise it unregister all
@@ -266,6 +258,7 @@ class Mapper(EventHandler):
         '''Loop though :attr:`registered_models` and issue the
         :meth:`.Manager.create_table` method.'''
         executed = []
+        search_engine = self.search_engine
         for manager in self._registered_models.values():
             executed.append(manager.create_table(remove_existing))
         return multi_async(executed, loop=self._loop)

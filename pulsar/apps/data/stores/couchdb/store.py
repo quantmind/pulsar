@@ -36,17 +36,12 @@ from asyncio import Lock
 
 from pulsar import coroutine_return, wait_complete, multi_async
 from pulsar.utils.system import json
-from pulsar.apps.http import HttpClient
 from pulsar.apps.data import Store, Command, register_store
 from pulsar.utils.pep import zip
 
 from pulsar.apps.data import odm
 
-from .query import CauchDbQuery, CouchDbError, couch_db_error
-
-
-DEFAULT_HEADERS = {'Accept': 'application/json, text/plain; q=0.8',
-                   'content-type': 'application/json'}
+from .query import CauchDbQuery, CouchDbError, couch_db_error, CouchDBMixin
 
 
 index_view = '''function (doc) {{
@@ -55,7 +50,7 @@ index_view = '''function (doc) {{
 '''
 
 
-class CouchDBStore(Store):
+class CouchDBStore(CouchDBMixin, Store):
     _lock = None
 
     @property
@@ -232,6 +227,7 @@ class CouchDBStore(Store):
                         url, data={'name': self._user,
                                    'password': self._password},
                         encode_multipart=False)
+                    self.fire_event('request', response)
                     if response.status_code != 200:
                         response.raise_for_status()
                         self._lock = None
@@ -240,8 +236,10 @@ class CouchDBStore(Store):
             finally:
                 lock.release()
         url = '%s/%s' % (self._address, '/'.join(bits))
+
         response = yield self._http.request(method, url, data=kwargs,
                                             headers=self.headers)
+        self.fire_event('request', response)
         if response.request.method == 'HEAD':
             coroutine_return(response)
         else:
@@ -272,29 +270,6 @@ class CouchDBStore(Store):
             yield 'Type', meta.table_name
         if '_rev' in model:
             yield '_rev', model['_rev']
-
-    def _init(self, headers=None, namespace=None, **kw):
-        if not self._database:
-            self._database = namespace or 'defaultdb'
-        elif namespace:
-            self._database = '%s_%s' % (self._database, namespace)
-        bits =self._name.split('+')
-        if len(bits) == 2:
-            self._scheme = bits[0]
-            self._name = bits[1]
-        else:
-            self._scheme = 'http'
-        host = self._host
-        if isinstance(host, tuple):
-            host = '%s:%s' % host
-        self._address = '%s://%s' % (self._scheme, host)
-        self.headers = DEFAULT_HEADERS.copy()
-        if headers:
-            self.headers.update(headers)
-        self._http = HttpClient(loop=self._loop, **kw)
-
-    def _buildurl(self):
-        return '%s+%s' % (self._scheme, super(CouchDBStore, self)._buildurl())
 
 
 register_store("couchdb", "pulsar.apps.data.stores.CouchDBStore")

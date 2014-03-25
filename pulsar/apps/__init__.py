@@ -146,8 +146,8 @@ def monitor_info(self, info=None):
 
 def monitor_params(self, params=None):
     app = self.app
-    params.update({'cfg': app.cfg.copy(),
-                   'name': '{0}-worker'.format(app.name),
+    params.update({'cfg': app.cfg.clone(),
+                   'name': '%s.worker' % app.name,
                    'start': worker_start})
     app.actorparams(self, params)
 
@@ -450,8 +450,10 @@ class Application(Configurator):
         if monitor is None and (not actor or actor.is_arbiter()):
             self.cfg.on_start()
             self.logger = self.cfg.configured_logger()
-            actor = actor or pulsar.arbiter()
-            self.update_arbiter_params(actor)
+            if not actor:
+                actor = pulsar.arbiter(cfg=self.cfg.clone())
+            else:
+                self.update_arbiter_params(actor)
             self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
                 start = Future(loop=actor._loop)

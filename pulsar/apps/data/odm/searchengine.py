@@ -34,12 +34,16 @@ class IndexTransaction(object):
 
 
 class SearchEngine(Store):
+    '''Interface class for a full text search engine
+    '''
     _mapper = None
 
     def set_mapper(self, mapper):
         '''Set the :class:`.Mapper` for this search engine.
         '''
         self._mapper = mapper
+        mapper.bind_event('post_commit', self.index_model)
+        mapper.bind_event('post_delete', self.deindex_model)
 
     def begin(self):
         return IndexTransaction(self)
@@ -47,6 +51,19 @@ class SearchEngine(Store):
     def upload(self, items):
         '''Upload items to the search engine'''
         raise NotImplementedError
+
+    def index_model(self, *args, **kw):
+        pass
+
+    def deindex_model(self, *args, **kw):
+        pass
+
+    def create_table(self, manager):
+        '''Invoked when a :class:`.Manager` creates the data store tables.
+
+        By default it does nothing, some search engine implementation
+        may need to do something here
+        '''
 
 
 def register_searchengine(name, engine_class):

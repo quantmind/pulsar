@@ -173,10 +173,6 @@ class Router(RouterType('RouterBase', (object,), {})):
         If a ``response_content_types`` value is
         passed, it overrides the :attr:`response_content_types` attribute.
 
-    .. attribute:: route
-
-        The :ref:`Route <apps-wsgi-route>` served by this :class:`Router`.
-
     .. attribute:: routes
 
         List of children :class:`Router` of this :class:`Router`.
@@ -221,7 +217,7 @@ class Router(RouterType('RouterBase', (object,), {})):
         self._creation_count = Router._creation_count
         if not isinstance(rule, Route):
             rule = Route(rule)
-        self.route = rule
+        self._route = rule
         self._name = parameters.pop('name', rule.rule)
         self.routes = []
         # add routes specified via the initialiser
@@ -240,6 +236,29 @@ class Router(RouterType('RouterBase', (object,), {})):
                 self.parameters[name] = value
             else:
                 setattr(self, name, value)
+
+    @property
+    def route(self):
+        '''The relative :class:`.Route` served by this
+        :class:`Router`.
+        '''
+        parent = self._parent
+        if parent and parent._route.is_leaf:
+            return parent.route + self._route
+        else:
+            return self._route
+
+    @property
+    def full_route(self):
+        '''The full :attr:`route` for this :class:`.Router`.
+
+        It includes the :attr:`parent` portion of the route if a parent
+        router is available.
+        '''
+        if self._parent:
+            return self._parent.full_route + self._route
+        else:
+            return self._route
 
     @property
     def name(self):
@@ -280,28 +299,10 @@ class Router(RouterType('RouterBase', (object,), {})):
         return self._creation_count
 
     @property
-    def full_route(self):
-        '''The full :attr:`route` for this :class:`Router`.
-
-        It includes the :attr:`parent` portion of the route if a parent
-        router is available.
-        '''
-        route = self.route
-        parent = self._parent
-        while parent:
-            if parent.route.is_leaf:
-                parent = parent._parent
-            else:
-                break
-        if parent:
-            route = parent.route + route
-        return route
-
-    @property
     def rule(self):
         '''The full ``rule`` string for this :class:`Router`.
 
-        It includes the :attr:`parent` portion of rule if a parent
+        It includes the :attr:`parent` portion of the rule if a :attr:`parent`
         router is available.
         '''
         return self.full_route.rule
@@ -312,10 +313,7 @@ class Router(RouterType('RouterBase', (object,), {})):
         It includes the :attr:`parent` portion of url if a parent router
         is available.
         '''
-        route = self.route
-        if self._parent:
-            route = self._parent.route + route
-        return route.url(**urlargs)
+        return self.full_route.url(**urlargs)
 
     def __getattr__(self, name):
         '''Check the value of a :attr:`parameters` ``name``.
@@ -428,14 +426,6 @@ class Router(RouterType('RouterBase', (object,), {})):
         assert router is not self, 'cannot add self to children'
         # Loop over available routers to check it the router
         # is already available
-        if self.route.is_leaf:
-            # if this router is a leaf router, prepend this router path
-            # to the child
-            if not router.route.path.startswith('/'):
-                route = '%s/%s' % (self.route, router.route)
-            else:
-                route = '%s%s' % (self.route, router.route)
-            router.route = Route(route)
         for r in self.routes:
             if r.route == router.route:
                 r.parameters.update(router.parameters)

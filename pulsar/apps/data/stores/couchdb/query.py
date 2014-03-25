@@ -1,5 +1,10 @@
 from pulsar import coroutine_return
+from pulsar.apps.http import HttpClient
 from pulsar.apps.data import odm
+
+
+DEFAULT_HEADERS = {'Accept': 'application/json, text/plain; q=0.8',
+                   'content-type': 'application/json'}
 
 
 class CouchDbError(Exception):
@@ -24,6 +29,29 @@ error_classes = {'no_db_file': CouchDbNoDbError,
 def couch_db_error(error=None, reason=None, **params):
     error_class = error_classes.get(reason, CouchDbError)
     raise error_class(error, reason)
+
+
+class CouchDBMixin(object):
+
+    def _init(self, headers=None, namespace=None, **kw):
+        if not self._database:
+            self._database = namespace or 'defaultdb'
+        elif namespace:
+            self._database = '%s_%s' % (self._database, namespace)
+        bits =self._name.split('+')
+        if len(bits) == 2:
+            self._scheme = bits[0]
+            self._name = bits[1]
+        else:
+            self._scheme = 'http'
+        host = self._host
+        if isinstance(host, tuple):
+            host = '%s:%s' % host
+        self._address = '%s://%s' % (self._scheme, host)
+        self.headers = DEFAULT_HEADERS.copy()
+        if headers:
+            self.headers.update(headers)
+        self._http = HttpClient(loop=self._loop, **kw)
 
 
 class CauchDbQuery(odm.CompiledQuery):

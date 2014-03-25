@@ -445,7 +445,7 @@ class TestSuite(tasks.TaskQueue):
     '''
     name = 'test'
     cfg = pulsar.Config(apps=('tasks', 'test'),
-                        loglevel='none',
+                        loglevel=['none'],
                         task_paths=['pulsar.apps.test.case'],
                         plugins=())
 

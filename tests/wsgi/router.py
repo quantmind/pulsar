@@ -122,3 +122,13 @@ class TestRouter(unittest.TestCase):
                          'application/json')
         self.assertEqual(router.accept_content_type('application/javascript'),
                          None)
+
+    def test_path_method(self):
+        router = Router('/root',
+                        Router('a', get=lambda r: ['route a']))
+        self.assertEqual(router.path(), '/root')
+        self.assertEqual(router.route.is_leaf, True)
+        child, args = router.resolve('root/a')
+        self.assertFalse(args)
+        self.assertEqual(child.parent, router)
+        self.assertEqual(child.path(), '/root/a')

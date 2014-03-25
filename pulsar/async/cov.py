@@ -17,6 +17,7 @@ class Coverage(object):
         if coverage and self.cfg.coverage:
             cov = self.coverage
             if not cov:
+                self.logger.info('Start coverage')
                 p = current_process()
                 p._coverage = coverage.coverage(data_suffix=True)
                 p._coverage.start()
@@ -37,3 +38,5 @@ class Coverage(object):
             c = coverage.coverage(data_suffix=True)
             c.combine()
             c.save()
+            self.stream.write('Coverage file available. Type "coverage html" '
+                              'for a report\n')

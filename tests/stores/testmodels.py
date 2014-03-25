@@ -26,6 +26,12 @@ class Session(odm.Model):
     user = odm.ForeignKey(User)
 
 
+class Blog(odm.Model):
+    published = odm.DateField()
+    title = odm.CharField()
+    body = odm.CharField()
+
+
 class StoreTest(object):
 
     @classmethod

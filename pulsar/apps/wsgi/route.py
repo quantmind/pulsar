@@ -54,8 +54,8 @@ import re
 from collections import namedtuple
 
 from pulsar import Http404
-from pulsar.utils.httpurl import iteritems, iri_to_uri, remove_double_slash
-from pulsar.utils.httpurl import ENCODE_URL_METHODS, ENCODE_BODY_METHODS
+from pulsar.utils.httpurl import (iteritems, iri_to_uri, remove_double_slash,
+                                  ENCODE_URL_METHODS, ENCODE_BODY_METHODS)
 from pulsar.utils.pep import to_string
 
 
@@ -130,48 +130,45 @@ def parse_rule(rule):
 
 
 class route(object):
-    '''Decorator to create a child route from a :ref:`Router <wsgi-router>`
-    method.
+    '''Decorator to create a child route from a :class:`.Router` method.
 
-Tipical usage::
+    Typical usage::
 
-    from pulsar.apps import wsgi
+        from pulsar.apps import wsgi
 
-    class View(wsgi.Router):
+        class View(wsgi.Router):
 
-        wsgi.route('/foo')
-        def handle_view(self, request):
-            ...
+            wsgi.route('/foo')
+            def handle1(self, request):
+                ...
 
-        wsgi.route('/bla', async=True)
-        def asynchronous_handle(self, request):
-            result = yield async_function(...)
-            yield ...
+            wsgi.route('/bla', method='post')
+            def handle2(self, request):
+                ...
 
 
-In this example, ``View`` is the **parent router**.
+    In this example, ``View`` is the **parent router**.
 
-The decorator injects the :attr:`rule_method` attribute to the
-method it decorates. The attribute is a four elements tuple
-contains the :class:`Route`, the HTTP ``method``, a
-dictionary of additional ``parameters`` and the ``position`` for ordering.
+    The decorator injects the :attr:`rule_method` attribute to the
+    method it decorates. The attribute is a four elements tuple
+    contains the :class:`Route`, the HTTP ``method``, a
+    dictionary of additional ``parameters`` and the ``position`` for ordering.
 
-Check the :ref:`HttpBin example <tutorials-httpbin>`
-for a sample usage.
+    Check the :ref:`HttpBin example <tutorials-httpbin>`
+    for a sample usage.
 
-:param rule: Optional string for the relative url served by the method which
-    is decorated. If not supplied, the method name is used.
-:param method: Optional HTTP method name. Default is `get`.
-:param defaults: Optional dictionary of default variable values used when
-    initialising the :class:`Route` instance.
-:param position: Optional positioning of the router within the
-    list of child routers of the parent router.
-:param parameters: Additional parameters used when initialising
-    the :class:`pulsar.apps.wsgi.handlers.Router` created by this decorator.
-    The ``async=True`` parameter will treat the ``callable`` as an asynchronous
-    component.
+    :param rule: Optional string for the relative url served by the method
+        which is decorated. If not supplied, the method name is used.
+    :param method: Optional HTTP method name. Default is `get`.
+    :param defaults: Optional dictionary of default variable values used when
+        initialising the :class:`Route` instance.
+    :param position: Optional positioning of the router within the
+        list of child routers of the parent router
+    :param parameters: Additional parameters used when initialising
+        the :class:`pulsar.apps.wsgi.handlers.Router` created by this
+        decorator
 
-'''
+    '''
     creation_count = 0
 
     def __init__(self, rule=None, method=None, defaults=None,
@@ -206,30 +203,34 @@ for a sample usage.
 class Route(object):
     '''A Route is a class with a relative :attr:`path`.
 
-:parameter rule: Rule strings basically are just normal URL paths
-    with placeholders in the format ``<converter(parameters):name>``
-    where both the ``converter`` and the ``parameters`` are optional.
-    If no ``converter`` is defined the `default` converter is used which
-    means ``string``. ``name`` is the variable name.
-:parameter defaults: optional dictionary of default values for the rule
-    variables.
+    :parameter rule: a normal URL path with ``placeholders`` in the
+        format ``<converter(parameters):name>``
+        where both the ``converter`` and the ``parameters`` are optional.
+        If no ``converter`` is defined the `default` converter is used which
+        means ``string``, ``name`` is the variable name.
+    :parameter defaults: optional dictionary of default values for the rule
+        variables.
 
-.. attribute:: is_leaf
+    .. attribute:: is_leaf
 
-    If ``True``, the route is equivalent to a file and no sub-routes can be
-    added.
+        If ``True``, the route is equivalent to a file.
+        For example ``/bla/foo``
 
-.. attribute:: path
+    .. attribute:: rule
 
-    The full path for this route including initial ``'/'``.
+        The rule string, does not include the initial ``'/'``
 
-.. attribute:: variables
+    .. attribute:: path
 
-    a set of  variable names for this route. If the route has no variables, the
-    set is empty.
+        The full rule for this route including initial ``'/'``.
 
-.. _werkzeug: https://github.com/mitsuhiko/werkzeug
-'''
+    .. attribute:: variables
+
+        a set of  variable names for this route. If the route has no
+        variables, the set is empty.
+
+    .. _werkzeug: https://github.com/mitsuhiko/werkzeug
+    '''
     def __init__(self, rule, defaults=None):
         rule = remove_double_slash('/%s' % rule)
         self.defaults = defaults if defaults is not None else {}
@@ -318,7 +319,8 @@ class Route(object):
             yield val
 
     def url(self, **urlargs):
-        '''Build a *url* from *urlargs* dictionary.'''
+        '''Build a ``url`` from ``urlargs`` key-value parameters
+        '''
         if self.defaults:
             d = self.defaults.copy()
             d.update(urlargs)
@@ -341,9 +343,9 @@ class Route(object):
 
     def match(self, path):
         '''Match a path and return ``None`` if no matching, otherwise
- a dictionary of matched variables with values. If there is more
- to be match in the path, the remaining string is placed in the
- ``__remaining__`` key of the dictionary.'''
+        a dictionary of matched variables with values. If there is more
+        to be match in the path, the remaining string is placed in the
+        ``__remaining__`` key of the dictionary.'''
         match = self._regex.search(path)
         if match is not None:
             remaining = path[match.end():]
@@ -376,9 +378,6 @@ the root route and ``None``. '''
             return last, None
 
     def __add__(self, other):
-        if self.is_leaf:
-            raise ValueError('Cannot prepend {0} to {1}. '
-                             'It is a leaf.'.format(self, other))
         cls = self.__class__
         defaults = self.defaults.copy()
         if isinstance(other, cls):
@@ -386,13 +385,7 @@ the root route and ``None``. '''
             defaults.update(other.defaults)
         else:
             rule = str(other)
-        return cls(self.rule + rule, defaults)
-
-    def __deepcopy__(self, memo):
-        return self.__copy__()
-
-    def __copy__(self):
-        return self.__class__(self.rule, self.defaults.copy())
+        return cls('%s/%s' % (self.rule, rule), defaults)
 
 
 class BaseConverter(object):

@@ -19,7 +19,7 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
     # Internal function which spawns a new Actor and return its
     # ActorProxyMonitor.
     # *cls* is the Actor class
-    # *monitor* can be either the ariber or a monitor
+    # *monitor* can be either the arbiter or a monitor
     kind = None
     if issubclass(cls, PoolMixin):
         kind = 'monitor'
@@ -76,8 +76,6 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
 class PoolMixin(Actor):
     '''A mixin for :class:`.Actor` which manages a pool (group) of actors.
 
-    Given an :attr:`actor_class` it makes sure there are always
-    :attr:`cfg.workers` alive.
     It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
 
     .. attribute:: managed_actors
