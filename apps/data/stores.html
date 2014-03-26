@@ -75,7 +75,7 @@
           <div class="body">
             
   <div class="section" id="available-clients">
-<span id="data-stores"></span><h1>Available Clients<a class="headerlink" href="#available-clients" title="Permalink to this headline">¶</a></h1>
+<span id="builtin-data-stores"></span><h1>Available Clients<a class="headerlink" href="#available-clients" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-pulsar.apps.data.stores.redis">
 <span id="redis"></span><span id="store-redis"></span><h2>Redis<a class="headerlink" href="#module-pulsar.apps.data.stores.redis" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar is shipped with a <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> implementation for <a class="reference external" href="http://redis.io/">redis</a>
@@ -223,6 +223,13 @@ are stored in exactly the same database.</p>
 <p>To differentiate and query over different types of models, the
 <tt class="docutils literal"><span class="pre">Type</span></tt> field is added to the document representing a model.</p>
 </div>
+<div class="section" id="queries">
+<h3>Queries<a class="headerlink" href="#queries" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="search">
+<h3>Search<a class="headerlink" href="#search" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://github.com/rnewson/couchdb-lucene">https://github.com/rnewson/couchdb-lucene</a></p>
+</div>
 <div class="section" id="couchdbstore">
 <h3>CouchDBStore<a class="headerlink" href="#couchdbstore" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
@@ -238,18 +245,6 @@ are stored in exactly the same database.</p>
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.ping">
 <tt class="descname">ping</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.ping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Information about the running server</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_design">
-<tt class="descname">create_design</tt><big>(</big><em>name</em>, <em>views</em>, <em>language=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.create_design"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_design" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new design document</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.delete_design">
-<tt class="descname">delete_design</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.delete_design"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.delete_design" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delete an existing design document at <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -280,6 +275,18 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_create">
+<tt class="descname">design_create</tt><big>(</big><em>name</em>, <em>views</em>, <em>language=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.design_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new design document</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_delete">
+<tt class="descname">design_delete</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.design_delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete an existing design document at <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.update_documents">
 <tt class="descname">update_documents</tt><big>(</big><em>dbname</em>, <em>documents</em>, <em>new_edits=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.update_documents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.update_documents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bulk update/insert of documents in a database</p>
@@ -295,6 +302,14 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.execute_transaction">
 <tt class="descname">execute_transaction</tt><big>(</big><em>transaction</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.execute_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.execute_transaction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute a <tt class="docutils literal"><span class="pre">transaction</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.query_model_view">
+<tt class="descname">query_model_view</tt><big>(</big><em>model</em>, <em>view_name</em>, <em>key=None</em>, <em>keys=None</em>, <em>group=None</em>, <em>limit=None</em>, <em>include_docs=None</em>, <em>reduce=True</em>, <em>method=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.query_model_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.query_model_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query an existing view</p>
+<p>All view parameters here:</p>
+<p><a class="reference external" href="http://wiki.apache.org/couchdb/HTTP_view_API">http://wiki.apache.org/couchdb/HTTP_view_API</a></p>
 </dd></dl>
 
 <dl class="method">
@@ -350,6 +365,8 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
 <li><a class="reference internal" href="#pulsards">PulsarDs</a></li>
 <li><a class="reference internal" href="#module-pulsar.apps.data.stores.couchdb.store">CouchDb</a><ul>
 <li><a class="reference internal" href="#models">Models</a></li>
+<li><a class="reference internal" href="#queries">Queries</a></li>
+<li><a class="reference internal" href="#search">Search</a></li>
 <li><a class="reference internal" href="#couchdbstore">CouchDBStore</a></li>
 </ul>
 </li>

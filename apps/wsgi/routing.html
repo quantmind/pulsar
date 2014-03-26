@@ -134,12 +134,6 @@ passed, it overrides the <a class="reference internal" href="#pulsar.apps.wsgi.r
 </tbody>
 </table>
 <dl class="attribute">
-<dt id="pulsar.apps.wsgi.routers.Router.route">
-<tt class="descname">route</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.route" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="#apps-wsgi-route"><em>Route</em></a> served by this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.Router.routes">
 <tt class="descname">routes</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.routes" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of children <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> of this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
@@ -180,6 +174,21 @@ passed to the <tt class="docutils literal"><span class="pre">__init__</span></tt
 </dd></dl>
 
 <dl class="attribute">
+<dt id="pulsar.apps.wsgi.routers.Router.route">
+<tt class="descname">route</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.route" title="Permalink to this definition">¶</a></dt>
+<dd><p>The relative <a class="reference internal" href="#pulsar.apps.wsgi.route.Route" title="pulsar.apps.wsgi.route.Route"><tt class="xref py py-class docutils literal"><span class="pre">Route</span></tt></a> served by this
+<a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.routers.Router.full_route">
+<tt class="descname">full_route</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.full_route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.full_route" title="Permalink to this definition">¶</a></dt>
+<dd><p>The full <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.route" title="pulsar.apps.wsgi.routers.Router.route"><tt class="xref py py-attr docutils literal"><span class="pre">route</span></tt></a> for this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
+<p>It includes the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.parent" title="pulsar.apps.wsgi.routers.Router.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a> portion of the route if a parent
+router is available.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.Router.name">
 <tt class="descname">name</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>The name of this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
@@ -209,18 +218,10 @@ by name via the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Ro
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.wsgi.routers.Router.full_route">
-<tt class="descname">full_route</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.full_route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.full_route" title="Permalink to this definition">¶</a></dt>
-<dd><p>The full <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.route" title="pulsar.apps.wsgi.routers.Router.route"><tt class="xref py py-attr docutils literal"><span class="pre">route</span></tt></a> for this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
-<p>It includes the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.parent" title="pulsar.apps.wsgi.routers.Router.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a> portion of the route if a parent
-router is available.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.Router.rule">
 <tt class="descname">rule</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.rule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.rule" title="Permalink to this definition">¶</a></dt>
 <dd><p>The full <tt class="docutils literal"><span class="pre">rule</span></tt> string for this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
-<p>It includes the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.parent" title="pulsar.apps.wsgi.routers.Router.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a> portion of rule if a parent
+<p>It includes the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.parent" title="pulsar.apps.wsgi.routers.Router.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a> portion of the rule if a <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.parent" title="pulsar.apps.wsgi.routers.Router.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a>
 router is available.</p>
 </dd></dl>
 
@@ -416,23 +417,19 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <dl class="class">
 <dt id="pulsar.apps.wsgi.route.route">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.route.</tt><tt class="descname">route</tt><big>(</big><em>rule=None</em>, <em>method=None</em>, <em>defaults=None</em>, <em>position=None</em>, <em>**parameters</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.route" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>Decorator to create a child route from a <a class="reference internal" href="#wsgi-router"><em>Router</em></a></dt>
-<dd>method.</dd>
-</dl>
-<p>Tipical usage:</p>
+<dd><p>Decorator to create a child route from a <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> method.</p>
+<p>Typical usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
 <span class="k">class</span> <span class="nc">View</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">):</span>
 
     <span class="n">wsgi</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s">&#39;/foo&#39;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">handle_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="o">...</span>
 
-    <span class="n">wsgi</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">asynchronous_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">async_function</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="o">...</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;post&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">handle2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="o">...</span>
 </pre></div>
 </div>
 <p>In this example, <tt class="docutils literal"><span class="pre">View</span></tt> is the <strong>parent router</strong>.</p>
@@ -447,17 +444,16 @@ for a sample usage.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>rule</strong> &#8211; Optional string for the relative url served by the method which
-is decorated. If not supplied, the method name is used.</li>
+<li><strong>rule</strong> &#8211; Optional string for the relative url served by the method
+which is decorated. If not supplied, the method name is used.</li>
 <li><strong>method</strong> &#8211; Optional HTTP method name. Default is <cite>get</cite>.</li>
 <li><strong>defaults</strong> &#8211; Optional dictionary of default variable values used when
 initialising the <a class="reference internal" href="#pulsar.apps.wsgi.route.Route" title="pulsar.apps.wsgi.route.Route"><tt class="xref py py-class docutils literal"><span class="pre">Route</span></tt></a> instance.</li>
 <li><strong>position</strong> &#8211; Optional positioning of the router within the
-list of child routers of the parent router.</li>
+list of child routers of the parent router</li>
 <li><strong>parameters</strong> &#8211; Additional parameters used when initialising
-the <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.handlers.Router</span></tt> created by this decorator.
-The <tt class="docutils literal"><span class="pre">async=True</span></tt> parameter will treat the <tt class="docutils literal"><span class="pre">callable</span></tt> as an asynchronous
-component.</li>
+the <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.handlers.Router</span></tt> created by this
+decorator</li>
 </ul>
 </td>
 </tr>
@@ -477,11 +473,11 @@ component.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>rule</strong> &#8211; Rule strings basically are just normal URL paths
-with placeholders in the format <tt class="docutils literal"><span class="pre">&lt;converter(parameters):name&gt;</span></tt>
+<li><strong>rule</strong> &#8211; a normal URL path with <tt class="docutils literal"><span class="pre">placeholders</span></tt> in the
+format <tt class="docutils literal"><span class="pre">&lt;converter(parameters):name&gt;</span></tt>
 where both the <tt class="docutils literal"><span class="pre">converter</span></tt> and the <tt class="docutils literal"><span class="pre">parameters</span></tt> are optional.
 If no <tt class="docutils literal"><span class="pre">converter</span></tt> is defined the <cite>default</cite> converter is used which
-means <tt class="docutils literal"><span class="pre">string</span></tt>. <tt class="docutils literal"><span class="pre">name</span></tt> is the variable name.</li>
+means <tt class="docutils literal"><span class="pre">string</span></tt>, <tt class="docutils literal"><span class="pre">name</span></tt> is the variable name.</li>
 <li><strong>defaults</strong> &#8211; optional dictionary of default values for the rule
 variables.</li>
 </ul>
@@ -492,27 +488,33 @@ variables.</li>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.route.Route.is_leaf">
 <tt class="descname">is_leaf</tt><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.is_leaf" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <tt class="docutils literal"><span class="pre">True</span></tt>, the route is equivalent to a file and no sub-routes can be
-added.</p>
+<dd><p>If <tt class="docutils literal"><span class="pre">True</span></tt>, the route is equivalent to a file.
+For example <tt class="docutils literal"><span class="pre">/bla/foo</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.route.Route.rule">
+<tt class="descname">rule</tt><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.rule" title="Permalink to this definition">¶</a></dt>
+<dd><p>The rule string, does not include the initial <tt class="docutils literal"><span class="pre">'/'</span></tt></p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.route.Route.path">
 <tt class="descname">path</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#Route.path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.path" title="Permalink to this definition">¶</a></dt>
-<dd><p>The full path for this route including initial <tt class="docutils literal"><span class="pre">'/'</span></tt>.</p>
+<dd><p>The full rule for this route including initial <tt class="docutils literal"><span class="pre">'/'</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.route.Route.variables">
 <tt class="descname">variables</tt><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.variables" title="Permalink to this definition">¶</a></dt>
-<dd><p>a set of  variable names for this route. If the route has no variables, the
-set is empty.</p>
+<dd><p>a set of  variable names for this route. If the route has no
+variables, the set is empty.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.route.Route.url">
 <tt class="descname">url</tt><big>(</big><em>**urlargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#Route.url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.url" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build a <em>url</em> from <em>urlargs</em> dictionary.</p>
+<dd><p>Build a <tt class="docutils literal"><span class="pre">url</span></tt> from <tt class="docutils literal"><span class="pre">urlargs</span></tt> key-value parameters</p>
 </dd></dl>
 
 <dl class="method">

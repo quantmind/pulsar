@@ -706,6 +706,7 @@
 
 <div class="viewcode-block" id="Headers.get"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get the field value at ``key`` as comma separated values.</span>
+
 <span class="sd">        For example::</span>
 
 <span class="sd">            &gt;&gt;&gt; from pulsar.utils.httpurl import Headers</span>
@@ -726,7 +727,9 @@
 <div class="viewcode-block" id="Headers.get_all"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.get_all">[docs]</a>    <span class="k">def</span> <span class="nf">get_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get the values at header ``key`` as a list rather than a</span>
 <span class="sd">        string separated by comma (which is returned by the</span>
-<span class="sd">        :meth:`get` method). For example::</span>
+<span class="sd">        :meth:`get` method).</span>
+
+<span class="sd">        For example::</span>
 
 <span class="sd">            &gt;&gt;&gt; from pulsar.utils.httpurl import Headers</span>
 <span class="sd">            &gt;&gt;&gt; h = Headers(kind=&#39;client&#39;)</span>
@@ -767,6 +770,8 @@
         <span class="sd">&#39;&#39;&#39;Add ``values`` to ``key`` header.</span>
 
 <span class="sd">        If the header is already available, append the value to the list.</span>
+
+<span class="sd">        :param key: header name</span>
 <span class="sd">        :param values: a string value or a list/tuple of strings values</span>
 <span class="sd">            for header ``key``</span>
 <span class="sd">        &#39;&#39;&#39;</span>

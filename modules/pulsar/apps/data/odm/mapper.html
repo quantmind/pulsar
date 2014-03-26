@@ -77,6 +77,7 @@
 <span class="kn">from</span> <span class="nn">.transaction</span> <span class="kn">import</span> <span class="n">Transaction</span><span class="p">,</span> <span class="n">ModelDictionary</span>
 <span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">ModelType</span>
 <span class="kn">from</span> <span class="nn">.manager</span> <span class="kn">import</span> <span class="n">Manager</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">query</span>
 <span class="kn">from</span> <span class="nn">..store</span> <span class="kn">import</span> <span class="n">create_store</span>
 
 
@@ -99,36 +100,27 @@
 <span class="sd">    The ``models`` instance in the above snippet can be set globally if</span>
 <span class="sd">    one wishes to do so.</span>
 
-<span class="sd">    .. attribute:: pre_commit</span>
+<span class="sd">    A :class:`.Mapper` has four events:</span>
 
-<span class="sd">        A signal which can be used to register ``callbacks`` before instances</span>
-<span class="sd">        are committed::</span>
+<span class="sd">    * ``pre_commit``: fired before instances are committed::</span>
 
-<span class="sd">            models.pre_commit.bind(callback, sender=MyModel)</span>
+<span class="sd">            models.bind_event(&#39;pre_commit&#39;, callback)</span>
 
-<span class="sd">    .. attribute:: pre_delete</span>
+<span class="sd">    * ``pre_delete``: fired before instances are deleted::</span>
 
-<span class="sd">        A signal which can be used to register ``callbacks`` before instances</span>
-<span class="sd">        are deleted::</span>
+<span class="sd">            models.bind_event(&#39;pre_delete&#39;, callback)</span>
 
-<span class="sd">            models.pre_delete.bind(callback, sender=MyModel)</span>
+<span class="sd">    * ``pre_commit``: fired after instances are committed::</span>
 
-<span class="sd">    .. attribute:: post_commit</span>
+<span class="sd">            models.bind_event(&#39;post_commit&#39;, callback)</span>
 
-<span class="sd">        A signal which can be used to register ``callbacks`` after instances</span>
-<span class="sd">        are committed::</span>
+<span class="sd">    * ``post_delete``: fired after instances are deleted::</span>
 
-<span class="sd">            models.post_commit.bind(callback, sender=MyModel)</span>
-
-<span class="sd">    .. attribute:: post_delete</span>
-
-<span class="sd">        A signal which can be used to register ``callbacks`` after instances</span>
-<span class="sd">        are deleted::</span>
-
-<span class="sd">            models.post_delete.bind(callback, sender=MyModel)</span>
+<span class="sd">            models.bind_event(&#39;post_delete&#39;, callback)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;pre_commit&#39;</span><span class="p">,</span> <span class="s">&#39;pre_delete&#39;</span><span class="p">,</span>
                          <span class="s">&#39;post_commit&#39;</span><span class="p">,</span> <span class="s">&#39;post_delete&#39;</span><span class="p">)</span>
+    <span class="n">ModelNotFound</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">ModelNotFound</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_store</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Mapper</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
@@ -154,11 +146,13 @@
 </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Mapper.search_engine"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.search_engine">[docs]</a>    <span class="k">def</span> <span class="nf">search_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`SearchEngine` for this :class:`.Mapper`.</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`.SearchEngine` for this :class:`.Mapper`.</span>
 
-<span class="sd">        This must be created by users.</span>
-<span class="sd">        Check :ref:`full text search &lt;tutorial-search&gt;`</span>
-<span class="sd">        tutorial for information.&#39;&#39;&#39;</span>
+<span class="sd">        This must be created by users and intalled on a mapper via the</span>
+<span class="sd">        :meth:`set_search_engine` method.</span>
+<span class="sd">        Check :ref:`full text search &lt;odm-search&gt;`</span>
+<span class="sd">        tutorial for information.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span>
 </div>
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -187,17 +181,16 @@
         <span class="k">return</span> <span class="n">Transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Mapper.set_search_engine"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.set_search_engine">[docs]</a>    <span class="k">def</span> <span class="nf">set_search_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`.SearchEngine` for this :class:`.Mapper`.</span>
+        <span class="sd">&#39;&#39;&#39;Set the :class:`.SearchEngine` for this :class:`.Mapper`.</span>
 
-<span class="sd">        This must be created by users.</span>
-<span class="sd">        Check :ref:`full text search &lt;tutorial-search&gt;`</span>
-<span class="sd">        tutorial for information.&#39;&#39;&#39;</span>
+<span class="sd">        Check :ref:`full text search &lt;odm-search&gt;`</span>
+<span class="sd">        tutorial for information.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span> <span class="o">=</span> <span class="n">engine</span>
         <span class="k">if</span> <span class="n">engine</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span><span class="o">.</span><span class="n">set_mapper</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Mapper.register"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">models</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">read_store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">include_related</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+<div class="viewcode-block" id="Mapper.register"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">models</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Register one or several :class:`.Model` with this :class:`Mapper`.</span>
 
 <span class="sd">        If a model was already registered it does nothing.</span>
@@ -216,7 +209,9 @@
 <span class="sd">        :return: a list models registered or a single model if there</span>
 <span class="sd">            was only one</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">store</span> <span class="o">=</span> <span class="n">store</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_store</span>
+        <span class="n">include_related</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;include_related&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;store&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_store</span>
+        <span class="n">read_store</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;read_store&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">read_store</span><span class="p">:</span>
             <span class="n">read_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">read_store</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">)</span>
@@ -228,7 +223,8 @@
                     <span class="k">continue</span>
                 <span class="n">registered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
                 <span class="n">default_manager</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">default_manager</span> <span class="ow">or</span> <span class="n">Manager</span>
-                <span class="n">manager_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;manager_class&#39;</span><span class="p">,</span> <span class="n">default_manager</span><span class="p">)</span>
+                <span class="n">manager_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;manager_class&#39;</span><span class="p">,</span>
+                                        <span class="n">default_manager</span><span class="p">)</span>
                 <span class="n">manager</span> <span class="o">=</span> <span class="n">manager_class</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">read_store</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="p">[</span><span class="n">model</span><span class="p">]</span> <span class="o">=</span> <span class="n">manager</span>
                 <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_names</span><span class="p">:</span>
@@ -263,20 +259,23 @@
         <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">manager</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">m</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">_meta</span>
-            <span class="k">if</span> <span class="n">include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">modelkey</span> <span class="ow">in</span> <span class="n">include</span> <span class="ow">or</span>
+            <span class="k">if</span> <span class="n">include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">table_name</span> <span class="ow">in</span> <span class="n">include</span> <span class="ow">or</span>
                                             <span class="n">m</span><span class="o">.</span><span class="n">app_label</span> <span class="ow">in</span> <span class="n">include</span><span class="p">):</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">modelkey</span> <span class="ow">in</span> <span class="n">exclude</span> <span class="ow">or</span> <span class="n">m</span><span class="o">.</span><span class="n">app_label</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">table_name</span> <span class="ow">in</span> <span class="n">exclude</span> <span class="ow">or</span> <span class="n">m</span><span class="o">.</span><span class="n">app_label</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">dryrun</span><span class="p">:</span>
-                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">manager</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">manager</span><span class="o">.</span><span class="n">flush</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">results</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">manager</span><span class="o">.</span><span class="n">query</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">manager</span><span class="p">,</span> <span class="n">result</span><span class="p">))</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Mapper.unregister"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.unregister">[docs]</a>    <span class="k">def</span> <span class="nf">unregister</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Unregister a ``model`` if provided, otherwise it unregister all</span>
-<span class="sd">registered models. Return a list of unregistered model managers or ``None``</span>
-<span class="sd">if no managers were removed.&#39;&#39;&#39;</span>
+<span class="sd">        registered models.</span>
+
+<span class="sd">        Return a list of unregistered model managers or ``None``</span>
+<span class="sd">        if no managers were removed.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
@@ -291,14 +290,16 @@
             <span class="k">return</span> <span class="n">managers</span>
 </div>
 <div class="viewcode-block" id="Mapper.register_applications"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.register_applications">[docs]</a>    <span class="k">def</span> <span class="nf">register_applications</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">applications</span><span class="p">,</span> <span class="n">models</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stores</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A higher level registration functions for group of models located</span>
+        <span class="sd">&#39;&#39;&#39;A higher level registration method for group of models located</span>
 <span class="sd">        on application modules.</span>
-<span class="sd">        It uses the :func:`model_iterator` function to iterate</span>
-<span class="sd">        through all :class:`.Model` models available in ``applications``</span>
-<span class="sd">        and register them using the :func:`register` low level method.</span>
+
+<span class="sd">        It uses the :meth:`model_iterator` method to iterate</span>
+<span class="sd">        through all :class:`.Model` available in ``applications``</span>
+<span class="sd">        and :meth:`register` them.</span>
 
 <span class="sd">        :parameter applications: A String or a list of strings representing</span>
-<span class="sd">            python dotted paths where models are implemented.</span>
+<span class="sd">            python dotted paths where models are implemented. Can also be</span>
+<span class="sd">            a module or a list of modules.</span>
 <span class="sd">        :parameter models: Optional list of models to include. If not provided</span>
 <span class="sd">            all models found in *applications* will be included.</span>
 <span class="sd">        :parameter stores: optional dictionary which map a model or an</span>
@@ -309,20 +310,25 @@
 <span class="sd">        For example::</span>
 
 
-<span class="sd">            mapper.register_application_models(&#39;mylib.myapp&#39;)</span>
-<span class="sd">            mapper.register_application_models([&#39;mylib.myapp&#39;, &#39;another.path&#39;])</span>
-<span class="sd">            mapper.register_application_models(pythonmodule)</span>
-<span class="sd">            mapper.register_application_models([&#39;mylib.myapp&#39;,pythonmodule])</span>
+<span class="sd">            mapper.register_applications(&#39;mylib.myapp&#39;)</span>
+<span class="sd">            mapper.register_applications([&#39;mylib.myapp&#39;, &#39;another.path&#39;])</span>
+<span class="sd">            mapper.register_applications(pythonmodule)</span>
+<span class="sd">            mapper.register_applications([&#39;mylib.myapp&#39;, pythonmodule])</span>
 
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_register_applications</span><span class="p">(</span><span class="n">applications</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span>
                                                 <span class="n">stores</span><span class="p">))</span>
 </div>
     <span class="nd">@wait_complete</span>
+    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@wait_complete</span>
 <div class="viewcode-block" id="Mapper.create_tables"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.create_tables">[docs]</a>    <span class="k">def</span> <span class="nf">create_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remove_existing</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Loop though :attr:`registered_models` and issue the</span>
 <span class="sd">        :meth:`.Manager.create_table` method.&#39;&#39;&#39;</span>
         <span class="n">executed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">search_engine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_engine</span>
         <span class="k">for</span> <span class="n">manager</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">executed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">manager</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="n">remove_existing</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
@@ -355,11 +361,17 @@
 
     <span class="k">def</span> <span class="nf">valid_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelType</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s">&#39;_meta&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">abstract</span>
         <span class="k">return</span> <span class="bp">False</span>
 
 <div class="viewcode-block" id="Mapper.models_from_model"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.models_from_model">[docs]</a>    <span class="k">def</span> <span class="nf">models_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">include_related</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Generator of all model in model.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Generator of all model in model.</span>
+
+<span class="sd">        :param model: a :class:`.Model`</span>
+<span class="sd">        :param include_related: if ``True`` al related models to ``model``</span>
+<span class="sd">            are included</span>
+<span class="sd">        :param exclude: optional set of models to exclude</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">exclude</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="ow">and</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>

@@ -83,6 +83,14 @@
 <span class="sd">To differentiate and query over different types of models, the</span>
 <span class="sd">``Type`` field is added to the document representing a model.</span>
 
+<span class="sd">Queries</span>
+<span class="sd">===========</span>
+
+<span class="sd">Search</span>
+<span class="sd">==========</span>
+
+<span class="sd">https://github.com/rnewson/couchdb-lucene</span>
+
 <span class="sd">CouchDBStore</span>
 <span class="sd">=================</span>
 
@@ -96,56 +104,23 @@
 <span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span><span class="p">,</span> <span class="n">b64decode</span>
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Lock</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">wait_complete</span><span class="p">,</span> <span class="n">multi_async</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.http</span> <span class="kn">import</span> <span class="n">HttpClient</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">Store</span><span class="p">,</span> <span class="n">Command</span><span class="p">,</span> <span class="n">register_store</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="nb">zip</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">odm</span>
 
-<span class="kn">from</span> <span class="nn">.query</span> <span class="kn">import</span> <span class="n">CauchDbQuery</span>
+<span class="kn">from</span> <span class="nn">.query</span> <span class="kn">import</span> <span class="n">CauchDbQuery</span><span class="p">,</span> <span class="n">CouchDbError</span><span class="p">,</span> <span class="n">couch_db_error</span><span class="p">,</span> <span class="n">CouchDBMixin</span>
 
-
-<span class="n">DEFAULT_HEADERS</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Accept&#39;</span><span class="p">:</span> <span class="s">&#39;application/json, text/plain; q=0.8&#39;</span><span class="p">,</span>
-                   <span class="s">&#39;content-type&#39;</span><span class="p">:</span> <span class="s">&#39;application/json&#39;</span><span class="p">}</span>
-
-
-<span class="k">class</span> <span class="nc">CouchDbError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">CouchDbError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
-
-
-<span class="k">class</span> <span class="nc">CouchDbNoDbError</span><span class="p">(</span><span class="n">CouchDbError</span><span class="p">):</span>
-    <span class="k">pass</span>
-
-
-<span class="n">error_classes</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;no_db_file&#39;</span><span class="p">:</span> <span class="n">CouchDbNoDbError</span><span class="p">}</span>
-
-
-<span class="k">def</span> <span class="nf">couch_db_error</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-    <span class="n">error_class</span> <span class="o">=</span> <span class="n">error_classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">reason</span><span class="p">,</span> <span class="n">CouchDbError</span><span class="p">)</span>
-    <span class="k">raise</span> <span class="n">error_class</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
-
-
-<span class="n">all_view</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;function (doc) {{</span>
-<span class="s">    if(doc.Type == &#39;{0}&#39;) emit(null, doc);</span>
-<span class="s">}};</span>
-<span class="s">&#39;&#39;&#39;</span>
-
-<span class="n">all_count</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;function (doc) {{</span>
-<span class="s">    if(doc.Type == &#39;{0}&#39;) emit(null, 1);</span>
-<span class="s">}};</span>
-<span class="s">&#39;&#39;&#39;</span>
 
 <span class="n">index_view</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;function (doc) {{</span>
-<span class="s">    if(doc.Type == &#39;{0}&#39; &amp;&amp; doc.{1} !== undefined) emit(doc.{1}, doc);</span>
+<span class="s">    if(doc.Type == &#39;{0}&#39; &amp;&amp; doc.{1} !== undefined) emit(doc.{1}, doc._rev);</span>
 <span class="s">}};</span>
 <span class="s">&#39;&#39;&#39;</span>
 
-<div class="viewcode-block" id="CouchDBStore"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore">[docs]</a><span class="k">class</span> <span class="nc">CouchDBStore</span><span class="p">(</span><span class="n">Store</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CouchDBStore"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore">[docs]</a><span class="k">class</span> <span class="nc">CouchDBStore</span><span class="p">(</span><span class="n">CouchDBMixin</span><span class="p">,</span> <span class="n">Store</span><span class="p">):</span>
     <span class="n">_lock</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="nd">@property</span>
@@ -159,19 +134,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;get&#39;</span><span class="p">)</span></div>
     <span class="n">ping</span> <span class="o">=</span> <span class="n">info</span>
 
-<div class="viewcode-block" id="CouchDBStore.create_design"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_design">[docs]</a>    <span class="k">def</span> <span class="nf">create_design</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">views</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a new design document</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;put&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
-                            <span class="n">views</span><span class="o">=</span><span class="n">views</span><span class="p">,</span>
-                            <span class="n">language</span><span class="o">=</span><span class="n">language</span> <span class="ow">or</span> <span class="s">&#39;javascript&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="CouchDBStore.delete_design"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.delete_design">[docs]</a>    <span class="k">def</span> <span class="nf">delete_design</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Delete an existing design document at ``name``.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;delete&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-</div>
+    <span class="c"># DATABASE OPERATIONS</span>
 <div class="viewcode-block" id="CouchDBStore.create_database"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_database">[docs]</a>    <span class="k">def</span> <span class="nf">create_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create a new database</span>
 
@@ -189,7 +152,29 @@
         <span class="sd">&#39;&#39;&#39;The list of all databases</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;get&#39;</span><span class="p">,</span> <span class="s">&#39;_all_dbs&#39;</span><span class="p">)</span>
+
+    <span class="c"># DESIGN VIEWS</span></div>
+<div class="viewcode-block" id="CouchDBStore.design_create"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_create">[docs]</a>    <span class="k">def</span> <span class="nf">design_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">views</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a new design document</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;put&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+                            <span class="n">views</span><span class="o">=</span><span class="n">views</span><span class="p">,</span>
+                            <span class="n">language</span><span class="o">=</span><span class="n">language</span> <span class="ow">or</span> <span class="s">&#39;javascript&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </div>
+    <span class="nd">@wait_complete</span>
+<div class="viewcode-block" id="CouchDBStore.design_delete"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_delete">[docs]</a>    <span class="k">def</span> <span class="nf">design_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Delete an existing design document at ``name``.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;head&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="n">rev</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;etag&#39;</span><span class="p">])</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;delete&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+                               <span class="n">rev</span><span class="o">=</span><span class="n">rev</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">design_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;get&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&#39;_info&#39;</span><span class="p">)</span>
+
+    <span class="c"># DOCUMENTS</span>
     <span class="k">def</span> <span class="nf">update_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;post&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="o">**</span><span class="n">document</span><span class="p">)</span>
 
@@ -204,48 +189,54 @@
         <span class="c"># Build views</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span>
         <span class="n">table</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span>
+        <span class="k">if</span> <span class="n">remove_existing</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">design_delete</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
         <span class="n">views</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">indexes</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">key</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">store_name</span>
             <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
-                <span class="n">views</span><span class="p">[</span><span class="s">&#39;all&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;map&#39;</span><span class="p">:</span> <span class="n">all_view</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">)}</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">store_name</span>
-                <span class="n">views</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;map&#39;</span><span class="p">:</span> <span class="n">index_view</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">name</span><span class="p">)}</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_design</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;id&#39;</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;_id&#39;</span>
+            <span class="n">views</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;map&#39;</span><span class="p">:</span> <span class="n">index_view</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span>
+                           <span class="s">&#39;reduce&#39;</span><span class="p">:</span> <span class="s">&#39;_count&#39;</span><span class="p">}</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">design_create</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CouchDBStore.drop_table"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.drop_table">[docs]</a>    <span class="k">def</span> <span class="nf">drop_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Drop model table by simply removing model design views&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete_design</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">design_delete</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">)</span>
 </div>
+    <span class="k">def</span> <span class="nf">table_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">design_info</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">)</span>
+
 <div class="viewcode-block" id="CouchDBStore.execute_transaction"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.execute_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">execute_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Execute a ``transaction``</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="c"># loop through models</span>
-        <span class="k">for</span> <span class="n">tmodel</span> <span class="ow">in</span> <span class="n">transaction</span><span class="o">.</span><span class="n">models</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">tmodel</span><span class="o">.</span><span class="n">dirty</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span>
         <span class="n">updates</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">update_insert</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="n">Command</span><span class="o">.</span><span class="n">INSERT</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">transaction</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
             <span class="n">action</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">action</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">action</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-            <span class="k">elif</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">update_insert</span><span class="p">:</span>
+            <span class="k">else</span><span class="p">:</span>
                 <span class="n">model</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">args</span>
                 <span class="n">updates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">)))</span>
                 <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="c">#</span>
         <span class="k">if</span> <span class="n">updates</span><span class="p">:</span>
             <span class="n">executed</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_documents</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span>
+            <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">models</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;ok&#39;</span><span class="p">):</span>
                     <span class="n">model</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">doc</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
                     <span class="n">model</span><span class="p">[</span><span class="s">&#39;_rev&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">doc</span><span class="p">[</span><span class="s">&#39;rev&#39;</span><span class="p">]</span>
-                    <span class="n">model</span><span class="p">[</span><span class="s">&#39;_store&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">_modified</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;error&#39;</span><span class="p">):</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CouchDbError</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="p">[</span><span class="s">&#39;reason&#39;</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </div>
-    <span class="nd">@task</span>
+    <span class="nd">@wait_complete</span>
     <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="n">pkvalue</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;get&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="n">pkvalue</span><span class="p">)</span>
@@ -254,16 +245,32 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build_model</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">query_model_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">view_name</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="CouchDBStore.query_model_view"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.query_model_view">[docs]</a>    <span class="k">def</span> <span class="nf">query_model_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">view_name</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">include_docs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="nb">reduce</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Query an existing view</span>
+
+<span class="sd">        All view parameters here:</span>
+
+<span class="sd">        http://wiki.apache.org/couchdb/HTTP_view_API</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">keys</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;keys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&#39;get&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
-                            <span class="s">&#39;_view&#39;</span><span class="p">,</span> <span class="n">view_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+        <span class="k">if</span> <span class="n">group</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;group&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;true&#39;</span>
+        <span class="k">if</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;limit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_docs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;include_docs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;true&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">reduce</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;reduce&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;false&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;get&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="s">&#39;_design&#39;</span><span class="p">,</span>
+                            <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="s">&#39;_view&#39;</span><span class="p">,</span> <span class="n">view_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
     <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">CauchDbQuery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
 
@@ -276,7 +283,7 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">CouchDBStore</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">build_model</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="c"># INTERNALS</span>
-    <span class="nd">@task</span>
+    <span class="nd">@wait_complete</span>
 <div class="viewcode-block" id="CouchDBStore.request"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.couchdb.store.CouchDBStore.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="o">*</span><span class="n">bits</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Execute the HTTP request&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">:</span>
@@ -290,6 +297,7 @@
                         <span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user</span><span class="p">,</span>
                                    <span class="s">&#39;password&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">},</span>
                         <span class="n">encode_multipart</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;request&#39;</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
                         <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="bp">None</span>
@@ -298,8 +306,10 @@
             <span class="k">finally</span><span class="p">:</span>
                 <span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_address</span><span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">))</span>
+
         <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
                                             <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;request&#39;</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;HEAD&#39;</span><span class="p">:</span>
             <span class="n">coroutine_return</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -321,34 +331,17 @@
         <span class="n">meta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span>
         <span class="n">pkname</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">pkname</span><span class="p">()</span>
         <span class="n">_id</span> <span class="o">=</span> <span class="s">&#39;_id&#39;</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">store_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="n">_id</span> <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">pkname</span> <span class="k">else</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
-        <span class="k">yield</span> <span class="s">&#39;Type&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span>
-</div>
-    <span class="k">def</span> <span class="nf">_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="n">namespace</span> <span class="ow">or</span> <span class="s">&#39;defaultdb&#39;</span>
-        <span class="k">elif</span> <span class="n">namespace</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span> <span class="n">namespace</span><span class="p">)</span>
-        <span class="n">bits</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_scheme</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="n">Command</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">_id</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">id</span>
+            <span class="k">yield</span> <span class="s">&#39;_deleted&#39;</span><span class="p">,</span> <span class="bp">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_scheme</span> <span class="o">=</span> <span class="s">&#39;http&#39;</span>
-        <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_host</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-            <span class="n">host</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">host</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_address</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">://</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheme</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">DEFAULT_HEADERS</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">headers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_http</span> <span class="o">=</span> <span class="n">HttpClient</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">store_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">_id</span> <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">pkname</span> <span class="k">else</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+            <span class="k">yield</span> <span class="s">&#39;Type&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span>
+        <span class="k">if</span> <span class="s">&#39;_rev&#39;</span> <span class="ow">in</span> <span class="n">model</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="s">&#39;_rev&#39;</span><span class="p">,</span> <span class="n">model</span><span class="p">[</span><span class="s">&#39;_rev&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">_buildurl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">+</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheme</span><span class="p">,</span> <span class="nb">super</span><span class="p">(</span><span class="n">CouchDBStore</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_buildurl</span><span class="p">())</span>
-
-</div>
+</div></div>
 <span class="n">register_store</span><span class="p">(</span><span class="s">&quot;couchdb&quot;</span><span class="p">,</span> <span class="s">&quot;pulsar.apps.data.stores.CouchDBStore&quot;</span><span class="p">)</span>
 <span class="n">register_store</span><span class="p">(</span><span class="s">&quot;http+couchdb&quot;</span><span class="p">,</span> <span class="s">&quot;pulsar.apps.data.stores.CouchDBStore&quot;</span><span class="p">)</span>
 <span class="n">register_store</span><span class="p">(</span><span class="s">&quot;https+couchdb&quot;</span><span class="p">,</span> <span class="s">&quot;pulsar.apps.data.stores.CouchDBStore&quot;</span><span class="p">)</span>

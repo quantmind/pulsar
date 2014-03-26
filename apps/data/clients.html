@@ -201,7 +201,7 @@ can be found at the python <tt class="docutils literal"><span class="pre">dotted
 <dl class="class">
 <dt id="pulsar.apps.data.store.Store">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">Store</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for an asynchronous <a class="reference internal" href="stores.html#data-stores"><em>data stores</em></a>.</p>
+<dd><p>Base class for an asynchronous <a class="reference internal" href="#data-stores"><em>data stores</em></a>.</p>
 <p>It is an <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> for accessing and retrieving
 data from remote data servers such as redis, couchdb and so forth.
 A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> should not be created directly, the high level
@@ -344,6 +344,12 @@ By default it does nothing.</p>
 <dd><p>Drop the table for <tt class="docutils literal"><span class="pre">model</span></tt>.</p>
 <p>This method is used by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.
 Must be implemented.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.store.Store.table_info">
+<tt class="descname">table_info</tt><big>(</big><em>model</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.table_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.table_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Information about the table/collection mapping <tt class="docutils literal"><span class="pre">model</span></tt></p>
 </dd></dl>
 
 <dl class="method">

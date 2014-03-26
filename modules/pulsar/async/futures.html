@@ -143,10 +143,12 @@
 
 
 <div class="viewcode-block" id="coroutine_return"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.coroutine_return">[docs]</a><span class="k">def</span> <span class="nf">coroutine_return</span><span class="p">(</span><span class="o">*</span><span class="n">value</span><span class="p">):</span>
-    <span class="k">raise</span> <span class="n">Return</span><span class="p">(</span><span class="o">*</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">Return</span><span class="p">(</span><span class="o">*</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">error</span><span class="o">.</span><span class="n">raised</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">raise</span> <span class="n">error</span>
 
 </div>
-<span class="k">def</span> <span class="nf">add_errback</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">add_errback</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Add a ``callback`` to a ``future`` executed only if an exception</span>
 <span class="sd">    or cancellation has occurred.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">_error_back</span><span class="p">(</span><span class="n">fut</span><span class="p">):</span>
@@ -155,17 +157,21 @@
         <span class="k">elif</span> <span class="n">fut</span><span class="o">.</span><span class="n">cancelled</span><span class="p">():</span>
             <span class="n">callback</span><span class="p">(</span><span class="n">CancelledError</span><span class="p">())</span>
 
+    <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
     <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">_error_back</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">future</span>
 
 
-<span class="k">def</span> <span class="nf">add_callback</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">add_callback</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Add a ``callback`` to ``future`` executed only if an exception</span>
 <span class="sd">    has not occurred.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">_call_back</span><span class="p">(</span><span class="n">fut</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">fut</span><span class="o">.</span><span class="n">_exception</span> <span class="ow">or</span> <span class="n">fut</span><span class="o">.</span><span class="n">cancelled</span><span class="p">()):</span>
             <span class="n">callback</span><span class="p">(</span><span class="n">fut</span><span class="o">.</span><span class="n">result</span><span class="p">())</span>
 
+    <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
     <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">_call_back</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">future</span>
 
 
 <span class="k">def</span> <span class="nf">future_timeout</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">exc_class</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -192,7 +198,7 @@
 <span class="sd">    ``callback`` is executed and its result set as the results of ``next``.</span>
 <span class="sd">    If an exception occurs the optional ``errback`` is executed.</span>
 
-<span class="sd">    :param future: the original :class:`asyncio.Future`</span>
+<span class="sd">    :param future: the original :class:`asyncio.Future` (can be a coroutine)</span>
 <span class="sd">    :param callback: optional callback to execute on the result of ``future``</span>
 <span class="sd">    :param errback: optional callback to execute on the exception of ``future``</span>
 <span class="sd">    :param next: optional :class:`asyncio.Future` to chain.</span>
@@ -200,6 +206,7 @@
 <span class="sd">    :param timeout: optional timeout to set on ``next``</span>
 <span class="sd">    :return: the future ``next``</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">next</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="nb">next</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">timeout</span> <span class="ow">and</span> <span class="n">timeout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -333,16 +340,15 @@
     <span class="sd">&#39;&#39;&#39;Decorator to wait for a ``method`` to complete.</span>
 
 <span class="sd">    It only affects asynchronous object with a local event loop.</span>
-<span class="sd">    The ``method`` must return a :class:`~asyncio.Future`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
-        <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="s">&#39;_iothreadloop&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">async</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">future</span>
+            <span class="k">return</span> <span class="n">result</span>
 
     <span class="k">return</span> <span class="n">_</span>
 

@@ -103,8 +103,8 @@
 <span class="sd">with the standard `WSGI 1.0.1`_ specification with the following two</span>
 <span class="sd">exceptions:</span>
 
-<span class="sd">* It can return a :class:`.Future`.</span>
-<span class="sd">* If it returns a :class:`.Future`, it must result in an</span>
+<span class="sd">* It can return a :class:`~asyncio.Future`.</span>
+<span class="sd">* If it returns a :class:`~asyncio.Future`, it must results in an</span>
 <span class="sd">  :ref:`asynchronous iterable &lt;wsgi-async-iter&gt;`.</span>
 
 <span class="sd">Pulsar is shipped with two WSGI application handlers documented below.</span>
@@ -115,13 +115,13 @@
 <span class="sd">========================</span>
 
 <span class="sd">An asynchronous iterable is an iterable over a combination of ``bytes`` or</span>
-<span class="sd">:class:`.Future` which result in ``bytes``.</span>
+<span class="sd">:class:`~asyncio.Future` which result in ``bytes``.</span>
 <span class="sd">For example this could be an asynchronous iterable::</span>
 
 <span class="sd">    def simple_async():</span>
 <span class="sd">        yield b&#39;hello&#39;</span>
-<span class="sd">        c = pulsar.Future()</span>
-<span class="sd">        c.callback(b&#39; &#39;)</span>
+<span class="sd">        c = Future()</span>
+<span class="sd">        c.set_result(b&#39; &#39;)</span>
 <span class="sd">        yield c</span>
 <span class="sd">        yield b&#39;World!&#39;</span>
 

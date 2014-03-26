@@ -166,8 +166,8 @@ non-standard header fields.</p>
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.get">
 <tt class="descname">get</tt><big>(</big><em>key</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the field value at <tt class="docutils literal"><span class="pre">key</span></tt> as comma separated values.
-For example:</p>
+<dd><p>Get the field value at <tt class="docutils literal"><span class="pre">key</span></tt> as comma separated values.</p>
+<p>For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s">&#39;gzip&#39;</span><span class="p">)</span>
@@ -186,7 +186,8 @@ For example:</p>
 <tt class="descname">get_all</tt><big>(</big><em>key</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.get_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.get_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the values at header <tt class="docutils literal"><span class="pre">key</span></tt> as a list rather than a
 string separated by comma (which is returned by the
-<a class="reference internal" href="#pulsar.utils.httpurl.Headers.get" title="pulsar.utils.httpurl.Headers.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> method). For example:</p>
+<a class="reference internal" href="#pulsar.utils.httpurl.Headers.get" title="pulsar.utils.httpurl.Headers.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> method).</p>
+<p>For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s">&#39;gzip&#39;</span><span class="p">)</span>
@@ -223,10 +224,20 @@ string separated by comma (which is returned by the
 <dt id="pulsar.utils.httpurl.Headers.add_header">
 <tt class="descname">add_header</tt><big>(</big><em>key</em>, <em>values</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.add_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.add_header" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add <tt class="docutils literal"><span class="pre">values</span></tt> to <tt class="docutils literal"><span class="pre">key</span></tt> header.</p>
-<p>If the header is already available, append the value to the list.
-:param values: a string value or a list/tuple of strings values</p>
-<blockquote>
-<div>for header <tt class="docutils literal"><span class="pre">key</span></tt></div></blockquote>
+<p>If the header is already available, append the value to the list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>key</strong> &#8211; header name</li>
+<li><strong>values</strong> &#8211; a string value or a list/tuple of strings values
+for header <tt class="docutils literal"><span class="pre">key</span></tt></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -420,7 +431,7 @@ the python <a class="reference external" href="http://docs.python.org/dev/librar
 <h3>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.utils.config.Config">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Config</tt><big>(</big><em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>apps=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>settings=None</em>, <em>prefix=None</em>, <em>name=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Config</tt><big>(</big><em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>apps=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>settings=None</em>, <em>prefix=None</em>, <em>name=None</em>, <em>log_name=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dictionary-like container of <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> parameters for
 fine tuning pulsar servers.</p>
 <p>It provides easy access to <a class="reference internal" href="#pulsar.utils.config.Setting.value" title="pulsar.utils.config.Setting.value"><tt class="xref py py-attr docutils literal"><span class="pre">Setting.value</span></tt></a>
@@ -1102,6 +1113,7 @@ quotes and angle brackets encoded.</p>
 <dt id="pulsar.utils.html.nicename">
 <tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">nicename</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#nicename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.nicename" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make <tt class="docutils literal"><span class="pre">name</span></tt> a more user friendly string.</p>
+<p>Capitalise the first letter and replace dash and underscores with a space</p>
 </dd></dl>
 
 <dl class="function">
@@ -1154,7 +1166,7 @@ taken from python.</p>
 
 <dl class="function">
 <dt id="pulsar.utils.log.configured_logger">
-<tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">configured_logger</tt><big>(</big><em>logger</em>, <em>config=None</em>, <em>level=None</em>, <em>handlers=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.configured_logger" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">configured_logger</tt><big>(</big><em>name</em>, <em>config=None</em>, <em>level=None</em>, <em>handlers=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.configured_logger" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configured logger.</p>
 </dd></dl>
 

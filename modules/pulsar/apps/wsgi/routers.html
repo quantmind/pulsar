@@ -244,10 +244,6 @@
 <span class="sd">        If a ``response_content_types`` value is</span>
 <span class="sd">        passed, it overrides the :attr:`response_content_types` attribute.</span>
 
-<span class="sd">    .. attribute:: route</span>
-
-<span class="sd">        The :ref:`Route &lt;apps-wsgi-route&gt;` served by this :class:`Router`.</span>
-
 <span class="sd">    .. attribute:: routes</span>
 
 <span class="sd">        List of children :class:`Router` of this :class:`Router`.</span>
@@ -292,7 +288,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_creation_count</span> <span class="o">=</span> <span class="n">Router</span><span class="o">.</span><span class="n">_creation_count</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">Route</span><span class="p">):</span>
             <span class="n">rule</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">route</span> <span class="o">=</span> <span class="n">rule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_route</span> <span class="o">=</span> <span class="n">rule</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">rule</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c"># add routes specified via the initialiser</span>
@@ -312,6 +308,29 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Router.route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.route">[docs]</a>    <span class="k">def</span> <span class="nf">route</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The relative :class:`.Route` served by this</span>
+<span class="sd">        :class:`Router`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">and</span> <span class="n">parent</span><span class="o">.</span><span class="n">_route</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">parent</span><span class="o">.</span><span class="n">route</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_route</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_route</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Router.full_route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.full_route">[docs]</a>    <span class="k">def</span> <span class="nf">full_route</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The full :attr:`route` for this :class:`.Router`.</span>
+
+<span class="sd">        It includes the :attr:`parent` portion of the route if a parent</span>
+<span class="sd">        router is available.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">full_route</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_route</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_route</span>
+</div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Router.name"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.name">[docs]</a>    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The name of this :class:`Router`.</span>
@@ -351,28 +370,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_creation_count</span>
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Router.full_route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.full_route">[docs]</a>    <span class="k">def</span> <span class="nf">full_route</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The full :attr:`route` for this :class:`Router`.</span>
-
-<span class="sd">        It includes the :attr:`parent` portion of the route if a parent</span>
-<span class="sd">        router is available.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">route</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span>
-        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span>
-        <span class="k">while</span> <span class="n">parent</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>
-                <span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_parent</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">break</span>
-        <span class="k">if</span> <span class="n">parent</span><span class="p">:</span>
-            <span class="n">route</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">route</span> <span class="o">+</span> <span class="n">route</span>
-        <span class="k">return</span> <span class="n">route</span>
-</div>
-    <span class="nd">@property</span>
 <div class="viewcode-block" id="Router.rule"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.rule">[docs]</a>    <span class="k">def</span> <span class="nf">rule</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The full ``rule`` string for this :class:`Router`.</span>
 
-<span class="sd">        It includes the :attr:`parent` portion of rule if a parent</span>
+<span class="sd">        It includes the :attr:`parent` portion of the rule if a :attr:`parent`</span>
 <span class="sd">        router is available.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_route</span><span class="o">.</span><span class="n">rule</span>
@@ -383,10 +384,7 @@
 <span class="sd">        It includes the :attr:`parent` portion of url if a parent router</span>
 <span class="sd">        is available.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">route</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
-            <span class="n">route</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">route</span> <span class="o">+</span> <span class="n">route</span>
-        <span class="k">return</span> <span class="n">route</span><span class="o">.</span><span class="n">url</span><span class="p">(</span><span class="o">**</span><span class="n">urlargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_route</span><span class="o">.</span><span class="n">url</span><span class="p">(</span><span class="o">**</span><span class="n">urlargs</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Check the value of a :attr:`parameters` ``name``.</span>
@@ -499,14 +497,6 @@
         <span class="k">assert</span> <span class="n">router</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">,</span> <span class="s">&#39;cannot add self to children&#39;</span>
         <span class="c"># Loop over available routers to check it the router</span>
         <span class="c"># is already available</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>
-            <span class="c"># if this router is a leaf router, prepend this router path</span>
-            <span class="c"># to the child</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">router</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
-                <span class="n">route</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="p">,</span> <span class="n">router</span><span class="o">.</span><span class="n">route</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">route</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="p">,</span> <span class="n">router</span><span class="o">.</span><span class="n">route</span><span class="p">)</span>
-            <span class="n">router</span><span class="o">.</span><span class="n">route</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">route</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="n">router</span><span class="o">.</span><span class="n">route</span><span class="p">:</span>
                 <span class="n">r</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">router</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>

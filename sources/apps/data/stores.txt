@@ -1,4 +1,4 @@
-.. _data-stores:
+.. _builtin-data-stores:
 
 ====================
 Available Clients

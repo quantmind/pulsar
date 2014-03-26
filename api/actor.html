@@ -509,9 +509,7 @@ high level api:</p>
 <dt id="pulsar.async.monitor.PoolMixin">
 <em class="property">class </em><tt class="descclassname">pulsar.async.monitor.</tt><tt class="descname">PoolMixin</tt><big>(</big><em>impl</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/monitor.html#PoolMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.monitor.PoolMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>A mixin for <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> which manages a pool (group) of actors.</p>
-<p>Given an <tt class="xref py py-attr docutils literal"><span class="pre">actor_class</span></tt> it makes sure there are always
-<tt class="xref py py-attr docutils literal"><span class="pre">cfg.workers</span></tt> alive.
-It is used by both the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> and the <tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt> classes.</p>
+<p>It is used by both the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> and the <tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt> classes.</p>
 <dl class="attribute">
 <dt id="pulsar.async.actor.PoolMixin.managed_actors">
 <tt class="descname">managed_actors</tt><a class="headerlink" href="#pulsar.async.actor.PoolMixin.managed_actors" title="Permalink to this definition">¶</a></dt>
@@ -924,7 +922,7 @@ the <a class="reference internal" href="#pulsar.async.arbiter.Arbiter" title="pu
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'TERMINATE': 6, 'CLOSE': 5, 'STOPPING': 4, 'INITIAL': 0, 'STARTING': 2, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3, 'INACTIVE': 1}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'TERMINATE': 6, 'RUN': 3, 'INITIAL': 0, 'STARTING': 2, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'INACTIVE': 1, 'STOPPING': 4, 'CLOSE': 5}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>

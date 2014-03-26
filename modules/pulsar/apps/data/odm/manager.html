@@ -68,9 +68,10 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.data.odm.manager</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">wait_complete</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">add_callback</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">wait_complete</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">add_callback</span><span class="p">,</span> <span class="n">task</span>
 
 <span class="kn">from</span> <span class="nn">.query</span> <span class="kn">import</span> <span class="n">AbstractQuery</span><span class="p">,</span> <span class="n">Query</span><span class="p">,</span> <span class="n">QueryError</span><span class="p">,</span> <span class="n">ModelNotFound</span>
+<span class="kn">from</span> <span class="nn">..store</span> <span class="kn">import</span> <span class="n">Command</span>
 
 
 <span class="n">RECURSIVE_RELATIONSHIP_CONSTANT</span> <span class="o">=</span> <span class="s">&#39;self&#39;</span>
@@ -182,11 +183,14 @@
         <span class="n">instance</span><span class="p">[</span><span class="s">&#39;_mapper&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span>
         <span class="k">return</span> <span class="n">instance</span>
 
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="Manager.create_table"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remove_existing</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create the table/collection for the :attr:`_model`</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
-                                        <span class="n">remove_existing</span><span class="o">=</span><span class="n">remove_existing</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+                                       <span class="n">remove_existing</span><span class="o">=</span><span class="n">remove_existing</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">search_engine</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">search_engine</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Manager.drop_table"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.drop_table">[docs]</a>    <span class="k">def</span> <span class="nf">drop_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Drop the table/collection for the :attr:`_model`</span>
@@ -249,17 +253,42 @@
     <span class="n">insert</span> <span class="o">=</span> <span class="n">new</span>
 
     <span class="nd">@wait_complete</span>
-<div class="viewcode-block" id="Manager.update"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+<div class="viewcode-block" id="Manager.update"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">instance</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Update an existing ``instance`` of :attr:`_model`.</span>
 
-<span class="sd">        If the instance already contain the primary key this is considered</span>
-<span class="sd">        and update, otherwise an insert.</span>
+<span class="sd">        The instance must have already contain the primary key.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">instance</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;expected at most 1 arguments, got </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
+                                <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">))</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot update. No primary key in </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">instance</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">instance</span><span class="p">)</span>
+</div>
+    <span class="nd">@wait_complete</span>
+<div class="viewcode-block" id="Manager.save"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Save an ``instance`` of :attr:`_model`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
             <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">instance</span><span class="p">)</span></div>
-    <span class="n">save</span> <span class="o">=</span> <span class="n">update</span>
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">instance</span><span class="p">)</span>
+</div>
+    <span class="nd">@wait_complete</span>
+<div class="viewcode-block" id="Manager.delete"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Delete an existing ``instance`` of :attr:`_model`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">DELETE</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">instance</span><span class="p">)</span>
 
+    <span class="c"># INTERNALS</span></div>
     <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -337,7 +366,7 @@
                 <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">pk</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">value</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">instance</span><span class="o">.</span><span class="n">privates</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                    <span class="n">instance</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="n">mapper</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;_mapper&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">mapper</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">add_callback</span><span class="p">(</span><span class="n">mapper</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">relmodel</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="p">),</span>
@@ -424,13 +453,13 @@
     <span class="k">def</span> <span class="nf">session_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">related_instance</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ManyToManyError</span><span class="p">(</span><span class="s">&#39;Cannot use &quot;</span><span class="si">%s</span><span class="s">&quot; method from class&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">related_instance</span><span class="o">.</span><span class="n">pkvalue</span><span class="p">():</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">related_instance</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ManyToManyError</span><span class="p">(</span><span class="s">&#39;Cannot use &quot;</span><span class="si">%s</span><span class="s">&quot; method on a non persistent &#39;</span>
                                   <span class="s">&#39;instance.&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">formodel</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ManyToManyError</span><span class="p">(</span>
                 <span class="s">&#39;</span><span class="si">%s</span><span class="s"> is not an instance of </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">formodel</span><span class="o">.</span><span class="n">_meta</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">pkvalue</span><span class="p">():</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ManyToManyError</span><span class="p">(</span><span class="s">&#39;Cannot use &quot;</span><span class="si">%s</span><span class="s">&quot; a non persistent instance.&#39;</span>
                                   <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">name_formodel</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
@@ -449,7 +478,7 @@
 <span class="sd">elements contained by the field.&#39;&#39;&#39;</span>
         <span class="n">s</span><span class="p">,</span> <span class="n">instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_instance</span><span class="p">(</span><span class="s">&#39;remove&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">session</span><span class="p">)</span>
         <span class="c"># update state so that the instance does look persistent</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">get_state</span><span class="p">(</span><span class="n">iid</span><span class="o">=</span><span class="n">instance</span><span class="o">.</span><span class="n">pkvalue</span><span class="p">(),</span> <span class="n">action</span><span class="o">=</span><span class="s">&#39;update&#39;</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">get_state</span><span class="p">(</span><span class="n">iid</span><span class="o">=</span><span class="n">instance</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&#39;update&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">throughquery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>

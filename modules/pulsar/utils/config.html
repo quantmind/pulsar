@@ -100,7 +100,7 @@
 <span class="kn">from</span> <span class="nn">.importer</span> <span class="kn">import</span> <span class="n">import_system_file</span>
 <span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">HttpParser</span> <span class="k">as</span> <span class="n">PyHttpParser</span>
 <span class="kn">from</span> <span class="nn">.log</span> <span class="kn">import</span> <span class="n">configured_logger</span>
-<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">native_str</span>
+<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">pickle</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Config&#39;</span><span class="p">,</span>
@@ -188,9 +188,10 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">epilog</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">apps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">exclude</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+                 <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">log_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">settings</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">settings</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_name</span> <span class="o">=</span> <span class="n">log_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">include</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">include</span> <span class="ow">or</span> <span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">exclude</span> <span class="ow">or</span> <span class="p">())</span>
@@ -282,7 +283,9 @@
 
 <span class="sd">        If ``default`` is ``True``, the :attr:`Setting.default` is also set.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
             <span class="c"># not in settings, check if this is a prefixed name</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
                 <span class="n">prefix_name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -408,34 +411,43 @@
         <span class="n">me</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">me</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">me</span>
 </div>
+    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
 <div class="viewcode-block" id="Config.configured_logger"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Config.configured_logger">[docs]</a>    <span class="k">def</span> <span class="nf">configured_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Configured logger.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">loggers</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">loghandlers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loghandlers</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;pulsar.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_name</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;pulsar.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">default_loglevel</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">for</span> <span class="n">loglevel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loglevel</span> <span class="ow">or</span> <span class="p">():</span>
             <span class="n">bits</span> <span class="o">=</span> <span class="n">loglevel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
             <span class="n">loglevel</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">namespace</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-                <span class="k">if</span> <span class="n">namespace</span> <span class="o">==</span> <span class="s">&#39;pulsar&#39;</span><span class="p">:</span>
-                    <span class="n">default_loglevel</span> <span class="o">=</span> <span class="n">loglevel</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">default_loglevel</span><span class="p">:</span>
-                    <span class="n">default_loglevel</span> <span class="o">=</span> <span class="n">loglevel</span>
                 <span class="n">namespace</span> <span class="o">=</span> <span class="n">name</span>
             <span class="k">if</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="n">loggers</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">loggers</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span>
-                                                   <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
-                                                   <span class="n">level</span><span class="o">=</span><span class="n">loglevel</span><span class="p">,</span>
-                                                   <span class="n">handlers</span><span class="o">=</span><span class="n">loghandlers</span><span class="p">)</span>
-        <span class="n">default_loglevel</span> <span class="o">=</span> <span class="n">default_loglevel</span> <span class="ow">or</span> <span class="s">&#39;info&#39;</span>
+            <span class="n">logger</span> <span class="o">=</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span>
+                                       <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
+                                       <span class="n">level</span><span class="o">=</span><span class="n">loglevel</span><span class="p">,</span>
+                                       <span class="n">handlers</span><span class="o">=</span><span class="n">loghandlers</span><span class="p">)</span>
+            <span class="n">loggers</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">logger</span>
+            <span class="k">if</span> <span class="n">namespace</span> <span class="o">==</span> <span class="s">&#39;pulsar&#39;</span> <span class="ow">or</span> <span class="n">default_loglevel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">default_loglevel</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">level</span>
+
+        <span class="n">default_loglevel</span> <span class="o">=</span> <span class="n">asyncio_loglevel</span> <span class="o">=</span> <span class="n">default_loglevel</span> <span class="ow">or</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">asyncio_loglevel</span><span class="p">:</span>
+            <span class="n">asyncio_loglevel</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">asyncio_loglevel</span><span class="p">,</span>
+                                   <span class="n">logging</span><span class="o">.</span><span class="n">_checkLevel</span><span class="p">(</span><span class="s">&#39;WARNING&#39;</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">loglevel</span> <span class="ow">in</span> <span class="p">((</span><span class="s">&#39;pulsar&#39;</span><span class="p">,</span> <span class="n">default_loglevel</span><span class="p">),</span>
                                     <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default_loglevel</span><span class="p">),</span>
-                                    <span class="p">(</span><span class="s">&#39;asyncio&#39;</span><span class="p">,</span> <span class="s">&#39;warning&#39;</span><span class="p">)):</span>
+                                    <span class="p">(</span><span class="s">&#39;asyncio&#39;</span><span class="p">,</span> <span class="n">asyncio_loglevel</span><span class="p">)):</span>
             <span class="k">if</span> <span class="n">namespace</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loggers</span><span class="p">:</span>
                 <span class="n">loggers</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span>
                                                        <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
@@ -812,9 +824,8 @@
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--http-py-parser&quot;</span><span class="p">]</span>
     <span class="n">action</span> <span class="o">=</span> <span class="s">&quot;store_true&quot;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;Set the python parser as default HTTP parser.</span>
-
-<span class="s">    Only used for benchmarking pourposes.</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
+<span class="s">        Set the python parser as default HTTP parser</span>
 <span class="s">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -921,6 +932,8 @@
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;loglevel&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--log-level&quot;</span><span class="p">]</span>
     <span class="n">nargs</span> <span class="o">=</span> <span class="s">&#39;+&#39;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;info&#39;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_list</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">        The granularity of log outputs.</span>
 
@@ -940,6 +953,7 @@
 <span class="k">class</span> <span class="nc">LogHandlers</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;loghandlers&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--log-handlers&quot;</span><span class="p">]</span>
+    <span class="n">nargs</span> <span class="o">=</span> <span class="s">&#39;+&#39;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;console&#39;</span><span class="p">]</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_list</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;Log handlers for pulsar server&#39;&#39;&#39;</span>

@@ -133,7 +133,6 @@
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">import_modules</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;JobMetaClass&#39;</span><span class="p">,</span> <span class="s">&#39;Job&#39;</span><span class="p">,</span> <span class="s">&#39;PeriodicJob&#39;</span><span class="p">,</span>
@@ -270,17 +269,6 @@
             <span class="n">meta_params</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">meta_params</span><span class="p">[</span><span class="s">&#39;from_task&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">task_id</span>
         <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">queue_task</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span> <span class="n">meta_params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="Job.create_id"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.Job.create_id">[docs]</a>    <span class="k">def</span> <span class="nf">create_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a unique id for a task.</span>
-
-<span class="sd">        Called by the :class:`.TaskBackend` when a new task is about to be</span>
-<span class="sd">        queued.</span>
-
-<span class="sd">        :parameter kwargs: dictionary of parameters passed to the</span>
-<span class="sd">            :ref:`job callable method &lt;job-callable&gt;`.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
 
 </div></div>
 <div class="viewcode-block" id="PeriodicJob"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.PeriodicJob">[docs]</a><span class="k">class</span> <span class="nc">PeriodicJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>

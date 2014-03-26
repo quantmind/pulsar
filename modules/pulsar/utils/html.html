@@ -231,11 +231,20 @@
 
 </div>
 <div class="viewcode-block" id="nicename"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.nicename">[docs]</a><span class="k">def</span> <span class="nf">nicename</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Make ``name`` a more user friendly string.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Make ``name`` a more user friendly string.</span>
+
+<span class="sd">    Capitalise the first letter and replace dash and underscores with a space</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">capfirst</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
 
 </div>
+<span class="k">def</span> <span class="nf">plural</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">plural</span> <span class="ow">or</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">s&#39;</span> <span class="o">%</span> <span class="n">text</span>
+    <span class="k">return</span> <span class="s">&#39;</span><span class="si">%d</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+
+
 <span class="k">class</span> <span class="nc">SafeString</span><span class="p">(</span><span class="n">string_type</span><span class="p">):</span>
     <span class="n">__html__</span> <span class="o">=</span> <span class="bp">True</span>
 

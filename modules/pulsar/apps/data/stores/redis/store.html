@@ -183,19 +183,13 @@
         <span class="n">pipe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span>
         <span class="n">update_insert</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="n">Command</span><span class="o">.</span><span class="n">INSERT</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">))</span>
         <span class="c">#</span>
-        <span class="c"># loop through models</span>
-        <span class="k">for</span> <span class="n">tmodel</span> <span class="ow">in</span> <span class="n">transaction</span><span class="o">.</span><span class="n">models</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">tmodel</span><span class="o">.</span><span class="n">dirty</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
         <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">transaction</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
             <span class="n">action</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">action</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">action</span><span class="p">:</span>
                 <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="o">*</span><span class="n">command</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">update_insert</span><span class="p">:</span>
                 <span class="n">model</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">args</span>
-                <span class="n">pkvalue</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">pkvalue</span><span class="p">()</span>
-                <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basekey</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span> <span class="n">pkvalue</span><span class="p">)</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basekey</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
                 <span class="n">pipe</span><span class="o">.</span><span class="n">hmset</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span>
@@ -203,7 +197,7 @@
         <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">transaction</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">command</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="n">Command</span><span class="o">.</span><span class="n">INSERT</span><span class="p">:</span>
                 <span class="n">model</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">args</span>
-                <span class="n">model</span><span class="p">[</span><span class="s">&#39;_store&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
+                <span class="n">model</span><span class="p">[</span><span class="s">&#39;_rev&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 </div>
     <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">,</span> <span class="n">manager</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>

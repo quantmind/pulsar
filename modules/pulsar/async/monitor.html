@@ -88,7 +88,7 @@
     <span class="c"># Internal function which spawns a new Actor and return its</span>
     <span class="c"># ActorProxyMonitor.</span>
     <span class="c"># *cls* is the Actor class</span>
-    <span class="c"># *monitor* can be either the ariber or a monitor</span>
+    <span class="c"># *monitor* can be either the arbiter or a monitor</span>
     <span class="n">kind</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">PoolMixin</span><span class="p">):</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="s">&#39;monitor&#39;</span>
@@ -145,8 +145,6 @@
 <div class="viewcode-block" id="PoolMixin"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin">[docs]</a><span class="k">class</span> <span class="nc">PoolMixin</span><span class="p">(</span><span class="n">Actor</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A mixin for :class:`.Actor` which manages a pool (group) of actors.</span>
 
-<span class="sd">    Given an :attr:`actor_class` it makes sure there are always</span>
-<span class="sd">    :attr:`cfg.workers` alive.</span>
 <span class="sd">    It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.</span>
 
 <span class="sd">    .. attribute:: managed_actors</span>
