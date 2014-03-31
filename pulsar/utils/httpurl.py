@@ -637,6 +637,7 @@ class Headers(object):
 
     def get(self, key, default=None):
         '''Get the field value at ``key`` as comma separated values.
+
         For example::
 
             >>> from pulsar.utils.httpurl import Headers
@@ -657,7 +658,9 @@ class Headers(object):
     def get_all(self, key, default=None):
         '''Get the values at header ``key`` as a list rather than a
         string separated by comma (which is returned by the
-        :meth:`get` method). For example::
+        :meth:`get` method).
+
+        For example::
 
             >>> from pulsar.utils.httpurl import Headers
             >>> h = Headers(kind='client')
@@ -698,6 +701,8 @@ class Headers(object):
         '''Add ``values`` to ``key`` header.
 
         If the header is already available, append the value to the list.
+
+        :param key: header name
         :param values: a string value or a list/tuple of strings values
             for header ``key``
         '''

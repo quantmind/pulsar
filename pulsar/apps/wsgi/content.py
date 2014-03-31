@@ -135,7 +135,7 @@ from inspect import isgenerator
 from pulsar import multi_async, Future, async, coroutine_return, chain_future
 from pulsar.utils.pep import iteritems, is_string, to_string, ispy3k
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
-                               csslink, dump_data_value, child_tag)
+                               dump_data_value, child_tag)
 from pulsar.utils.httpurl import remove_double_slash
 from pulsar.utils.system import json
 
@@ -806,7 +806,7 @@ class Media(AsyncString):
         if urlparams:
             path = '%s?%s' % (path, urlparams)
         if self.is_relative(path):
-            return remove_double_slash('/%s/%s' % (self.media_path, path))
+            return remove_double_slash('%s/%s' % (self.media_path, path))
         else:
             return path
 
@@ -832,32 +832,38 @@ class Css(Media):
             {'all': [path1, ...],
              'print': [path2, ...]}
         '''
-        if value:
-            if isinstance(value, str):
+        if value is not None:
+            if isinstance(value, Html):
+                value = {'all': [value]}
+            elif isinstance(value, str):
                 value = {'all': [value]}
             for media, values in value.items():
+                if isinstance(values, str):
+                    values = (values,)
                 m = self.children.get(media, [])
                 for value in values:
-                    if not isinstance(value, (tuple, list)):
-                        value = (value, None)
-                    path, condition = value
-                    value = csslink(self.absolute_path(path), condition)
-                    if value not in m:
-                        m.append(value)
+                    if not isinstance(value, Html):
+                        if not isinstance(value, (tuple, list)):
+                            value = (value, None)
+                        path, condition = value
+                        path = self.absolute_path(path)
+                        value = Html('link', href=path, type='text/css',
+                                     rel='stylesheet')
+                        if condition:
+                            value = Html(None, '<!--[if %s]>', value,
+                                         '<![endif]-->')
+                    m.append(value)
                 self.children[media] = m
 
     def do_stream(self, request):
         children = self.children
         for medium in sorted(children):
             paths = children[medium]
-            medium = '' if medium == 'all' else " media='%s'" % medium
+            medium = '' if medium == 'all' else medium
             for path in paths:
-                link = ("<link href='%s' type='text/css'%s "
-                        "rel='stylesheet'/>\n" % (path.link, medium))
-                if path.condition:
-                    link = '<!--[if %s]>%s<![endif]-->' % (path.condition,
-                                                           link)
-                yield link
+                if medium:
+                    path.attr('media', medium)
+                yield path
 
 
 class Scripts(Media):
@@ -1070,18 +1076,11 @@ class HtmlDocument(Html):
                          scripts_dependencies=scripts_dependencies,
                          charset=charset)
         self.body = Html('body')
-
-    def __call__(self, title=None, body=None, media_path=None):
-        if title:
-            self.head.title = title
-        if media_path:
-            self.head.scripts.media_path = media_path
-            self.head.links.media_path = media_path
-        self.body.append(body)
-        return self
+        self.end = Html(None)
 
     def do_stream(self, request):
         # stream the body
+        self.body.append(self.end)
         body = multi_async(self.body.stream(request))
         # the body has asynchronous components
         # delay the header untl later

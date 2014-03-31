@@ -119,9 +119,10 @@ class Config(object):
     def __init__(self, description=None, epilog=None,
                  version=None, apps=None, include=None,
                  exclude=None, settings=None, prefix=None,
-                 name=None, **params):
+                 name=None, log_name=None, **params):
         self.settings = {} if settings is None else settings
         self.name = name
+        self.log_name = log_name
         self.prefix = prefix
         self.include = set(include or ())
         self.exclude = set(exclude or ())
@@ -213,7 +214,9 @@ class Config(object):
 
         If ``default`` is ``True``, the :attr:`Setting.default` is also set.
         '''
-        if name not in self.settings:
+        if name in self.__dict__:
+            self.__dict__[name] = value
+        elif name not in self.settings:
             # not in settings, check if this is a prefixed name
             if self.prefix:
                 prefix_name = '%s_%s' % (self.prefix, name)
@@ -347,7 +350,10 @@ class Config(object):
         '''
         loggers = {}
         loghandlers = self.loghandlers
-        name = 'pulsar.%s' % (name or self.name)
+        if not name and self.log_name:
+            name = self.log_name
+        else:
+            name = 'pulsar.%s' % (name or self.name)
         default_loglevel = None
         for loglevel in self.loglevel or ():
             bits = loglevel.split('.')
@@ -857,6 +863,7 @@ class Loglevel(Global):
     name = "loglevel"
     flags = ["--log-level"]
     nargs = '+'
+    default = ['info']
     validator = validate_list
     desc = '''
         The granularity of log outputs.
@@ -877,6 +884,7 @@ class Loglevel(Global):
 class LogHandlers(Global):
     name = "loghandlers"
     flags = ["--log-handlers"]
+    nargs = '+'
     default = ['console']
     validator = validate_list
     desc = '''Log handlers for pulsar server'''

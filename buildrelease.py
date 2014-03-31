@@ -2,9 +2,9 @@ import os
 from datetime import datetime, date
 
 import setup
-from clean import rmfiles
+import clean
 
-rmfiles()
+clean.run()
 script = os.path.abspath(setup.__file__)
 
 assert setup.mod.VERSION[3] == 'final'

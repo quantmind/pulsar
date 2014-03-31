@@ -44,6 +44,7 @@ LOGGING_CONFIG = {
             'format': '%(asctime)s %(levelname)s %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
+        'level_message': {'format': '%(levelname)s - %(message)s'},
         'message': {'format': '%(message)s'}
     },
     'handlers': {
@@ -58,6 +59,10 @@ LOGGING_CONFIG = {
         'console_message': {
             'class': 'pulsar.utils.log.ColoredStream',
             'formatter': 'message'
+        },
+        'console_level_message': {
+            'class': 'pulsar.utils.log.ColoredStream',
+            'formatter': 'level_message'
         }
     },
     'filters ': {},

@@ -32,8 +32,8 @@ An asynchronous :ref:`application handler <wsgi-handlers>` must conform
 with the standard `WSGI 1.0.1`_ specification with the following two
 exceptions:
 
-* It can return a :class:`.Future`.
-* If it returns a :class:`.Future`, it must result in an
+* It can return a :class:`~asyncio.Future`.
+* If it returns a :class:`~asyncio.Future`, it must results in an
   :ref:`asynchronous iterable <wsgi-async-iter>`.
 
 Pulsar is shipped with two WSGI application handlers documented below.
@@ -44,13 +44,13 @@ Asynchronous Iterable
 ========================
 
 An asynchronous iterable is an iterable over a combination of ``bytes`` or
-:class:`.Future` which result in ``bytes``.
+:class:`~asyncio.Future` which result in ``bytes``.
 For example this could be an asynchronous iterable::
 
     def simple_async():
         yield b'hello'
-        c = pulsar.Future()
-        c.callback(b' ')
+        c = Future()
+        c.set_result(b' ')
         yield c
         yield b'World!'
 

@@ -382,7 +382,7 @@ class WsgiRequest(EnvironMixin):
 
     @cached_property
     def content_types(self):
-        '''List of content types this client supports as
+        '''List of content types this client supports as a
         :class:`.ContentAccept` object.
 
         Obtained form the ``Accept`` request header.
@@ -392,7 +392,7 @@ class WsgiRequest(EnvironMixin):
 
     @cached_property
     def charsets(self):
-        '''List of charsets this client supports as
+        '''List of charsets this client supports as a
         :class:`.CharsetAccept` object.
 
         Obtained form the ``Accept-Charset`` request header.

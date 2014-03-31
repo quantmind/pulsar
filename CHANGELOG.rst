@@ -1,12 +1,14 @@
-Ver. 0.8.1 - Development
+Ver. 0.8.1 - 2014-Mar-31
 ===========================
 * Added :mod:`pulsar.apps.greenio` application for writing asynchronous code
-  using the greenlet library.
+  using the greenlet library
 * Moved :class:`.PulsarDS` server into its own :mod:`pulsar.apps.ds`
-  module.
+  module
 * The task application can run on redis.
-* Added support for :ref:`couchdb datastore <store_couchdb>` (alpha).
-* Added :ref:`twisted integration <tutorials-twisted>` (alpha).
+* Added support for :ref:`couchdb datastore <store_couchdb>` (alpha)
+* Added :ref:`twisted integration <tutorials-twisted>` (alpha)
+* Removed ``Server`` and ``Date`` from Hop headers
+* Fixed installation problem with extensions
 * More documentation for data stores.
 
 Ver. 0.8.0 - 2014-Mar-06

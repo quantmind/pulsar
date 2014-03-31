@@ -2,7 +2,6 @@
 '''
 import re
 from unicodedata import normalize
-from collections import namedtuple
 
 from .system import json
 from .pep import (ispy3k, native_str, to_string, iteritems, is_string,
@@ -10,7 +9,7 @@ from .pep import (ispy3k, native_str, to_string, iteritems, is_string,
 
 NOTHING = ('', b'', None)
 '''Tuple of elements considered as null.'''
-INLINE_TAGS = set(('input', 'meta', 'hr'))
+INLINE_TAGS = set(('input', 'link', 'meta', 'hr'))
 # The global attributes below can be used on any HTML element
 # class and style are misssing here since they are treated separately
 GLOBAL_HTML_ATTRIBUTES = ('accesskey', 'contenteditable', 'contextmenu', 'dir',
@@ -47,6 +46,8 @@ HTML_ATTRIBUTES['input[type="image"]'] = input_attr(
 HTML_ATTRIBUTES['input[type="radio"]'] = input_attr('checked')
 HTML_ATTRIBUTES['input[type="submit"]'] = input_attr(
     'formaction', 'formenctype', 'formmethod', 'formtarget')
+HTML_ATTRIBUTES['link'] = e('href', 'hreflang', 'media', 'rel',
+                            'sizes', 'type')
 HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
 HTML_ATTRIBUTES['option'] = e('disabled', 'label', 'selected', 'value')
 HTML_ATTRIBUTES['script'] = e('async', 'charset', 'defer', 'src', 'type')
@@ -79,8 +80,6 @@ HTML_ENDASH = '&ndash;'
 '''HTML - symbol.'''
 HTML_EMDASH = '&mdash;'
 '''HTML -- symbol.'''
-
-csslink = namedtuple('cssentry', 'link condition')
 
 
 def tag_attributes(tag, type=None):

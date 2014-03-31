@@ -37,9 +37,7 @@ HOP_HEADERS = frozenset(('connection',
                          'te',
                          'trailers',
                          'transfer-encoding',
-                         'upgrade',
-                         'server',
-                         'date')
+                         'upgrade')
                         )
 
 logger = logging.getLogger('pulsar.wsgi')

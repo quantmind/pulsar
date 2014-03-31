@@ -89,13 +89,16 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
 
 
 def run_setup(params=None):
-    if not params:
+    argv = sys.argv
+    command = argv[1] if len(argv) > 1 else None
+    if not params or command=='sdist':
         params = {'cmdclass': {}}
+    else:
+        params = params()
     if sys.platform == "darwin":
         params['cmdclass']['install_data'] = osx_install_data
     else:
         params['cmdclass']['install_data'] = install_data
-    argv = sys.argv
     params.update({'name': package_fullname,
                    'version': mod.__version__,
                    'author': mod.__author__,

@@ -13,7 +13,7 @@ from Cython.Build import cythonize
 
 include_dirs = []
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
-if sys.platform == 'win32' and sys.version_info > (2, 6):
+if sys.platform == 'win32':
    # 2.6's distutils.msvc9compiler can raise an IOError when failing to
    # find the compiler
    ext_errors += (IOError,)
@@ -46,7 +46,7 @@ class tolerant_build_ext(build_ext):
                 raise BuildFailed
             raise
 
-lib_path = os.path.dirname(__file__)
+lib_path = 'extensions'
 
 
 def lib_extension():
@@ -57,10 +57,8 @@ def lib_extension():
                      include_dirs=include_dirs)
 
 
-extensions = [lib_extension()]
-
-libparams = {
-             'ext_modules': cythonize(extensions),
-             'cmdclass': {'build_ext' : tolerant_build_ext},
-             'include_dirs': include_dirs
-             }
+def libparams():
+    extensions = [lib_extension()]
+    return {'ext_modules': cythonize(extensions),
+            'cmdclass': {'build_ext' : tolerant_build_ext},
+            'include_dirs': include_dirs}

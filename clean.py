@@ -1,6 +1,7 @@
 import os
 import shutil
 
+remove_dirs = ('dist', 'build', 'pulsar.egg-info')
 
 def rmgeneric(path, __func__):
     try:
@@ -12,33 +13,40 @@ def rmgeneric(path, __func__):
         return 0
 
 
-def rmfiles(path=None, ext='pyc', rmcache=True):
+def rmfiles(path=None, *extensions):
     path = path or os.curdir
     if not os.path.isdir(path):
         return 0
-    assert ext
+    assert extensions
+    for ext in extensions:
+        assert ext
     trem = 0
     tall = 0
     files = os.listdir(path)
-    for f in files:
-        fullpath = os.path.join(path, f)
+    for name in files:
+        fullpath = os.path.join(path, name)
         if os.path.isfile(fullpath):
-            sf = f.split('.')
-            if len(sf) == 2:
-                if ext is None or sf[1] == ext:
-                    tall += 1
-                    trem += rmgeneric(fullpath, os.remove)
-        elif f == '__pycache__' and rmcache:
+            sf = name.split('.')
+            if len(sf) == 2 and sf[1] in extensions:
+                tall += 1
+                trem += rmgeneric(fullpath, os.remove)
+        elif name == '__pycache__':
             shutil.rmtree(fullpath)
             tall += 1
-        elif os.path.isdir(fullpath):
-            r, ra = rmfiles(fullpath, ext)
+        elif os.path.isdir(fullpath) and not name.startswith('.'):
+            r, ra = rmfiles(fullpath, *extensions)
             trem += r
             tall += ra
     return trem, tall
 
 
-if __name__ == '__main__':
-    path = os.curdir
-    removed, allfiles = rmfiles(path, 'pyc')
+def run():
+    for path in remove_dirs:
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+    removed, allfiles = rmfiles(os.curdir, 'pyc', 'DS_Store')
     print('removed {0} pyc files out of {1}'.format(removed, allfiles))
+
+
+if __name__ == '__main__':
+    run()
