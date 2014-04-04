@@ -45,7 +45,7 @@ class PulsarService(win32serviceutil.ServiceFramework):
         self.running = False
 
     def SvcStop(self):
-        #self.log.info('%s - Received stop signal' % self._svc_name_)
+        # self.log.info('%s - Received stop signal' % self._svc_name_)
         pulsar.arbiter().stop()
         self.running = False
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)

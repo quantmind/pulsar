@@ -510,7 +510,7 @@ class Task(asyncio.Task):
         self = None
 
 
-############################################################### MultiFuture
+# ############################################################## MultiFuture
 class MultiFuture(Future):
 
     def __init__(self, loop, data, type=None, raise_on_error=True):
@@ -539,7 +539,7 @@ class MultiFuture(Future):
     def failures(self):
         return self._failures
 
-    ###    INTERNALS
+    #    INTERNALS
     def _check(self):
         if not self._futures and self._state == _PENDING:
             self.set_result(self._stream)

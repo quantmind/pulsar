@@ -65,7 +65,7 @@ class HaltServer(BaseException):
         self.exit_code = exit_code
 
 
-##################################################################### HTTP
+# #################################################################### HTTP
 class HTTPError(PulsarException):
     "Base for all HTTP related errors."
     pass

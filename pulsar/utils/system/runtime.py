@@ -23,7 +23,7 @@ knownPlatforms = {
     }
 
 _timeFunctions = {
-    #'win': time.clock,
+    # 'win': time.clock,
     'win': time.time,
     }
 

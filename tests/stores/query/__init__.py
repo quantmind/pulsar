@@ -130,4 +130,3 @@ class QueryTest(StoreTest):
                                                       m2.first_name)).count()
         self.assertTrue(N > 1)
         self.assertTrue(N < self.sizes[self.cfg.size])
-

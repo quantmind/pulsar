@@ -12,7 +12,7 @@ def lua_nested_table(nesting, s=100):
     result = pres
     for i in range(nesting):
         res = [-8, s, None]
-        #dres = {1: 'valid', 'bla': 6}
+        # dres = {1: 'valid', 'bla': 6}
         dres = 1
         pres.extend((res, res, dres))
         pres = res

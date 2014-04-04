@@ -10,7 +10,7 @@ OK = check_server('redis')
 
 @unittest.skipUnless(OK, 'Requires a running redis server')
 class TestRedisTaskQueueOnThread(test_pulsards.TestTaskQueueOnThread):
-    #schedule_periodic = False
+    # schedule_periodic = False
 
     @classmethod
     def task_backend(cls):

@@ -321,7 +321,6 @@ class LazyForeignKey(LazyProxy):
             instance.pop(key)
 
 
-
 class RelatedManager(Manager):
     '''A :class:`.Manager` handling relationships between models.
 
@@ -341,7 +340,6 @@ class RelatedManager(Manager):
 
     def __get__(self, instance, instance_type=None):
         return self.__class__(self.field, self.model, instance)
-
 
 
 class OneToManyRelatedManager(RelatedManager):
@@ -371,7 +369,7 @@ class OneToManyRelatedManager(RelatedManager):
         return query.session.query(self.model, fargs={self.field.name: params})
 
 
-############################################    MANY2MANY MANAGER
+#    MANY2MANY MANAGER
 
 class ManyToManyRelatedManager(OneToManyRelatedManager):
     '''A specialized :class:`.OneToManyRelatedManager` for handling

@@ -57,15 +57,15 @@ from .structures import mapping_iterator, OrderedDict
 from .pep import ispy3k, iteritems, itervalues, to_bytes, native_str
 from .html import capfirst
 
-#try:
-#    from http_parser.parser import HttpParser as CHttpParser
-#    hasextensions = True
-#    _Http_Parser = CHttpParser
-#except ImportError:  # pragma    nocover
-#    hasextensions = False
-#    _Http_Parser = None
+# try:
+#     from http_parser.parser import HttpParser as CHttpParser
+#     hasextensions = True
+#     _Http_Parser = CHttpParser
+# except ImportError:  # pragma    nocover
+#     hasextensions = False
+#     _Http_Parser = None
 #
-#The http_parser has several bus, therefore it is switched off
+# The http_parser has several bugs, therefore it is switched off
 hasextensions = False
 _Http_Parser = None
 
@@ -184,7 +184,7 @@ class SSLError(HTTPError):
     "Raised when SSL certificate fails in an HTTPS connection."
     pass
 
-####################################################    URI & IRI SUFF
+# ###################################################    URI & IRI SUFF
 #
 # The reserved URI characters (RFC 3986 - section 2.2)
 # Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
@@ -308,12 +308,12 @@ def remove_double_slash(route):
     return route
 
 
-####################################################    CONTENT TYPES
+# ###################################################    CONTENT TYPES
 JSON_CONTENT_TYPES = ('application/json',
                       'application/javascript',
                       'text/json',
                       'text/x-json')
-####################################################    REQUEST METHODS
+# ###################################################    REQUEST METHODS
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
 REDIRECT_CODES = (301, 302, 303, 307)
@@ -335,7 +335,7 @@ def is_succesful(status):
     return status >= 200 and status < 300
 
 
-####################################################    HTTP HEADERS
+# ###################################################    HTTP HEADERS
 WEBSOCKET_VERSION = (8, 13)
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                        'Pragma', 'Trailer',
@@ -425,7 +425,7 @@ def header_field(name, HEADERS_SET=None, strict=False):
             return capheader(name)
 
 
-####    HEADERS UTILITIES
+#    HEADERS UTILITIES
 HEADER_FIELDS_JOINER = {'Cookie': '; ',
                         'Set-Cookie': None,
                         'Set-Cookie2': None}
@@ -712,7 +712,7 @@ class Headers(object):
                 values = header_values(key, values)
             current = self._headers.get(key, [])
             for value in values:
-                if value and not value in current:
+                if value and value not in current:
                     current.append(value)
             self._headers[key] = current
 
@@ -778,7 +778,7 @@ class Headers(object):
 
 
 ###############################################################################
-##    HTTP PARSER
+#    HTTP PARSER
 ###############################################################################
 METHOD_RE = re.compile("[A-Z0-9$-_.]{3,20}")
 VERSION_RE = re.compile("HTTP/(\d+).(\d+)")
@@ -1154,7 +1154,7 @@ if not hasextensions:   # pragma    nocover
     setDefaultHttpParser(HttpParser)
 
 
-###############################################    UTILITIES, ENCODERS, PARSERS
+# ############################################    UTILITIES, ENCODERS, PARSERS
 def get_environ_proxies():
     """Return a dict of environment proxies. From requests_."""
 
@@ -1252,7 +1252,7 @@ def http_date(epoch_seconds=None):
     return formatdate(epoch_seconds, usegmt=True)
 
 
-#################################################################### COOKIE
+# ################################################################# COOKIE
 def create_cookie(name, value, **kwargs):
     """Make a cookie from underspecified parameters.
 

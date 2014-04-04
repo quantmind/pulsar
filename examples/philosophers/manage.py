@@ -63,7 +63,7 @@ except ImportError:
 from pulsar import command, async
 from pulsar.apps import wsgi, ws, data, ds
 
-############################# WEB INTERFACE
+# WEB INTERFACE
 media_libraries = {
     "d3": "//cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3",
     "jquery": "//code.jquery.com/jquery-1.11.0",
@@ -83,7 +83,7 @@ class WsProtocol:
 
 
 ###########################################################################
-##    EXTRA COMMAND LINE PARAMETERS
+#    EXTRA COMMAND LINE PARAMETERS
 class Eating_Period(pulsar.Setting):
     flags = ["--eating-period"]
     validator = pulsar.validate_pos_float
@@ -99,7 +99,7 @@ class Waiting_Period(pulsar.Setting):
 
 
 ###########################################################################
-##    PULSAR COMMANDS FOR DINING PHILOSOPHERS
+#    PULSAR COMMANDS FOR DINING PHILOSOPHERS
 @command(ack=False)
 def putdown_fork(request, fork):
     self = request.actor.app
@@ -124,7 +124,7 @@ def pickup_fork(request, fork_right):
 
 
 ############################################################################
-##    DINING PHILOSOPHERS APP
+#    DINING PHILOSOPHERS APP
 class DiningPhilosophers(pulsar.Application):
     description = ('Dining philosophers sit at a table around a bowl of '
                    'spaghetti and waits for available forks.')
@@ -301,10 +301,10 @@ class server(pulsar.MultiApp):
 
     def build(self):
         yield self.new_app(DiningPhilosophers)
-        #yield self.new_app(wsgi.WSGIServer, prefix='wsgi',
-        #                   callable=PhilosophersWsgi(self.name))
-        #yield self.new_app(wsgi.WSGIServer,
-        #                   callable=PhilosophersWsgi(self.name))
+        # yield self.new_app(wsgi.WSGIServer, prefix='wsgi',
+        #                    callable=PhilosophersWsgi(self.name))
+        # yield self.new_app(wsgi.WSGIServer,
+        #                    callable=PhilosophersWsgi(self.name))
 
 
 if __name__ == '__main__':

@@ -267,7 +267,7 @@ class Monitor(PoolMixin):
         return info
 
     def get_actor(self, aid):
-        #Delegate get_actor to the arbiter
+        # Delegate get_actor to the arbiter
         a = super(Monitor, self).get_actor(aid)
         if a is None:
             a = self.monitor.get_actor(aid)

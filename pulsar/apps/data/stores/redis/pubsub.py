@@ -80,7 +80,7 @@ class PubSub(data.PubSub):
             self._connection.execute('PUNSUBSCRIBE')
             self._connection.execute('UNSUBSCRIBE')
 
-    ##    INTERNALS
+    #    INTERNALS
     @task
     def _subscribe(self, *args):
         if not self._connection:

@@ -67,7 +67,6 @@ class HttpBin(wsgi.Router):
         ul = ul.render(request)
         body = template() % (title, version, ul, pyversion, JAPANESE)
         html.body.append(body)
-        #html.meta.append()
         return html.http_response(request)
 
     @route('get', title='Returns GET data')
@@ -144,7 +143,7 @@ class HttpBin(wsgi.Router):
                 self.headers = server.headers
 
             def generate(self):
-                #yield a byte so that headers are sent
+                # yield a byte so that headers are sent
                 yield b''
                 # we must have the headers now
                 yield json.dumps(dict(self.headers))
@@ -207,11 +206,11 @@ class HttpBin(wsgi.Router):
 
         Try sending lots of requests
         '''
-        #scheme = 'wss' if request.is_secure else 'ws'
-        #host = request.get('HTTP_HOST')
-        #address = '%s://%s/stats' % (scheme, host)
+        # scheme = 'wss' if request.is_secure else 'ws'
+        # host = request.get('HTTP_HOST')
+        # address = '%s://%s/stats' % (scheme, host)
         doc = HtmlDocument(title='Live server stats', media_path='/assets/')
-        #docs.head.scripts
+        # docs.head.scripts
         return doc.http_response(request)
 
     @route('expect', method='post', title='Expectation Failed')

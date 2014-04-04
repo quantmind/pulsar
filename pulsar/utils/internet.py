@@ -97,7 +97,7 @@ def parse_address(netloc, default_port=8000):
         host = "0.0.0.0"
     else:
         host = netloc.lower()
-    #get port
+    # get port
     netloc = netloc.split(']')[-1]
     if ":" in netloc:
         port = netloc.split(':', 1)[1]

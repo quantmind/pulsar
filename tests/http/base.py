@@ -86,7 +86,7 @@ class TestHttpClientBase:
 
     def _check_pool(self, http, response, available=1, processed=1,
                     sessions=1, pools=1):
-        #Test the connection pool
+        # Test the connection pool
         self.assertEqual(len(http.connection_pools), pools)
         if pools:
             pool = http.connection_pools[response.request.key]
@@ -413,7 +413,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(response.parser.is_chunked())
 
     def test_stream_response_large_chunk(self):
-        #TODO fix this test. Issue #97
+        # TODO fix this test. Issue #97
         if not self.with_tls:
             http = self._client
             response = yield http.get(self.httpbin('stream/100000/3'))
@@ -470,14 +470,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_basic_authentication(self):
         http = self._client
         r = yield http.get(self.httpbin('basic-auth/bla/foo'))
-        #The response MUST include a WWW-Authenticate header field
+        # The response MUST include a WWW-Authenticate header field
         self.assertEqual(r.status_code, 401)
         http.add_basic_authentication('bla', 'foo')
         r = yield http.get(self.httpbin('basic-auth/bla/foo'))
         self.assertEqual(r.status_code, 200)
 
     def test_digest_authentication(self):
-        #TODO fix this test. Issue #94
+        # TODO fix this test. Issue #94
         if not self.tunneling:
             http = self.client()
             r = yield http.get(self.httpbin(

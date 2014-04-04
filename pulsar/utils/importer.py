@@ -68,7 +68,7 @@ def import_system_file(mod, add_to_path=True):
         # it is a file in the system path
         dir, name = os.path.split(mod)
         names = [py_file(name)]
-        while dir and not dir in sys.path:
+        while dir and dir not in sys.path:
             ndir, name = os.path.split(dir)
             if dir == ndir:
                 dir = ''

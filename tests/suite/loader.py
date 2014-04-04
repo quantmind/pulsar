@@ -15,11 +15,11 @@ class TestTestLoader(unittest.TestCase):
     def test_testsuite(self):
         app = yield get_application('test')
         self.assertTrue(app.cfg.script)
-        #self.assertEqual(app.script, sys.argv[0])
+        # self.assertEqual(app.script, sys.argv[0])
         self.assertEqual(os.path.dirname(app.cfg.script), app.root_dir)
         self.assertEqual(app.cfg.modules, ('tests',
-                                          ('examples', 'tests'),
-                                          ('examples', 'test_*')))
+                                           ('examples', 'tests'),
+                                           ('examples', 'test_*')))
 
     def test_load_pulsar_tests(self):
         app = get_actor().app
@@ -62,7 +62,7 @@ class TestTestLoader(unittest.TestCase):
             self.assertTrue('apps.pubsub' not in module)
 
     def __test_djangoapp_tags(self):
-        #TODO Fix this
+        # TODO Fix this
         app = get_actor().app
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('djangoapp',)))

@@ -623,7 +623,7 @@ class MultiApp(Configurator):
     def __call__(self, actor=None):
         return multi_async((app(actor) for app in self.apps()))
 
-    ##    INTERNALS
+    #    INTERNALS
     def _iter_app(self, app_name_callables):
         main = app_name_callables.pop('', None)
         if not main:

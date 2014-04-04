@@ -36,7 +36,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         super(TaskQueueRpcMixin, self).__init__(**kwargs)
 
     ########################################################################
-    ##    REMOTES
+    #    REMOTES
     def rpc_job_list(self, request, jobnames=None):
         '''Return the list of Jobs registered with task queue with meta
         information.
@@ -94,7 +94,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         coroutine_return(task_backend.num_tasks())
 
     ########################################################################
-    ##    INTERNALS
+    #    INTERNALS
     def task_backend(self):
         if not self._task_backend:
             app = yield get_application(self.taskqueue)

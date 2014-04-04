@@ -85,7 +85,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(len(store.namespace), 7)
 
     ###########################################################################
-    ##    KEYS
+    #    KEYS
     def test_dump_restore(self):
         key = self.randomkey()
         c = self.client
@@ -203,15 +203,15 @@ class RedisCommands(StoreMixin):
         yield eq(c.unwatch(), True)
 
     ###########################################################################
-    ##    BAD REQUESTS
-    #def test_no_command(self):
-    #    yield self.async.assertRaises(ResponseError, self.store.execute)
+    #    BAD REQUESTS
+    # def test_no_command(self):
+    #     yield self.async.assertRaises(ResponseError, self.store.execute)
 
-    #def test_bad_command(self):
-    #    yield self.async.assertRaises(ResponseError, self.store.execute,
-    #                                  'foo')
+    # def test_bad_command(self):
+    #     yield self.async.assertRaises(ResponseError, self.store.execute,
+    #                                   'foo')
     ###########################################################################
-    ##    STRINGS
+    #    STRINGS
     def test_append(self):
         key = self.randomkey()
         c = self.client
@@ -391,7 +391,7 @@ class RedisCommands(StoreMixin):
         yield eq(c.mget(key1, key2, key3), [b'foox', b'fooxx', None])
 
     ###########################################################################
-    ##    HASHES
+    #    HASHES
     def test_hdel(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -495,7 +495,7 @@ class RedisCommands(StoreMixin):
         yield self.async.assertRaises(ResponseError, c.hsetnx, key, 'a', 'jk')
 
     ###########################################################################
-    ##    LISTS
+    #    LISTS
     def test_blpop(self):
         key1 = self.randomkey()
         key2 = key1 + 'x'
@@ -621,7 +621,7 @@ class RedisCommands(StoreMixin):
         yield self.async.assertRaises(ResponseError, c.lrem, key, 1)
 
     ###########################################################################
-    ###     SORT
+    #    SORT
     def test_sort_basic(self):
         key = self.randomkey()
         c = self.client
@@ -682,8 +682,7 @@ class RedisCommands(StoreMixin):
                  [(b'u1', b'1'), (b'u2', b'2'), (b'u3', b'3')])
 
     ###########################################################################
-    ##    SETS
-    ### SET COMMANDS ###
+    #    SETS
     def test_sadd_scard(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -823,7 +822,7 @@ class RedisCommands(StoreMixin):
         yield eq(c.smembers(des), set([b'1', b'2', b'3', b'4']))
 
     ###########################################################################
-    ##    SORTED SETS
+    #    SORTED SETS
     def test_zadd_zcard(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -977,7 +976,7 @@ class RedisCommands(StoreMixin):
         yield eq(c.zrange(key, 0, -1), [b'a1', b'a5'])
 
     ###########################################################################
-    ##    CONNECTION
+    #    CONNECTION
     def test_ping(self):
         result = yield self.client.ping()
         self.assertTrue(result)
@@ -987,7 +986,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(result, b'Hello')
 
     ###########################################################################
-    ##    SERVER
+    #    SERVER
     def test_dbsize(self):
         yield self.client.set('one_at_least', 'foo')
         result = yield self.client.dbsize()
@@ -1003,7 +1002,7 @@ class RedisCommands(StoreMixin):
         total = t[0] + 0.000001*t[1]
 
     ###########################################################################
-    ##    PUBSUB
+    #    PUBSUB
     def test_handler(self):
         client = self.client
         pubsub = client.pubsub()
@@ -1055,7 +1054,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(message, b'Hello')
 
     def test_pattern_subscribe(self):
-        #switched off for redis. Issue #95
+        # switched off for redis. Issue #95
         if self.store.name == 'pulsar':
             eq = self.async.assertEqual
             pubsub = self.client.pubsub(protocol=StringProtocol())
@@ -1067,10 +1066,10 @@ class RedisCommands(StoreMixin):
             self.assertEqual(channel, 'foo')
             self.assertEqual(message, 'hello foo')
             yield eq(pubsub.punsubscribe(), None)
-            #yield listener.get()
+            # yield listener.get()
 
     ###########################################################################
-    ##    TRANSACTION
+    #    TRANSACTION
     def test_watch(self):
         key1 = self.randomkey()
         key2 = key1 + '2'
@@ -1078,7 +1077,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(result, 1)
 
     ###########################################################################
-    ##    SYNCHRONOUS CLIENT
+    #    SYNCHRONOUS CLIENT
     def test_sync(self):
         client = self.sync_store.client()
         self.assertFalse(client.store._loop.is_running())

@@ -415,7 +415,7 @@ class PubSub(object):
         '''Remove *client* from the set of all :attr:`clients`.'''
         self._clients.discard(client)
 
-    ##    INTERNALS
+    # INTERNALS
     def broadcast(self, response):
         '''Broadcast ``message`` to all :attr:`clients`.'''
         remove = set()

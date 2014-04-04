@@ -26,7 +26,7 @@ class TestEchoServerThread(unittest.TestCase):
     def sync_client(self):
         return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
 
-    ##    TEST THE SERVER APPLICATION
+    #    TEST THE SERVER APPLICATION
     @run_on_arbiter
     def test_server_on_arbiter(self):
         app = yield get_application(self.__class__.__name__.lower())
@@ -41,7 +41,7 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(server.cfg.callable, EchoServerProtocol)
         self.assertTrue(server.cfg.addresses)
 
-    ##    TEST CLIENT INTERACTION
+    #    TEST CLIENT INTERACTION
     def test_ping(self):
         result = yield self.client(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
@@ -137,14 +137,14 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.sessions, 3)
         self.assertEqual(client._requests_processed, 8)
 
-    ##    TEST SYNCHRONOUS CLIENT
+    #    TEST SYNCHRONOUS CLIENT
     def test_sync_echo(self):
         echo = self.sync_client()
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
 
     def __test_sync_close(self):
-        #TODO: fix this. Issue #96
+        # TODO: fix this. Issue #96
         echo = self.sync_client()
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo.sessions, 1)

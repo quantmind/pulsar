@@ -6,10 +6,10 @@ from pulsar.apps import tasks
 from .test_pulsards import TaskQueueBase
 
 
-class a:    # pragma    nocover
-#class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
-#TODO: fix this test
+# class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
+# TODO: fix this test
 
+class a:    # pragma    nocover
     def info(self):
         info = yield self.proxy.server_info()
         # get the task queue
@@ -40,7 +40,7 @@ class a:    # pragma    nocover
             self.assertFalse(a['actor_id'] in killed)
 
     def __test_check_worker(self):
-        #TODO, this test fails sometimes
+        # TODO, this test fails sometimes
         r = yield self.proxy.run_new_task(jobname='checkworker')
         self.assertTrue(r)
         r = yield self.proxy.wait_for_task(r)

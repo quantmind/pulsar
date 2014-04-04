@@ -121,8 +121,8 @@ def validate_list_of_pairs(val):
     return new_val
 
 
-###############################################################################
-##    CONFIGURATION PARAMETERS
+# #############################################################################
+# #    CONFIGURATION PARAMETERS
 class KeyValueDatabases(PulsarDsSetting):
     name = "key_value_databases"
     flags = ["--key-value-databases"]
@@ -199,8 +199,8 @@ class PulsarDS(SocketServer):
         return super(PulsarDS, self).monitor_start(monitor)
 
 
-###############################################################################
-##    DATA STORE
+# #############################################################################
+# #    DATA STORE
 pubsub_patterns = namedtuple('pubsub_patterns', 're clients')
 
 
@@ -305,8 +305,8 @@ class Storage(object):
         self._loaddb()
         pulsar.call_repeatedly(self._loop, 1, self._cron)
 
-    ###########################################################################
-    ##    KEYS COMMANDS
+    # #########################################################################
+    # #    KEYS COMMANDS
     @command('Keys', True, name='del')
     def delete(self, client, request, N):
         check_input(request, not N)
@@ -516,8 +516,8 @@ class Storage(object):
     def scan(self, client, request, N):
         client.reply_error(self.NOT_SUPPORTED)
 
-    ###########################################################################
-    ##    STRING COMMANDS
+    # #########################################################################
+    # #    STRING COMMANDS
     @command('Strings', True)
     def append(self, client, request, N):
         check_input(request, N != 2,)
@@ -888,8 +888,8 @@ class Storage(object):
         else:
             return client.reply_wrongtype()
 
-    ###########################################################################
-    ##    HASHES COMMANDS
+    # #########################################################################
+    # #    HASHES COMMANDS
     @command('Hashes', True)
     def hdel(self, client, request, N):
         check_input(request, N < 2)
@@ -1054,8 +1054,8 @@ class Storage(object):
     def hscan(self, client, request, N):
         client.reply_error(self.NOT_SUPPORTED)
 
-    ###########################################################################
-    ##    LIST COMMANDS
+    # #########################################################################
+    # #    LIST COMMANDS
     @command('Lists', True, script=0)
     def blpop(self, client, request, N):
         check_input(request, N < 2)
@@ -1331,8 +1331,8 @@ class Storage(object):
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key1)
             client.reply_bulk(value)
 
-    ###########################################################################
-    ##    SETS COMMANDS
+    # #########################################################################
+    # #    SETS COMMANDS
     @command('Sets', True)
     def sadd(self, client, request, N):
         check_input(request, N < 2)
@@ -1528,8 +1528,8 @@ class Storage(object):
     def sscan(self, client, request, N):
         client.reply_error(self.NOT_SUPPORTED)
 
-    ###########################################################################
-    ##    SORTED SETS COMMANDS
+    # #########################################################################
+    # #    SORTED SETS COMMANDS
     @command('Sorted Sets', True)
     def zadd(self, client, request, N):
         D = (N - 1) // 2
@@ -1791,8 +1791,8 @@ class Storage(object):
     def zscan(self, client, request, N):
         client.reply_error(self.NOT_SUPPORTED)
 
-    ###########################################################################
-    ##    PUBSUB COMMANDS
+    # #########################################################################
+    # #    PUBSUB COMMANDS
     @command('Pub/Sub', script=0)
     def psubscribe(self, client, request, N):
         check_input(request, not N)
@@ -1888,8 +1888,8 @@ class Storage(object):
                         self._channels.pop(channel)
                     client.reply_multi_bulk((b'unsubscribe', channel))
 
-    ###########################################################################
-    ##    TRANSACTION COMMANDS
+    # #########################################################################
+    # #    TRANSACTION COMMANDS
     @command('Transactions', script=0)
     def discard(self, client, request, N):
         check_input(request, N)
@@ -1945,8 +1945,8 @@ class Storage(object):
         client.transaction = transaction
         client.reply_ok()
 
-    ###########################################################################
-    ##    SCRIPTING
+    # #########################################################################
+    # #    SCRIPTING
     @command('Scripting', script=0)
     def eval(self, client, request, N):
         check_input(request, N < 2)
@@ -1991,8 +1991,8 @@ class Storage(object):
             scripts[sha] = script
             client.reply_bulk(sha)
 
-    ###########################################################################
-    ##    CONNECTION COMMANDS
+    # #########################################################################
+    # #    CONNECTION COMMANDS
     @command('Connections', script=0)
     def auth(self, client, request, N):
         check_input(request, N != 1)
@@ -2033,8 +2033,8 @@ class Storage(object):
             client.database = num
             client.reply_ok()
 
-    ###########################################################################
-    ##    SERVER COMMANDS
+    # #########################################################################
+    # #    SERVER COMMANDS
     @command('Server', supported=False)
     def bgrewriteaof(self, client, request, N):
         client.reply_error(self.NOT_SUPPORTED)
@@ -2158,8 +2158,8 @@ class Storage(object):
         microseconds = int(1000000*(t-seconds))
         client.reply_multi_bulk((seconds, microseconds))
 
-    ###########################################################################
-    ##    INTERNALS
+    # #########################################################################
+    # #    INTERNALS
     def _cron(self):
         dirty = self._dirty
         if dirty:
@@ -2542,7 +2542,7 @@ class Storage(object):
                 self._patterns.pop(pattern)
 
     def _write_to_monitors(self, client, request):
-        #addr = '%s:%s' % self._transport.get_extra_info('addr')
+        # addr = '%s:%s' % self._transport.get_extra_info('addr')
         cmds = b'" "'.join(request)
         message = '+%s [0 %s] "'.encode('utf-8') + cmds + b'"\r\n'
         remove = set()
@@ -2625,8 +2625,8 @@ class Db(object):
     def __iter__(self):
         return chain(self._data, self._expires)
 
-    ###########################################################################
-    ##    INTERNALS
+    # #########################################################################
+    # #    INTERNALS
     def flush(self):
         removed = len(self._data)
         self._data.clear()

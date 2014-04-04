@@ -81,5 +81,3 @@ class Odm(StoreTest):
         yield user.delete()
         yield self.async.assertRaises(models.ModelNotFound,
                                       models.user.get, user.id)
-
-

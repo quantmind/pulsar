@@ -170,7 +170,7 @@ class MailboxProtocol(Protocol):
             msg = self._parser.decode()
 
     ########################################################################
-    ##    INTERNALS
+    #    INTERNALS
     def _start(self, req):
         if req.future and 'ack' in req.data:
             self._pending_responses[req.data['ack']] = req.future

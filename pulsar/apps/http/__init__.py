@@ -749,8 +749,8 @@ class HttpResponse(ProtocolConsumer):
         Return :attr:`headers`.'''
         return self.headers
 
-    #######################################################################
-    ##    PROTOCOL IMPLEMENTATION
+    # #####################################################################
+    # #    PROTOCOL IMPLEMENTATION
     def start_request(self):
         self.transport.write(self._request.encode())
 
@@ -1046,13 +1046,10 @@ class HttpClient(AbstractClient):
         '''
         self.bind_event('pre_request', HTTPDigestAuth(username, password))
 
-    #def add_oauth2(self, client_id, client_secret):
-    #    self.bind_event('pre_request', OAuth2(client_id, client_secret))
-
     #    INTERNALS
     def get_headers(self, request, headers=None):
-        #Returns a :class:`Header` obtained from combining
-        #:attr:`headers` with *headers*. Can handle websocket requests.
+        # Returns a :class:`Header` obtained from combining
+        # :attr:`headers` with *headers*. Can handle websocket requests.
         if request.scheme in ('ws', 'wss'):
             d = Headers((
                 ('Connection', 'Upgrade'),

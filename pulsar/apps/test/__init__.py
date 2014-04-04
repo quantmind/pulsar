@@ -466,8 +466,8 @@ class TestSuite(tasks.TaskQueue):
 
     @lazyproperty
     def loader(self):
-        #When config is available load the tests and check what type of
-        #action is required.
+        # When config is available load the tests and check what type of
+        # action is required.
         modules = self.cfg.get('modules')
         # Create a runner and configure it
         runner = self.new_runner()

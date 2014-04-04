@@ -432,9 +432,9 @@ class TaskBackend(EventHandler):
         self.bind_event('task_done', self.task_done_callback)
         return pubsub
 
-    ########################################################################
-    ##    ABSTRACT METHODS
-    ########################################################################
+    # #######################################################################
+    # #    ABSTRACT METHODS
+    # #######################################################################
     def maybe_queue_task(self, task):
         '''Actually queue a :class:`.Task` if possible.
         '''
@@ -464,9 +464,9 @@ class TaskBackend(EventHandler):
         '''
         raise NotImplementedError()
 
-    ########################################################################
-    ##    START/CLOSE METHODS FOR TASK WORKERS
-    ########################################################################
+    # #######################################################################
+    # #    START/CLOSE METHODS FOR TASK WORKERS
+    # #######################################################################
     def start(self, worker):
         '''Invoked by the task queue ``worker`` when it starts.
         '''
@@ -485,7 +485,6 @@ class TaskBackend(EventHandler):
             self.task_poller = None
             self.logger.debug('stopped polling tasks')
         self._pubsub.close()
-            #self.store.close()
 
     def generate_task_ids(self, job, kwargs):
         '''An internal method to generate task unique identifiers.
@@ -514,11 +513,11 @@ class TaskBackend(EventHandler):
                 name = self.name
             return tid, sha1(name.encode('utf-8')).hexdigest()
 
-    ########################################################################
-    ##    PRIVATE METHODS
-    ########################################################################
+    # #######################################################################
+    # #    PRIVATE METHODS
+    # #######################################################################
     def tick(self, now=None):
-        #Run a tick, that is one iteration of the scheduler.
+        # Run a tick, that is one iteration of the scheduler.
         if not self.schedule_periodic:
             return
         remaining_times = []
@@ -585,7 +584,7 @@ class TaskBackend(EventHandler):
 
     @task
     def may_pool_task(self, worker):
-        #Called in the ``worker`` event loop.
+        # Called in the ``worker`` event loop.
         #
         # It pools a new task if possible, and add it to the queue of
         # tasks consumed by the ``worker`` CPU-bound thread.'''

@@ -144,7 +144,7 @@ class Concurrency(object):
         self.daemon = False
         self.params['monitor'] = get_proxy(self.params['monitor'])
         # make sure these parameters are picklable
-        #pickle.dumps(self.params)
+        # pickle.dumps(self.params)
         return ActorProxyMonitor(self)
 
     def create_mailbox(self, actor, loop):
@@ -279,7 +279,7 @@ class MonitorMixin(object):
 
 
 ############################################################################
-##    CONCURRENCY IMPLEMENTATIONS
+#    CONCURRENCY IMPLEMENTATIONS
 class MonitorConcurrency(MonitorMixin, Concurrency):
     ''':class:`.Concurrency` class for a :class:`.Monitor`.
 

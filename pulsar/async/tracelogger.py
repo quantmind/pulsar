@@ -10,7 +10,7 @@ log_exc_info = ('error', 'critical')
 
 
 def is_relevant_tb(tb):
-    return not '__skip_traceback__' in tb.tb_frame.f_locals
+    return '__skip_traceback__' not in tb.tb_frame.f_locals
 
 
 def tb_length(tb):

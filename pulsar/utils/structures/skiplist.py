@@ -152,7 +152,7 @@ class Skiplist(Sequence):
         rank = [0] * SKIPLIST_MAXLEVEL
         node = self._head
         for i in range(self._level-1, -1, -1):
-            #store rank that is crossed to reach the insert position
+            # store rank that is crossed to reach the insert position
             rank[i] = 0 if i == self._level-1 else rank[i+1]
             while node.next[i] and node.next[i].score <= score:
                 rank[i] += node.width[i]

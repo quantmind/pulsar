@@ -129,7 +129,7 @@ class BenchMark(test.TestPlugin):
     def addSuccess(self, test):
         if self.config.benchmark and self.stream:
             result = getattr(test, 'bench_info', None)
-            #if result and self.stream.showAll:
+            # if result and self.stream.showAll:
             if result:
                 stream = self.stream.handler('benchmark')
                 template = getattr(test, 'benchmark_template',

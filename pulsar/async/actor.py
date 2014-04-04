@@ -181,7 +181,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     def __str__(self):
         return self.__repr__()
 
-    ############################################################### PROPERTIES
+    # ############################################################# PROPERTIES
     @property
     def name(self):
         return self.__impl.name
@@ -222,7 +222,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         return get_executor(self._loop)
 
     #######################################################################
-    ##    HIGH LEVEL API METHODS
+    #    HIGH LEVEL API METHODS
     #######################################################################
     def start(self):
         '''Called after forking to start the actor's life.
@@ -255,7 +255,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
             elif isinstance(actor, ActorProxyMonitor):
                 mailbox = actor.mailbox
         if hasattr(mailbox, 'request'):
-            #if not mailbox.closed:
+            # if not mailbox.closed:
             return mailbox.request(action, self, target, args, kwargs)
         else:
             raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
@@ -279,7 +279,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
             executor.shutdown()
             self._loop._default_executor = None
 
-    ###############################################################  STATES
+    # ##############################################################  STATES
     def is_running(self):
         '''``True`` if actor is running, that is when the :attr:`state`
         is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the loop is

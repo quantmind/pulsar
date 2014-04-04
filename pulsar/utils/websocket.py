@@ -379,7 +379,7 @@ class FrameParser(object):
             if len(data) > 125:
                 raise ProtocolError('WEBSOCKET control frame too large')
             if opcode == 8:
-                #TODO CHECK CLOSE FRAME STATUS CODE
+                # TODO CHECK CLOSE FRAME STATUS CODE
                 pass
         return opcode, masking_key, data
 

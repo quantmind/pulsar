@@ -340,7 +340,7 @@ class PulsarProtocol(EventHandler):
         return info
 
     ########################################################################
-    ##    INTERNALS
+    #    INTERNALS
     def _timed_out(self):
         self.close()
         self.logger.debug('Closed idle %s.', self)
@@ -659,7 +659,7 @@ class TcpServer(Producer):
             self.close()
         return protocol
 
-    ##    INTERNALS
+    #    INTERNALS
     def _connection_made(self, connection, exc=None):
         if not exc:
             self._concurrent_connections.add(connection)

@@ -38,7 +38,7 @@ class CouchDBMixin(object):
             self._database = namespace or 'defaultdb'
         elif namespace:
             self._database = '%s_%s' % (self._database, namespace)
-        bits =self._name.split('+')
+        bits = self._name.split('+')
         if len(bits) == 2:
             self._scheme = bits[0]
             self._name = bits[1]

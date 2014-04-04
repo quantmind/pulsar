@@ -140,7 +140,7 @@ class ProxyServerWsgiHandler(LocalMixin):
 
 
 ############################################################################
-##    RESPONSE OBJECTS
+#    RESPONSE OBJECTS
 class ProxyResponse(object):
     '''Asynchronous wsgi response.
     '''
@@ -281,7 +281,7 @@ def server(name='proxy-server', headers_middleware=None,
            server_software=None, **kwargs):
     '''Function to Create a WSGI Proxy Server.'''
     if headers_middleware is None:
-        #headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
+        # headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
         headers_middleware = [x_forwarded_for]
     wsgi_proxy = ProxyServerWsgiHandler(headers_middleware)
     kwargs['server_software'] = server_software or SERVER_SOFTWARE

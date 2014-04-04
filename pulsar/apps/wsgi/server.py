@@ -137,7 +137,7 @@ class StreamReader:
         if self.waiting_expect():
             raise HttpException(status=417)
 
-    ##    INTERNALS
+    #    INTERNALS
     def _getvalue(self, body, maxbuf):
         if self.buffer:
             body = self.buffer + body
@@ -424,7 +424,7 @@ class HttpServerResponse(ProtocolConsumer):
             self.transport.write(chunk_encoding(data))
 
     ########################################################################
-    ##    INTERNALS
+    #    INTERNALS
     @in_loop
     def _response(self, environ):
         exc_info = None
@@ -512,7 +512,7 @@ class HttpServerResponse(ProtocolConsumer):
         return headers
 
     def wsgi_environ(self):
-        #return a the WSGI environ dictionary
+        # return a the WSGI environ dictionary
         transport = self.transport
         https = True if is_tls(transport.get_extra_info('socket')) else False
         multiprocess = (self.cfg.concurrency == 'process')

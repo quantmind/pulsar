@@ -380,7 +380,7 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
         else:
             raise OdmError('_mapper not available in %s' % self)
 
-    ##    INTERNALS
+    #    INTERNALS
     def _to_json(self):
         pk = self.get('id')
         if pk:

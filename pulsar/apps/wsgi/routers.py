@@ -497,7 +497,7 @@ class MediaMixin(Router):
     cache_control = CacheControl(maxage=86400)
     _file_path = ''
 
-    def serve_file(self, request, fullpath):
+    def serve_file(self, request, fullpath, status_code=None):
         # Respect the If-Modified-Since header.
         statobj = os.stat(fullpath)
         content_type, encoding = mimetypes.guess_type(fullpath)
@@ -505,15 +505,18 @@ class MediaMixin(Router):
         if content_type:
             response.content_type = content_type
         response.encoding = encoding
-        if not self.was_modified_since(
+        if not (status_code or self.was_modified_since(
                 request.environ.get('HTTP_IF_MODIFIED_SINCE'),
                 statobj[stat.ST_MTIME],
-                statobj[stat.ST_SIZE]):
+                statobj[stat.ST_SIZE])):
             response.status_code = 304
         else:
             response.content = open(fullpath, 'rb').read()
-            response.headers["Last-Modified"] = http_date(
-                statobj[stat.ST_MTIME])
+            if status_code:
+                response.status_code = status_code
+            else:
+                response.headers["Last-Modified"] = http_date(
+                    statobj[stat.ST_MTIME])
         return response
 
     def was_modified_since(self, header=None, mtime=0, size=0):
@@ -580,37 +583,60 @@ class MediaRouter(MediaMixin):
 
         If ``True`` (default), the router will serve media file directories as
         well as media files.
+
+    .. attribute:: default_file
+
+        The default file to serve when a directory is requested.
     '''
-    def __init__(self, rute, path, show_indexes=True):
-        super(MediaRouter, self).__init__('%s/<path:path>' % rute)
+    def __init__(self, rute, path, show_indexes=False, mapping=None,
+                 default_suffix=None, default_file='index.html',
+                 raise_404=True):
+        rute = '%s/<path:path>' % rute
+        if rute.startswith('/'):
+            rute = rute[1:]
+        super(MediaRouter, self).__init__(rute)
+        self._mapping = mapping or {}
+        self._default_suffix = default_suffix
+        self._default_file = default_file
         self._show_indexes = show_indexes
         self._file_path = path
+        self._raise_404 = raise_404
 
     def filesystem_path(self, request):
-        bits = request.urlargs['path'].split('/')
-        '''Retrieve the filesystem path for this request.'''
-        if len(bits) == 1 and bits[0] == '':
-            bits.pop(0)
+        path = request.urlargs['path']
+        bits = [bit for bit in path.split('/') if bit]
         return os.path.join(self._file_path, *bits)
 
     def get(self, request):
         fullpath = self.filesystem_path(request)
+        if os.path.isdir(fullpath) and self._default_file:
+            file = os.path.join(fullpath, self._default_file)
+            if os.path.isfile(file):
+                fullpath = file
+        #
         if os.path.isdir(fullpath):
             if self._show_indexes:
                 return self.directory_index(request, fullpath)
             else:
                 raise PermissionDenied
-        elif os.path.exists(fullpath):
+        #
+        filename = os.path.basename(fullpath)
+        if '.' not in filename and self._default_suffix:
+            fullpath = '%s.%s' % (fullpath, self._default_suffix)
+        #
+        if os.path.isfile(fullpath):
             return self.serve_file(request, fullpath)
-        else:
+        elif self._raise_404:
             raise Http404
 
 
 class FileRouter(MediaMixin):
     '''A Router for a single file.'''
-    def __init__(self, route, file_path):
+    def __init__(self, route, file_path, status_code=None, raise_404=True):
         super(FileRouter, self).__init__(route)
+        self._status_code = status_code
         self._file_path = file_path
+        self._raise_404 = raise_404
 
     def filesystem_path(self, request):
         return self._file_path
@@ -618,6 +644,7 @@ class FileRouter(MediaMixin):
     def get(self, request):
         fullpath = self.filesystem_path(request)
         if os.path.isfile(fullpath):
-            return self.serve_file(request, fullpath)
-        else:
+            return self.serve_file(request, fullpath,
+                                   status_code=self._status_code)
+        elif self._raise_404:
             raise Http404

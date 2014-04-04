@@ -216,7 +216,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertTrue('kaputt' in r['result'])
 
     def __test_delete_task(self):
-        #ISSUE #56
+        # ISSUE #56
         app = self.tq
         id = yield app.backend.queue_task(jobname='addition', a=1, b=4)
         r1 = yield app.backend.wait_for_task(id)
@@ -238,22 +238,22 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertTrue(tasks.nice_task_message(r))
         # We check for the tasks created
         # TODO: not available
-        #created = yield self.proxy.get_tasks(from_task=r['id'])
-        #self.assertEqual(len(created), sample)
-        #stasks = []
-        #for task in created:
-        #    stasks.append(self.proxy.wait_for_task(task['id']))
-        #created = yield multi_async(stasks)
-        #self.assertEqual(len(created), sample)
-        #for task in created:
-        #    self.assertEqual(task['status'], tasks.SUCCESS)
+        # created = yield self.proxy.get_tasks(from_task=r['id'])
+        # self.assertEqual(len(created), sample)
+        # stasks = []
+        # for task in created:
+        #     stasks.append(self.proxy.wait_for_task(task['id']))
+        # created = yield multi_async(stasks)
+        # self.assertEqual(len(created), sample)
+        # for task in created:
+        #     self.assertEqual(task['status'], tasks.SUCCESS)
 
-    ##    RPC TESTS
+    #    RPC TESTS
     def test_check_next_run(self):
         app = self.tq
         backend = app.backend
         backend.tick()
-        #self.assertTrue(backend.next_run > now)
+        # self.assertTrue(backend.next_run > now)
 
     def test_rpc_ping(self):
         yield self.async.assertEqual(self.proxy.ping(), 'pong')

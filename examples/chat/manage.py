@@ -81,7 +81,7 @@ class Protocol:
         return to_string(message)
 
 
-##    Web Socket Chat handler
+#    Web Socket Chat handler
 class Chat(WS):
     '''The websocket handler (:class:`.WS`) managing the chat application.
 
@@ -114,7 +114,7 @@ class Chat(WS):
                 self.pubsub.publish(self.channel, msg)
 
 
-##    RPC MIDDLEWARE To publish messages
+#    RPC MIDDLEWARE To publish messages
 class Rpc(PulsarServerCommands):
 
     def __init__(self, pubsub, channel, **kwargs):

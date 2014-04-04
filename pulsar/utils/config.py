@@ -393,7 +393,7 @@ class Config(object):
         return self.copy()
 
     ########################################################################
-    ##    INTERNALS
+    #    INTERNALS
     def update_settings(self):
         for s in ordered_settings():
             setting = s().copy(name=self.name, prefix=self.prefix)
@@ -421,7 +421,7 @@ class SettingMeta(type):
     in the global ``KNOWN_SETTINGS`` list.'''
     def __new__(cls, name, bases, attrs):
         super_new = super(SettingMeta, cls).__new__
-        #parents = [b for b in bases if isinstance(b, SettingMeta)]
+        # parents = [b for b in bases if isinstance(b, SettingMeta)]
         val = attrs.get("validator")
         attrs["validator"] = wrap_method(val) if val else None
         if attrs.pop('virtual', False):
@@ -709,7 +709,7 @@ def make_optparse_options(apps=None, exclude=None, include=None):
 
 
 ############################################################################
-##    Global Server Settings
+#    Global Server Settings
 section_docs['Global Server Settings'] = '''
 These settings are global in the sense that they are used by the arbiter
 as well as all pulsar workers. They are server configuration parameters.
@@ -964,7 +964,7 @@ class ExecutionId(Global):
 
 
 ############################################################################
-##    Worker Processes
+#    Worker Processes
 section_docs['Worker Processes'] = '''
 This group of configuration parameters control the number of actors
 for a given :class:`.Monitor`, the type of concurreny of the server and
@@ -1048,7 +1048,7 @@ class ThreadWorkers(Setting):
 
 
 ############################################################################
-##    APPLICATION HOOKS
+#    APPLICATION HOOKS
 section_docs['Application Hooks'] = '''
 Application hooks are functions which can be specified in a
 :ref:`config <setting-config>` file to perform custom tasks in a pulsar server.

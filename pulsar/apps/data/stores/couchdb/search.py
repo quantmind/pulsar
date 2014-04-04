@@ -40,7 +40,7 @@ class CouchDBLuceneSearch(CouchDBMixin, odm.SearchEngine):
         return search
 
     def _init(self, headers=None, doc_url=None, **kw):
-        bits =self._name.split('+')
+        bits = self._name.split('+')
         if len(bits) == 2:
             self._scheme = bits[0]
             self._name = bits[1]

@@ -67,7 +67,7 @@ class TestProxy(unittest.TestCase):
             yield send(send, 'sjdcbhjscbhjdbjsj', 'bla')
         except CommandNotFound:
             pass
-        #self.assertRaises(pickle.PicklingError, pickle.dumps, actor)
+        # self.assertRaises(pickle.PicklingError, pickle.dumps, actor)
 
 
 class TestActorThread(ActorTestMixin, unittest.TestCase):

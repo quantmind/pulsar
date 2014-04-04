@@ -104,7 +104,7 @@ class TestCouchDbStore(TestStoreWithDb, unittest.TestCase):
         client = self.store.client()
         users = yield client.users()
         self.assertTrue(users)
-        #self.assertTrue('_users' in dbs)
+        # self.assertTrue('_users' in dbs)
 
     # DOCUMENTS
     def test_get_invalid_document(self):

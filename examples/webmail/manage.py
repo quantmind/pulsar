@@ -68,8 +68,8 @@ def mail_client(cfg, timeout=10):
         yield client.select('INBOX')
         process_global(key, client, True)
     coroutine_return(client)
-    #info = yield client.fetchEnvelope(imap4.MessageSet(1))
-    #print 'First message subject:', info[1]['ENVELOPE'][1]
+    # info = yield client.fetchEnvelope(imap4.MessageSet(1))
+    # print 'First message subject:', info[1]['ENVELOPE'][1]
 
 
 class WsMail(ws.WS):
@@ -80,7 +80,7 @@ class WsMail(ws.WS):
         '''When the websocket starts, it create a new mail client.'''
         request = websocket.handshake
         client = yield mail_client(request.cfg)
-        #add the mail client to the environ cache
+        # add the mail client to the environ cache
         request.cache.mailclient = client
         # retrieve the list of mailboxes and them to the client
         yield self._send_mailboxes(websocket)

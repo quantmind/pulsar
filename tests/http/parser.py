@@ -59,7 +59,7 @@ class TestPythonHttpParser(unittest.TestCase):
         data = b'GET /get HTTP/1.1\r\nciao'
         self.assertEqual(p.execute(data, len(data)), len(data))
         self.assertFalse(p.is_headers_complete())
-        #self.assertTrue(p.is_message_begin())
+        # self.assertTrue(p.is_message_begin())
         self.assertFalse(p.is_message_complete())
         self.assertEqual(p.execute(b'x', 1), 1)
 
