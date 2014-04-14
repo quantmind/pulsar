@@ -261,15 +261,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(data['data']), 600000)
         self.assertFalse(response.parser.is_chunked())
 
-    def test_large_response2(self):
-        http = self._client
-        response = yield http.get(self.httpbin('getsize/600000'))
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data['size'], 600000)
-        self.assertEqual(len(data['data']), 600000)
-        self.assertFalse(response.parser.is_chunked())
-
     def test_400_and_get(self):
         '''Bad request 400'''
         http = self.client()

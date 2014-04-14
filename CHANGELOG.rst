@@ -1,7 +1,7 @@
-Ver. 0.8.1 - 2014-Mar-31
+Ver. 0.8.1 - 2014-Apr-14
 ===========================
 * Added :mod:`pulsar.apps.greenio` application for writing asynchronous code
-  using the greenlet library
+  using the greenlet_ library.
 * Moved :class:`.PulsarDS` server into its own :mod:`pulsar.apps.ds`
   module
 * The task application can run on redis.
@@ -473,3 +473,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _ujson: https://pypi.python.org/pypi/ujson
 .. _asyncio: http://www.python.org/dev/peps/pep-3156/
 .. _cauchdb: http://couchdb.apache.org/
+.. _greenlet: http://greenlet.readthedocs.org/

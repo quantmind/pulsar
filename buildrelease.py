@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime, date
 
 import setup
@@ -21,8 +22,8 @@ assert dt == date.today()
 
 assert version == 'Ver. %s' % setup.mod.__version__
 
-
-setup.run(argv=[script, 'sdist'])
+argv = [script, 'sdist'] + sys.argv[1:]
+setup.run(argv=argv)
 
 
 print('%s %s ready!' % (setup.package_name, setup.mod.__version__))

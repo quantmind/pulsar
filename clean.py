@@ -43,6 +43,7 @@ def rmfiles(path=None, *extensions):
 def run():
     for path in remove_dirs:
         if os.path.isdir(path):
+            print('Removing %s' % path)
             shutil.rmtree(path)
     removed, allfiles = rmfiles(os.curdir, 'pyc', 'DS_Store')
     print('removed {0} pyc files out of {1}'.format(removed, allfiles))
