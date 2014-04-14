@@ -9,7 +9,13 @@ Ver. 0.8.1 - 2014-Mar-31
 * Added :ref:`twisted integration <tutorials-twisted>` (alpha)
 * Removed ``Server`` and ``Date`` from Hop headers
 * Fixed installation problem with extensions
-* More documentation for data stores.
+* More documentation for data stores
+* Added ability to serve directories in :class:`.MediaRouter` if the
+  path contain a ``default_file`` (``index.html``). This also means
+  ``show_indexes`` in :class:`.MediaRouter` initialisation is by default
+  ``False``.
+* The callable method in a :class:`.AsyncString` always returns a
+  :class:`~asyncio.Future`.
 
 Ver. 0.8.0 - 2014-Mar-06
 ===========================

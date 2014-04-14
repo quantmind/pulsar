@@ -284,7 +284,8 @@ class Site(wsgi.LazyWsgi):
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
                                  wsgi.authorization_middleware,
                                  wsgi.FileRouter('/favicon.ico', FAVICON),
-                                 wsgi.MediaRouter('media', ASSET_DIR),
+                                 wsgi.MediaRouter('media', ASSET_DIR,
+                                                  show_indexes=True),
                                  ws.WebSocket('/graph-data', Graph()),
                                  router])
 

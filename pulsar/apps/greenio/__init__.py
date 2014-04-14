@@ -1,12 +1,19 @@
 '''
 Greenlet support facilitates the integration of synchronous
 third-party libraries into pulsar asynchronous framework.
-'''
-from socket import error, socket
+It requires the greenlet_ library.
 
+
+Usage
+=======
+The key component is the :class:`GreenEventLoop`, a specialised
+:class:`event-loop <asyncio-event-loop>` which uses the
+:class:`GreenTask` to switch between greenlets.
+
+.. _greenlet: http://greenlet.readthedocs.org/
+'''
 import asyncio
 from asyncio import Future
-from asyncio.tasks import _DEBUG
 
 import greenlet
 
@@ -19,6 +26,8 @@ class _TaskGreenlet(greenlet.greenlet):
 
 
 class GreenTask(Task):
+    '''An :class:`asyncio.Task` for running synchronous code in greenlets.
+    '''
     _greenlet = None
 
     def _step(self, value=None, exc=None):

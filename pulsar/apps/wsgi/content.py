@@ -1010,6 +1010,14 @@ class Head(Html):
     def __get_links(self):
         return self._children[1]
 
+    def __get_media_path(self):
+        return self.links.media_path
+
+    def __set_media_path(self, media_path):
+        self.links.media_path = media_path
+        self.scripts.media_path = media_path
+    media_path = property(__get_media_path, __set_media_path)
+
     def __set_links(self, links):
         self._children[1] = links
     links = property(__get_links, __set_links)

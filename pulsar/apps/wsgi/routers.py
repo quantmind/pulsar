@@ -581,7 +581,7 @@ class MediaRouter(MediaMixin):
 
     .. attribute::    show_indexes
 
-        If ``True`` (default), the router will serve media file directories as
+        If ``True``, the router will serve media file directories as
         well as media files.
 
     .. attribute:: default_file

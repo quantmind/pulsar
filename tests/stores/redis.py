@@ -20,7 +20,7 @@ class RedisDbTest(object):
                             **kw)
 
 
-@unittest.skipUnless(check_server('redis'), 'Requires a running redis server')
+@unittest.skipUnless(OK, 'Requires a running redis server')
 class TestRedisStore(RedisCommands, Scripting, unittest.TestCase):
     store = None
 
@@ -32,6 +32,6 @@ class TestRedisStore(RedisCommands, Scripting, unittest.TestCase):
         cls.client = cls.store.client()
 
 
-@unittest.skipUnless(HAS_C_EXTENSIONS, 'Requires cython extensions')
+@unittest.skipUnless(OK and HAS_C_EXTENSIONS, 'Requires cython extensions')
 class TestRedisStorePyParser(TestRedisStore):
     pass

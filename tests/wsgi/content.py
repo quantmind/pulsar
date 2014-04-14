@@ -150,7 +150,8 @@ class TestAsyncContent(unittest.TestCase):
         doc = wsgi.HtmlDocument(media_path='/foo/')
         self.assertEqual(doc.head.scripts.media_path, '/foo/')
         self.assertEqual(doc.head.links.media_path, '/foo/')
-        doc = doc(title='ciao', media_path='/assets/')
+        doc.head.title = 'ciao'
+        doc.head.media_path = '/assets/'
         self.assertEqual(doc.head.title, 'ciao')
         self.assertEqual(doc.head.scripts.media_path, '/assets/')
         self.assertEqual(doc.head.links.media_path, '/assets/')

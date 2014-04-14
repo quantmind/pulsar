@@ -39,6 +39,7 @@ check server
 '''
 import gc
 import logging
+import unittest
 from inspect import isclass
 from functools import partial
 from contextlib import contextmanager
