@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.tasks.backend &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>pulsar.apps.tasks.backend &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.tasks" href="../tasks.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../tasks.html" accesskey="U">pulsar.apps.tasks</a> &raquo;</li> 
@@ -503,9 +503,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;task_done&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_done_callback</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">pubsub</span>
 
-    <span class="c">########################################################################</span>
-    <span class="c">##    ABSTRACT METHODS</span>
-    <span class="c">########################################################################</span></div>
+    <span class="c"># #######################################################################</span>
+    <span class="c"># #    ABSTRACT METHODS</span>
+    <span class="c"># #######################################################################</span></div>
 <div class="viewcode-block" id="TaskBackend.maybe_queue_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.maybe_queue_task">[docs]</a>    <span class="k">def</span> <span class="nf">maybe_queue_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Actually queue a :class:`.Task` if possible.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -535,9 +535,9 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
-    <span class="c">########################################################################</span>
-    <span class="c">##    START/CLOSE METHODS FOR TASK WORKERS</span>
-    <span class="c">########################################################################</span></div>
+    <span class="c"># #######################################################################</span>
+    <span class="c"># #    START/CLOSE METHODS FOR TASK WORKERS</span>
+    <span class="c"># #######################################################################</span></div>
 <div class="viewcode-block" id="TaskBackend.start"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Invoked by the task queue ``worker`` when it starts.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -556,7 +556,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;stopped polling tasks&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-            <span class="c">#self.store.close()</span>
 </div>
 <div class="viewcode-block" id="TaskBackend.generate_task_ids"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.generate_task_ids">[docs]</a>    <span class="k">def</span> <span class="nf">generate_task_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;An internal method to generate task unique identifiers.</span>
@@ -585,11 +584,11 @@
                 <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
             <span class="k">return</span> <span class="n">tid</span><span class="p">,</span> <span class="n">sha1</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
-    <span class="c">########################################################################</span>
-    <span class="c">##    PRIVATE METHODS</span>
-    <span class="c">########################################################################</span></div>
+    <span class="c"># #######################################################################</span>
+    <span class="c"># #    PRIVATE METHODS</span>
+    <span class="c"># #######################################################################</span></div>
     <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">now</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="c">#Run a tick, that is one iteration of the scheduler.</span>
+        <span class="c"># Run a tick, that is one iteration of the scheduler.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_periodic</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">remaining_times</span> <span class="o">=</span> <span class="p">[]</span>
@@ -656,7 +655,7 @@
 
     <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">may_pool_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
-        <span class="c">#Called in the ``worker`` event loop.</span>
+        <span class="c"># Called in the ``worker`` event loop.</span>
         <span class="c">#</span>
         <span class="c"># It pools a new task if possible, and add it to the queue of</span>
         <span class="c"># tasks consumed by the ``worker`` CPU-bound thread.&#39;&#39;&#39;</span>

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.tasks.rpc &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>pulsar.apps.tasks.rpc &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.tasks" href="../tasks.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../tasks.html" accesskey="U">pulsar.apps.tasks</a> &raquo;</li> 
@@ -107,7 +107,7 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">TaskQueueRpcMixin</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="c">########################################################################</span>
-    <span class="c">##    REMOTES</span>
+    <span class="c">#    REMOTES</span>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_job_list"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_job_list">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_job_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return the list of Jobs registered with task queue with meta</span>
 <span class="sd">        information.</span>
@@ -165,7 +165,7 @@
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task_backend</span><span class="o">.</span><span class="n">num_tasks</span><span class="p">())</span>
 
     <span class="c">########################################################################</span>
-    <span class="c">##    INTERNALS</span></div>
+    <span class="c">#    INTERNALS</span></div>
     <span class="k">def</span> <span class="nf">task_backend</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span><span class="p">:</span>
             <span class="n">app</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">get_application</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">taskqueue</span><span class="p">)</span>

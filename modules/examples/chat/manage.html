@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>examples.chat.manage &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>examples.chat.manage &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -150,7 +150,7 @@
         <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
 
-<span class="c">##    Web Socket Chat handler</span>
+<span class="c">#    Web Socket Chat handler</span>
 <div class="viewcode-block" id="Chat"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Chat">[docs]</a><span class="k">class</span> <span class="nc">Chat</span><span class="p">(</span><span class="n">WS</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The websocket handler (:class:`.WS`) managing the chat application.</span>
 
@@ -183,7 +183,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 
 
-<span class="c">##    RPC MIDDLEWARE To publish messages</span></div></div>
+<span class="c">#    RPC MIDDLEWARE To publish messages</span></div></div>
 <div class="viewcode-block" id="Rpc"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Rpc">[docs]</a><span class="k">class</span> <span class="nc">Rpc</span><span class="p">(</span><span class="n">PulsarServerCommands</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pubsub</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>

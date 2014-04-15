@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Routing &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>Routing &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchronous WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -330,7 +330,7 @@ start from the root <a class="reference internal" href="#pulsar.apps.wsgi.router
 files such ass <tt class="docutils literal"><span class="pre">css</span></tt>, <tt class="docutils literal"><span class="pre">javascript</span></tt>, images and so forth.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.routers.MediaRouter">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.routers.</tt><tt class="descname">MediaRouter</tt><big>(</big><em>rute</em>, <em>path</em>, <em>show_indexes=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#MediaRouter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.routers.</tt><tt class="descname">MediaRouter</tt><big>(</big><em>rute</em>, <em>path</em>, <em>show_indexes=False</em>, <em>mapping=None</em>, <em>default_suffix=None</em>, <em>default_file='index.html'</em>, <em>raise_404=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#MediaRouter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for serving static media files from a given
 directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -356,8 +356,14 @@ will serve the <tt class="docutils literal"><span class="pre">/media/&lt;path:pa
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.MediaRouter.show_indexes">
 <tt class="descname">show_indexes</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter.show_indexes" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <tt class="docutils literal"><span class="pre">True</span></tt> (default), the router will serve media file directories as
+<dd><p>If <tt class="docutils literal"><span class="pre">True</span></tt>, the router will serve media file directories as
 well as media files.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.routers.MediaRouter.default_file">
+<tt class="descname">default_file</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter.default_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default file to serve when a directory is requested.</p>
 </dd></dl>
 
 </dd></dl>

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.routers &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.routers &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -568,7 +568,7 @@
     <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
     <span class="n">_file_path</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="nf">serve_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">serve_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c"># Respect the If-Modified-Since header.</span>
         <span class="n">statobj</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">fullpath</span><span class="p">)</span>
         <span class="n">content_type</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">fullpath</span><span class="p">)</span>
@@ -576,15 +576,18 @@
         <span class="k">if</span> <span class="n">content_type</span><span class="p">:</span>
             <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span>
         <span class="n">response</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="n">encoding</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">was_modified_since</span><span class="p">(</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">status_code</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">was_modified_since</span><span class="p">(</span>
                 <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_IF_MODIFIED_SINCE&#39;</span><span class="p">),</span>
                 <span class="n">statobj</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_MTIME</span><span class="p">],</span>
-                <span class="n">statobj</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_SIZE</span><span class="p">]):</span>
+                <span class="n">statobj</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_SIZE</span><span class="p">])):</span>
             <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="mi">304</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&quot;Last-Modified&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">http_date</span><span class="p">(</span>
-                <span class="n">statobj</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_MTIME</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">status_code</span><span class="p">:</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status_code</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&quot;Last-Modified&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">http_date</span><span class="p">(</span>
+                    <span class="n">statobj</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_MTIME</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">response</span>
 
     <span class="k">def</span> <span class="nf">was_modified_since</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mtime</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
@@ -649,39 +652,62 @@
 
 <span class="sd">    .. attribute::    show_indexes</span>
 
-<span class="sd">        If ``True`` (default), the router will serve media file directories as</span>
+<span class="sd">        If ``True``, the router will serve media file directories as</span>
 <span class="sd">        well as media files.</span>
+
+<span class="sd">    .. attribute:: default_file</span>
+
+<span class="sd">        The default file to serve when a directory is requested.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rute</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">show_indexes</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">MediaRouter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/&lt;path:path&gt;&#39;</span> <span class="o">%</span> <span class="n">rute</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rute</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">show_indexes</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">default_suffix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">default_file</span><span class="o">=</span><span class="s">&#39;index.html&#39;</span><span class="p">,</span>
+                 <span class="n">raise_404</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">rute</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">/&lt;path:path&gt;&#39;</span> <span class="o">%</span> <span class="n">rute</span>
+        <span class="k">if</span> <span class="n">rute</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">rute</span> <span class="o">=</span> <span class="n">rute</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MediaRouter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">rute</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mapping</span> <span class="o">=</span> <span class="n">mapping</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_suffix</span> <span class="o">=</span> <span class="n">default_suffix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_file</span> <span class="o">=</span> <span class="n">default_file</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_show_indexes</span> <span class="o">=</span> <span class="n">show_indexes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raise_404</span> <span class="o">=</span> <span class="n">raise_404</span>
 
     <span class="k">def</span> <span class="nf">filesystem_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="n">bits</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">urlargs</span><span class="p">[</span><span class="s">&#39;path&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
-        <span class="sd">&#39;&#39;&#39;Retrieve the filesystem path for this request.&#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
-            <span class="n">bits</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">urlargs</span><span class="p">[</span><span class="s">&#39;path&#39;</span><span class="p">]</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="p">[</span><span class="n">bit</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">bit</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">,</span> <span class="o">*</span><span class="n">bits</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">fullpath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filesystem_path</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">fullpath</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_file</span><span class="p">:</span>
+            <span class="nb">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="nb">file</span><span class="p">):</span>
+                <span class="n">fullpath</span> <span class="o">=</span> <span class="nb">file</span>
+        <span class="c">#</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">fullpath</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_indexes</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">directory_index</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">PermissionDenied</span>
-        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fullpath</span><span class="p">):</span>
+        <span class="c">#</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fullpath</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;.&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">filename</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_suffix</span><span class="p">:</span>
+            <span class="n">fullpath</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_suffix</span><span class="p">)</span>
+        <span class="c">#</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fullpath</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serve_file</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raise_404</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">Http404</span>
 
 </div>
 <span class="k">class</span> <span class="nc">FileRouter</span><span class="p">(</span><span class="n">MediaMixin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A Router for a single file.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">raise_404</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FileRouter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">route</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span> <span class="o">=</span> <span class="n">status_code</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">file_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raise_404</span> <span class="o">=</span> <span class="n">raise_404</span>
 
     <span class="k">def</span> <span class="nf">filesystem_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span>
@@ -689,8 +715,9 @@
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">fullpath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filesystem_path</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fullpath</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serve_file</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serve_file</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span>
+                                   <span class="n">status_code</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raise_404</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">Http404</span>
 </pre></div>
 

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.data.odm.manager &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>pulsar.apps.data.odm.manager &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../../apps.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -391,7 +391,6 @@
             <span class="n">instance</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
 
-
 <span class="k">class</span> <span class="nc">RelatedManager</span><span class="p">(</span><span class="n">Manager</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`.Manager` handling relationships between models.</span>
 
@@ -411,7 +410,6 @@
 
     <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">instance_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
-
 
 
 <span class="k">class</span> <span class="nc">OneToManyRelatedManager</span><span class="p">(</span><span class="n">RelatedManager</span><span class="p">):</span>
@@ -441,7 +439,7 @@
         <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">fargs</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">params</span><span class="p">})</span>
 
 
-<span class="c">############################################    MANY2MANY MANAGER</span>
+<span class="c">#    MANY2MANY MANAGER</span>
 
 <span class="k">class</span> <span class="nc">ManyToManyRelatedManager</span><span class="p">(</span><span class="n">OneToManyRelatedManager</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A specialized :class:`.OneToManyRelatedManager` for handling</span>

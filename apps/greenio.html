@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Greenlet Support &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>Greenlet Support &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../index.html" />
     <link rel="prev" title="Pulsar Data Store Server" href="ds.html" /> 
 </head>
  <body>
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="ds.html" title="Pulsar Data Store Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -71,7 +71,14 @@
   <div class="section" id="module-pulsar.apps.greenio">
 <span id="greenlet-support"></span><span id="greenio"></span><h1>Greenlet Support<a class="headerlink" href="#module-pulsar.apps.greenio" title="Permalink to this headline">¶</a></h1>
 <p>Greenlet support facilitates the integration of synchronous
-third-party libraries into pulsar asynchronous framework.</p>
+third-party libraries into pulsar asynchronous framework.
+It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet</a> library.</p>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>The key component is the <tt class="xref py py-class docutils literal"><span class="pre">GreenEventLoop</span></tt>, a specialised
+<tt class="xref py py-class docutils literal"><span class="pre">event-loop</span></tt> which uses the
+<tt class="xref py py-class docutils literal"><span class="pre">GreenTask</span></tt> to switch between greenlets.</p>
+</div>
 </div>
 
 
@@ -97,6 +104,14 @@ third-party libraries into pulsar asynchronous framework.</p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Greenlet Support</a><ul>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="ds.html"
                         title="previous chapter">Pulsar Data Store Server</a></p>

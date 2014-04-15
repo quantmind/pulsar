@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.server &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -208,7 +208,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_expect</span><span class="p">():</span>
             <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">417</span><span class="p">)</span>
 
-    <span class="c">##    INTERNALS</span>
+    <span class="c">#    INTERNALS</span>
     <span class="k">def</span> <span class="nf">_getvalue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">maxbuf</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">:</span>
             <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">body</span>
@@ -495,7 +495,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 
     <span class="c">########################################################################</span>
-    <span class="c">##    INTERNALS</span></div>
+    <span class="c">#    INTERNALS</span></div>
     <span class="nd">@in_loop</span>
     <span class="k">def</span> <span class="nf">_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
         <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
@@ -583,7 +583,7 @@
         <span class="k">return</span> <span class="n">headers</span>
 </div>
     <span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c">#return a the WSGI environ dictionary</span>
+        <span class="c"># return a the WSGI environ dictionary</span>
         <span class="n">transport</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span>
         <span class="n">https</span> <span class="o">=</span> <span class="bp">True</span> <span class="k">if</span> <span class="n">is_tls</span><span class="p">(</span><span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;socket&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="bp">False</span>
         <span class="n">multiprocess</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">)</span>

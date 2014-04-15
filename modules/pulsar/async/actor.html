@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.actor &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>pulsar.async.actor &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -250,7 +250,7 @@
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
 
-    <span class="c">############################################################### PROPERTIES</span>
+    <span class="c"># ############################################################# PROPERTIES</span>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Actor.name"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.name">[docs]</a>    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">name</span>
@@ -291,7 +291,7 @@
         <span class="k">return</span> <span class="n">get_executor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
 
     <span class="c">#######################################################################</span>
-    <span class="c">##    HIGH LEVEL API METHODS</span>
+    <span class="c">#    HIGH LEVEL API METHODS</span>
     <span class="c">#######################################################################</span></div>
 <div class="viewcode-block" id="Actor.start"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called after forking to start the actor&#39;s life.</span>
@@ -324,7 +324,7 @@
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">):</span>
                 <span class="n">mailbox</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">mailbox</span><span class="p">,</span> <span class="s">&#39;request&#39;</span><span class="p">):</span>
-            <span class="c">#if not mailbox.closed:</span>
+            <span class="c"># if not mailbox.closed:</span>
             <span class="k">return</span> <span class="n">mailbox</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">CommandError</span><span class="p">(</span><span class="s">&#39;Cannot execute &quot;</span><span class="si">%s</span><span class="s">&quot; in </span><span class="si">%s</span><span class="s">. Unknown actor </span><span class="si">%s</span><span class="s">.&#39;</span>
@@ -348,7 +348,7 @@
             <span class="n">executor</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">_default_executor</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="c">###############################################################  STATES</span></div>
+    <span class="c"># ##############################################################  STATES</span></div>
 <div class="viewcode-block" id="Actor.is_running"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.is_running">[docs]</a>    <span class="k">def</span> <span class="nf">is_running</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;``True`` if actor is running, that is when the :attr:`state`</span>
 <span class="sd">        is equal to :ref:`ACTOR_STATES.RUN &lt;actor-states&gt;` and the loop is</span>

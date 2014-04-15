@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.ds.server &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>pulsar.apps.ds.server &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -191,8 +191,8 @@
     <span class="k">return</span> <span class="n">new_val</span>
 
 
-<span class="c">###############################################################################</span>
-<span class="c">##    CONFIGURATION PARAMETERS</span>
+<span class="c"># #############################################################################</span>
+<span class="c"># #    CONFIGURATION PARAMETERS</span>
 <span class="k">class</span> <span class="nc">KeyValueDatabases</span><span class="p">(</span><span class="n">PulsarDsSetting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;key_value_databases&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--key-value-databases&quot;</span><span class="p">]</span>
@@ -269,8 +269,8 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">PulsarDS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
 
 
-<span class="c">###############################################################################</span>
-<span class="c">##    DATA STORE</span></div>
+<span class="c"># #############################################################################</span>
+<span class="c"># #    DATA STORE</span></div>
 <span class="n">pubsub_patterns</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;pubsub_patterns&#39;</span><span class="p">,</span> <span class="s">&#39;re clients&#39;</span><span class="p">)</span>
 
 
@@ -375,8 +375,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_loaddb</span><span class="p">()</span>
         <span class="n">pulsar</span><span class="o">.</span><span class="n">call_repeatedly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cron</span><span class="p">)</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    KEYS COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    KEYS COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Keys&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;del&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="ow">not</span> <span class="n">N</span><span class="p">)</span>
@@ -586,8 +586,8 @@
     <span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOT_SUPPORTED</span><span class="p">)</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    STRING COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    STRING COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Strings&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">,)</span>
@@ -958,8 +958,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_wrongtype</span><span class="p">()</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    HASHES COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    HASHES COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Hashes&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">hdel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
@@ -1124,8 +1124,8 @@
     <span class="k">def</span> <span class="nf">hscan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOT_SUPPORTED</span><span class="p">)</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    LIST COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    LIST COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Lists&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">blpop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
@@ -1401,8 +1401,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_signal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOTIFY_GENERIC</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="s">&#39;del&#39;</span><span class="p">,</span> <span class="n">key1</span><span class="p">)</span>
             <span class="n">client</span><span class="o">.</span><span class="n">reply_bulk</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    SETS COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    SETS COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Sets&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">sadd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
@@ -1598,8 +1598,8 @@
     <span class="k">def</span> <span class="nf">sscan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOT_SUPPORTED</span><span class="p">)</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    SORTED SETS COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    SORTED SETS COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Sorted Sets&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">zadd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">D</span> <span class="o">=</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
@@ -1861,8 +1861,8 @@
     <span class="k">def</span> <span class="nf">zscan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOT_SUPPORTED</span><span class="p">)</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    PUBSUB COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    PUBSUB COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Pub/Sub&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">psubscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="ow">not</span> <span class="n">N</span><span class="p">)</span>
@@ -1958,8 +1958,8 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">_channels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
                     <span class="n">client</span><span class="o">.</span><span class="n">reply_multi_bulk</span><span class="p">((</span><span class="n">b</span><span class="s">&#39;unsubscribe&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="p">))</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    TRANSACTION COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    TRANSACTION COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Transactions&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">discard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
@@ -2015,8 +2015,8 @@
         <span class="n">client</span><span class="o">.</span><span class="n">transaction</span> <span class="o">=</span> <span class="n">transaction</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    SCRIPTING</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    SCRIPTING</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Scripting&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
@@ -2061,8 +2061,8 @@
             <span class="n">scripts</span><span class="p">[</span><span class="n">sha</span><span class="p">]</span> <span class="o">=</span> <span class="n">script</span>
             <span class="n">client</span><span class="o">.</span><span class="n">reply_bulk</span><span class="p">(</span><span class="n">sha</span><span class="p">)</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    CONNECTION COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    CONNECTION COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Connections&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">auth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span>
@@ -2103,8 +2103,8 @@
             <span class="n">client</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">num</span>
             <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    SERVER COMMANDS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    SERVER COMMANDS</span>
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Server&#39;</span><span class="p">,</span> <span class="n">supported</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">bgrewriteaof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOT_SUPPORTED</span><span class="p">)</span>
@@ -2228,8 +2228,8 @@
         <span class="n">microseconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">1000000</span><span class="o">*</span><span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="n">seconds</span><span class="p">))</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_multi_bulk</span><span class="p">((</span><span class="n">seconds</span><span class="p">,</span> <span class="n">microseconds</span><span class="p">))</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    INTERNALS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    INTERNALS</span>
     <span class="k">def</span> <span class="nf">_cron</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">dirty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span>
         <span class="k">if</span> <span class="n">dirty</span><span class="p">:</span>
@@ -2612,7 +2612,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_patterns</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_write_to_monitors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="c">#addr = &#39;%s:%s&#39; % self._transport.get_extra_info(&#39;addr&#39;)</span>
+        <span class="c"># addr = &#39;%s:%s&#39; % self._transport.get_extra_info(&#39;addr&#39;)</span>
         <span class="n">cmds</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&quot; &quot;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;+</span><span class="si">%s</span><span class="s"> [0 </span><span class="si">%s</span><span class="s">] &quot;&#39;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">cmds</span> <span class="o">+</span> <span class="n">b</span><span class="s">&#39;&quot;</span><span class="se">\r\n</span><span class="s">&#39;</span>
         <span class="n">remove</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -2695,8 +2695,8 @@
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">)</span>
 
-    <span class="c">###########################################################################</span>
-    <span class="c">##    INTERNALS</span>
+    <span class="c"># #########################################################################</span>
+    <span class="c"># #    INTERNALS</span>
     <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">removed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>

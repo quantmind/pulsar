@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.utils.config &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>pulsar.utils.config &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -462,7 +462,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
     <span class="c">########################################################################</span>
-    <span class="c">##    INTERNALS</span>
+    <span class="c">#    INTERNALS</span>
     <span class="k">def</span> <span class="nf">update_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">ordered_settings</span><span class="p">():</span>
             <span class="n">setting</span> <span class="o">=</span> <span class="n">s</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
@@ -490,7 +490,7 @@
 <span class="sd">    in the global ``KNOWN_SETTINGS`` list.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
         <span class="n">super_new</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SettingMeta</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span>
-        <span class="c">#parents = [b for b in bases if isinstance(b, SettingMeta)]</span>
+        <span class="c"># parents = [b for b in bases if isinstance(b, SettingMeta)]</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;validator&quot;</span><span class="p">)</span>
         <span class="n">attrs</span><span class="p">[</span><span class="s">&quot;validator&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrap_method</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span> <span class="k">else</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;virtual&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
@@ -778,7 +778,7 @@
 
 
 <span class="c">############################################################################</span>
-<span class="c">##    Global Server Settings</span>
+<span class="c">#    Global Server Settings</span>
 <span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Global Server Settings&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">These settings are global in the sense that they are used by the arbiter</span>
 <span class="s">as well as all pulsar workers. They are server configuration parameters.</span>
@@ -1033,7 +1033,7 @@
 
 
 <span class="c">############################################################################</span>
-<span class="c">##    Worker Processes</span>
+<span class="c">#    Worker Processes</span>
 <span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Worker Processes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">This group of configuration parameters control the number of actors</span>
 <span class="s">for a given :class:`.Monitor`, the type of concurreny of the server and</span>
@@ -1117,7 +1117,7 @@
 
 
 <span class="c">############################################################################</span>
-<span class="c">##    APPLICATION HOOKS</span>
+<span class="c">#    APPLICATION HOOKS</span>
 <span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Application Hooks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">Application hooks are functions which can be specified in a</span>
 <span class="s">:ref:`config &lt;setting-config&gt;` file to perform custom tasks in a pulsar server.</span>

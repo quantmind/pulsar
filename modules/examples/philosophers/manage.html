@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>examples.philosophers.manage &mdash; pulsar 0.8.1-beta.1 documentation</title>
+    <title>examples.philosophers.manage &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.1-beta.1',
+        VERSION:     '0.8.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -132,7 +132,7 @@
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">async</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ds</span>
 
-<span class="c">############################# WEB INTERFACE</span>
+<span class="c"># WEB INTERFACE</span>
 <span class="n">media_libraries</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s">&quot;d3&quot;</span><span class="p">:</span> <span class="s">&quot;//cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3&quot;</span><span class="p">,</span>
     <span class="s">&quot;jquery&quot;</span><span class="p">:</span> <span class="s">&quot;//code.jquery.com/jquery-1.11.0&quot;</span><span class="p">,</span>
@@ -152,7 +152,7 @@
 
 
 <span class="c">###########################################################################</span>
-<span class="c">##    EXTRA COMMAND LINE PARAMETERS</span>
+<span class="c">#    EXTRA COMMAND LINE PARAMETERS</span>
 <span class="k">class</span> <span class="nc">Eating_Period</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--eating-period&quot;</span><span class="p">]</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_float</span>
@@ -168,7 +168,7 @@
 
 
 <span class="c">###########################################################################</span>
-<span class="c">##    PULSAR COMMANDS FOR DINING PHILOSOPHERS</span>
+<span class="c">#    PULSAR COMMANDS FOR DINING PHILOSOPHERS</span>
 <span class="nd">@command</span><span class="p">(</span><span class="n">ack</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">putdown_fork</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fork</span><span class="p">):</span>
     <span class="bp">self</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">actor</span><span class="o">.</span><span class="n">app</span>
@@ -193,7 +193,7 @@
 
 
 <span class="c">############################################################################</span>
-<span class="c">##    DINING PHILOSOPHERS APP</span>
+<span class="c">#    DINING PHILOSOPHERS APP</span>
 <div class="viewcode-block" id="DiningPhilosophers"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers">[docs]</a><span class="k">class</span> <span class="nc">DiningPhilosophers</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
     <span class="n">description</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Dining philosophers sit at a table around a bowl of &#39;</span>
                    <span class="s">&#39;spaghetti and waits for available forks.&#39;</span><span class="p">)</span>
@@ -370,10 +370,10 @@
 
     <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">DiningPhilosophers</span><span class="p">)</span>
-        <span class="c">#yield self.new_app(wsgi.WSGIServer, prefix=&#39;wsgi&#39;,</span>
-        <span class="c">#                   callable=PhilosophersWsgi(self.name))</span>
-        <span class="c">#yield self.new_app(wsgi.WSGIServer,</span>
-        <span class="c">#                   callable=PhilosophersWsgi(self.name))</span>
+        <span class="c"># yield self.new_app(wsgi.WSGIServer, prefix=&#39;wsgi&#39;,</span>
+        <span class="c">#                    callable=PhilosophersWsgi(self.name))</span>
+        <span class="c"># yield self.new_app(wsgi.WSGIServer,</span>
+        <span class="c">#                    callable=PhilosophersWsgi(self.name))</span>
 
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
