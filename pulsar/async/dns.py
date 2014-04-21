@@ -69,7 +69,8 @@ class DNSResolver(StandardDNSResolver):
                 self._timer = None
 
     def _timer_cb(self):
-        self._channel.process_fd(pycares.ARES_SOCKET_BAD, pycares.ARES_SOCKET_BAD)
+        self._channel.process_fd(pycares.ARES_SOCKET_BAD,
+                                 pycares.ARES_SOCKET_BAD)
         self._timer = self._loop.call_later(1.0, self._timer_cb)
 
     def _process_events(self, fd, event):

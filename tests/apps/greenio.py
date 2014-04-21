@@ -45,6 +45,7 @@ class TestGreenIO(unittest.TestCase):
         data = greenio.local()
         data.bla = 56
         self.assertEqual(data.bla, 56)
+
         def _test_bla():
             self.assertFalse(hasattr(data, 'bla'))
             data.bla = 89

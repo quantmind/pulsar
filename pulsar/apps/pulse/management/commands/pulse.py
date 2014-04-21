@@ -53,7 +53,6 @@ class Wsgi(LazyWsgi):
 
 
 class Command(BaseCommand):
-    #option_list = BaseCommand.option_list + (pulse_app_name,) + PULSAR_OPTIONS
     help = "Starts a fully-functional Web server using pulsar."
     args = 'pulse --help for usage'
 
@@ -64,7 +63,7 @@ class Command(BaseCommand):
         callable = Wsgi()
         if options.pop('dryrun', False) is True:  # used for testing
             return callable
-        #callable.setup()
+        # callable.setup()
         cfg = pulsar.Config(apps=['socket', 'pulse'],
                             server_software=pulsar.SERVER_SOFTWARE,
                             **options)

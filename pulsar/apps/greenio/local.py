@@ -33,11 +33,13 @@ class _localimpl:
         key = self.key
         greenlet = getcurrent()
         idt = id(greenlet)
+
         def local_deleted(_, key=key):
             # When the localimpl is deleted, remove the greenlet attribute.
             greenlet = wrgreenlet()
             if greenlet is not None:
                 del greenlet.__dict__[key]
+
         def greenlet_deleted(_, idt=idt):
             # When the greenlet is deleted, remove the local dict.
             # Note that this is suboptimal if the greenlet object gets
@@ -46,6 +48,7 @@ class _localimpl:
             local = wrlocal()
             if local is not None:
                 dct = local.dicts.pop(idt)
+
         wrlocal = ref(self, local_deleted)
         wrgreenlet = ref(greenlet, greenlet_deleted)
         greenlet.__dict__[key] = wrlocal

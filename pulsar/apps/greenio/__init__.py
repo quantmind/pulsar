@@ -4,11 +4,10 @@ third-party libraries into pulsar asynchronous framework.
 It requires the greenlet_ library.
 
 
-Usage
-=======
-The key component is the :class:`GreenEventLoop`, a specialised
-:class:`event-loop <asyncio-event-loop>` which uses the
-:class:`GreenTask` to switch between greenlets.
+API
+======
+
+.. autofunction:: wait_fd
 
 .. _greenlet: http://greenlet.readthedocs.org/
 '''
@@ -66,7 +65,6 @@ def run_in_greenlet(method):
         while isinstance(result, Future):
             result = gr.switch((yield result))
         coroutine_return(result)
-
 
     return _
 
