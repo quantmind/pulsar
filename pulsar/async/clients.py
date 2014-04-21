@@ -63,7 +63,7 @@ class Pool(AsyncObject):
         The connection is either a new one or retrieved from the
         :attr:`available` connections in the pool.
 
-        :return: a :class:`.Future` resulting in the connection.
+        :return: a :class:`~asyncio.Future` resulting in the connection.
         '''
         assert not self._closed
         return PoolConnection.checkout(self)
@@ -103,8 +103,7 @@ class Pool(AsyncObject):
         if connection is None:
             connection = yield self._get()
         else:
-            if is_socket_closed(connection.sock):
-                connection.close()
+            if self.is_connection_closed(connection):
                 connection = yield self._get()
             else:
                 self._in_use_connections.add(connection)
@@ -117,6 +116,12 @@ class Pool(AsyncObject):
             except QueueFull:
                 conn.close()
         self._in_use_connections.discard(conn)
+
+    def is_connection_closed(self, connection):
+        if is_socket_closed(connection.sock):
+            connection.close()
+            return True
+        return False
 
     def info(self, message=None, level=None):   # pragma    nocover
         if self._queue._maxsize != 2:

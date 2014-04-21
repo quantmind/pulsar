@@ -44,9 +44,10 @@ Wait for request body
 
 '''
 import re
+from functools import wraps
 
 import pulsar
-from pulsar import Future, async, coroutine_return
+from pulsar import Future, async, get_event_loop
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -54,7 +55,8 @@ from .auth import parse_authorization_header
 
 __all__ = ['clean_path_middleware',
            'authorization_middleware',
-           'wait_for_body_middleware']
+           'wait_for_body_middleware',
+           'middleware_in_executor']
 
 
 def clean_path_middleware(environ, start_response=None):
@@ -103,4 +105,18 @@ def _wait_for_body_middleware(environ, start_response):
     if isinstance(chunk, Future):
         chunk = yield chunk
     environ['wsgi.input'] = BytesIO(chunk)
-    coroutine_return(None)
+
+
+def middleware_in_executor(middleware):
+    '''Use this middleware to run a synchronous middleware in the event loop
+    executor.
+
+    Useful when using synchronous web-frameworks.
+    '''
+
+    @wraps(middleware)
+    def _(environ, start_response):
+        loop = get_event_loop()
+        return loop.run_in_executor(None, middleware, environ, start_response)
+
+    return _

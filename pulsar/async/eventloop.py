@@ -5,6 +5,7 @@ from threading import current_thread
 from .access import thread_data, LOGGER
 from .futures import Future, maybe_async, async, Task
 from .threads import run_in_executor, QueueEventLoop, set_as_loop
+from . import dns
 
 
 __all__ = ['EventLoop', 'call_repeatedly', 'loop_thread_id']
@@ -97,14 +98,22 @@ class LoopingCall(object):
 class EventLoop(asyncio.SelectorEventLoop):
     task_factory = Task
 
-    def __init__(self, selector=None, iothreadloop=False, logger=None):
+    def __init__(self, selector=None, iothreadloop=False, logger=None,
+                 cfg=None):
         super(EventLoop, self).__init__(selector)
         self._iothreadloop = iothreadloop
         self.logger = logger or LOGGER
+        self._dns = dns.resolver(self, cfg)
         self.call_soon(set_as_loop, self)
 
     def run_in_executor(self, executor, callback, *args):
         return run_in_executor(self, executor, callback, *args)
+
+    def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
+        return self._dns.getaddrinfo(host, port, family, type, proto, flags)
+
+    def getnameinfo(self, sockaddr, flags=0):
+        return self._dns.getnameinfo(sockaddr, flags)
 
 
 def call_repeatedly(loop, interval, callback, *args):

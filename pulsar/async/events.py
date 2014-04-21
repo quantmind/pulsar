@@ -176,6 +176,10 @@ class EventHandler(AsyncObject):
             event._loop = self._loop
         return event
 
+    def fired_event(self, name):
+        event = self._events.get(name)
+        return event._fired if event else 0
+
     def bind_event(self, name, callback):
         '''Register a ``callback`` with ``event``.
 

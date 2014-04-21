@@ -69,15 +69,6 @@ class ProtocolConsumer(EventHandler):
         return self._connection
 
     @property
-    def _loop(self):
-        '''The event loop of this consumer.
-
-        The same as the :attr:`connection` event loop.
-        '''
-        if self._connection:
-            return self._connection._loop
-
-    @property
     def request(self):
         '''The request.
 
@@ -366,7 +357,7 @@ class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
 
 
 class Connection(Protocol):
-    '''A :class:`Protocol` to handle multiple request/response.
+    '''A :class:`Protocol` to handle multiple TCP requests/responses.
 
     It is a class which acts as bridge between a
     :ref:`transport <asyncio-transport>` and a :class:`.ProtocolConsumer`.
@@ -404,6 +395,7 @@ class Connection(Protocol):
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self
+        consumer._loop = self._loop
         consumer.connection_made(self)
 
     def data_received(self, data):
@@ -616,13 +608,13 @@ class TcpServer(Producer):
         '''Stop serving the :attr:`.Server.sockets` and close all
         concurrent connections.
         '''
-        if self._server:
-            server, self._server = self._server, None
-            server.close()
-            yield None
-            yield self._close_connections()
+        if not self.fired_event('stop'):
+            if self._server:
+                server, self._server = self._server, None
+                server.close()
+                yield None
+                yield self._close_connections()
             self.fire_event('stop')
-        coroutine_return(self)
 
     def info(self):
         sockets = []
@@ -751,12 +743,12 @@ class DatagramServer(EventHandler):
         '''Stop serving the :attr:`.Server.sockets` and close all
         concurrent connections.
         '''
-        if self._transports:
+        if not self.fired_event('stop'):
             transports, self._transports = self._transports, None
-            for transport in transports:
-                transport.close()
+            if transports:
+                for transport in transports:
+                    transport.close()
             self.fire_event('stop')
-        coroutine_return(self)
 
     def info(self):
         sockets = []

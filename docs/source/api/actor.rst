@@ -6,6 +6,9 @@
 Actors API
 =======================
 
+For an overview of pulsar :class:`.Actor`
+check out the :ref:`design documentation <design-actor>`.
+
 
 High Level Functions
 =======================
@@ -29,7 +32,8 @@ get_actor
 
 .. function:: get_actor
 
-    Return the :class:`Actor` controlling the current thread.
+    Returns the :class:`Actor` controlling the current thread.
+    Returns ``None`` if no actor is available.
 
 arbiter
 ~~~~~~~~~~~~~~

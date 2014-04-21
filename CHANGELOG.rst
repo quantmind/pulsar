@@ -1,3 +1,13 @@
+Ver. 0.8.2 - Development
+===========================
+* ``--pep8`` is now a command line options for the :mod:`~pulsar.apps.test`
+  application
+* :class:`.ProtocolConsumer` has its own ``_loop`` attribute rather than
+  obtaining indirectly from the underling connection. This avoids several
+  logging errors when a connection is dropped.
+* :ref:`Django pulse application <apps-pulse>` can be run asynchronously
+  when using PostgreSql database. It requires the greenlet_ module.
+
 Ver. 0.8.1 - 2014-Apr-14
 ===========================
 * Added :mod:`pulsar.apps.greenio` application for writing asynchronous code

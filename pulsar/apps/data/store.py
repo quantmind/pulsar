@@ -281,7 +281,7 @@ class Store(Producer):
         '''Internal initialisation'''
         pass
 
-    def _buildurl(self):
+    def _buildurl(self, **kw):
         pre = ''
         if self._user:
             if not self._password:
@@ -295,7 +295,8 @@ class Store(Producer):
             host = '%s:%s' % host
         host = '%s%s' % (pre, host)
         path = '/%s' % self._database if self._database else ''
-        query = urlencode(self._urlparams)
+        kw.update(self._urlparams)
+        query = urlencode(kw)
         scheme = self._name
         if self._scheme:
             scheme = '%s+%s' % (self._scheme, scheme)

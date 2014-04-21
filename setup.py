@@ -103,6 +103,7 @@ def run_setup(params=None):
                    'version': mod.__version__,
                    'author': mod.__author__,
                    'author_email': mod.__contact__,
+                   'maintainer_email': mod.__contact__,
                    'url': mod.__homepage__,
                    'license': mod.__license__,
                    'description': mod.__doc__,

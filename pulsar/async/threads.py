@@ -21,7 +21,7 @@ from .consts import ACTOR_STATES
 
 __all__ = ['Thread', 'IOqueue', 'ThreadPool', 'ThreadQueue', 'Empty', 'Full']
 
-_MAX_WORKERS = 5
+_MAX_WORKERS = 50
 _threads_queues = weakref.WeakKeyDictionary()
 passthrough = lambda: None
 
@@ -201,12 +201,12 @@ class ThreadPool(AsyncObject):
 
     def __init__(self, max_workers=None, actor=None, loop=None,
                  maxtasks=None):
-        self._actor = actor or get_actor()
-        if self._actor:
-            loop = loop or self._actor._loop
+        self._actor = actor = actor or get_actor()
+        if actor:
+            loop = loop or actor._loop
             if not max_workers:
-                max_workers = self._actor.cfg.thread_workers
-            self.worker_name = '%s.%s' % (self._actor.name, self.worker_name)
+                max_workers = actor.cfg.thread_workers
+            self.worker_name = '%s.%s' % (actor.name, self.worker_name)
         self._loop = loop or get_event_loop()
         self._max_workers = min(max_workers or _MAX_WORKERS, _MAX_WORKERS)
         self._threads = set()

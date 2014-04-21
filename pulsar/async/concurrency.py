@@ -110,7 +110,7 @@ class Concurrency(object):
         '''
         actor._logger = self.cfg.configured_logger(actor.name)
         loop = EventLoop(self.selector(), logger=actor._logger,
-                         iothreadloop=True)
+                         iothreadloop=True, cfg=actor.cfg)
         actor.mailbox = self.create_mailbox(actor, loop)
 
     def hand_shake(self, actor):

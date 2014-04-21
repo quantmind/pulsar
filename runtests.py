@@ -6,16 +6,7 @@ from multiprocessing import current_process
 
 def run(**params):
     args = params.get('argv', sys.argv)
-    # pep8
-    if '--pep8' in args:
-        from pulsar.apps.test import pep8_run
-        msg, code = pep8_run(args, ['pulsar', 'examples', 'tests'],
-                             'setup.cfg')
-        if msg:
-            sys.stderr.write(msg)
-        sys.exit(code)
-    # Submit to coveralls
-    elif '--coveralls' in args:
+    if '--coveralls' in args:
         import pulsar
         from pulsar.utils.path import Path
         from pulsar.apps.test.cov import coveralls
@@ -41,13 +32,9 @@ def run(**params):
 
 def runtests(**params):
     import pulsar
-    from pulsar.utils.path import Path
     from pulsar.apps.test import TestSuite
     from pulsar.apps.test.plugins import bench, profile
     import pulsar.utils.settings.backend
-    #
-    path = Path(__file__)
-    path.add2python('stdnet', 1, down=['python-stdnet'], must_exist=False)
     #
     TestSuite(description='Pulsar Asynchronous test suite',
               modules=('tests',

@@ -21,7 +21,7 @@ services:
   - mongodb
 
 script:
-  - python -m covrun --pep8
+  - python -m covrun --pep8 pulsar examples tests
   - sudo rm -rf pulsar
   - python -m covrun -w 2 -e taskqueue pshell philosophers webmail djangoapp stores.odm stores.couchdb stores.query stores.redis
   - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then python -m runtests --coveralls; fi
