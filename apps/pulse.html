@@ -88,13 +88,21 @@ Add it to the list of your <tt class="docutils literal"><span class="pre">INSTAL
 </div>
 <p>Check the <a class="reference internal" href="../tutorials/django.html#tutorials-django"><em>django chat example</em></a> for a django chat
 application served by a multiprocessing pulsar server.</p>
-<div class="section" id="greenlets">
-<h2>Greenlets<a class="headerlink" href="#greenlets" title="Permalink to this headline">¶</a></h2>
 <p>By default, the <tt class="docutils literal"><span class="pre">pulse</span></tt> command creates a <a class="reference internal" href="#pulsar.apps.pulse.Wsgi" title="pulsar.apps.pulse.Wsgi"><tt class="xref py py-class docutils literal"><span class="pre">Wsgi</span></tt></a> middleware which
 runs the django application in a separate thread of execution from the
 main event loop.
 This is a standard programming pattern when using <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-dev.html#asyncio-multithreading" title="(in Python v3.4)"><em class="xref std std-ref">asyncio with blocking
-functions</em></a>.</p>
+functions</em></a>.
+To control the number of thread workers in the event loop executor (which
+is a pool of threads) one uses the
+<a class="reference internal" href="../settings.html#setting-thread-workers"><em>thread-workers</em></a> option. For example, the
+following command:</p>
+<div class="highlight-python"><pre>python manage.py pulse -w 4 --thread-workers 20</pre>
+</div>
+<p>will run four <a class="reference internal" href="../design.html#concurrency"><em>processed base actors</em></a>, each with
+an executor with up to 20 threads.</p>
+<div class="section" id="greenlets">
+<h2>Greenlets<a class="headerlink" href="#greenlets" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="wsgi-middleware">
 <h2>Wsgi middleware<a class="headerlink" href="#wsgi-middleware" title="Permalink to this headline">¶</a></h2>
