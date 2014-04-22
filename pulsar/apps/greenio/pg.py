@@ -13,7 +13,7 @@ by invoking :func:`make_asynchronous` somehere convinient in the code::
 
     from pulsar.apps.greenio import pg
 
-    pg.make_asynchronous().
+    pg.make_asynchronous()
 
 The :func:`make_asynchronous` set the :func:`psycopg2_wait_callback` function
 as the waiting callback in psycopg2.

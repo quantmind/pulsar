@@ -1,10 +1,11 @@
 '''
 Greenlet support facilitates the integration of synchronous
 third-party libraries into pulsar asynchronous framework.
-It requires the greenlet_ library.
+It requires the :greenlet:`greenlet <>` library.
 
 If you want to understand how integration works and you are unfamiliar with
-greenlets, check out the greenlet_ documentation first. On the other hand,
+greenlets, check out the :greenlet:`greenlet documentation <>` first.
+On the other hand,
 if you need to use it in the context of :ref:`asynchronous psycopg2 <psycopg2>`
 connections for example, you can skip the implementation details.
 
@@ -12,7 +13,8 @@ This application **does not use monkey patching** and therefore it
 works quite differently from implicit asynchronous libraries such as
 gevent_. All it does, it provides the user with a set
 of utilities for **explicitly** transferring execution from the main greenlet
-(the greenlet without any parent greenlet) to a child greenlet.
+(the greenlet without any parent greenlet) to a child greenlet which
+execute the blocking call in a greenlet-friendly way.
 
 API
 ======
@@ -32,6 +34,12 @@ Run in greenlet
 -------------------
 
 .. autofunction:: run_in_greenlet
+
+
+green task
+-------------
+
+.. autofunction:: green_task
 
 
 .. module:: pulsar.apps.greenio.pool
@@ -59,13 +67,12 @@ Psycopg2
 .. automodule:: pulsar.apps.greenio.pg
 
 
-.. _greenlet: http://greenlet.readthedocs.org/
 .. _gevent: http://www.gevent.org/
 '''
 import asyncio
 from asyncio import Future
 from inspect import isgeneratorfunction
-from functools import wraps
+from functools import wraps, partial
 
 import greenlet
 
@@ -82,33 +89,10 @@ class PulsarGreenlet(greenlet.greenlet):
     pass
 
 
-class GreenTask(Task):
-    '''An :class:`asyncio.Task` for running synchronous code in greenlets.
-    '''
-    _greenlet = None
-
-    def _step(self, value=None, exc=None):
-        if self._greenlet is None:
-            # Means that the task is not currently in a suspended greenlet
-            # waiting for results
-            assert greenlet.getcurrent().parent is None
-            gl = PulsarGreenlet(super(GreenTask, self)._step)
-            self._greenlet = gl
-            gl.switch(value, exc)
-        else:
-            gl = self._greenlet.parent
-            assert gl.parent is None
-            self._greenlet = None
-            gl.switch()
-            self._step(value, exc)
-
-        # There no waiting future
-        if not self._fut_waiter:
-            self._greenlet = None
-
-
 def run_in_greenlet(callable):
     '''Decorator to run a ``callable`` on a new greenlet.
+
+    A callable decorated with this decorator returns a coroutine.
     '''
     @wraps(callable)
     def _(*args, **kwargs):
@@ -117,6 +101,25 @@ def run_in_greenlet(callable):
         while isinstance(result, Future):
             result = gr.switch((yield result))
         coroutine_return(result)
+
+    return _
+
+
+def green_task(method):
+    '''Decorator to run a ``method`` an a new greenlet in the event loop
+    of the instance of the bound ``method``.
+
+    This method is the greenlet equivalent of the :func:`.task` decorator.
+    The instance must be an :ref:`async object <async-object>`.
+
+    :return: a :class:`~asyncio.Future`
+    '''
+    @wraps(method)
+    def _(self, *args, **kwargs):
+        future = Future(loop=self._loop)
+        self._loop.call_soon_threadsafe(
+            _green, self, method, future, args, kwargs)
+        return future
 
     return _
 
@@ -163,9 +166,61 @@ def wait(coro_or_future, loop=None):
     return future.result()
 
 
+# INTERNALS
+
 def _done_wait_fd(fd, future, read):
     if read:
         future._loop.remove_reader(fd)
     else:
         future._loop.remove_writer(fd)
     future.set_result(None)
+
+
+def _green(self, method, future, args, kwargs):
+    # Called in the main greenlet
+    try:
+        gr = PulsarGreenlet(method)
+        result = gr.switch(self, *args, **kwargs)
+        if isinstance(result, Future):
+            result.add_done_callback(partial(_green_check, gr, future))
+        else:
+            future.set_result(result)
+    except Exception as exc:
+        future.set_exception(exc)
+
+
+def _green_check(gr, future, fut):
+    # Called in the main greenlet
+    try:
+        result = gr.switch(fut.result())
+        if isinstance(result, Future):
+            result.add_done_callback(partial(_green_check, gr, future))
+        else:
+            future.set_result(result)
+    except Exception as exc:
+        future.set_exception(exc)
+
+
+class GreenTask(Task):
+    '''An :class:`asyncio.Task` for running synchronous code in greenlets.
+    '''
+    _greenlet = None
+
+    def _step(self, value=None, exc=None):
+        if self._greenlet is None:
+            # Means that the task is not currently in a suspended greenlet
+            # waiting for results
+            assert greenlet.getcurrent().parent is None
+            gl = PulsarGreenlet(super(GreenTask, self)._step)
+            self._greenlet = gl
+            gl.switch(value, exc)
+        else:
+            gl = self._greenlet.parent
+            assert gl.parent is None
+            self._greenlet = None
+            gl.switch()
+            self._step(value, exc)
+
+        # There no waiting future
+        if not self._fut_waiter:
+            self._greenlet = None

@@ -90,6 +90,7 @@ class Store(Producer):
     _scheme = None
     compiler_class = None
     default_manager = None
+    registered = False
     MANY_TIMES_EVENTS = ('request',)
 
     def __init__(self, name, host, loop, database=None,
@@ -126,6 +127,10 @@ class Store(Producer):
     def dns(self):
         '''Domain name server'''
         return self._dns
+
+    @classmethod
+    def register(cls):
+        pass
 
     def __repr__(self):
         return 'Store(dns="%s")' % self._dns
@@ -506,6 +511,9 @@ def create_store(url, loop=None, **kw):
     if not loop:
         loop = new_event_loop(logger=logging.getLogger(dotted_path))
     store_class = module_attribute(dotted_path)
+    if not store_class.registered:
+        store_class.registered = True
+        store_class.register()
     params.update(kw)
     return store_class(scheme, address, loop, **params)
 
