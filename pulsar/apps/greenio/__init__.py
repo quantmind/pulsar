@@ -3,6 +3,16 @@ Greenlet support facilitates the integration of synchronous
 third-party libraries into pulsar asynchronous framework.
 It requires the greenlet_ library.
 
+If you want to understand how integration works and you are unfamiliar with
+greenlets, check out the greenlet_ documentation first. On the other hand,
+if you need to use it in the context of :ref:`asynchronous psycopg2 <psycopg2>`
+connections for example, you can skip the implementation details.
+
+This application **does not use monkey patching** and therefore it
+works quite differently from implicit asynchronous libraries such as
+gevent_. All it does, it provides the user with a set
+of utilities for **explicitly** transferring execution from the main greenlet
+(the greenlet without any parent greenlet) to a child greenlet.
 
 API
 ======
@@ -24,6 +34,25 @@ Run in greenlet
 .. autofunction:: run_in_greenlet
 
 
+.. module:: pulsar.apps.greenio.pool
+
+Green Pool
+----------------
+
+.. autoclass:: GreenPool
+   :members:
+   :member-order: bysource
+
+Run in Pool
+----------------
+
+.. autoclass:: RunInPool
+   :members:
+   :member-order: bysource
+
+
+.. _psycopg2:
+
 Psycopg2
 ===========
 
@@ -31,6 +60,7 @@ Psycopg2
 
 
 .. _greenlet: http://greenlet.readthedocs.org/
+.. _gevent: http://www.gevent.org/
 '''
 import asyncio
 from asyncio import Future

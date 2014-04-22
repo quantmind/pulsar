@@ -110,7 +110,14 @@ class GreenPool(AsyncObject):
 
 
 class RunInPool:
+    '''Utility for running a callable in a :class:`.GreenPool`.
 
+    :param app: the callable to run on greenlet workers
+    :param max_workers=100: maximum number of workers
+    :param loop: optional event loop
+
+    THis utility is used by the :mod:`~pulsar.apps.pulse` application.
+    '''
     def __init__(self, app, max_workers=None, loop=None):
         self.pool = GreenPool(max_workers=max_workers, loop=loop)
         self.app = app

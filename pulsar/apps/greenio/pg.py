@@ -7,7 +7,7 @@ Such feature can be extremely useful since it allows to write
 asynchronous code without the need to explicitly yield
 control appropriately when necessary.
 
-For example, one could use ORMs (Object Relational MAppers) such as
+For example, one could use ORMs (Object Relational Mappers) such as
 :sqlalchemy:`SqlAlchemy <>` and :django:`django <>` in asynchronous mode
 by invoking :func:`make_asynchronous` somehere convinient in the code::
 

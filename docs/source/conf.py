@@ -155,4 +155,5 @@ intersphinx_mapping = {
 extlinks = {'django': ('https://www.djangoproject.com/', None),
             'postgresql': ('http://www.postgresql.org/', None),
             'sqlalchemy': ('http://www.sqlalchemy.org/', None),
+            'greenlet': ('http://greenlet.readthedocs.org/', None),
             'psycopg2coroutine': ('http://pythonhosted.org/psycopg2/advanced.html#support-for-coroutine-libraries', None)}
