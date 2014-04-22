@@ -74,14 +74,16 @@
 third-party libraries into pulsar asynchronous framework.
 It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet</a> library.</p>
 <p>If you want to understand how integration works and you are unfamiliar with
-greenlets, check out the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet</a> documentation first. On the other hand,
+greenlets, check out the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet documentation</a> first.
+On the other hand,
 if you need to use it in the context of <a class="reference internal" href="#psycopg2"><em>asynchronous psycopg2</em></a>
 connections for example, you can skip the implementation details.</p>
 <p>This application <strong>does not use monkey patching</strong> and therefore it
 works quite differently from implicit asynchronous libraries such as
 <a class="reference external" href="http://www.gevent.org/">gevent</a>. All it does, it provides the user with a set
 of utilities for <strong>explicitly</strong> transferring execution from the main greenlet
-(the greenlet without any parent greenlet) to a child greenlet.</p>
+(the greenlet without any parent greenlet) to a child greenlet which
+execute the blocking call in a greenlet-friendly way.</p>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="wait">
@@ -124,6 +126,27 @@ function.</p>
 <dt id="pulsar.apps.greenio.run_in_greenlet">
 <tt class="descclassname">pulsar.apps.greenio.</tt><tt class="descname">run_in_greenlet</tt><big>(</big><em>callable</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/greenio.html#run_in_greenlet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.run_in_greenlet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator to run a <tt class="docutils literal"><span class="pre">callable</span></tt> on a new greenlet.</p>
+<p>A callable decorated with this decorator returns a coroutine.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="green-task">
+<h3>green task<a class="headerlink" href="#green-task" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.apps.greenio.green_task">
+<tt class="descclassname">pulsar.apps.greenio.</tt><tt class="descname">green_task</tt><big>(</big><em>method</em><big>)</big><a class="headerlink" href="#pulsar.apps.greenio.green_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator to run a <tt class="docutils literal"><span class="pre">method</span></tt> an a new greenlet in the event loop
+of the instance of the bound <tt class="docutils literal"><span class="pre">method</span></tt>.</p>
+<p>This method is the greenlet equivalent of the <a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorator.
+The instance must be an <a class="reference internal" href="../design.html#async-object"><em>async object</em></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <span class="target" id="module-pulsar.apps.greenio.pool"></span></div>
@@ -184,9 +207,10 @@ control appropriately when necessary.</p>
 <p>For example, one could use ORMs (Object Relational Mappers) such as
 <a class="reference external" href="http://www.sqlalchemy.org/">SqlAlchemy</a> and <a class="reference external" href="https://www.djangoproject.com/">django</a> in asynchronous mode
 by invoking <a class="reference internal" href="#pulsar.apps.greenio.pg.make_asynchronous" title="pulsar.apps.greenio.pg.make_asynchronous"><tt class="xref py py-func docutils literal"><span class="pre">make_asynchronous()</span></tt></a> somehere convinient in the code:</p>
-<div class="highlight-python"><pre>from pulsar.apps.greenio import pg
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.greenio</span> <span class="kn">import</span> <span class="n">pg</span>
 
-pg.make_asynchronous().</pre>
+<span class="n">pg</span><span class="o">.</span><span class="n">make_asynchronous</span><span class="p">()</span>
+</pre></div>
 </div>
 <p>The <a class="reference internal" href="#pulsar.apps.greenio.pg.make_asynchronous" title="pulsar.apps.greenio.pg.make_asynchronous"><tt class="xref py py-func docutils literal"><span class="pre">make_asynchronous()</span></tt></a> set the <a class="reference internal" href="#pulsar.apps.greenio.pg.psycopg2_wait_callback" title="pulsar.apps.greenio.pg.psycopg2_wait_callback"><tt class="xref py py-func docutils literal"><span class="pre">psycopg2_wait_callback()</span></tt></a> function
 as the waiting callback in psycopg2.</p>
@@ -241,6 +265,7 @@ The caller must be from a greenlet other than the main one.</p>
 <li><a class="reference internal" href="#wait">Wait</a></li>
 <li><a class="reference internal" href="#wait-file-descriptor">Wait file descriptor</a></li>
 <li><a class="reference internal" href="#run-in-greenlet">Run in greenlet</a></li>
+<li><a class="reference internal" href="#green-task">green task</a></li>
 <li><a class="reference internal" href="#green-pool">Green Pool</a></li>
 <li><a class="reference internal" href="#run-in-pool">Run in Pool</a></li>
 </ul>
