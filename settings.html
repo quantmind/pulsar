@@ -245,6 +245,22 @@ By default no datastore is used.</p>
 <p>Use this setting to specify an execution ID.
 If not provided, a value will be assigned by pulsar.</p>
 </div>
+<div class="section" id="greenlet">
+<span id="setting-greenlet"></span><h3>greenlet<a class="headerlink" href="#greenlet" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">greenlet</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--greenlet</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">0</span></tt></p>
+<p>Use greenlet whenever possible.</p>
+</div>
+<div class="section" id="no-pycares">
+<span id="setting-no-pycares"></span><h3>no_pycares<a class="headerlink" href="#no-pycares" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">no_pycares</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--no-pycares</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>Switch off pycares DNS lookup.</p>
+<p>By default, pulsar uses pycares for its DNS lookups (if it is available).
+Use this flag to revert to the standard library dns resolver.</p>
+</div>
 <div class="section" id="selector">
 <span id="setting-selector"></span><h3>selector<a class="headerlink" href="#selector" title="Permalink to this headline">¶</a></h3>
 <p><em>Config name</em>: <tt class="docutils literal"><span class="pre">selector</span></tt></p>
@@ -326,9 +342,10 @@ killed and restarted.</p>
 <p><em>Config name</em>: <tt class="docutils literal"><span class="pre">thread_workers</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--thread-workers</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">1</span></tt></p>
-<p>The number of threads in an actor thread pool.</p>
-<p>The thread pool is used by actors to perform CPU intensive
-calculations. In this way the actor main thread is free to listen
+<p>The number of threads used by the actor event loop executor.</p>
+<p>The executor is a thread pool used by the event loop to perform CPU
+intensive operations or when it needs to execute blocking calls.
+It allows the actor main thread to be free to listen
 to events on file descriptors and process them as quick as possible.</p>
 </div>
 </div>
@@ -612,6 +629,14 @@ To see available labels use the -l option.</div></blockquote>
 <div>Run the garbage collector before a process-based actor dies and shows
 the memory leak report.</div></blockquote>
 </div>
+<div class="section" id="pep8">
+<span id="setting-pep8"></span><h3>pep8<a class="headerlink" href="#pep8" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">pep8</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--pep8</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
+<p>Run pep8</p>
+</div>
 </div>
 <div class="section" id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
@@ -671,6 +696,8 @@ the memory leak report.</div></blockquote>
 <li><a class="reference internal" href="#coverage">coverage</a></li>
 <li><a class="reference internal" href="#data-store">data_store</a></li>
 <li><a class="reference internal" href="#exc-id">exc_id</a></li>
+<li><a class="reference internal" href="#greenlet">greenlet</a></li>
+<li><a class="reference internal" href="#no-pycares">no_pycares</a></li>
 <li><a class="reference internal" href="#selector">selector</a></li>
 <li><a class="reference internal" href="#redis-py-parser">redis_py_parser</a></li>
 <li><a class="reference internal" href="#redis-server">redis_server</a></li>
@@ -726,6 +753,7 @@ the memory leak report.</div></blockquote>
 <li><a class="reference internal" href="#list-labels">list_labels</a></li>
 <li><a class="reference internal" href="#sequential">sequential</a></li>
 <li><a class="reference internal" href="#show-leaks">show_leaks</a></li>
+<li><a class="reference internal" href="#pep8">pep8</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#utilities">Utilities</a></li>

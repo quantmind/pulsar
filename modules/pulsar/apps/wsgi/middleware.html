@@ -113,11 +113,17 @@
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 <span class="sd">.. autofunction:: wait_for_body_middleware</span>
 
+
+<span class="sd">Middleware in Executor</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="sd">.. autofunction:: middleware_in_executor</span>
+
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">get_event_loop</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
 <span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">parse_authorization_header</span>
@@ -125,7 +131,8 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;clean_path_middleware&#39;</span><span class="p">,</span>
            <span class="s">&#39;authorization_middleware&#39;</span><span class="p">,</span>
-           <span class="s">&#39;wait_for_body_middleware&#39;</span><span class="p">]</span>
+           <span class="s">&#39;wait_for_body_middleware&#39;</span><span class="p">,</span>
+           <span class="s">&#39;middleware_in_executor&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="clean_path_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.clean_path_middleware">[docs]</a><span class="k">def</span> <span class="nf">clean_path_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -145,8 +152,7 @@
     <span class="sd">&#39;&#39;&#39;Parse the ``HTTP_AUTHORIZATION`` key in the ``environ``.</span>
 
 <span class="sd">    If available, set the ``http.authorization`` key in ``environ`` with</span>
-<span class="sd">    the result obtained from</span>
-<span class="sd">    :func:`pulsar.apps.wsgi.auth.parse_authorization_header` function.</span>
+<span class="sd">    the result obtained from :func:`~.parse_authorization_header` function.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;http.authorization&#39;</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
@@ -162,7 +168,7 @@
 <span class="sd">    This middleware wait for the full body to be received before letting</span>
 <span class="sd">    other middleware to be processed.</span>
 
-<span class="sd">    Useful when using synchronous web-frameworks.</span>
+<span class="sd">    Useful when using synchronous web-frameworks such as :django:`django &lt;&gt;`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="n">_wait_for_body_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">))</span>
@@ -174,7 +180,21 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
         <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">chunk</span>
     <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-    <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="middleware_in_executor"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.middleware_in_executor">[docs]</a><span class="k">def</span> <span class="nf">middleware_in_executor</span><span class="p">(</span><span class="n">middleware</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Use this middleware to run a synchronous middleware in the event loop</span>
+<span class="sd">    executor.</span>
+
+<span class="sd">    Useful when using synchronous web-frameworks such as :django:`django &lt;&gt;`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">middleware</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">get_event_loop</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">middleware</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_</span></div>
 </pre></div>
 
           </div>

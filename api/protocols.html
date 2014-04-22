@@ -196,7 +196,7 @@ and adds a <a class="reference internal" href="#pulsar.async.protocols.PulsarPro
 <dl class="class">
 <dt id="pulsar.async.protocols.Connection">
 <em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Connection</tt><big>(</big><em>consumer_factory=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.async.protocols.Protocol" title="pulsar.async.protocols.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> to handle multiple request/response.</p>
+<dd><p>A <a class="reference internal" href="#pulsar.async.protocols.Protocol" title="pulsar.async.protocols.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> to handle multiple TCP requests/responses.</p>
 <p>It is a class which acts as bridge between a
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio-transport" title="(in Python v3.4)"><em class="xref std std-ref">transport</em></a> and a <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.
 It routes data arriving from the transport to the
@@ -685,7 +685,7 @@ to the pool.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> resulting in the connection.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> resulting in the connection.</td>
 </tr>
 </tbody>
 </table>

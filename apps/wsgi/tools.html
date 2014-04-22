@@ -82,13 +82,6 @@
 both server and the <a class="reference internal" href="../http.html#apps-http"><em>HTTP client</em></a>. Headers are collected using
 the <a class="reference internal" href="../../api/utilities.html#tools-http-headers"><em>Headers data structure</em></a> which exposes a
 list/dictionary-type interface.</p>
-<p>At runtime, pulsar checks if the <a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a> package is available.
-If this is the case, it switches the default HTTP parser
-to be the one provided by the <tt class="xref py py-mod docutils literal"><span class="pre">http_parser.paser</span></tt> module.
-To check if the C parser is the default parser:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">hasextensions</span>
-</pre></div>
-</div>
 </div>
 <div class="section" id="module-pulsar.apps.wsgi.auth">
 <span id="authentication"></span><h2>Authentication<a class="headerlink" href="#module-pulsar.apps.wsgi.auth" title="Permalink to this headline">¶</a></h2>
@@ -101,6 +94,26 @@ To check if the C parser is the default parser:</p>
 <dd><p>Exception when <tt class="docutils literal"><span class="pre">basic</span></tt> or <tt class="docutils literal"><span class="pre">digest</span></tt> authentication is required.</p>
 <p>This HttpException is raised with status code <tt class="docutils literal"><span class="pre">401</span></tt> and the extra
 <tt class="docutils literal"><span class="pre">WWW_Authenticate</span></tt> header if <tt class="docutils literal"><span class="pre">type</span></tt> is either <tt class="docutils literal"><span class="pre">basic</span></tt> or <tt class="docutils literal"><span class="pre">digest</span></tt>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="authorization-header-parser">
+<h3>Authorization header parser<a class="headerlink" href="#authorization-header-parser" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.apps.wsgi.auth.parse_authorization_header">
+<tt class="descclassname">pulsar.apps.wsgi.auth.</tt><tt class="descname">parse_authorization_header</tt><big>(</big><em>value</em>, <em>charset='utf-8'</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/auth.html#parse_authorization_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.auth.parse_authorization_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse an HTTP basic/digest authorisation header.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; the authorisation header to parse.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">either <cite>None</cite> if the header was invalid or
+not given, otherwise an <tt class="xref py py-class docutils literal"><span class="pre">Auth</span></tt> object.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -322,6 +335,7 @@ by various components in the <a class="reference internal" href="index.html#apps
 <li><a class="reference internal" href="#http-parsers">HTTP Parsers</a></li>
 <li><a class="reference internal" href="#module-pulsar.apps.wsgi.auth">Authentication</a><ul>
 <li><a class="reference internal" href="#httpauthenticate">HttpAuthenticate</a></li>
+<li><a class="reference internal" href="#authorization-header-parser">Authorization header parser</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.apps.wsgi.structures">Structures</a></li>

@@ -138,15 +138,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
 </div>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The event loop of this consumer.</span>
-
-<span class="sd">        The same as the :attr:`connection` event loop.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">_loop</span>
-
-    <span class="nd">@property</span>
 <div class="viewcode-block" id="ProtocolConsumer.request"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The request.</span>
 
@@ -435,7 +426,7 @@
 
 </div>
 <div class="viewcode-block" id="Connection"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection">[docs]</a><span class="k">class</span> <span class="nc">Connection</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`Protocol` to handle multiple request/response.</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`Protocol` to handle multiple TCP requests/responses.</span>
 
 <span class="sd">    It is a class which acts as bridge between a</span>
 <span class="sd">    :ref:`transport &lt;asyncio-transport&gt;` and a :class:`.ProtocolConsumer`.</span>
@@ -473,6 +464,7 @@
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">,</span> <span class="s">&#39;Consumer is not None&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span> <span class="o">=</span> <span class="n">consumer</span>
         <span class="n">consumer</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">consumer</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
         <span class="n">consumer</span><span class="o">.</span><span class="n">connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Connection.data_received"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -685,13 +677,13 @@
         <span class="sd">&#39;&#39;&#39;Stop serving the :attr:`.Server.sockets` and close all</span>
 <span class="sd">        concurrent connections.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">:</span>
-            <span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">,</span> <span class="bp">None</span>
-            <span class="n">server</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-            <span class="k">yield</span> <span class="bp">None</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_close_connections</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fired_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">:</span>
+                <span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">,</span> <span class="bp">None</span>
+                <span class="n">server</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">yield</span> <span class="bp">None</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_close_connections</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span>
-        <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">sockets</span> <span class="o">=</span> <span class="p">[]</span>
@@ -820,12 +812,12 @@
         <span class="sd">&#39;&#39;&#39;Stop serving the :attr:`.Server.sockets` and close all</span>
 <span class="sd">        concurrent connections.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transports</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fired_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">):</span>
             <span class="n">transports</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transports</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transports</span><span class="p">,</span> <span class="bp">None</span>
-            <span class="k">for</span> <span class="n">transport</span> <span class="ow">in</span> <span class="n">transports</span><span class="p">:</span>
-                <span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">transports</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">transport</span> <span class="ow">in</span> <span class="n">transports</span><span class="p">:</span>
+                    <span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span>
-        <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">sockets</span> <span class="o">=</span> <span class="p">[]</span>

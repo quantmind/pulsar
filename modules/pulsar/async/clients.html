@@ -132,7 +132,7 @@
 <span class="sd">        The connection is either a new one or retrieved from the</span>
 <span class="sd">        :attr:`available` connections in the pool.</span>
 
-<span class="sd">        :return: a :class:`.Future` resulting in the connection.</span>
+<span class="sd">        :return: a :class:`~asyncio.Future` resulting in the connection.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span>
         <span class="k">return</span> <span class="n">PoolConnection</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -172,8 +172,7 @@
         <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">is_socket_closed</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">sock</span><span class="p">):</span>
-                <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_connection_closed</span><span class="p">(</span><span class="n">connection</span><span class="p">):</span>
                 <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
@@ -186,6 +185,12 @@
             <span class="k">except</span> <span class="n">QueueFull</span><span class="p">:</span>
                 <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_connection_closed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_socket_closed</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">sock</span><span class="p">):</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="bp">False</span>
 
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>   <span class="c"># pragma    nocover</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">_maxsize</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>

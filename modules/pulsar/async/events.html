@@ -245,6 +245,10 @@
             <span class="n">event</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
         <span class="k">return</span> <span class="n">event</span>
 </div>
+    <span class="k">def</span> <span class="nf">fired_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">event</span><span class="o">.</span><span class="n">_fired</span> <span class="k">if</span> <span class="n">event</span> <span class="k">else</span> <span class="mi">0</span>
+
 <div class="viewcode-block" id="EventHandler.bind_event"><a class="viewcode-back" href="../../../api/events.html#pulsar.async.events.EventHandler.bind_event">[docs]</a>    <span class="k">def</span> <span class="nf">bind_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Register a ``callback`` with ``event``.</span>
 

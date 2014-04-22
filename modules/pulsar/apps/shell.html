@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.shell &mdash; pulsar 0.8.2-beta.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.8.2-beta.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar.apps" href="../apps.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/shell.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.shell</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;\</span>
+<span class="sd">An asynchronous shell for experimenting with pulsar on the command line.</span>
+<span class="sd">To use write a little script, lets call it ``pshell.py``::</span>
+
+<span class="sd">    from pulsar.apps.shell import PulsarShell</span>
+
+<span class="sd">    if __name__ == &#39;__main__&#39;:</span>
+<span class="sd">        PulsarShell().start()</span>
+
+<span class="sd">And run it::</span>
+
+<span class="sd">    python pshell.py</span>
+
+<span class="sd">.. module:: pulsar</span>
+
+<span class="sd">The shell has already ``pulsar``, :func:`get_actor`, :func:`spawn`,</span>
+<span class="sd">:func:`send` and the :class:`Actor` class in the global dictionary::</span>
+
+<span class="sd">    &gt;&gt;&gt; pulsar.__version__</span>
+<span class="sd">    0.8.0</span>
+<span class="sd">    &gt;&gt;&gt; actor = get_actor()</span>
+<span class="sd">    &gt;&gt;&gt; actor.info_state</span>
+<span class="sd">    &#39;running&#39;</span>
+<span class="sd">    &gt;&gt;&gt; a = spawn()</span>
+<span class="sd">    &gt;&gt;&gt; a.done()</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; proxy = a.result()</span>
+
+
+<span class="sd">Implementation</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: pulsar.apps.shell.PulsarShell</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">code</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+
+<span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span>
+
+
+<span class="k">if</span> <span class="n">ispy3k</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">decode_line</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">line</span>
+<span class="k">else</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
+
+    <span class="k">def</span> <span class="nf">decode_line</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">,</span> <span class="s">&quot;encoding&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">encoding</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">line</span>
+
+
+<span class="n">_pshell_help</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
+
+<span class="s">Welcome to Pulsar shell </span><span class="si">%s</span><span class="s">! This is an interactive help utility</span>
+
+<span class="s">pulsar is already imported in this shell therefore you can</span>
+<span class="s">use its API directly.</span>
+<span class="s">&#39;&#39;&#39;</span> <span class="o">%</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">__version__</span>
+
+
+<span class="k">class</span> <span class="nc">InteractiveConsole</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">InteractiveConsole</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
+
+    <span class="k">def</span> <span class="nf">pulsar_banner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cprt</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for &#39;</span>
+                <span class="s">&#39;more information.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">((</span><span class="s">&quot;Python </span><span class="si">%s</span><span class="s"> on </span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">Pulsar </span><span class="si">%s</span><span class="s"> is loaded</span><span class="se">\n</span><span class="s">&quot;</span>
+                 <span class="s">&quot;Type pulsar.help() for more information</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span> <span class="o">%</span>
+                <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">,</span> <span class="n">cprt</span><span class="p">,</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">__version__</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">banner</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Closely emulate the interactive Python console.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">ps1</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">ps1</span> <span class="o">=</span> <span class="s">&quot;&gt;&gt;&gt; &quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">ps2</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">ps2</span> <span class="o">=</span> <span class="s">&quot;... &quot;</span>
+        <span class="k">if</span> <span class="n">banner</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">banner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulsar_banner</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">banner</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_more</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">interact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="n">timeout</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_more</span><span class="p">:</span>
+                <span class="n">prompt</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">ps2</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">prompt</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">ps1</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">decode_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_input</span><span class="p">(</span><span class="n">prompt</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">EOFError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_more</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="PulsarShell"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell">[docs]</a><span class="k">class</span> <span class="nc">PulsarShell</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;shell&#39;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">loglevel</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;none&#39;</span><span class="p">],</span>
+                        <span class="n">process_name</span><span class="o">=</span><span class="s">&#39;Pulsar shell&#39;</span><span class="p">,</span>
+                        <span class="n">console_class</span><span class="o">=</span><span class="n">InteractiveConsole</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PulsarShell.monitor_start"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;make sure :ref:`workers &lt;setting-workers&gt;` and</span>
+<span class="sd">        :ref:`thread_workers &lt;setting-thread_workers&gt;` are both set to 1 and</span>
+<span class="sd">        :ref:`concurrency &lt;setting-concurrency&gt;` is ``thread``.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;thread_workers&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;concurrency&#39;</span><span class="p">,</span> <span class="s">&#39;thread&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="PulsarShell.worker_start"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>     <span class="c"># pragma    nocover</span>
+        <span class="sd">&#39;&#39;&#39;When the worker starts, create the :attr:`~.Actor.thread_pool`</span>
+<span class="sd">        and send the :meth:`interact` method to it.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">worker</span><span class="o">.</span><span class="n">executor</span><span class="p">()</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_shell</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">start_shell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="n">pulsar</span><span class="o">.</span><span class="n">help</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_help</span>
+        <span class="n">imported_objects</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;pshell&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="p">,</span>
+                            <span class="s">&#39;pulsar&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="p">,</span>
+                            <span class="s">&#39;get_actor&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">,</span>
+                            <span class="s">&#39;spawn&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">spawn</span><span class="p">,</span>
+                            <span class="s">&#39;send&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">send</span><span class="p">}</span>
+        <span class="n">imported_objects</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">worker</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;imported_objects&#39;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="k">try</span><span class="p">:</span>  <span class="c"># Try activating rlcompleter, because it&#39;s handy.</span>
+            <span class="kn">import</span> <span class="nn">readline</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
+            <span class="kn">import</span> <span class="nn">rlcompleter</span>
+            <span class="n">readline</span><span class="o">.</span><span class="n">set_completer</span><span class="p">(</span>
+                <span class="n">rlcompleter</span><span class="o">.</span><span class="n">Completer</span><span class="p">(</span><span class="n">imported_objects</span><span class="p">)</span><span class="o">.</span><span class="n">complete</span><span class="p">)</span>
+            <span class="n">readline</span><span class="o">.</span><span class="n">parse_and_bind</span><span class="p">(</span><span class="s">&quot;tab:complete&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">console</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">console_class</span><span class="p">(</span><span class="n">imported_objects</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+        <span class="n">worker</span><span class="o">.</span><span class="n">executor</span><span class="p">()</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PulsarShell.interact"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.interact">[docs]</a>    <span class="k">def</span> <span class="nf">interact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Handled by the :attr:`Actor.thread_pool`&#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">worker</span><span class="o">.</span><span class="n">executor</span><span class="p">()</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_show_help</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">_pshell_help</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../index.html">
+  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2014, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>

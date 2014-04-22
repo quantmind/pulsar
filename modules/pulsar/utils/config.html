@@ -763,15 +763,18 @@
     <span class="k">return</span> <span class="n">_validate_callable</span>
 
 
-<span class="k">def</span> <span class="nf">make_optparse_options</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">make_optparse_options</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">override</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Create a tuple of optparse options.&#39;&#39;&#39;</span>
     <span class="kn">from</span> <span class="nn">optparse</span> <span class="kn">import</span> <span class="n">make_option</span>
 
     <span class="k">class</span> <span class="nc">AddOptParser</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">add_argument</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s">&#39;const&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;store_const&#39;</span>
+                <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">make_option</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
-    <span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="n">apps</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">exclude</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="n">include</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="n">apps</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">exclude</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="o">**</span><span class="n">override</span><span class="p">)</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">AddOptParser</span><span class="p">()</span>
     <span class="n">config</span><span class="o">.</span><span class="n">add_to_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
@@ -1032,6 +1035,31 @@
 <span class="s">    &#39;&#39;&#39;</span>
 
 
+<span class="k">class</span> <span class="nc">UseGreenlet</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;greenlet&#39;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--greenlet&#39;</span><span class="p">]</span>
+    <span class="n">nargs</span> <span class="o">=</span> <span class="s">&#39;?&#39;</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
+<span class="s">    Use greenlet whenever possible.</span>
+<span class="s">    &#39;&#39;&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">PyCares</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;no_pycares&#39;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--no-pycares&#39;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_bool</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="s">&quot;store_true&quot;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
+<span class="s">    Switch off pycares DNS lookup.</span>
+
+<span class="s">    By default, pulsar uses pycares for its DNS lookups (if it is available).</span>
+<span class="s">    Use this flag to revert to the standard library dns resolver.</span>
+<span class="s">    &#39;&#39;&#39;</span>
+
 <span class="c">############################################################################</span>
 <span class="c">#    Worker Processes</span>
 <span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Worker Processes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
@@ -1108,10 +1136,11 @@
     <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
     <span class="n">default</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s">        The number of threads in an actor thread pool.</span>
+<span class="s">        The number of threads used by the actor event loop executor.</span>
 
-<span class="s">        The thread pool is used by actors to perform CPU intensive</span>
-<span class="s">        calculations. In this way the actor main thread is free to listen</span>
+<span class="s">        The executor is a thread pool used by the event loop to perform CPU</span>
+<span class="s">        intensive operations or when it needs to execute blocking calls.</span>
+<span class="s">        It allows the actor main thread to be free to listen</span>
 <span class="s">        to events on file descriptors and process them as quick as possible.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 

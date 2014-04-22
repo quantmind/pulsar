@@ -113,8 +113,7 @@ serve requests, instead they perform initialisation and sanity checks.</p>
 <tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">authorization_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#authorization_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.authorization_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_AUTHORIZATION</span></tt> key in the <tt class="docutils literal"><span class="pre">environ</span></tt>.</p>
 <p>If available, set the <tt class="docutils literal"><span class="pre">http.authorization</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with
-the result obtained from
-<tt class="xref py py-func docutils literal"><span class="pre">pulsar.apps.wsgi.auth.parse_authorization_header()</span></tt> function.</p>
+the result obtained from <a class="reference internal" href="tools.html#pulsar.apps.wsgi.auth.parse_authorization_header" title="pulsar.apps.wsgi.auth.parse_authorization_header"><tt class="xref py py-func docutils literal"><span class="pre">parse_authorization_header()</span></tt></a> function.</p>
 </dd></dl>
 
 </div>
@@ -126,7 +125,18 @@ the result obtained from
 <dd><p>Use this middleware to wait for the full body.</p>
 <p>This middleware wait for the full body to be received before letting
 other middleware to be processed.</p>
-<p>Useful when using synchronous web-frameworks.</p>
+<p>Useful when using synchronous web-frameworks such as <a class="reference external" href="https://www.djangoproject.com/">django</a>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="middleware-in-executor">
+<h2>Middleware in Executor<a class="headerlink" href="#middleware-in-executor" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pulsar.apps.wsgi.middleware.middleware_in_executor">
+<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">middleware_in_executor</tt><big>(</big><em>middleware</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#middleware_in_executor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.middleware_in_executor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this middleware to run a synchronous middleware in the event loop
+executor.</p>
+<p>Useful when using synchronous web-frameworks such as <a class="reference external" href="https://www.djangoproject.com/">django</a>.</p>
 </dd></dl>
 
 </div>
@@ -161,6 +171,7 @@ other middleware to be processed.</p>
 <li><a class="reference internal" href="#clean-path">Clean path</a></li>
 <li><a class="reference internal" href="#authorization">Authorization</a></li>
 <li><a class="reference internal" href="#wait-for-request-body">Wait for request body</a></li>
+<li><a class="reference internal" href="#middleware-in-executor">Middleware in Executor</a></li>
 </ul>
 </li>
 </ul>

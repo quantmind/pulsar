@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.greenio &mdash; pulsar 0.8.2-beta.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.8.2-beta.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar.apps" href="../apps.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/greenio.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.greenio</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Greenlet support facilitates the integration of synchronous</span>
+<span class="sd">third-party libraries into pulsar asynchronous framework.</span>
+<span class="sd">It requires the greenlet_ library.</span>
+
+<span class="sd">If you want to understand how integration works and you are unfamiliar with</span>
+<span class="sd">greenlets, check out the greenlet_ documentation first. On the other hand,</span>
+<span class="sd">if you need to use it in the context of :ref:`asynchronous psycopg2 &lt;psycopg2&gt;`</span>
+<span class="sd">connections for example, you can skip the implementation details.</span>
+
+<span class="sd">This application **does not use monkey patching** and therefore it</span>
+<span class="sd">works quite differently from implicit asynchronous libraries such as</span>
+<span class="sd">gevent_. All it does, it provides the user with a set</span>
+<span class="sd">of utilities for **explicitly** transferring execution from the main greenlet</span>
+<span class="sd">(the greenlet without any parent greenlet) to a child greenlet.</span>
+
+<span class="sd">API</span>
+<span class="sd">======</span>
+
+<span class="sd">Wait</span>
+<span class="sd">------</span>
+
+<span class="sd">.. autofunction:: wait</span>
+
+<span class="sd">Wait file descriptor</span>
+<span class="sd">-----------------------</span>
+
+<span class="sd">.. autofunction:: wait_fd</span>
+
+
+<span class="sd">Run in greenlet</span>
+<span class="sd">-------------------</span>
+
+<span class="sd">.. autofunction:: run_in_greenlet</span>
+
+
+<span class="sd">.. module:: pulsar.apps.greenio.pool</span>
+
+<span class="sd">Green Pool</span>
+<span class="sd">----------------</span>
+
+<span class="sd">.. autoclass:: GreenPool</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
+<span class="sd">Run in Pool</span>
+<span class="sd">----------------</span>
+
+<span class="sd">.. autoclass:: RunInPool</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
+
+<span class="sd">.. _psycopg2:</span>
+
+<span class="sd">Psycopg2</span>
+<span class="sd">===========</span>
+
+<span class="sd">.. automodule:: pulsar.apps.greenio.pg</span>
+
+
+<span class="sd">.. _greenlet: http://greenlet.readthedocs.org/</span>
+<span class="sd">.. _gevent: http://www.gevent.org/</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Future</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isgeneratorfunction</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+
+<span class="kn">import</span> <span class="nn">greenlet</span>
+
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar.async.futures</span> <span class="kn">import</span> <span class="n">Task</span><span class="p">,</span> <span class="n">chain_future</span>
+<span class="kn">from</span> <span class="nn">pulsar.async.threads</span> <span class="kn">import</span> <span class="n">run_in_executor</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">Global</span>
+
+<span class="kn">from</span> <span class="nn">.pool</span> <span class="kn">import</span> <span class="n">GreenPool</span><span class="p">,</span> <span class="n">RunInPool</span>
+<span class="kn">from</span> <span class="nn">.local</span> <span class="kn">import</span> <span class="n">local</span>
+
+
+<span class="k">class</span> <span class="nc">PulsarGreenlet</span><span class="p">(</span><span class="n">greenlet</span><span class="o">.</span><span class="n">greenlet</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">GreenTask</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;An :class:`asyncio.Task` for running synchronous code in greenlets.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">_greenlet</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_greenlet</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># Means that the task is not currently in a suspended greenlet</span>
+            <span class="c"># waiting for results</span>
+            <span class="k">assert</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span>
+            <span class="n">gl</span> <span class="o">=</span> <span class="n">PulsarGreenlet</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">GreenTask</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_step</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_greenlet</span> <span class="o">=</span> <span class="n">gl</span>
+            <span class="n">gl</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_greenlet</span><span class="o">.</span><span class="n">parent</span>
+            <span class="k">assert</span> <span class="n">gl</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_greenlet</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="n">gl</span><span class="o">.</span><span class="n">switch</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+
+        <span class="c"># There no waiting future</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fut_waiter</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_greenlet</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+<div class="viewcode-block" id="run_in_greenlet"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.run_in_greenlet">[docs]</a><span class="k">def</span> <span class="nf">run_in_greenlet</span><span class="p">(</span><span class="nb">callable</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Decorator to run a ``callable`` on a new greenlet.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">gr</span> <span class="o">=</span> <span class="n">PulsarGreenlet</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">yield</span> <span class="n">result</span><span class="p">))</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_</span>
+
+</div>
+<div class="viewcode-block" id="wait_fd"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.wait_fd">[docs]</a><span class="k">def</span> <span class="nf">wait_fd</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">read</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Wait for an event on file descriptor ``fd``.</span>
+
+<span class="sd">    :param fd: file descriptor</span>
+<span class="sd">    :param read=True: wait for a read event if ``True``, otherwise a wait</span>
+<span class="sd">        for write event.</span>
+
+<span class="sd">    Check how this function is used in the :func:`.psycopg2_wait_callback`</span>
+<span class="sd">    function.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">assert</span> <span class="n">parent</span><span class="p">,</span> <span class="s">&#39;&quot;wait_fd&quot; must be called by greenlet with a parent&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">fileno</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">fileno</span> <span class="o">=</span> <span class="n">fd</span>
+    <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
+    <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
+    <span class="c"># When the event on fd occurs switch back to the current greenlet</span>
+    <span class="k">if</span> <span class="n">read</span><span class="p">:</span>
+        <span class="n">loop</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">fileno</span><span class="p">,</span> <span class="n">_done_wait_fd</span><span class="p">,</span> <span class="n">fileno</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">read</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">loop</span><span class="o">.</span><span class="n">add_writer</span><span class="p">(</span><span class="n">fileno</span><span class="p">,</span> <span class="n">_done_wait_fd</span><span class="p">,</span> <span class="n">fileno</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">read</span><span class="p">)</span>
+    <span class="c"># switch back to parent greenlet</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="wait"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.wait">[docs]</a><span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Wait for a coroutine or a future to complete.</span>
+
+<span class="sd">    This method must be called from a greenlet other than the main one</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">assert</span> <span class="n">parent</span><span class="p">,</span> <span class="s">&#39;Waiter cannot be initialised in main greenlet&#39;</span>
+    <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_done_wait_fd</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">read</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">read</span><span class="p">:</span>
+        <span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">remove_writer</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+    <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../index.html">
+  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2014, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>
