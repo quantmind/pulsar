@@ -42,6 +42,11 @@ Wait for request body
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: wait_for_body_middleware
 
+
+Middleware in Executor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: middleware_in_executor
+
 '''
 import re
 from functools import wraps
@@ -76,8 +81,7 @@ def authorization_middleware(environ, start_response=None):
     '''Parse the ``HTTP_AUTHORIZATION`` key in the ``environ``.
 
     If available, set the ``http.authorization`` key in ``environ`` with
-    the result obtained from
-    :func:`pulsar.apps.wsgi.auth.parse_authorization_header` function.
+    the result obtained from :func:`~.parse_authorization_header` function.
     '''
     key = 'http.authorization'
     c = environ.get(key)
@@ -93,7 +97,7 @@ def wait_for_body_middleware(environ, start_response=None):
     This middleware wait for the full body to be received before letting
     other middleware to be processed.
 
-    Useful when using synchronous web-frameworks.
+    Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
     if environ['wsgi.input']:
         return async(_wait_for_body_middleware(environ, start_response))
@@ -111,7 +115,7 @@ def middleware_in_executor(middleware):
     '''Use this middleware to run a synchronous middleware in the event loop
     executor.
 
-    Useful when using synchronous web-frameworks.
+    Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
 
     @wraps(middleware)

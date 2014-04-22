@@ -11,13 +11,13 @@ from greenlet import getcurrent
 
 class _localimpl:
     """A class managing greenelt-local dicts"""
-    __slots__ = 'key', 'dicts', 'localargs', 'locallock', '__weakref__'
+    __slots__ = ('key', 'dicts', 'localargs', 'locallock', '__weakref__')
 
     def __init__(self):
         # The key used in the Thread objects' attribute dicts.
         # We keep it a string for speed but make it unlikely to clash with
         # a "real" attribute.
-        self.key = '_greenelt_local._localimpl.' + str(id(self))
+        self.key = '_greenlet_local._localimpl.' + str(id(self))
         # { id(Thread) -> (ref(Thread), thread-local dict) }
         self.dicts = {}
 
@@ -70,8 +70,8 @@ def _patch(self):
         yield
 
 
-class local:
-    __slots__ = '_local__impl', '__dict__'
+class local(object):
+    __slots__ = ('_local__impl', '__dict__')
 
     def __new__(cls, *args, **kw):
         if (args or kw) and (cls.__init__ is object.__init__):

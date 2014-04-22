@@ -5,6 +5,8 @@ Ver. 0.8.2 - Development
 * :class:`.ProtocolConsumer` has its own ``_loop`` attribute rather than
   obtaining indirectly from the underling connection. This avoids several
   logging errors when a connection is dropped.
+* Utilities to execute postgresql queries via psycopg2_ in asynchronous mode
+  via the :mod:`~pulsar.apps.greenio` module.
 * :ref:`Django pulse application <apps-pulse>` can be run asynchronously
   when using PostgreSql database. It requires the greenlet_ module.
 
@@ -484,3 +486,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _asyncio: http://www.python.org/dev/peps/pep-3156/
 .. _cauchdb: http://couchdb.apache.org/
 .. _greenlet: http://greenlet.readthedocs.org/
+.. _psycopg2: http://pythonhosted.org/psycopg2/

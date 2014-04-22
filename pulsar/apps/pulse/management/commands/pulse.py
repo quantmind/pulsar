@@ -3,22 +3,11 @@ import sys
 
 import pulsar
 from pulsar import Setting
-from pulsar.utils.importer import module_attribute
-from pulsar.apps.wsgi import (WSGIServer, LazyWsgi, WsgiHandler,
-                              wait_for_body_middleware,
-                              middleware_in_executor)
-
-try:
-    from pulsar.apps import greenio
-    from pulsar.apps.greenio import pg, local
-except ImportError:
-    greenio = None
-    pg = None
+from pulsar.apps.wsgi import WSGIServer
+from pulsar.apps.pulse import Wsgi
 
 from django.core.management.base import (BaseCommand, CommandError,
                                          OutputWrapper, handle_default_options)
-from django.core.wsgi import get_wsgi_application
-from django.db import connections
 
 
 class PulseAppName(Setting):
@@ -30,26 +19,6 @@ class PulseAppName(Setting):
     desc = """\
         Name for the django pulse application
         """
-
-
-class Wsgi(LazyWsgi):
-    cfg = None
-
-    def setup(self, environ=None):
-        from django.conf import settings
-        app = get_wsgi_application()
-        green_workers = self.cfg.greenlet if self.cfg else 0
-        if greenio and green_workers:
-            if pg:
-                pg.make_asynchronous()
-            app = greenio.RunInPool(app, green_workers)
-            self.green_safe_connections()
-        else:
-            app = middleware_in_executor(app)
-        return WsgiHandler((wait_for_body_middleware, app))
-
-    def green_safe_connections(self):
-        connections._connections = local()
 
 
 class Command(BaseCommand):

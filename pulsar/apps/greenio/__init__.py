@@ -7,7 +7,28 @@ It requires the greenlet_ library.
 API
 ======
 
+Wait
+------
+
+.. autofunction:: wait
+
+Wait file descriptor
+-----------------------
+
 .. autofunction:: wait_fd
+
+
+Run in greenlet
+-------------------
+
+.. autofunction:: run_in_greenlet
+
+
+Psycopg2
+===========
+
+.. automodule:: pulsar.apps.greenio.pg
+
 
 .. _greenlet: http://greenlet.readthedocs.org/
 '''
@@ -56,11 +77,12 @@ class GreenTask(Task):
             self._greenlet = None
 
 
-def run_in_greenlet(method):
-
-    @wraps(method)
+def run_in_greenlet(callable):
+    '''Decorator to run a ``callable`` on a new greenlet.
+    '''
+    @wraps(callable)
     def _(*args, **kwargs):
-        gr = PulsarGreenlet(method)
+        gr = PulsarGreenlet(callable)
         result = gr.switch(*args, **kwargs)
         while isinstance(result, Future):
             result = gr.switch((yield result))
@@ -69,28 +91,15 @@ def run_in_greenlet(method):
     return _
 
 
-class middleware_in_greenlet:
-    '''Run a function on a separate greenlet
-    '''
-    def __init__(self, middleware, loop=None):
-        self._loop = loop or asyncio.get_event_loop()
-        self._middleware = middleware
-
-    @task
-    def __call__(self, *args, **kwargs):
-        gr = PulsarGreenlet(self._middleware)
-        result = gr.switch(*args, **kwargs)
-        while isinstance(result, Future):
-            result = gr.switch((yield result))
-        coroutine_return(result)
-
-
 def wait_fd(fd, read=True):
     '''Wait for an event on file descriptor ``fd``.
 
     :param fd: file descriptor
     :param read=True: wait for a read event if ``True``, otherwise a wait
-        for write event
+        for write event.
+
+    Check how this function is used in the :func:`.psycopg2_wait_callback`
+    function.
     '''
     current = greenlet.getcurrent()
     parent = current.parent
