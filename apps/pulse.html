@@ -99,10 +99,22 @@ is a pool of threads) one uses the
 following command:</p>
 <div class="highlight-python"><pre>python manage.py pulse -w 4 --thread-workers 20</pre>
 </div>
-<p>will run four <a class="reference internal" href="../design.html#concurrency"><em>processed base actors</em></a>, each with
+<p>will run four <a class="reference internal" href="../design.html#concurrency"><em>process base actors</em></a>, each with
 an executor with up to 20 threads.</p>
 <div class="section" id="greenlets">
 <h2>Greenlets<a class="headerlink" href="#greenlets" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to run django in fully asynchronous mode, i.e. without
+running the middleware in the event loop executor.
+Currently, this is available when using <a class="reference external" href="http://www.postgresql.org/PostgreSql backend">http://www.postgresql.org/PostgreSql backend</a>
+only, and it requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet library</a>.</p>
+<p>To run django using greenlet support:</p>
+<div class="highlight-python"><pre>python manage.py pulse -w 4 --greenlet</pre>
+</div>
+<p>By default it will run the django middleware on a pool of 100 greenlets (and
+therefore approximately 100 separate database connections per actor). To
+adjust the number or greenlets:</p>
+<div class="highlight-python"><pre>python manage.py pulse -w 4 --greenlet 200</pre>
+</div>
 </div>
 <div class="section" id="wsgi-middleware">
 <h2>Wsgi middleware<a class="headerlink" href="#wsgi-middleware" title="Permalink to this headline">¶</a></h2>
