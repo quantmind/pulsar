@@ -83,6 +83,26 @@ A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="puls
 the higher level <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
 <div class="section" id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>To create a data <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> client one uses the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><tt class="xref py py-func docutils literal"><span class="pre">create_store()</span></tt></a>
+function with a valid <a class="reference internal" href="#connection-string"><em>connection string</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">name</span>
+<span class="go">&#39;redis&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">database</span>
+<span class="go">&#39;11&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">dns</span>
+<span class="go">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span>
+</pre></div>
+</div>
+<p>Additional parameters can be passed via the connection string or as key-valued
+parameters. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">,</span>
+<span class="go">                         namespace=&#39;test_&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">dns</span>
+<span class="go">&#39;redis://user:password@127.0.0.1:6500/11?namespace=test_&#39;</span>
+</pre></div>
+</div>
 <div class="section" id="connection-string">
 <span id="id1"></span><h3>Connection String<a class="headerlink" href="#connection-string" title="Permalink to this headline">¶</a></h3>
 <p>The connection string is a way to specify the various parameters for the
@@ -90,17 +110,13 @@ data store connection. All <a class="reference internal" href="#pulsar.apps.data
 of the form:</p>
 <div class="highlight-python"><pre>&lt;scheme&gt;://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;/&lt;database&gt;?param1=...&amp;param2=...</pre>
 </div>
-<p>backend to use. Redis supports the following
-parameters:</p>
+<p>where:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">db</span></tt>, the database number.</li>
-<li><tt class="docutils literal"><span class="pre">namespace</span></tt>, the namespace for all the keys used by the backend.</li>
-<li><tt class="docutils literal"><span class="pre">password</span></tt>, database password.</li>
-<li><tt class="docutils literal"><span class="pre">timeout</span></tt>, connection timeout (0 is an asynchronous connection).</li>
+<li><tt class="docutils literal"><span class="pre">schema</span></tt> is the store name</li>
+<li><tt class="docutils literal"><span class="pre">database</span></tt> is the database name (or number for redis)</li>
+<li><tt class="docutils literal"><span class="pre">username</span></tt> is an optional database username</li>
+<li><tt class="docutils literal"><span class="pre">password</span></tt> is an optional database password</li>
 </ul>
-<p>A full connection string could be:</p>
-<div class="highlight-python"><pre>redis://127.0.0.1:6379?db=3&amp;password=bla&amp;namespace=test.&amp;timeout=5</pre>
-</div>
 </div>
 </div>
 <div class="section" id="implement-a-store">
@@ -137,8 +153,13 @@ a valid <a class="reference internal" href="#pulsar.apps.data.store.PubSub" titl
 <dl class="function">
 <dt id="pulsar.apps.data.store.create_store">
 <tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">create_store</tt><big>(</big><em>url</em>, <em>loop=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#create_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.create_store" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new client <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> for a valid <tt class="docutils literal"><span class="pre">url</span></tt>.</p>
-<p>A valid <tt class="docutils literal"><span class="pre">url</span></tt> takes the following forms:</p>
+<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> for a valid <tt class="docutils literal"><span class="pre">url</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>url</strong> &#8211; <p>a valid <tt class="docutils literal"><span class="pre">url</span></tt> takes the following forms:</p>
 <p><a class="reference internal" href="stores.html#store-pulsar"><em>Pulsar datastore</em></a>:</p>
 <div class="highlight-python"><pre>pulsar://user:password@127.0.0.1:6410</pre>
 </div>
@@ -149,11 +170,7 @@ a valid <a class="reference internal" href="#pulsar.apps.data.store.PubSub" titl
 <div class="highlight-python"><pre>couchdb://user:password@127.0.0.1:6500/testdb
 https+couchdb://user:password@127.0.0.1:6500/testdb</pre>
 </div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+</li>
 <li><strong>loop</strong> &#8211; optional event loop, obtained by
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.4)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a> if not provided.
 To create a synchronous client pass a new event loop created via
@@ -162,7 +179,9 @@ In the latter case the event loop is employed only for synchronous
 type requests via the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.BaseEventLoop.run_until_complete" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">run_until_complete()</span></tt></a>
 method.</li>
 <li><strong>kw</strong> &#8211; additional key-valued parameters to pass to the <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
-initialisation method. These parameters are processed by the
+initialisation method. It can contains parameters such as
+<tt class="docutils literal"><span class="pre">database</span></tt>, <tt class="docutils literal"><span class="pre">user</span></tt> and <tt class="docutils literal"><span class="pre">password</span></tt> to override the
+<tt class="docutils literal"><span class="pre">url</span></tt> values. Additional parameters are processed by the
 <tt class="xref py py-meth docutils literal"><span class="pre">Store._init()</span></tt> method.</li>
 </ul>
 </td>
@@ -280,10 +299,36 @@ A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="puls
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.Store.create_database">
-<tt class="descname">create_database</tt><big>(</big><em>dbname</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.create_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.create_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new database in this store</p>
+<tt class="descname">create_database</tt><big>(</big><em>dbname=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.create_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.create_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new database in this store.</p>
 <p>By default it does nothing, stores must implement this method
 only if they support database creation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dbname</strong> &#8211; optional database name. If not supplied a
+database with <a class="reference internal" href="#pulsar.apps.data.store.Store.database" title="pulsar.apps.data.store.Store.database"><tt class="xref py py-attr docutils literal"><span class="pre">database</span></tt></a> is created.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.store.Store.delete_database">
+<tt class="descname">delete_database</tt><big>(</big><em>dbname=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.data.store.Store.delete_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a database <tt class="docutils literal"><span class="pre">dbname</span></tt></p>
+<p>By default it does nothing, stores must implement this method
+only if they support database deletion.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dbname</strong> &#8211; optional database name. If not supplied a
+database named <a class="reference internal" href="#pulsar.apps.data.store.Store.database" title="pulsar.apps.data.store.Store.database"><tt class="xref py py-attr docutils literal"><span class="pre">database</span></tt></a> is deleted.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">

@@ -80,10 +80,10 @@
 <li><tt class="docutils literal"><span class="pre">--pep8</span></tt> is now a command line options for the <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">test</span></tt></a>
 application</li>
 <li><a class="reference internal" href="api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> has its own <tt class="docutils literal"><span class="pre">_loop</span></tt> attribute rather than
-obtaining indirectly from the underling connection. This avoids several
-logging errors when a connection is dropped.</li>
-<li>Utilities to execute postgresql queries via <a class="reference external" href="http://pythonhosted.org/psycopg2/">psycopg2</a> in asynchronous mode
-via the <a class="reference internal" href="apps/greenio.html#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><tt class="xref py py-mod docutils literal"><span class="pre">greenio</span></tt></a> module.</li>
+obtaining indirectly from the underling <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a>.
+This avoids several logging errors when a connection is dropped.</li>
+<li>Added utilities to execute <a class="reference external" href="http://www.postgresql.org/">PostgreSql</a> queries via
+<a class="reference external" href="http://pythonhosted.org/psycopg2/">psycopg2</a> in asynchronous mode via the <a class="reference internal" href="apps/greenio.html#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><tt class="xref py py-mod docutils literal"><span class="pre">greenio</span></tt></a> module.</li>
 <li><a class="reference internal" href="apps/pulse.html#apps-pulse"><em>Django pulse application</em></a> can be run asynchronously
 when using PostgreSql database. It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet</a> module.</li>
 </ul>

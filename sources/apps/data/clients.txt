@@ -9,6 +9,27 @@ Datastore Clients
 Getting Started
 =====================
 
+To create a data :class:`.Store` client one uses the :func:`.create_store`
+function with a valid :ref:`connection string <connection-string>`::
+
+    >>> from pulsar.apps.data import create_store
+    >>> store = create_store('redis://user:password@127.0.0.1:6500/11')
+    >>> store.name
+    'redis'
+    >>> store.database
+    '11'
+    >>> store.dns
+    'redis://user:password@127.0.0.1:6500/11'
+
+Additional parameters can be passed via the connection string or as key-valued
+parameters. For example::
+
+    >>> store = create_store('redis://user:password@127.0.0.1:6500/11',
+                             namespace='test_')
+    >>> store.dns
+    'redis://user:password@127.0.0.1:6500/11?namespace=test_'
+
+
 .. _connection-string:
 
 Connection String
@@ -21,17 +42,12 @@ of the form::
     <scheme>://<username>:<password>@<host>/<database>?param1=...&param2=...
 
 
-backend to use. Redis supports the following
-parameters:
+where:
 
-* ``db``, the database number.
-* ``namespace``, the namespace for all the keys used by the backend.
-* ``password``, database password.
-* ``timeout``, connection timeout (0 is an asynchronous connection).
-
-A full connection string could be::
-
-    redis://127.0.0.1:6379?db=3&password=bla&namespace=test.&timeout=5
+* ``schema`` is the store name
+* ``database`` is the database name (or number for redis)
+* ``username`` is an optional database username
+* ``password`` is an optional database password
 
 
 Implement a Store

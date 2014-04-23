@@ -81,9 +81,11 @@ connections for example, you can skip the implementation details.</p>
 <p>This application <strong>does not use monkey patching</strong> and therefore it
 works quite differently from implicit asynchronous libraries such as
 <a class="reference external" href="http://www.gevent.org/">gevent</a>. All it does, it provides the user with a set
-of utilities for <strong>explicitly</strong> transferring execution from the main greenlet
-(the greenlet without any parent greenlet) to a child greenlet which
-execute the blocking call in a greenlet-friendly way.</p>
+of utilities for <strong>explicitly</strong> transferring execution from one greenlet
+to a another which execute the blocking call in a greenlet-friendly way.</p>
+<p>The caller has the responsibility that the blocking call is greenlet-friendly,
+i.e. it transfers the control of execution back to the parent greenlet when
+needed.</p>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="wait">
@@ -115,7 +117,9 @@ for write event.</li>
 </tr>
 </tbody>
 </table>
-<p>Check how this function is used in the <a class="reference internal" href="#pulsar.apps.greenio.pg.psycopg2_wait_callback" title="pulsar.apps.greenio.pg.psycopg2_wait_callback"><tt class="xref py py-func docutils literal"><span class="pre">psycopg2_wait_callback()</span></tt></a>
+<p>This function must be invoked from a coroutine with parent, therefore
+invoking it from the main greenlet will raise an exception.
+Check how this function is used in the <a class="reference internal" href="#pulsar.apps.greenio.pg.psycopg2_wait_callback" title="pulsar.apps.greenio.pg.psycopg2_wait_callback"><tt class="xref py py-func docutils literal"><span class="pre">psycopg2_wait_callback()</span></tt></a>
 function.</p>
 </dd></dl>
 
@@ -131,7 +135,7 @@ function.</p>
 
 </div>
 <div class="section" id="green-task">
-<h3>green task<a class="headerlink" href="#green-task" title="Permalink to this headline">¶</a></h3>
+<h3>Green task<a class="headerlink" href="#green-task" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.greenio.green_task">
 <tt class="descclassname">pulsar.apps.greenio.</tt><tt class="descname">green_task</tt><big>(</big><em>method</em><big>)</big><a class="headerlink" href="#pulsar.apps.greenio.green_task" title="Permalink to this definition">¶</a></dt>
@@ -265,7 +269,7 @@ The caller must be from a greenlet other than the main one.</p>
 <li><a class="reference internal" href="#wait">Wait</a></li>
 <li><a class="reference internal" href="#wait-file-descriptor">Wait file descriptor</a></li>
 <li><a class="reference internal" href="#run-in-greenlet">Run in greenlet</a></li>
-<li><a class="reference internal" href="#green-task">green task</a></li>
+<li><a class="reference internal" href="#green-task">Green task</a></li>
 <li><a class="reference internal" href="#green-pool">Green Pool</a></li>
 <li><a class="reference internal" href="#run-in-pool">Run in Pool</a></li>
 </ul>
