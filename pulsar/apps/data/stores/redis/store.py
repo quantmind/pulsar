@@ -109,6 +109,7 @@ class RedisStore(Store):
     def execute_transaction(self, transaction):
         '''Execute a :class:`.Transaction`
         '''
+        models = []
         pipe = self.pipeline()
         update_insert = set((Command.INSERT, Command.UPDATE))
         #
@@ -118,6 +119,7 @@ class RedisStore(Store):
                 pipe.execute(*command.args)
             elif action in update_insert:
                 model = command.args
+                models.append(model)
                 key = self.basekey(model._meta, model.id)
                 pipe.hmset(key, self.model_data(model, action))
             else:
@@ -127,6 +129,7 @@ class RedisStore(Store):
             if command.action == Command.INSERT:
                 model = command.args
                 model['_rev'] = 1
+        return models
 
     def get_model(self, manager, pk):
         key = '%s%s:%s' % (self.namespace, manager._meta.table_name,

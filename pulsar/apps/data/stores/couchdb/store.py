@@ -165,6 +165,7 @@ class CouchDBStore(CouchDBMixin, Store):
                     errors.append(CouchDbError(doc['error'], doc['reason']))
             if errors:
                 raise errors[0]
+        return models
 
     @wait_complete
     def get_model(self, manager, pkvalue):

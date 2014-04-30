@@ -82,6 +82,20 @@ Asynchronous Html
 Html Document
 ==================
 
+The :class:`.HtmlDocument` class is a python representation of an
+`HTML5 document`_, the latest standard for HTML.
+It can be used to build a web site page in a pythonic fashion rather than
+using template languages::
+
+    >>> from pulsar.apps.wsgi import HtmlDocument
+
+    >>> doc = HtmlDocument(title='My great page title')
+    >>> doc.head.add_meta(name="description", content=...)
+    >>> doc.head.scripts.append('jquery')
+    ...
+    >>> doc.body.append(...)
+
+
 Document
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -125,6 +139,7 @@ Html Factory
 .. autofunction:: html_factory
 
 
+.. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp
 '''
 import json as pyjson
 
@@ -239,11 +254,12 @@ class AsyncString(object):
     def append(self, child):
         '''Append ``child`` to the list of :attr:`children`.
 
-:param child: String, bytes or another :class:`AsyncString`. If it is an
-    :class:`AsyncString`, this instance will be set as its :attr:`parent`.
-    If ``child`` is ``None``, this method does nothing.
+        :param child: String, bytes or another :class:`.AsyncString`.
+            If it is an :class:`.AsyncString`, this instance will be
+            set as its :attr:`parent`.
+            If ``child`` is ``None``, this method does nothing.
 
-'''
+        '''
         self.insert(None, child)
 
     def prepend(self, child):
@@ -333,10 +349,8 @@ This is a shortcut for the :meth:`insert` method at index 0.
 
         If :ref:`asynchronous elements <tutorials-coroutine>` are included
         in the iterable, when called, they must result in strings.
-
         This method can be re-implemented by subclasses and should not be
         invoked directly.
-
         Use the :meth:`stream` method instead.
         '''
         if self._children:
@@ -359,22 +373,23 @@ This is a shortcut for the :meth:`insert` method at index 0.
         response.content = self.to_string(body)
         coroutine_return(response)
 
-    def to_string(self, stream):
-        '''Once the :class:`.Future`, returned by :meth:`content`
-        method, is ready, this method get called to transform the stream into
-        the content string. This method can be overwritten by derived classes.
+    def to_string(self, streams):
+        '''Called to transform the collection of
+        ``streams`` into the content string.
+        This method can be overwritten by derived classes.
 
-        :param stream: a collections containing ``strings/bytes`` used to
-            build the final ``string/bytes``.
+        :param streams: a collection (list or dictionary) containing
+            ``strings/bytes`` used to build the final ``string/bytes``.
         :return: a string or bytes
         '''
-        return to_string(''.join(stream_to_string(stream)))
+        return to_string(''.join(stream_to_string(streams)))
 
     def render(self, request=None):
         '''Render this string.
 
-        This method returns a string or a :class:`.Future` which results
-        in a string.
+        This method returns a string or a :class:`~asyncio.Future` which
+        results in a string. On the other hand, the callable method of
+        a :class:`.AsyncString` **always** returns a :class:`~asyncio.Future`.
         '''
         stream = multi_async(self.stream(request))
         if stream.done():
@@ -532,14 +547,13 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
             return self.__class__.__name__
 
     def append(self, child):
-        if child:
-            tag = child_tag(self._tag)
-            if tag:
-                if isinstance(child, Html):
-                    if child.tag != tag:
-                        child = Html(tag, child)
-                elif not child.startswith('<%s' % tag):
+        tag = child_tag(self._tag)
+        if tag and child not in (None, self):
+            if isinstance(child, Html):
+                if child.tag != tag:
                     child = Html(tag, child)
+            elif not child.startswith('<%s' % tag):
+                child = Html(tag, child)
         super(Html, self).append(child)
 
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
@@ -725,7 +739,7 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
 
 
 class Media(AsyncString):
-    '''A useful container of media links or scripts.
+    '''A container for both :class:`.Css` styles and :class:`.Scripts` links.
 
     .. attribute:: media_path
 
@@ -832,7 +846,7 @@ class Css(Media):
             {'all': [path1, ...],
              'print': [path2, ...]}
         '''
-        if value is not None:
+        if value not in (None, self):
             if isinstance(value, Html):
                 value = {'all': [value]}
             elif isinstance(value, str):
@@ -867,7 +881,7 @@ class Css(Media):
 
 
 class Scripts(Media):
-    '''A :class:`Media` container for javascript links.
+    '''A :class:`.Media` container for javascript links.
 
     Supports javascript Asynchronous Module Definition
     '''
@@ -889,6 +903,7 @@ class Scripts(Media):
         The script will be loaded using the ``require`` javascript package.
         '''
         for script in scripts:
+            script = script.strip()
             if script not in self.known_libraries:
                 script = self.absolute_path(script)
             required = self.required
@@ -902,7 +917,7 @@ class Scripts(Media):
             or relative path (does not start with ``http`` or ``/``), in which
             case the :attr:`Media.media_path` attribute is prepended.
         '''
-        if child:
+        if child not in (None, self):
             if is_string(child):
                 path = self.absolute_path(child)
                 script = Html('script', src=path,
@@ -939,12 +954,20 @@ var require = %s,
             yield '\n'
 
 
-class EmbeddedCss(Html):
+class Embedded(Html):
 
-    def append(self, child, media=None, type=None):
-        type = type or 'text/css'
-        child = Html('style', child, media=media, type=type or 'text/css')
-        super(EmbeddedCss, self).append(child)
+    def __init__(self, tag, **kwargs):
+        super(Embedded, self).__init__(None, **kwargs)
+        self._child_tag = tag
+        self._child_kwargs = kwargs
+
+    def append(self, child, media=None):
+        if not isinstance(child, Html):
+            kwargs = self._child_kwargs
+            if media:
+                kwargs['media'] = media
+            child = Html(self._child_tag, child, **kwargs)
+        super(Embedded, self).append(child)
 
 
 class Head(Html):
@@ -967,18 +990,29 @@ class Head(Html):
 
     .. attribute:: links
 
-        A container of ``css`` links. Rendered just after the :attr:`meta`
-        container.
+        A :class:`.Css` container.
+
+        Rendered just after the :attr:`meta` container.
 
     .. attribute:: embedded_css
 
-        Css embedded in the html page
+        Css embedded in the html page.
+
+        Rendered just after the :attr:`links` container
+
+    .. attribute:: embedded_js
+
+        Javascript embedded in the html page.
+
+        Rendered just after the :attr:`embedded_css` container
 
     .. attribute:: scripts
 
-        A container of Javascript files to render at the end of the body tag.
-        To add new javascript files simply use the append method on
-        this attribute. You can add relative paths::
+        A :class:`.Scripts` container.
+
+        Rendered just after the :attr:`embedded_js` container.
+        To add new javascript files simply use the :meth:`~.Scripts.append`
+        method on this attribute. You can add relative paths::
 
             html.head.scripts.append('/media/js/scripts.js')
 
@@ -996,7 +1030,8 @@ class Head(Html):
         self.append(Html(None, meta))
         self.append(Css(media_path, minified=minified,
                         known_libraries=known_libraries))
-        self.append(EmbeddedCss(None))
+        self.append(Embedded('style', type='text/css'))
+        self.append(Embedded('script', type='text/javascript'))
         self.append(Scripts(media_path, minified=minified,
                             known_libraries=known_libraries,
                             dependencies=scripts_dependencies,
@@ -1007,9 +1042,6 @@ class Head(Html):
     def meta(self):
         return self._children[0]
 
-    def __get_links(self):
-        return self._children[1]
-
     def __get_media_path(self):
         return self.links.media_path
 
@@ -1017,6 +1049,9 @@ class Head(Html):
         self.links.media_path = media_path
         self.scripts.media_path = media_path
     media_path = property(__get_media_path, __set_media_path)
+
+    def __get_links(self):
+        return self._children[1]
 
     def __set_links(self, links):
         self._children[1] = links
@@ -1027,13 +1062,20 @@ class Head(Html):
 
     def __set_css(self, css):
         self._children[2] = css
-    embedded_css = property(__get_css, __set_css, doc='Embedded css rules.')
+    embedded_css = property(__get_css, __set_css)
 
-    def __get_scripts(self):
+    def __get_js(self):
         return self._children[3]
 
+    def __set_js(self, css):
+        self._children[3] = js
+    embedded_js = property(__get_js, __set_js)
+
+    def __get_scripts(self):
+        return self._children[4]
+
     def __set_scripts(self, scripts):
-        self._children[3] = scripts
+        self._children[4] = scripts
     scripts = property(__get_scripts, __set_scripts)
 
     def do_stream(self, request):

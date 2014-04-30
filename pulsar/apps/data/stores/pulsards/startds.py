@@ -27,10 +27,9 @@ def start_pulsar_ds(arbiter, host, workers=0):
 
 
 def start_store(url, workers=0, **kw):
-    '''Equivalent to :func:`create_store` for most cases excepts when the
+    '''Equivalent to :func:`.create_store` for most cases excepts when the
     ``url`` is for a pulsar store not yet started.
-
-    In this case, the a :class:`.PulsarDS` is started.
+    In this case, a :class:`.PulsarDS` is started.
     '''
     store = create_store(url, **kw)
     if store.name == 'pulsar':

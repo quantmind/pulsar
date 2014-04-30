@@ -454,7 +454,8 @@ class Application(Configurator):
                 actor = pulsar.arbiter(cfg=self.cfg.clone())
             else:
                 self.update_arbiter_params(actor)
-            self.cfg.set('exc_id', actor.cfg.exc_id)
+            if not self.cfg.exc_id:
+                self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
                 start = Future(loop=actor._loop)
                 actor.bind_event('start', partial(self._add_monitor, start))

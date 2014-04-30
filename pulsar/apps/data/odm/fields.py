@@ -111,6 +111,7 @@ class Field(UnicodeMixin):
     '''
     repr_type = 'unknown'
     primary_key = False
+    autoincrement = False
     required = True
     to_python = None
     index = False
@@ -224,7 +225,8 @@ class CharField(Field):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.String, primary_key=self.primary_key)
+        return s.Column(s.String, primary_key=self.primary_key,
+                        default=self._default, nullable=not self.required)
 
 
 class AutoIdField(Field):
@@ -232,7 +234,8 @@ class AutoIdField(Field):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.Integer, primary_key=self.primary_key)
+        return s.Column(s.Integer, primary_key=self.primary_key,
+                        default=self._default, nullable=not self.required)
 
 
 class IntegerField(Field):
@@ -255,7 +258,9 @@ class IntegerField(Field):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.Integer, primary_key=self.primary_key)
+        return s.Column(s.Integer, primary_key=self.primary_key,
+                        autoincrement=self.autoincrement,
+                        default=self._default, nullable=not self.required)
 
 
 class BooleanField(Field):
@@ -276,7 +281,9 @@ class BooleanField(Field):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.Boolean, primary_key=self.primary_key)
+        return s.Column(s.Boolean, primary_key=self.primary_key,
+                        default=self._default,
+                        nullable=not self.required)
 
 
 class FloatField(Field):
@@ -298,7 +305,8 @@ class FloatField(Field):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.Float)
+        return s.Column(s.Float, default=self._default,
+                        nullable=not self.required)
 
 
 class DateField(Field):
@@ -330,7 +338,8 @@ class DateField(Field):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.Date)
+        return s.Column(s.Date, default=self._default,
+                        nullable=not self.required)
 
 
 class DateTimeField(DateField):
@@ -348,7 +357,8 @@ class DateTimeField(DateField):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.DateTime)
+        return s.Column(s.DateTime, default=self._default,
+                        nullable=not self.required)
 
 
 class PickleField(Field):
@@ -385,7 +395,8 @@ class PickleField(Field):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.PickleType)
+        return s.Column(s.PickleType, default=self._default,
+                        nullable=not self.required)
 
 
 class JSONField(CharField):
@@ -491,7 +502,8 @@ class JSONField(CharField):
 
     def sql_alchemy_column(self):
         s = sql()
-        return s.Column(s.Text)
+        return s.Column(s.Text, default=self._default,
+                        nullable=not self.required)
 
 
 class ForeignKey(Field):

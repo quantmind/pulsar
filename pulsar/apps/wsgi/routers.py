@@ -70,8 +70,7 @@ from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
-from pulsar import (Http404, PermissionDenied, HttpException, HttpRedirect,
-                    multi_async)
+from pulsar import Http404, HttpException, HttpRedirect
 
 from .route import Route
 from .utils import wsgi_request
@@ -618,7 +617,7 @@ class MediaRouter(MediaMixin):
             if self._show_indexes:
                 return self.directory_index(request, fullpath)
             else:
-                raise PermissionDenied
+                raise Http404
         #
         filename = os.path.basename(fullpath)
         if '.' not in filename and self._default_suffix:

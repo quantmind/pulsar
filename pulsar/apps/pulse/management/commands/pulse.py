@@ -28,7 +28,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if args:
             raise CommandError('pulse --help for usage')
-        app_name = options.get('pulse-app-name')
+        app_name = options.get('pulse_app_name')
         callable = Wsgi()
         if options.pop('dryrun', False) is True:  # used for testing
             return callable

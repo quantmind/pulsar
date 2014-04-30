@@ -360,13 +360,16 @@ def check_server(name):
     cfg = get_actor().cfg
     cfgname = '%s_server' % name
     addr = cfg.get('%s_server' % name)
-    if ('%s://' % name) not in addr:
-        addr = '%s://%s' % (name, addr)
-    sync_store = create_store(addr, loop=new_event_loop())
-    try:
-        sync_store.ping()
-        return True
-    except Exception:
+    if addr:
+        if ('%s://' % name) not in addr:
+            addr = '%s://%s' % (name, addr)
+        sync_store = create_store(addr, loop=new_event_loop())
+        try:
+            sync_store.ping()
+            return True
+        except Exception:
+            return False
+    else:
         return False
 
 

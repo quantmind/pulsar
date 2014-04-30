@@ -17,6 +17,17 @@ class Odm(StoreTest):
     def tearDownClass(cls):
         return cls.store.delete_database()
 
+    def test_create_instance(self):
+        models = self.mapper(Task)
+        yield models.create_tables()
+        task = yield models.task.create(id='bjbhjscbhj', name='foo')
+        self.assertEqual(task.id, 'bjbhjscbhj')
+        data = task.to_json()
+        self.assertEqual(len(data), 2)
+        self.assertFalse(task._modified)
+        yield models.drop_tables()
+
+class d:
     def test_foreign_key_meta(self):
         models = self.mapper(User, Session)
         self.assertEqual(len(models.registered_models), 2)

@@ -12,9 +12,12 @@ connections for example, you can skip the implementation details.
 This application **does not use monkey patching** and therefore it
 works quite differently from implicit asynchronous libraries such as
 gevent_. All it does, it provides the user with a set
-of utilities for **explicitly** transferring execution from the main greenlet
-(the greenlet without any parent greenlet) to a child greenlet which
-execute the blocking call in a greenlet-friendly way.
+of utilities for **explicitly** transferring execution from one greenlet
+to a another which execute the blocking call in a greenlet-friendly way.
+
+The caller has the responsibility that the blocking call is greenlet-friendly,
+i.e. it transfers the control of execution back to the parent greenlet when
+needed.
 
 API
 ======
@@ -36,7 +39,7 @@ Run in greenlet
 .. autofunction:: run_in_greenlet
 
 
-green task
+Green task
 -------------
 
 .. autofunction:: green_task
@@ -131,6 +134,8 @@ def wait_fd(fd, read=True):
     :param read=True: wait for a read event if ``True``, otherwise a wait
         for write event.
 
+    This function must be invoked from a coroutine with parent, therefore
+    invoking it from the main greenlet will raise an exception.
     Check how this function is used in the :func:`.psycopg2_wait_callback`
     function.
     '''
