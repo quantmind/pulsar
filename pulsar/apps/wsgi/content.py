@@ -1088,6 +1088,32 @@ class Head(Html):
         meta = Html('meta', **kwargs)
         self.meta.append(meta)
 
+    def get_meta(self, name):
+        '''Get the ``content`` attribute of meta tag ``name``.
+
+        For example::
+
+            head.get_meta('decription')
+
+        returns the ``content`` attribute of the meta tag with attribute
+        ``name`` equal to ``description`` or ``None``.
+        '''
+        for child in self.meta._children:
+            if child.attr('name') == name:
+                return child.attr('content')
+
+    def replace_meta(self, name, content):
+        '''Replace the ``content`` attribute of meta tag ``name``
+
+        If the meta with ``name`` is not available, it is added, otherwise
+        its content is replaced.
+        '''
+        for child in self.meta._children:
+            if child.attr('name') == name:
+                child.attr('content', content)
+                return
+        self.add_meta(name=name, content=content)
+
     def __add__(self, other):
         if isinstance(other, Media):
             return Media(media=self).add(other)

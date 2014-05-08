@@ -14,7 +14,7 @@ INLINE_TAGS = set(('input', 'link', 'meta', 'hr'))
 # class and style are misssing here since they are treated separately
 GLOBAL_HTML_ATTRIBUTES = ('accesskey', 'contenteditable', 'contextmenu', 'dir',
                           'draggable', 'dropzone', 'hidden', 'id', 'lang',
-                          'spellcheck', 'tabindex', 'title', 'traslate')
+                          'spellcheck', 'tabindex', 'title', 'translate')
 HTML_ATTRIBUTES = {}
 HTML_CHILDREN_TAG = {}
 
@@ -48,7 +48,8 @@ HTML_ATTRIBUTES['input[type="submit"]'] = input_attr(
     'formaction', 'formenctype', 'formmethod', 'formtarget')
 HTML_ATTRIBUTES['link'] = e('href', 'hreflang', 'media', 'rel',
                             'sizes', 'type')
-HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
+HTML_ATTRIBUTES['meta'] = e('charset', 'content', 'http-equiv', 'name',
+                            'scheme')
 HTML_ATTRIBUTES['option'] = e('disabled', 'label', 'selected', 'value')
 HTML_ATTRIBUTES['script'] = e('async', 'charset', 'defer', 'src', 'type')
 HTML_ATTRIBUTES['style'] = e('media', 'scoped', 'type')

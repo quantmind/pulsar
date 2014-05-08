@@ -23,7 +23,21 @@ Pulsar HTTP client has no dependencies and an API similar to requests_::
     resp = yield client.get('https://github.com/timeline.json')
 
 ``resp`` is a :class:`HttpResponse` object which contains all the information
-about the request and, once finished, the result.
+about the request and, the result:
+
+    >>> request = resp.request
+    >>> print(request.headers)
+    Connection: Keep-Alive
+    User-Agent: pulsar/0.8.2-beta.1
+    Accept-Encoding: deflate, gzip
+    Accept: */*
+    >>> resp.status_code
+    200
+    >>> print(resp.headers)
+    ...
+
+The :attr:`~.ProtocolConsumer.request` attribute of :class:`HttpResponse`
+is an instance of :class:`.HttpRequest`.
 
 Cookie support
 ================
@@ -218,6 +232,7 @@ from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
+from .oauth import OAuth1, OAuth2
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
@@ -325,6 +340,8 @@ class HttpTunnel(RequestBase):
 class HttpRequest(RequestBase):
     '''An :class:`HttpClient` request for an HTTP resource.
 
+    This class has a similar interface to :class:`urllib.request.Request`.
+
     :param files: optional dictionary of name, file-like-objects.
     :param allow_redirects: allow the response to follow redirects.
 
@@ -338,7 +355,7 @@ class HttpRequest(RequestBase):
 
     .. attribute:: history
 
-        List of past :class:`HttpResponse` (collected during redirects).
+        List of past :class:`.HttpResponse` (collected during redirects).
 
     .. attribute:: wait_continue
 
@@ -374,7 +391,7 @@ class HttpRequest(RequestBase):
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary
         self.websocket_handler = websocket_handler
-        self.data = data if data is not None else {}
+        self._data = None
         self.files = files
         self.source_address = source_address
         self.new_parser()
@@ -388,6 +405,7 @@ class HttpRequest(RequestBase):
         self.unredirected_headers['host'] = host_no_default_port(self._scheme,
                                                                  self._netloc)
         client.set_proxy(self)
+        self.data = data
 
     @property
     def address(self):
@@ -428,18 +446,28 @@ class HttpRequest(RequestBase):
         return self.first_line()
     __str__ = __repr__
 
-    def _get_full_url(self):
+    @property
+    def full_url(self):
+        '''Full url of endpoint'''
         return urlunparse((self._scheme, self._netloc, self.path,
                            self.params, self.query, self.fragment))
 
-    def _set_full_url(self, url):
+    @full_url.setter
+    def full_url(self, url):
         self._scheme, self._netloc, self.path, self.params,\
             self.query, self.fragment = urlparse(url)
         if not self._netloc and self.method == 'CONNECT':
             self._scheme, self._netloc, self.path, self.params,\
                 self.query, self.fragment = urlparse('http://%s' % url)
 
-    full_url = property(_get_full_url, _set_full_url)
+    @property
+    def data(self):
+        '''Body of request'''
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        self._data = self._encode_data(data)
 
     def first_line(self):
         if not self._proxy and self.method != self.CONNECT:
@@ -483,13 +511,11 @@ class HttpRequest(RequestBase):
         :class:`HttpRequest` before sending it to the HTTP resource.
         '''
         # Call body before fist_line in case the query is changes.
-        self.body = body = self.encode_body()
         first_line = self.first_line()
-        if body:
-            self.headers['content-length'] = str(len(body))
-            if self.wait_continue:
-                self.headers['expect'] = '100-continue'
-                body = None
+        body = self.data
+        if body and self.wait_continue:
+            self.headers['expect'] = '100-continue'
+            body = None
         headers = self.headers
         if self.unredirected_headers:
             headers = self.unredirected_headers.copy()
@@ -499,30 +525,8 @@ class HttpRequest(RequestBase):
             buffer.append(body)
         return b''.join(buffer)
 
-    def encode_body(self):
-        '''Encode body or url if the :attr:`method` does not have body.
-
-        Called by the :meth:`encode` method.
-        '''
-        body = None
-        if self.method in ENCODE_URL_METHODS:
-            self.files = None
-            self._encode_url(self.data)
-        elif isinstance(self.data, bytes):
-            assert self.files is None, ('data cannot be bytes when files are '
-                                        'present')
-            body = self.data
-        elif is_string(self.data):
-            assert self.files is None, ('data cannot be string when files are '
-                                        'present')
-            body = to_bytes(self.data, self.charset)
-        elif self.data or self.files:
-            if self.files:
-                body, content_type = self._encode_files()
-            else:
-                body, content_type = self._encode_params()
-            self.headers['Content-Type'] = content_type
-        return body
+    def add_header(self, key, value):
+        self.headers[key] = value
 
     def has_header(self, header_name):
         '''Check ``header_name`` is in this request headers.
@@ -546,23 +550,50 @@ class HttpRequest(RequestBase):
         self.unredirected_headers[header_name] = header_value
 
     # INTERNAL ENCODING METHODS
-    def _encode_url(self, body):
-        query = self.query
-        if body:
-            body = native_str(body)
-            if isinstance(body, str):
-                body = parse_qsl(body)
+    def _encode_data(self, data):
+        body = None
+        if self.method in ENCODE_URL_METHODS:
+            self.files = None
+            self._encode_url(data)
+        elif isinstance(data, bytes):
+            assert self.files is None, ('data cannot be bytes when files are '
+                                        'present')
+            body = data
+        elif is_string(data):
+            assert self.files is None, ('data cannot be string when files are '
+                                        'present')
+            body = to_bytes(data, self.charset)
+        elif data or self.files:
+            if self.files:
+                body, content_type = self._encode_files(data)
             else:
-                body = mapping_iterator(body)
+                body, content_type = self._encode_params(data)
+            # set files to None, Important!
+            self.files = None
+            self.headers['Content-Type'] = content_type
+        if body:
+            self.headers['content-length'] = str(len(body))
+        else:
+            self.headers.pop('content-length', None)
+            self.headers.pop('content-type', None)
+        return body
+
+    def _encode_url(self, data):
+        query = self.query
+        if data:
+            data = native_str(data)
+            if isinstance(data, str):
+                data = parse_qsl(data)
+            else:
+                data = mapping_iterator(data)
             query = parse_qsl(query)
-            query.extend(body)
-            self.data = query
+            query.extend(data)
             query = urlencode(query)
         self.query = query
 
-    def _encode_files(self):
+    def _encode_files(self, data):
         fields = []
-        for field, val in mapping_iterator(self.data or ()):
+        for field, val in mapping_iterator(data or ()):
             if (is_string(val) or isinstance(val, bytes) or
                     not hasattr(val, '__iter__')):
                 val = [val]
@@ -597,19 +628,19 @@ class HttpRequest(RequestBase):
         #
         return encode_multipart_formdata(fields, charset=self.charset)
 
-    def _encode_params(self):
+    def _encode_params(self, data):
         content_type = self.headers.get('content-type')
         # No content type given
         if not content_type:
             if self.encode_multipart:
                 return encode_multipart_formdata(
-                    self.data, boundary=self.multipart_boundary,
+                    data, boundary=self.multipart_boundary,
                     charset=self.charset)
             else:
                 content_type = 'application/x-www-form-urlencoded'
-                body = urlencode(self.data).encode(self.charset)
+                body = urlencode(data).encode(self.charset)
         elif content_type in JSON_CONTENT_TYPES:
-            body = json.dumps(self.data).encode(self.charset)
+            body = json.dumps(data).encode(self.charset)
         else:
             raise ValueError("Don't know how to encode body for %s" %
                              content_type)
@@ -804,8 +835,10 @@ class HttpClient(AbstractClient):
 
     .. attribute:: encode_multipart
 
-        Flag indicating if body data is encoded using the
-        ``multipart/form-data`` encoding by default.
+        Flag indicating if body data is by default encoded using the
+        ``multipart/form-data`` or ``application/x-www-form-urlencoded``
+        encoding.
+
         It can be overwritten during a :meth:`request`.
 
         Default: ``True``

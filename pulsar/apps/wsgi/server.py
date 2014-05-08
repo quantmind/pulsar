@@ -61,6 +61,11 @@ def test_wsgi_environ(path='/', method=None, headers=None, extra=None,
     data = data.encode('latin1')
     parser.execute(data, len(data))
     request_headers = Headers(headers, kind='client')
+    # Add Host if not available
+    parsed = urlparse(path)
+    if parsed.netloc and 'host' not in request_headers:
+        request_headers['host'] = parsed.netloc
+    #
     headers = Headers()
     stream = StreamReader(request_headers, parser)
     extra = extra or {}
@@ -222,7 +227,7 @@ def wsgi_environ(stream, address, client_address, headers,
         host = host_and_port_default(url_scheme, host)
         environ['SERVER_NAME'] = socket.getfqdn(host[0])
         environ['SERVER_PORT'] = host[1]
-    path_info = parser.get_path()
+    path_info = request_uri.path
     if path_info is not None:
         if script_name:
             path_info = path_info.split(script_name, 1)[1]

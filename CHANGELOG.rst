@@ -12,6 +12,7 @@ Ver. 0.8.2 - Development
   It requires the :greenlet:`greenlet module <>`
 * Added :attr:`.Head.embedded_js` for adding javascript code directly in the
   :class:`.HtmlDocument`.
+* Improved management of ``meta`` tags in the HTML5 :class:`.Head` class.
 
 Ver. 0.8.1 - 2014-Apr-14
 ===========================

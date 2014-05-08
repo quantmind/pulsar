@@ -20,6 +20,13 @@ class WsgiRequestTests(unittest.TestCase):
         environ = wsgi.test_wsgi_environ(**kwargs)
         return wsgi.WsgiRequest(environ)
 
+    def test_absolute_path(self):
+        uri = 'http://bbc.co.uk/news/'
+        request = self.request(path=uri)
+        self.assertEqual(request.get('RAW_URI'), uri)
+        self.assertEqual(request.path, '/news/')
+        self.assertEqual(request.absolute_uri(), uri)
+
     def test_is_secure(self):
         request = self.request(secure=True)
         self.assertTrue(request.is_secure)

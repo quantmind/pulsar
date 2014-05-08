@@ -63,6 +63,7 @@ import sys
 from hashlib import sha1
 from inspect import getfile
 from functools import partial
+from collections import namedtuple
 
 import pulsar
 from pulsar import (get_actor, coroutine_return, Config, async,
@@ -73,6 +74,7 @@ __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
 
 when_monitor_start = []
+new_app = namedtuple('new_app', 'prefix params')
 
 
 def get_application(name):
@@ -173,7 +175,7 @@ class Configurator(object):
         the class :attr:`cfg.version` attribute.
     :parameter argv: Optional list of command line parameters to parse, if
         not supplied the :attr:`sys.argv` list will be used. The parameter
-        is only relevant if **parse_console** is ``True``.
+        is only relevant if ``parse_console`` is ``True``.
     :parameter parse_console: ``True`` (default) if the console parameters
         needs parsing.
     :parameter script: Optional string which set the :attr:`script`
@@ -202,7 +204,7 @@ class Configurator(object):
 
         Default: ``None``.
 
-    .. attribute:: parsed_console
+    .. attribute:: console_parsed
 
         ``True`` if this application parsed the console before starting.
 
@@ -213,7 +215,6 @@ class Configurator(object):
     '''
     argv = None
     name = None
-    parse_console = False
     cfg = Config()
 
     def __init__(self,
@@ -242,7 +243,7 @@ class Configurator(object):
         cfg.name = self.name
         cfg.application = cls
         self.argv = argv
-        self.parsed_console = parse_console
+        self.console_parsed = parse_console
         self.cfg.script = self.script = self.python_path(script)
 
     @property
@@ -302,10 +303,10 @@ class Configurator(object):
         Called during application initialisation. The parameters
         overriding order is the following:
 
-         * default parameters.
-         * the key-valued params passed in the initialisation.
-         * the parameters in the optional configuration file
-         * the parameters passed in the command line.
+        * default parameters.
+        * the key-valued params passed in the initialisation.
+        * the parameters in the optional configuration file
+        * the parameters passed in the command line.
         '''
         # get the actor if available and override default cfg values with those
         # from the actor
@@ -315,7 +316,7 @@ class Configurator(object):
             # actor available and running.
             # Unless argv is set, skip parsing
             if self.argv is None:
-                self.parsed_console = False
+                self.console_parsed = False
             # copy global settings
             self.cfg.copy_globals(actor.cfg)
         #
@@ -325,17 +326,17 @@ class Configurator(object):
                 if value is not None:
                     self.cfg.set(name, value)
         # parse console args
-        if self.parsed_console:
+        if self.console_parsed:
             parser = self.cfg.parser()
             opts = parser.parse_args(self.argv)
             config = getattr(opts, 'config', None)
             # set the config only if config is part of the settings
             if config is not None and self.cfg.config:
-                self.cfg.config = config
+                self.cfg.set('config', config)
         else:
             parser, opts = None, None
         #
-        # Load up the config file if its found.
+        # Load up the config file if found.
         self.cfg.params.update(self.cfg.import_from_module())
         #
         # Update the configuration with any command line settings.
@@ -367,7 +368,15 @@ class Configurator(object):
         with ``params`` and apply the ``prefix`` to non global
         settings.
         '''
-        cfg = cls.cfg.copy(name=name, prefix=prefix)
+        if isinstance(cls.cfg, Config):
+            cfg = cls.cfg.copy(name=name, prefix=prefix)
+        else:
+            cfg = cls.cfg.copy()
+            if name:
+                cfg[name] = name
+            if prefix:
+                cfg[prefix] = prefix
+            cfg = Config(**cfg)
         cfg.update_settings()
         cfg.update(params)
         return cfg
@@ -565,13 +574,15 @@ class MultiApp(Configurator):
             self.cfg.params.update(((s.name, s.value) for s in
                                     self.cfg.settings.values() if s.modified))
             self.cfg.settings = {}
-            self._apps = []
-            apps = OrderedDict(self.build())
-            if not apps:
-                return self._apps
+            self._apps = OrderedDict()
+            self._apps.update(self._build())
+            if not self._apps:
+                return []
             # Load the configuration (command line and config file)
             self.load_config()
             kwargs = self._get_app_params()
+            apps = self._apps
+            self._apps = []
             for App, name, callable, cfg in self._iter_app(apps):
                 settings = self.cfg.settings
                 new_settings = {}
@@ -610,21 +621,32 @@ class MultiApp(Configurator):
         params.update(self.cfg.params.copy())
         params.pop('name', None)    # remove the name
         prefix = prefix or ''
+        if not prefix and '' in self._apps:
+            prefix = App.name or App.__name__.lower()
         if not prefix:
             name = self.name
             cfg = App.create_config(params, name=name)
         else:
             name = '%s_%s' % (prefix, self.name)
             cfg = App.create_config(params, prefix=prefix, name=name)
+        # Add the config entry to the multi app config if not available
         for k in cfg.settings:
             if k not in self.cfg.settings:
                 self.cfg.settings[k] = cfg.settings[k]
-        return prefix, (App, name, callable, cfg)
+        return new_app(prefix, (App, name, callable, cfg))
 
     def __call__(self, actor=None):
-        return multi_async((app(actor) for app in self.apps()))
+        apps = [app(actor) for app in self.apps()]
+        return multi_async(apps, loop=get_actor()._loop)
 
     #    INTERNALS
+    def _build(self):
+        for app in self.build():
+            if not isinstance(app, new_app):
+                raise ImproperlyConfigured(
+                    'You must use new_app when building a MultiApp')
+            yield app
+
     def _iter_app(self, app_name_callables):
         main = app_name_callables.pop('', None)
         if not main:
@@ -638,8 +660,9 @@ class MultiApp(Configurator):
         for key, value in self.__dict__.items():
             if key.startswith('_'):
                 continue
-            elif key == 'parsed_console':
-                key = 'parse_console'
-            params[key] = value
+            elif key == 'console_parsed':
+                params['parse_console'] = not value
+            else:
+                params[key] = value
         params['load_config'] = False
         return params
