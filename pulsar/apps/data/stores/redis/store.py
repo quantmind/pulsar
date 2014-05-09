@@ -129,7 +129,7 @@ class RedisStore(Store):
             if command.action == Command.INSERT:
                 model = command.args
                 model['_rev'] = 1
-        return models
+        coroutine_return(models)
 
     def get_model(self, manager, pk):
         key = '%s%s:%s' % (self.namespace, manager._meta.table_name,

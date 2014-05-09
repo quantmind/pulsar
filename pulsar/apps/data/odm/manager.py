@@ -170,7 +170,6 @@ class Manager(AbstractQuery):
         '''Begin a new :class:`.Transaction`.'''
         return self._mapper.begin()
 
-    @wait_complete
     def create(self, *args, **kwargs):
         '''Create a new instance of :attr:`_model` and commit to server.
         '''
@@ -180,7 +179,6 @@ class Manager(AbstractQuery):
     new = create
     insert = new
 
-    @wait_complete
     def update(self, instance, **kwargs):
         '''Update an existing ``instance`` of :attr:`_model`.
 
@@ -191,7 +189,6 @@ class Manager(AbstractQuery):
             t.add(instance)
         return t.wait(lambda t: instance)
 
-    @wait_complete
     def save(self, instance):
         '''Save an ``instance`` of :attr:`_model`.
         '''
@@ -199,7 +196,6 @@ class Manager(AbstractQuery):
             t.add(instance)
         return t.wait(lambda t: instance)
 
-    @wait_complete
     def delete(self, instance):
         '''Delete an existing ``instance`` of :attr:`_model`
         '''

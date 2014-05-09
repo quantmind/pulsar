@@ -11,7 +11,8 @@ from . import auth
 
 
 class OAuth1(auth.Auth):
-    '''Add OAuth2 authentication to pulsar :class:`.HttpClient`'''
+    '''Add OAuth1 authentication to pulsar :class:`.HttpClient`
+    '''
 
     def __init__(self, client_id=None, client=None, **kw):
         if oauth1 is None:
@@ -40,4 +41,3 @@ class OAuth2(auth.Auth):
 
     def __call__(self, response, exc=None):
         raise NotImplementedError
-

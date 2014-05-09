@@ -1,5 +1,5 @@
-'''Pulsar ships with a thread safe :class:`HttpClient` class for multiple
-asynchronous HTTP requests.
+'''Pulsar ships with a thread safe, fully featured, :class:`.HttpClient`
+class for multiple asynchronous HTTP requests.
 
 To get started, one builds a client::
 
@@ -8,11 +8,11 @@ To get started, one builds a client::
 
 and than makes requests, in a coroutine::
 
-    >>> response = yield http.get('http://www.bbc.co.uk')
+    response = yield http.get('http://www.bbc.co.uk')
 
+or (only in python 3)::
 
-.. contents::
-    :local:
+    response = yield from http.get('http://www.bbc.co.uk')
 
 Making requests
 =================
@@ -20,24 +20,26 @@ Pulsar HTTP client has no dependencies and an API similar to requests_::
 
     from pulsar.apps import http
     client = http.HttpClient()
-    resp = yield client.get('https://github.com/timeline.json')
+    response = yield client.get('https://github.com/timeline.json')
 
-``resp`` is a :class:`HttpResponse` object which contains all the information
-about the request and, the result:
+``response`` is a :class:`HttpResponse` object which contains all the
+information about the request and the result:
 
-    >>> request = resp.request
+    >>> request = response.request
     >>> print(request.headers)
     Connection: Keep-Alive
     User-Agent: pulsar/0.8.2-beta.1
     Accept-Encoding: deflate, gzip
     Accept: */*
-    >>> resp.status_code
+    >>> response.status_code
     200
-    >>> print(resp.headers)
+    >>> print(response.headers)
     ...
 
 The :attr:`~.ProtocolConsumer.request` attribute of :class:`HttpResponse`
 is an instance of :class:`.HttpRequest`.
+
+.. _http-cookie:
 
 Cookie support
 ================
@@ -48,8 +50,8 @@ To disable cookie one can pass ``store_cookies=False`` during
 
 If a response contains some Cookies, you can get quick access to them::
 
-    >>> r = yield client.get(...)
-    >>> type(r.cookies)
+    >>> response = yield client.get(...)
+    >>> type(response.cookies)
     <type 'dict'>
 
 To send your own cookies to the server, you can use the cookies parameter::
@@ -62,11 +64,11 @@ To send your own cookies to the server, you can use the cookies parameter::
 Authentication
 ======================
 
-Headers authentication, either ``basic`` or ``digest``, can be added to a
+Authentication, either ``basic`` or ``digest``, can be added to a
 client by invoking
 
-* :meth:`HttpClient.add_basic_authentication` method
-* :meth:`HttpClient.add_digest_authentication` method
+* :meth:`HttpClient.add_basic_authentication` or
+* :meth:`HttpClient.add_digest_authentication`
 
 In either case the authentication is handled by adding additional headers
 to your requests.
@@ -93,21 +95,23 @@ Streaming
 
 This is an event-driven client, therefore streaming support is native.
 
-To stream data received from the client one can use either the
-``data_received`` or ``data_processed``
-:ref:`many time events <many-times-event>`. For example::
+To stream data received from the client one uses the
+:ref:`data_processed <http-many-time-events>` event handler.
+For example::
 
-    def new_data(response, data=None):
-        # response is the http response receiving data
-        # data are bytes
+    def new_data(response, **kw):
+        if response.status_code == 200:
+            data = response.recv_body()
+            # do something with this data
 
-    response = http.get(..., data_received=new_data)
+    response = http.get(..., data_processed=new_data)
 
-The ``on_finished`` callback on a :class:`HttpResponse` is only fired when
-the client has finished with the response.
+The response :meth:`~.HttpResponse.recv_body` method fetches the parsed body
+of the response and at the same time it flushes it.
 Check the :ref:`proxy server <tutorials-proxy-server>` example for an
 application using the :class:`HttpClient` streaming capabilities.
 
+.. _http-websocket:
 
 WebSocket
 ==============
@@ -126,8 +130,12 @@ The websocket response is obtained by::
 
     ws = yield http.get('ws://...', websocket_handler=Echo())
 
+.. _http-redirects:
+
 Redirects & Decompression
 =============================
+
+[TODO]
 
 Synchronous Mode
 =====================
@@ -138,9 +146,19 @@ Can be used in :ref:`synchronous mode <tutorials-synchronous>`::
 
 Events
 ==============
-Events are used to customise the behaviour of the Http client when certain
-headers or responses occurs. There are three
-:ref:`one time events <one-time-event>` associated with an
+:ref:`Events <event-handling>` control the behaviour of the
+:class:`.HttpClient` when certain conditions occur. They are useful for
+handling standard HTTP event such as :ref:`redirects <http-redirects>`,
+:ref:`websocket upgrades <http-websocket>`,
+:ref:`streaming <http-streaming>` or anything your application
+requires.
+
+.. _http-one-time-events:
+
+One time events
+~~~~~~~~~~~~~~~~~~~
+
+There are three :ref:`one time events <one-time-event>` associated with an
 :class:`HttpResponse` object:
 
 * ``pre_request``, fired before the request is sent to the server. Callbacks
@@ -152,9 +170,9 @@ headers or responses occurs. There are three
 
 Adding event handlers can be done at client level::
 
-    def myheader_handler(response):
-        ...
-        return response    # !important, must return the response
+    def myheader_handler(response, exc=None):
+        if not exc:
+            print('got headers!')
 
     client.bind_event('on_headers', myheader_handler)
 
@@ -164,9 +182,32 @@ or at request level::
 
 By default, the :class:`HttpClient` has one ``pre_request`` callback for
 handling `HTTP tunneling`_, three ``on_headers`` callbacks for
-handling *100 Continue*, *websocket upgrade* and *cookies*, and one
-``post_request`` callback for handling redirects.
+handling *100 Continue*, *websocket upgrade* and :ref:`cookies <http-cookie>`,
+and one ``post_request`` callback for handling redirects.
 
+.. _http-many-time-events:
+
+Many time events
+~~~~~~~~~~~~~~~~~~~
+
+In addition to the three :ref:`one time events <http-one-time-events>`,
+the Http client supports two additional
+events which can occur several times while processing a given response:
+
+* ``data_received`` is fired when new data has been received but not yet
+  parsed
+* ``data_processed`` is fired just after the data has been parsed by the
+  :class:`.HttpResponse`. This is the event one should bind to when performing
+  :ref:`http streaming <http-streaming>`.
+
+
+both events support handlers with a signature::
+
+    def handler(response, data=None):
+        ...
+
+where ``response`` is the :class:`.HttpResponse` handling the request and
+``data`` is the **raw** data received.
 
 API
 ==========
@@ -194,6 +235,23 @@ HTTP Response
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: HttpResponse
+   :members:
+   :member-order: bysource
+
+
+.. _module:: pulsar.apps.http.oauth
+
+OAuth1
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: OAuth1
+   :members:
+   :member-order: bysource
+
+OAuth2
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: OAuth2
    :members:
    :member-order: bysource
 
@@ -375,6 +433,8 @@ class HttpRequest(RequestBase):
                  decompress=True, version=None, wait_continue=False,
                  websocket_handler=None, cookies=None, **ignored):
         self.client = client
+        self._data = None
+        self.files = files
         self.inp_params = inp_params
         self.unredirected_headers = Headers(kind='client')
         self.timeout = timeout
@@ -391,8 +451,6 @@ class HttpRequest(RequestBase):
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary
         self.websocket_handler = websocket_handler
-        self._data = None
-        self.files = files
         self.source_address = source_address
         self.new_parser()
         if self._scheme in tls_schemes:
@@ -573,7 +631,7 @@ class HttpRequest(RequestBase):
             self.headers['Content-Type'] = content_type
         if body:
             self.headers['content-length'] = str(len(body))
-        else:
+        elif not 'expect' in self.headers:
             self.headers.pop('content-length', None)
             self.headers.pop('content-type', None)
         return body
@@ -1043,7 +1101,9 @@ class HttpClient(AbstractClient):
             # bind request-specific events
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
-            consumer = yield consumer.on_finished
+            response = yield consumer.on_finished
+            if response is not None:
+                consumer = response
             if consumer.request_again:
                 if isinstance(consumer.request_again, Exception):
                     raise consumer.request_again

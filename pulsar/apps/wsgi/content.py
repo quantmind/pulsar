@@ -141,6 +141,7 @@ Html Factory
 
 .. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp
 '''
+import os
 import json as pyjson
 
 from collections import Mapping, OrderedDict
@@ -159,6 +160,26 @@ from .html import html_visitor
 __all__ = ['AsyncString', 'Html',
            'Json', 'HtmlDocument',
            'html_factory', 'Media', 'Scripts', 'Css']
+
+
+import json
+
+release = 'beta'
+
+
+JS_DIR = os.path.join(os.path.dirname(__file__), 'js')
+
+
+def load_pkg(name, dir=None):
+    p = os.path
+    dir = dir or JS_DIR
+    with open(os.path.join(dir, name)) as f:
+        data = f.read()
+    return json.loads(data)
+
+
+media_libraries = load_pkg('libs.json')
+javascript_dependencies = load_pkg('deps.json')
 
 
 if ispy3k:
@@ -1026,6 +1047,9 @@ class Head(Html):
                  known_libraries=None, scripts_dependencies=None,
                  require_callback=None, **params):
         super(Head, self).__init__('head', **params)
+        if known_libraries is None:
+            known_libraries = media_libraries
+            scripts_dependencies = javascript_dependencies
         self.title = title
         self.append(Html(None, meta))
         self.append(Css(media_path, minified=minified,
@@ -1129,11 +1153,11 @@ class HtmlDocument(Html):
 
     .. attribute:: head
 
-        The :class:`Head` part of this :class:`HtmlDocument`
+        The :class:`.Head` part of this :class:`HtmlDocument`
 
     .. attribute:: body
 
-        The :class:`Body` part of this :class:`HtmlDocument`
+        The body part of this :class:`HtmlDocument`, an :class:`.Html` element
 
     .. _HTML5: http://www.w3schools.com/html/html5_intro.asp
     '''

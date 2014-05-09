@@ -122,8 +122,9 @@ class ProxyServerWsgiHandler(LocalMixin):
 
     def request_headers(self, environ):
         '''Fill request headers from the environ dictionary and
-        modify the headers via the list of :attr:`headers_middleware`.
-        The returned headers will be sent to the target uri.'''
+        modify them via the list of :attr:`headers_middleware`.
+        The returned headers will be sent to the target uri.
+        '''
         headers = Headers(kind='client')
         for k in environ:
             if k.startswith('HTTP_'):
@@ -142,7 +143,7 @@ class ProxyServerWsgiHandler(LocalMixin):
 ############################################################################
 #    RESPONSE OBJECTS
 class ProxyResponse(object):
-    '''Asynchronous wsgi response.
+    '''Asynchronous wsgi response for http requests
     '''
     _started = False
     _headers = None
@@ -167,7 +168,6 @@ class ProxyResponse(object):
     def pre_request(self, response, exc=None):
         self._started = True
         response.bind_event('data_processed', self.data_processed)
-        return response
 
     def error(self, exc):
         if not self._started:
@@ -215,7 +215,8 @@ class ProxyResponse(object):
 
 
 class ProxyTunnel(ProxyResponse):
-
+    '''Asynchronous wsgi response for https requests
+    '''
     def pre_request(self, response, exc=None):
         '''Start the tunnel.
 

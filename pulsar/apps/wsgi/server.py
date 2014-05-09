@@ -251,20 +251,20 @@ If the size is 0, this is the last chunk, and an extra CRLF is appended.
 
 
 def keep_alive(headers, version):
-        """ return True if the connection should be kept alive"""
-        conn = set((v.lower() for v in headers.get_all('connection', ())))
-        if "close" in conn:
-            return False
-        elif 'upgrade' in conn:
-            headers['connection'] = 'upgrade'
-            return True
-        elif "keep-alive" in conn:
-            return True
-        elif version == (1, 1):
-            headers['connection'] = 'keep-alive'
-            return True
-        else:
-            return False
+    """ return True if the connection should be kept alive"""
+    conn = set((v.lower() for v in headers.get_all('connection', ())))
+    if "close" in conn:
+        return False
+    elif 'upgrade' in conn:
+        headers['connection'] = 'upgrade'
+        return True
+    elif "keep-alive" in conn:
+        return True
+    elif version == (1, 1):
+        headers['connection'] = 'keep-alive'
+        return True
+    else:
+        return False
 
 
 def keep_alive_with_status(status, headers):

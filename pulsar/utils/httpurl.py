@@ -1117,11 +1117,6 @@ class HttpParser(object):
             if size is None or len(rest) < size + 2:
                 return None
             body_part, rest = rest[:size], rest[size:]
-            #if len(rest) < 2:
-            #    self.errno = INVALID_CHUNK
-            #    self.errstr = "chunk missing terminator [%s]" % data
-            #    return -1
-            # maybe decompress
             if self.__decompress_obj is not None:
                 body_part = self.__decompress_obj.decompress(body_part)
             self._partial_body = True

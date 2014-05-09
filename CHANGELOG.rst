@@ -13,6 +13,10 @@ Ver. 0.8.2 - Development
 * Added :attr:`.Head.embedded_js` for adding javascript code directly in the
   :class:`.HtmlDocument`.
 * Improved management of ``meta`` tags in the HTML5 :class:`.Head` class.
+* Added :class:`.OAuth1` and :class:`.OAuth2` hooks to the
+  :mod:`~pulsar.apps.http` module (alpha).
+* Bug fix in :class:`.HttpParser` when ``Transfer-Encoding=chunked``.
+* Added default javascript libraries for the :class:`.HtmlDocument`
 
 Ver. 0.8.1 - 2014-Apr-14
 ===========================
