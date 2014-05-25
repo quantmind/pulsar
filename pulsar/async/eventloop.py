@@ -1,8 +1,7 @@
 import os
-import asyncio
 from threading import current_thread
 
-from .access import thread_data, LOGGER
+from .access import asyncio, thread_data, LOGGER
 from .futures import Future, maybe_async, async, Task
 from .threads import run_in_executor, QueueEventLoop, set_as_loop
 from . import dns
@@ -33,10 +32,6 @@ class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
 
 
 asyncio.set_event_loop_policy(EventLoopPolicy())
-
-
-Handle = asyncio.Handle
-TimerHandle = asyncio.TimerHandle
 
 
 class LoopingCall(object):

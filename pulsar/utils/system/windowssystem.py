@@ -4,6 +4,7 @@ import ctypes
 import ctypes.wintypes
 import socket
 import getpass
+from multiprocessing import current_process
 
 from .base import *
 
@@ -15,7 +16,8 @@ __all__ = ['close_on_exec',
            'get_uid',
            'get_gid',
            'get_maxfd',
-           'set_owner_process']
+           'set_owner_process',
+           'current_process']
 
 # See: http://msdn.microsoft.com/en-us/library/ms724935(VS.85).aspx
 SetHandleInformation = ctypes.windll.kernel32.SetHandleInformation

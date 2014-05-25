@@ -471,6 +471,10 @@ class WsgiRequest(EnvironMixin):
         return self.environ.get('PATH_INFO', '/')
 
     @property
+    def uri(self):
+        return self.absolute_uri()
+
+    @property
     def method(self):
         '''The request method (uppercase).'''
         return self.environ['REQUEST_METHOD']

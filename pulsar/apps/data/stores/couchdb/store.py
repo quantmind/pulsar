@@ -32,9 +32,8 @@ CouchDBStore
 .. _CouchDB: http://couchdb.apache.org/
 '''
 from base64 import b64encode, b64decode
-from asyncio import Lock
 
-from pulsar import coroutine_return, wait_complete, multi_async
+from pulsar import asyncio, coroutine_return, wait_complete, multi_async
 from pulsar.utils.system import json
 from pulsar.apps.data import Store, Command, register_store
 from pulsar.utils.pep import zip
@@ -221,7 +220,7 @@ class CouchDBStore(CouchDBMixin, Store):
             try:
                 lock = self._lock
                 if not lock:
-                    self._lock = lock = Lock(loop=self._loop)
+                    self._lock = lock = asyncio.Lock(loop=self._loop)
                     yield lock.acquire()
                     url = '%s/_session' % self._address
                     response = yield self._http.post(

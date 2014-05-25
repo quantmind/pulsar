@@ -631,7 +631,7 @@ class HttpRequest(RequestBase):
             self.headers['Content-Type'] = content_type
         if body:
             self.headers['content-length'] = str(len(body))
-        elif not 'expect' in self.headers:
+        elif 'expect' not in self.headers:
             self.headers.pop('content-length', None)
             self.headers.pop('content-type', None)
         return body
@@ -950,7 +950,7 @@ class HttpClient(AbstractClient):
                           'timeout', 'websocket_handler')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
-    no_proxy = set(('localhost', urllibr.localhost(), platform.node()))
+    no_proxy = set(('localhost', platform.node()))
 
     def __init__(self, proxy_info=None, cache=None, headers=None,
                  encode_multipart=True, multipart_boundary=None,

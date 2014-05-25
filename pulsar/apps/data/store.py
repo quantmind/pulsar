@@ -10,7 +10,7 @@ import socket
 from functools import partial
 
 from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
-                    coroutine_return, get_application, in_loop, send,
+                    coroutine_return, get_application, in_loop,
                     EventHandler, Producer)
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string

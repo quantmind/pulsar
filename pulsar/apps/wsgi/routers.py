@@ -70,12 +70,14 @@ from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
-from pulsar import Http404, HttpException, HttpRedirect
+from pulsar import Http404, HttpException
 
 from .route import Route
 from .utils import wsgi_request
 from .content import Html
 from .structures import ContentAccept
+from .wrappers import WsgiResponse
+
 
 __all__ = ['Router', 'MediaRouter', 'FileRouter', 'MediaMixin',
            'RouterParam']
@@ -415,8 +417,10 @@ class Router(RouterType('RouterBase', (object,), {})):
                                 msg='Method "%s" not allowed' % method)
         return callable(request)
 
-    def redirect(self, environ, path):
-        raise HttpRedirect(path)
+    def redirect(self, path):
+        '''Redirect to a different ``path``
+        '''
+        return WsgiResponse(302, response_headers=[('location', path)])
 
     def add_child(self, router):
         '''Add a new :class:`Router` to the :attr:`routes` list.

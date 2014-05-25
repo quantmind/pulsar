@@ -17,6 +17,7 @@ try:
     HAS_SNI = False
     ssl = None
     CERT_NONE = 0
+    PROTOCOL_SSLv23 = None
     import ssl
     from ssl import wrap_socket, PROTOCOL_SSLv23, CERT_NONE
     from ssl import SSLContext as _SSLContext

@@ -58,6 +58,8 @@ WebSocket protocol
    :member-order: bysource
 
 '''
+from pulsar.apps import data
+
 from .websocket import WebSocket, WebSocketProtocol
 
 
@@ -112,3 +114,30 @@ class WS(object):
         """Invoked when the ``websocket`` is closed.
         """
         pass
+
+
+class PubSubClient(data.PubSubClient):
+    __slots__ = ('connection', 'channel')
+
+    def __init__(self, connection, channel):
+        self.connection = connection
+        self.channel = channel
+
+    def __call__(self, channel, message):
+        self.connection.write(message)
+
+
+class PubSubWS(WS):
+    '''A :class:`.WS` handler with a publish-subscribe handler
+    '''
+    client = PubSubClient
+
+    def __init__(self, pubsub, channel):
+        self.pubsub = pubsub
+        self.channel = channel
+
+    def on_open(self, websocket):
+        '''When a new websocket connection is established it creates a
+        new :class:`ChatClient` and adds it to the set of clients of the
+        :attr:`pubsub` handler.'''
+        self.pubsub.add_client(self.client(websocket, self.channel))

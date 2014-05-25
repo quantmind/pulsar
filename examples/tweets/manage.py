@@ -13,8 +13,10 @@ import os
 
 import pulsar
 from pulsar.utils.system import json
+from pulsar.apps.data import create_store
+from pulsar.apps.ds import pulsards_url
 from pulsar.apps.wsgi import WSGIServer, LazyWsgi, WsgiHandler, Router
-from pulsar.apps.ws import WebSocket, WS
+from pulsar.apps.ws import WebSocket, PubSubWS
 from pulsar.apps.http import HttpClient, OAuth1
 
 THIS_DIR = os.path.dirname(__file__)
@@ -128,14 +130,52 @@ class Twitter(pulsar.Application):
         return value
 
 
-class Tweets(WS):
-    pass
+class ProcessTweets:
+    '''Tweets processor
+
+    This callable class is passed to the :class:`.Twitter` application
+    and it is invoked every time new messages are available.
+    '''
+    store = None
+
+    def __init__(self, channel):
+        self.channel = channel
+
+    def __call__(self, messages):
+        if not self.store:
+            self.store = create_store(self.data_store)
+            self.pubsub = self.store.pubsub()
+        for message in messages:
+            self.pubsub.publish(self.channel, json.dumps(message))
+
+
+class TweetsWsHandler(PubSubWS):
+    '''WebSocket Handler for new tweets
+    '''
+    def on_message(self, websocket, msg):
+        if msg:
+            lines = []
+            for l in msg.split('\n'):
+                l = l.strip()
+                if l:
+                    lines.append(l)
+            msg = ' '.join(lines)
+            if msg:
+                self.pubsub.publish(self.channel, msg)
+
 
 class Site(LazyWsgi):
 
+    def __init__(self, channel):
+        self.channel = channel
+
     def setup(self, environ):
+        cfg = environ['pulsar.cfg']
+        self.store = create_store(cfg.data_store)
+        pubsub = self.store.pubsub()
         return WsgiHandler([Router('/', get=self.home_page),
-                            WebSocket('/message', Tweets())])
+                            WebSocket('/message',
+                                      TweetsWsHandler(pubsub, self.channel))])
 
     def home_page(self, request):
         doc = request.html_document
@@ -153,13 +193,14 @@ class Server(pulsar.MultiApp):
     '''Create two pulsar applications, one for serving the web site and
     one for streaming tweets
     '''
-    def build(self):
-        yield self.new_app(WSGIServer, callable=Site())
-        yield self.new_app(Twitter, callable=self.process_tweets)
+    # set the default data_store to be pulsar
+    cfg = {'data_store': pulsards_url()}
 
-    def process_tweets(self, messages):
-        for message in messages:
-            pass
+    def build(self):
+        # the pubsub channel
+        channel = '%s_tweets' % self.name
+        yield self.new_app(WSGIServer, callable=Site(channel))
+        yield self.new_app(Twitter, callable=ProcessTweets(channel))
 
 
 if __name__ == '__main__':  # pragma nocover

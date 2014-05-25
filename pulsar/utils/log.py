@@ -2,12 +2,14 @@
 Module containing utilities and mixins for logging and serialisation.
 '''
 import sys
+import logging
 from copy import deepcopy, copy
 from time import time
-import logging
 from threading import Lock
 from functools import wraps
-from multiprocessing import current_process
+
+from .system import current_process
+
 
 from .pep import force_native_str
 

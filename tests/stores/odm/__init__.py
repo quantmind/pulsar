@@ -27,6 +27,7 @@ class Odm(StoreTest):
         self.assertFalse(task._modified)
         yield models.drop_tables()
 
+
 class d:
     def test_foreign_key_meta(self):
         models = self.mapper(User, Session)

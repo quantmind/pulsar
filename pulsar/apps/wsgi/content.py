@@ -382,17 +382,22 @@ This is a shortcut for the :meth:`insert` method at index 0.
                 else:
                     yield child
 
-    def http_response(self, request):
-        '''Return a coroutine which results in a :class:`.WsgiResponse`.
+    def http_response(self, request, stream=None):
+        '''Return a :class:`.WsgiResponse` or a :class:`~asyncio.Future`.
 
         This method asynchronously wait for :meth:`stream` and subsequently
         returns a :class:`.WsgiResponse`.
         '''
         response = request.response
-        response.content_type = self.content_type
-        body = yield multi_async(self.stream(request))
-        response.content = self.to_string(body)
-        coroutine_return(response)
+        if stream is None:
+            stream = multi_async(self.stream(request))
+        if stream.done():
+            response.content_type = self.content_type
+            response.content = self.to_string(stream.result())
+            return response
+        else:
+            return chain_future(stream,
+                                callback=partial(self.http_response, request))
 
     def to_string(self, streams):
         '''Called to transform the collection of
@@ -556,7 +561,8 @@ class Html(AsyncString):
 
     def set_form_value(self, value):
         '''Set the value of this :class:`Html` element when it is contained
-in a Html form element. For most element it sets the ``value`` attribute.'''
+        in a Html form element.
+        For most element it sets the ``value`` attribute.'''
         self._visitor.set_form_value(self, value)
 
     def __repr__(self):
@@ -631,6 +637,17 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
             return self
         else:
             return result
+
+    def addDir(self, key, value=None):
+        '''Add a directive to the element
+
+        The ``value`` can be ``None``.
+        '''
+        attr = self._attr
+        if attr is None:
+            self._extra['attr'] = attr = {}
+        attr[key] = value or ''
+        return self
 
     def addClass(self, cn):
         '''Add the specific class names to the class set and return ``self``.
@@ -958,13 +975,12 @@ class Scripts(Media):
                             ('waitSeconds', self.wait)))
 
     def do_stream(self, request):
-        if self.required:
-            require = self.require_script()
-            callback = self.require_callback or ''
-            if callback:
-                callback = ('\nrequire.callback = function () {%s();}'
-                            % callback)
-            yield '''\
+        require = self.require_script()
+        callback = self.require_callback or ''
+        if callback:
+            callback = ('\nrequire.callback = function () {%s();}'
+                        % callback)
+        yield '''\
 <script type="text/javascript">
 var require = %s,
     media_path = "%s";%s

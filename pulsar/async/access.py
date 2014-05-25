@@ -1,15 +1,26 @@
 import os
 import threading
 import logging
+import subprocess
 from collections import OrderedDict
 from threading import current_thread
-from multiprocessing import current_process
-
-import asyncio
-from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
-from asyncio.base_events import BaseEventLoop, _StopError
 
 from pulsar.utils.config import Global
+from pulsar.utils.system import platform, current_process
+
+appengine = False
+try:
+    import asyncio
+    from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
+    from asyncio.base_events import BaseEventLoop, _StopError
+except ImportError:
+    if platform.is_appengine:
+        from . import appengine as asyncio
+        _PENDING = _CANCELLED = _FINISHED = None
+        BaseEventLoop = asyncio.BaseEventLoop
+        _StopError = asyncio._StopError
+        appengine = True
+
 
 __all__ = ['get_request_loop',
            'get_event_loop',
@@ -22,7 +33,8 @@ __all__ = ['get_request_loop',
            'logger',
            'get_logger',
            'NOTHING',
-           'SELECTORS']
+           'SELECTORS',
+           'appengine']
 
 
 LOGGER = logging.getLogger('pulsar')
@@ -38,21 +50,24 @@ for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
 
 if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':     # pragma nocover
     default_selector = 'epoll on linux, kqueue on mac, select on windows'
-else:
+elif SELECTORS:
     default_selector = tuple(SELECTORS)[0]
+else:
+    default_selector = None
 
 
-class PollerSetting(Global):
-    name = "selector"
-    flags = ["--io"]
-    choices = tuple(SELECTORS)
-    default = default_selector
-    desc = """\
-        Specify the default selector used for I/O event polling.
+if default_selector:
+    class PollerSetting(Global):
+        name = "selector"
+        flags = ["--io"]
+        choices = tuple(SELECTORS)
+        default = default_selector
+        desc = """\
+            Specify the default selector used for I/O event polling.
 
-        The default value is the best possible for the system running the
-        application.
-        """
+            The default value is the best possible for the system running the
+            application.
+            """
 
 get_event_loop = asyncio.get_event_loop
 

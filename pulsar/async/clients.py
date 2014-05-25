@@ -1,8 +1,8 @@
 from functools import reduce
-from asyncio import Queue, QueueFull
 
 from pulsar.utils.internet import is_socket_closed
 
+from .access import asyncio
 from .futures import coroutine_return, AsyncObject, future_timeout
 from .protocols import Producer
 
@@ -22,7 +22,7 @@ class Pool(AsyncObject):
         self._creator = creator
         self._closed = False
         self._timeout = timeout
-        self._queue = Queue(maxsize=pool_size, loop=loop)
+        self._queue = asyncio.Queue(maxsize=pool_size, loop=loop)
         self._connecting = 0
         self._loop = self._queue._loop
         self._in_use_connections = set()
@@ -113,7 +113,7 @@ class Pool(AsyncObject):
         if not self._closed:
             try:
                 self._queue.put_nowait(None if discard else conn)
-            except QueueFull:
+            except asyncio.QueueFull:
                 conn.close()
         self._in_use_connections.discard(conn)
 

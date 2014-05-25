@@ -1,7 +1,6 @@
 import sys
 import traceback
 import types
-import asyncio
 from collections import deque, namedtuple, Mapping
 from inspect import isgeneratorfunction
 from functools import wraps, partial
@@ -9,7 +8,7 @@ from functools import wraps, partial
 from pulsar.utils.pep import iteritems, default_timer, range
 
 from .consts import MAX_ASYNC_WHILE
-from .access import (get_request_loop, get_event_loop, logger, LOGGER,
+from .access import (asyncio, get_request_loop, get_event_loop, logger, LOGGER,
                      _PENDING, _CANCELLED, _FINISHED)
 
 
@@ -18,7 +17,6 @@ TimeoutError = asyncio.TimeoutError
 InvalidStateError = asyncio.InvalidStateError
 Future = asyncio.Future
 GeneratorType = types.GeneratorType
-ASYNC_OBJECTS = (Future, GeneratorType)
 
 __all__ = ['Future',
            'CancelledError',
@@ -41,7 +39,6 @@ __all__ = ['Future',
            'task',
            'wait_complete',
            'chain_future',
-           'ASYNC_OBJECTS',
            'future_result_exc',
            'AsyncObject']
 
@@ -531,7 +528,7 @@ class MultiFuture(Future):
             if isinstance(value, Future):
                 self._futures[key] = value
                 value.add_done_callback(partial(self._future_done, key))
-            elif self._state != _PENDING:
+            elif self.done():
                 break
         self._check()
 
@@ -541,7 +538,7 @@ class MultiFuture(Future):
 
     #    INTERNALS
     def _check(self):
-        if not self._futures and self._state == _PENDING:
+        if not self._futures and not self.done():
             self.set_result(self._stream)
 
     def _future_done(self, key, future, inthread=False):

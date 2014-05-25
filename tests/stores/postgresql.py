@@ -17,7 +17,7 @@ class PostgreSqlTest(object):
         cls.store = create_store(cls.cfg.postgresql_server,
                                  database=cls.name('test'))
         assert cls.store.database == cls.name('test')
-        return cls.createdb();
+        return cls.createdb()
 
     @classmethod
     def tearDownClass(cls):
