@@ -41,10 +41,10 @@ Wsgi Response
 .. _TLS: http://en.wikipedia.org/wiki/Transport_Layer_Security
 '''
 import re
-from functools import reduce
+from functools import reduce, partial
 from io import BytesIO
 
-from pulsar import Future, coroutine_return
+from pulsar import Future, chain_future
 from pulsar.utils.system import json
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
@@ -520,27 +520,29 @@ class WsgiRequest(EnvironMixin):
         '''
         return self.data_and_files(files=False)
 
-    def _data_and_files(self, data=True, files=True):
+    def _data_and_files(self, data=True, files=True, future=None):
         result = {}, None
-        stream = self.environ.get('wsgi.input')
         chunk = None
-        try:
+        if not future:
+            stream = self.environ.get('wsgi.input')
             if self.method not in ENCODE_URL_METHODS and stream:
                 chunk = stream.read()
                 if isinstance(chunk, Future):
-                    chunk = yield chunk
-                content_type, options = self.content_type_options
-                charset = options.get('charset', 'utf-8')
-                if content_type in JSON_CONTENT_TYPES:
-                    result = json.loads(chunk.decode(charset)), None
-                else:
-                    self.environ['wsgi.input'] = BytesIO(chunk)
-                    result = parse_form_data(self.environ, charset)
-        finally:
-            self.cache.data_and_files = result
-            if chunk is not None:
+                    return chain_future(
+                        chunk, partial(self._data_and_files, data, files))
+        else:
+            chunk = future.result()
+        if chunk is not None:
+            content_type, options = self.content_type_options
+            charset = options.get('charset', 'utf-8')
+            if content_type in JSON_CONTENT_TYPES:
+                result = json.loads(chunk.decode(charset)), None
+            else:
                 self.environ['wsgi.input'] = BytesIO(chunk)
-        coroutine_return(self.data_and_files(data, files))
+                result = parse_form_data(self.environ, charset)
+            self.environ['wsgi.input'] = BytesIO(chunk)
+        self.cache.data_and_files = result
+        return self.data_and_files(data, files)
 
     @cached_property
     def url_data(self):

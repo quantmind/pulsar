@@ -444,6 +444,7 @@ header_parsers = {'Connection': split_comma,
 
 
 def header_values(header, value):
+    value = native_str(value)
     assert isinstance(value, str)
     if header in header_parsers:
         return header_parsers[header](value)

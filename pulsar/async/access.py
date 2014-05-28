@@ -16,7 +16,9 @@ try:
 except ImportError:
     if platform.is_appengine:
         from . import appengine as asyncio
-        _PENDING = _CANCELLED = _FINISHED = None
+        _PENDING = 'PENDING'
+        _CANCELLED = 'CANCELLED'
+        _FINISHED = 'FINISHED'
         BaseEventLoop = asyncio.BaseEventLoop
         _StopError = asyncio._StopError
         appengine = True

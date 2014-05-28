@@ -17,6 +17,7 @@ Ver. 0.8.2 - Development
   :mod:`~pulsar.apps.http` module (alpha).
 * Bug fix in :class:`.HttpParser` when ``Transfer-Encoding=chunked``.
 * Added default javascript libraries for the :class:`.HtmlDocument`
+* pulsar can be imported and used in the google appengine.
 
 Ver. 0.8.1 - 2014-Apr-14
 ===========================

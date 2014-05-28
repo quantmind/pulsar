@@ -171,10 +171,10 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
 
 
 def as_exception(fut):
-    if fut._state == _CANCELLED:
-        return CancelledError()
-    elif fut._exception:
+    if fut._exception:
         return fut.exception()
+    elif getattr(fut, '_state', None) == _CANCELLED:
+        return CancelledError()
 
 
 def future_result_exc(future):
@@ -552,7 +552,7 @@ class MultiFuture(Future):
 
     def _get_set_item(self, key, value):
         if isinstance(value, Future):
-            if value._state != _PENDING:
+            if value.done():
                 exc = as_exception(value)
                 if exc:
                     if self._raise_on_error:

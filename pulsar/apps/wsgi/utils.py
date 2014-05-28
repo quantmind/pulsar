@@ -26,6 +26,7 @@ __all__ = ['handle_wsgi_error',
            'render_error_debug',
            'wsgi_request',
            'set_wsgi_request_class',
+           'dump_environ',
            'HOP_HEADERS']
 
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
@@ -233,14 +234,15 @@ def handle_wsgi_error(environ, exc):
         response.content = None
     else:
         request.cache.pop('html_document', None)
-        renderer = environ.get('error.handler') or render_error
+        renderer = environ.get('error.handlers', {}).get(status, render_error)
         try:
             content = renderer(request, exc)
         except Exception:
             logger.critical('Error while rendering error', exc_info=True)
             response.content_type = 'text/plain'
             content = 'Critical server error'
-        response.content = content
+        if content is not response:
+            response.content = content
     return response
 
 
