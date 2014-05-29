@@ -1,6 +1,7 @@
 import socket
 from functools import partial
-from asyncio import get_event_loop, Future
+
+from .futures import get_event_loop, Future
 
 try:
     import pycares

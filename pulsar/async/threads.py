@@ -3,7 +3,6 @@ import threading
 import weakref
 from multiprocessing import dummy, current_process
 from functools import partial
-from asyncio import selectors, events, get_event_loop, set_event_loop
 
 try:
     import queue
@@ -13,8 +12,8 @@ ThreadQueue = queue.Queue
 Empty = queue.Empty
 Full = queue.Full
 
-from .access import (asyncio, new_event_loop, get_actor, set_actor,
-                     thread_data, _StopError, BaseEventLoop)
+from .access import (asyncio, selectors, new_event_loop, get_actor, set_actor,
+                     events, thread_data, _StopError, BaseEventLoop)
 from .futures import Future, Task, async, AsyncObject
 from .consts import ACTOR_STATES
 
@@ -28,7 +27,7 @@ passthrough = lambda: None
 
 def set_as_loop(loop):
     if loop._iothreadloop:
-        set_event_loop(loop)
+        asyncio.set_event_loop(loop)
 
 
 def get_executor(loop):
@@ -207,7 +206,7 @@ class ThreadPool(AsyncObject):
             if not max_workers:
                 max_workers = actor.cfg.thread_workers
             self.worker_name = '%s.%s' % (actor.name, self.worker_name)
-        self._loop = loop or get_event_loop()
+        self._loop = loop or asyncio.get_event_loop()
         self._max_workers = min(max_workers or _MAX_WORKERS, _MAX_WORKERS)
         self._threads = set()
         self._maxtasks = maxtasks

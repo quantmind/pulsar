@@ -5,10 +5,10 @@ import unittest
 from datetime import datetime, timedelta
 
 import pulsar
-from pulsar import Http404
 from pulsar.utils.pep import range, zip, pickle
 from pulsar.apps import wsgi
 from pulsar.apps import http
+from pulsar.apps.test import mock
 from pulsar.utils.multipart import parse_form_data, MultipartError
 from pulsar.utils.httpurl import urlparse, unquote
 from pulsar.apps.wsgi.utils import cookie_date
@@ -224,11 +224,10 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertTrue(html.startswith(b'<!DOCTYPE html>'))
         self.assertTrue(b'<title>500 Internal Server Error</title>' in html)
 
-    def test_wsgi_handler(self):
+    def test_wsgi_handler_404(self):
+        start = mock.MagicMock()
         handler = wsgi.WsgiHandler()
-        try:
-            yield handler({}, None)
-        except Http404:
-            pass
-        else:
-            assert False
+        environ = self.request().environ
+        response = yield handler(environ, start)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(start.call_count, 1)

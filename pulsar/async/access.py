@@ -6,13 +6,16 @@ from collections import OrderedDict
 from threading import current_thread
 
 from pulsar.utils.config import Global
+from pulsar.utils.pep import ispy3k
 from pulsar.utils.system import platform, current_process
 
+# Dance between different versions. So boring!
 appengine = False
 try:
     import asyncio
     from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
     from asyncio.base_events import BaseEventLoop, _StopError
+    from asyncio import selectors, events
 except ImportError:
     if platform.is_appengine:
         from . import appengine as asyncio
@@ -22,6 +25,18 @@ except ImportError:
         BaseEventLoop = asyncio.BaseEventLoop
         _StopError = asyncio._StopError
         appengine = True
+    elif not ispy3k:
+        import trollius as asyncio
+        from trollius.futures import _PENDING, _CANCELLED, _FINISHED
+        from trollius.base_events import BaseEventLoop, _StopError
+        from trollius import selectors, events
+    else:
+        raise
+
+if ispy3k:
+    ConnectionRefusedError = __builtins__['ConnectionRefusedError']
+else:
+    ConnectionRefusedError = asyncio.ConnectionRefusedError
 
 
 __all__ = ['get_request_loop',
@@ -36,7 +51,8 @@ __all__ = ['get_request_loop',
            'get_logger',
            'NOTHING',
            'SELECTORS',
-           'appengine']
+           'appengine',
+           'ConnectionRefusedError']
 
 
 LOGGER = logging.getLogger('pulsar')

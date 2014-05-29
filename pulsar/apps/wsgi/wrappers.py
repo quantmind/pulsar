@@ -335,8 +335,9 @@ class EnvironMixin(object):
     @property
     def cache(self):
         '''An :ref:`attribute dictionary <attribute-dictionary>` of
-pulsar-specific data stored in the :attr:`environ` at the wsgi-extension
-key ``pulsar.cache``.'''
+        pulsar-specific data stored in the :attr:`environ` at
+        the wsgi-extension key ``pulsar.cache``
+        '''
         return self.environ['pulsar.cache']
 
     @property
@@ -429,7 +430,7 @@ class WsgiRequest(EnvironMixin):
     @property
     def urlargs(self):
         '''Dictionary of url parameters obtained when matching a
-:ref:`router <wsgi-router>` with this request :attr:`path`.'''
+        :ref:`router <wsgi-router>` with this request :attr:`path`.'''
         return self.cache.urlargs
 
     @property
@@ -523,7 +524,7 @@ class WsgiRequest(EnvironMixin):
     def _data_and_files(self, data=True, files=True, future=None):
         result = {}, None
         chunk = None
-        if not future:
+        if future is None:
             stream = self.environ.get('wsgi.input')
             if self.method not in ENCODE_URL_METHODS and stream:
                 chunk = stream.read()
@@ -531,7 +532,7 @@ class WsgiRequest(EnvironMixin):
                     return chain_future(
                         chunk, partial(self._data_and_files, data, files))
         else:
-            chunk = future.result()
+            chunk = future
         if chunk is not None:
             content_type, options = self.content_type_options
             charset = options.get('charset', 'utf-8')

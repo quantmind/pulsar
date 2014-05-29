@@ -382,22 +382,25 @@ This is a shortcut for the :meth:`insert` method at index 0.
                 else:
                     yield child
 
-    def http_response(self, request, stream=None):
+    def http_response(self, request, *stream):
         '''Return a :class:`.WsgiResponse` or a :class:`~asyncio.Future`.
 
         This method asynchronously wait for :meth:`stream` and subsequently
         returns a :class:`.WsgiResponse`.
         '''
         response = request.response
-        if stream is None:
-            stream = multi_async(self.stream(request))
-        if stream.done():
-            response.content_type = self.content_type
-            response.content = self.to_string(stream.result())
-            return response
+        response.content_type = self.content_type
+        if stream:
+            stream = stream[0]
         else:
-            return chain_future(stream,
-                                callback=partial(self.http_response, request))
+            stream = multi_async(self.stream(request))
+            if stream.done():
+                stream = stream.result()
+            else:
+                return chain_future(
+                    stream, callback=partial(self.http_response, request))
+        response.content = self.to_string(stream)
+        return response
 
     def to_string(self, streams):
         '''Called to transform the collection of

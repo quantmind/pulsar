@@ -40,7 +40,6 @@ import io
 import sys
 import logging
 from functools import partial
-from asyncio import Queue, QueueEmpty
 
 try:
     import pulsar
@@ -48,7 +47,7 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 
-from pulsar import HttpException, async, coroutine_return, add_errback
+from pulsar import asyncio, HttpException, async, coroutine_return, add_errback
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -153,14 +152,14 @@ class ProxyResponse(object):
         self._loop = environ['pulsar.connection']._loop
         self.environ = environ
         self.start_response = start_response
-        self.queue = Queue()
+        self.queue = asyncio.Queue()
 
     def __iter__(self):
         while True:
             if self._done:
                 try:
                     yield self.queue.get_nowait()
-                except QueueEmpty:
+                except asyncio.QueueEmpty:
                     break
             else:
                 yield async(self.queue.get(), loop=self._loop)

@@ -1,16 +1,11 @@
 import pulsar
+from pulsar import asyncio
 
 if pulsar.appengine:
     def start_store(url, workers=0, **kw):
         raise RuntimeError('Cannot start datastore in google appengine')
 
 else:
-    from asyncio import Lock
-    try:
-        from asyncio import ConnectionRefusedError
-    except (ImportError, NameError):
-        pass
-
     from pulsar import (when_monitor_start, coroutine_return, get_application,
                         send)
     from pulsar.apps.data import create_store
@@ -19,7 +14,7 @@ else:
     def start_pulsar_ds(arbiter, host, workers=0):
         lock = getattr(arbiter, 'lock', None)
         if lock is None:
-            arbiter.lock = lock = Lock()
+            arbiter.lock = lock = asyncio.Lock()
         yield lock.acquire()
         try:
             app = yield get_application('pulsards')
@@ -42,7 +37,7 @@ else:
             client = store.client()
             try:
                 yield client.ping()
-            except ConnectionRefusedError:
+            except pulsar.ConnectionRefusedError:
                 host = localhost(store._host)
                 if not host:
                     raise
