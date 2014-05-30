@@ -162,11 +162,6 @@ __all__ = ['AsyncString', 'Html',
            'html_factory', 'Media', 'Scripts', 'Css']
 
 
-import json
-
-release = 'beta'
-
-
 JS_DIR = os.path.join(os.path.dirname(__file__), 'js')
 
 
@@ -933,6 +928,7 @@ class Scripts(Media):
         self.require_callback = kwargs.pop('require_callback', None)
         self.wait = kwargs.pop('wait', 200)
         self.required = []
+        self._requirejs = False
         super(Scripts, self).__init__(*args, **kwargs)
 
     def require(self, *scripts):
@@ -960,6 +956,8 @@ class Scripts(Media):
         '''
         if child not in (None, self):
             if is_string(child):
+                if child == 'require':
+                    self._requirejs = True
                 path = self.absolute_path(child)
                 script = Html('script', src=path,
                               type='application/javascript')
@@ -978,16 +976,17 @@ class Scripts(Media):
                             ('waitSeconds', self.wait)))
 
     def do_stream(self, request):
-        require = self.require_script()
-        callback = self.require_callback or ''
-        if callback:
-            callback = ('\nrequire.callback = function () {%s();}'
-                        % callback)
-        yield '''\
-<script type="text/javascript">
-var require = %s,
-    media_path = "%s";%s
-</script>\n''' % (pyjson.dumps(require), self.media_path, callback)
+        if self._requirejs or self.required:
+            require = self.require_script()
+            callback = self.require_callback or ''
+            if callback:
+                callback = ('\nrequire.callback = function () {%s();}'
+                            % callback)
+            yield ('<script type="text/javascript">\n'
+                   'var require = %s,\n'
+                   '    media_path = "%s";%s\n'
+                   '</script>\n') % (pyjson.dumps(require),
+                                     self.media_path, callback)
         for child in self.children.values():
             for bit in child.stream(request):
                 yield bit

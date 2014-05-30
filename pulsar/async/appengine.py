@@ -1,8 +1,12 @@
+'''At the moment this module is just an Hack to get pulsar
+imported in the google appengine. It may become better in the future.
+'''
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import eventloop
 
 get_event_loop = eventloop.get_event_loop
 selectors = None
+ConnectionRefusedError = None
 
 
 class Future(ndb.Future):

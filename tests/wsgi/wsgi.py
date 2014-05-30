@@ -187,14 +187,15 @@ class WsgiRequestTests(unittest.TestCase):
             self.assertEqual(url, '/bla/foo?page=1')
 
     def test_handle_wsgi_error(self):
+        handle500 = lambda request, exc: 'exception: %s' % exc
         environ = wsgi.test_wsgi_environ(
-            extra={'error.handler': lambda request, failure: 'bla'})
+            extra={'error.handlers': {500: handle500}})
         try:
             raise ValueError('just a test')
         except ValueError as exc:
             response = wsgi.handle_wsgi_error(environ, exc)
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.content, (b'bla',))
+        self.assertEqual(response.content, (b'exception: just a test',))
 
     def test_handle_wsgi_error_debug(self):
         cfg = self.cfg.copy()
