@@ -19,8 +19,9 @@ import socket
 from wsgiref.handlers import format_date_time
 
 import pulsar
-from pulsar import HttpException, ProtocolError, Future, in_loop, chain_future
-from pulsar.utils.pep import is_string, native_str, reraise
+from pulsar import (reraise, HttpException, ProtocolError, Future, in_loop,
+                    chain_future)
+from pulsar.utils.pep import is_string, native_str
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
                                   urlparse, iri_to_uri, DEFAULT_CHARSET)

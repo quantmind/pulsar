@@ -4,15 +4,6 @@ import string
 import threading
 from inspect import istraceback
 
-try:    # pragma    nocover
-    from asyncio.py33_exceptions import reraise
-except ImportError:
-
-    def reraise(tp, value, tb=None):
-        if value.__traceback__ is not tb:
-            raise value.with_traceback(tb)
-        raise value
-
 
 ispy3k = sys.version_info >= (3, 0)
 
