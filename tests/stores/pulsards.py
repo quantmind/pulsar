@@ -1,10 +1,9 @@
 import binascii
 import time
 import unittest
-from asyncio import Queue
 
 import pulsar
-from pulsar import new_event_loop
+from pulsar import asyncio, new_event_loop
 from pulsar.utils.security import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
@@ -14,7 +13,7 @@ from pulsar.apps.data import create_store
 class Listener:
 
     def __init__(self):
-        self._messages = Queue()
+        self._messages = asyncio.Queue()
 
     def __call__(self, channel, message):
         self._messages.put_nowait((channel, message))

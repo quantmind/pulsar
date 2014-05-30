@@ -2,10 +2,9 @@
 import os
 import unittest
 from threading import current_thread
-from asyncio import sleep, Future
 
 import pulsar
-from pulsar import send, multi_async, get_event_loop, coroutine_return
+from pulsar import asyncio, send, multi_async, get_event_loop, coroutine_return
 from pulsar.async.eventloop import QueueEventLoop
 from pulsar.apps.test import run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
@@ -18,7 +17,7 @@ def simple_function(actor):
 
 def wait(actor, period=0.5):
     start = actor._loop.time()
-    yield sleep(period)
+    yield asyncio.sleep(period)
     coroutine_return(actor._loop.time() - start)
 
 
@@ -88,7 +87,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(loop_tid, current_thread().ident)
         yield None
         self.assertEqual(loop_tid, current_thread().ident)
-        d = Future()
+        d = asyncio.Future()
         # We are calling back the future in the event_loop which is on
         # a separate thread
 

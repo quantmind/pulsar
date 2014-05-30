@@ -1,5 +1,4 @@
-from asyncio import Future
-
+from pulsar import Future
 from pulsar.apps.data import odm
 from pulsar.apps.tasks import Task
 

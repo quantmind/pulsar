@@ -3,23 +3,23 @@ Ver. 0.8.2 - Development
 * :ref:`--pep8 <setting-pep8>` is a new command line option for the
   :mod:`~pulsar.apps.test` application
 * :class:`.ProtocolConsumer` has its own ``_loop`` attribute rather than
-  obtaining indirectly from the underling :class:`.Connection`
+  obtaining indirectly from the underling :class:`.Connection`.
   This avoids several logging errors when a connection is dropped
 * Added utilities to execute :postgresql:`PostgreSql <>` queries via
   psycopg2_ in asynchronous mode via the :mod:`~pulsar.apps.greenio` module.
 * :ref:`Django pulse application <apps-pulse>` can be run asynchronously
-  when using PostgreSql database
+  when using PostgreSql database.
   It requires the :greenlet:`greenlet module <>`
 * Added :attr:`.Head.embedded_js` for adding javascript code directly in the
-  :class:`.HtmlDocument`.
-* Improved management of ``meta`` tags in the HTML5 :class:`.Head` class.
+  :class:`.HtmlDocument`
+* Improved management of ``meta`` tags in the HTML5 :class:`.Head` class
 * Added :class:`.OAuth1` and :class:`.OAuth2` hooks to the
-  :mod:`~pulsar.apps.http` module (alpha).
-* Bug fix in :class:`.HttpParser` when ``Transfer-Encoding=chunked``.
-* Added default javascript libraries for the :class:`.HtmlDocument`
+  :mod:`~pulsar.apps.http` module (alpha and untested)
+* Bug fix in :class:`.HttpParser` when ``Transfer-Encoding=chunked``
+* Added default javascript libraries to the :class:`.HtmlDocument`
 * Both wsgi request wrappers and content don't use coroutines but
   straight :class:`~asyncio.Future` for compatibility with other frameworks.
-* pulsar can be imported and used in the google appengine
+* pulsar can be imported and used (with limited scope) in the google appengine
 
 Ver. 0.8.1 - 2014-Apr-14
 ===========================

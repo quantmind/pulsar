@@ -72,14 +72,12 @@ Psycopg2
 
 .. _gevent: http://www.gevent.org/
 '''
-import asyncio
-from asyncio import Future
 from inspect import isgeneratorfunction
 from functools import wraps, partial
 
 import greenlet
 
-from pulsar import async, task, coroutine_return
+from pulsar import Future, get_event_loop, async, task, coroutine_return
 from pulsar.async.futures import Task, chain_future
 from pulsar.async.threads import run_in_executor
 from pulsar.utils.config import Global
@@ -146,7 +144,7 @@ def wait_fd(fd, read=True):
         fileno = fd.fileno()
     except AttributeError:
         fileno = fd
-    loop = asyncio.get_event_loop()
+    loop = get_event_loop()
     future = Future(loop=loop)
     # When the event on fd occurs switch back to the current greenlet
     if read:

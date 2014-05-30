@@ -1,12 +1,11 @@
 import unittest
-from asyncio import Future
 
 try:
     from pulsar.apps import greenio
 except ImportError:
     greenio = None
 
-from pulsar import send, multi_async, get_event_loop
+from pulsar import Future, send, multi_async, get_event_loop
 
 from examples.echo.manage import server, Echo
 

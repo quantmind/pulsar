@@ -1,11 +1,10 @@
 import threading
 from collections import deque
-from asyncio import Future, get_event_loop
 
 import greenlet
 from greenlet import getcurrent
 
-from pulsar import AsyncObject, task
+from pulsar import Future, get_event_loop, AsyncObject, task
 
 
 _DEFAULT_WORKERS = 100
