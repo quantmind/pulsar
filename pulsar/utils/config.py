@@ -694,15 +694,18 @@ def validate_callable(arity):
     return _validate_callable
 
 
-def make_optparse_options(apps=None, exclude=None, include=None):
+def make_optparse_options(apps=None, exclude=None, include=None, **override):
     '''Create a tuple of optparse options.'''
     from optparse import make_option
 
     class AddOptParser(list):
         def add_argument(self, *args, **kwargs):
+            if 'const' in kwargs:
+                kwargs['action'] = 'store_const'
+                kwargs.pop('type')
             self.append(make_option(*args, **kwargs))
 
-    config = Config(apps=apps, exclude=exclude, include=include)
+    config = Config(apps=apps, exclude=exclude, include=include, **override)
     parser = AddOptParser()
     config.add_to_parser(parser)
     return tuple(parser)
@@ -963,6 +966,31 @@ class ExecutionId(Global):
     '''
 
 
+class UseGreenlet(Global):
+    name = 'greenlet'
+    flags = ['--greenlet']
+    nargs = '?'
+    type = int
+    default = 0
+    const = 100
+    desc = '''\
+    Use greenlet whenever possible.
+    '''
+
+
+class PyCares(Global):
+    name = 'no_pycares'
+    flags = ['--no-pycares']
+    validator = validate_bool
+    action = "store_true"
+    default = False
+    desc = '''\
+    Switch off pycares DNS lookup.
+
+    By default, pulsar uses pycares for its DNS lookups (if it is available).
+    Use this flag to revert to the standard library dns resolver.
+    '''
+
 ############################################################################
 #    Worker Processes
 section_docs['Worker Processes'] = '''
@@ -1039,10 +1067,11 @@ class ThreadWorkers(Setting):
     type = int
     default = 1
     desc = """\
-        The number of threads in an actor thread pool.
+        The number of threads used by the actor event loop executor.
 
-        The thread pool is used by actors to perform CPU intensive
-        calculations. In this way the actor main thread is free to listen
+        The executor is a thread pool used by the event loop to perform CPU
+        intensive operations or when it needs to execute blocking calls.
+        It allows the actor main thread to be free to listen
         to events on file descriptors and process them as quick as possible.
         """
 

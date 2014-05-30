@@ -2,7 +2,7 @@ import sys
 import unittest
 from datetime import timedelta
 
-from pulsar.utils.pep import reraise
+from pulsar import reraise
 
 
 class TestMiscellaneous(unittest.TestCase):

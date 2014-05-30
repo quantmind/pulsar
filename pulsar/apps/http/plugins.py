@@ -109,7 +109,7 @@ def handle_cookies(response, exc=None):
 def handle_100(response, exc=None):
     '''Handle Except: 100-continue.
 
-    This is a pre_request hook which checks if the request headers
+    This is a ``on_header`` hook which checks if the request headers
     have the ``Expect: 100-continue`` value. If so add a ``on_headers``
     callback to handle the response from the server.
     '''
@@ -123,8 +123,8 @@ def handle_100(response, exc=None):
 def _write_body(response, exc=None):
     if response.status_code == 100:
         response.request.new_parser()
-        if response.request.body:
-            response.transport.write(response.request.body)
+        if response.request.data:
+            response.transport.write(response.request.data)
 
 
 def handle_101(response, exc=None):

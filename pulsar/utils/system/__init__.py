@@ -9,10 +9,12 @@ seconds = platform.seconds
 
 from .base import *
 
-if platform.type == 'posix':
-    from .posixsystem import *
-elif platform.type == 'win':    # pragma nocover
+if platform.type == 'win':    # pragma nocover
     from .windowssystem import *
+elif platform.is_appengine:
+    from .appengine import *
+else:
+    from .posixsystem import *
 
 
 try:

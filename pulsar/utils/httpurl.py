@@ -444,6 +444,7 @@ header_parsers = {'Connection': split_comma,
 
 
 def header_values(header, value):
+    value = native_str(value)
     assert isinstance(value, str)
     if header in header_parsers:
         return header_parsers[header](value)
@@ -1117,7 +1118,6 @@ class HttpParser(object):
             if size is None or len(rest) < size + 2:
                 return None
             body_part, rest = rest[:size], rest[size:]
-            # maybe decompress
             if self.__decompress_obj is not None:
                 body_part = self.__decompress_obj.decompress(body_part)
             self._partial_body = True

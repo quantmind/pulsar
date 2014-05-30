@@ -49,7 +49,6 @@ from hashlib import sha1
 from itertools import islice, chain
 from functools import partial, reduce
 from collections import namedtuple
-from multiprocessing import Process
 
 import pulsar
 from pulsar.apps.socket import SocketServer
@@ -2453,6 +2452,7 @@ class Storage(object):
         if writer and writer.is_alive():
             self.logger.warning('Cannot save, background saving in progress')
         else:
+            from multiprocessing import Process
             data = self._dbs()
             self._dirty = 0
             self._last_save = int(time.time())

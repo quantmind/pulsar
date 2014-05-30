@@ -107,11 +107,9 @@ class Manager(AbstractQuery):
     __repr__ = __str__
 
     def __call__(self, *args, **kwargs):
-        '''Create a new model without commiting to database.
+        '''Create a new model without committing to database.
         '''
-        instance = self._model(*args, **kwargs)
-        instance['_mapper'] = self._mapper
-        return instance
+        return self._store.create_model(self, *args, **kwargs)
 
     @task
     def create_table(self, remove_existing=False):
@@ -172,37 +170,25 @@ class Manager(AbstractQuery):
         '''Begin a new :class:`.Transaction`.'''
         return self._mapper.begin()
 
-    @wait_complete
     def create(self, *args, **kwargs):
         '''Create a new instance of :attr:`_model` and commit to server.
         '''
         with self._mapper.begin() as t:
             model = t.add(self(*args, **kwargs))
-        return t.wait(lambda t: model)
+        return t.wait(lambda models: models[self._store][0])
     new = create
     insert = new
 
-    @wait_complete
-    def update(self, *instance, **kwargs):
+    def update(self, instance, **kwargs):
         '''Update an existing ``instance`` of :attr:`_model`.
 
         The instance must have already contain the primary key.
         '''
-        if instance:
-            if len(instance) > 1:
-                raise TypeError('expected at most 1 arguments, got %s' %
-                                len(instance))
-            instance = instance[0]
-            instance.update(kwargs)
-        else:
-            instance = self(**kwargs)
-        if not instance.id:
-            raise ValueError('Cannot update. No primary key in %s' % instance)
+        instance.update(kwargs)
         with self._mapper.begin() as t:
-            t.add(instance, Command.UPDATE)
+            t.add(instance)
         return t.wait(lambda t: instance)
 
-    @wait_complete
     def save(self, instance):
         '''Save an ``instance`` of :attr:`_model`.
         '''
@@ -210,7 +196,6 @@ class Manager(AbstractQuery):
             t.add(instance)
         return t.wait(lambda t: instance)
 
-    @wait_complete
     def delete(self, instance):
         '''Delete an existing ``instance`` of :attr:`_model`
         '''

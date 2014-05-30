@@ -615,7 +615,7 @@ class TaskBackend(EventHandler):
         # on a separate thread of execution from the worker event loop thread.
         logger = get_logger(worker.logger)
         pubsub = self._pubsub
-        task_id = task['id']
+        task_id = task.id
         lock_id = task.get('lock_id')
         time_ended = time.time()
         job = self.registry.get(task.get('name'))
@@ -631,7 +631,7 @@ class TaskBackend(EventHandler):
                 else:
                     logger.info('starting %s', task_info)
                     kwargs = task.get('kwargs') or {}
-                    self.models.task.update(id=task_id, status=states.STARTED,
+                    self.models.task.update(task, status=states.STARTED,
                                             time_started=time_ended,
                                             worker=worker.aid)
                     pubsub.publish(self.channel('task_started'), task_id)
@@ -652,7 +652,7 @@ class TaskBackend(EventHandler):
             status = states.FAILURE
         #
         try:
-            yield self.models.task.update(id=task_id, time_ended=time.time(),
+            yield self.models.task.update(task, time_ended=time.time(),
                                           status=status, result=result)
         finally:
             self.concurrent_tasks.discard(task_id)
@@ -788,7 +788,7 @@ class PulsarTaskBackend(TaskBackend):
         if free:
             with self.models.begin() as t:
                 t.add(task)
-                t.execute('lpush', c('inqueue'), task['id'])
+                t.execute('lpush', c('inqueue'), task.id)
             yield t.wait()
             coroutine_return(task)
         else:

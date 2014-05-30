@@ -43,7 +43,6 @@ import unittest
 from inspect import isclass
 from functools import partial
 from contextlib import contextmanager
-from asyncio import Future
 
 try:
     from unittest.case import _ExpectedFailure as ExpectedFailure
@@ -53,7 +52,7 @@ except ImportError:
 import pulsar
 from pulsar import (get_actor, send, multi_async, async, future_timeout,
                     TcpServer, coroutine_return, new_event_loop,
-                    format_traceback)
+                    Future, format_traceback)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.data import create_store
@@ -360,13 +359,16 @@ def check_server(name):
     cfg = get_actor().cfg
     cfgname = '%s_server' % name
     addr = cfg.get('%s_server' % name)
-    if ('%s://' % name) not in addr:
-        addr = '%s://%s' % (name, addr)
-    sync_store = create_store(addr, loop=new_event_loop())
-    try:
-        sync_store.ping()
-        return True
-    except Exception:
+    if addr:
+        if ('%s://' % name) not in addr:
+            addr = '%s://%s' % (name, addr)
+        sync_store = create_store(addr, loop=new_event_loop())
+        try:
+            sync_store.ping()
+            return True
+        except Exception:
+            return False
+    else:
         return False
 
 

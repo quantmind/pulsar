@@ -1,10 +1,9 @@
-import asyncio
 import unittest
 from threading import current_thread
 
 import pulsar
 from pulsar.async.eventloop import LoopingCall
-from pulsar import (run_in_loop, Future, call_repeatedly,
+from pulsar import (asyncio, run_in_loop, Future, call_repeatedly,
                     get_event_loop, new_event_loop, loop_thread_id)
 
 

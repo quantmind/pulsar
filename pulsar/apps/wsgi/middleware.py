@@ -42,11 +42,17 @@ Wait for request body
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: wait_for_body_middleware
 
+
+Middleware in Executor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: middleware_in_executor
+
 '''
 import re
+from functools import wraps
 
 import pulsar
-from pulsar import Future, async, coroutine_return
+from pulsar import Future, async, get_event_loop
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -54,7 +60,8 @@ from .auth import parse_authorization_header
 
 __all__ = ['clean_path_middleware',
            'authorization_middleware',
-           'wait_for_body_middleware']
+           'wait_for_body_middleware',
+           'middleware_in_executor']
 
 
 def clean_path_middleware(environ, start_response=None):
@@ -74,8 +81,7 @@ def authorization_middleware(environ, start_response=None):
     '''Parse the ``HTTP_AUTHORIZATION`` key in the ``environ``.
 
     If available, set the ``http.authorization`` key in ``environ`` with
-    the result obtained from
-    :func:`pulsar.apps.wsgi.auth.parse_authorization_header` function.
+    the result obtained from :func:`~.parse_authorization_header` function.
     '''
     key = 'http.authorization'
     c = environ.get(key)
@@ -91,7 +97,7 @@ def wait_for_body_middleware(environ, start_response=None):
     This middleware wait for the full body to be received before letting
     other middleware to be processed.
 
-    Useful when using synchronous web-frameworks.
+    Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
     if environ['wsgi.input']:
         return async(_wait_for_body_middleware(environ, start_response))
@@ -103,4 +109,18 @@ def _wait_for_body_middleware(environ, start_response):
     if isinstance(chunk, Future):
         chunk = yield chunk
     environ['wsgi.input'] = BytesIO(chunk)
-    coroutine_return(None)
+
+
+def middleware_in_executor(middleware):
+    '''Use this middleware to run a synchronous middleware in the event loop
+    executor.
+
+    Useful when using synchronous web-frameworks such as :django:`django <>`.
+    '''
+
+    @wraps(middleware)
+    def _(environ, start_response):
+        loop = get_event_loop()
+        return loop.run_in_executor(None, middleware, environ, start_response)
+
+    return _

@@ -40,7 +40,6 @@ import io
 import sys
 import logging
 from functools import partial
-from asyncio import Queue, QueueEmpty
 
 try:
     import pulsar
@@ -48,7 +47,7 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 
-from pulsar import HttpException, async, coroutine_return, add_errback
+from pulsar import asyncio, HttpException, async, coroutine_return, add_errback
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -122,8 +121,9 @@ class ProxyServerWsgiHandler(LocalMixin):
 
     def request_headers(self, environ):
         '''Fill request headers from the environ dictionary and
-        modify the headers via the list of :attr:`headers_middleware`.
-        The returned headers will be sent to the target uri.'''
+        modify them via the list of :attr:`headers_middleware`.
+        The returned headers will be sent to the target uri.
+        '''
         headers = Headers(kind='client')
         for k in environ:
             if k.startswith('HTTP_'):
@@ -142,7 +142,7 @@ class ProxyServerWsgiHandler(LocalMixin):
 ############################################################################
 #    RESPONSE OBJECTS
 class ProxyResponse(object):
-    '''Asynchronous wsgi response.
+    '''Asynchronous wsgi response for http requests
     '''
     _started = False
     _headers = None
@@ -152,14 +152,14 @@ class ProxyResponse(object):
         self._loop = environ['pulsar.connection']._loop
         self.environ = environ
         self.start_response = start_response
-        self.queue = Queue()
+        self.queue = asyncio.Queue()
 
     def __iter__(self):
         while True:
             if self._done:
                 try:
                     yield self.queue.get_nowait()
-                except QueueEmpty:
+                except asyncio.QueueEmpty:
                     break
             else:
                 yield async(self.queue.get(), loop=self._loop)
@@ -167,7 +167,6 @@ class ProxyResponse(object):
     def pre_request(self, response, exc=None):
         self._started = True
         response.bind_event('data_processed', self.data_processed)
-        return response
 
     def error(self, exc):
         if not self._started:
@@ -215,7 +214,8 @@ class ProxyResponse(object):
 
 
 class ProxyTunnel(ProxyResponse):
-
+    '''Asynchronous wsgi response for https requests
+    '''
     def pre_request(self, response, exc=None):
         '''Start the tunnel.
 

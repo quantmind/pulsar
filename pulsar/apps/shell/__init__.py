@@ -105,7 +105,7 @@ class InteractiveConsole(code.InteractiveConsole):  # pragma    nocover
 
 class PulsarShell(pulsar.Application):
     name = 'shell'
-    cfg = pulsar.Config(loglevel='none',
+    cfg = pulsar.Config(loglevel=['none'],
                         process_name='Pulsar shell',
                         console_class=InteractiveConsole)
 

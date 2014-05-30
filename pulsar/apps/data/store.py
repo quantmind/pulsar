@@ -10,7 +10,7 @@ import socket
 from functools import partial
 
 from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
-                    coroutine_return, get_application, in_loop, send,
+                    coroutine_return, get_application, in_loop,
                     EventHandler, Producer)
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
@@ -19,7 +19,6 @@ from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 __all__ = ['Command',
            'Store',
-           'Compiler',
            'PubSub',
            'PubSubClient',
            'parse_store_url',
@@ -52,6 +51,22 @@ class Command(object):
     @classmethod
     def insert(cls, args):
         return cls(args, cls.INSERT)
+
+
+class StoreTransaction(object):
+    '''Transaction for a given :class:`.Store`
+    '''
+    def __init__(self, store):
+        self.store = store
+        self.commands = []
+
+    def add(self, model):
+        if '_rev' in model:
+            action = Command.UPDATE
+        else:
+            action = Command.INSERT
+        self.commands.append(Command(model, action))
+        return model
 
 
 class Compiler(object):
@@ -90,6 +105,7 @@ class Store(Producer):
     _scheme = None
     compiler_class = None
     default_manager = None
+    registered = False
     MANY_TIMES_EVENTS = ('request',)
 
     def __init__(self, name, host, loop, database=None,
@@ -127,6 +143,10 @@ class Store(Producer):
         '''Domain name server'''
         return self._dns
 
+    @classmethod
+    def register(cls):
+        pass
+
     def __repr__(self):
         return 'Store(dns="%s")' % self._dns
     __str__ = __repr__
@@ -156,13 +176,27 @@ class Store(Producer):
         '''
         raise NotImplementedError
 
-    def create_database(self, dbname, **kw):
-        '''Create a new database in this store
+    def create_database(self, dbname=None, **kw):
+        '''Create a new database in this store.
 
         By default it does nothing, stores must implement this method
         only if they support database creation.
+
+        :param dbname: optional database name. If not supplied a
+            database with :attr:`database` is created.
         '''
-        raise NotImplementedError
+        pass
+
+    def delete_database(self, dbname=None):
+        '''Delete a database ``dbname``
+
+        By default it does nothing, stores must implement this method
+        only if they support database deletion.
+
+        :param dbname: optional database name. If not supplied a
+            database named :attr:`database` is deleted.
+        '''
+        pass
 
     def close(self):
         '''Close all open connections
@@ -198,6 +232,11 @@ class Store(Producer):
 
     #    ODM SUPPORT
     #######################
+    def transaction(self):
+        '''Create a transaction for this store.
+        '''
+        return StoreTransaction(self)
+
     def create_table(self, model, remove_existing=False):
         '''Create the table for ``model``.
 
@@ -209,19 +248,30 @@ class Store(Producer):
         '''Drop the table for ``model``.
 
         This method is used by the :ref:`object data mapper <odm>`.
-        Must be implemented.
+        By default it does nothing.
         '''
-        raise NotImplementedError
 
     def table_info(self, model):
         '''Information about the table/collection mapping ``model``
         '''
         pass
 
-    def execute_transaction(self, commands):
-        '''Execute a list of ``commands`` in a :class:`.Transaction`.
+    def create_model(self, manager, *args, **kwargs):
+        '''Create a new model from a ``manager``
 
-        This method is used by the :ref:`object data mapper <odm>`.
+        Method used by the :class:`.Manager` callable method.
+        '''
+        instance = manager._model(*args, **kwargs)
+        instance['_mapper'] = manager._mapper
+        return instance
+
+    def execute_transaction(self, transaction):
+        '''Execute a  :meth:`transaction` in a multi-store
+        :class:`.Transaction`.
+
+        THis methid is used by the :ref:`object data mapper <odm>` and
+        should not be invoked directly.
+        It returns a list of models committed to the backend server.
         '''
         raise NotImplementedError
 
@@ -281,12 +331,13 @@ class Store(Producer):
         '''Internal initialisation'''
         pass
 
-    def _buildurl(self):
+    def _buildurl(self, **kw):
         pre = ''
         if self._user:
-            if not self._password:
-                raise ImproperlyConfigured('user but not password')
-            pre = '%s:%s@' % (self._user, self._password)
+            if self._password:
+                pre = '%s:%s@' % (self._user, self._password)
+            else:
+                pre = '%s@' % self._user
         elif self._password:
             raise ImproperlyConfigured('password but not user')
             assert self._password
@@ -295,7 +346,8 @@ class Store(Producer):
             host = '%s:%s' % host
         host = '%s%s' % (pre, host)
         path = '/%s' % self._database if self._database else ''
-        query = urlencode(self._urlparams)
+        kw.update(self._urlparams)
+        query = urlencode(kw)
         scheme = self._name
         if self._scheme:
             scheme = '%s+%s' % (self._scheme, scheme)
@@ -453,12 +505,11 @@ def parse_store_url(url):
     if len(bits) == 2:
         userpass, host = bits
         userpass = userpass.split(':')
-        assert len(userpass) == 2,\
+        assert len(userpass) <= 2,\
             'User and password not in user:password format'
         params['user'] = userpass[0]
-        params['password'] = userpass[1]
-    else:
-        user, password = None, None
+        if len(userpass) == 2:
+            params['password'] = userpass[1]
     if ':' in host:
         host = tuple(host.split(':'))
         host = host[0], int(host[1])
@@ -466,22 +517,22 @@ def parse_store_url(url):
 
 
 def create_store(url, loop=None, **kw):
-    '''Create a new client :class:`Store` for a valid ``url``.
+    '''Create a new :class:`Store` for a valid ``url``.
 
-    A valid ``url`` takes the following forms:
+    :param url: a valid ``url`` takes the following forms:
 
-    :ref:`Pulsar datastore <store_pulsar>`::
+        :ref:`Pulsar datastore <store_pulsar>`::
 
-        pulsar://user:password@127.0.0.1:6410
+            pulsar://user:password@127.0.0.1:6410
 
-    :ref:`Redis <store_redis>`::
+        :ref:`Redis <store_redis>`::
 
-        redis://user:password@127.0.0.1:6500/11?namespace=testdb
+            redis://user:password@127.0.0.1:6500/11?namespace=testdb
 
-    :ref:`CouchDb <store_couchdb>`::
+        :ref:`CouchDb <store_couchdb>`::
 
-        couchdb://user:password@127.0.0.1:6500/testdb
-        https+couchdb://user:password@127.0.0.1:6500/testdb
+            couchdb://user:password@127.0.0.1:6500/testdb
+            https+couchdb://user:password@127.0.0.1:6500/testdb
 
     :param loop: optional event loop, obtained by
         :func:`~asyncio.get_event_loop` if not provided.
@@ -491,7 +542,9 @@ def create_store(url, loop=None, **kw):
         type requests via the :meth:`~asyncio.BaseEventLoop.run_until_complete`
         method.
     :param kw: additional key-valued parameters to pass to the :class:`.Store`
-        initialisation method. These parameters are processed by the
+        initialisation method. It can contains parameters such as
+        ``database``, ``user`` and ``password`` to override the
+        ``url`` values. Additional parameters are processed by the
         :meth:`.Store._init` method.
     :return: a :class:`Store`.
     '''
@@ -505,6 +558,9 @@ def create_store(url, loop=None, **kw):
     if not loop:
         loop = new_event_loop(logger=logging.getLogger(dotted_path))
     store_class = module_attribute(dotted_path)
+    if not store_class.registered:
+        store_class.registered = True
+        store_class.register()
     params.update(kw)
     return store_class(scheme, address, loop, **params)
 

@@ -1,5 +1,5 @@
-'''Pulsar ships with a thread safe :class:`HttpClient` class for multiple
-asynchronous HTTP requests.
+'''Pulsar ships with a thread safe, fully featured, :class:`.HttpClient`
+class for multiple asynchronous HTTP requests.
 
 To get started, one builds a client::
 
@@ -8,11 +8,11 @@ To get started, one builds a client::
 
 and than makes requests, in a coroutine::
 
-    >>> response = yield http.get('http://www.bbc.co.uk')
+    response = yield http.get('http://www.bbc.co.uk')
 
+or (only in python 3)::
 
-.. contents::
-    :local:
+    response = yield from http.get('http://www.bbc.co.uk')
 
 Making requests
 =================
@@ -20,10 +20,26 @@ Pulsar HTTP client has no dependencies and an API similar to requests_::
 
     from pulsar.apps import http
     client = http.HttpClient()
-    resp = yield client.get('https://github.com/timeline.json')
+    response = yield client.get('https://github.com/timeline.json')
 
-``resp`` is a :class:`HttpResponse` object which contains all the information
-about the request and, once finished, the result.
+``response`` is a :class:`HttpResponse` object which contains all the
+information about the request and the result:
+
+    >>> request = response.request
+    >>> print(request.headers)
+    Connection: Keep-Alive
+    User-Agent: pulsar/0.8.2-beta.1
+    Accept-Encoding: deflate, gzip
+    Accept: */*
+    >>> response.status_code
+    200
+    >>> print(response.headers)
+    ...
+
+The :attr:`~.ProtocolConsumer.request` attribute of :class:`HttpResponse`
+is an instance of :class:`.HttpRequest`.
+
+.. _http-cookie:
 
 Cookie support
 ================
@@ -34,8 +50,8 @@ To disable cookie one can pass ``store_cookies=False`` during
 
 If a response contains some Cookies, you can get quick access to them::
 
-    >>> r = yield client.get(...)
-    >>> type(r.cookies)
+    >>> response = yield client.get(...)
+    >>> type(response.cookies)
     <type 'dict'>
 
 To send your own cookies to the server, you can use the cookies parameter::
@@ -48,11 +64,11 @@ To send your own cookies to the server, you can use the cookies parameter::
 Authentication
 ======================
 
-Headers authentication, either ``basic`` or ``digest``, can be added to a
+Authentication, either ``basic`` or ``digest``, can be added to a
 client by invoking
 
-* :meth:`HttpClient.add_basic_authentication` method
-* :meth:`HttpClient.add_digest_authentication` method
+* :meth:`HttpClient.add_basic_authentication` or
+* :meth:`HttpClient.add_digest_authentication`
 
 In either case the authentication is handled by adding additional headers
 to your requests.
@@ -79,21 +95,23 @@ Streaming
 
 This is an event-driven client, therefore streaming support is native.
 
-To stream data received from the client one can use either the
-``data_received`` or ``data_processed``
-:ref:`many time events <many-times-event>`. For example::
+To stream data received from the client one uses the
+:ref:`data_processed <http-many-time-events>` event handler.
+For example::
 
-    def new_data(response, data=None):
-        # response is the http response receiving data
-        # data are bytes
+    def new_data(response, **kw):
+        if response.status_code == 200:
+            data = response.recv_body()
+            # do something with this data
 
-    response = http.get(..., data_received=new_data)
+    response = http.get(..., data_processed=new_data)
 
-The ``on_finished`` callback on a :class:`HttpResponse` is only fired when
-the client has finished with the response.
+The response :meth:`~.HttpResponse.recv_body` method fetches the parsed body
+of the response and at the same time it flushes it.
 Check the :ref:`proxy server <tutorials-proxy-server>` example for an
 application using the :class:`HttpClient` streaming capabilities.
 
+.. _http-websocket:
 
 WebSocket
 ==============
@@ -112,8 +130,12 @@ The websocket response is obtained by::
 
     ws = yield http.get('ws://...', websocket_handler=Echo())
 
+.. _http-redirects:
+
 Redirects & Decompression
 =============================
+
+[TODO]
 
 Synchronous Mode
 =====================
@@ -124,9 +146,19 @@ Can be used in :ref:`synchronous mode <tutorials-synchronous>`::
 
 Events
 ==============
-Events are used to customise the behaviour of the Http client when certain
-headers or responses occurs. There are three
-:ref:`one time events <one-time-event>` associated with an
+:ref:`Events <event-handling>` control the behaviour of the
+:class:`.HttpClient` when certain conditions occur. They are useful for
+handling standard HTTP event such as :ref:`redirects <http-redirects>`,
+:ref:`websocket upgrades <http-websocket>`,
+:ref:`streaming <http-streaming>` or anything your application
+requires.
+
+.. _http-one-time-events:
+
+One time events
+~~~~~~~~~~~~~~~~~~~
+
+There are three :ref:`one time events <one-time-event>` associated with an
 :class:`HttpResponse` object:
 
 * ``pre_request``, fired before the request is sent to the server. Callbacks
@@ -138,9 +170,9 @@ headers or responses occurs. There are three
 
 Adding event handlers can be done at client level::
 
-    def myheader_handler(response):
-        ...
-        return response    # !important, must return the response
+    def myheader_handler(response, exc=None):
+        if not exc:
+            print('got headers!')
 
     client.bind_event('on_headers', myheader_handler)
 
@@ -150,9 +182,32 @@ or at request level::
 
 By default, the :class:`HttpClient` has one ``pre_request`` callback for
 handling `HTTP tunneling`_, three ``on_headers`` callbacks for
-handling *100 Continue*, *websocket upgrade* and *cookies*, and one
-``post_request`` callback for handling redirects.
+handling *100 Continue*, *websocket upgrade* and :ref:`cookies <http-cookie>`,
+and one ``post_request`` callback for handling redirects.
 
+.. _http-many-time-events:
+
+Many time events
+~~~~~~~~~~~~~~~~~~~
+
+In addition to the three :ref:`one time events <http-one-time-events>`,
+the Http client supports two additional
+events which can occur several times while processing a given response:
+
+* ``data_received`` is fired when new data has been received but not yet
+  parsed
+* ``data_processed`` is fired just after the data has been parsed by the
+  :class:`.HttpResponse`. This is the event one should bind to when performing
+  :ref:`http streaming <http-streaming>`.
+
+
+both events support handlers with a signature::
+
+    def handler(response, data=None):
+        ...
+
+where ``response`` is the :class:`.HttpResponse` handling the request and
+``data`` is the **raw** data received.
 
 API
 ==========
@@ -180,6 +235,23 @@ HTTP Response
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: HttpResponse
+   :members:
+   :member-order: bysource
+
+
+.. _module:: pulsar.apps.http.oauth
+
+OAuth1
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: OAuth1
+   :members:
+   :member-order: bysource
+
+OAuth2
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: OAuth2
    :members:
    :member-order: bysource
 
@@ -218,6 +290,7 @@ from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
+from .oauth import OAuth1, OAuth2
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
@@ -325,6 +398,8 @@ class HttpTunnel(RequestBase):
 class HttpRequest(RequestBase):
     '''An :class:`HttpClient` request for an HTTP resource.
 
+    This class has a similar interface to :class:`urllib.request.Request`.
+
     :param files: optional dictionary of name, file-like-objects.
     :param allow_redirects: allow the response to follow redirects.
 
@@ -338,7 +413,7 @@ class HttpRequest(RequestBase):
 
     .. attribute:: history
 
-        List of past :class:`HttpResponse` (collected during redirects).
+        List of past :class:`.HttpResponse` (collected during redirects).
 
     .. attribute:: wait_continue
 
@@ -358,6 +433,8 @@ class HttpRequest(RequestBase):
                  decompress=True, version=None, wait_continue=False,
                  websocket_handler=None, cookies=None, **ignored):
         self.client = client
+        self._data = None
+        self.files = files
         self.inp_params = inp_params
         self.unredirected_headers = Headers(kind='client')
         self.timeout = timeout
@@ -374,8 +451,6 @@ class HttpRequest(RequestBase):
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary
         self.websocket_handler = websocket_handler
-        self.data = data if data is not None else {}
-        self.files = files
         self.source_address = source_address
         self.new_parser()
         if self._scheme in tls_schemes:
@@ -388,6 +463,7 @@ class HttpRequest(RequestBase):
         self.unredirected_headers['host'] = host_no_default_port(self._scheme,
                                                                  self._netloc)
         client.set_proxy(self)
+        self.data = data
 
     @property
     def address(self):
@@ -428,18 +504,28 @@ class HttpRequest(RequestBase):
         return self.first_line()
     __str__ = __repr__
 
-    def _get_full_url(self):
+    @property
+    def full_url(self):
+        '''Full url of endpoint'''
         return urlunparse((self._scheme, self._netloc, self.path,
                            self.params, self.query, self.fragment))
 
-    def _set_full_url(self, url):
+    @full_url.setter
+    def full_url(self, url):
         self._scheme, self._netloc, self.path, self.params,\
             self.query, self.fragment = urlparse(url)
         if not self._netloc and self.method == 'CONNECT':
             self._scheme, self._netloc, self.path, self.params,\
                 self.query, self.fragment = urlparse('http://%s' % url)
 
-    full_url = property(_get_full_url, _set_full_url)
+    @property
+    def data(self):
+        '''Body of request'''
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        self._data = self._encode_data(data)
 
     def first_line(self):
         if not self._proxy and self.method != self.CONNECT:
@@ -483,13 +569,11 @@ class HttpRequest(RequestBase):
         :class:`HttpRequest` before sending it to the HTTP resource.
         '''
         # Call body before fist_line in case the query is changes.
-        self.body = body = self.encode_body()
         first_line = self.first_line()
-        if body:
-            self.headers['content-length'] = str(len(body))
-            if self.wait_continue:
-                self.headers['expect'] = '100-continue'
-                body = None
+        body = self.data
+        if body and self.wait_continue:
+            self.headers['expect'] = '100-continue'
+            body = None
         headers = self.headers
         if self.unredirected_headers:
             headers = self.unredirected_headers.copy()
@@ -499,30 +583,8 @@ class HttpRequest(RequestBase):
             buffer.append(body)
         return b''.join(buffer)
 
-    def encode_body(self):
-        '''Encode body or url if the :attr:`method` does not have body.
-
-        Called by the :meth:`encode` method.
-        '''
-        body = None
-        if self.method in ENCODE_URL_METHODS:
-            self.files = None
-            self._encode_url(self.data)
-        elif isinstance(self.data, bytes):
-            assert self.files is None, ('data cannot be bytes when files are '
-                                        'present')
-            body = self.data
-        elif is_string(self.data):
-            assert self.files is None, ('data cannot be string when files are '
-                                        'present')
-            body = to_bytes(self.data, self.charset)
-        elif self.data or self.files:
-            if self.files:
-                body, content_type = self._encode_files()
-            else:
-                body, content_type = self._encode_params()
-            self.headers['Content-Type'] = content_type
-        return body
+    def add_header(self, key, value):
+        self.headers[key] = value
 
     def has_header(self, header_name):
         '''Check ``header_name`` is in this request headers.
@@ -546,23 +608,50 @@ class HttpRequest(RequestBase):
         self.unredirected_headers[header_name] = header_value
 
     # INTERNAL ENCODING METHODS
-    def _encode_url(self, body):
-        query = self.query
-        if body:
-            body = native_str(body)
-            if isinstance(body, str):
-                body = parse_qsl(body)
+    def _encode_data(self, data):
+        body = None
+        if self.method in ENCODE_URL_METHODS:
+            self.files = None
+            self._encode_url(data)
+        elif isinstance(data, bytes):
+            assert self.files is None, ('data cannot be bytes when files are '
+                                        'present')
+            body = data
+        elif is_string(data):
+            assert self.files is None, ('data cannot be string when files are '
+                                        'present')
+            body = to_bytes(data, self.charset)
+        elif data or self.files:
+            if self.files:
+                body, content_type = self._encode_files(data)
             else:
-                body = mapping_iterator(body)
+                body, content_type = self._encode_params(data)
+            # set files to None, Important!
+            self.files = None
+            self.headers['Content-Type'] = content_type
+        if body:
+            self.headers['content-length'] = str(len(body))
+        elif 'expect' not in self.headers:
+            self.headers.pop('content-length', None)
+            self.headers.pop('content-type', None)
+        return body
+
+    def _encode_url(self, data):
+        query = self.query
+        if data:
+            data = native_str(data)
+            if isinstance(data, str):
+                data = parse_qsl(data)
+            else:
+                data = mapping_iterator(data)
             query = parse_qsl(query)
-            query.extend(body)
-            self.data = query
+            query.extend(data)
             query = urlencode(query)
         self.query = query
 
-    def _encode_files(self):
+    def _encode_files(self, data):
         fields = []
-        for field, val in mapping_iterator(self.data or ()):
+        for field, val in mapping_iterator(data or ()):
             if (is_string(val) or isinstance(val, bytes) or
                     not hasattr(val, '__iter__')):
                 val = [val]
@@ -597,19 +686,19 @@ class HttpRequest(RequestBase):
         #
         return encode_multipart_formdata(fields, charset=self.charset)
 
-    def _encode_params(self):
+    def _encode_params(self, data):
         content_type = self.headers.get('content-type')
         # No content type given
         if not content_type:
             if self.encode_multipart:
                 return encode_multipart_formdata(
-                    self.data, boundary=self.multipart_boundary,
+                    data, boundary=self.multipart_boundary,
                     charset=self.charset)
             else:
                 content_type = 'application/x-www-form-urlencoded'
-                body = urlencode(self.data).encode(self.charset)
+                body = urlencode(data).encode(self.charset)
         elif content_type in JSON_CONTENT_TYPES:
-            body = json.dumps(self.data).encode(self.charset)
+            body = json.dumps(data).encode(self.charset)
         else:
             raise ValueError("Don't know how to encode body for %s" %
                              content_type)
@@ -804,8 +893,10 @@ class HttpClient(AbstractClient):
 
     .. attribute:: encode_multipart
 
-        Flag indicating if body data is encoded using the
-        ``multipart/form-data`` encoding by default.
+        Flag indicating if body data is by default encoded using the
+        ``multipart/form-data`` or ``application/x-www-form-urlencoded``
+        encoding.
+
         It can be overwritten during a :meth:`request`.
 
         Default: ``True``
@@ -859,7 +950,7 @@ class HttpClient(AbstractClient):
                           'timeout', 'websocket_handler')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
-    no_proxy = set(('localhost', urllibr.localhost(), platform.node()))
+    no_proxy = set(('localhost', platform.node()))
 
     def __init__(self, proxy_info=None, cache=None, headers=None,
                  encode_multipart=True, multipart_boundary=None,
@@ -1010,7 +1101,9 @@ class HttpClient(AbstractClient):
             # bind request-specific events
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
-            consumer = yield consumer.on_finished
+            response = yield consumer.on_finished
+            if response is not None:
+                consumer = response
             if consumer.request_again:
                 if isinstance(consumer.request_again, Exception):
                     raise consumer.request_again

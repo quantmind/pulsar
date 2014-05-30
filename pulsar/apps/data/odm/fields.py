@@ -21,6 +21,11 @@ class FieldValueError(ValueError):
     pass
 
 
+def sql():
+    import sqlalchemy
+    return sqlalchemy
+
+
 class Field(UnicodeMixin):
     '''Base class of all :mod:`.odm` Fields.
 
@@ -106,6 +111,7 @@ class Field(UnicodeMixin):
     '''
     repr_type = 'unknown'
     primary_key = False
+    autoincrement = False
     required = True
     to_python = None
     index = False
@@ -200,6 +206,11 @@ class Field(UnicodeMixin):
             raise TypeError(("__init__() got an unexepcted keyword argument "
                              "'{0}'".format(keys[0])))
 
+    def sql_alchemy_column(self):
+        '''Return a valid Column for :sqlalchemy:`SqlAlchemy model <>`.
+        '''
+        raise NotImplementedError
+
 
 class CharField(Field):
     repr_type = 'text'
@@ -212,9 +223,19 @@ class CharField(Field):
     to_store = to_python
     to_json = to_python
 
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.String, primary_key=self.primary_key,
+                        default=self._default, nullable=not self.required)
+
 
 class AutoIdField(Field):
     primary_key = True
+
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.Integer, primary_key=self.primary_key,
+                        default=self._default, nullable=not self.required)
 
 
 class IntegerField(Field):
@@ -235,6 +256,12 @@ class IntegerField(Field):
 
     to_json = to_python
 
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.Integer, primary_key=self.primary_key,
+                        autoincrement=self.autoincrement,
+                        default=self._default, nullable=not self.required)
+
 
 class BooleanField(Field):
     index = True
@@ -251,6 +278,12 @@ class BooleanField(Field):
         if value in NONE_EMPTY:
             value = self.get_default()
         return store.encode_bool(value)
+
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.Boolean, primary_key=self.primary_key,
+                        default=self._default,
+                        nullable=not self.required)
 
 
 class FloatField(Field):
@@ -269,6 +302,11 @@ class FloatField(Field):
             return float(value)
         else:
             return self.get_default()
+
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.Float, default=self._default,
+                        nullable=not self.required)
 
 
 class DateField(Field):
@@ -298,6 +336,11 @@ class DateField(Field):
         self.auto_now = auto_now
         super(DateField, self)._handle_extras(**extras)
 
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.Date, default=self._default,
+                        nullable=not self.required)
+
 
 class DateTimeField(DateField):
 
@@ -311,6 +354,11 @@ class DateTimeField(DateField):
             return value
         else:
             return self.get_default()
+
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.DateTime, default=self._default,
+                        nullable=not self.required)
 
 
 class PickleField(Field):
@@ -344,6 +392,11 @@ class PickleField(Field):
             value = self.to_store(value)
             if value is not None:
                 return b64encode(value).decode('utf-8')
+
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.PickleType, default=self._default,
+                        nullable=not self.required)
 
 
 class JSONField(CharField):
@@ -446,6 +499,11 @@ class JSONField(CharField):
             if name:
                 name = JSPLITTER.join((self.store_name, name))
             return (name, None)
+
+    def sql_alchemy_column(self):
+        s = sql()
+        return s.Column(s.Text, default=self._default,
+                        nullable=not self.required)
 
 
 class ForeignKey(Field):

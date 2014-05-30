@@ -6,12 +6,11 @@ except ImportError:
     pep8 = None
 
 
-def pep8_run(args, paths, config_file=None, stream=None):
+def pep8_run(paths, config_file=None, stream=None):
     '''Programmatically run ``pep8``.
 
     Returns a 2-elements tuple with a string message and an exit code.
     '''
-    args.remove('--pep8')
     if pep8:
         stream = stream or sys.stderr
         stream.write('Running pep8\n')

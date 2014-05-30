@@ -6,7 +6,7 @@ import pwd
 import signal
 import socket
 import ctypes
-from multiprocessing import Pipe
+from multiprocessing import Pipe, current_process
 
 from .base import *
 
@@ -18,7 +18,8 @@ __all__ = ['close_on_exec',
            'get_uid',
            'get_gid',
            'get_maxfd',
-           'set_owner_process']
+           'set_owner_process',
+           'current_process']
 
 # standard signal quit
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGQUIT)

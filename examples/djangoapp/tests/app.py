@@ -1,8 +1,7 @@
 '''Tests django chat application.'''
 import unittest
-from asyncio import Queue
 
-from pulsar import send, get_application, coroutine_return
+from pulsar import asyncio, send, get_application, coroutine_return
 from pulsar.utils.path import Path
 from pulsar.apps import http, ws
 from pulsar.apps.test import dont_run_with_thread
@@ -24,7 +23,7 @@ def start_server(actor, name, argv):
 class MessageHandler(ws.WS):
 
     def __init__(self):
-        self.queue = Queue()
+        self.queue = asyncio.Queue()
 
     def get(self):
         return self.queue.get()

@@ -1,8 +1,7 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
 import unittest
-from asyncio import Queue
 
-from pulsar import send
+from pulsar import asyncio, send
 from pulsar.apps import rpc, http, ws
 from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.httpurl import HTTPError
@@ -14,7 +13,7 @@ from .manage import server
 class Message(ws.WS):
 
     def __init__(self, loop):
-        self.queue = Queue(loop=loop)
+        self.queue = asyncio.Queue(loop=loop)
 
     def get(self):
         return self.queue.get()

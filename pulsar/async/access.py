@@ -1,15 +1,52 @@
 import os
 import threading
 import logging
+import subprocess
 from collections import OrderedDict
 from threading import current_thread
-from multiprocessing import current_process
-
-import asyncio
-from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
-from asyncio.base_events import BaseEventLoop, _StopError
 
 from pulsar.utils.config import Global
+from pulsar.utils.pep import ispy3k
+from pulsar.utils.system import platform, current_process
+
+# Dance between different versions. So boring!
+appengine = False
+reraise = None
+try:
+    import asyncio
+    from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
+    from asyncio.base_events import BaseEventLoop, _StopError
+    from asyncio import selectors, events
+except ImportError:  # pragma    nocover
+    if platform.is_appengine:
+        from . import appengine as asyncio
+        _PENDING = 'PENDING'
+        _CANCELLED = 'CANCELLED'
+        _FINISHED = 'FINISHED'
+        BaseEventLoop = asyncio.BaseEventLoop
+        _StopError = asyncio._StopError
+        appengine = True
+    elif not ispy3k:
+        import trollius as asyncio
+        from trollius.futures import _PENDING, _CANCELLED, _FINISHED
+        from trollius.base_events import BaseEventLoop, _StopError
+        from trollius import selectors, events
+        from trollius.py33_exceptions import reraise
+    else:
+        raise
+
+if ispy3k:
+    ConnectionRefusedError = __builtins__['ConnectionRefusedError']
+
+    def reraise(tp, value, tb=None):
+        if value.__traceback__ is not tb:
+            raise value.with_traceback(tb)
+        raise value
+else:   # pragma    nocover
+    ConnectionRefusedError = asyncio.ConnectionRefusedError
+    if reraise is None:  # trollius name change
+        from asyncio.py33_exceptions import reraise
+
 
 __all__ = ['get_request_loop',
            'get_event_loop',
@@ -22,7 +59,10 @@ __all__ = ['get_request_loop',
            'logger',
            'get_logger',
            'NOTHING',
-           'SELECTORS']
+           'SELECTORS',
+           'appengine',
+           'ConnectionRefusedError',
+           'reraise']
 
 
 LOGGER = logging.getLogger('pulsar')
@@ -38,21 +78,24 @@ for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
 
 if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':     # pragma nocover
     default_selector = 'epoll on linux, kqueue on mac, select on windows'
-else:
+elif SELECTORS:
     default_selector = tuple(SELECTORS)[0]
+else:
+    default_selector = None
 
 
-class PollerSetting(Global):
-    name = "selector"
-    flags = ["--io"]
-    choices = tuple(SELECTORS)
-    default = default_selector
-    desc = """\
-        Specify the default selector used for I/O event polling.
+if default_selector:
+    class PollerSetting(Global):
+        name = "selector"
+        flags = ["--io"]
+        choices = tuple(SELECTORS)
+        default = default_selector
+        desc = """\
+            Specify the default selector used for I/O event polling.
 
-        The default value is the best possible for the system running the
-        application.
-        """
+            The default value is the best possible for the system running the
+            application.
+            """
 
 get_event_loop = asyncio.get_event_loop
 

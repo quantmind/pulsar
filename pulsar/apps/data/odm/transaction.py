@@ -28,14 +28,6 @@ class ModelDictionary(dict):
         return getattr(model, '_meta', model)
 
 
-class TransactionStore(object):
-    '''Transaction for a given :class:`.Store`
-    '''
-    def __init__(self, store):
-        self._store = store
-        self.commands = []
-
-
 class Transaction(EventHandler):
     '''Transaction class for pipelining commands to a :class:`.Store`.
 
@@ -101,7 +93,7 @@ class Transaction(EventHandler):
         ts.commands.append(Command(args))
         return self
 
-    def add(self, model, action=None):
+    def add(self, model):
         '''Add a ``model`` to the transaction.
 
         :param model: a :class:`.Model` instance. It must be registered
@@ -111,12 +103,7 @@ class Transaction(EventHandler):
         '''
         manager = self.mapper[model]
         ts = self.tstore(manager._store)
-        if not action:
-            if '_rev' in model:
-                action = Command.UPDATE
-            else:
-                action = Command.INSERT
-        ts.commands.append(Command(model, action))
+        ts.add(model)
         return model
 
     def update(self, instance_or_query, **kw):
@@ -136,7 +123,7 @@ class Transaction(EventHandler):
         '''Returns the :class:`TransactionStore` for ``store``
         '''
         if store not in self._commands:
-            self._commands[store] = TransactionStore(store)
+            self._commands[store] = store.transaction()
         return self._commands[store]
 
     def commit(self):

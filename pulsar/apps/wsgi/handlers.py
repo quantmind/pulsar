@@ -101,11 +101,11 @@ via the ``_loop`` attribute::
 import sys
 import types
 
-from pulsar import async, Http404, coroutine_return
+from pulsar import async, Http404, coroutine_return, appengine
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.log import LocalMixin, local_method
 
-from .utils import handle_wsgi_error
+from .utils import handle_wsgi_error, wsgi_request
 from .wrappers import WsgiResponse
 
 
@@ -139,30 +139,53 @@ class WsgiHandler(object):
             middleware = list(middleware)
         self.middleware = middleware or []
         self.response_middleware = response_middleware or []
+        self.error_handlers = {}
 
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
-        c = environ.get('pulsar.connection')
-        loop = c._loop if c else None
-        return async(self._call(environ, start_response), loop)
+        environ['error.handlers'] = self.error_handlers
+        if appengine:
+            return self._appengine(environ, start_response)
+        else:
+            c = environ.get('pulsar.connection')
+            loop = c._loop if c else None
+            return async(self._call(environ, start_response), loop)
 
     def _call(self, environ, start_response):
         resp = None
-        for middleware in self.middleware:
-            try:
+        try:
+            for middleware in self.middleware:
                 resp = yield middleware(environ, start_response)
-            except Exception as exc:
-                resp = yield handle_wsgi_error(environ, exc)
-            if resp is not None:
-                break
-        if resp is None:
-            raise Http404
+                if resp is not None:
+                    break
+            if resp is None:
+                raise Http404
+        except Exception as exc:
+            resp = yield handle_wsgi_error(environ, exc)
         if isinstance(resp, WsgiResponse):
             # The response is a WSGIResponse
             for middleware in self.response_middleware:
                 resp = yield middleware(environ, resp)
             start_response(resp.status, resp.get_headers())
         coroutine_return(resp)
+
+    def _appengine(self, environ, start_response):
+        resp = None
+        try:
+            for middleware in self.middleware:
+                resp = middleware(environ, start_response)
+                if resp is not None:
+                    break
+            if resp is None:
+                raise Http404
+        except Exception as exc:
+            resp = handle_wsgi_error(environ, exc)
+        if isinstance(resp, WsgiResponse):
+            # The response is a WSGIResponse
+            for middleware in self.response_middleware:
+                resp = middleware(environ, resp)
+            start_response(resp.status, resp.get_headers())
+        return resp
 
 
 class LazyWsgi(LocalMixin):

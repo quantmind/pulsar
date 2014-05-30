@@ -73,6 +73,9 @@ def register_searchengine(name, engine_class):
 def search_engine(url, loop=None, **kw):
     if isinstance(url, SearchEngine):
         return url
+    loop = loop or get_event_loop()
+    if not loop:
+        raise ImproperlyConfigured('no event loop')
     if isinstance(url, dict):
         extra = url.copy()
         url = extra.pop('url', None)
@@ -82,9 +85,6 @@ def search_engine(url, loop=None, **kw):
     dotted_path = search_engines.get(scheme)
     if not dotted_path:
         raise ImproperlyConfigured('%s search engine not available' % scheme)
-    loop = loop or get_event_loop()
-    if not loop:
-        loop = new_event_loop(logger=logging.getLogger(dotted_path))
     engine_class = module_attribute(dotted_path)
     params.update(kw)
     return engine_class(scheme, address, loop, **params)

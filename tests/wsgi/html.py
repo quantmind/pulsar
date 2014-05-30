@@ -3,7 +3,7 @@ import unittest
 from pulsar.apps import wsgi
 
 
-class TestHtmlFactory(unittest.TestCase):
+class TestHtml(unittest.TestCase):
 
     def test_html_factory(self):
         input = wsgi.html_factory('input', type='text')
@@ -14,9 +14,6 @@ class TestHtmlFactory(unittest.TestCase):
         text = h.render()
         self.assertTrue(" type='text'" in text)
         self.assertTrue(" value='bla'" in text)
-
-
-class TestAttributes(unittest.TestCase):
 
     def testEmpty(self):
         c = wsgi.Html('div')
@@ -143,12 +140,9 @@ class TestWidgets(unittest.TestCase):
         self.assertTrue('<li>a list item</li>' in ht)
         self.assertTrue('<li>another one</li>' in ht)
 
-
-class TestHtmlDocument(unittest.TestCase):
-
-    def testSimple(self):
+    def test_simple(self):
         html = wsgi.HtmlDocument()
-        self.assertEqual(len(html.head.children), 4)
+        self.assertEqual(len(html.head.children), 5)
         self.assertEqual(len(html.body.children), 0)
 
     def testHead(self):
@@ -168,10 +162,7 @@ class TestHtmlDocument(unittest.TestCase):
         text = meta.render()
         self.assertEqual(text, "<meta charset='utf-8'><meta name='bla'>")
 
-
-class TestMedia(unittest.TestCase):
-
-    def testEmptyHtml(self):
+    def test_document_empty_body(self):
         m = wsgi.HtmlDocument(title='test', bla='foo')
         self.assertTrue(m.head)
         self.assertTrue(m.body)
@@ -188,7 +179,7 @@ class TestMedia(unittest.TestCase):
                                   '</body>\n',
                                   '</html>']))
 
-    def testHtml(self):
+    def test_document(self):
         m = wsgi.HtmlDocument(title='test')
         m.body.append(wsgi.Html('div', 'this is a test'))
         txt = m.render()

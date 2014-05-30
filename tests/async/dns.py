@@ -1,0 +1,16 @@
+import unittest
+
+from pulsar import get_event_loop
+
+
+class TestDns(unittest.TestCase):
+
+    def test_getnameinfo(self):
+        loop = get_event_loop()
+        info = yield loop.getaddrinfo('www.bbc.co.uk', 'http')
+        info = yield loop.getnameinfo(('212.58.244.66', 80))
+        info = yield loop.getaddrinfo('github.com', 'https')
+        self.assertTrue(info)
+        addr = info[0][4]
+        info = yield loop.getnameinfo(addr)
+        self.assertTrue(info)

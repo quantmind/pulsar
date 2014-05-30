@@ -18,6 +18,7 @@ MANIFEST
 .settings
 .python-version
 examples/webmail/config.py
+examples/tweets/settings.py
 *~
 .htmlprof
 examples/djangoapp/test.db
@@ -27,4 +28,4 @@ extensions/lua/lua.c
 extensions/lib/lib.c
 .coveralls.yml
 *.rdb
-config.py
+/config.py

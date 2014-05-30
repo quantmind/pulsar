@@ -31,6 +31,7 @@ How pulsar handle asynchronous data?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Check the :ref:`asynchronous components documentation <tutorials-coroutine>`.
 
+
 Socket Servers
 --------------------
 
@@ -52,6 +53,22 @@ Is a WSGI response asynchronous?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 It depends on the WSGI application serving the request.
 
+
+Logging
+---------------
+
+log level
+~~~~~~~~~~~~~~~~
+
+Pulsar uses the :ref:`log-level <setting_log-level>` setting to control
+logging level on the command line or on your :ref:`config <setting_config`
+file::
+
+    python script.py --log-level debug
+
+Did you know you can pass several namespaces to ``--log-level``::
+
+    python script.py --log-level debug asyncio.warning
 
 
 Internals

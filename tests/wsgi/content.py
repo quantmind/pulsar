@@ -1,6 +1,6 @@
 import unittest
-from asyncio import Future
 
+from pulsar import Future
 from pulsar.apps import wsgi
 from pulsar.utils.system import json
 

@@ -19,8 +19,9 @@ import socket
 from wsgiref.handlers import format_date_time
 
 import pulsar
-from pulsar import HttpException, ProtocolError, Future, in_loop, chain_future
-from pulsar.utils.pep import is_string, native_str, reraise
+from pulsar import (reraise, HttpException, ProtocolError, Future, in_loop,
+                    chain_future)
+from pulsar.utils.pep import is_string, native_str
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
                                   urlparse, iri_to_uri, DEFAULT_CHARSET)
@@ -61,6 +62,11 @@ def test_wsgi_environ(path='/', method=None, headers=None, extra=None,
     data = data.encode('latin1')
     parser.execute(data, len(data))
     request_headers = Headers(headers, kind='client')
+    # Add Host if not available
+    parsed = urlparse(path)
+    if parsed.netloc and 'host' not in request_headers:
+        request_headers['host'] = parsed.netloc
+    #
     headers = Headers()
     stream = StreamReader(request_headers, parser)
     extra = extra or {}
@@ -222,7 +228,7 @@ def wsgi_environ(stream, address, client_address, headers,
         host = host_and_port_default(url_scheme, host)
         environ['SERVER_NAME'] = socket.getfqdn(host[0])
         environ['SERVER_PORT'] = host[1]
-    path_info = parser.get_path()
+    path_info = request_uri.path
     if path_info is not None:
         if script_name:
             path_info = path_info.split(script_name, 1)[1]
@@ -246,20 +252,20 @@ If the size is 0, this is the last chunk, and an extra CRLF is appended.
 
 
 def keep_alive(headers, version):
-        """ return True if the connection should be kept alive"""
-        conn = set((v.lower() for v in headers.get_all('connection', ())))
-        if "close" in conn:
-            return False
-        elif 'upgrade' in conn:
-            headers['connection'] = 'upgrade'
-            return True
-        elif "keep-alive" in conn:
-            return True
-        elif version == (1, 1):
-            headers['connection'] = 'keep-alive'
-            return True
-        else:
-            return False
+    """ return True if the connection should be kept alive"""
+    conn = set((v.lower() for v in headers.get_all('connection', ())))
+    if "close" in conn:
+        return False
+    elif 'upgrade' in conn:
+        headers['connection'] = 'upgrade'
+        return True
+    elif "keep-alive" in conn:
+        return True
+    elif version == (1, 1):
+        headers['connection'] = 'keep-alive'
+        return True
+    else:
+        return False
 
 
 def keep_alive_with_status(status, headers):

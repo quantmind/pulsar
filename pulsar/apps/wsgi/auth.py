@@ -8,6 +8,12 @@ HttpAuthenticate
    :members:
    :member-order: bysource
 
+
+
+Authorization header parser
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: parse_authorization_header
 '''
 import os
 import time
