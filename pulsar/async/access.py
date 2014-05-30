@@ -17,7 +17,7 @@ try:
     from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
     from asyncio.base_events import BaseEventLoop, _StopError
     from asyncio import selectors, events
-except ImportError: # pragma    nocover
+except ImportError:  # pragma    nocover
     if platform.is_appengine:
         from . import appengine as asyncio
         _PENDING = 'PENDING'
@@ -44,7 +44,7 @@ if ispy3k:
         raise value
 else:   # pragma    nocover
     ConnectionRefusedError = asyncio.ConnectionRefusedError
-    if reraise is None: # trollius name change
+    if reraise is None:  # trollius name change
         from asyncio.py33_exceptions import reraise
 
 
