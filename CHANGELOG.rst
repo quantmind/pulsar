@@ -1,3 +1,6 @@
+Ver. 0.8.3 - Development
+===========================
+
 Ver. 0.8.2 - 2014-May-30
 ===========================
 * :ref:`--pep8 <setting-pep8>` is a new command line option for the
