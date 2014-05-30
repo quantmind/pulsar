@@ -79,7 +79,7 @@
 <p>There are three, closely related, ways to create asynchronous components in
 pulsar:</p>
 <ul>
-<li><p class="first">Directly create a of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>:</p>
+<li><p class="first">Directly create a of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">asyncio</span>
 
 <span class="n">o</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
@@ -112,7 +112,7 @@ For example:</p>
 </li>
 </ul>
 <ul id="task-component">
-<li><p class="first">An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Task</span></tt></a>, is a component which has been added to
+<li><p class="first">An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Task</span></tt></a>, is a component which has been added to
 pulsar asynchronous engine. It is created via the <a class="reference internal" href="../api/async.html#pulsar.async.futures.async" title="pulsar.async.futures.async"><tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt></a> function
 when applied to a generator function or, equivalently, by the
 <a class="reference internal" href="../api/async.html#pulsar.async.futures.in_loop" title="pulsar.async.futures.in_loop"><tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt></a> and <a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators:</p>
@@ -127,7 +127,7 @@ when applied to a generator function or, equivalently, by the
 <span class="n">task</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">my_async_generator2</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a subclass of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> and
+<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a subclass of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> and
 therefore it has the same API, for example, you can add callbacks to a task:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">task</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 </pre></div>
@@ -137,7 +137,7 @@ therefore it has the same API, for example, you can add callbacks to a task:</p>
 <div class="section" id="coroutines">
 <span id="coroutine"></span><h2>Coroutines<a class="headerlink" href="#coroutines" title="Permalink to this headline">¶</a></h2>
 <p>As mentioned above, a coroutine is a generator which consumes values. A pulsar
-coroutine can consume synchronous values as well as <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
+coroutine can consume synchronous values as well as <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
 and other <a class="reference internal" href="#coroutine"><em>coroutines</em></a>.
 Let&#8217;s consider the following code:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">d</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
@@ -164,20 +164,20 @@ asynchronous engine via the <a class="reference internal" href="../api/async.htm
 <div class="highlight-python"><div class="highlight"><pre><span class="n">task</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>task is a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> instance.</p>
+<p>task is a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> instance.</p>
 <p>Coroutines can return values via the <a class="reference internal" href="../api/async.html#pulsar.async.futures.coroutine_return" title="pulsar.async.futures.coroutine_return"><tt class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></tt></a> function.
 Otherwise they always return <tt class="docutils literal"><span class="pre">None</span></tt> (unless exceptions occur).</p>
 </div>
 <div class="section" id="task">
 <h2>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h2>
-<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> which consumes
+<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> which consumes
 <a class="reference internal" href="#coroutine"><em>coroutines</em></a>.
-A coroutine is transformed into a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>
+A coroutine is transformed into a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>
 via the <a class="reference internal" href="../api/async.html#pulsar.async.futures.async" title="pulsar.async.futures.async"><tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt></a> function or the <a class="reference internal" href="../api/async.html#pulsar.async.futures.in_loop" title="pulsar.async.futures.in_loop"><tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt></a> and
 <a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators.</p>
 <p>A task consumes a coroutine until the coroutine yield an asynchronous component
 not yet done. When this appends, the task pauses and returns the control of execution.
-Before it returns, it adds a <tt class="docutils literal"><span class="pre">callback</span></tt> to the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
+Before it returns, it adds a <tt class="docutils literal"><span class="pre">callback</span></tt> to the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
 on which the coroutine is blocked to resume the coroutine once the future
 is called.
 A task in this state is said to be <strong>suspended</strong>.</p>

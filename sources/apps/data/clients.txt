@@ -87,6 +87,11 @@ a valid :class:`.PubSub` handler.
 API
 ============
 
+The main component of the data store API is the :func:`.create_store`
+function which creates in one function call a new :class:`.Store`
+object which can be used to interact directly with the backend database
+or indirectly via the :ref:`object data mapper <odm>`.
+
 Create store
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

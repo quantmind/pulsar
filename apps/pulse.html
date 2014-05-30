@@ -91,7 +91,7 @@ application served by a multiprocessing pulsar server.</p>
 <p>By default, the <tt class="docutils literal"><span class="pre">pulse</span></tt> command creates a <a class="reference internal" href="#pulsar.apps.pulse.Wsgi" title="pulsar.apps.pulse.Wsgi"><tt class="xref py py-class docutils literal"><span class="pre">Wsgi</span></tt></a> middleware which
 runs the django application in a separate thread of execution from the
 main event loop.
-This is a standard programming pattern when using <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-dev.html#asyncio-multithreading" title="(in Python v3.4)"><em class="xref std std-ref">asyncio with blocking
+This is a standard programming pattern when using <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-dev.html#asyncio-multithreading" title="(in Python v3.5)"><em class="xref std std-ref">asyncio with blocking
 functions</em></a>.
 To control the number of thread workers in the event loop executor (which
 is a pool of threads) one uses the

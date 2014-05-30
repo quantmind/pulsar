@@ -93,8 +93,12 @@
 <li><a class="reference internal" href="#is-a-wsgi-response-asynchronous" id="id11">Is a WSGI response asynchronous?</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#internals" id="id12">Internals</a><ul>
-<li><a class="reference internal" href="#how-is-inter-actor-message-passing-implemented" id="id13">How is inter-actor message passing implemented?</a></li>
+<li><a class="reference internal" href="#logging" id="id12">Logging</a><ul>
+<li><a class="reference internal" href="#log-level" id="id13">log level</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#internals" id="id14">Internals</a><ul>
+<li><a class="reference internal" href="#how-is-inter-actor-message-passing-implemented" id="id15">How is inter-actor message passing implemented?</a></li>
 </ul>
 </li>
 </ul>
@@ -138,10 +142,24 @@ please <a class="reference internal" href="overview.html#contributing"><em>file 
 <p>It depends on the WSGI application serving the request.</p>
 </div>
 </div>
+<div class="section" id="logging">
+<h2><a class="toc-backref" href="#id12">Logging</a><a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="log-level">
+<h3><a class="toc-backref" href="#id13">log level</a><a class="headerlink" href="#log-level" title="Permalink to this headline">¶</a></h3>
+<p>Pulsar uses the <em class="xref std std-ref">log-level</em> setting to control
+logging level on the command line or on your <em class="xref std std-ref">config &lt;setting_config</em>
+file:</p>
+<div class="highlight-python"><pre>python script.py --log-level debug</pre>
+</div>
+<p>Did you know you can pass several namespaces to <tt class="docutils literal"><span class="pre">--log-level</span></tt>:</p>
+<div class="highlight-python"><pre>python script.py --log-level debug asyncio.warning</pre>
+</div>
+</div>
+</div>
 <div class="section" id="internals">
-<h2><a class="toc-backref" href="#id12">Internals</a><a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id14">Internals</a><a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="how-is-inter-actor-message-passing-implemented">
-<h3><a class="toc-backref" href="#id13">How is inter-actor message passing implemented?</a><a class="headerlink" href="#how-is-inter-actor-message-passing-implemented" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id15">How is inter-actor message passing implemented?</a><a class="headerlink" href="#how-is-inter-actor-message-passing-implemented" title="Permalink to this headline">¶</a></h3>
 <p>Check the <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>actor messages documentation</em></a>.</p>
 </div>
 </div>
@@ -187,6 +205,10 @@ please <a class="reference internal" href="overview.html#contributing"><em>file 
 <li><a class="reference internal" href="#wsgi-server">WSGI Server</a><ul>
 <li><a class="reference internal" href="#is-pulsar-wsgi-server-pep-3333-compliant">Is pulsar WSGI server pep 3333 compliant?</a></li>
 <li><a class="reference internal" href="#is-a-wsgi-response-asynchronous">Is a WSGI response asynchronous?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#logging">Logging</a><ul>
+<li><a class="reference internal" href="#log-level">log level</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#internals">Internals</a><ul>

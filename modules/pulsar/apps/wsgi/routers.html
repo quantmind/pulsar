@@ -487,9 +487,9 @@
                                 <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Method &quot;</span><span class="si">%s</span><span class="s">&quot; not allowed&#39;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">redirect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<div class="viewcode-block" id="Router.redirect"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.redirect">[docs]</a>    <span class="k">def</span> <span class="nf">redirect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">HttpRedirect</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-
+</div>
 <div class="viewcode-block" id="Router.add_child"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.add_child">[docs]</a>    <span class="k">def</span> <span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add a new :class:`Router` to the :attr:`routes` list.</span>
 <span class="sd">        &#39;&#39;&#39;</span>

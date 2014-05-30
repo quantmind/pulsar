@@ -74,11 +74,11 @@
             
   <span class="target" id="module-pulsar"><span id="design"></span></span><div class="section" id="id1">
 <h1>Design<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar implements two layers of components on top of python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.4)"><tt class="xref py py-mod docutils literal"><span class="pre">asyncio</span></tt></a>
+<p>Pulsar implements two layers of components on top of python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.5)"><tt class="xref py py-mod docutils literal"><span class="pre">asyncio</span></tt></a>
 module:</p>
 <ul class="simple">
 <li><a class="reference internal" href="#design-actor"><em>The actor layer</em></a> provides parallel execution in
-processes and threads and uses the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.4)"><tt class="xref py py-mod docutils literal"><span class="pre">asyncio</span></tt></a> module
+processes and threads and uses the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.5)"><tt class="xref py py-mod docutils literal"><span class="pre">asyncio</span></tt></a> module
 as building block.</li>
 <li>The second layer, built on top of the first one, is based on the higher level
 <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> class.</li>
@@ -87,7 +87,7 @@ as building block.</li>
 <span id="async-object"></span><h2>Async Objects<a class="headerlink" href="#async-objects" title="Permalink to this headline">¶</a></h2>
 <p>Introduced in pulsar 0.8, an asynchronous object is any instance which exposes
 the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><tt class="xref py py-attr docutils literal"><span class="pre">_loop</span></tt></a> attribute.
-This attribute is the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.4)"><em class="xref std std-ref">event loop</em></a> where
+This attribute is the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> where
 the instance performs its asynchronous operations, whatever they may be.</p>
 <p>For example this is a class for valid async objects:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">new_event_loop</span>
@@ -104,8 +104,8 @@ the instance performs its asynchronous operations, whatever they may be.</p>
 <li>Several classes in pulsar are async objects, for example: <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>,
 <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a>, <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>, <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
 and so forth</li>
-<li>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> is an async object</li>
-<li>However an async object <strong>is not</strong> necessarily a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a></li>
+<li>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> is an async object</li>
+<li>However an async object <strong>is not</strong> necessarily a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a></li>
 <li>They can use the <a class="reference internal" href="api/async.html#pulsar.async.futures.in_loop" title="pulsar.async.futures.in_loop"><tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt></a> and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators for
 their methods</li>
 <li>Pulsar provides the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject" title="pulsar.async.futures.AsyncObject"><tt class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></tt></a> signature class,
@@ -160,7 +160,7 @@ don&#8217;t shares state between them.</li>
 <span id="arbiter"></span><h3>The Arbiter<a class="headerlink" href="#the-arbiter" title="Permalink to this headline">¶</a></h3>
 <p>When using pulsar actor layer, you need to use pulsar in <strong>server state</strong>,
 that is to say, there will be a centralised <a class="reference internal" href="api/actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> controlling the main
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.4)"><em class="xref std std-ref">event loop</em></a> in the <strong>main thread</strong> of the
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> in the <strong>main thread</strong> of the
 <strong>master process</strong>.
 The arbiter is a specialised <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
 which control the life of all <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.async.monitor.Monitor" title="pulsar.async.monitor.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>.</p>
@@ -175,7 +175,7 @@ which control the life of all <a class="reference internal" href="api/actor.html
 <div class="section" id="implementation">
 <span id="concurrency"></span><h3>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h3>
 <p>An actor can be <strong>processed based</strong> (default) or <strong>thread based</strong> and control
-at least one running <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.4)"><em class="xref std std-ref">event loop</em></a>.
+at least one running <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a>.
 To obtain the actor controlling the current thread:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">()</span>
 </pre></div>
@@ -187,8 +187,8 @@ as the arbiter) and control threads other than the main thread.</p>
 <p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> can control more than one thread if it needs to, via the
 <tt class="xref py py-attr docutils literal"><span class="pre">thread_pool</span></tt> as explained in the <a class="reference internal" href="#cpubound"><em>CPU bound</em></a>
 paragraph.
-The actor <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.4)"><em class="xref std std-ref">event loop</em></a> is installed in all threads
-controlled by the actor so that when the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.4)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>
+The actor <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> is installed in all threads
+controlled by the actor so that when the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>
 function is invoked on these threads it returns the event loop of
 the controlling actor.</p>
 <div class="admonition note" id="actor-io-thread">
@@ -265,7 +265,7 @@ attribute.</p>
 </pre></div>
 </div>
 <p>The valued returned by <a class="reference internal" href="api/actor.html#pulsar.async.arbiter.spawn" title="pulsar.async.arbiter.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> is an <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxyFuture" title="pulsar.async.proxy.ActorProxyFuture"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyFuture</span></tt></a> instance,
-a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>, which has the spawned actor id <tt class="docutils literal"><span class="pre">aid</span></tt>
+a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>, which has the spawned actor id <tt class="docutils literal"><span class="pre">aid</span></tt>
 and it is called back once the remote actor has started.
 The callback will be an <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>, a lightweight proxy
 for the remote actor.</p>
@@ -414,7 +414,7 @@ initial parameter:</p>
 <tt class="xref py py-class docutils literal"><span class="pre">Exception</span></tt> class and those that derive from <tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt>.
 Exceptions deriving from Exception will generally be caught and handled
 appropriately; for example, they will be passed through by a
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>,
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>,
 and they will be logged and ignored when they occur in a callback.</p>
 <p>However, exceptions deriving only from BaseException are never caught,
 and will usually cause the program to terminate with a traceback.

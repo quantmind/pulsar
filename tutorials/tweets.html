@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Tutorials &amp; Topics &mdash; pulsar 0.8.2-beta.1 documentation</title>
+    <title>Twitter Streaming &mdash; pulsar 0.8.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -30,8 +30,9 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.2-beta.1 documentation" href="../index.html" />
-    <link rel="next" title="Hello World!" href="hello.html" />
-    <link rel="prev" title="Pulsar Advantage" href="../advantage.html" /> 
+    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
+    <link rel="next" title="Dining Philosophers" href="philosophers.html" />
+    <link rel="prev" title="Django with Pulsar" href="django.html" /> 
 </head>
  <body>
 
@@ -47,12 +48,13 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="hello.html" title="Hello World!"
+          <a href="philosophers.html" title="Dining Philosophers"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../advantage.html" title="Pulsar Advantage"
+          <a href="django.html" title="Django with Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.2-beta.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -60,7 +62,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/tutorials/index.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/tutorials/tweets.html">release docs here</a>.
         </p>
     
 </div>
@@ -72,48 +74,38 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-examples"></span><div class="section" id="tutorials-topics">
-<span id="tutorials"></span><h1>Tutorials &amp; Topics<a class="headerlink" href="#tutorials-topics" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="id1">
-<h2>Tutorials<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>Most of the material presented in the these tutorials is based on the
-<a class="reference internal" href="#module-examples" title="examples"><tt class="xref py py-mod docutils literal"><span class="pre">examples</span></tt></a> module in the <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar distribution</a>.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="hello.html">Hello World!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="clients.html">Echo Server and Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="wsgi.html">WSGI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="deploy.html">Deploy Web Applications</a></li>
-<li class="toctree-l1"><a class="reference internal" href="httpbin.html">Http Bin</a></li>
-<li class="toctree-l1"><a class="reference internal" href="proxy.html">HTTP Proxy Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="calculator.html">JSON-RPC Calculator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="chat.html">Websocket Chat Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="taskqueue.html">A Task Queue with a JSON-RPC Api</a></li>
-<li class="toctree-l1"><a class="reference internal" href="django.html">Django with Pulsar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tweets.html">Twitter Streaming</a></li>
-<li class="toctree-l1"><a class="reference internal" href="philosophers.html">Dining Philosophers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pulsards.html">Pulsar-ds</a></li>
-<li class="toctree-l1"><a class="reference internal" href="udp.html">Udp Server and Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="webmail.html">Twisted Integration</a></li>
+  <div class="section" id="twitter-streaming">
+<span id="tutorials-tweets"></span><h1>Twitter Streaming<a class="headerlink" href="#twitter-streaming" title="Permalink to this headline">¶</a></h1>
+<p>The code for this example is located in the <a class="reference internal" href="#module-examples.tweets.manage" title="examples.tweets.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.tweets.manage</span></tt></a>
+module.</p>
+<span class="target" id="module-examples.tweets.manage"></span><p>This example uses the streaming capabilities of pulsar <a class="reference internal" href="../apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">HttpClient</span></tt></a>
+to hook into twitter streaming api and send tweets into a processing queue.</p>
+<div class="section" id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="examples.tweets.manage.Twitter">
+<em class="property">class </em><tt class="descclassname">examples.tweets.manage.</tt><tt class="descname">Twitter</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/examples/tweets/manage.html#Twitter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.manage.Twitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>This applications requires the following parameters
+to be specified in your <tt class="docutils literal"><span class="pre">config.py</span></tt> file:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">twitter_api_key</span></tt> the Consumer key of your application</li>
+<li><tt class="docutils literal"><span class="pre">twitter_api_secret</span></tt>, the Consumer secret</li>
+<li><tt class="docutils literal"><span class="pre">twitter_access_token</span></tt>, the application Access token</li>
+<li><tt class="docutils literal"><span class="pre">twitter_access_secret</span></tt>, the Access token secret</li>
+<li><tt class="docutils literal"><span class="pre">twitter_stream_filter</span></tt>, dictionary of parameters for
+filtering tweets.</li>
 </ul>
-</div>
-</div>
-<div class="section" id="topics">
-<h2>Topics<a class="headerlink" href="#topics" title="Permalink to this headline">¶</a></h2>
-<p>These sections cover <strong>pulsar internals</strong> for the curious reader.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="actors.html">The Arbiter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="actors.html#using-command">Using command</a></li>
-<li class="toctree-l1"><a class="reference internal" href="coroutine.html">Asynchronous Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="messages.html">Actor messages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Events</a></li>
-<li class="toctree-l1"><a class="reference internal" href="signal.html">Signal Handling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sync.html">Synchronous Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cextensions.html">C Extensions</a></li>
-</ul>
-</div>
+<p>Check the twitter stream filter api for further information</p>
+<p><a class="reference external" href="https://dev.twitter.com/docs/api/1.1/post/statuses/filter">https://dev.twitter.com/docs/api/1.1/post/statuses/filter</a></p>
+<dl class="method">
+<dt id="examples.tweets.manage.Twitter.reconnect">
+<tt class="descname">reconnect</tt><big>(</big><em>response</em>, <em>exc=None</em><big>)</big><a class="headerlink" href="#examples.tweets.manage.Twitter.reconnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle reconnection according to twitter streaming policy</p>
+<p><a class="reference external" href="https://dev.twitter.com/docs/streaming-apis/connecting">https://dev.twitter.com/docs/streaming-apis/connecting</a></p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 
@@ -142,26 +134,21 @@
 <br>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Tutorials &amp; Topics</a><ul>
-<li><a class="reference internal" href="#id1">Tutorials</a><ul>
-</ul>
-</li>
-<li><a class="reference internal" href="#topics">Topics</a><ul>
-</ul>
-</li>
+<li><a class="reference internal" href="#">Twitter Streaming</a><ul>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../advantage.html"
-                        title="previous chapter">Pulsar Advantage</a></p>
+  <p class="topless"><a href="django.html"
+                        title="previous chapter">Django with Pulsar</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="hello.html"
-                        title="next chapter">Hello World!</a></p>
+  <p class="topless"><a href="philosophers.html"
+                        title="next chapter">Dining Philosophers</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/index.txt"
+    <li><a href="../sources/tutorials/tweets.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

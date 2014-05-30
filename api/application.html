@@ -102,7 +102,7 @@ attribute.</li>
 the class <tt class="xref py py-attr docutils literal"><span class="pre">cfg.version</span></tt> attribute.</li>
 <li><strong>argv</strong> &#8211; Optional list of command line parameters to parse, if
 not supplied the <tt class="xref py py-attr docutils literal"><span class="pre">sys.argv</span></tt> list will be used. The parameter
-is only relevant if <strong>parse_console</strong> is <tt class="docutils literal"><span class="pre">True</span></tt>.</li>
+is only relevant if <tt class="docutils literal"><span class="pre">parse_console</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>.</li>
 <li><strong>parse_console</strong> &#8211; <tt class="docutils literal"><span class="pre">True</span></tt> (default) if the console parameters
 needs parsing.</li>
 <li><strong>script</strong> &#8211; Optional string which set the <a class="reference internal" href="#pulsar.apps.Configurator.script" title="pulsar.apps.Configurator.script"><tt class="xref py py-attr docutils literal"><span class="pre">script</span></tt></a>
@@ -141,8 +141,8 @@ If set as class attribute it will be replaced during initialisation.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.Configurator.parsed_console">
-<tt class="descname">parsed_console</tt><a class="headerlink" href="#pulsar.apps.Configurator.parsed_console" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.Configurator.console_parsed">
+<tt class="descname">console_parsed</tt><a class="headerlink" href="#pulsar.apps.Configurator.console_parsed" title="Permalink to this definition">¶</a></dt>
 <dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this application parsed the console before starting.</p>
 </dd></dl>
 
@@ -193,14 +193,12 @@ concurrent machinery is put into place.</p>
 from the command line.</p>
 <p>Called during application initialisation. The parameters
 overriding order is the following:</p>
-<blockquote>
-<div><ul class="simple">
+<ul class="simple">
 <li>default parameters.</li>
 <li>the key-valued params passed in the initialisation.</li>
 <li>the parameters in the optional configuration file</li>
 <li>the parameters passed in the command line.</li>
 </ul>
-</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -208,7 +206,7 @@ overriding order is the following:</p>
 <tt class="descname">start</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked the application callable method and start
 the <a class="reference internal" href="actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> if it wasn&#8217;t already started.</p>
-<p>It returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called back once the
+<p>It returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called back once the
 application/applications are running. It returns <tt class="docutils literal"><span class="pre">None</span></tt> if
 called more than once.</p>
 </dd></dl>

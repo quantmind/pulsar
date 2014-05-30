@@ -77,15 +77,26 @@
 <div class="section" id="ver-0-8-2-development">
 <h2>Ver. 0.8.2 - Development<a class="headerlink" href="#ver-0-8-2-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">--pep8</span></tt> is now a command line options for the <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">test</span></tt></a>
-application</li>
+<li><a class="reference internal" href="settings.html#setting-pep8"><em>&#8211;pep8</em></a> is a new command line option for the
+<a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">test</span></tt></a> application</li>
 <li><a class="reference internal" href="api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> has its own <tt class="docutils literal"><span class="pre">_loop</span></tt> attribute rather than
 obtaining indirectly from the underling <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a>.
-This avoids several logging errors when a connection is dropped.</li>
+This avoids several logging errors when a connection is dropped</li>
 <li>Added utilities to execute <a class="reference external" href="http://www.postgresql.org/">PostgreSql</a> queries via
 <a class="reference external" href="http://pythonhosted.org/psycopg2/">psycopg2</a> in asynchronous mode via the <a class="reference internal" href="apps/greenio.html#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><tt class="xref py py-mod docutils literal"><span class="pre">greenio</span></tt></a> module.</li>
 <li><a class="reference internal" href="apps/pulse.html#apps-pulse"><em>Django pulse application</em></a> can be run asynchronously
-when using PostgreSql database. It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet</a> module.</li>
+when using PostgreSql database.
+It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet module</a></li>
+<li>Added <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Head.embedded_js" title="pulsar.apps.wsgi.content.Head.embedded_js"><tt class="xref py py-attr docutils literal"><span class="pre">Head.embedded_js</span></tt></a> for adding javascript code directly in the
+<a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a></li>
+<li>Improved management of <tt class="docutils literal"><span class="pre">meta</span></tt> tags in the HTML5 <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Head" title="pulsar.apps.wsgi.content.Head"><tt class="xref py py-class docutils literal"><span class="pre">Head</span></tt></a> class</li>
+<li>Added <a class="reference internal" href="apps/http.html#pulsar.apps.http.OAuth1" title="pulsar.apps.http.OAuth1"><tt class="xref py py-class docutils literal"><span class="pre">OAuth1</span></tt></a> and <a class="reference internal" href="apps/http.html#pulsar.apps.http.OAuth2" title="pulsar.apps.http.OAuth2"><tt class="xref py py-class docutils literal"><span class="pre">OAuth2</span></tt></a> hooks to the
+<a class="reference internal" href="apps/http.html#module-pulsar.apps.http" title="pulsar.apps.http"><tt class="xref py py-mod docutils literal"><span class="pre">http</span></tt></a> module (alpha and untested)</li>
+<li>Bug fix in <a class="reference internal" href="api/utilities.html#pulsar.utils.httpurl.HttpParser" title="pulsar.utils.httpurl.HttpParser"><tt class="xref py py-class docutils literal"><span class="pre">HttpParser</span></tt></a> when <tt class="docutils literal"><span class="pre">Transfer-Encoding=chunked</span></tt></li>
+<li>Added default javascript libraries to the <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a></li>
+<li>Both wsgi request wrappers and content don&#8217;t use coroutines but
+straight <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> for compatibility with other frameworks.</li>
+<li>pulsar can be imported and used (with limited scope) in the google appengine</li>
 </ul>
 </div>
 <div class="section" id="ver-0-8-1-2014-apr-14">
@@ -106,7 +117,7 @@ path contain a <tt class="docutils literal"><span class="pre">default_file</span
 <tt class="docutils literal"><span class="pre">show_indexes</span></tt> in <a class="reference internal" href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.MediaRouter" title="pulsar.apps.wsgi.routers.MediaRouter"><tt class="xref py py-class docutils literal"><span class="pre">MediaRouter</span></tt></a> initialisation is by default
 <tt class="docutils literal"><span class="pre">False</span></tt>.</li>
 <li>The callable method in a <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a> always returns a
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>.</li>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-8-0-2014-mar-06">
@@ -116,15 +127,15 @@ path contain a <tt class="docutils literal"><span class="pre">default_file</span
 <li><strong>Asyncio Integration</strong><ul>
 <li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">asyncio</a> integration with several changes in internals. The integration
 works with all supported python versions: 2.7, 3.3 and 3.4</li>
-<li>Asyncio event loop functions <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.4)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>,
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.new_event_loop" title="(in Python v3.4)"><tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt></a>,
+<li>Asyncio event loop functions <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>,
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.new_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt></a>,
 are available from pulsar top level module as well as asyncio.
 In other words <tt class="docutils literal"><span class="pre">from</span> <span class="pre">pulsar</span> <span class="pre">import</span> <span class="pre">get_event_loop</span></tt> and
 <tt class="docutils literal"><span class="pre">from</span> <span class="pre">asyncio</span> <span class="pre">import</span> <span class="pre">get_event_loop</span></tt> are equivalent (provided pulsar is
 imported first).</li>
-<li>Replaced the <tt class="docutils literal"><span class="pre">Deferred</span></tt> class with <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a>.</li>
+<li>Replaced the <tt class="docutils literal"><span class="pre">Deferred</span></tt> class with <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a>.</li>
 <li>Replaced the <tt class="docutils literal"><span class="pre">EventLoop</span></tt> class with
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.4)"><em class="xref std std-ref">asyncio event loop</em></a>.</li>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">asyncio event loop</em></a>.</li>
 </ul>
 </li>
 <li><strong>Core library</strong><ul>
@@ -133,7 +144,7 @@ imported first).</li>
 <a class="reference internal" href="api/async.html#pulsar.async.futures.coroutine_return" title="pulsar.async.futures.coroutine_return"><tt class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></tt></a> function.</li>
 <li>Added <a class="reference internal" href="api/async.html#pulsar.async.futures.run_in_loop" title="pulsar.async.futures.run_in_loop"><tt class="xref py py-func docutils literal"><span class="pre">run_in_loop()</span></tt></a> high level function. This utility
 runs a callable in the event loop thread and returns a
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called back once the callable has
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called back once the callable has
 a result/exception.</li>
 <li>Added <a class="reference internal" href="api/async.html#pulsar.async.futures.in_loop" title="pulsar.async.futures.in_loop"><tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt></a> and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators for
 member functions of <a class="reference internal" href="design.html#async-object"><em>async objects</em></a>.</li>
@@ -196,7 +207,7 @@ main distribution.</li>
 <a class="reference internal" href="apps/test.html#pulsar.apps.test.utils.run_on_arbiter" title="pulsar.apps.test.utils.run_on_arbiter"><tt class="xref py py-func docutils literal"><span class="pre">run_on_arbiter()</span></tt></a> decorator.</li>
 <li>The <a class="reference internal" href="apps/shell.html#apps-shell"><em>shell application</em></a> runs on a worker thread in the
 arbiter domain.</li>
-<li>The <a class="reference internal" href="api/application.html#pulsar.apps.Configurator.start" title="pulsar.apps.Configurator.start"><tt class="xref py py-meth docutils literal"><span class="pre">Configurator.start()</span></tt></a> method returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
+<li>The <a class="reference internal" href="api/application.html#pulsar.apps.Configurator.start" title="pulsar.apps.Configurator.start"><tt class="xref py py-meth docutils literal"><span class="pre">Configurator.start()</span></tt></a> method returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
 called back once the applications in the configurator are running.</li>
 <li>Added a new script for building releases for pypi (<tt class="docutils literal"><span class="pre">buildrelease.py</span></tt>)</li>
 </ul>
@@ -316,7 +327,7 @@ The metod can be used to remove all tasks and empty the task queue.</li>
 in a task queue.</li>
 <li>Added <a class="reference internal" href="settings.html#setting-when-exit"><em>when_exit</em></a> application hook.</li>
 <li>Added <a class="reference internal" href="settings.html#setting-selector"><em>&#8211;io option</em></a> for controlling the default
-selector from python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/selectors.html#module-selectors" title="(in Python v3.4)"><tt class="xref py py-mod docutils literal"><span class="pre">selectors</span></tt></a> module.</li>
+selector from python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/selectors.html#module-selectors" title="(in Python v3.5)"><tt class="xref py py-mod docutils literal"><span class="pre">selectors</span></tt></a> module.</li>
 <li>Critical bug fix in python 3 WSGI server.</li>
 <li>Added <tt class="docutils literal"><span class="pre">full_route</span></tt> and <tt class="docutils literal"><span class="pre">rule</span></tt> attributes to wsgi Router.</li>
 <li>Added <a class="reference internal" href="settings.html#setting-show-leaks"><em>&#8211;show_leaks option</em></a>
@@ -505,7 +516,7 @@ synchronous and asynchronous clients.</li>
 can add separate callbacks for handling errors.</li>
 <li>Added <tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt> for handling a group of asynchronous
 elements independent from each other.</li>
-<li>The <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Mailbox</span></tt> does not derive from <a class="reference external" href="http://python.readthedocs.org/en/latest/library/threading.html#threading.Thread" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></a> so
+<li>The <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Mailbox</span></tt> does not derive from <a class="reference external" href="http://python.readthedocs.org/en/latest/library/threading.html#threading.Thread" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></a> so
 that the eventloop can be restarted.</li>
 <li>Removed the <tt class="docutils literal"><span class="pre">ActorMetaClass</span></tt>. Remote functions are specified using
 a dictionary.</li>
