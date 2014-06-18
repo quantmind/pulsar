@@ -42,11 +42,11 @@ class TestDjangoChat(unittest.TestCase):
         cls.exc_id = gen_unique_id()[:8]
         name = cls.__name__.lower()
         argv = [__file__, 'pulse',
-                '--bind', '127.0.0.1:0',
+                '-b', '127.0.0.1:0',
                 '--concurrency', cls.concurrency,
                 '--exc-id', cls.exc_id,
                 '--pulse-app-name', name,
-                '--data-store', cls.data_store()]
+                '--data-store', 'pulsar://127.0.0.1:6410/1']
         cls.app_cfg = yield send('arbiter', 'run', start_server, name, argv)
         assert cls.app_cfg.exc_id == cls.exc_id, "Bad execution id"
         addr = cls.app_cfg.addresses[0]
@@ -58,10 +58,6 @@ class TestDjangoChat(unittest.TestCase):
     def tearDownClass(cls):
         if cls.app_cfg:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
-
-    @classmethod
-    def data_store(cls):
-        return 'pulsar://127.0.0.1:0/8'
 
     def test_home(self):
         result = yield self.http.get(self.uri)

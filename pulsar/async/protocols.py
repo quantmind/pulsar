@@ -167,7 +167,7 @@ class ProtocolConsumer(EventHandler):
 
         By default it calls the :meth:`finished` method. It can be overwritten
         to handle the potential exception ``exc``.'''
-        return self.finished(exc)
+        return self.finished(exc=exc)
 
     def finished(self, *arg, **kw):
         '''Fire the ``post_request`` event if it wasn't already fired.
