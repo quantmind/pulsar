@@ -61,9 +61,9 @@ def process_info(pid=None):
     except psutil.NoSuchProcess:  # pragma    nocover
         return {}
     else:
-        mem = p.get_memory_info()
+        mem = p.memory_info()
         return {'memory': mem.rss,
                 'memory_virtual': mem.vms,
-                'cpu_percent': p.get_cpu_percent(),
+                'cpu_percent': p.cpu_percent(),
                 'nice': p.get_nice(),
-                'num_threads': p.get_num_threads()}
+                'num_threads': p.num_threads()}

@@ -30,4 +30,3 @@ class TestPath(unittest.TestCase):
         p = Path()
         self.assertRaises(ImportError, p.add2python, 'kaputttt')
         self.assertFalse(p.add2python('vdfvdavfdv', must_exist=False))
-
