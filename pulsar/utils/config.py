@@ -378,7 +378,8 @@ class Config(object):
                                    logging._checkLevel('WARNING'))
         for namespace, loglevel in (('pulsar', default_loglevel),
                                     (name, default_loglevel),
-                                    ('asyncio', asyncio_loglevel)):
+                                    ('asyncio', asyncio_loglevel),
+                                    ('trollius', asyncio_loglevel)):
             if namespace not in loggers:
                 loggers[namespace] = configured_logger(namespace,
                                                        config=self.logconfig,

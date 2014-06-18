@@ -159,7 +159,8 @@ from .html import html_visitor
 
 __all__ = ['AsyncString', 'Html',
            'Json', 'HtmlDocument',
-           'html_factory', 'Media', 'Scripts', 'Css']
+           'html_factory', 'Media',
+           'Scripts', 'Css', 'media_libraries']
 
 
 JS_DIR = os.path.join(os.path.dirname(__file__), 'js')

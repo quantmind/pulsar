@@ -29,7 +29,7 @@ class Path(string_type):
     def join(self, *path):
         return self.__class__(os.path.join(self, *path))
 
-    def split(self):
+    def split(self, *args):
         d, f = os.path.split(self)
         return self.__class__(d), f
 

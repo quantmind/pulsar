@@ -1,5 +1,7 @@
-Ver. 0.8.3 - Development
+Ver. 0.8.3 - 2014-Jun-18
 ===========================
+* Fixed bug in python 2 for :func:`.middleware_in_executor`
+* Set trollius logger to warning by default (same as asyncio)
 
 Ver. 0.8.2 - 2014-May-30
 ===========================

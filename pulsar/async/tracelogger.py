@@ -84,7 +84,10 @@ if sys.version_info >= (3, 0):
 else:  # pragma    nocover
 
     def format_traceback(exc):
-        return getattr(exc, '__traceback__', [])
+        tb = getattr(exc, '__traceback__', None)
+        if tb is None:
+            tb = format_exception(*sys.exc_info())
+        return tb
 
     class _TracebackLogger:
         __slots__ = ['exc', 'tb']
