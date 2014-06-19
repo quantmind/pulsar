@@ -65,5 +65,5 @@ def process_info(pid=None):
         return {'memory': mem.rss,
                 'memory_virtual': mem.vms,
                 'cpu_percent': p.cpu_percent(),
-                'nice': p.get_nice(),
+                'nice': p.nice(),
                 'num_threads': p.num_threads()}
