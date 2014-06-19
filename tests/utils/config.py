@@ -29,7 +29,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg1.post_fork(worker), worker)
 
     def __testFunctionFromConfigFile(self):
-        #TODO, fails in pypy for some odd reasons
+        # TODO, fails in pypy for some odd reasons
         worker = get_actor()
         cfg = Config()
         self.assertEqual(cfg.connection_made(worker), None)
