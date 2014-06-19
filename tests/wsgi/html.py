@@ -22,10 +22,10 @@ class TestHtml(unittest.TestCase):
         self.assertEqual(c._data, None)
         self.assertEqual(c._css, None)
 
-    def testHtmlRepr(self):
+    def test_html_repr(self):
         c = wsgi.Html('div', cn='bla', charset='utf-16')
         self.assertEqual(c.content_type, 'text/html; charset=utf-16')
-        self.assertEqual(str(c), "<div class='bla'>")
+        self.assertEqual(str(c), "<div charset='utf-16' class='bla'>")
         c = wsgi.Html(None, cn='bla')
         self.assertEqual(c.tag, None)
         self.assertEqual(str(c), "Html")
@@ -119,14 +119,13 @@ class TestHtml(unittest.TestCase):
 
 class TestWidgets(unittest.TestCase):
 
-    def testAncor(self):
+    def test_ancor(self):
         a = wsgi.Html('a', 'kaput', cn='bla', href='/abc/')
         self.assertEqual(a.attr('href'), '/abc/')
         ht = a.render()
         self.assertTrue('>kaput</a>' in ht)
         a = wsgi.Html('a', xxxx='ciao')
-        self.assertFalse('xxxx' in a.attr())
-        self.assertEqual(a.data('xxxx'), 'ciao')
+        self.assertTrue('xxxx' in a.attr())
 
     def testList(self):
         ul = wsgi.Html('ul')
@@ -170,7 +169,7 @@ class TestWidgets(unittest.TestCase):
         txt = m.render()
         self.assertEqual(txt,
                          ''.join(['<!DOCTYPE html>\n',
-                                  "<html data-bla='foo'>\n",
+                                  "<html bla='foo'>\n",
                                   '<head>',
                                   '<title>test</title>'
                                   "<meta charset='utf-8'>",

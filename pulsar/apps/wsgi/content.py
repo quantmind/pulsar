@@ -150,7 +150,7 @@ from inspect import isgenerator
 
 from pulsar import multi_async, Future, async, coroutine_return, chain_future
 from pulsar.utils.pep import iteritems, is_string, to_string, ispy3k
-from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
+from pulsar.utils.html import (slugify, INLINE_TAGS, escape,
                                dump_data_value, child_tag)
 from pulsar.utils.httpurl import remove_double_slash
 from pulsar.utils.system import json
@@ -211,6 +211,12 @@ def stream_mapping(value, request=None):
             value = value.render(request)
         result[key] = value
     return multi_async(result)
+
+
+def attr_iter(attrs):
+    for k, v in iteritems(attrs):
+        if v is not None:
+            yield " %s='%s'" % (k, escape(v, force=True))
 
 
 class AsyncString(object):
@@ -498,9 +504,6 @@ class Html(AsyncString):
         * ``data`` dictionary of data to add (rendered as HTML data attribute).
         * ``type`` type of element, only supported for tags which accept the
           ``type`` attribute (for example the ``input`` tag).
-
-    Any other keyed-value parameter will be added as attribute,
-    if in the set of:attr:`available_attributes` or as :meth:`data`.
     '''
     _default_content_type = 'text/html'
 
@@ -545,11 +548,6 @@ class Html(AsyncString):
         if 'attr' in self._extra:
             return self._extra['attr'].get('type')
 
-    @property
-    def available_attributes(self):
-        '''The list of valid HTML attributes for this :attr:`tag`.'''
-        return tag_attributes(self._tag, self.type)
-
     def get_form_value(self):
         '''Return the value of this :class:`Html` element when it is contained
         in a Html form element.
@@ -582,7 +580,7 @@ class Html(AsyncString):
                 child = Html(tag, child)
         super(Html, self).append(child)
 
-    def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
+    def _setup(self, cn=None, attr=None, css=None, data=None,
                content_type=None, **params):
         self.charset = params.get('charset') or 'utf-8'
         self._content_type = content_type or self._default_content_type
@@ -591,15 +589,7 @@ class Html(AsyncString):
         self.data(data)
         self.attr(attr)
         self.css(css)
-        attributes = self.available_attributes
-        if type and 'type' in attributes:
-            self.attr('type', type)
-            attributes = self.available_attributes
-        for name, value in iteritems(params):
-            if name in attributes:
-                self.attr(name, value)
-            elif name != 'charset':
-                self.data(name, value)
+        self.attr(params)
 
     def attr(self, *args):
         '''Add the specific attribute to the attribute dictionary
@@ -611,13 +601,7 @@ class Html(AsyncString):
         if adding:
             if attr is None:
                 self._extra['attr'] = attr = {}
-            available_attributes = self.available_attributes
-            for name, value in iteritems(result):
-                if value is not None:
-                    if name in available_attributes:
-                        attr[name] = value
-                    elif name is 'value':
-                        self.append(value)
+            attr.update(result)
             result = self
         return result
 
