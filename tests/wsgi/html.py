@@ -25,7 +25,8 @@ class TestHtml(unittest.TestCase):
     def test_html_repr(self):
         c = wsgi.Html('div', cn='bla', charset='utf-16')
         self.assertEqual(c.content_type, 'text/html; charset=utf-16')
-        self.assertEqual(str(c), "<div charset='utf-16' class='bla'>")
+        self.assertTrue(str(c) in ("<div charset='utf-16' class='bla'>",
+                                   "<div class='bla' charset='utf-16'>"))
         c = wsgi.Html(None, cn='bla')
         self.assertEqual(c.tag, None)
         self.assertEqual(str(c), "Html")

@@ -32,7 +32,7 @@ class TestConfig(unittest.TestCase):
         worker = get_actor()
         cfg = Config()
         self.assertEqual(cfg.connection_made(worker), None)
-        self.assertTrue(cfg.import_from_module(__file__))
+        cfg.import_from_module(__file__)
         self.assertEqual(cfg.connection_made(worker), worker)
         cfg1 = pickle.loads(pickle.dumps(cfg))
         self.assertEqual(cfg1.connection_made(worker), worker)
