@@ -10,6 +10,7 @@ omit =
     *pulsar/apps/test/plugins/bench.py
     *pulsar/apps/test/cov.py
     *pulsar/apps/test/plugins/profile.py
+    *pulsar/apps/data/stores/*
     examples/httpbin/config.py
     examples/philosophers/config.py
     examples/webmail/*
