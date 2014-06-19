@@ -8,7 +8,8 @@ __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',
            'SKIP_SIGNALS',
            'MAXFD',
-           'set_proctitle']
+           'set_proctitle',
+           'get_proctitle']
 
 
 SIG_NAMES = {}
@@ -32,12 +33,19 @@ ALL_SIGNALS = tuple(all_signals())
 
 
 try:
-    from setproctitle import setproctitle
+    from setproctitle import setproctitle, getproctitle
 
     def set_proctitle(title):
         setproctitle(title)
         return True
+
+    def get_proctitle():
+        return getproctitle()
+
 except ImportError:  # pragma    nocover
 
     def set_proctitle(title):
-        return
+        return False
+
+    def get_proctitle():
+        pass
