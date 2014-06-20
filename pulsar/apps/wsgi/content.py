@@ -126,10 +126,10 @@ Scripts
    :members:
    :member-order: bysource
 
-Css
+Links
 ~~~~~~~~~~
 
-.. autoclass:: Css
+.. autoclass:: Links
    :members:
    :member-order: bysource
 
@@ -158,9 +158,8 @@ from pulsar.utils.system import json
 from .html import html_visitor
 
 __all__ = ['AsyncString', 'Html',
-           'Json', 'HtmlDocument',
-           'html_factory', 'Media',
-           'Scripts', 'Css', 'media_libraries']
+           'Json', 'HtmlDocument', 'Links', 'Scripts', 'Media',
+           'html_factory', 'media_libraries']
 
 
 JS_DIR = os.path.join(os.path.dirname(__file__), 'js')
@@ -214,7 +213,8 @@ def stream_mapping(value, request=None):
 
 
 def attr_iter(attrs):
-    for k, v in iteritems(attrs):
+    for k in sorted(attrs):
+        v = attrs[k]
         if v is not None:
             yield " %s='%s'" % (k, escape(v, force=True))
 
@@ -288,12 +288,13 @@ class AsyncString(object):
     def prepend(self, child):
         '''Prepend ``child`` to the list of :attr:`children`.
 
-This is a shortcut for the :meth:`insert` method at index 0.
+        This is a shortcut for the :meth:`insert` method at index 0.
 
-:param child: String, bytes or another :class:`AsyncString`. If it is an
-    :class:`AsyncString`, this instance will be set as its :attr:`parent`.
-    If ``child`` is ``None``, this method does nothing.
-    '''
+        :param child: String, bytes or another :class:`AsyncString`.
+            If it is an :class:`.AsyncString`, this instance will be set
+            as its :attr:`parent`.
+            If ``child`` is ``None``, this method does nothing.
+        '''
         self.insert(0, child)
 
     def insert(self, index, child):
@@ -760,7 +761,7 @@ class Html(AsyncString):
 
 
 class Media(AsyncString):
-    '''A container for both :class:`.Css` styles and :class:`.Scripts` links.
+    '''A container for both :class:`.Links` and :class:`.Scripts`.
 
     .. attribute:: media_path
 
@@ -791,17 +792,8 @@ class Media(AsyncString):
         super(Media, self).__init__()
         self.media_path = media_path
         self.minified = minified
-        self.known_libraries = known_libraries or {}
-
-    @property
-    def children(self):
-        if self._children is None:
-            self._children = OrderedDict()
-        return self._children
-
-    def append(self, value):
-        '''Append new media to the container.'''
-        raise NotImplementedError
+        self.known_libraries = (media_libraries if known_libraries is None
+                                else known_libraries)
 
     def is_relative(self, path):
         '''Check if ``path`` is a local relative path.
@@ -852,64 +844,54 @@ class Media(AsyncString):
         return path
 
 
-class Css(Media):
-    '''A :class:`Media` container for style sheet links.
+class Links(Media):
+    '''A :class:`.Media` container for ``link`` tags.
+
+    The ``<link>`` tag defines the relationship between a
+    :class:`.HtmlDocument` and an external resource.
+    It is most used to link to style sheets.
     '''
     mediatype = 'css'
 
-    def append(self, value):
-        '''Append a style sheet to this media container.
+    def append(self, href=None, rel=None, type=None, media=None,
+               condition=None, **kwargs):
+        '''Append a link to this container.
 
-        ``value`` can be a string or a dictionary with keys given by
-        of the media and values, lists of style sheet paths.
-        For example::
-
-            {'all': [path1, ...],
-             'print': [path2, ...]}
+        :param href: a string indicating the location of the linked
+            document
+        :param rel: Specifies the relationship between the document
+            and the linked document. If not given ``stylesheet`` is used.
+        :param type: Specifies the content type of the linked document.
+            If not given ``text/css`` is used.
+        :param media: Specifies on what device the linked document will be
+            displayed. If not given or ``all``, the media is for all devices.
+        :param kwargs: additional attributes
         '''
-        if value not in (None, self):
-            if isinstance(value, Html):
-                value = {'all': [value]}
-            elif isinstance(value, str):
-                value = {'all': [value]}
-            for media, values in value.items():
-                if isinstance(values, str):
-                    values = (values,)
-                m = self.children.get(media, [])
-                for value in values:
-                    if not isinstance(value, Html):
-                        if not isinstance(value, (tuple, list)):
-                            value = (value, None)
-                        path, condition = value
-                        path = self.absolute_path(path)
-                        value = Html('link', href=path, type='text/css',
-                                     rel='stylesheet')
-                        if condition:
-                            value = Html(None, '<!--[if %s]>', value,
-                                         '<![endif]-->')
-                    m.append(value)
-                self.children[media] = m
-
-    def do_stream(self, request):
-        children = self.children
-        for medium in sorted(children):
-            paths = children[medium]
-            medium = '' if medium == 'all' else medium
-            for path in paths:
-                if medium:
-                    path.attr('media', medium)
-                yield path
+        if href:
+            type = type or 'text/css'
+            rel = rel or 'stylesheet'
+            path = self.absolute_path(href)
+            value = Html('link', href=path, type=type, rel=rel, **kwargs)
+            if media not in (None, 'all'):
+                value.attr('media', media)
+            if condition:
+                value = Html(None, '<!--[if %s]>\n' % condition,
+                             value, '\n<![endif]-->')
+            value = '%s\n' % value.render()
+            if value not in self.children:
+                self.children.append(value)
 
 
 class Scripts(Media):
-    '''A :class:`.Media` container for javascript links.
+    '''A :class:`.Media` container for ``script`` tags.
 
     Supports javascript Asynchronous Module Definition
     '''
     mediatype = 'js'
 
     def __init__(self, *args, **kwargs):
-        self.dependencies = kwargs.pop('dependencies', {})
+        deps = kwargs.pop('dependencies', None)
+        self.dependencies = javascript_dependencies if deps is None else deps
         self.require_callback = kwargs.pop('require_callback', None)
         self.wait = kwargs.pop('wait', 200)
         self.required = []
@@ -932,24 +914,22 @@ class Scripts(Media):
             if script not in required:
                 required.append(script)
 
-    def append(self, child):
-        '''add a new link to the javascript links.
+    def append(self, src=None, type=None, **kwargs):
+        '''add a new script to the container.
 
-        :param child: a ``string`` representing an absolute path to the script
+        :param src: a ``string`` representing an absolute path to the script
             or relative path (does not start with ``http`` or ``/``), in which
             case the :attr:`Media.media_path` attribute is prepended.
         '''
-        if child not in (None, self):
-            if is_string(child):
-                if child == 'require':
-                    self._requirejs = True
-                path = self.absolute_path(child)
-                script = Html('script', src=path,
-                              type='application/javascript')
-                self.children[script] = script
-                return script
-            elif isinstance(child, Html) and child.tag == 'script':
-                self.children[child] = child
+        if src:
+            type = type or 'application/javascript'
+            if src == 'require':
+                self._requirejs = True
+            path = self.absolute_path(src)
+            script = '%s\n' % Html('script', src=path, type=type,
+                                   **kwargs).render()
+            if script not in self.children:
+                self.children.append(script)
 
     def require_script(self):
         '''Can be used for requirejs'''
@@ -972,10 +952,8 @@ class Scripts(Media):
                    '    media_path = "%s";%s\n'
                    '</script>\n') % (pyjson.dumps(require),
                                      self.media_path, callback)
-        for child in self.children.values():
-            for bit in child.stream(request):
-                yield bit
-            yield '\n'
+        for child in self.children:
+            yield child
 
 
 class Embedded(Html):
@@ -1014,7 +992,7 @@ class Head(Html):
 
     .. attribute:: links
 
-        A :class:`.Css` container.
+        A :class:`.Links` container.
 
         Rendered just after the :attr:`meta` container.
 
@@ -1055,8 +1033,8 @@ class Head(Html):
             scripts_dependencies = javascript_dependencies
         self.title = title
         self.append(Html(None, meta))
-        self.append(Css(media_path, minified=minified,
-                        known_libraries=known_libraries))
+        self.append(Links(media_path, minified=minified,
+                          known_libraries=known_libraries))
         self.append(Embedded('style', type='text/css'))
         self.append(Embedded('script', type='text/javascript'))
         self.append(Scripts(media_path, minified=minified,

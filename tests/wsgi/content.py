@@ -140,7 +140,7 @@ class TestAsyncContent(unittest.TestCase):
                          'http://bla.foo/jquery.js')
 
     def test_media_minified(self):
-        media = wsgi.Css('/media/', minified=True)
+        media = wsgi.Links('/media/', minified=True)
         self.assertEqual(media.absolute_path('bla/foo.css'),
                          '/media/bla/foo.min.css')
         self.assertEqual(media.absolute_path('bla/foo.min.css'),
@@ -155,3 +155,29 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(doc.head.title, 'ciao')
         self.assertEqual(doc.head.scripts.media_path, '/assets/')
         self.assertEqual(doc.head.links.media_path, '/assets/')
+
+    def test_link_condition(self):
+        links = wsgi.Links('/media/')
+        links.append('bla.css', condition='IE 6')
+        html = links.render()
+        lines = html.split('\n')
+        self.assertEqual(len(lines), 4)
+        self.assertEqual(lines[0], '<!--[if IE 6]>')
+        self.assertEqual(lines[1], ("<link href='/media/bla.css' "
+                                    "rel='stylesheet' type='text/css'>"))
+        self.assertEqual(lines[2], '<![endif]-->')
+        self.assertEqual(lines[3], '')
+
+    def test_script(self):
+        links = wsgi.Scripts('/static/')
+        self.assertTrue(links.known_libraries)
+        links.append('require')
+        self.assertTrue(links._requirejs)
+        html = links.render()
+        lines = html.split('\n')
+        self.assertEqual(len(lines), 6)
+        require = links.known_libraries.get('require')
+        self.assertEqual(lines[4],
+            "<script src='%s.js' type='application/javascript'></script>"
+            % require)
+        self.assertEqual(lines[5], '')
