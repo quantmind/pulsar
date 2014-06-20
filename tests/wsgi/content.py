@@ -177,7 +177,8 @@ class TestAsyncContent(unittest.TestCase):
         lines = html.split('\n')
         self.assertEqual(len(lines), 6)
         require = links.known_libraries.get('require')
-        self.assertEqual(lines[4],
+        self.assertEqual(
+            lines[4],
             "<script src='%s.js' type='application/javascript'></script>"
             % require)
         self.assertEqual(lines[5], '')
