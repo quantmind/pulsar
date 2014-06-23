@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Release Notes &mdash; pulsar 0.8.3-beta.1 documentation</title>
+    <title>Release Notes &mdash; pulsar 0.8.4-beta.0 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.8.3-beta.1',
+        VERSION:     '0.8.4-beta.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.3-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.8.4-beta.0 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
 </head>
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.8.3-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.8.4-beta.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -74,8 +74,18 @@
             
   <div class="section" id="release-notes">
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-8-3-development">
-<h2>Ver. 0.8.3 - Development<a class="headerlink" href="#ver-0-8-3-development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-8-4-development">
+<h2>Ver. 0.8.4 - Development<a class="headerlink" href="#ver-0-8-4-development" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="ver-0-8-3-2014-jun-23">
+<h2>Ver. 0.8.3 - 2014-Jun-23<a class="headerlink" href="#ver-0-8-3-2014-jun-23" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Fixed critical bug in python 2 for <a class="reference internal" href="apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.middleware_in_executor" title="pulsar.apps.wsgi.middleware.middleware_in_executor"><tt class="xref py py-func docutils literal"><span class="pre">middleware_in_executor()</span></tt></a></li>
+<li>Set trollius logger to warning by default (same as asyncio)</li>
+<li>Added <a class="reference internal" href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect" title="pulsar.apps.wsgi.wrappers.WsgiRequest.redirect"><tt class="xref py py-meth docutils literal"><span class="pre">WsgiRequest.redirect()</span></tt></a> and <a class="reference internal" href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.redirect" title="pulsar.apps.wsgi.routers.Router.redirect"><tt class="xref py py-meth docutils literal"><span class="pre">Router.redirect()</span></tt></a> methods
+to simplify redirection.</li>
+<li>Renamed css container as <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Links" title="pulsar.apps.wsgi.content.Links"><tt class="xref py py-class docutils literal"><span class="pre">Links</span></tt></a></li>
+</ul>
 </div>
 <div class="section" id="ver-0-8-2-2014-may-30">
 <h2>Ver. 0.8.2 - 2014-May-30<a class="headerlink" href="#ver-0-8-2-2014-may-30" title="Permalink to this headline">¶</a></h2>
@@ -632,7 +642,8 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Release Notes</a><ul>
-<li><a class="reference internal" href="#ver-0-8-3-development">Ver. 0.8.3 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-8-4-development">Ver. 0.8.4 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-8-3-2014-jun-23">Ver. 0.8.3 - 2014-Jun-23</a></li>
 <li><a class="reference internal" href="#ver-0-8-2-2014-may-30">Ver. 0.8.2 - 2014-May-30</a></li>
 <li><a class="reference internal" href="#ver-0-8-1-2014-apr-14">Ver. 0.8.1 - 2014-Apr-14</a></li>
 <li><a class="reference internal" href="#ver-0-8-0-2014-mar-06">Ver. 0.8.0 - 2014-Mar-06</a></li>

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Routing &mdash; pulsar 0.8.3-beta.1 documentation</title>
+    <title>Routing &mdash; pulsar 0.8.4-beta.0 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.3-beta.1',
+        VERSION:     '0.8.4-beta.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.3-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.4-beta.0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchronous WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.3-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.4-beta.0 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -266,7 +266,7 @@ this method to produce the WSGI response.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.routers.Router.redirect">
-<tt class="descname">redirect</tt><big>(</big><em>path</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.redirect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.redirect" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">redirect</tt><big>(</big><em>path</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.redirect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.redirect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Redirect to a different <tt class="docutils literal"><span class="pre">path</span></tt></p>
 </dd></dl>
 
@@ -325,6 +325,12 @@ start from the root <a class="reference internal" href="#pulsar.apps.wsgi.router
 <tt class="descname">encoding</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.encoding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.encoding" title="Permalink to this definition">¶</a></dt>
 <dd><p>The encoding to use for the response.</p>
 <p>By default it returns <tt class="docutils literal"><span class="pre">utf-8</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.routers.Router.has_parent">
+<tt class="descname">has_parent</tt><big>(</big><em>router</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.has_parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if <tt class="docutils literal"><span class="pre">router</span></tt> is <tt class="docutils literal"><span class="pre">self</span></tt> or a parent or <tt class="docutils literal"><span class="pre">self</span></tt></p>
 </dd></dl>
 
 </dd></dl>
