@@ -1,3 +1,6 @@
+Ver. 0.8.4 - Development
+===========================
+
 Ver. 0.8.3 - 2014-Jun-23
 ===========================
 * Fixed critical bug in python 2 for :func:`.middleware_in_executor`
