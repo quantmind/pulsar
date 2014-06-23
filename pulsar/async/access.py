@@ -26,6 +26,7 @@ except ImportError:  # pragma    nocover
         BaseEventLoop = asyncio.BaseEventLoop
         _StopError = asyncio._StopError
         appengine = True
+        reraise = asyncio.reraise
     elif not ispy3k:
         import trollius as asyncio
         from trollius.futures import _PENDING, _CANCELLED, _FINISHED

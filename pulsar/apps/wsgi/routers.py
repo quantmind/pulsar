@@ -76,7 +76,7 @@ from .route import Route
 from .utils import wsgi_request
 from .content import Html
 from .structures import ContentAccept
-from .wrappers import WsgiResponse
+from .wrappers import redirect
 
 
 __all__ = ['Router', 'MediaRouter', 'FileRouter', 'MediaMixin',
@@ -212,6 +212,7 @@ class Router(RouterType('RouterBase', (object,), {})):
 
     response_content_types = RouterParam(None)
     allows_redirects = RouterParam(False)
+    response_wrapper = RouterParam(None)
 
     def __init__(self, rule, *routes, **parameters):
         Router._creation_count += 1
@@ -375,12 +376,12 @@ class Router(RouterType('RouterBase', (object,), {})):
                 if path.endswith('/'):
                     router_args = self.resolve(path[:-1])
                     if router_args is not None:
-                        return self.redirect(environ, '/%s' % path[:-1])
+                        return self.redirect('/%s' % path[:-1])
             else:
                 if not path.endswith('/'):
                     router_args = self.resolve('%s/' % path)
                     if router_args is not None:
-                        return self.redirect(environ, '/%s/' % path)
+                        return self.redirect('/%s/' % path)
 
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
@@ -415,12 +416,15 @@ class Router(RouterType('RouterBase', (object,), {})):
         if callable is None:
             raise HttpException(status=405,
                                 msg='Method "%s" not allowed' % method)
+        response_wrapper = self.response_wrapper
+        if response_wrapper:
+            return response_wrapper(callable, request)
         return callable(request)
 
-    def redirect(self, path):
+    def redirect(self, path, **kw):
         '''Redirect to a different ``path``
         '''
-        return WsgiResponse(302, response_headers=[('location', path)])
+        return redirect(path, **kw)
 
     def add_child(self, router):
         '''Add a new :class:`Router` to the :attr:`routes` list.
@@ -490,6 +494,14 @@ class Router(RouterType('RouterBase', (object,), {})):
 
         By default it returns ``utf-8``.'''
         return 'utf-8'
+
+    def has_parent(self, router):
+        '''Check if ``router`` is ``self`` or a parent or ``self``
+        '''
+        parent = self
+        while parent and parent is not router:
+            parent = parent._parent
+        return parent is not None
 
 
 class MediaMixin(Router):

@@ -20,5 +20,8 @@
     },
     "angular-route": {
         "deps": ["angular"]
+    },
+    "nvd3": {
+        "deps": ["d3"]
     }
 }

@@ -62,7 +62,6 @@ from pulsar.apps.socket import SocketServer, Connection
 
 from .html import *
 from .content import *
-from .templates import *
 from .utils import *
 from .middleware import *
 from .response import *

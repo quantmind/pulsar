@@ -27,6 +27,8 @@
     },
     "moment": "//cdnjs.cloudflare.com/ajax/libs/moment.js/2.5.1/moment",
     "mustache": "//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.7.2/mustache",
+    "nvd3": "//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3",
+    "nvd3_css": "//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3",
     "parsley": "//cdnjs.cloudflare.com/ajax/libs/parsley.js/1.2.3/parsley.min",
     "pjax": "//cdnjs.cloudflare.com/ajax/libs/jquery.pjax/1.7.0/jquery.pjax",
     "prettify": "//cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify",

@@ -49,7 +49,6 @@ Middleware in Executor
 
 '''
 import re
-from functools import wraps
 
 import pulsar
 from pulsar import Future, async, get_event_loop
@@ -117,8 +116,6 @@ def middleware_in_executor(middleware):
 
     Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
-
-    @wraps(middleware)
     def _(environ, start_response):
         loop = get_event_loop()
         return loop.run_in_executor(None, middleware, environ, start_response)

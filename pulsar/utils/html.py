@@ -10,61 +10,8 @@ from .pep import (ispy3k, native_str, to_string, iteritems, is_string,
 NOTHING = ('', b'', None)
 '''Tuple of elements considered as null.'''
 INLINE_TAGS = set(('input', 'link', 'meta', 'hr'))
-# The global attributes below can be used on any HTML element
-# class and style are misssing here since they are treated separately
-GLOBAL_HTML_ATTRIBUTES = ('accesskey', 'contenteditable', 'contextmenu', 'dir',
-                          'draggable', 'dropzone', 'hidden', 'id', 'lang',
-                          'spellcheck', 'tabindex', 'title', 'translate')
-HTML_ATTRIBUTES = {}
-HTML_CHILDREN_TAG = {}
-
-# Extend GLOBAL ATTRIBUTES (which can be used in any HTML element).
-e = lambda *t: GLOBAL_HTML_ATTRIBUTES + t
-
-# Input atg attributes
-# http://www.w3schools.com/tags/tag_input.asp
-input_attr = lambda *t: e('type', 'autocomplete', 'autofocus', 'disabled',
-                          'form', 'formnovalidate', 'list', 'max', 'maxlength',
-                          'min', 'multiple', 'name', 'pattern', 'placeholder',
-                          'readonly', 'required', 'size', 'step', 'value', *t)
-
-# HTML TAG ATTRIBUTES
-############################################################################
-HTML_ATTRIBUTES['a'] = e('href', 'name', 'target')
-HTML_ATTRIBUTES['form'] = e('accept-charset', 'action', 'autocomplete',
-                            'enctype', 'method', 'name', 'novalidate',
-                            'target')
-HTML_ATTRIBUTES['img'] = e('align', 'alt', 'broder', 'crossorigin',
-                           'height', 'hspace', 'ismap', 'longdesc',
-                           'src', 'usemap', 'vspace', 'width')
-HTML_ATTRIBUTES['input'] = input_attr()
-HTML_ATTRIBUTES['input[type="checkbox"]'] = input_attr('checked')
-HTML_ATTRIBUTES['input[type="file"]'] = input_attr('accept')
-HTML_ATTRIBUTES['input[type="image"]'] = input_attr(
-    'alt', 'formaction', 'formenctype', 'formmethod', 'formtarget',
-    'height', 'src', 'width')
-HTML_ATTRIBUTES['input[type="radio"]'] = input_attr('checked')
-HTML_ATTRIBUTES['input[type="submit"]'] = input_attr(
-    'formaction', 'formenctype', 'formmethod', 'formtarget')
-HTML_ATTRIBUTES['link'] = e('href', 'hreflang', 'media', 'rel',
-                            'sizes', 'type')
-HTML_ATTRIBUTES['meta'] = e('charset', 'content', 'http-equiv', 'name',
-                            'scheme')
-HTML_ATTRIBUTES['option'] = e('disabled', 'label', 'selected', 'value')
-HTML_ATTRIBUTES['script'] = e('async', 'charset', 'defer', 'src', 'type')
-HTML_ATTRIBUTES['style'] = e('media', 'scoped', 'type')
-HTML_ATTRIBUTES['select'] = e('autofocus', 'disabled', 'form', 'multiple',
-                              'name', 'required', 'size')
-HTML_ATTRIBUTES['textarea'] = e('autofocus', 'cols', 'disabled', 'maxlength',
-                                'name', 'placeholder', 'readonly', 'required',
-                                'rows', 'wrap')
-HTML_ATTRIBUTES['th'] = e('colspan', 'headers', 'rowspan', 'scope')
-
-# DEFAULT HTML TAG CHILDREN
-############################################################################
-HTML_CHILDREN_TAG['ul'] = 'li'
-HTML_CHILDREN_TAG['ol'] = 'li'
-HTML_CHILDREN_TAG['select'] = 'option'
+HTML_CHILDREN_TAG = {'ul': 'li',
+                     'ol': 'li'}
 
 # COMMON HTML ENTITIES
 # Check http://www.w3schools.com/tags/ref_symbols.asp for more
@@ -81,17 +28,6 @@ HTML_ENDASH = '&ndash;'
 '''HTML - symbol.'''
 HTML_EMDASH = '&mdash;'
 '''HTML -- symbol.'''
-
-
-def tag_attributes(tag, type=None):
-    '''Return a tuple of valid attributes for the HTML ``tag`` and optional
-``type``. If the ``tag`` is not found in the global ``HTML_ATTRIBUTES``
-dictionary, the ``GLOBAL_HTML_ATTRIBUTES`` set is returned.'''
-    if type:
-        ntag = '%s[type="%s"]' % (tag, type)
-        if ntag in HTML_ATTRIBUTES:
-            return HTML_ATTRIBUTES[ntag]
-    return HTML_ATTRIBUTES.get(tag, GLOBAL_HTML_ATTRIBUTES)
 
 
 def child_tag(tag):
@@ -128,12 +64,6 @@ quotes and angle brackets encoded."""
         return to_string(html).replace('&', '&amp;').replace(
             '<', '&lt;').replace('>', '&gt;').replace("'", '&#39;').replace(
             '"', '&quot;')
-
-
-def attr_iter(attrs):
-    for k, v in iteritems(attrs):
-        if v is not None:
-            yield " %s='%s'" % (k, escape(v, force=True))
 
 
 def dump_data_value(v):

@@ -1,3 +1,11 @@
+Ver. 0.8.3 - 2014-Jun-23
+===========================
+* Fixed critical bug in python 2 for :func:`.middleware_in_executor`
+* Set trollius logger to warning by default (same as asyncio)
+* Added :meth:`.WsgiRequest.redirect` and :meth:`.Router.redirect` methods
+  to simplify redirection.
+* Renamed css container as :class:`.Links`
+
 Ver. 0.8.2 - 2014-May-30
 ===========================
 * :ref:`--pep8 <setting-pep8>` is a new command line option for the

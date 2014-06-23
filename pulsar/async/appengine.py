@@ -58,3 +58,7 @@ class Queue(object):
 
     def __init__(self, **kw):
         raise NotImplementedError
+
+
+def reraise(tp, value, tb=None):
+    raise value

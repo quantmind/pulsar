@@ -4,11 +4,14 @@ omit =
     *pulsar/utils/system/winservice.py
     *pulsar/utils/system/windowssystem.py
     *pulsar/utils/system/winprocess.py
+    *pulsar/utils/system/appengine.py
     *pulsar/async/cov.py
-    *pulsar/async/fallbacks/asyncio.py
+    *pulsar/async/appengine.py
     *pulsar/apps/test/plugins/bench.py
     *pulsar/apps/test/cov.py
     *pulsar/apps/test/plugins/profile.py
+    *pulsar/apps/test/pep.py
+    *pulsar/apps/data/stores/*
     examples/httpbin/config.py
     examples/philosophers/config.py
     examples/webmail/*
@@ -16,6 +19,7 @@ omit =
     examples/pshell/*
     examples/snippets/*
     examples/pulsards/*
+    examples/tweets/*
 
 
 

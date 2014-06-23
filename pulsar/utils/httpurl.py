@@ -316,7 +316,7 @@ JSON_CONTENT_TYPES = ('application/json',
 # ###################################################    REQUEST METHODS
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
-REDIRECT_CODES = (301, 302, 303, 307)
+REDIRECT_CODES = (301, 302, 303, 305, 307)
 
 
 def has_empty_content(status, method=None):

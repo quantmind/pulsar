@@ -155,9 +155,10 @@ class Concurrency(object):
         return client
 
     def _install_signals(self, actor):
-        proc_name = "%s-%s" % (actor.cfg.proc_name, actor)
+        proc_name = "%s-%s" % (actor.cfg.proc_name, actor.name)
         if system.set_proctitle(proc_name):
-            actor.logger.debug('Set process title to %s', proc_name)
+            actor.logger.debug('Set process title to %s',
+                               system.get_proctitle())
         system.set_owner_process(actor.cfg.uid, actor.cfg.gid)
         if signal:
             actor.logger.debug('Installing signals')

@@ -49,7 +49,7 @@ from pulsar.utils.system import json
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
-                                  has_empty_content, ispy3k,
+                                  has_empty_content, ispy3k, REDIRECT_CODES,
                                   ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
                                   remove_double_slash, iri_to_uri)
 
@@ -64,6 +64,14 @@ __all__ = ['EnvironMixin', 'WsgiResponse',
 
 MAX_BUFFER_SIZE = 2**16
 absolute_http_url_re = re.compile(r"^https?://", re.I)
+
+
+def redirect(path, code=None, permanent=False):
+    if code is None:
+        code = 301 if permanent else 302
+
+    assert code in REDIRECT_CODES, 'Invalid redirect status code.'
+    return WsgiResponse(code, response_headers=[('location', path)])
 
 
 def cached_property(f):
@@ -581,10 +589,8 @@ class WsgiRequest(EnvironMixin):
                 raise TypeError("full_url() takes exactly 1 argument "
                                 "(%s given)" % len(args))
             path = args[0]
-        if path is None:
+        if not path:
             path = self.path
-            if not query:
-                query = self.url_data
         elif not path.startswith('/'):
             path = remove_double_slash('%s/%s' % (self.path, path))
         return iri_to_uri(path, query)
@@ -606,6 +612,11 @@ class WsgiRequest(EnvironMixin):
             return iri_to_uri(location)
         else:
             raise ValueError('Absolute location with scheme not valid')
+
+    def redirect(self, path, **kw):
+        '''Redirect to a different ``path``
+        '''
+        return redirect(path, **kw)
 
 
 set_wsgi_request_class(WsgiRequest)
