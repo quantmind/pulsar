@@ -1,6 +1,6 @@
-Ver. 0.8.3 - 2014-Jun-18
+Ver. 0.8.3 - 2014-Jun-23
 ===========================
-* Fixed bug in python 2 for :func:`.middleware_in_executor`
+* Fixed critical bug in python 2 for :func:`.middleware_in_executor`
 * Set trollius logger to warning by default (same as asyncio)
 * Added :meth:`.WsgiRequest.redirect` and :meth:`.Router.redirect` methods
   to simplify redirection.
