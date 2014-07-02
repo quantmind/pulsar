@@ -1,5 +1,6 @@
 Ver. 0.8.4 - Development
 ===========================
+* Several bug fixes in wsgi :class:`.Router`
 
 Ver. 0.8.3 - 2014-Jun-23
 ===========================

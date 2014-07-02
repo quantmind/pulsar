@@ -572,14 +572,15 @@ class Html(AsyncString):
             return self.__class__.__name__
 
     def append(self, child):
-        tag = child_tag(self._tag)
-        if tag and child not in (None, self):
-            if isinstance(child, Html):
-                if child.tag != tag:
+        if child not in (None, self):
+            tag = child_tag(self._tag)
+            if tag:
+                if isinstance(child, Html):
+                    if child.tag != tag:
+                        child = Html(tag, child)
+                elif not child.startswith('<%s' % tag):
                     child = Html(tag, child)
-            elif not child.startswith('<%s' % tag):
-                child = Html(tag, child)
-        super(Html, self).append(child)
+            super(Html, self).append(child)
 
     def _setup(self, cn=None, attr=None, css=None, data=None,
                content_type=None, **params):
@@ -898,6 +899,12 @@ class Scripts(Media):
         self._requirejs = False
         super(Scripts, self).__init__(*args, **kwargs)
 
+    def script(self, src, type=None, **kwargs):
+        type = type or 'application/javascript'
+        path = self.absolute_path(src)
+        return '%s\n' % Html('script', src=path, type=type,
+                             **kwargs).render()
+
     def require(self, *scripts):
         '''Add a ``script`` to the list of :attr:`required` scripts.
 
@@ -906,11 +913,15 @@ class Scripts(Media):
 
         The script will be loaded using the ``require`` javascript package.
         '''
+        if scripts:
+            self.append('require')
+        required = self.required
         for script in scripts:
+            if script == 'require':
+                continue
             script = script.strip()
             if script not in self.known_libraries:
                 script = self.absolute_path(script)
-            required = self.required
             if script not in required:
                 required.append(script)
 
@@ -922,12 +933,9 @@ class Scripts(Media):
             case the :attr:`Media.media_path` attribute is prepended.
         '''
         if src:
-            type = type or 'application/javascript'
             if src == 'require':
                 self._requirejs = True
-            path = self.absolute_path(src)
-            script = '%s\n' % Html('script', src=path, type=type,
-                                   **kwargs).render()
+            script = self.script(src, type=type, **kwargs)
             if script not in self.children:
                 self.children.append(script)
 

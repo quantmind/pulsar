@@ -1,4 +1,5 @@
-from pulsar import send, coroutine_return, get_application
+import pulsar
+from pulsar import coroutine_return, get_application
 from pulsar.apps import rpc
 
 from .backend import Task, TaskNotAvailable
@@ -121,4 +122,4 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         return {}
 
     def _rq(self, request, action, *args, **kw):
-        return send(self.taskqueue, action, *args, **kw)
+        return pulsar.send(self.taskqueue, action, *args, **kw)

@@ -103,18 +103,18 @@ def update_args(urlargs, args):
 
 class RouterParam(object):
     '''A :class:`RouterParam` is a way to flag a :class:`Router` parameter
-so that children can retrieve the value if they don't define their own.
+    so that children can retrieve the value if they don't define their own.
 
-A :class:`RouterParam` is always defined as a class attribute and it
-is processed by the :class:`Router` metaclass and stored in a dictionary
-available as ``parameter`` class attribute.
+    A :class:`RouterParam` is always defined as a class attribute and it
+    is processed by the :class:`Router` metaclass and stored in a dictionary
+    available as ``parameter`` class attribute.
 
-.. attribute:: value
+    .. attribute:: value
 
-    The value associated with this :class:`RouterParam`. THis is the value
-    stored in the :class:`Router.parameters` dictionary at key given by
-    the class attribute specified in the class definition.
-'''
+        The value associated with this :class:`RouterParam`. THis is the value
+        stored in the :class:`Router.parameters` dictionary at key given by
+        the class attribute specified in the class definition.
+    '''
     def __init__(self, value):
         self.value = value
 
@@ -145,10 +145,10 @@ class RouterType(type):
         if base_rules:
             all = base_rules + rule_methods
             rule_methods = {}
-            for name, rule in all:
-                if name in rule_methods:
-                    rule = rule.override(rule_methods[name])
-                rule_methods[name] = rule
+            for namerule, rule in all:
+                if namerule in rule_methods:
+                    rule = rule.override(rule_methods[namerule])
+                rule_methods[namerule] = rule
             rule_methods = sorted(rule_methods.items(),
                                   key=lambda x: x[1].order)
         attrs['rule_methods'] = OrderedDict(rule_methods)
@@ -170,9 +170,9 @@ class Router(RouterType('RouterBase', (object,), {})):
     :param routes: Optional :class:`Router` instances which are added to the
         children :attr:`routes` of this router.
     :param parameters: Optional parameters for this router.
-        They are stored in the :attr:`parameters` attribute.
-        If a ``response_content_types`` value is
-        passed, it overrides the :attr:`response_content_types` attribute.
+        They are stored in the :attr:`parameters` attribute with the
+        exception of :attr:`response_content_types` and
+        :attr:`response_wrapper`
 
     .. attribute:: routes
 
@@ -189,6 +189,16 @@ class Router(RouterType('RouterBase', (object,), {})):
 
         The client request must accept at least one of the response content
         types, otherwise an HTTP ``415`` exception occurs.
+
+    .. attribute:: response_wrapper
+
+        Optional function which wraps all handlers of this :class:`.Router`.
+        The function must accept two parameters, the original handler
+        and the :class:`.WsgiRequest`::
+
+            def response_wrapper(handler, request):
+                ...
+                return handler(request)
 
     .. attribute:: allows_redirects
 
@@ -466,34 +476,6 @@ class Router(RouterType('RouterBase', (object,), {})):
         else:
             text = url
         return Html('a', text, href=url)
-
-    def sitemap(self, root=None):
-        '''This utility method returns a sitemap starting at root.
-
-        If *root* is ``None`` it starts from this :class:`Router`.
-
-        :param request: a :ref:`wsgi request wrapper <app-wsgi-request>`
-        :param root: Optional url path where to start the sitemap.
-            By default it starts from this :class:`Router`. Pass `"/"` to
-            start from the root :class:`Router`.
-        :param levels: Number of nested levels to include.
-        :return: A list of children
-        '''
-        if not root:
-            root = self
-        else:
-            handler_urlargs = self.root.resolve(root[1:])
-            if handler_urlargs:
-                root, urlargs = handler_urlargs
-            else:
-                return []
-        return list(self.routes)
-
-    def encoding(self, request):
-        '''The encoding to use for the response.
-
-        By default it returns ``utf-8``.'''
-        return 'utf-8'
 
     def has_parent(self, router):
         '''Check if ``router`` is ``self`` or a parent or ``self``

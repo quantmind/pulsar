@@ -1,6 +1,7 @@
 {
-    "angular": "//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular",
-    "angular-route": "//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-route",
+    "angular": "//ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular",
+    "angular-route": "//ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular-route",
+    "angular-sanitize": "//ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular-sanitize",
     "aws": "//sdk.amazonaws.com/js/aws-sdk-2.0.0-rc13",
     "bootstrap": "//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/js/bootstrap",
     "bootstrap_css": "//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/css/bootstrap",

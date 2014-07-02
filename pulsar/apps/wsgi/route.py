@@ -190,7 +190,7 @@ class route(object):
         method = None
         if len(bits) > 1:
             m = bits[0].upper()
-            if m in ENCODE_URL_METHODS or method in ENCODE_BODY_METHODS:
+            if m in ENCODE_URL_METHODS or m in ENCODE_BODY_METHODS:
                 method = m
                 bits = bits[1:]
         method = (self.method or method or 'get').lower()
