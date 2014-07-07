@@ -3,7 +3,7 @@ Greenlet support facilitates the integration of synchronous
 third-party libraries into pulsar asynchronous framework.
 It requires the :greenlet:`greenlet <>` library.
 
-If you want to understand how integration works and you are unfamiliar with
+If you want to understand how integration works but you are unfamiliar with
 greenlets, check out the :greenlet:`greenlet documentation <>` first.
 On the other hand,
 if you need to use it in the context of :ref:`asynchronous psycopg2 <psycopg2>`
@@ -11,13 +11,28 @@ connections for example, you can skip the implementation details.
 
 This application **does not use monkey patching** and therefore it
 works quite differently from implicit asynchronous libraries such as
-gevent_. All it does, it provides the user with a set
+gevent_. All it does, it provides the user with a limited set
 of utilities for **explicitly** transferring execution from one greenlet
 to a another which execute the blocking call in a greenlet-friendly way.
 
 The caller has the responsibility that the blocking call is greenlet-friendly,
 i.e. it transfers the control of execution back to the parent greenlet when
 needed.
+
+Usage
+=======
+
+Lets assume you are building an application which uses pulsar asynchronous
+engine and would like to
+
+* either use an external library written in blocking style,
+  i.e. without yielding control to the event loop when IO calls are performed.
+* or write your client code without dealing with :class:`~asyncio.Future` or
+  coroutines, in other words in an implicit asynchronous style. In this way
+  your client code can be used on other frameworks just as well.
+
+In both cases, the :class:`~pulsar.apps.greenio` application is what you need.
+
 
 API
 ======
@@ -202,28 +217,3 @@ def _green_check(gr, future, fut):
             future.set_result(result)
     except Exception as exc:
         future.set_exception(exc)
-
-
-class GreenTask(Task):
-    '''An :class:`asyncio.Task` for running synchronous code in greenlets.
-    '''
-    _greenlet = None
-
-    def _step(self, value=None, exc=None):
-        if self._greenlet is None:
-            # Means that the task is not currently in a suspended greenlet
-            # waiting for results
-            assert greenlet.getcurrent().parent is None
-            gl = PulsarGreenlet(super(GreenTask, self)._step)
-            self._greenlet = gl
-            gl.switch(value, exc)
-        else:
-            gl = self._greenlet.parent
-            assert gl.parent is None
-            self._greenlet = None
-            gl.switch()
-            self._step(value, exc)
-
-        # There no waiting future
-        if not self._fut_waiter:
-            self._greenlet = None

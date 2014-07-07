@@ -50,8 +50,11 @@ Yes it is, to the best of our knowledge. If you find an issue,
 please :ref:`file a bug report <contributing>`.
 
 Is a WSGI response asynchronous?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-It depends on the WSGI application serving the request.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It depends on the WSGI application serving the request. Blocking application
+such as django or flask can be made more pulsar-friendly by using the
+:func:`.middleware_in_executor` utility as explained in the
+:ref:`wsgi tutorial <blocking-wsgi>`.
 
 
 Logging

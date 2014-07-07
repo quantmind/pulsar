@@ -190,7 +190,7 @@ class route(object):
         method = None
         if len(bits) > 1:
             m = bits[0].upper()
-            if m in ENCODE_URL_METHODS or method in ENCODE_BODY_METHODS:
+            if m in ENCODE_URL_METHODS or m in ENCODE_BODY_METHODS:
                 method = m
                 bits = bits[1:]
         method = (self.method or method or 'get').lower()
@@ -279,6 +279,17 @@ class Route(object):
     @property
     def path(self):
         return '/' + self.rule
+
+    @property
+    def name(self):
+        '''A nice name for the route.
+
+        Derived from :attr:`rule` replacing underscores and dashes.
+        '''
+        name = self.rule.replace('/', ' ')
+        if not self.variables:
+            name = name.replace('_', ' ').replace('-', ' ')
+        return name.strip()
 
     @property
     def regex(self):

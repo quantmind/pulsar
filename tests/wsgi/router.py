@@ -16,13 +16,17 @@ class HttpBin2(HttpBin):
     def _get(self, request):    # override the _get handler
         raise pulsar.Http404
 
-    @route('async', async=True)
-    def test_async_route(self, request):
-        yield 'Hello'
+    @route()
+    def async(self, request):
+        future = pulsar.Future()
+        futute._loop.call_later(0.5, lambda: future.set_result(['Hello!']))
+        return future
 
-    @route('async', async=True, method='post')
-    def test_async_route_post(self, request):
-        yield 'Hello'
+    @route()
+    def post_async(self, request):
+        future = pulsar.Future()
+        futute._loop.call_later(0.5, lambda: future.set_result(['Hello!']))
+        return future
 
 
 class HttpBin3(HttpBin):
@@ -78,16 +82,6 @@ class TestRouter(unittest.TestCase):
         self.assertTrue('gzip' in HttpBin.rule_methods)
         self.assertFalse('gzip' in HttpBin2.rule_methods)
 
-    def test_async_route(self):
-        self.assertTrue('test_async_route' in HttpBin2.rule_methods)
-        method = HttpBin2.rule_methods['test_async_route']
-        self.assertEqual(method[2].get('async'), True)
-        app = HttpBin2('/')
-        router, args = app.resolve('async')
-        self.assertFalse(args)
-        get = router.get
-        post = router.post
-
     def test_override(self):
         self.assertTrue('_get' in HttpBin.rule_methods)
         self.assertEqual(HttpBin.rule_methods['_get'][0].rule, 'get')
@@ -132,3 +126,24 @@ class TestRouter(unittest.TestCase):
         self.assertFalse(args)
         self.assertEqual(child.parent, router)
         self.assertEqual(child.path(), '/root/a')
+
+    def test_router_count(self):
+        self.assertTrue(HttpBin2.rule_methods)
+        async = HttpBin2.rule_methods.get('async')
+        self.assertTrue(async)
+        self.assertEqual(async.method, 'get')
+        self.assertEqual(str(async.rule), '/async')
+        async = HttpBin2.rule_methods.get('post_async')
+        self.assertTrue(async)
+        self.assertEqual(async.method, 'post')
+        self.assertEqual(str(async.rule), '/async')
+        #
+        router = HttpBin2('/')
+        self.assertEqual(router.name, '')
+        router = HttpBin2('/', name='root')
+        self.assertEqual(router.name, 'root')
+        child = router.get_route('async')
+        self.assertTrue(child)
+        # It has both get and post methods
+        get = child.get
+        post = child.post

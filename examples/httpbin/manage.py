@@ -113,9 +113,9 @@ class HttpBin(wsgi.Router):
 
     @route('cookies', title='Returns cookie data')
     def cookies(self, request):
-        response = request.response
-        cookies = dict(((c.key, c.value) for c in response.cookies.values()))
-        return Json({'cookies': cookies}).http_response(request)
+        cookies = request.cookies
+        d = dict(((c.key, c.value) for c in cookies.values()))
+        return Json({'cookies': d}).http_response(request)
 
     @route('cookies/set/<name>/<value>', title='Sets a simple cookie',
            defaults={'name': 'package', 'value': 'pulsar'})

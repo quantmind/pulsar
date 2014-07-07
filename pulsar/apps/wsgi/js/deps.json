@@ -21,6 +21,9 @@
     "angular-route": {
         "deps": ["angular"]
     },
+    "angular-sanitize": {
+        "deps": ["angular"]
+    },
     "nvd3": {
         "deps": ["d3"]
     }

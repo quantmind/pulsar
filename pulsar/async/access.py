@@ -110,8 +110,10 @@ def new_event_loop(**kwargs):
 
 
 def is_mainthread(thread=None):
-    '''Check if thread is the main thread. If ``thread`` is not supplied check
-the current thread.'''
+    '''Check if thread is the main thread.
+
+    If ``thread`` is not supplied check the current thread
+    '''
     thread = thread if thread is not None else current_thread()
     return isinstance(thread, threading._MainThread)
 
@@ -129,9 +131,11 @@ def get_logger(default=None):
 
 
 def process_data(name=None):
-    '''Fetch the current process local data dictionary. If *name* is not
-``None`` it returns the value at *name*, otherwise it return the process data
-dictionary.'''
+    '''Fetch the current process local data dictionary.
+
+    If ``name`` is not ``None`` it returns the value at``name``,
+    otherwise it return the process data dictionary
+    '''
     ct = current_process()
     if not hasattr(ct, '_pulsar_local'):
         ct._pulsar_local = {}

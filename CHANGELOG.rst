@@ -1,3 +1,11 @@
+Ver. 0.8.4 - 2014-Jul-07
+===========================
+* Several bug fixes in wsgi :class:`.Router`
+* Added :attr:`.Route.name` attribute
+* :class:`.WsgiResponse` does not send cookies back to the client by default
+* Critical bug fix for multiprocessing sockets when running on python 3.4 and
+  windows
+
 Ver. 0.8.3 - 2014-Jun-23
 ===========================
 * Fixed critical bug in python 2 for :func:`.middleware_in_executor`
