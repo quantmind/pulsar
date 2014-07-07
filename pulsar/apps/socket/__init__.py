@@ -102,8 +102,7 @@ from functools import partial
 
 import pulsar
 from pulsar import asyncio, TcpServer, DatagramServer, Connection
-from pulsar.utils.internet import (parse_address, SSLContext, WrapSocket,
-                                   format_address)
+from pulsar.utils.internet import parse_address, SSLContext, format_address
 from pulsar.utils.config import pass_through
 
 
@@ -181,17 +180,6 @@ class WrapTransport:
         self.sock = self.extra.pop('socket')
         self.transport = transport.__class__
 
-    def __getstate__(self):
-        s = self.sock
-        d = self.__dict__.copy()
-        d['sock'] = (s.fileno(), s.family, s.type, s.proto)
-        return d
-
-    def __setstate__(self, state):
-        values = state.pop('sock')
-        self.__dict__ = state
-        self.sock = socket.fromfd(*values)
-
     def __call__(self, loop, protocol):
         return self.transport(loop, self.sock, protocol, extra=self.extra)
 
@@ -245,7 +233,6 @@ class SocketServer(pulsar.Application):
         sockets = []
         for sock in server.sockets:
             addresses.append(sock.getsockname())
-            # sockets.append(WrapSocket(sock))
             sockets.append(sock)
             server.loop.remove_reader(sock.fileno())
         monitor.sockets = sockets
@@ -285,7 +272,6 @@ class SocketServer(pulsar.Application):
 
         :return: a :class:`.TcpServer`.
         '''
-        # sockets = [sock.sock for sock in worker.sockets]
         sockets = worker.sockets
         cfg = self.cfg
         max_requests = cfg.max_requests
