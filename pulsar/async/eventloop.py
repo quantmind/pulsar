@@ -11,7 +11,8 @@ __all__ = ['EventLoop', 'call_repeatedly', 'loop_thread_id']
 
 
 class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
-    '''Pulsar event loop policy'''
+    '''Pulsar event loop policy
+    '''
     def get_event_loop(self):
         return thread_data('_event_loop')
 
