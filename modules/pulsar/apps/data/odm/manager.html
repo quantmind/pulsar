@@ -177,11 +177,9 @@
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a new model without commiting to database.</span>
+        <span class="sd">&#39;&#39;&#39;Create a new model without committing to database.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">instance</span><span class="p">[</span><span class="s">&#39;_mapper&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span>
-        <span class="k">return</span> <span class="n">instance</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@task</span>
 <div class="viewcode-block" id="Manager.create_table"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remove_existing</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
@@ -242,37 +240,25 @@
         <span class="sd">&#39;&#39;&#39;Begin a new :class:`.Transaction`.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span>
 </div>
-    <span class="nd">@wait_complete</span>
 <div class="viewcode-block" id="Manager.create"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create a new instance of :attr:`_model` and commit to server.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">model</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">models</span><span class="p">:</span> <span class="n">models</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span></div>
     <span class="n">new</span> <span class="o">=</span> <span class="n">create</span>
     <span class="n">insert</span> <span class="o">=</span> <span class="n">new</span>
 
-    <span class="nd">@wait_complete</span>
-<div class="viewcode-block" id="Manager.update"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">instance</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Manager.update"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Update an existing ``instance`` of :attr:`_model`.</span>
 
 <span class="sd">        The instance must have already contain the primary key.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">instance</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;expected at most 1 arguments, got </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
-                                <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">))</span>
-            <span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">instance</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">instance</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">instance</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot update. No primary key in </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">instance</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
-            <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">instance</span><span class="p">)</span>
 </div>
-    <span class="nd">@wait_complete</span>
 <div class="viewcode-block" id="Manager.save"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Save an ``instance`` of :attr:`_model`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -280,7 +266,6 @@
             <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">instance</span><span class="p">)</span>
 </div>
-    <span class="nd">@wait_complete</span>
 <div class="viewcode-block" id="Manager.delete"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Delete an existing ``instance`` of :attr:`_model`</span>
 <span class="sd">        &#39;&#39;&#39;</span>

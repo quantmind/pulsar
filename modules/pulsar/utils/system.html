@@ -78,10 +78,12 @@
 
 <span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span>
 
-<span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;posix&#39;</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.posixsystem</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="k">elif</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;win&#39;</span><span class="p">:</span>    <span class="c"># pragma nocover</span>
+<span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;win&#39;</span><span class="p">:</span>    <span class="c"># pragma nocover</span>
     <span class="kn">from</span> <span class="nn">.windowssystem</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="k">elif</span> <span class="n">platform</span><span class="o">.</span><span class="n">is_appengine</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.appengine</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.posixsystem</span> <span class="kn">import</span> <span class="o">*</span>
 
 
 <span class="k">try</span><span class="p">:</span>
@@ -128,12 +130,12 @@
     <span class="k">except</span> <span class="n">psutil</span><span class="o">.</span><span class="n">NoSuchProcess</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">mem</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get_memory_info</span><span class="p">()</span>
+        <span class="n">mem</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">memory_info</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">{</span><span class="s">&#39;memory&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span>
                 <span class="s">&#39;memory_virtual&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">,</span>
-                <span class="s">&#39;cpu_percent&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_cpu_percent</span><span class="p">(),</span>
-                <span class="s">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_nice</span><span class="p">(),</span>
-                <span class="s">&#39;num_threads&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_num_threads</span><span class="p">()}</span></div>
+                <span class="s">&#39;cpu_percent&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(),</span>
+                <span class="s">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">nice</span><span class="p">(),</span>
+                <span class="s">&#39;num_threads&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">num_threads</span><span class="p">()}</span></div>
 </pre></div>
 
           </div>

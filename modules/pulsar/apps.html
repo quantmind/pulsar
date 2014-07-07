@@ -132,6 +132,7 @@
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">getfile</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span>
@@ -142,6 +143,7 @@
 
 
 <span class="n">when_monitor_start</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">new_app</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;new_app&#39;</span><span class="p">,</span> <span class="s">&#39;prefix params&#39;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="get_application"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.get_application">[docs]</a><span class="k">def</span> <span class="nf">get_application</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
@@ -242,7 +244,7 @@
 <span class="sd">        the class :attr:`cfg.version` attribute.</span>
 <span class="sd">    :parameter argv: Optional list of command line parameters to parse, if</span>
 <span class="sd">        not supplied the :attr:`sys.argv` list will be used. The parameter</span>
-<span class="sd">        is only relevant if **parse_console** is ``True``.</span>
+<span class="sd">        is only relevant if ``parse_console`` is ``True``.</span>
 <span class="sd">    :parameter parse_console: ``True`` (default) if the console parameters</span>
 <span class="sd">        needs parsing.</span>
 <span class="sd">    :parameter script: Optional string which set the :attr:`script`</span>
@@ -271,7 +273,7 @@
 
 <span class="sd">        Default: ``None``.</span>
 
-<span class="sd">    .. attribute:: parsed_console</span>
+<span class="sd">    .. attribute:: console_parsed</span>
 
 <span class="sd">        ``True`` if this application parsed the console before starting.</span>
 
@@ -282,7 +284,6 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">argv</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">parse_console</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -311,7 +312,7 @@
         <span class="n">cfg</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="n">cfg</span><span class="o">.</span><span class="n">application</span> <span class="o">=</span> <span class="n">cls</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="n">argv</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parsed_console</span> <span class="o">=</span> <span class="n">parse_console</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">console_parsed</span> <span class="o">=</span> <span class="n">parse_console</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">python_path</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -371,10 +372,10 @@
 <span class="sd">        Called during application initialisation. The parameters</span>
 <span class="sd">        overriding order is the following:</span>
 
-<span class="sd">         * default parameters.</span>
-<span class="sd">         * the key-valued params passed in the initialisation.</span>
-<span class="sd">         * the parameters in the optional configuration file</span>
-<span class="sd">         * the parameters passed in the command line.</span>
+<span class="sd">        * default parameters.</span>
+<span class="sd">        * the key-valued params passed in the initialisation.</span>
+<span class="sd">        * the parameters in the optional configuration file</span>
+<span class="sd">        * the parameters passed in the command line.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="c"># get the actor if available and override default cfg values with those</span>
         <span class="c"># from the actor</span>
@@ -384,7 +385,7 @@
             <span class="c"># actor available and running.</span>
             <span class="c"># Unless argv is set, skip parsing</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">argv</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">parsed_console</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">console_parsed</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="c"># copy global settings</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">copy_globals</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="c">#</span>
@@ -394,17 +395,17 @@
                 <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="c"># parse console args</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsed_console</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">console_parsed</span><span class="p">:</span>
             <span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">parser</span><span class="p">()</span>
             <span class="n">opts</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
             <span class="n">config</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s">&#39;config&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="c"># set the config only if config is part of the settings</span>
             <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;config&#39;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">parser</span><span class="p">,</span> <span class="n">opts</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
         <span class="c">#</span>
-        <span class="c"># Load up the config file if its found.</span>
+        <span class="c"># Load up the config file if found.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">import_from_module</span><span class="p">())</span>
         <span class="c">#</span>
         <span class="c"># Update the configuration with any command line settings.</span>
@@ -436,7 +437,15 @@
 <span class="sd">        with ``params`` and apply the ``prefix`` to non global</span>
 <span class="sd">        settings.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">cfg</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="n">Config</span><span class="p">):</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+                <span class="n">cfg</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="k">if</span> <span class="n">prefix</span><span class="p">:</span>
+                <span class="n">cfg</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">prefix</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="o">**</span><span class="n">cfg</span><span class="p">)</span>
         <span class="n">cfg</span><span class="o">.</span><span class="n">update_settings</span><span class="p">()</span>
         <span class="n">cfg</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cfg</span>
@@ -523,7 +532,8 @@
                 <span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">update_arbiter_params</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;exc_id&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;exc_id&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_config</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">False</span><span class="p">:</span>
                 <span class="n">start</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
                 <span class="n">actor</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_add_monitor</span><span class="p">,</span> <span class="n">start</span><span class="p">))</span>
@@ -633,13 +643,15 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(((</span><span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span>
                                     <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">modified</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">apps</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">())</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">apps</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build</span><span class="p">())</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[]</span>
             <span class="c"># Load the configuration (command line and config file)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">load_config</span><span class="p">()</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_app_params</span><span class="p">()</span>
+            <span class="n">apps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">App</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_app</span><span class="p">(</span><span class="n">apps</span><span class="p">):</span>
                 <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span>
                 <span class="n">new_settings</span> <span class="o">=</span> <span class="p">{}</span>
@@ -678,21 +690,32 @@
         <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
         <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>    <span class="c"># remove the name</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span> <span class="ow">and</span> <span class="s">&#39;&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">App</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
             <span class="n">cfg</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">create_config</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="n">cfg</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">create_config</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+        <span class="c"># Add the config entry to the multi app config if not available</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="n">App</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_app</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="n">App</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">))</span>
 </div>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">multi_async</span><span class="p">((</span><span class="n">app</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span> <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps</span><span class="p">()))</span>
+        <span class="n">apps</span> <span class="o">=</span> <span class="p">[</span><span class="n">app</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span> <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">apps</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
 
     <span class="c">#    INTERNALS</span>
+    <span class="k">def</span> <span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">new_app</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span>
+                    <span class="s">&#39;You must use new_app when building a MultiApp&#39;</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">app</span>
+
     <span class="k">def</span> <span class="nf">_iter_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_name_callables</span><span class="p">):</span>
         <span class="n">main</span> <span class="o">=</span> <span class="n">app_name_callables</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">main</span><span class="p">:</span>
@@ -706,9 +729,10 @@
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
                 <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;parsed_console&#39;</span><span class="p">:</span>
-                <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;parse_console&#39;</span>
-            <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;console_parsed&#39;</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">[</span><span class="s">&#39;parse_console&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
         <span class="n">params</span><span class="p">[</span><span class="s">&#39;load_config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">return</span> <span class="n">params</span></div>
 </pre></div>

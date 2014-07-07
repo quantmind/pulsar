@@ -76,6 +76,13 @@
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="ver-0-8-4-development">
 <h2>Ver. 0.8.4 - Development<a class="headerlink" href="#ver-0-8-4-development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Several bug fixes in wsgi <a class="reference internal" href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a></li>
+<li>Added <a class="reference internal" href="apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.name" title="pulsar.apps.wsgi.route.Route.name"><tt class="xref py py-attr docutils literal"><span class="pre">Route.name</span></tt></a> attribute</li>
+<li><a class="reference internal" href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> does not send cookies back to the client by default</li>
+<li>Critical bug fix for multiprocessing sockets when running on python 3.4 and
+windows</li>
+</ul>
 </div>
 <div class="section" id="ver-0-8-3-2014-jun-23">
 <h2>Ver. 0.8.3 - 2014-Jun-23<a class="headerlink" href="#ver-0-8-3-2014-jun-23" title="Permalink to this headline">¶</a></h2>
@@ -365,7 +372,7 @@ via the <a class="reference internal" href="apps/wsgi/routing.html#wsgi-route-de
 <div class="section" id="ver-0-5-2-2013-june-30">
 <h2>Ver. 0.5.2 - 2013-June-30<a class="headerlink" href="#ver-0-5-2-2013-june-30" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Introduced the <a class="reference internal" href="tutorials/wsgi.html#tutorial-router"><em>Router parameter</em></a> for propagating
+<li>Introduced the <em class="xref std std-ref">Router parameter</em> for propagating
 attributes to children routes. router can also have a <tt class="docutils literal"><span class="pre">name</span></tt> so that
 they can easily be retrieved via the <tt class="docutils literal"><span class="pre">get_route</span></tt> method.</li>
 <li>Bug fix in Asynchronous Wsgi String <tt class="docutils literal"><span class="pre">__repr__</span></tt> method.</li>

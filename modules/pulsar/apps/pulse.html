@@ -85,14 +85,39 @@
 <span class="sd">Check the :ref:`django chat example &lt;tutorials-django&gt;` for a django chat</span>
 <span class="sd">application served by a multiprocessing pulsar server.</span>
 
-<span class="sd">Greenlets</span>
-<span class="sd">===============</span>
-
 <span class="sd">By default, the ``pulse`` command creates a :class:`Wsgi` middleware which</span>
 <span class="sd">runs the django application in a separate thread of execution from the</span>
 <span class="sd">main event loop.</span>
 <span class="sd">This is a standard programming pattern when using :ref:`asyncio with blocking</span>
 <span class="sd">functions &lt;asyncio-multithreading&gt;`.</span>
+<span class="sd">To control the number of thread workers in the event loop executor (which</span>
+<span class="sd">is a pool of threads) one uses the</span>
+<span class="sd">:ref:`thread-workers &lt;setting-thread_workers&gt;` option. For example, the</span>
+<span class="sd">following command::</span>
+
+<span class="sd">    python manage.py pulse -w 4 --thread-workers 20</span>
+
+<span class="sd">will run four :ref:`process based actors &lt;concurrency&gt;`, each with</span>
+<span class="sd">an executor with up to 20 threads.</span>
+
+<span class="sd">Greenlets</span>
+<span class="sd">===============</span>
+
+<span class="sd">It is possible to run django in fully asynchronous mode, i.e. without</span>
+<span class="sd">running the middleware in the event loop executor.</span>
+<span class="sd">Currently, this is available when using :postgresql:`PostgreSql backend &lt;&gt;`</span>
+<span class="sd">only, and it requires the :greenlet:`greenlet library &lt;&gt;`.</span>
+
+<span class="sd">To run django using greenlet support::</span>
+
+<span class="sd">    python manage.py pulse -w 4 --greenlet</span>
+
+<span class="sd">By default it will run the django middleware on a pool of 100 greenlets (and</span>
+<span class="sd">therefore approximately 100 separate database connections per actor). To</span>
+<span class="sd">adjust this number::</span>
+
+<span class="sd">    python manage.py pulse -w 4 --greenlet 200</span>
+
 
 <span class="sd">Wsgi middleware</span>
 <span class="sd">===================</span>

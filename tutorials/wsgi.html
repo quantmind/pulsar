@@ -78,11 +78,9 @@
 <span id="tutorials-wsgi"></span><h1>WSGI<a class="headerlink" href="#wsgi" title="Permalink to this headline">¶</a></h1>
 <p>We assume you are familiar with python Web Standard Gateway Interface (WSGI),
 if not you should read <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep-3333</a> first.</p>
-<div class="section" id="server">
-<h2>Server<a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="setting-up">
-<h3>Setting Up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h3>
-<p>All pulsar needs to setup a WSGI server is the wsgi callable of your
+<h2>Setting Up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h2>
+<p>All pulsar needs to set-up a WSGI server is the callable of your
 application. We start by creating a script, called <tt class="docutils literal"><span class="pre">managed.py</span></tt>
 which will be used to run your server:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
@@ -94,17 +92,9 @@ which will be used to run your server:</p>
     <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Pulsar is an asynchronous server, however, the callable which
-consume your application may not be.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Most web-framework in the public domain are not asynchronous by
-construction. This is ok as long as the WSGI callable consumes the
-request and return control to pulsar as fast as possible.</p>
-</div>
 </div>
 <div class="section" id="multiple-process">
-<span id="multi-wsgi"></span><h3>Multiple Process<a class="headerlink" href="#multiple-process" title="Permalink to this headline">¶</a></h3>
+<span id="multi-wsgi"></span><h2>Multiple Process<a class="headerlink" href="#multiple-process" title="Permalink to this headline">¶</a></h2>
 <p>When serving lots of requests, an asynchronous single-process server may not be
 enough. To add power, you can run the server using 2 or more process (workers):</p>
 <div class="highlight-python"><pre>python manage.py --workers 4</pre>
@@ -112,13 +102,53 @@ enough. To add power, you can run the server using 2 or more process (workers):<
 <p>Multi-process servers are only available for:</p>
 <ul class="simple">
 <li>Posix systems.</li>
-<li>Windows running python 3.2 or above.</li>
+<li>Windows running python 3.3 or above.</li>
 </ul>
 <p>Check <a class="reference internal" href="../apps/socket.html#socket-server-concurrency"><em>multi-process socket servers</em></a>
 documentation for more information.</p>
 </div>
+<div class="section" id="blocking-middleware">
+<span id="blocking-wsgi"></span><h2>Blocking middleware<a class="headerlink" href="#blocking-middleware" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar is an asynchronous server, however, the callable which
+consume your application may not be.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Most web-framework in the public domain are blocking by
+construction. This is OK as long as the WSGI callable consumes the
+request and return control to pulsar as fast as possible.</p>
+</div>
+<p>In order to facilitate the integration of blocking frameworks, pulsar ships with
+several WSGI utilities, including:</p>
+<ul class="simple">
+<li><a class="reference internal" href="../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a> for grouping several WSGI middleware together</li>
+<li><a class="reference internal" href="../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.wait_for_body_middleware" title="pulsar.apps.wsgi.middleware.wait_for_body_middleware"><tt class="xref py py-func docutils literal"><span class="pre">wait_for_body_middleware()</span></tt></a> should be placed before any synchronous middleware
+which needs to process the body of the HTTP request (such as POST methods)</li>
+<li><a class="reference internal" href="../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.middleware_in_executor" title="pulsar.apps.wsgi.middleware.middleware_in_executor"><tt class="xref py py-func docutils literal"><span class="pre">middleware_in_executor()</span></tt></a>, a wrapper to execute a blocking middleware in the
+executor (threading pool) of the actor serving the request.</li>
+</ul>
+<p>A pulsar friendly WSGI handler for a <tt class="docutils literal"><span class="pre">callable</span></tt> can take the following form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+
+<span class="k">def</span> <span class="nf">callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">wsgi_handler</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">wsgi</span><span class="o">.</span><span class="n">wait_for_body_middleware</span><span class="p">,</span>
+                                 <span class="n">wsgi</span><span class="o">.</span><span class="n">middleware_in_executor</span><span class="p">(</span><span class="nb">callable</span><span class="p">)])</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">wsgi_handler</span><span class="p">())</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>To control the number of thread workers in the event loop executor, one uses the
+<a class="reference internal" href="../settings.html#setting-thread-workers"><em>thread-workers</em></a> option. For example, the
+following command:</p>
+<div class="highlight-python"><pre>python manage.py -w 4 --thread-workers 10</pre>
+</div>
+<p>will run four <a class="reference internal" href="../design.html#concurrency"><em>process based actors</em></a>, each with
+an executor with up to 10 threads.</p>
+</div>
 <div class="section" id="serving-more-than-one-application">
-<h3>Serving More than one application<a class="headerlink" href="#serving-more-than-one-application" title="Permalink to this headline">¶</a></h3>
+<h2>Serving More than one application<a class="headerlink" href="#serving-more-than-one-application" title="Permalink to this headline">¶</a></h2>
 <p>You can serve as many applications, on different addresses, as you like.
 For example, our <tt class="docutils literal"><span class="pre">manage.py</span></tt> script could be:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">arbiter</span>
@@ -136,13 +166,6 @@ For example, our <tt class="docutils literal"><span class="pre">manage.py</span>
     <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">callable2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;wsgi2&#39;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="mi">8070</span><span class="p">)</span>
     <span class="n">arbiter</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="application-handlers">
-<h2>Application Handlers<a class="headerlink" href="#application-handlers" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="router">
-<span id="tutorial-router"></span><h3>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h3>
 </div>
 </div>
 </div>
@@ -173,16 +196,10 @@ For example, our <tt class="docutils literal"><span class="pre">manage.py</span>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">WSGI</a><ul>
-<li><a class="reference internal" href="#server">Server</a><ul>
 <li><a class="reference internal" href="#setting-up">Setting Up</a></li>
 <li><a class="reference internal" href="#multiple-process">Multiple Process</a></li>
+<li><a class="reference internal" href="#blocking-middleware">Blocking middleware</a></li>
 <li><a class="reference internal" href="#serving-more-than-one-application">Serving More than one application</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#application-handlers">Application Handlers</a><ul>
-<li><a class="reference internal" href="#router">Router</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>

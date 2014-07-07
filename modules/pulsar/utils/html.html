@@ -79,60 +79,8 @@
 <span class="n">NOTHING</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 <span class="sd">&#39;&#39;&#39;Tuple of elements considered as null.&#39;&#39;&#39;</span>
 <span class="n">INLINE_TAGS</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="s">&#39;input&#39;</span><span class="p">,</span> <span class="s">&#39;link&#39;</span><span class="p">,</span> <span class="s">&#39;meta&#39;</span><span class="p">,</span> <span class="s">&#39;hr&#39;</span><span class="p">))</span>
-<span class="c"># The global attributes below can be used on any HTML element</span>
-<span class="c"># class and style are misssing here since they are treated separately</span>
-<span class="n">GLOBAL_HTML_ATTRIBUTES</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;accesskey&#39;</span><span class="p">,</span> <span class="s">&#39;contenteditable&#39;</span><span class="p">,</span> <span class="s">&#39;contextmenu&#39;</span><span class="p">,</span> <span class="s">&#39;dir&#39;</span><span class="p">,</span>
-                          <span class="s">&#39;draggable&#39;</span><span class="p">,</span> <span class="s">&#39;dropzone&#39;</span><span class="p">,</span> <span class="s">&#39;hidden&#39;</span><span class="p">,</span> <span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;lang&#39;</span><span class="p">,</span>
-                          <span class="s">&#39;spellcheck&#39;</span><span class="p">,</span> <span class="s">&#39;tabindex&#39;</span><span class="p">,</span> <span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;traslate&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="n">HTML_CHILDREN_TAG</span> <span class="o">=</span> <span class="p">{}</span>
-
-<span class="c"># Extend GLOBAL ATTRIBUTES (which can be used in any HTML element).</span>
-<span class="n">e</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">t</span><span class="p">:</span> <span class="n">GLOBAL_HTML_ATTRIBUTES</span> <span class="o">+</span> <span class="n">t</span>
-
-<span class="c"># Input atg attributes</span>
-<span class="c"># http://www.w3schools.com/tags/tag_input.asp</span>
-<span class="n">input_attr</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">t</span><span class="p">:</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;autocomplete&#39;</span><span class="p">,</span> <span class="s">&#39;autofocus&#39;</span><span class="p">,</span> <span class="s">&#39;disabled&#39;</span><span class="p">,</span>
-                          <span class="s">&#39;form&#39;</span><span class="p">,</span> <span class="s">&#39;formnovalidate&#39;</span><span class="p">,</span> <span class="s">&#39;list&#39;</span><span class="p">,</span> <span class="s">&#39;max&#39;</span><span class="p">,</span> <span class="s">&#39;maxlength&#39;</span><span class="p">,</span>
-                          <span class="s">&#39;min&#39;</span><span class="p">,</span> <span class="s">&#39;multiple&#39;</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;pattern&#39;</span><span class="p">,</span> <span class="s">&#39;placeholder&#39;</span><span class="p">,</span>
-                          <span class="s">&#39;readonly&#39;</span><span class="p">,</span> <span class="s">&#39;required&#39;</span><span class="p">,</span> <span class="s">&#39;size&#39;</span><span class="p">,</span> <span class="s">&#39;step&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">t</span><span class="p">)</span>
-
-<span class="c"># HTML TAG ATTRIBUTES</span>
-<span class="c">############################################################################</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;target&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;form&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;accept-charset&#39;</span><span class="p">,</span> <span class="s">&#39;action&#39;</span><span class="p">,</span> <span class="s">&#39;autocomplete&#39;</span><span class="p">,</span>
-                            <span class="s">&#39;enctype&#39;</span><span class="p">,</span> <span class="s">&#39;method&#39;</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;novalidate&#39;</span><span class="p">,</span>
-                            <span class="s">&#39;target&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;img&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;align&#39;</span><span class="p">,</span> <span class="s">&#39;alt&#39;</span><span class="p">,</span> <span class="s">&#39;broder&#39;</span><span class="p">,</span> <span class="s">&#39;crossorigin&#39;</span><span class="p">,</span>
-                           <span class="s">&#39;height&#39;</span><span class="p">,</span> <span class="s">&#39;hspace&#39;</span><span class="p">,</span> <span class="s">&#39;ismap&#39;</span><span class="p">,</span> <span class="s">&#39;longdesc&#39;</span><span class="p">,</span>
-                           <span class="s">&#39;src&#39;</span><span class="p">,</span> <span class="s">&#39;usemap&#39;</span><span class="p">,</span> <span class="s">&#39;vspace&#39;</span><span class="p">,</span> <span class="s">&#39;width&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_attr</span><span class="p">()</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;input[type=&quot;checkbox&quot;]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_attr</span><span class="p">(</span><span class="s">&#39;checked&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;input[type=&quot;file&quot;]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_attr</span><span class="p">(</span><span class="s">&#39;accept&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;input[type=&quot;image&quot;]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_attr</span><span class="p">(</span>
-    <span class="s">&#39;alt&#39;</span><span class="p">,</span> <span class="s">&#39;formaction&#39;</span><span class="p">,</span> <span class="s">&#39;formenctype&#39;</span><span class="p">,</span> <span class="s">&#39;formmethod&#39;</span><span class="p">,</span> <span class="s">&#39;formtarget&#39;</span><span class="p">,</span>
-    <span class="s">&#39;height&#39;</span><span class="p">,</span> <span class="s">&#39;src&#39;</span><span class="p">,</span> <span class="s">&#39;width&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;input[type=&quot;radio&quot;]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_attr</span><span class="p">(</span><span class="s">&#39;checked&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;input[type=&quot;submit&quot;]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_attr</span><span class="p">(</span>
-    <span class="s">&#39;formaction&#39;</span><span class="p">,</span> <span class="s">&#39;formenctype&#39;</span><span class="p">,</span> <span class="s">&#39;formmethod&#39;</span><span class="p">,</span> <span class="s">&#39;formtarget&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;link&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="s">&#39;hreflang&#39;</span><span class="p">,</span> <span class="s">&#39;media&#39;</span><span class="p">,</span> <span class="s">&#39;rel&#39;</span><span class="p">,</span>
-                            <span class="s">&#39;sizes&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;charset&#39;</span><span class="p">,</span> <span class="s">&#39;content&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;option&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;disabled&#39;</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;selected&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;script&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;async&#39;</span><span class="p">,</span> <span class="s">&#39;charset&#39;</span><span class="p">,</span> <span class="s">&#39;defer&#39;</span><span class="p">,</span> <span class="s">&#39;src&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;style&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;media&#39;</span><span class="p">,</span> <span class="s">&#39;scoped&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;select&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;autofocus&#39;</span><span class="p">,</span> <span class="s">&#39;disabled&#39;</span><span class="p">,</span> <span class="s">&#39;form&#39;</span><span class="p">,</span> <span class="s">&#39;multiple&#39;</span><span class="p">,</span>
-                              <span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;required&#39;</span><span class="p">,</span> <span class="s">&#39;size&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;textarea&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;autofocus&#39;</span><span class="p">,</span> <span class="s">&#39;cols&#39;</span><span class="p">,</span> <span class="s">&#39;disabled&#39;</span><span class="p">,</span> <span class="s">&#39;maxlength&#39;</span><span class="p">,</span>
-                                <span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;placeholder&#39;</span><span class="p">,</span> <span class="s">&#39;readonly&#39;</span><span class="p">,</span> <span class="s">&#39;required&#39;</span><span class="p">,</span>
-                                <span class="s">&#39;rows&#39;</span><span class="p">,</span> <span class="s">&#39;wrap&#39;</span><span class="p">)</span>
-<span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="s">&#39;th&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;colspan&#39;</span><span class="p">,</span> <span class="s">&#39;headers&#39;</span><span class="p">,</span> <span class="s">&#39;rowspan&#39;</span><span class="p">,</span> <span class="s">&#39;scope&#39;</span><span class="p">)</span>
-
-<span class="c"># DEFAULT HTML TAG CHILDREN</span>
-<span class="c">############################################################################</span>
-<span class="n">HTML_CHILDREN_TAG</span><span class="p">[</span><span class="s">&#39;ul&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;li&#39;</span>
-<span class="n">HTML_CHILDREN_TAG</span><span class="p">[</span><span class="s">&#39;ol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;li&#39;</span>
-<span class="n">HTML_CHILDREN_TAG</span><span class="p">[</span><span class="s">&#39;select&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;option&#39;</span>
+<span class="n">HTML_CHILDREN_TAG</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;ul&#39;</span><span class="p">:</span> <span class="s">&#39;li&#39;</span><span class="p">,</span>
+                     <span class="s">&#39;ol&#39;</span><span class="p">:</span> <span class="s">&#39;li&#39;</span><span class="p">}</span>
 
 <span class="c"># COMMON HTML ENTITIES</span>
 <span class="c"># Check http://www.w3schools.com/tags/ref_symbols.asp for more</span>
@@ -151,17 +99,6 @@
 <span class="sd">&#39;&#39;&#39;HTML -- symbol.&#39;&#39;&#39;</span>
 
 
-<div class="viewcode-block" id="tag_attributes"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.tag_attributes">[docs]</a><span class="k">def</span> <span class="nf">tag_attributes</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a tuple of valid attributes for the HTML ``tag`` and optional</span>
-<span class="sd">``type``. If the ``tag`` is not found in the global ``HTML_ATTRIBUTES``</span>
-<span class="sd">dictionary, the ``GLOBAL_HTML_ATTRIBUTES`` set is returned.&#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">:</span>
-        <span class="n">ntag</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">[type=&quot;</span><span class="si">%s</span><span class="s">&quot;]&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ntag</span> <span class="ow">in</span> <span class="n">HTML_ATTRIBUTES</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="n">ntag</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">HTML_ATTRIBUTES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">GLOBAL_HTML_ATTRIBUTES</span><span class="p">)</span>
-
-</div>
 <div class="viewcode-block" id="child_tag"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.child_tag">[docs]</a><span class="k">def</span> <span class="nf">child_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The default children ``tag`` for a given ``tag``.&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">HTML_CHILDREN_TAG</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
@@ -198,12 +135,6 @@
             <span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;quot;&#39;</span><span class="p">)</span>
 
 </div>
-<span class="k">def</span> <span class="nf">attr_iter</span><span class="p">(</span><span class="n">attrs</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">attrs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="s">&quot; </span><span class="si">%s</span><span class="s">=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">escape</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
-
-
 <span class="k">def</span> <span class="nf">dump_data_value</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">is_string</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>

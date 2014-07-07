@@ -91,6 +91,11 @@
     <span class="k">pass</span>
 
 
+<span class="k">def</span> <span class="nf">sql</span><span class="p">():</span>
+    <span class="kn">import</span> <span class="nn">sqlalchemy</span>
+    <span class="k">return</span> <span class="n">sqlalchemy</span>
+
+
 <div class="viewcode-block" id="Field"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.Field">[docs]</a><span class="k">class</span> <span class="nc">Field</span><span class="p">(</span><span class="n">UnicodeMixin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Base class of all :mod:`.odm` Fields.</span>
 
@@ -176,6 +181,7 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">repr_type</span> <span class="o">=</span> <span class="s">&#39;unknown&#39;</span>
     <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">autoincrement</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">required</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">to_python</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">index</span> <span class="o">=</span> <span class="bp">False</span>
@@ -270,7 +276,12 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">((</span><span class="s">&quot;__init__() got an unexepcted keyword argument &quot;</span>
                              <span class="s">&quot;&#39;{0}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
 
-</div>
+<div class="viewcode-block" id="Field.sql_alchemy_column"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.Field.sql_alchemy_column">[docs]</a>    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return a valid Column for :sqlalchemy:`SqlAlchemy model &lt;&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+</div></div>
 <div class="viewcode-block" id="CharField"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.CharField">[docs]</a><span class="k">class</span> <span class="nc">CharField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
     <span class="n">repr_type</span> <span class="o">=</span> <span class="s">&#39;text&#39;</span>
 
@@ -282,9 +293,19 @@
     <span class="n">to_store</span> <span class="o">=</span> <span class="n">to_python</span>
     <span class="n">to_json</span> <span class="o">=</span> <span class="n">to_python</span>
 
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
+
 </div>
 <span class="k">class</span> <span class="nc">AutoIdField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
     <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="IntegerField"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.IntegerField">[docs]</a><span class="k">class</span> <span class="nc">IntegerField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
@@ -305,6 +326,12 @@
 
     <span class="n">to_json</span> <span class="o">=</span> <span class="n">to_python</span>
 
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span><span class="p">,</span>
+                        <span class="n">autoincrement</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">autoincrement</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
+
 </div>
 <span class="k">class</span> <span class="nc">BooleanField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
     <span class="n">index</span> <span class="o">=</span> <span class="bp">True</span>
@@ -321,6 +348,12 @@
         <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">NONE_EMPTY</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">store</span><span class="o">.</span><span class="n">encode_bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Boolean</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">primary_key</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span>
+                        <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="FloatField"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.FloatField">[docs]</a><span class="k">class</span> <span class="nc">FloatField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
@@ -339,6 +372,11 @@
             <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span>
+                        <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
 
 </div>
 <span class="k">class</span> <span class="nc">DateField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
@@ -368,6 +406,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">auto_now</span> <span class="o">=</span> <span class="n">auto_now</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">DateField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_handle_extras</span><span class="p">(</span><span class="o">**</span><span class="n">extras</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Date</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span>
+                        <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
+
 
 <span class="k">class</span> <span class="nc">DateTimeField</span><span class="p">(</span><span class="n">DateField</span><span class="p">):</span>
 
@@ -381,6 +424,11 @@
             <span class="k">return</span> <span class="n">value</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">DateTime</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span>
+                        <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">PickleField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
@@ -414,6 +462,11 @@
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_store</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">b64encode</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">PickleType</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span>
+                        <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">JSONField</span><span class="p">(</span><span class="n">CharField</span><span class="p">):</span>
@@ -516,6 +569,11 @@
             <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
                 <span class="n">name</span> <span class="o">=</span> <span class="n">JSPLITTER</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">store_name</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sql_alchemy_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">sql</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Text</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="p">,</span>
+                        <span class="n">nullable</span><span class="o">=</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ForeignKey"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.fields.ForeignKey">[docs]</a><span class="k">class</span> <span class="nc">ForeignKey</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>

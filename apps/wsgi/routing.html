@@ -125,9 +125,9 @@ be implemented.</p>
 <li><strong>routes</strong> &#8211; Optional <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> instances which are added to the
 children <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.routes" title="pulsar.apps.wsgi.routers.Router.routes"><tt class="xref py py-attr docutils literal"><span class="pre">routes</span></tt></a> of this router.</li>
 <li><strong>parameters</strong> &#8211; Optional parameters for this router.
-They are stored in the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.parameters" title="pulsar.apps.wsgi.routers.Router.parameters"><tt class="xref py py-attr docutils literal"><span class="pre">parameters</span></tt></a> attribute.
-If a <tt class="docutils literal"><span class="pre">response_content_types</span></tt> value is
-passed, it overrides the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.response_content_types" title="pulsar.apps.wsgi.routers.Router.response_content_types"><tt class="xref py py-attr docutils literal"><span class="pre">response_content_types</span></tt></a> attribute.</li>
+They are stored in the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.parameters" title="pulsar.apps.wsgi.routers.Router.parameters"><tt class="xref py py-attr docutils literal"><span class="pre">parameters</span></tt></a> attribute with the
+exception of <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.response_content_types" title="pulsar.apps.wsgi.routers.Router.response_content_types"><tt class="xref py py-attr docutils literal"><span class="pre">response_content_types</span></tt></a> and
+<a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.response_wrapper" title="pulsar.apps.wsgi.routers.Router.response_wrapper"><tt class="xref py py-attr docutils literal"><span class="pre">response_wrapper</span></tt></a></li>
 </ul>
 </td>
 </tr>
@@ -152,6 +152,19 @@ passed, it overrides the <a class="reference internal" href="#pulsar.apps.wsgi.r
 client request.</p>
 <p>The client request must accept at least one of the response content
 types, otherwise an HTTP <tt class="docutils literal"><span class="pre">415</span></tt> exception occurs.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.routers.Router.response_wrapper">
+<tt class="descname">response_wrapper</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.response_wrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional function which wraps all handlers of this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.
+The function must accept two parameters, the original handler
+and the <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest" title="pulsar.apps.wsgi.wrappers.WsgiRequest"><tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">response_wrapper</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">return</span> <span class="n">handler</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -296,40 +309,8 @@ set to the url of this <a class="reference internal" href="#pulsar.apps.wsgi.rou
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.wsgi.routers.Router.sitemap">
-<tt class="descname">sitemap</tt><big>(</big><em>root=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.sitemap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.sitemap" title="Permalink to this definition">¶</a></dt>
-<dd><p>This utility method returns a sitemap starting at root.</p>
-<p>If <em>root</em> is <tt class="docutils literal"><span class="pre">None</span></tt> it starts from this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>request</strong> &#8211; a <a class="reference internal" href="wrappers.html#app-wsgi-request"><em>wsgi request wrapper</em></a></li>
-<li><strong>root</strong> &#8211; Optional url path where to start the sitemap.
-By default it starts from this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>. Pass <cite>&#8220;/&#8221;</cite> to
-start from the root <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</li>
-<li><strong>levels</strong> &#8211; Number of nested levels to include.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of children</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.wsgi.routers.Router.encoding">
-<tt class="descname">encoding</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.encoding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.encoding" title="Permalink to this definition">¶</a></dt>
-<dd><p>The encoding to use for the response.</p>
-<p>By default it returns <tt class="docutils literal"><span class="pre">utf-8</span></tt>.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.wsgi.routers.Router.has_parent">
-<tt class="descname">has_parent</tt><big>(</big><em>router</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.has_parent" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">has_parent</tt><big>(</big><em>router</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.has_parent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.has_parent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if <tt class="docutils literal"><span class="pre">router</span></tt> is <tt class="docutils literal"><span class="pre">self</span></tt> or a parent or <tt class="docutils literal"><span class="pre">self</span></tt></p>
 </dd></dl>
 
@@ -527,6 +508,13 @@ For example <tt class="docutils literal"><span class="pre">/bla/foo</span></tt><
 <tt class="descname">variables</tt><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.variables" title="Permalink to this definition">¶</a></dt>
 <dd><p>a set of  variable names for this route. If the route has no
 variables, the set is empty.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.route.Route.name">
+<tt class="descname">name</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#Route.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A nice name for the route.</p>
+<p>Derived from <a class="reference internal" href="#pulsar.apps.wsgi.route.Route.rule" title="pulsar.apps.wsgi.route.Route.rule"><tt class="xref py py-attr docutils literal"><span class="pre">rule</span></tt></a> replacing underscores and dashes.</p>
 </dd></dl>
 
 <dl class="method">

@@ -447,7 +447,8 @@
                                    <span class="n">logging</span><span class="o">.</span><span class="n">_checkLevel</span><span class="p">(</span><span class="s">&#39;WARNING&#39;</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">loglevel</span> <span class="ow">in</span> <span class="p">((</span><span class="s">&#39;pulsar&#39;</span><span class="p">,</span> <span class="n">default_loglevel</span><span class="p">),</span>
                                     <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default_loglevel</span><span class="p">),</span>
-                                    <span class="p">(</span><span class="s">&#39;asyncio&#39;</span><span class="p">,</span> <span class="n">asyncio_loglevel</span><span class="p">)):</span>
+                                    <span class="p">(</span><span class="s">&#39;asyncio&#39;</span><span class="p">,</span> <span class="n">asyncio_loglevel</span><span class="p">),</span>
+                                    <span class="p">(</span><span class="s">&#39;trollius&#39;</span><span class="p">,</span> <span class="n">asyncio_loglevel</span><span class="p">)):</span>
             <span class="k">if</span> <span class="n">namespace</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loggers</span><span class="p">:</span>
                 <span class="n">loggers</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span>
                                                        <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>

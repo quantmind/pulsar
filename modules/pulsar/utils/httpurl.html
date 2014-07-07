@@ -385,7 +385,7 @@
 <span class="c"># ###################################################    REQUEST METHODS</span>
 <span class="n">ENCODE_URL_METHODS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span> <span class="s">&#39;HEAD&#39;</span><span class="p">,</span> <span class="s">&#39;OPTIONS&#39;</span><span class="p">])</span>
 <span class="n">ENCODE_BODY_METHODS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s">&#39;PATCH&#39;</span><span class="p">,</span> <span class="s">&#39;POST&#39;</span><span class="p">,</span> <span class="s">&#39;PUT&#39;</span><span class="p">,</span> <span class="s">&#39;TRACE&#39;</span><span class="p">])</span>
-<span class="n">REDIRECT_CODES</span> <span class="o">=</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">307</span><span class="p">)</span>
+<span class="n">REDIRECT_CODES</span> <span class="o">=</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">305</span><span class="p">,</span> <span class="mi">307</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -513,6 +513,7 @@
 
 
 <span class="k">def</span> <span class="nf">header_values</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">native_str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">header_parsers</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">header_parsers</span><span class="p">[</span><span class="n">header</span><span class="p">](</span><span class="n">value</span><span class="p">)</span>
@@ -1183,14 +1184,9 @@
                 <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
             <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">size</span>
-            <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">size</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">None</span>
             <span class="n">body_part</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">rest</span><span class="p">[:</span><span class="n">size</span><span class="p">],</span> <span class="n">rest</span><span class="p">[</span><span class="n">size</span><span class="p">:]</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">errno</span> <span class="o">=</span> <span class="n">INVALID_CHUNK</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;chunk missing terminator [</span><span class="si">%s</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="n">data</span>
-                <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
-            <span class="c"># maybe decompress</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">body_part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">body_part</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">True</span>

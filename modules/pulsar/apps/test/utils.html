@@ -114,7 +114,6 @@
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isclass</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Future</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">unittest.case</span> <span class="kn">import</span> <span class="n">_ExpectedFailure</span> <span class="k">as</span> <span class="n">ExpectedFailure</span>
@@ -124,7 +123,7 @@
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">future_timeout</span><span class="p">,</span>
                     <span class="n">TcpServer</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span>
-                    <span class="n">format_traceback</span><span class="p">)</span>
+                    <span class="n">Future</span><span class="p">,</span> <span class="n">format_traceback</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.async.proxy</span> <span class="kn">import</span> <span class="n">ActorProxyFuture</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">module_attribute</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
@@ -431,13 +430,16 @@
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">cfg</span>
     <span class="n">cfgname</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_server&#39;</span> <span class="o">%</span> <span class="n">name</span>
     <span class="n">addr</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_server&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
-    <span class="k">if</span> <span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">://&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">addr</span><span class="p">:</span>
-        <span class="n">addr</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">://</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
-    <span class="n">sync_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">new_event_loop</span><span class="p">())</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">sync_store</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">True</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">addr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">://&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">addr</span><span class="p">:</span>
+            <span class="n">addr</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">://</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+        <span class="n">sync_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">new_event_loop</span><span class="p">())</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sync_store</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">False</span>
 
 </div>

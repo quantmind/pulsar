@@ -84,7 +84,7 @@
 
 <span class="sd">    from pulsar.apps.greenio import pg</span>
 
-<span class="sd">    pg.make_asynchronous().</span>
+<span class="sd">    pg.make_asynchronous()</span>
 
 <span class="sd">The :func:`make_asynchronous` set the :func:`psycopg2_wait_callback` function</span>
 <span class="sd">as the waiting callback in psycopg2.</span>
@@ -119,8 +119,10 @@
             <span class="c"># Done with waiting</span>
             <span class="k">break</span>
         <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">extensions</span><span class="o">.</span><span class="n">POLL_READ</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;reading&#39;</span><span class="p">)</span>
             <span class="n">wait_fd</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">extensions</span><span class="o">.</span><span class="n">POLL_WRITE</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;writing&#39;</span><span class="p">)</span>
             <span class="n">wait_fd</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">read</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">OperationalError</span><span class="p">(</span><span class="s">&quot;Bad result from poll: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">state</span><span class="p">)</span>

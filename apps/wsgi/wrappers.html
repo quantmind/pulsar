@@ -164,9 +164,17 @@ For charsets have a look at <a class="reference internal" href="#pulsar.apps.wsg
 </dd></dl>
 
 <dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.cookies">
+<tt class="descname">cookies</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.cookies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.cookies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Container of request cookies</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler">
 <tt class="descname">app_handler</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.app_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>The WSGI application handling this request.</p>
+<p>The WSGI handler is responsible for setting this value in the
+same way as the <a class="reference internal" href="routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> does.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -225,7 +233,7 @@ For charsets have a look at <a class="reference internal" href="#pulsar.apps.wsg
 <p>Returns a two-elements tuple of a
 <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.misc.MultiValueDict" title="pulsar.utils.structures.misc.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">MultiValueDict</span></tt></a> containing data from
 the request body, and data from uploaded files.</p>
-<p>If the body data is not ready, return a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>
+<p>If the body data is not ready, return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
 which results in the tuple.</p>
 <p>The result is cached.</p>
 </dd></dl>
@@ -256,6 +264,12 @@ in <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.e
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.get_client_address">
+<tt class="descname">get_client_address</tt><big>(</big><em>use_x_forwarded=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.get_client_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.get_client_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>Obtain the client IP address</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.full_path">
 <tt class="descname">full_path</tt><big>(</big><em>*args</em>, <em>**query</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.full_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a full path</p>
@@ -272,7 +286,7 @@ available in this request.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.redirect">
-<tt class="descname">redirect</tt><big>(</big><em>path</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">redirect</tt><big>(</big><em>path</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.redirect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Redirect to a different <tt class="docutils literal"><span class="pre">path</span></tt></p>
 </dd></dl>
 

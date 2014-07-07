@@ -72,7 +72,6 @@
 <span class="kn">import</span> <span class="nn">weakref</span>
 <span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">dummy</span><span class="p">,</span> <span class="n">current_process</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">selectors</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">set_event_loop</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">queue</span>
@@ -82,8 +81,8 @@
 <span class="n">Empty</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span>
 <span class="n">Full</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Full</span>
 
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="p">(</span><span class="n">asyncio</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">set_actor</span><span class="p">,</span>
-                     <span class="n">thread_data</span><span class="p">,</span> <span class="n">_StopError</span><span class="p">,</span> <span class="n">BaseEventLoop</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="p">(</span><span class="n">asyncio</span><span class="p">,</span> <span class="n">selectors</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">set_actor</span><span class="p">,</span>
+                     <span class="n">events</span><span class="p">,</span> <span class="n">thread_data</span><span class="p">,</span> <span class="n">_StopError</span><span class="p">,</span> <span class="n">BaseEventLoop</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">AsyncObject</span>
 <span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 
@@ -97,7 +96,7 @@
 
 <span class="k">def</span> <span class="nf">set_as_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">loop</span><span class="o">.</span><span class="n">_iothreadloop</span><span class="p">:</span>
-        <span class="n">set_event_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
+        <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_executor</span><span class="p">(</span><span class="n">loop</span><span class="p">):</span>
@@ -276,7 +275,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">max_workers</span><span class="p">:</span>
                 <span class="n">max_workers</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">thread_workers</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">worker_name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_workers</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_workers</span> <span class="ow">or</span> <span class="n">_MAX_WORKERS</span><span class="p">,</span> <span class="n">_MAX_WORKERS</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_maxtasks</span> <span class="o">=</span> <span class="n">maxtasks</span>

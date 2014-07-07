@@ -73,19 +73,32 @@
 <p>Greenlet support facilitates the integration of synchronous
 third-party libraries into pulsar asynchronous framework.
 It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet</a> library.</p>
-<p>If you want to understand how integration works and you are unfamiliar with
+<p>If you want to understand how integration works but you are unfamiliar with
 greenlets, check out the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet documentation</a> first.
 On the other hand,
 if you need to use it in the context of <a class="reference internal" href="#psycopg2"><em>asynchronous psycopg2</em></a>
 connections for example, you can skip the implementation details.</p>
 <p>This application <strong>does not use monkey patching</strong> and therefore it
 works quite differently from implicit asynchronous libraries such as
-<a class="reference external" href="http://www.gevent.org/">gevent</a>. All it does, it provides the user with a set
+<a class="reference external" href="http://www.gevent.org/">gevent</a>. All it does, it provides the user with a limited set
 of utilities for <strong>explicitly</strong> transferring execution from one greenlet
 to a another which execute the blocking call in a greenlet-friendly way.</p>
 <p>The caller has the responsibility that the blocking call is greenlet-friendly,
 i.e. it transfers the control of execution back to the parent greenlet when
 needed.</p>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>Lets assume you are building an application which uses pulsar asynchronous
+engine and would like to</p>
+<ul class="simple">
+<li>either use an external library written in blocking style,
+i.e. without yielding control to the event loop when IO calls are performed.</li>
+<li>or write your client code without dealing with <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> or
+coroutines, in other words in an implicit asynchronous style. In this way
+your client code can be used on other frameworks just as well.</li>
+</ul>
+<p>In both cases, the <a class="reference internal" href="#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><tt class="xref py py-class docutils literal"><span class="pre">greenio</span></tt></a> application is what you need.</p>
+</div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="wait">
@@ -138,7 +151,7 @@ function.</p>
 <h3>Green task<a class="headerlink" href="#green-task" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.greenio.green_task">
-<tt class="descclassname">pulsar.apps.greenio.</tt><tt class="descname">green_task</tt><big>(</big><em>method</em><big>)</big><a class="headerlink" href="#pulsar.apps.greenio.green_task" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.greenio.</tt><tt class="descname">green_task</tt><big>(</big><em>method</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/greenio.html#green_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.green_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator to run a <tt class="docutils literal"><span class="pre">method</span></tt> an a new greenlet in the event loop
 of the instance of the bound <tt class="docutils literal"><span class="pre">method</span></tt>.</p>
 <p>This method is the greenlet equivalent of the <a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorator.
@@ -265,6 +278,7 @@ The caller must be from a greenlet other than the main one.</p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Greenlet Support</a><ul>
+<li><a class="reference internal" href="#usage">Usage</a></li>
 <li><a class="reference internal" href="#api">API</a><ul>
 <li><a class="reference internal" href="#wait">Wait</a></li>
 <li><a class="reference internal" href="#wait-file-descriptor">Wait file descriptor</a></li>

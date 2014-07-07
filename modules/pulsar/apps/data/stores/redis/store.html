@@ -180,6 +180,7 @@
 <div class="viewcode-block" id="RedisStore.execute_transaction"><a class="viewcode-back" href="../../../../../../apps/data/stores.html#pulsar.apps.data.stores.redis.store.RedisStore.execute_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">execute_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Execute a :class:`.Transaction`</span>
 <span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">pipe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span>
         <span class="n">update_insert</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="n">Command</span><span class="o">.</span><span class="n">INSERT</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">))</span>
         <span class="c">#</span>
@@ -189,6 +190,7 @@
                 <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="o">*</span><span class="n">command</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">update_insert</span><span class="p">:</span>
                 <span class="n">model</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">args</span>
+                <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
                 <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basekey</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
                 <span class="n">pipe</span><span class="o">.</span><span class="n">hmset</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
@@ -198,6 +200,7 @@
             <span class="k">if</span> <span class="n">command</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="n">Command</span><span class="o">.</span><span class="n">INSERT</span><span class="p">:</span>
                 <span class="n">model</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">args</span>
                 <span class="n">model</span><span class="p">[</span><span class="s">&#39;_rev&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">,</span> <span class="n">manager</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
