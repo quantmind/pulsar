@@ -20,7 +20,7 @@ from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES, iteritems,
                                   JSON_CONTENT_TYPES)
 
 from .structures import Accept, RequestCacheControl
-from .content import Html
+from .content import Html, HtmlDocument
 
 __all__ = ['handle_wsgi_error',
            'render_error_debug',
@@ -228,7 +228,9 @@ def handle_wsgi_error(environ, exc):
         logger.critical('Unhandled exception during HTTP response %s.%s',
                         path, dump_environ(environ), exc_info=exc_info)
     else:
-        logger.warning('HTTP %s %s', response.status, path)
+        msg = str(exc)
+        msg = '' if not msg else ' - %s' % msg
+        logger.warning('HTTP %s %s%s', response.status, path, msg)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         response.content_type = None
         response.content = None
@@ -257,15 +259,13 @@ def render_error(request, exc):
     content_type = None
     if response.content_type:
         content_type = response.content_type.split(';')[0]
-
-    if content_type == 'text/html':
-        request.html_document.head.title = response.status
+    is_html = content_type == 'text/html'
 
     if debug:
-        msg = render_error_debug(request, exc, content_type)
+        msg = render_error_debug(request, exc, is_html)
     else:
-        msg = error_messages.get(response.status_code) or ''
-        if content_type == 'text/html':
+        msg = error_messages.get(response.status_code) or str(exc)
+        if is_html:
             msg = textwrap.dedent("""
                 <h1>{0[reason]}</h1>
                 {0[msg]}
@@ -274,7 +274,8 @@ def render_error(request, exc):
                          "version": request.environ['SERVER_SOFTWARE']})
     #
     if content_type == 'text/html':
-        doc = request.html_document
+        doc = HtmlDocument(title=response.status)
+        doc.head.links.append('bootstrap_css')
         doc.head.embedded_css.append(error_css)
         doc.body.append(Html('div', msg, cn='pulsar-error'))
         return doc.render(request)
@@ -285,13 +286,11 @@ def render_error(request, exc):
         return '\n'.join(msg) if isinstance(msg, (list, tuple)) else msg
 
 
-def render_error_debug(request, exc, content_type):
-    '''Render the traceback into the content type in *response*.'''
-    response = request.response
-    is_html = content_type == 'text/html'
-    error = Html('div', cn='section traceback error') if is_html else []
-    trace = format_traceback(exc)
-    for trace in format_traceback(exc):
+def render_error_debug(request, exception, is_html):
+    '''Render the ``exception`` traceback
+    '''
+    error = Html('div', cn='well well-lg') if is_html else []
+    for trace in format_traceback(exception):
         counter = 0
         for line in trace.split('\n'):
             if line.startswith('  '):
@@ -299,8 +298,10 @@ def render_error_debug(request, exc, content_type):
                 line = line[2:]
             if line:
                 if is_html:
-                    line = Html('p', escape(line))
+                    line = Html('p', escape(line), cn='text-danger')
                     if counter:
                         line.css({'margin-left': '%spx' % (20*counter)})
                 error.append(line)
+    if is_html:
+        error = Html('div', Html('h1', request.response.status), error)
     return error

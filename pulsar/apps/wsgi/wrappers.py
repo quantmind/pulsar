@@ -74,14 +74,15 @@ def redirect(path, code=None, permanent=False):
     return WsgiResponse(code, response_headers=[('location', path)])
 
 
-def cached_property(f):
-    name = f.__name__
+def cached_property(method):
+    name = method.__name__
 
     def _(self):
         if name not in self.cache:
-            self.cache[name] = f(self)
+            self.cache[name] = method(self)
         return self.cache[name]
-    return property(_, doc=f.__doc__)
+
+    return property(_, doc=method.__doc__)
 
 
 def wsgi_encoder(gen, encoding):
@@ -147,10 +148,6 @@ class WsgiResponse(object):
         self._can_store_cookies = can_store_cookies
         if content_type is not None:
             self.content_type = content_type
-        if environ:
-            cookie = environ.get('HTTP_COOKIE')
-            if cookie:
-                self.cookies.load(cookie)
 
     @property
     def started(self):
@@ -430,9 +427,23 @@ class WsgiRequest(EnvironMixin):
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
                                    LanguageAccept)
 
+    @cached_property
+    def cookies(self):
+        '''Container of request cookies
+        '''
+        cookies = SimpleCookie()
+        cookie = self.environ.get('HTTP_COOKIE')
+        if cookie:
+            cookies.load(cookie)
+        return cookies
+
     @property
     def app_handler(self):
-        '''The WSGI application handling this request.'''
+        '''The WSGI application handling this request.
+
+        The WSGI handler is responsible for setting this value in the
+        same way as the :class:`.Router` does.
+        '''
         return self.cache.app_handler
 
     @property
@@ -580,6 +591,15 @@ class WsgiRequest(EnvironMixin):
             if server_port != ('443' if self.is_secure else '80'):
                 host = '%s:%s' % (host, server_port)
         return host
+
+    def get_client_address(self, use_x_forwarded=True):
+        '''Obtain the client IP address
+        '''
+        xfor = self.environ.get('HTTP_X_FORWARDED_FOR')
+        if use_x_forwarded and xfor:
+            return xfor.split(',')[-1].strip()
+        else:
+            return self.environ['REMOTE_ADDR']
 
     def full_path(self, *args, **query):
         '''Return a full path'''

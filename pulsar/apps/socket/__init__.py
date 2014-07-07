@@ -245,7 +245,8 @@ class SocketServer(pulsar.Application):
         sockets = []
         for sock in server.sockets:
             addresses.append(sock.getsockname())
-            sockets.append(WrapSocket(sock))
+            # sockets.append(WrapSocket(sock))
+            sockets.append(sock)
             server.loop.remove_reader(sock.fileno())
         monitor.sockets = sockets
         monitor.ssl = ssl
@@ -284,7 +285,8 @@ class SocketServer(pulsar.Application):
 
         :return: a :class:`.TcpServer`.
         '''
-        sockets = [sock.sock for sock in worker.sockets]
+        # sockets = [sock.sock for sock in worker.sockets]
+        sockets = worker.sockets
         cfg = self.cfg
         max_requests = cfg.max_requests
         if max_requests:

@@ -15,7 +15,8 @@ def raise_error():
 
 
 class EchoGreen(Echo):
-
+    '''An echo client which uses greenlets to provide implicit
+    asynchronous code'''
     @greenio.run_in_greenlet
     def __call__(self, message):
         connection = greenio.wait(self.pool.connect())

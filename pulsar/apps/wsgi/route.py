@@ -281,6 +281,17 @@ class Route(object):
         return '/' + self.rule
 
     @property
+    def name(self):
+        '''A nice name for the route.
+
+        Derived from :attr:`rule` replacing underscores and dashes.
+        '''
+        name = self.rule.replace('/', ' ')
+        if not self.variables:
+            name = name.replace('_', ' ').replace('-', ' ')
+        return name.strip()
+
+    @property
     def regex(self):
         if self.is_leaf:
             return '^' + self._regex_string + '$'

@@ -1,6 +1,8 @@
 Ver. 0.8.4 - Development
 ===========================
 * Several bug fixes in wsgi :class:`.Router`
+* Added :attr:`.Route.name` attribute
+* :class:`.WsgiResponse` does not send cookies back to the client by default
 
 Ver. 0.8.3 - 2014-Jun-23
 ===========================

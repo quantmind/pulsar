@@ -230,7 +230,7 @@ class Router(RouterType('RouterBase', (object,), {})):
         if not isinstance(rule, Route):
             rule = Route(rule)
         self._route = rule
-        self._name = parameters.pop('name', rule.rule)
+        self._name = parameters.pop('name', rule.name)
         self.routes = []
         # add routes specified via the initialiser
         for router in routes:
