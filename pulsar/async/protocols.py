@@ -1,12 +1,13 @@
 import sys
-from functools import partial
+from functools import partial, wraps
 
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, in_loop, task, coroutine_return
+from .futures import multi_async, in_loop, task, coroutine_return, Future
 from .events import EventHandler
-from .access import asyncio, get_event_loop, new_event_loop
+from .access import (asyncio, get_event_loop, new_event_loop,
+                     ConnectionResetError)
 
 
 __all__ = ['ProtocolConsumer',
@@ -21,8 +22,23 @@ __all__ = ['ProtocolConsumer',
 BIG = 2**31
 
 
+def with_timeout(method):
+
+    @wraps(method)
+    def _(self, *args, **kwargs):
+        self._cancel_timeout()
+        result = method(self, *args, **kwargs)
+        if isinstance(result, Future):
+            result.add_done_callback(lambda f: self._add_idle_timeout())
+        else:
+            self._add_idle_timeout()
+        return result
+
+    return _
+
+
 class ProtocolConsumer(EventHandler):
-    '''The consumer of data for a server or client :class:`Connection`.
+    '''The consumer of data for a server or client :class:`.Connection`.
 
     It is responsible for receiving incoming data from an end point via the
     :meth:`Connection.data_received` method, decoding (parsing) and,
@@ -175,6 +191,13 @@ class ProtocolConsumer(EventHandler):
         if not self.event('post_request').fired():
             return self.fire_event('post_request', *arg, **kw)
 
+    def write(self, data):
+        c = self._connection
+        if c:
+            return c.write(data)
+        else:
+            raise RuntimeError('No connection')
+
     def _data_received(self, data):
         # Called by Connection, it updates the counters and invoke
         # the high level data_received method which must be implemented
@@ -215,6 +238,8 @@ class PulsarProtocol(EventHandler):
         self._session = session
         self._timeout = timeout
         self._producer = producer
+        self._paused = False
+        self._drain_waiter = None
         self.bind_event('connection_lost', self._cancel_timeout)
 
     def __repr__(self):
@@ -282,6 +307,19 @@ class PulsarProtocol(EventHandler):
         '''``True`` if the :attr:`transport` is closed.'''
         return self._transport._closing if self._transport else True
 
+    def pause_writing(self):
+        assert not self._paused
+        self._paused = True
+
+    def resume_writing(self):
+        assert self._paused
+        self._paused = False
+        waiter = self._drain_waiter
+        if waiter is not None:
+            self._drain_waiter = None
+            if not waiter.done():
+                waiter.set_result(None)
+
     def close(self):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
@@ -346,6 +384,16 @@ class PulsarProtocol(EventHandler):
             self._idle_timeout.cancel()
             self._idle_timeout = None
 
+    def _make_drain_waiter(self):
+        if not self._paused:
+            return ()
+        waiter = self._drain_waiter
+        assert waiter is None or waiter.cancelled()
+        self.logger.info('%s wait for transport to drain', self)
+        waiter = Future(loop=self._loop)
+        self._drain_waiter = waiter
+        return waiter
+
 
 class Protocol(PulsarProtocol, asyncio.Protocol):
     '''An :class:`asyncio.Protocol` with :ref:`events <event-handling>`
@@ -398,17 +446,29 @@ class Connection(Protocol):
         consumer._loop = self._loop
         consumer.connection_made(self)
 
+    @with_timeout
     def data_received(self, data):
         '''Delegates handling of data to the :meth:`current_consumer`.
 
         Once done set a timeout for idle connections when a
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         '''
-        self._cancel_timeout()
         while data:
             consumer = self.current_consumer()
             data = consumer._data_received(data)
-        self._add_idle_timeout()
+
+    @with_timeout
+    def write(self, data):
+        '''Write data into the transport
+        '''
+        t = self._transport
+        if t:
+            if t._conn_lost:  # Uses private variable.
+                raise ConnectionResetError('Connection lost')
+            t.write(data)
+            return self._make_drain_waiter()
+        else:
+            raise ConnectionResetError('No Transport')
 
     def upgrade(self, consumer_factory):
         '''Upgrade the :func:`_consumer_factory` callable.

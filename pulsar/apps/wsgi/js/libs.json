@@ -34,7 +34,7 @@
     "pjax": "//cdnjs.cloudflare.com/ajax/libs/jquery.pjax/1.7.0/jquery.pjax",
     "prettify": "//cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify",
     "qunit": "//code.jquery.com/qunit/qunit-1.14.0",
-    "require": "//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require",
+    "require": "//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require",
     "select": "//cdnjs.cloudflare.com/ajax/libs/select2/3.4.5/select2",
     "showdown": "//cdnjs.cloudflare.com/ajax/libs/showdown/0.3.1/showdown.min",
     "socket.io": "//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.10/socket.io",

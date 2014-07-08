@@ -38,6 +38,7 @@ except ImportError:  # pragma    nocover
 
 if ispy3k:
     ConnectionRefusedError = __builtins__['ConnectionRefusedError']
+    ConnectionResetError = __builtins__['ConnectionResetError']
 
     def reraise(tp, value, tb=None):
         if value.__traceback__ is not tb:
@@ -45,6 +46,7 @@ if ispy3k:
         raise value
 else:   # pragma    nocover
     ConnectionRefusedError = asyncio.ConnectionRefusedError
+    ConnectionResetError = asyncio.ConnectionResetError
     if reraise is None:  # trollius name change
         from asyncio.py33_exceptions import reraise
 
@@ -63,6 +65,7 @@ __all__ = ['get_request_loop',
            'SELECTORS',
            'appengine',
            'ConnectionRefusedError',
+           'ConnectionResetError',
            'reraise']
 
 

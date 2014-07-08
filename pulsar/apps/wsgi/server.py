@@ -37,6 +37,9 @@ __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 
 MAX_CHUNK_SIZE = 65536
 
+MAX_BYTES_PER_CYCLE = 2*18     # 256 KB max per cycle
+MAX_LOOPS_PER_CYCLE = 20
+
 
 class FakeConnection(object):
 
@@ -408,26 +411,32 @@ class HttpServerResponse(ProtocolConsumer):
         Required by the WSGI specification.
 
         :param data: bytes to write
-        :param force: Optional flag used internally.
+        :param force: Optional flag used internally
+        :return: a :class:`~asyncio.Future` or the number of bytes written
         '''
+        write = super(HttpServerResponse, self).write
+        chunks = []
         if not self._headers_sent:
             tosend = self.get_headers()
             self._headers_sent = tosend.flat(self.version, self.status)
             self.fire_event('on_headers')
-            self.transport.write(self._headers_sent)
+            chunks.append(self._headers_sent)
         if data:
             if self.chunked:
-                chunks = []
                 while len(data) >= MAX_CHUNK_SIZE:
                     chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
                     chunks.append(chunk_encoding(chunk))
                 if data:
                     chunks.append(chunk_encoding(data))
-                self.transport.write(b''.join(chunks))
             else:
-                self.transport.write(data)
+                chunks.append(data)
         elif force and self.chunked:
-            self.transport.write(chunk_encoding(data))
+            chunks.append(chunk_encoding(data))
+        if chunks:
+            data = b''.join(chunks)
+            return write(data) or len(data)
+        else:
+            return 0
 
     ########################################################################
     #    INTERNALS
@@ -453,10 +462,26 @@ class HttpServerResponse(ProtocolConsumer):
                     self.start_response(response.status,
                                         response.get_headers(), exc_info)
                 #
+                # Do the actual writing
+                total = 0
+                loops = 0
                 for chunk in response:
                     if isinstance(chunk, Future):
+                        total, loops = 0, 0
                         chunk = yield chunk
-                    self.write(chunk)
+                    num_bytes = self.write(chunk)
+                    if isinstance(num_bytes, Future):
+                        total, loops = 0, 0
+                        yield num_bytes
+                    else:
+                        total += num_bytes
+                        loops += 1
+                    if (total >= MAX_BYTES_PER_CYCLE or
+                            loops >= MAX_LOOPS_PER_CYCLE):
+                        self.logger.debug('release the loop after %d '
+                                          'iterations', loops)
+                        total, loops = 0, 0
+                        yield None
                 #
                 # make sure we write headers
                 self.write(b'', True)

@@ -302,7 +302,10 @@ class Route(object):
     def bits(self):
         return tuple((b[1] for b in self.breadcrumbs))
 
+    @property
     def ordered_variables(self):
+        '''Tuple of ordered url :attr:`variables`
+        '''
         return tuple((b for dyn, b in self.breadcrumbs if dyn))
 
     def __hash__(self):

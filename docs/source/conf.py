@@ -31,6 +31,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.extlinks',
               'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode',
+              'pulsar.utils.docs.html',
               'pulsarext',
               'redisext']
 
@@ -65,7 +66,7 @@ html_sidebars = {
 }
 exclude_trees = []
 html_additional_pages = {
-#    'index': 'index.html',
+    'home': 'home.html',
 }
 
 # -- Options for HTML output ---------------------------------------------------

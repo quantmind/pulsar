@@ -818,15 +818,21 @@ class Media(AsyncString):
 
         :return: A url path to insert in a HTML ``link`` or ``script``.
         '''
-        urlparams = ''
         ending = '.%s' % self.mediatype
+        minify = True
+        urlparams = ''
+        if isinstance(path, dict):
+            urlparams = path.get('urlparams', urlparams)
+            minify = path.get('minify', minify)
+            path = path['url']
         if path in self.known_libraries:
             lib = self.known_libraries[path]
             if isinstance(lib, dict):
                 urlparams = lib.get('urlparams', '')
+                minify = lib.get('minify', minify)
                 lib = lib['url']
             path = '%s%s' % (lib, ending)
-        if self.minified:
+        if self.minified and minify:
             if path.endswith(ending):
                 path = self._minify(path, ending)
         if not with_media_ending:
@@ -919,8 +925,10 @@ class Scripts(Media):
         for script in scripts:
             if script == 'require':
                 continue
-            script = script.strip()
-            if script not in self.known_libraries:
+            name = script
+            if isinstance(script, dict):
+                name = script['url']
+            if name.strip() not in self.known_libraries:
                 script = self.absolute_path(script)
             if script not in required:
                 required.append(script)
