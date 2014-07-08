@@ -1,5 +1,10 @@
 Ver. 0.8.5 - Development
 ===========================
+* Added new :meth:`.Connection.write` method so that when the keep-alive
+  connection timeout is set, the write method reset it accordingly. Previously
+  only when reading the timeout was reset and therefore causing long
+  streaming responses to fail.
+* Better handling of streaming responses by the wsgi server
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

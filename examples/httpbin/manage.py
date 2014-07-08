@@ -181,9 +181,9 @@ class HttpBin(wsgi.Router):
     def request_stream(self, request):
         m = request.urlargs['m']
         n = request.urlargs['n']
-        # if m*n > 8388608:
-            # limit at 8 megabytes of total data
-            # raise HttpException(status=403)
+        if m*n > 2**25:
+            # limit at 32 megabytes of total data
+            raise HttpException(status=403)
         stream = ('Chunk %s\n%s\n\n' % (i+1, ''.join((
             choice(characters) for _ in range(m)))) for i in range(n))
         request.response.content = stream
