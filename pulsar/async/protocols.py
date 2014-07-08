@@ -23,7 +23,9 @@ BIG = 2**31
 
 
 def with_timeout(method):
-
+    '''Decorator for methods requiring the removal and addition of
+    timeouts
+    '''
     @wraps(method)
     def _(self, *args, **kwargs):
         self._cancel_timeout()
