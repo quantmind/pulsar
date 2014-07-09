@@ -1,5 +1,5 @@
 '''
-This example uses the streaming capabilities of pulsar :class:`.HttpClient`
+This example uses the streaming capabilities of the :class:`.HttpClient`
 to hook into twitter streaming api and send tweets into a processing queue.
 
 Implementation
@@ -9,17 +9,19 @@ Implementation
    :members:
    :member-order: bysource
 '''
-import os
+from os import path
 
 import pulsar
 from pulsar.utils.system import json
 from pulsar.apps.data import create_store
 from pulsar.apps.ds import pulsards_url
-from pulsar.apps.wsgi import WSGIServer, LazyWsgi, WsgiHandler, Router
+from pulsar.apps.wsgi import (WSGIServer, LazyWsgi, WsgiHandler, Router,
+                              FileRouter)
 from pulsar.apps.ws import WebSocket, PubSubWS
 from pulsar.apps.http import HttpClient, OAuth1
 
-THIS_DIR = os.path.dirname(__file__)
+STATIC_DIR = path.join(path.dirname(__file__), 'assets')
+FAVICON = path.join(STATIC_DIR, 'favicon.ico')
 
 
 class Twitter(pulsar.Application):
@@ -100,7 +102,7 @@ class Twitter(pulsar.Application):
             if messages:
                 # a list of messages is available
                 if self.cfg.callable:
-                    self.cfg.callable(messages)
+                    self.cfg.callable(self, messages)
 
     def reconnect(self, response, exc=None):
         '''Handle reconnection according to twitter streaming policy
@@ -141,9 +143,9 @@ class ProcessTweets:
     def __init__(self, channel):
         self.channel = channel
 
-    def __call__(self, messages):
+    def __call__(self, twitter, messages):
         if not self.store:
-            self.store = create_store(self.data_store)
+            self.store = create_store(twitter.cfg.data_store)
             self.pubsub = self.store.pubsub()
         for message in messages:
             self.pubsub.publish(self.channel, json.dumps(message))
@@ -165,7 +167,8 @@ class TweetsWsHandler(PubSubWS):
 
 
 class Site(LazyWsgi):
-
+    '''A simple web site for displaying tweets
+    '''
     def __init__(self, channel):
         self.channel = channel
 
@@ -174,6 +177,7 @@ class Site(LazyWsgi):
         self.store = create_store(cfg.data_store)
         pubsub = self.store.pubsub()
         return WsgiHandler([Router('/', get=self.home_page),
+                            FileRouter('/favicon.ico', FAVICON),
                             WebSocket('/message',
                                       TweetsWsHandler(pubsub, self.channel))])
 
@@ -184,7 +188,7 @@ class Site(LazyWsgi):
         head.links.append('bootstrap_css')
         head.scripts.append('require')
         head.scripts.require('jquery')
-        data = open(os.path.join(THIS_DIR, 'home.html')).read()
+        data = open(path.join(STATIC_DIR, 'home.html')).read()
         doc.body.append(data)
         return doc.http_response(request)
 

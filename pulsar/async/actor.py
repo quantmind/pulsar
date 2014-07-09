@@ -171,7 +171,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         self.pid = os.getpid()
         try:
             self.cfg.post_fork(self)
-        except Exception:
+        except Exception:   # pragma    nocover
             pass
         impl.setup_event_loop(self)
 
@@ -264,12 +264,12 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
 
-    def stop(self, exc=None):
+    def stop(self, exc=None, exit_code=None):
         '''Gracefully stop the :class:`Actor`.
 
         Implemented by the :meth:`.Concurrency.stop` method of the :attr:`impl`
         attribute.'''
-        return self.__impl.stop(self, exc)
+        return self.__impl.stop(self, exc, exit_code)
 
     def close_executor(self):
         '''Close the :meth:`executor`'''

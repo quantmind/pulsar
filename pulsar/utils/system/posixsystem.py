@@ -1,4 +1,5 @@
 import os
+import sys
 import fcntl
 import resource
 import grp
@@ -87,33 +88,50 @@ def setpgrp():
 
 
 def get_maxfd():
-    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-    if (maxfd == resource.RLIM_INFINITY):
-        maxfd = MAXFD
-    return maxfd
+    return resource.getrlimit(resource.RLIMIT_NOFILE)[0]
 
 
-def daemonize():    # pragma    nocover
-    """Standard daemonization of a process. Code is based on the
-ActiveState recipe at http://code.activestate.com/recipes/278731/"""
-    if os.fork() == 0:
-        os.setsid()
-        if os.fork() != 0:
-            os.umask(0)
-        else:
-            os._exit(0)
-    else:
-        os._exit(0)
-    maxfd = get_maxfd()
-    # Iterate through and close all file descriptors.
-    for fd in range(0, maxfd):
-        try:
-            os.close(fd)
-        except OSError:    # ERROR, fd wasn't open to begin with (ignored)
-            pass
-    os.open(REDIRECT_TO, os.O_RDWR)
-    os.dup2(0, 1)
-    os.dup2(0, 2)
+def daemonize(auto_close_fds=True, keep_fds=None):    # pragma    nocover
+    '''Standard daemonization of a process
+    '''
+    process_id = os.fork()
+    if process_id < 0:
+        # Fork error. Exit badly.
+        sys.exit(1)
+    elif process_id != 0:
+        # This is the parent process. Exit.
+        sys.exit(0)
+    # This is the child process. Continue.
+
+    # Stop listening for signals that the parent process receives.
+    # This is done by getting a new process id.
+    # setpgrp() is an alternative to setsid().
+    # setsid puts the process in a new parent group and detaches
+    # its controlling terminal.
+    process_id = os.setsid()
+    if process_id == -1:
+        # Uh oh, there was a problem.
+        sys.exit(1)
+    #
+    # Iterate through and close file descriptors
+    if auto_close_fds:
+        keep_fds = set(keep_fds or ())
+        for fd in range(3, get_maxfd()):
+            if fd not in keep_fds:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+
+    devnull_fd = os.open(REDIRECT_TO, os.O_RDWR)
+    os.dup2(devnull_fd, 0)
+    os.dup2(devnull_fd, 1)
+    os.dup2(devnull_fd, 2)
+
+    # Set umask to default to safe file permissions when running as a  daemon.
+    # 027 is an octal number which we are typing as 0o27
+    # for Python3 compatibility
+    os.umask(0o27)
 
 
 class Waker(object):

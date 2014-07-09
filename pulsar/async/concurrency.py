@@ -1,10 +1,13 @@
 import sys
+import os
 from functools import partial
 from multiprocessing import Process, current_process
 
 from pulsar import system, HaltServer, MonitorStarted
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues
+from pulsar.utils.log import logger_fds
+from pulsar.utils import autoreload
 
 from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, set_actor, logger, _StopError, SELECTORS
@@ -192,7 +195,7 @@ class Concurrency(object):
             min(next, MAX_NOTIFY), self.periodic_task, actor)
         return ack
 
-    def stop(self, actor, exc):
+    def stop(self, actor, exc, exit_code=0):
         '''Gracefully stop the ``actor``.
         '''
         if actor.state <= ACTOR_STATES.RUN:
@@ -200,17 +203,18 @@ class Concurrency(object):
             actor.state = ACTOR_STATES.STOPPING
             actor.event('start').clear()
             if exc:
-                actor.exit_code = getattr(exc, 'exit_code', 1)
-                if actor.exit_code == 1:
+                if not exit_code:
+                    exit_code = getattr(exc, 'exit_code', 1)
+                if exit_code == 1:
                     actor.logger.critical('Stopping', exc_info=True)
-                elif actor.exit_code:
+                elif exit_code:
                     actor.stream.writeln(str(exc))
                 else:
                     actor.logger.info('Stopping')
             else:
                 if actor.logger:
                     actor.logger.debug('stopping')
-                actor.exit_code = 0
+            actor.exit_code = exit_code
             stopping = actor.fire_event('stopping')
             actor.close_executor()
             if not stopping.done() and actor._loop.is_running():
@@ -232,7 +236,7 @@ class Concurrency(object):
         else:
             actor.exit_code = 1
             actor.mailbox.abort()
-            self.stop(actor, 0)
+            actor.stop()
 
     def _switch_to_run(self, actor, exc=None):
         if exc is None and actor.state < ACTOR_STATES.RUN:
@@ -332,8 +336,17 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def before_start(self, actor):  # pragma    nocover
         '''Daemonise the system if required.
         '''
-        if actor.cfg.daemon:
-            system.daemonize()
+        cfg = actor.cfg
+        if cfg.reload:
+            if autoreload.start():
+                return
+        if cfg.daemon:
+            system.daemonize(keep_fds=logger_fds())
+            actor.logger.info('Successfully daemonized process')
+            if not cfg.pidfile:
+                pidfile = 'pulsar.pid'
+                actor.logger.info('Setting pid file to %s', pidfile)
+                cfg.set('pidfile', pidfile)
         actor.start_coverage()
         self._install_signals(actor)
 
@@ -362,11 +375,14 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             for m in list(itervalues(actor.monitors)):
                 if m.started() and not m.is_running():
                     actor._remove_actor(m)
+            if actor.cfg.reload and autoreload.check_changes():
+                return actor.stop(exit_code=autoreload.EXIT_CODE)
         actor.next_periodic_task = actor._loop.call_later(
             interval, self.periodic_task, actor)
 
     def _stop_actor(self, actor):
-        '''Stop the pools the message queue and remaining actors.'''
+        '''Stop the pools the message queue and remaining actors
+        '''
         if actor._loop.is_running():
             self._exit_arbiter(actor)
         else:

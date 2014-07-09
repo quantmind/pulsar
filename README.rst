@@ -137,9 +137,8 @@ uses them to add additional functionalities or improve performance:
 
 Running Tests
 ==================
-Pulsar test suite uses the pulsar test application. If you are using python 2.6
-you need to install unittest2_, and if not running on python 3.3, the mock_
-library is also needed. To run tests::
+Pulsar test suite uses the pulsar test application.
+If not running on python 3.3 or above the mock_ is needed. To run tests::
 
     python runtests.py
 
@@ -149,7 +148,7 @@ For options and help type::
 
 pep8_ check (requires pep8 package)::
 
-    python runtests.py --pep8
+    python runtests.py --pep8 pulsar
 
 
 .. _kudo:
@@ -196,7 +195,6 @@ file in the top distribution directory for the full license text.
 .. _celery: http://celeryproject.org/
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
 .. _`actors primitive`: http://en.wikipedia.org/wiki/Actor_model
-.. _unittest2: http://pypi.python.org/pypi/unittest2
 .. _mock: http://pypi.python.org/pypi/mock
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
 .. _psutil: http://code.google.com/p/psutil/

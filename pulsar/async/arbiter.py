@@ -6,6 +6,7 @@ import pulsar
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues
+from pulsar.utils import autoreload
 from pulsar import HaltServer
 
 from .actor import Actor, ACTOR_STATES
@@ -89,7 +90,10 @@ def stop_arbiter(self, exc=None):     # pragma    nocover
         self.state = ACTOR_STATES.TERMINATE
     self.collect_coverage()
     exit_code = self.exit_code or 0
-    self.stream.writeln("Bye (exit code = %s)" % exit_code)
+    if exit_code == autoreload.EXIT_CODE:
+        self.stream.writeln("Code changed, reloading server")
+    else:
+        self.stream.writeln("Bye (exit code = %s)" % exit_code)
     try:
         self.cfg.when_exit(self)
     except Exception:
@@ -105,6 +109,7 @@ def start_arbiter(self, exc=None):
     os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
     pidfile = self.cfg.pidfile
     if pidfile is not None:
+        self.logger.info('Create pid file %s', pidfile)
         try:
             p = Pidfile(pidfile)
             p.create(self.pid)

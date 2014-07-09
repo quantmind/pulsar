@@ -27,6 +27,9 @@ else:
 
 from .structures import AttributeDictionary
 
+def file_handler(**kw):
+    return logging.FileHandler('pulsar.log', **kw)
+
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -65,6 +68,10 @@ LOGGING_CONFIG = {
         'console_level_message': {
             'class': 'pulsar.utils.log.ColoredStream',
             'formatter': 'level_message'
+        },
+        'file': {
+            '()': file_handler,
+            'formatter': 'verbose'
         }
     },
     'filters ': {},
@@ -214,7 +221,8 @@ class Silence(logging.Handler):
         pass
 
 
-def configured_logger(name, config=None, level=None, handlers=None):
+def configured_logger(name, config=None, level=None, handlers=None,
+                      rootlevel=None):
     '''Configured logger.
     '''
     with process_global('lock'):
@@ -235,17 +243,8 @@ def configured_logger(name, config=None, level=None, handlers=None):
             logconfig.pop('loggers', None)
             logconfig.pop('root', None)
 
-        if level is None:
-            level = logging.NOTSET
-        else:
-            try:
-                level = int(level)
-            except ValueError:
-                lv = str(level).upper()
-                try:
-                    level = logging._checkLevel(lv)
-                except ValueError:
-                    level = logging.NOTSET
+        level = get_level(level)
+        rootlevel = get_level(rootlevel or level)
         # No loggers configured. This means no logconfig setting
         # parameter was used. Set up the root logger with default
         # loggers
@@ -261,12 +260,37 @@ def configured_logger(name, config=None, level=None, handlers=None):
         logconfig['loggers'][name] = l
         #
         if not original.get('root'):
-            logconfig['root'] = {'handlers': handlers,
-                                 'level': level}
+            logconfig['root'] = {'handlers': handlers, 'level': rootlevel}
         if logconfig:
             dictConfig(logconfig)
         return logging.getLogger(name)
 
+
+def get_level(level):
+    try:
+        return int(level)
+    except TypeError:
+        return logging.NOTSET
+    except ValueError:
+        lv = str(level).upper()
+        try:
+            return logging._checkLevel(lv)
+        except ValueError:
+            return logging.NOTSET
+
+
+def logger_fds():
+    logger = logging.getLogger()
+    loggers = set(logger.manager.loggerDict.values())
+    loggers.add(logger)
+    fds = set()
+    for logger in loggers:
+        for hnd in getattr(logger, 'handlers', ()):
+            try:
+                fds.add(hnd.stream.fileno())
+            except AttributeError:
+                pass
+    return fds
 
 WHITE = 37
 COLOURS = {'red': 31,

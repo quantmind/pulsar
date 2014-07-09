@@ -349,43 +349,50 @@ class Config(object):
         '''Configured logger.
         '''
         loggers = {}
+        internal_level = 'warning'
         loghandlers = self.loghandlers
-        if not name and self.log_name:
-            name = self.log_name
-        else:
-            name = 'pulsar.%s' % (name or self.name)
-        default_loglevel = None
+        # base name is always pulsar
+        basename = 'pulsar'
+        # the namespace which uses the default log level
+        # (the one without namespace prefix)
+        defname = self.log_name or basename
+        # the namespace name for this config
+        name = name or self.name
+        if name:
+            name = '%s.%s' % (basename, name)
+        #
+        namespaces = {basename: internal_level,
+                      'asyncio': internal_level,
+                      'trollius': internal_level}
+
         for loglevel in self.loglevel or ():
             bits = loglevel.split('.')
-            loglevel = bits[-1]
-            if len(bits) > 1:
-                namespace = '.'.join(bits[:-1])
-            else:
-                namespace = name
+            namespaces['.'.join(bits[:-1]) or defname] = bits[-1]
+
+        if defname not in namespaces:
+            namespaces[defname] = self.settings['loglevel'].default[0]
+
+        if name and name not in namespaces:
+            namespaces[name] = namespaces[basename]
+
+        for namespace in sorted(namespaces):
             if namespace in loggers:
                 continue
+            if self.daemon: # pragma    nocover
+                handlers = []
+                for hnd in loghandlers:
+                    if hnd != 'console':
+                        handlers.append(hnd)
+                if not handlers:
+                    handlers.append('file')
+                loghandlers = handlers
             logger = configured_logger(namespace,
                                        config=self.logconfig,
-                                       level=loglevel,
-                                       handlers=loghandlers)
+                                       level=namespaces[namespace],
+                                       handlers=loghandlers,
+                                       rootlevel=internal_level)
             loggers[namespace] = logger
-            if namespace == 'pulsar' or default_loglevel is None:
-                default_loglevel = logger.level
-
-        default_loglevel = asyncio_loglevel = default_loglevel or 0
-        if asyncio_loglevel:
-            asyncio_loglevel = max(asyncio_loglevel,
-                                   logging._checkLevel('WARNING'))
-        for namespace, loglevel in (('pulsar', default_loglevel),
-                                    (name, default_loglevel),
-                                    ('asyncio', asyncio_loglevel),
-                                    ('trollius', asyncio_loglevel)):
-            if namespace not in loggers:
-                loggers[namespace] = configured_logger(namespace,
-                                                       config=self.logconfig,
-                                                       level=loglevel,
-                                                       handlers=loghandlers)
-        return loggers[name]
+        return loggers.get(name)
 
     def __copy__(self):
         return self.copy()
@@ -795,6 +802,19 @@ class Daemon(Global):
 
         Detaches the server from the controlling terminal and enters the
         background.
+        """
+
+
+class Reload(Global):
+    name = "reload"
+    flags = ["--reload"]
+    validator = validate_bool
+    action = "store_true"
+    default = False
+    desc = """\
+        Auto reload modules when changes occurs.
+
+        Useful during development.
         """
 
 
