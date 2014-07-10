@@ -258,8 +258,11 @@ class WsgiResponse(object):
         return len(self.content)
 
     def close(self):
+        '''Close this response, required by WSGI
+        '''
         if self.is_streamed:
-            self.content.close()
+            if hasattr(self.content, 'close'):
+                self.content.close()
 
     def set_cookie(self, key, **kwargs):
         """

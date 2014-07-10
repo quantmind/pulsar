@@ -6,6 +6,7 @@ from pulsar.utils.internet import nice_address, format_address
 
 from .futures import multi_async, in_loop, task, coroutine_return, Future
 from .events import EventHandler
+from .mixins import ProtocolWrapper, FlowControl, Timeout
 from .access import (asyncio, get_event_loop, new_event_loop,
                      ConnectionResetError)
 
@@ -17,26 +18,6 @@ __all__ = ['ProtocolConsumer',
            'Producer',
            'TcpServer',
            'DatagramServer']
-
-
-BIG = 2**31
-
-
-def with_timeout(method):
-    '''Decorator for methods requiring the removal and addition of
-    timeouts
-    '''
-    @wraps(method)
-    def _(self, *args, **kwargs):
-        self._cancel_timeout()
-        result = method(self, *args, **kwargs)
-        if isinstance(result, Future):
-            result.add_done_callback(lambda f: self._add_idle_timeout())
-        else:
-            self._add_idle_timeout()
-        return result
-
-    return _
 
 
 class ProtocolConsumer(EventHandler):
@@ -231,18 +212,13 @@ class PulsarProtocol(EventHandler):
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
 
     _transport = None
-    _idle_timeout = None
     _address = None
     _type = 'server'
 
-    def __init__(self, session=1, producer=None, timeout=0):
+    def __init__(self, session=1, producer=None, **kw):
         super(PulsarProtocol, self).__init__()
         self._session = session
-        self._timeout = timeout
         self._producer = producer
-        self._paused = False
-        self._drain_waiter = None
-        self.bind_event('connection_lost', self._cancel_timeout)
 
     def __repr__(self):
         address = self._address
@@ -285,13 +261,6 @@ class PulsarProtocol(EventHandler):
         return self._address
 
     @property
-    def timeout(self):
-        '''Number of seconds to keep alive this connection when idle.
-
-        A value of ``0`` means no timeout.'''
-        return self._timeout
-
-    @property
     def _loop(self):
         '''The :attr:`transport` event loop.
         '''
@@ -309,19 +278,6 @@ class PulsarProtocol(EventHandler):
         '''``True`` if the :attr:`transport` is closed.'''
         return self._transport._closing if self._transport else True
 
-    def pause_writing(self):
-        assert not self._paused
-        self._paused = True
-
-    def resume_writing(self):
-        assert self._paused
-        self._paused = False
-        waiter = self._drain_waiter
-        if waiter is not None:
-            self._drain_waiter = None
-            if not waiter.done():
-                waiter.set_result(None)
-
     def close(self):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
@@ -336,8 +292,6 @@ class PulsarProtocol(EventHandler):
         '''Sets the :attr:`transport`, fire the ``connection_made`` event
         and adds a :attr:`timeout` for idle connections.
         '''
-        if self._transport is not None:
-            self._cancel_timeout()
         self._transport = transport
         addr = self._transport.get_extra_info('peername')
         if not addr:
@@ -346,7 +300,6 @@ class PulsarProtocol(EventHandler):
         self._address = addr
         # let everyone know we have a connection with endpoint
         self.fire_event('connection_made')
-        self._add_idle_timeout()
 
     def connection_lost(self, exc=None):
         '''Fires the ``connection_lost`` event.
@@ -356,35 +309,11 @@ class PulsarProtocol(EventHandler):
     def eof_received(self):
         '''The socket was closed from the remote end'''
 
-    def set_timeout(self, timeout):
-        '''Set a new :attr:`timeout` for this connection.'''
-        self._cancel_timeout()
-        self._timeout = timeout
-        self._add_idle_timeout()
-
     def info(self):
-        connection = {'session': self._session,
-                      'timeout': self._timeout}
-        info = {'connection': connection}
+        info = {'connection': {'session': self._session}}
         if self._producer:
             info.update(self._producer.info())
         return info
-
-    ########################################################################
-    #    INTERNALS
-    def _timed_out(self):
-        self.close()
-        self.logger.debug('Closed idle %s.', self)
-
-    def _add_idle_timeout(self):
-        if not self.closed and not self._idle_timeout and self._timeout:
-            self._idle_timeout = self._loop.call_later(self._timeout,
-                                                       self._timed_out)
-
-    def _cancel_timeout(self, *args, **kw):
-        if self._idle_timeout:
-            self._idle_timeout.cancel()
-            self._idle_timeout = None
 
     def _make_drain_waiter(self):
         if not self._paused:
@@ -400,13 +329,23 @@ class PulsarProtocol(EventHandler):
 class Protocol(PulsarProtocol, asyncio.Protocol):
     '''An :class:`asyncio.Protocol` with :ref:`events <event-handling>`
     '''
+    def write(self, data):
+        '''Write data into the transport
+        '''
+        t = self._transport
+        if t:
+            if t._conn_lost:  # Uses private variable.
+                raise ConnectionResetError('Connection lost')
+            t.write(data)
+        else:
+            raise ConnectionResetError('No Transport')
 
 
 class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
     '''An ``asyncio.DatagramProtocol`` with events`'''
 
 
-class Connection(Protocol):
+class Connection(ProtocolWrapper):
     '''A :class:`Protocol` to handle multiple TCP requests/responses.
 
     It is a class which acts as bridge between a
@@ -422,13 +361,13 @@ class Connection(Protocol):
 
         number of separate requests processed.
     '''
-    _current_consumer = None
-
-    def __init__(self, consumer_factory=None, **kw):
-        super(Connection, self).__init__(**kw)
+    def __init__(self, consumer_factory=None, timeout=None, **kw):
+        protocol = Protocol(**kw)
+        self.protocol = FlowControl(Timeout(protocol, timeout))
         self._processed = 0
+        self._current_consumer = None
         self._consumer_factory = consumer_factory
-        self.bind_event('connection_lost', self._connection_lost)
+        self.protocol.bind_event('connection_lost', self._connection_lost)
 
     def current_consumer(self):
         '''The :class:`ProtocolConsumer` currently handling incoming data.
@@ -448,7 +387,6 @@ class Connection(Protocol):
         consumer._loop = self._loop
         consumer.connection_made(self)
 
-    @with_timeout
     def data_received(self, data):
         '''Delegates handling of data to the :meth:`current_consumer`.
 
@@ -458,19 +396,6 @@ class Connection(Protocol):
         while data:
             consumer = self.current_consumer()
             data = consumer._data_received(data)
-
-    @with_timeout
-    def write(self, data):
-        '''Write data into the transport
-        '''
-        t = self._transport
-        if t:
-            if t._conn_lost:  # Uses private variable.
-                raise ConnectionResetError('Connection lost')
-            t.write(data)
-            return self._make_drain_waiter()
-        else:
-            raise ConnectionResetError('No Transport')
 
     def upgrade(self, consumer_factory):
         '''Upgrade the :func:`_consumer_factory` callable.
@@ -495,9 +420,8 @@ class Connection(Protocol):
             self._build_consumer(None)
 
     def info(self):
-        info = super(Connection, self).info()
-        connection = info['connection']
-        connection.update({'request_processed': self._processed})
+        info = self.protocol.info()
+        info['connection']['request_processed'] = self._processed
         return info
 
     def _build_consumer(self, _, exc=None):
@@ -505,7 +429,7 @@ class Connection(Protocol):
             consumer = self._producer.build_consumer(self._consumer_factory)
             self.set_consumer(consumer)
 
-    def _connection_lost(self, conn, exc=None):
+    def _connection_lost(self, _, exc=None):
         '''It performs these actions in the following order:
 
         * Fires the ``connection_lost`` :ref:`one time event <one-time-event>`
@@ -514,8 +438,8 @@ class Connection(Protocol):
         * Invokes the :meth:`ProtocolConsumer.connection_lost` method in the
           :meth:`current_consumer`.
           '''
-        if conn._current_consumer:
-            conn._current_consumer.connection_lost(exc)
+        if self._current_consumer:
+            self._current_consumer.connection_lost(exc)
 
 
 class Producer(EventHandler):
@@ -594,7 +518,7 @@ class TcpServer(Producer):
         self._name = name or self.__class__.__name__
         self._params = {'address': address, 'sockets': sockets}
         self._max_connections = max_connections
-        self._keep_alive = keep_alive
+        self._keep_alive = max(keep_alive or 0, 0)
         self._concurrent_connections = set()
 
     def __repr__(self):
@@ -701,8 +625,7 @@ class TcpServer(Producer):
         '''Override :meth:`Producer.create_protocol`.
         '''
         self._sessions = session = self._sessions + 1
-        protocol = self.protocol_factory(session=session,
-                                         producer=self,
+        protocol = self.protocol_factory(session=session, producer=self,
                                          timeout=self._keep_alive)
         protocol.bind_event('connection_made', self._connection_made)
         protocol.bind_event('connection_lost', self._connection_lost)
@@ -831,4 +754,5 @@ class DatagramServer(EventHandler):
     def create_protocol(self):
         '''Override :meth:`Producer.create_protocol`.
         '''
-        return self.protocol_factory(producer=self)
+        self._sessions = self._sessions + 1
+        return self.protocol_factory(session=self._sessions, producer=self)

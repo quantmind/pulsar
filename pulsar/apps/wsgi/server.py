@@ -36,9 +36,7 @@ __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 
 
 MAX_CHUNK_SIZE = 65536
-
-MAX_BYTES_PER_CYCLE = 2*18     # 256 KB max per cycle
-MAX_LOOPS_PER_CYCLE = 20
+MAX_TIME_IN_LOOP = 0.5
 
 
 class FakeConnection(object):
@@ -433,10 +431,7 @@ class HttpServerResponse(ProtocolConsumer):
         elif force and self.chunked:
             chunks.append(chunk_encoding(data))
         if chunks:
-            data = b''.join(chunks)
-            return write(data) or len(data)
-        else:
-            return 0
+            return write(b''.join(chunks))
 
     ########################################################################
     #    INTERNALS
@@ -463,27 +458,26 @@ class HttpServerResponse(ProtocolConsumer):
                                         response.get_headers(), exc_info)
                 #
                 # Do the actual writing
-                total = 0
-                loops = 0
+                loop = self._loop
+                start = loop.time()
                 for chunk in response:
                     if isinstance(chunk, Future):
-                        total, loops = 0, 0
                         chunk = yield chunk
-                    num_bytes = self.write(chunk)
-                    if isinstance(num_bytes, Future):
-                        total, loops = 0, 0
-                        yield num_bytes
+                        start = loop.time()
+                    result = self.write(chunk)
+                    if isinstance(result, Future):
+                        yield result
+                        start = loop.time()
                     else:
-                        total += num_bytes
-                        loops += 1
-                    if (total >= MAX_BYTES_PER_CYCLE or
-                            loops >= MAX_LOOPS_PER_CYCLE):
-                        self.logger.debug('release the loop after %d '
-                                          'iterations', loops)
-                        total, loops = 0, 0
-                        yield None
+                        time_in_loop = loop.time() - start
+                        if time_in_loop > MAX_TIME_IN_LOOP:
+                            self.logger.debug(
+                                'Released the event loop after %.3f seconds',
+                                time_in_loop)
+                            yield None
+                            start = loop.time()
                 #
-                # make sure we write headers
+                # make sure we write headers and last chunk if needed
                 self.write(b'', True)
 
             except IOError:     # client disconnected, end this connection

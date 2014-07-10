@@ -18,6 +18,10 @@ try:
 except ImportError:
     pypy = False
 
+
+identity = lambda x: x
+
+
 if ispy3k:  # Python 3
     import pickle
     string_type = str
@@ -29,6 +33,7 @@ if ispy3k:  # Python 3
     iteritems = lambda d: d.items()
     itervalues = lambda d: d.values()
     is_string = lambda s: isinstance(s, str)
+    as_iterator = identity
 
     def to_bytes(s, encoding=None, errors=None):
         '''Convert *s* into bytes'''
@@ -102,3 +107,8 @@ else:   # pragma : no cover
             return str(s)
         else:
             return s
+
+    def as_iterator(cls):
+        cls.next = cls.__next__
+        del cls.__next__
+        return cls

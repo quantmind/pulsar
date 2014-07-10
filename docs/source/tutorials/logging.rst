@@ -12,3 +12,7 @@ The :ref:`log-level <setting-log_level>` sets levels of loggers, for example::
 	python script.py --log-level debug
 	
 Set the log level for the ``pulsar.*`` loggers to ``DEBUG``.
+
+You can pass several namespaces to the command, for example::
+
+	python script.py --log-level warning pulsar.wsgi.debug

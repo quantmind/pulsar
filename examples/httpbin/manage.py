@@ -12,6 +12,8 @@ Implementation
 import os
 import sys
 import string
+import mimetypes
+from itertools import repeat
 from random import choice, random
 
 try:
@@ -21,7 +23,7 @@ except ImportError:     # pragma    nocover
     from pulsar.utils.pep import ispy3k, range
 
 from pulsar import (HttpRedirect, HttpException, version, JAPANESE,
-                    coroutine_return)
+                    CHINESE, coroutine_return)
 from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
@@ -39,10 +41,23 @@ else:   # pragma nocover
     characters = string.letters + string.digits
 
 
-def template():
-    name = os.path.join(ASSET_DIR, 'template.html')
-    with open(name, 'r') as file:
-        return file.read()
+def asset(name, mode='r', chunk_size=None):
+    name = os.path.join(ASSET_DIR, name)
+    if os.path.isfile(name):
+        content_type, encoding = mimetypes.guess_type(name)
+        if chunk_size:
+            def _chunks():
+                with open(name, mode) as file:
+                    while True:
+                        data = file.read(chunk_size)
+                        if not data:
+                            break
+                        yield data
+            data = _chunks()
+        else:
+            with open(name, 'r') as file:
+                data = file.read()
+        return data, content_type, encoding
 
 
 class HttpBin(wsgi.Router):
@@ -65,7 +80,8 @@ class HttpBin(wsgi.Router):
         html.head.scripts.append('//code.jquery.com/jquery.min.js')
         html.head.scripts.append('/media/httpbin.js')
         ul = ul.render(request)
-        body = template() % (title, version, ul, pyversion, JAPANESE)
+        templ, _, _ = asset('template.html')
+        body = templ % (title, JAPANESE, CHINESE, version, ul, pyversion)
         html.body.append(body)
         return html.http_response(request)
 
@@ -181,12 +197,8 @@ class HttpBin(wsgi.Router):
     def request_stream(self, request):
         m = request.urlargs['m']
         n = request.urlargs['n']
-        if m*n > 2**25:
-            # limit at 32 megabytes of total data
-            raise HttpException(status=403)
-        stream = ('Chunk %s\n%s\n\n' % (i+1, ''.join((
-            choice(characters) for _ in range(m)))) for i in range(n))
-        request.response.content = stream
+        request.response.content_type = 'text/plain'
+        request.response.content = repeat(b'a' * m, n)
         return request.response
 
     @route('websocket', title='A web socket graph')
@@ -218,6 +230,19 @@ class HttpBin(wsgi.Router):
         stream = request.get('wsgi.input')
         stream.fail()
         return self.info_data_response(request)
+
+    @route('clip/<int(min=256,max=16777216):chunk_size>',
+           defaults={'chunk_size': 4096},
+           title='Show a video clip')
+    def clip(self, request):
+        c = request.urlargs['chunk_size']
+        data, ct, encoding = asset('clip.mp4', 'rb', chunk_size=c)
+        response = request.response
+        response.content_type = ct
+        response.encoding = encoding
+        response.content = data
+        return response
+
 
     ########################################################################
     #    BENCHMARK ROUTES
