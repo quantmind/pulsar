@@ -119,16 +119,13 @@ class RedisStore(Store):
                 pipe.execute(*command.args)
             elif action in update_insert:
                 model = command.args
+                model['_rev'] = model.get('_rev', 0) + 1
                 models.append(model)
                 key = self.basekey(model._meta, model.id)
                 pipe.hmset(key, self.model_data(model, action))
             else:
                 raise NotImplementedError
         response = yield pipe.commit()
-        for command in transaction.commands:
-            if command.action == Command.INSERT:
-                model = command.args
-                model['_rev'] = 1
         coroutine_return(models)
 
     def get_model(self, manager, pk):

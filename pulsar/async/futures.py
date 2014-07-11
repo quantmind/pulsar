@@ -8,8 +8,8 @@ from functools import wraps, partial
 from pulsar.utils.pep import iteritems, default_timer, range
 
 from .consts import MAX_ASYNC_WHILE
-from .access import (asyncio, get_request_loop, get_event_loop, logger, LOGGER,
-                     _PENDING, _CANCELLED, _FINISHED)
+from .access import (asyncio, get_request_loop, get_event_loop,
+                     LOGGER, _PENDING, _CANCELLED, _FINISHED)
 
 
 CancelledError = asyncio.CancelledError

@@ -173,8 +173,20 @@ def load_pkg(name, dir=None):
     return json.loads(data)
 
 
-media_libraries = load_pkg('libs.json')
-javascript_dependencies = load_pkg('deps.json')
+_media_libraries = None
+
+def media_libraries():
+    global _media_libraries
+    if _media_libraries is None:
+        from pulsar import new_event_loop
+        from pulsar.apps.http import HttpClient
+        http = HttpClient(loop=new_event_loop())
+        try:
+            response = http.get('http://quantmind.github.io/jslibs/libs.json')
+            _media_libraries = response.json()
+        except Exception:   # pragma    nocover
+            _media_libraries = {'libs': {}, 'deps': {}}
+    return _media_libraries
 
 
 if ispy3k:
@@ -789,12 +801,17 @@ class Media(AsyncString):
     '''
     mediatype = None
 
-    def __init__(self, media_path, minified=False, known_libraries=None):
+    def __init__(self, media_path, minified=False, known_libraries=None,
+                 dependencies=None):
         super(Media, self).__init__()
         self.media_path = media_path
         self.minified = minified
-        self.known_libraries = (media_libraries if known_libraries is None
-                                else known_libraries)
+        if known_libraries is None:
+            known_libraries = media_libraries()['libs']
+        if dependencies is None:
+            dependencies = media_libraries()['deps']
+        self.known_libraries = known_libraries
+        self.dependencies = dependencies
 
     def is_relative(self, path):
         '''Check if ``path`` is a local relative path.
@@ -897,8 +914,6 @@ class Scripts(Media):
     mediatype = 'js'
 
     def __init__(self, *args, **kwargs):
-        deps = kwargs.pop('dependencies', None)
-        self.dependencies = javascript_dependencies if deps is None else deps
         self.require_callback = kwargs.pop('require_callback', None)
         self.wait = kwargs.pop('wait', 200)
         self.required = []
@@ -1044,13 +1059,11 @@ class Head(Html):
                  known_libraries=None, scripts_dependencies=None,
                  require_callback=None, **params):
         super(Head, self).__init__('head', **params)
-        if known_libraries is None:
-            known_libraries = media_libraries
-            scripts_dependencies = javascript_dependencies
         self.title = title
         self.append(Html(None, meta))
         self.append(Links(media_path, minified=minified,
-                          known_libraries=known_libraries))
+                          known_libraries=known_libraries,
+                          dependencies=scripts_dependencies))
         self.append(Embedded('style', type='text/css'))
         self.append(Embedded('script', type='text/javascript'))
         self.append(Scripts(media_path, minified=minified,

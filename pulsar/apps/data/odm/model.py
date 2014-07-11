@@ -6,7 +6,7 @@ from collections import Mapping
 
 from pulsar import ImproperlyConfigured
 from pulsar.utils.structures import OrderedDict
-from pulsar.utils.pep import ispy3k, iteritems
+from pulsar.utils.pep import ispy3k, iteritems, to_string
 
 try:
     from pulsar.utils.libs import Model as CModelBase
@@ -18,11 +18,17 @@ from .fields import (Field, AutoIdField, ForeignKey, CompositeIdField,
                      FieldError, NONE_EMPTY)
 from .query import OdmError
 
-from ..store import Command
+from ..store import Command, REV_KEY
 
 
 primary_keys = ('id', 'ID', 'pk', 'PK')
 
+
+def rev_key(value):
+    try:
+        return int(value)
+    except ValueError:
+        return to_string(value)
 
 def is_private_field(field):
     return field.startswith('_') or field == 'Type'
@@ -147,7 +153,7 @@ class ModelMeta(object):
         self.indexes = []
         self.manytomany = []
         self.dfields = {}
-        self.converters = {}
+        self.converters = {REV_KEY: rev_key}
         self.related = {}
         self.model._meta = self
         self.app_label = make_app_label(model, app_label)
@@ -221,19 +227,21 @@ class ModelMeta(object):
                                      (name, self))
                 if value is not None:
                     yield name, value
-            for name in (set(instance) - set(fields)):
-                if not is_private_field(name):
-                    value = instance[name]
-                    if value is not None:
-                        yield name, value
+            rest = set(instance) - set(fields)
         else:
-            for name in instance:
-                if not is_private_field(name):
-                    value = instance[name]
-                    if name in fields:
-                        value = fields[name].to_store(value, store)
-                    if value is not None:
-                        yield name, value
+            rest = instance
+        #
+        for name in rest:
+            if name in fields:
+                value = fields[name].to_store(instance[name], store)
+            elif name in self.converters:
+                value = self.converters[name](instance[name])
+            elif not is_private_field(name):
+                value = instance[name]
+            else:
+                continue
+            if value is not None:
+                yield name, value
 
 
 class ModelType(type(dict)):
@@ -287,6 +295,7 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
         self._access_cache = set()
         self._modified = None
         self.update(*args, **kwargs)
+        # reset the modified field set
         self._modified = set()
 
     def __getitem__(self, field):

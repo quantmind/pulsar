@@ -3,12 +3,19 @@ Ver. 0.8.5 - Development
 * Added new :meth:`.Connection.write` method so that when the keep-alive
   connection timeout is set, the write method reset it accordingly. Previously
   only when reading the timeout was reset and therefore causing long
-  streaming responses to fail.
+  streaming responses to fail
 * Better handling of streaming responses by the wsgi server
 * Added the :ref:`--reload <setting-reload>` command line option and
   configuration parameter. If used, pulsar auto-reload code changes (useful
   during development)
 * Added ``file`` log handler
+* Javascript and Css defaults libraries moved to a new project
+  (https://github.com/quantmind/jslibs) and the json file
+  (http://quantmind.github.io/jslibs/libs.json) lazily loaded if needed by
+  either :class:`.Links` or :class:`.Scripts` classes
+* The :class:`.HttpClient` can be used in conjunction with
+  :ref:`greenlet support <green-http>` to write implicit asynchronous HTTP
+  requests
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

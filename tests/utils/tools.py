@@ -4,6 +4,7 @@ import unittest
 
 from pulsar import system, get_actor, spawn, send
 from pulsar.utils.tools import checkarity, Pidfile, nice_number
+from pulsar.utils.importer import py_file, import_modules
 from pulsar.apps.test import ActorTestMixin
 
 
@@ -156,3 +157,19 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(nice_number(51345618),
                          'fifty one million, three hundred forty five '
                          'thousand, six hundred and eighteen')
+
+    def test_py_file(self):
+        self.assertEqual(py_file('bla.py'), 'bla')
+        self.assertEqual(py_file('bla.pyc'), 'bla')
+        self.assertEqual(py_file('bla.pyd'), 'bla')
+        self.assertEqual(py_file('bla.pyo'), 'bla')
+        self.assertEqual(py_file('bla.exe'), None)
+        self.assertEqual(py_file('bla.foo.py'), None)
+        self.assertEqual(py_file('bla'), 'bla')
+        self.assertEqual(py_file('.bla'), None)
+        self.assertEqual(py_file('.'), None)
+
+    def test_import_modules(self):
+        self.assertEqual(import_modules(['gggggggggggg']), [])
+        mods = import_modules(['pulsar.async.*'])
+        self.assertTrue(mods)

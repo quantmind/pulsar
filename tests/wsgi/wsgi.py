@@ -5,7 +5,7 @@ import unittest
 from datetime import datetime, timedelta
 
 import pulsar
-from pulsar.utils.pep import range, zip, pickle
+from pulsar.utils.pep import pickle
 from pulsar.apps import wsgi
 from pulsar.apps import http
 from pulsar.apps.test import mock

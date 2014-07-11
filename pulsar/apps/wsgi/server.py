@@ -312,21 +312,22 @@ class HttpServerResponse(ProtocolConsumer):
             self._stream = StreamReader(headers, parser, self.transport)
             self._response(self.wsgi_environ())
         #
-        done = parser.is_message_complete()
-        if done and not self._stream.on_message_complete.done():
-            self._stream.on_message_complete.set_result(None)
-        #
-        if processed < len(data):
-            if not done:
-                # This is a parsing error, the client must have sent
-                # bogus data
-                raise ProtocolError
-            else:
+        if parser.is_message_complete():
+            #
+            if not self._stream.on_message_complete.done():
+                self._stream.on_message_complete.set_result(None)
+
+            if processed < len(data):
                 if not self._buffer:
                     self._buffer = data[processed:]
                     self.bind_event('post_request', self._new_request)
                 else:
                     self._buffer += data[processed:]
+        #
+        elif processed < len(data):
+            # This is a parsing error, the client must have sent
+            # bogus data
+            raise ProtocolError
 
     @property
     def status(self):
@@ -554,9 +555,6 @@ class HttpServerResponse(ProtocolConsumer):
                              ('Date', format_date_time(time.time()))])
         return environ
 
-    def _new_request(self, response):
-        connection = response._connection
-        if not connection.closed:
-            connection.data_received(response._buffer)
-            return connection._current_consumer
-        return response
+    def _new_request(self, _, exc=None):
+        connection = self._connection
+        connection.data_received(self._buffer)

@@ -206,8 +206,11 @@ class Task(odm.Model):
     '''flag indicating the :ref:`task status <task-state>`
     '''
     kwargs = odm.PickleField()
+    '''Key-valued parameters used by this task
+    '''
     result = odm.PickleField()
-
+    '''Result as a json object
+    '''
     def done(self):
         '''Return ``True`` if the :class:`Task` has finshed.
 
@@ -643,7 +646,7 @@ class TaskBackend(EventHandler):
                 self.concurrent_tasks.discard(task_id)
                 coroutine_return(task_id)
         except TaskTimeout:
-            logger.info('%s timed-out', task_info)
+            logger.warning('%s timed-out', task_info)
             result = None
             status = states.REVOKED
         except Exception as exc:

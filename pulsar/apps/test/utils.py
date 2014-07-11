@@ -52,7 +52,7 @@ except ImportError:
 import pulsar
 from pulsar import (get_actor, send, multi_async, async, future_timeout,
                     TcpServer, coroutine_return, new_event_loop,
-                    Future, format_traceback)
+                    Future, format_traceback, ImproperlyConfigured)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.data import create_store
@@ -362,7 +362,10 @@ def check_server(name):
     if addr:
         if ('%s://' % name) not in addr:
             addr = '%s://%s' % (name, addr)
-        sync_store = create_store(addr, loop=new_event_loop())
+        try:
+            sync_store = create_store(addr, loop=new_event_loop())
+        except ImproperlyConfigured:
+            return False
         try:
             sync_store.ping()
             return True

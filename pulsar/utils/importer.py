@@ -54,12 +54,14 @@ def module_attribute(dotpath, default=None, safe=False):
         return default
 
 
+py_extensions = set(('py', 'pyc', 'pyd', 'pyo'))
+
+
 def py_file(name):
-    if name.endswith('.py'):
-        return name[:-3]
-    elif name.endswith('.pyc'):
-        return name[:-4]
-    else:
+    bits = name.split('.')
+    if len(bits) == 2 and bits[1] in py_extensions:
+        return bits[0]
+    elif len(bits) == 1:
         return name
 
 
@@ -67,7 +69,9 @@ def import_system_file(mod, add_to_path=True):
     if os.path.isfile(mod):
         # it is a file in the system path
         dir, name = os.path.split(mod)
-        names = [py_file(name)]
+        name = py_file(name)
+        assert name
+        names = [name]
         while dir and dir not in sys.path:
             ndir, name = os.path.split(dir)
             if dir == ndir:

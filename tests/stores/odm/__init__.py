@@ -1,8 +1,9 @@
 from pulsar import Future
+from pulsar.utils.system import json
 from pulsar.apps.data import odm
 from pulsar.apps.tasks import Task
 
-from ..testmodels import StoreTest, User, Session
+from ..data.testmodels import StoreTest, User, Session
 
 
 class Odm(StoreTest):
@@ -19,11 +20,22 @@ class Odm(StoreTest):
     def test_create_instance(self):
         models = self.mapper(Task)
         yield models.create_tables()
-        task = yield models.task.create(id='bjbhjscbhj', name='foo')
+        task = yield models.task.create(id='bjbhjscbhj', name='foo',
+                                        kwargs={'bal': 'foo'})
         self.assertEqual(task.id, 'bjbhjscbhj')
+        self.assertEqual(task.kwargs, {'bal': 'foo'})
         data = task.to_json()
-        self.assertEqual(len(data), 2)
+        self.assertEqual(len(data), 3)
         self.assertFalse(task._modified)
+        # make sure it is serializable
+        json.dumps(data)
+        task = yield models.task.get(task.id)
+        self.assertEqual(task.id, 'bjbhjscbhj')
+        self.assertEqual(task.kwargs, {'bal': 'foo'})
+        data = json.dumps(task.to_json())
+        #
+        task = yield models.task.get(task.id)
+        data = json.dumps(task.to_json())
         yield models.drop_tables()
 
 
@@ -52,6 +64,10 @@ class d:
         data = task.to_json()
         self.assertEqual(len(data), 2)
         self.assertFalse(task._modified)
+        # make sure it is serializable
+        json.dumps(data)
+        task = yield models.task(task.id)
+
         yield models.drop_tables()
 
     def test_foreign_key(self):

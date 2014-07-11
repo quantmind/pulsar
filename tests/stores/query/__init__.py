@@ -4,7 +4,7 @@ from random import choice
 from pulsar.apps.data import odm
 from pulsar.apps.test import populate
 
-from ..testmodels import StoreTest, User
+from ..data.testmodels import StoreTest, User
 
 
 def populate_from_file(size, path):

@@ -345,7 +345,7 @@ class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
     '''An ``asyncio.DatagramProtocol`` with events`'''
 
 
-class Connection(ProtocolWrapper):
+class Connection(FlowControl):
     '''A :class:`Protocol` to handle multiple TCP requests/responses.
 
     It is a class which acts as bridge between a
@@ -362,8 +362,8 @@ class Connection(ProtocolWrapper):
         number of separate requests processed.
     '''
     def __init__(self, consumer_factory=None, timeout=None, **kw):
-        protocol = Protocol(**kw)
-        self.protocol = FlowControl(Timeout(protocol, timeout))
+        protocol = Timeout(Protocol(**kw), timeout)
+        super(Connection, self).__init__(protocol)
         self._processed = 0
         self._current_consumer = None
         self._consumer_factory = consumer_factory

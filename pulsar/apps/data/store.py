@@ -29,6 +29,9 @@ __all__ = ['Command',
 data_stores = {}
 
 
+REV_KEY = '_rev'
+
+
 class Command(object):
     '''A command executed during a in a :meth:`~.Store.execute_transaction`
 
@@ -61,10 +64,7 @@ class StoreTransaction(object):
         self.commands = []
 
     def add(self, model):
-        if '_rev' in model:
-            action = Command.UPDATE
-        else:
-            action = Command.INSERT
+        action = Command.UPDATE if REV_KEY in model else Command.INSERT
         self.commands.append(Command(model, action))
         return model
 

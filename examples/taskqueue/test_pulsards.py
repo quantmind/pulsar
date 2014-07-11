@@ -69,6 +69,14 @@ class TaskQueueBase(object):
 
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
+    def test_queue_task_expiry(self):
+        r = yield self.proxy.queue_task(jobname='addition', a=40, b=50,
+                                        expiry=0)
+        self.assertTrue(r)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.REVOKED)
+
+class d:
     def test_run_new_simple_task(self):
         r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
         r = yield self.proxy.wait_for_task(r)

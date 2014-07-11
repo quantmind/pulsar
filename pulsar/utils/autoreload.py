@@ -19,7 +19,7 @@ try:
 except ImportError:
     pass
 
-EXIT_CODE = 3
+EXIT_CODE = 5
 
 _mtimes = {}
 _win = (sys.platform == "win32")

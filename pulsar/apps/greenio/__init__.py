@@ -33,12 +33,67 @@ engine and would like to
 
 In both cases, the :class:`~pulsar.apps.greenio` application is what you need.
 
+.. _green-wsgi:
+
+Green WSGI
+---------------
+
+Assume you are using pulsar web server and would like to write your application
+in an implicit asynchronous mode, i.e. without dealing with futures nor
+coroutines, then you can wrap your wsgi ``app`` with the :class:`.RunInPool`
+utility::
+
+    from pulsar.apps import wsgi, greenio
+
+    callable = wsgi.WsgiHandler([wsgi.wait_for_body_middleware,
+                                 greenio.RunInPool(app, 20)])
+
+    wsgi.WsgiServer(callable=callable).start()
+
+The :class:`.RunInPool` manages a pool of greenlets which execute your
+application. In this way, within your ``app`` you can invoke the
+:func:`.wait` function when needing to wait for asynchronous results to be
+ready.
+
+.. _green-http:
+
+Green Http
+-----------------
+
+The :class:`.HttpClient` can be used with greenlets::
+
+    >>> from pulsar.apps.http import HttpClient
+    >>> http = HttpClient(green=True)
+    >>> http.green
+    True
+
+And now you can write synchronous looking code and run it in a separate
+greenlet via the :func:`.run_in_greenlet` decorator::
+
+    @greenio.run_in_greenlet
+    def example():
+        response = http.get('http://bbc.co.uk')
+        ...
+        return 'done'
+
+
+and somewhere, in your asynchronous code::
+
+        result = yield example()
+        result == 'done'
+
+
+the :func:`.run_in_greenlet` decorator, execute the function on a child
+greenlet without blocking the asynchronous engine. Once the ``example``
+function returns, the asynchronous code continue from the ``yield``
+statement as usual.
+
 
 API
 ======
 
 Wait
-------
+----------
 
 .. autofunction:: wait
 
@@ -108,7 +163,7 @@ class PulsarGreenlet(greenlet.greenlet):
 def run_in_greenlet(callable):
     '''Decorator to run a ``callable`` on a new greenlet.
 
-    A callable decorated with this decorator returns a coroutine.
+    A ``callable`` decorated with this decorator returns a coroutine
     '''
     @wraps(callable)
     def _(*args, **kwargs):
@@ -172,9 +227,9 @@ def wait_fd(fd, read=True):
 
 
 def wait(coro_or_future, loop=None):
-    '''Wait for a coroutine or a future to complete.
+    '''Wait for a coroutine or a :class:'~asyncio.Future` to complete.
 
-    This method must be called from a greenlet other than the main one
+    **This function must be called from a greenlet other than the main one**.
     '''
     current = greenlet.getcurrent()
     parent = current.parent

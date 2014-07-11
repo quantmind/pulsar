@@ -268,8 +268,6 @@ class CouchDBStore(CouchDBMixin, Store):
             for key, value in meta.store_data(model, self, action):
                 yield _id if key == pkname else key, value
             yield 'Type', meta.table_name
-        if '_rev' in model:
-            yield '_rev', model['_rev']
 
 
 register_store("couchdb", "pulsar.apps.data.stores.CouchDBStore")

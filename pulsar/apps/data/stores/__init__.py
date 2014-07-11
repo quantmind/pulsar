@@ -4,11 +4,6 @@ from .pulsards import *
 from .couchdb import *
 
 try:
-    from .mongodb import *
-except ImportError:
-    pass
-
-try:
     from .sql import *
 except ImportError:
     pass

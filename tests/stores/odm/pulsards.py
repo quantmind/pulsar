@@ -1,7 +1,6 @@
 import unittest
 
 from . import Odm
-from ..testmodels import User
 from ..pulsards import StoreMixin
 
 

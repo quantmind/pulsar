@@ -1,8 +1,8 @@
-import pickle
 from functools import partial
-from base64 import b64encode
 from datetime import date, datetime
 
+from pulsar.utils.pep import pickle
+from pulsar.utils.system import json
 from pulsar.utils.html import UnicodeMixin
 from pulsar.utils.numbers import date2timestamp
 
@@ -379,19 +379,17 @@ class PickleField(Field):
         if value is not None:
             try:
                 value = pickle.dumps(value, protocol=2)
-                if store:
-                    value = store.encode_bytes(value)
-                return value
             except Exception:
                 return None
+            if store:
+                value = store.encode_bytes(value)
+            return value
 
     def to_json(self, value, store=None):
         if isinstance(value, (int, float, str, tuple, list, dict)):
             return value
         else:
-            value = self.to_store(value)
-            if value is not None:
-                return b64encode(value).decode('utf-8')
+            return self.to_store(value)
 
     def sql_alchemy_column(self):
         s = sql()

@@ -1,3 +1,5 @@
+from functools import partial
+
 from .futures import Future, asyncio
 
 
@@ -23,6 +25,11 @@ class ProtocolWrapper(object):
             return b
 
 
+def _set_flow_limits(low, high, protocol, exc=None):
+    if not exc:
+        protocol._transport.set_write_buffer_limits(low, high)
+
+
 class FlowControl(ProtocolWrapper):
     """Reusable flow control logic for StreamWriter.drain().
 
@@ -37,9 +44,11 @@ class FlowControl(ProtocolWrapper):
     _paused = False
     _drain_waiter = None
 
-    def __init__(self, protocol, read_limit=None, write_limit=None):
+    def __init__(self, protocol, low_limit=None, high_limit=None):
         self.protocol = protocol
-        self.bind_event('connection_lost', self._wakeup_waiter)
+        protocol.bind_event('connection_made',
+                            partial(_set_flow_limits, low_limit, high_limit))
+        protocol.bind_event('connection_lost', self._wakeup_waiter)
 
     def write(self, data):
         result = self.protocol.write(data)

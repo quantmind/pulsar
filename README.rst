@@ -176,8 +176,15 @@ of course. To do so, simply follow these guidelines:
 * Fork pulsar_ on github
 * Create a topic branch ``git checkout -b my_branch``
 * Push to your branch ``git push origin my_branch``
-* Create an issue at https://github.com/quantmind/pulsar/issues with pull request
-  for the ``dev`` branch.
+* Create an issue at https://github.com/quantmind/pulsar/issues with
+  pull request for the **dev branch**.
+
+A good ``pull`` request should:
+
+* Cover one bug fix or new feature only
+* Include tests to cover the new code (inside the ``tests`` directory)
+* Preferably have one commit only (you can use rebase_ to combine several
+  commits into one)
 
 
 .. _license:
@@ -213,3 +220,4 @@ file in the top distribution directory for the full license text.
 .. _pep8: http://www.python.org/dev/peps/pep-0008/
 .. _ujson: https://pypi.python.org/pypi/ujson
 .. _trollius: https://pypi.python.org/pypi/trollius
+.. _rebase: https://help.github.com/articles/about-git-rebase
