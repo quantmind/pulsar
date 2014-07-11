@@ -34,6 +34,7 @@ from pulsar.utils.httpurl import BytesIO
 
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
+re_media_type = re.compile(r'^(image|audio|video)/.+')
 
 
 __all__ = ['AccessControl', 'GZipMiddleware']
@@ -107,17 +108,19 @@ http://jython.xhaus.com/http-compression-in-python-and-jython
                 if response.length() < self.min_length:
                     return False
                 headers = response.headers
+                ctype = headers.get('Content-Type', '').lower()
                 # Avoid gzipping if we've already got a content-encoding.
                 if 'Content-Encoding' in headers:
                     return False
                 # MSIE have issues with gzipped response of various
                 # content types.
                 if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
-                    ctype = headers.get('Content-Type', '').lower()
                     if not ctype.startswith("text/") or "javascript" in ctype:
                         return False
                 ae = environ.get('HTTP_ACCEPT_ENCODING', '')
                 if not re_accepts_gzip.search(ae):
+                    return False
+                if re_media_type.match(ctype):
                     return False
                 return True
         except Exception:
