@@ -4,7 +4,7 @@ from datetime import timedelta
 from random import random
 from functools import reduce
 
-from pulsar import asyncio, get_request_loop, coroutine_return
+from pulsar import asyncio, coroutine_return
 from pulsar.apps import tasks
 
 

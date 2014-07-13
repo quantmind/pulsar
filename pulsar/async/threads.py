@@ -18,16 +18,30 @@ from .futures import Future, Task, async, AsyncObject
 from .consts import ACTOR_STATES
 
 
-__all__ = ['Thread', 'IOqueue', 'ThreadPool', 'ThreadQueue', 'Empty', 'Full']
+__all__ = ['Thread', 'IOqueue', 'ThreadPool',
+           'ThreadQueue', 'Empty', 'Full',
+           'get_thread_loop']
 
+_THREAD_LOOP = '_thread_loop'
 _MAX_WORKERS = 50
 _threads_queues = weakref.WeakKeyDictionary()
 passthrough = lambda: None
 
 
 def set_as_loop(loop):
+    '''Internal method to set the event loop or thread loop in the current
+    thread of execution.
+    '''
     if loop._iothreadloop:
-        asyncio.set_event_loop(loop)
+        if isinstance(loop, QueueEventLoop):
+            thread_data(_THREAD_LOOP, loop)
+        else:
+            asyncio.set_event_loop(loop)
+
+
+def get_thread_loop():
+    '''Get the loop for the current thread'''
+    return thread_data(_THREAD_LOOP) or asyncio.get_event_loop()
 
 
 def get_executor(loop):
@@ -53,12 +67,13 @@ def run_in_executor(loop, executor, callback, *args):
 
 
 class Thread(dummy.DummyProcess):
+
     @property
     def pid(self):
         return current_process().pid
 
     def loop(self):
-        raise NotImplemented
+        return thread_data(_THREAD_LOOP, ct=self)
 
     def terminate(self):
         '''Invoke the stop on the event loop method.'''
@@ -93,15 +108,12 @@ class PoolThread(Thread):
         loop = QueueEventLoop(self.pool, logger=logger, iothreadloop=True)
         loop.run_forever()
 
-    def loop(self):
-        return thread_data('_request_loop', ct=self)
-
 
 class IOqueue(selectors.BaseSelector):
     '''A selector based on a distributed queue
 
     Since there is no way to my knowledge to wake up the queue while
-    getting an itiem from the task queue, the timeout cannot be larger than
+    getting an item from the task queue, the timeout cannot be larger than
     a small number which by default is ``0.5`` seconds.
     '''
     max_timeout = 0.5
@@ -184,7 +196,7 @@ class QueueEventLoop(BaseEventLoop):
 
     def _process_events(self, task):
         if task:
-            async(self._selector.process_task(task), self)
+            async(self._selector.process_task(task), loop=self)
 
     def run_in_executor(self, executor, callback, *args):
         return run_in_executor(self, executor, callback, *args)

@@ -48,10 +48,8 @@ def psycopg2_wait_callback(conn):
             # Done with waiting
             break
         elif state == extensions.POLL_READ:
-            print('reading')
             wait_fd(conn)
         elif state == extensions.POLL_WRITE:
-            print('writing')
             wait_fd(conn, read=False)
         else:
             raise OperationalError("Bad result from poll: %r" % state)

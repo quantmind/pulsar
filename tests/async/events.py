@@ -1,12 +1,12 @@
 import unittest
 
-from pulsar import EventHandler, get_request_loop
+from pulsar import EventHandler, get_event_loop
 
 
 class Handler(EventHandler):
 
     def __init__(self, **kw):
-        self._loop = get_request_loop()
+        self._loop = get_event_loop()
         super(Handler, self).__init__(self._loop, **kw)
 
 

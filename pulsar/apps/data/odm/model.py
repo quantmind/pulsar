@@ -30,6 +30,7 @@ def rev_key(value):
     except ValueError:
         return to_string(value)
 
+
 def is_private_field(field):
     return field.startswith('_') or field == 'Type'
 

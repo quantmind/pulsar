@@ -5,7 +5,7 @@ try:
 except ImportError:
     greenio = None
 
-from pulsar import Future, send, multi_async, get_event_loop
+from pulsar import Future, send, multi_async, get_event_loop, task
 
 from examples.echo.manage import server, Echo
 
@@ -57,15 +57,22 @@ class TestGreenIO(unittest.TestCase):
     def test_pool(self):
         pool = greenio.GreenPool()
         self.assertTrue(pool._loop)
+        self.assertEqual(pool._loop, get_event_loop())
         self.assertFalse(pool._greenlets)
         future = pool.submit(lambda: 'Hi!')
         self.assertIsInstance(future, Future)
         result = yield future
         self.assertEqual(result, 'Hi!')
+        self.assertEqual(len(pool._greenlets), 1)
+        self.assertEqual(len(pool._available), 1)
+
+    @task
+    def test_error_in_pool(self):
         # Test an error
+        pool = greenio.GreenPool()
         yield self.async.assertRaises(RuntimeError, pool.submit, raise_error)
-        self.assertEqual(len(pool._greenlets), 2)
-        self.assertEqual(len(pool._available), 2)
+        self.assertEqual(len(pool._greenlets), 1)
+        self.assertEqual(len(pool._available), 1)
 
     def test_echo(self):
         result = yield self.client(b'ciao luca')

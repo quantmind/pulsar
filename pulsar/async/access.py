@@ -51,8 +51,7 @@ else:   # pragma    nocover
         from asyncio.py33_exceptions import reraise
 
 
-__all__ = ['get_request_loop',
-           'get_event_loop',
+__all__ = ['get_event_loop',
            'new_event_loop',
            'asyncio',
            'get_actor',
@@ -60,7 +59,6 @@ __all__ = ['get_request_loop',
            'process_data',
            'thread_data',
            'logger',
-           'get_logger',
            'NOTHING',
            'SELECTORS',
            'appengine',
@@ -121,16 +119,8 @@ def is_mainthread(thread=None):
     return isinstance(thread, threading._MainThread)
 
 
-def get_request_loop():
-    return asyncio.get_event_loop_policy().get_request_loop()
-
-
-def logger(loop=None):
-    return getattr(loop or get_request_loop(), 'logger', LOGGER)
-
-
-def get_logger(default=None):
-    return getattr(get_request_loop(), 'logger', default or LOGGER)
+def logger(loop=None, logger=None):
+    return getattr(loop or get_event_loop(), 'logger', LOGGER)
 
 
 def process_data(name=None):

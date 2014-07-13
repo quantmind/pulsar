@@ -16,8 +16,8 @@ def has_callback(loop, handler):
 
 class TestEventLoop(unittest.TestCase):
 
-    def test_request_loop(self):
-        request_loop = pulsar.get_request_loop()
+    def test_thread_loop(self):
+        thread_loop = pulsar.get_thread_loop()
         event_loop = get_event_loop()
         self.assertNotEqual(event_loop, request_loop)
 

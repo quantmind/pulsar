@@ -62,6 +62,10 @@ class ProtocolConsumer(EventHandler):
     ONE_TIME_EVENTS = ('pre_request', 'post_request')
     MANY_TIMES_EVENTS = ('data_received', 'data_processed')
 
+    #def __repr__(self):
+    #    return '%s(%s)' % (self.__class.__.__name__, self._connection)
+    #__str__ = __repr__
+
     @property
     def connection(self):
         '''The :class:`Connection` of this consumer.'''
@@ -166,7 +170,11 @@ class ProtocolConsumer(EventHandler):
 
         By default it calls the :meth:`finished` method. It can be overwritten
         to handle the potential exception ``exc``.'''
-        return self.finished(exc=exc)
+        # TODO: decide how to handle connection_lost when no exception occurs
+        # Set the first positional parameter to None so that if the
+        # connection was dropped without exception it returns None
+        # rather than the protocol consumer
+        return self.finished(None, exc=exc)
 
     def finished(self, *arg, **kw):
         '''Fire the ``post_request`` event if it wasn't already fired.
@@ -314,16 +322,6 @@ class PulsarProtocol(EventHandler):
         if self._producer:
             info.update(self._producer.info())
         return info
-
-    def _make_drain_waiter(self):
-        if not self._paused:
-            return ()
-        waiter = self._drain_waiter
-        assert waiter is None or waiter.cancelled()
-        self.logger.info('%s wait for transport to drain', self)
-        waiter = Future(loop=self._loop)
-        self._drain_waiter = waiter
-        return waiter
 
 
 class Protocol(PulsarProtocol, asyncio.Protocol):

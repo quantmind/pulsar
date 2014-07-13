@@ -16,9 +16,6 @@ class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
     def get_event_loop(self):
         return thread_data('_event_loop')
 
-    def get_request_loop(self):
-        return thread_data('_request_loop') or self.get_event_loop()
-
     def new_event_loop(self):
         return EventLoop()
 
@@ -26,10 +23,7 @@ class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
         """Set the event loop."""
         assert event_loop is None or isinstance(event_loop,
                                                 asyncio.AbstractEventLoop)
-        if isinstance(event_loop, QueueEventLoop):
-            thread_data('_request_loop', event_loop)
-        else:
-            thread_data('_event_loop', event_loop)
+        thread_data('_event_loop', event_loop)
 
 
 asyncio.set_event_loop_policy(EventLoopPolicy())

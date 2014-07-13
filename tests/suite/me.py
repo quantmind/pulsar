@@ -39,7 +39,7 @@ class TestTestWorker(unittest.TestCase):
 
     def testCPUbound(self):
         worker = pulsar.get_actor()
-        loop = pulsar.get_request_loop()
+        loop = pulsar.get_thread_loop()
         self.assertIsInstance(loop, QueueEventLoop)
         self.assertNotIsInstance(worker._loop, QueueEventLoop)
 
@@ -71,7 +71,7 @@ class TestTestWorker(unittest.TestCase):
     def test_event_loop(self):
         '''Test event loop in test worker'''
         worker = pulsar.get_actor()
-        loop = pulsar.get_request_loop()
+        loop = pulsar.get_thread_loop()
         event_loop = get_event_loop()
         self.assertTrue(loop.is_running())
         self.assertTrue(event_loop.is_running())
@@ -81,7 +81,7 @@ class TestTestWorker(unittest.TestCase):
     def test_yield(self):
         '''Yielding a future calling back on separate thread'''
         worker = pulsar.get_actor()
-        loop = pulsar.get_request_loop()
+        loop = pulsar.get_thread_loop()
         loop_tid = yield pulsar.loop_thread_id(loop)
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop_tid, current_thread().ident)

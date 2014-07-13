@@ -8,7 +8,7 @@ from functools import wraps, partial
 from pulsar.utils.pep import iteritems, default_timer, range
 
 from .consts import MAX_ASYNC_WHILE
-from .access import (asyncio, get_request_loop, get_event_loop,
+from .access import (asyncio, get_event_loop,
                      LOGGER, _PENDING, _CANCELLED, _FINISHED)
 
 
@@ -218,7 +218,7 @@ def async(coro_or_future, loop=None):
     if isinstance(coro_or_future, Future):
         return coro_or_future
     elif isinstance(coro_or_future, GeneratorType):
-        loop = loop or get_request_loop()
+        loop = loop or get_event_loop()
         task_factory = getattr(loop, 'task_factory', Task)
         return task_factory(coro_or_future, loop=loop)
     else:
@@ -237,7 +237,7 @@ def maybe_async(value, loop=None):
     :return: a :class:`.Future` or a synchronous ``value``.
     '''
     try:
-        return async(value, loop)
+        return async(value, loop=loop)
     except FutureTypeError:
         return value
 
@@ -461,7 +461,7 @@ class Task(asyncio.Task):
                         result = next(coro)
                     # handle possibly asynchronous results
                     try:
-                        result = async(result, self._loop)
+                        result = async(result, loop=self._loop)
                     except FutureTypeError:
                         pass
                 except Return as exc:

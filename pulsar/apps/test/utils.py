@@ -102,7 +102,7 @@ class TestCallable(object):
     __str__ = __repr__
 
     def __call__(self, actor):
-        result = async(self._call(actor))
+        result = async(self._call(actor), loop=pulsar.get_thread_loop())
         return future_timeout(result, self.timeout) if self.timeout else result
 
     def _call(self, actor):
@@ -111,7 +111,7 @@ class TestCallable(object):
         test = self.test
         if self.istest:
             test = actor.app.runner.before_test_function_run(test)
-        inject_async_assert(test)
+        inject_async_assert(self.test)
         test_function = getattr(test, self.method_name)
         failure = None
         try:

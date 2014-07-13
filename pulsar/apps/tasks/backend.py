@@ -83,8 +83,8 @@ from functools import partial
 from datetime import datetime, timedelta
 from hashlib import sha1
 
-from pulsar import (task, async, EventHandler, PulsarException, get_logger,
-                    Future, coroutine_return, get_request_loop)
+from pulsar import (task, async, EventHandler, PulsarException,
+                    Future, coroutine_return)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.utils.security import gen_unique_id
 from pulsar.apps.data import create_store, PubSubClient, odm
@@ -176,8 +176,7 @@ class TaskConsumer(object):
         tasks from within a :ref:`job callable <job-callable>`.
     '''
     def __init__(self, backend, worker, task_id, job):
-        self._loop = get_request_loop()
-        self.logger = self._loop.logger
+        self.logger = worker.logger
         self.backend = backend
         self.worker = worker
         self.job = job
@@ -616,7 +615,7 @@ class TaskBackend(EventHandler):
     def _execute_task(self, worker, task):
         # Asynchronous execution of a Task. This method is called
         # on a separate thread of execution from the worker event loop thread.
-        logger = get_logger(worker.logger)
+        logger = worker.logger
         pubsub = self._pubsub
         task_id = task.id
         lock_id = task.get('lock_id')

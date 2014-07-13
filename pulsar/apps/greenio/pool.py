@@ -18,8 +18,8 @@ class GreenletWorker(greenlet.greenlet):
 class GreenPool(AsyncObject):
     '''A pool of running greenlets.
 
-    This pool maintains a group of greenlets to perform asynchronous tasks via
-    the :meth:`submit` method.
+    This pool maintains a group of greenlets to perform asynchronous
+    tasks via the :meth:`submit` method.
     '''
     worker_name = 'exec'
 

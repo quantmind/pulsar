@@ -3,7 +3,7 @@ import string
 import unittest
 
 from pulsar import HAS_C_EXTENSIONS
-from pulsar.apps.data import redis_parser
+from pulsar.apps.ds import redis_parser
 from pulsar.utils.pep import ispy3k
 
 if ispy3k:

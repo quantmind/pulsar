@@ -16,6 +16,8 @@ Ver. 0.8.5 - Development
 * The :class:`.HttpClient` can be used in conjunction with
   :ref:`greenlet support <green-http>` to write implicit asynchronous HTTP
   requests
+* Finally removed the ``get_request_loop`` method. Full compatibility with
+  asyncio.
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================
