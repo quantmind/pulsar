@@ -8,7 +8,7 @@ from time import time
 from threading import Lock
 from functools import wraps
 
-from .system import current_process
+from .system import current_process, platform
 
 
 from .pep import force_native_str
@@ -26,10 +26,6 @@ else:
     from logging import NullHandler
 
 from .structures import AttributeDictionary
-
-
-def file_handler(**kw):
-    return logging.FileHandler('pulsar.log', **kw)
 
 
 LOGGING_CONFIG = {
@@ -69,16 +65,22 @@ LOGGING_CONFIG = {
         'console_level_message': {
             'class': 'pulsar.utils.log.ColoredStream',
             'formatter': 'level_message'
-        },
-        'file': {
-            '()': file_handler,
-            'formatter': 'verbose'
         }
     },
     'filters ': {},
     'loggers': {},
     'root': {}
 }
+
+
+if not platform.is_appengine:
+
+    def file_handler(**kw):
+        return logging.FileHandler('pulsar.log', **kw)
+
+    LOGGING_CONFIG['handlers']['file'] = {
+        '()': file_handler,
+        'formatter': 'verbose'}
 
 
 def update_config(config, c):

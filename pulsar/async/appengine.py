@@ -7,6 +7,7 @@ from google.appengine.ext.ndb import eventloop
 get_event_loop = eventloop.get_event_loop
 selectors = None
 ConnectionRefusedError = None
+ConnectionResetError = None
 
 
 class Future(ndb.Future):
