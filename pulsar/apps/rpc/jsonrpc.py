@@ -1,9 +1,9 @@
 import sys
+import json
 from functools import partial
 import logging
 
 from pulsar import AsyncObject, multi_async, task, coroutine_return
-from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import range
@@ -64,14 +64,23 @@ class JSONRPC(RpcHandler):
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
+        else:
+            try:
+                json.dumps(result)
+            except Exception as exc:
+                result = exc
+                exc_info = sys.exc_info()
         #
         res = {'id': data.get('id'), "jsonrpc": self.version}
         if exc_info:
-            code = getattr(result, 'fault_code', -32603)
             msg = None
-            if isinstance(result, TypeError) and callable:
-                msg = checkarity(callable, args, kwargs, discount=1)
+            code = getattr(result, 'fault_code', None)
+            if not code:
+                if isinstance(result, TypeError) and callable:
+                    msg = checkarity(callable, args, kwargs, discount=1)
+                code = -32602 if msg else -32603
             msg = msg or str(result) or 'JSON RPC exception'
+            code = getattr(result, 'fault_code', code)
             if code == -32603:
                 logger.error(msg, exc_info=exc_info)
             else:
@@ -79,7 +88,7 @@ class JSONRPC(RpcHandler):
             error = {'code': code,
                      'message': msg,
                      'data': getattr(result, 'data', '')}
-            response.status_code = getattr(result, 'status', 500)
+            response.status_code = getattr(result, 'status', 400)
             res['error'] = error
         else:
             res['result'] = result

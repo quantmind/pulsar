@@ -5,14 +5,19 @@ __all__ = ['checkarity']
 
 def checkarity(func, args, kwargs, discount=0):
     '''Check if arguments respect a given function arity and return
-a error message if the check did not pass, otherwise it returns ``None``.
+    an error message if the check did not pass,
+    otherwise it returns ``None``.
 
-:parameter func: the function.
-:parameter args: function arguments.
-:parameter kwargs: function key-valued parameters.
-:parameter discount: optional integer which discount the number of
-                     positional argument to check. Default ``0``.'''
+    :parameter func: the function.
+    :parameter args: function arguments.
+    :parameter kwargs: function key-valued parameters.
+    :parameter discount: optional integer which discount the number of
+                         positional argument to check. Default ``0``.
+    '''
     spec = inspect.getargspec(func)
+    self = getattr(func, '__self__', None)
+    if self and spec.args:
+        discount += 1
     args = list(args)
     defaults = list(spec.defaults or ())
     len_defaults = len(defaults)

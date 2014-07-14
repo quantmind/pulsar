@@ -119,11 +119,12 @@ class TestRpcOnThread(unittest.TestCase):
                              '%s:%s' % self.app_cfg.addresses[0])
 
     def test_invalid_params(self):
-        self.async.assertRaises(rpc.InvalidParams, self.p.calc.add, 50, 25, 67)
+        return self.async.assertRaises(rpc.InvalidParams, self.p.calc.add,
+                                       50, 25, 67)
 
     def test_invalid_params_fromApi(self):
-        self.async.assertRaises(rpc.InvalidParams, self.p.calc.divide,
-                                50, 25, 67)
+        return self.async.assertRaises(rpc.InvalidParams, self.p.calc.divide,
+                                       50, 25, 67)
 
     def test_invalid_function(self):
         p = self.p
@@ -136,11 +137,11 @@ class TestRpcOnThread(unittest.TestCase):
                                       p.blabla.foofoo.sjdcbjcb)
 
     def testInternalError(self):
-        self.async.assertRaises(rpc.InternalError, self.p.calc.divide,
-                                'ciao', 'bo')
+        return self.async.assertRaises(rpc.InternalError, self.p.calc.divide,
+                                       'ciao', 'bo')
 
     def testCouldNotserialize(self):
-        self.async.assertRaises(rpc.InternalError, self.p.dodgy_method)
+        return self.async.assertRaises(rpc.InternalError, self.p.dodgy_method)
 
     def testpaths(self):
         '''Fetch a sizable ammount of data'''
