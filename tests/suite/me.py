@@ -5,7 +5,7 @@ from threading import current_thread
 
 import pulsar
 from pulsar import asyncio, send, multi_async, get_event_loop, coroutine_return
-from pulsar.async.eventloop import QueueEventLoop
+from pulsar.async.threads import QueueEventLoop
 from pulsar.apps.test import run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
 from pulsar.utils.version import get_version

@@ -2,8 +2,10 @@ import unittest
 
 try:
     from pulsar.apps import greenio
+    run_in_greenlet = greenio.run_in_greenlet
 except ImportError:
     greenio = None
+    run_in_greenlet = lambda x: x
 
 from pulsar import Future, send, multi_async, get_event_loop
 
@@ -17,7 +19,7 @@ def raise_error():
 class EchoGreen(Echo):
     '''An echo client which uses greenlets to provide implicit
     asynchronous code'''
-    @greenio.run_in_greenlet
+    @run_in_greenlet
     def __call__(self, message):
         connection = greenio.wait(self.pool.connect())
         with connection:
