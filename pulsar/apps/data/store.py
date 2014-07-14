@@ -110,10 +110,9 @@ class Store(Producer):
 
     def __init__(self, name, host, loop, database=None,
                  user=None, password=None, encoding=None, **kw):
-        super(Producer, self).__init__()
+        super(Store, self).__init__(loop)
         self._name = name
         self._host = host
-        self._loop = loop
         self._encoding = encoding or 'utf-8'
         self._database = database
         self._user = user

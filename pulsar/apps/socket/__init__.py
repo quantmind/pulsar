@@ -14,7 +14,7 @@ This is an example of a script for an Echo server::
         SocketServer(EchoServerProtocol).start()
 
 Check the :ref:`echo server example <tutorials-writing-clients>` for detailed
-implementation of the ``.EchoServerProtocol`` class.
+implementation of the ``EchoServerProtocol`` class.
 
 .. _socket-server-settings:
 
@@ -280,7 +280,7 @@ class SocketServer(pulsar.Application):
         server = self.server_factory(self.protocol_factory(),
                                      worker._loop,
                                      sockets=sockets,
-                                     max_connections=max_requests,
+                                     max_requests=max_requests,
                                      keep_alive=cfg.keep_alive,
                                      name=self.name)
         for event in ('connection_made', 'pre_request', 'post_request',

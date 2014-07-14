@@ -442,11 +442,8 @@ class Connection(FlowControl):
 
 class Producer(EventHandler):
     '''An Abstract :class:`.EventHandler` class for all producers of
-    connections.
+    socket (client and servers)
     '''
-    _requests_processed = 0
-    _sessions = 0
-
     protocol_factory = None
     '''A callable producing protocols.
 
@@ -455,9 +452,15 @@ class Producer(EventHandler):
         protocol_factory(session, producer, **params)
     '''
 
-    def __init__(self, loop):
+    def __init__(self, loop, protocol_factory=None, name=None,
+                 max_requests=None):
         self._loop = loop or get_event_loop() or new_event_loop()
         super(Producer, self).__init__(self._loop)
+        self.protocol_factory = protocol_factory or self.protocol_factory
+        self._name = name or self.__class__.__name__
+        self._requests_processed = 0
+        self._sessions = 0
+        self._max_requests = max_requests
 
     @property
     def sessions(self):
@@ -471,14 +474,16 @@ class Producer(EventHandler):
         '''
         return self._requests_processed
 
-    def create_protocol(self):
+    def create_protocol(self, **kw):
         '''Create a new protocol via the :meth:`protocol_factory`
 
         This method increase the count of :attr:`sessions` and build
         the protocol passing ``self`` as the producer.
         '''
-        self._sessions = session = self._sessions + 1
-        return self.protocol_factory(session=session, producer=self)
+        self._sessions = self._sessions + 1
+        kw['sessions'] = self.sessions
+        kw['producer'] = self
+        return self.protocol_factory(**kw)
 
     def build_consumer(self, consumer_factory):
         '''Build a consumer for a protocol.
@@ -494,7 +499,7 @@ class Producer(EventHandler):
 
 
 class TcpServer(Producer):
-    '''A :class:`Producer` of server :class:`Connection` for TCP servers.
+    '''A :class:`.Producer` of server :class:`Connection` for TCP servers.
 
     .. attribute:: _server
 
@@ -509,13 +514,11 @@ class TcpServer(Producer):
     _started = None
 
     def __init__(self, protocol_factory, loop, address=None,
-                 name=None, sockets=None, max_connections=None,
+                 name=None, sockets=None, max_requests=None,
                  keep_alive=None):
-        super(TcpServer, self).__init__(loop)
-        self.protocol_factory = protocol_factory
-        self._name = name or self.__class__.__name__
+        super(TcpServer, self).__init__(loop, protocol_factory, name=name,
+                                        max_requests=max_requests)
         self._params = {'address': address, 'sockets': sockets}
-        self._max_connections = max_connections
         self._keep_alive = max(keep_alive or 0, 0)
         self._concurrent_connections = set()
 
@@ -607,7 +610,7 @@ class TcpServer(Producer):
                   'python_version': sys.version,
                   'uptime_in_seconds': up,
                   'sockets': sockets,
-                  'max_connections': self._max_connections,
+                  'max_requests': self._max_requests,
                   'keep_alive': self._keep_alive}
         clients = {'processed_clients': self._sessions,
                    'connected_clients': len(self._concurrent_connections),
@@ -622,15 +625,14 @@ class TcpServer(Producer):
     def create_protocol(self):
         '''Override :meth:`Producer.create_protocol`.
         '''
-        self._sessions = session = self._sessions + 1
-        protocol = self.protocol_factory(session=session, producer=self,
-                                         timeout=self._keep_alive)
+        protocol = super(TcpServer, self).create_protocol(
+            timeout=self._keep_alive)
         protocol.bind_event('connection_made', self._connection_made)
         protocol.bind_event('connection_lost', self._connection_lost)
-        if (self._server and self._max_connections and
-                session >= self._max_connections):
+        if (self._server and self._max_requests and
+                session >= self._max_requests):
             self.logger.info('Reached maximum number of connections %s. '
-                             'Stop serving.' % self._max_connections)
+                             'Stop serving.' % self._max_requests)
             self.close()
         return protocol
 
@@ -663,8 +665,8 @@ class TcpServer(Producer):
             return multi_async(all)
 
 
-class DatagramServer(EventHandler):
-    '''An :class:`.EventHandler` for serving UDP sockets.
+class DatagramServer(Producer):
+    '''An :class:`.Producer` for serving UDP sockets.
 
     .. attribute:: _transports
 
@@ -680,12 +682,8 @@ class DatagramServer(EventHandler):
 
     def __init__(self, protocol_factory, loop=None, address=None,
                  name=None, sockets=None, max_requests=None):
-        self._loop = loop or get_event_loop()
-        super(DatagramServer, self).__init__(self._loop)
-        self.protocol_factory = protocol_factory
-        self._max_requests = max_requests
-        self._requests_processed = 0
-        self._name = name or self.__class__.__name__
+        super(DatagramServer, self).__init__(loop, protocol_factory, name=name,
+                                             max_requests=max_requests)
         self._params = {'address': address, 'sockets': sockets}
 
     @task
@@ -748,9 +746,3 @@ class DatagramServer(EventHandler):
                     'address': format_address(transport._sock.getsockname())})
         return {'server': server,
                 'clients': clients}
-
-    def create_protocol(self):
-        '''Override :meth:`Producer.create_protocol`.
-        '''
-        self._sessions = self._sessions + 1
-        return self.protocol_factory(session=self._sessions, producer=self)

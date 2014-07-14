@@ -18,6 +18,7 @@ Ver. 0.8.5 - Development
   requests
 * Finally removed the ``get_request_loop`` method. Full compatibility with
   asyncio.
+* Bug fix in :class:`.Store` constructor
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================
