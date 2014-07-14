@@ -26,9 +26,6 @@ class Test(tasks.Job):
             testcls = testcls()
         testcls.tag = tag
         testcls.cfg = consumer.worker.cfg
-        testcls._test_suite =  consumer.worker.app
-        testcls._loop = pulsar.get_event_loop()
-        testcls._thread_loop = pulsar.get_thread_loop()
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
@@ -67,7 +64,7 @@ class Test(tasks.Job):
                 yield self.run_test(test, runner, error)
         else:
             all = (self.run_test(test, runner, error) for test in all_tests)
-            yield pulsar.multi_async(all, loop=testcls._thread_loop)
+            yield pulsar.multi_async(all, loop=pulsar.get_thread_loop())
         if not skip_tests:
             yield self._run(runner, testcls, 'tearDownClass', add_err=False)
         runner.stopTestClass(testcls)

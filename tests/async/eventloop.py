@@ -19,7 +19,7 @@ class TestEventLoop(unittest.TestCase):
     def test_thread_loop(self):
         thread_loop = pulsar.get_thread_loop()
         event_loop = get_event_loop()
-        self.assertNotEqual(event_loop, request_loop)
+        self.assertNotEqual(event_loop, thread_loop)
 
     def test_io_loop(self):
         ioloop = get_event_loop()
@@ -113,11 +113,5 @@ class TestEventLoop(unittest.TestCase):
         self.assertIsInstance(d, Future)
         result = yield d
         self.assertEqual(result, 3)
-        d = run_in_loop(event_loop, simple, 1, 'a')
-        self.assertIsInstance(d, Future)
-        try:
-            result = yield d
-        except TypeError:
-            pass
-        else:
-            assert False, "TypeError not raised"
+        yield self.async.assertRaises(TypeError, run_in_loop, event_loop,
+                                      simple, 1, 'a')

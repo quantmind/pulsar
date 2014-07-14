@@ -51,7 +51,7 @@ except ImportError:
 
 import pulsar
 from pulsar import (get_actor, send, multi_async, async, future_timeout,
-                    TcpServer, coroutine_return, new_event_loop,
+                    TcpServer, coroutine_return, new_event_loop, task,
                     Future, format_traceback, ImproperlyConfigured)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
@@ -139,6 +139,7 @@ class SafeTest(object):
         else:
             cls = self.test.__class__
             data = self.test.__dict__.copy()
+            data.pop('_loop', None)
         return ('%s.%s' % (cls.__module__, cls.__name__), data)
 
     def __setstate__(self, state):
@@ -230,8 +231,9 @@ class AsyncAssert(object):
 
     .. _descriptor: http://users.rcn.com/python/download/Descriptor.htm
     '''
-    def __init__(self, test=None):
+    def __init__(self, test):
         self.test = test
+        self._loop = test._loop
 
     def __get__(self, instance, instance_type=None):
         return AsyncAssert(instance)
@@ -244,6 +246,7 @@ class AsyncAssert(object):
             coroutine_return(result)
         return _
 
+    @task
     def assertRaises(self, error, callable, *args, **kwargs):
         try:
             yield callable(*args, **kwargs)
@@ -304,7 +307,8 @@ class ActorTestMixin(object):
 def inject_async_assert(obj):
     tcls = obj if isclass(obj) else obj.__class__
     if not hasattr(tcls, 'async'):
-        tcls.async = AsyncAssert()
+        tcls._loop = pulsar.get_event_loop()
+        tcls.async = AsyncAssert(tcls)
 
 
 def show_leaks(actor, show=True):
