@@ -3,7 +3,7 @@ import time
 import unittest
 
 import pulsar
-from pulsar import asyncio, new_event_loop
+from pulsar import asyncio, new_event_loop, task
 from pulsar.utils.security import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
@@ -391,6 +391,7 @@ class RedisCommands(StoreMixin):
 
     ###########################################################################
     #    HASHES
+    @task
     def test_hdel(self):
         key = self.randomkey()
         eq = self.async.assertEqual

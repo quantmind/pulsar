@@ -30,7 +30,6 @@ if sys.version_info >= (3, 0):
                 tb = trace
         return tb
 
-
     def format_traceback(exc):
         return _tarceback_list(exc.__class__, exc, exc.__traceback__)
 

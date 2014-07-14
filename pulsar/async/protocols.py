@@ -62,10 +62,6 @@ class ProtocolConsumer(EventHandler):
     ONE_TIME_EVENTS = ('pre_request', 'post_request')
     MANY_TIMES_EVENTS = ('data_received', 'data_processed')
 
-    #def __repr__(self):
-    #    return '%s(%s)' % (self.__class.__.__name__, self._connection)
-    #__str__ = __repr__
-
     @property
     def connection(self):
         '''The :class:`Connection` of this consumer.'''

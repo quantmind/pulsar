@@ -378,7 +378,7 @@ class Config(object):
         for namespace in sorted(namespaces):
             if namespace in loggers:
                 continue
-            if self.daemon: # pragma    nocover
+            if self.daemon:     # pragma    nocover
                 handlers = []
                 for hnd in loghandlers:
                     if hnd != 'console':

@@ -27,6 +27,7 @@ else:
 
 from .structures import AttributeDictionary
 
+
 def file_handler(**kw):
     return logging.FileHandler('pulsar.log', **kw)
 

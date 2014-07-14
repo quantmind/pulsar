@@ -28,4 +28,6 @@ extensions/lua/lua.c
 extensions/lib/lib.c
 .coveralls.yml
 *.rdb
+*.log
+*.mp4
 /config.py

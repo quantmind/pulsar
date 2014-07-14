@@ -243,7 +243,6 @@ class HttpBin(wsgi.Router):
         response.content = data
         return response
 
-
     ########################################################################
     #    BENCHMARK ROUTES
     @route('json')

@@ -162,30 +162,26 @@ __all__ = ['AsyncString', 'Html',
            'html_factory', 'media_libraries']
 
 
-JS_DIR = os.path.join(os.path.dirname(__file__), 'js')
-
-
-def load_pkg(name, dir=None):
-    p = os.path
-    dir = dir or JS_DIR
-    with open(os.path.join(dir, name)) as f:
-        data = f.read()
-    return json.loads(data)
-
-
+_libs_url = 'http://quantmind.github.io/jslibs/libs.json'
 _media_libraries = None
+
 
 def media_libraries():
     global _media_libraries
     if _media_libraries is None:
-        from pulsar import new_event_loop
-        from pulsar.apps.http import HttpClient
-        http = HttpClient(loop=new_event_loop())
-        try:
-            response = http.get('http://quantmind.github.io/jslibs/libs.json')
-            _media_libraries = response.json()
-        except Exception:   # pragma    nocover
-            _media_libraries = {'libs': {}, 'deps': {}}
+        if os.path.isfile('libs.json'):
+            with open('libs.json') as f:   # pragma    nocover
+                data = f.read()
+            _media_libraries = json.loads(data)
+        else:
+            from pulsar import new_event_loop
+            from pulsar.apps.http import HttpClient
+            http = HttpClient(loop=new_event_loop())
+            try:
+                response = http.get(_libs_url)
+                _media_libraries = response.json()
+            except Exception:   # pragma    nocover
+                _media_libraries = {'libs': {}, 'deps': {}}
     return _media_libraries
 
 
