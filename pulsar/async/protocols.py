@@ -169,7 +169,7 @@ class ProtocolConsumer(EventHandler):
         # Set the first positional parameter to None so that if the
         # connection was dropped without exception it returns None
         # rather than the protocol consumer
-        return self.finished(None, exc=exc)
+        return self.finished(None)
 
     def finished(self, *arg, **kw):
         '''Fire the ``post_request`` event if it wasn't already fired.
@@ -307,7 +307,7 @@ class PulsarProtocol(EventHandler):
     def connection_lost(self, exc=None):
         '''Fires the ``connection_lost`` event.
         '''
-        self.fire_event('connection_lost', exc=exc)
+        self.fire_event('connection_lost')
 
     def eof_received(self):
         '''The socket was closed from the remote end'''
