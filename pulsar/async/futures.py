@@ -1,11 +1,9 @@
-import sys
-import traceback
 import types
-from collections import deque, namedtuple, Mapping
+from collections import Mapping
 from inspect import isgeneratorfunction
 from functools import wraps, partial
 
-from pulsar.utils.pep import iteritems, default_timer, range
+from pulsar.utils.pep import iteritems, range
 
 from .consts import MAX_ASYNC_WHILE
 from .access import (asyncio, get_event_loop,
@@ -150,8 +148,8 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
                 exc = e
             if exc:
                 if errback:
+                    result = errback(exc)
                     exc = None
-                    result = errback(result)
             else:
                 result = future.result()
                 if callback:
@@ -162,7 +160,7 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
             if exc:
                 next.set_exception(exc)
             elif isinstance(result, Future):
-                chain(result, next=next)
+                chain_future(result, next=next)
             else:
                 next.set_result(result)
 
@@ -185,7 +183,7 @@ def future_result_exc(future):
     if future._state == _CANCELLED:
         return None, CancelledError()
     elif future._exception:
-        return None, fut.exception()
+        return None, future.exception()
     else:
         return future.result(), None
 

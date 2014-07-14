@@ -148,8 +148,8 @@ from collections import Mapping, OrderedDict
 from functools import partial
 from inspect import isgenerator
 
-from pulsar import multi_async, Future, async, coroutine_return, chain_future
-from pulsar.utils.pep import iteritems, is_string, to_string, ispy3k
+from pulsar import multi_async, async, coroutine_return, chain_future
+from pulsar.utils.pep import iteritems, to_string, ispy3k
 from pulsar.utils.html import (slugify, INLINE_TAGS, escape,
                                dump_data_value, child_tag)
 from pulsar.utils.httpurl import remove_double_slash
@@ -212,7 +212,6 @@ else:  # pragma nocover
 
 def stream_mapping(value, request=None):
     result = {}
-    async = False
     for key, value in iteritems(value):
         if isinstance(value, AsyncString):
             value = value.render(request)
@@ -1097,7 +1096,7 @@ class Head(Html):
     def __get_js(self):
         return self._children[3]
 
-    def __set_js(self, css):
+    def __set_js(self, js):
         self._children[3] = js
     embedded_js = property(__get_js, __set_js)
 

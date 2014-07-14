@@ -1,9 +1,8 @@
-import os
 from threading import current_thread
 
 from .access import asyncio, thread_data, LOGGER
-from .futures import Future, maybe_async, async, Task
-from .threads import run_in_executor, QueueEventLoop, set_as_loop
+from .futures import Future, maybe_async, Task
+from .threads import run_in_executor, set_as_loop
 from . import dns
 
 

@@ -1,7 +1,6 @@
 import os
 import threading
 import logging
-import subprocess
 from collections import OrderedDict
 from threading import current_thread
 

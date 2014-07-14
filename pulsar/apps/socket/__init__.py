@@ -95,14 +95,13 @@ for:
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import os
-import socket
 from math import log
 from random import lognormvariate
 from functools import partial
 
 import pulsar
 from pulsar import asyncio, TcpServer, DatagramServer, Connection
-from pulsar.utils.internet import parse_address, SSLContext, format_address
+from pulsar.utils.internet import parse_address, SSLContext
 from pulsar.utils.config import pass_through
 
 

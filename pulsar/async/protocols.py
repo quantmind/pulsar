@@ -1,12 +1,11 @@
 import sys
-from functools import partial, wraps
 
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, in_loop, task, coroutine_return, Future
+from .futures import multi_async, in_loop, task
 from .events import EventHandler
-from .mixins import ProtocolWrapper, FlowControl, Timeout
+from .mixins import FlowControl, Timeout
 from .access import (asyncio, get_event_loop, new_event_loop,
                      ConnectionResetError)
 
@@ -626,7 +625,7 @@ class TcpServer(Producer):
         protocol.bind_event('connection_made', self._connection_made)
         protocol.bind_event('connection_lost', self._connection_lost)
         if (self._server and self._max_requests and
-                session >= self._max_requests):
+                self._sessions >= self._max_requests):
             self.logger.info('Reached maximum number of connections %s. '
                              'Stop serving.' % self._max_requests)
             self.close()
@@ -701,7 +700,7 @@ class DatagramServer(Producer):
                         transports.append(transport(self._loop, proto))
                 else:
                     transport, _ = yield self._loop.create_datagram_endpoint(
-                        self.protocol_factory, local_addr=adress)
+                        self.protocol_factory, local_addr=address)
                     transports.append(transport)
                 self._transports = transports
                 self._started = self._loop.time()

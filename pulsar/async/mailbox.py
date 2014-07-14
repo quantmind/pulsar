@@ -50,16 +50,14 @@ Client
   :member-order: bysource
 
 '''
-import sys
-import logging
 import socket
-import pickle
 from collections import namedtuple
 
 from pulsar import ProtocolError, CommandError
 from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id
+from pulsar.utils.pep import pickle
 
 from .access import get_actor
 from .futures import Future, coroutine_return, task
@@ -68,7 +66,6 @@ from .protocols import Protocol
 from .clients import AbstractClient
 
 
-LOGGER = logging.getLogger('pulsar.mailbox')
 CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
 
 

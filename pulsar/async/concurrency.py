@@ -1,9 +1,8 @@
 import sys
-import os
 from functools import partial
 from multiprocessing import Process, current_process
 
-from pulsar import system, HaltServer, MonitorStarted
+from pulsar import system, MonitorStarted
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues
 from pulsar.utils.log import logger_fds
@@ -13,7 +12,7 @@ from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, set_actor, logger, _StopError, SELECTORS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
-from .futures import multi_async, Future, add_errback
+from .futures import multi_async, add_errback
 from .eventloop import EventLoop
 from .protocols import TcpServer
 from .consts import *
@@ -387,7 +386,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             self._exit_arbiter(actor)
         else:
             actor.logger.debug('Restarts event loop to stop actors')
-            loop = actor._loop
             actor._loop.call_soon(self._exit_arbiter, actor)
             actor._run(False)
 

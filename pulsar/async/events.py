@@ -213,7 +213,6 @@ class EventHandler(AsyncObject):
         '''
         for name in self._events:
             if name in events:
-                callbacks = events[name]
                 self.bind_event(name, events[name])
 
     def fire_event(self, name, *args, **kwargs):

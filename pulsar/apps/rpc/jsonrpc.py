@@ -1,16 +1,12 @@
 import sys
 import json
-from functools import partial
 import logging
 
-from pulsar import AsyncObject, multi_async, task, coroutine_return
-from pulsar.utils.structures import AttributeDictionary
+from pulsar import AsyncObject, task, coroutine_return
 from pulsar.utils.security import gen_unique_id
-from pulsar.utils.pep import range
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
 from pulsar.apps.http import HttpClient
-from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 
 from .handlers import RpcHandler, InvalidRequest, exception
 

@@ -2,7 +2,6 @@ import logging
 import threading
 import weakref
 from multiprocessing import dummy, current_process
-from functools import partial
 
 try:
     import queue
@@ -12,8 +11,9 @@ ThreadQueue = queue.Queue
 Empty = queue.Empty
 Full = queue.Full
 
-from .access import (asyncio, selectors, new_event_loop, get_actor, set_actor,
-                     events, thread_data, _StopError, BaseEventLoop)
+from .access import (asyncio, selectors, get_actor, set_actor,
+                     events, thread_data, _StopError, BaseEventLoop,
+                     logger as get_logger)
 from .futures import Future, Task, async, AsyncObject
 from .consts import ACTOR_STATES
 
@@ -188,7 +188,7 @@ class QueueEventLoop(BaseEventLoop):
         self._default_executor = executor
         self._iothreadloop = iothreadloop
         self._selector = IOqueue(executor)
-        self.logger = logger or LOGGER
+        self.logger = get_logger(logger=logger)
         self.call_soon(set_as_loop, self)
 
     def _write_to_self(self):

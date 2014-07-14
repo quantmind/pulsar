@@ -483,7 +483,7 @@ class HttpServerResponse(ProtocolConsumer):
 
             except IOError:     # client disconnected, end this connection
                 self.finished()
-            except Exception as exc:
+            except Exception:
                 if wsgi_request(environ).cache.handle_wsgi_error:
                     self.keep_alive = False
                     self.connection.close()

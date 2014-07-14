@@ -98,14 +98,10 @@ via the ``_loop`` attribute::
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
-import sys
-import types
-
 from pulsar import async, Http404, coroutine_return, appengine
-from pulsar.utils.structures import OrderedDict
 from pulsar.utils.log import LocalMixin, local_method
 
-from .utils import handle_wsgi_error, wsgi_request
+from .utils import handle_wsgi_error
 from .wrappers import WsgiResponse
 
 

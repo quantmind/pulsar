@@ -60,13 +60,12 @@ By default, the list of hooks only contains a callback to start the
 '''
 import os
 import sys
-from hashlib import sha1
 from inspect import getfile
 from functools import partial
 from collections import namedtuple
 
 import pulsar
-from pulsar import (get_actor, coroutine_return, Config, async,
+from pulsar import (get_actor, coroutine_return, Config,
                     multi_async, Future, ImproperlyConfigured)
 from pulsar.utils.structures import OrderedDict
 
@@ -311,7 +310,6 @@ class Configurator(object):
         # get the actor if available and override default cfg values with those
         # from the actor
         actor = get_actor()
-        cfg = self.cfg
         if actor and actor.is_running():
             # actor available and running.
             # Unless argv is set, skip parsing
