@@ -95,12 +95,14 @@ for:
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import os
+import socket
 from math import log
 from random import lognormvariate
 from functools import partial
 
 import pulsar
-from pulsar import asyncio, TcpServer, DatagramServer, Connection
+from pulsar import (asyncio, TcpServer, DatagramServer, Connection,
+                    ImproperlyConfigured)
 from pulsar.utils.internet import parse_address, SSLContext
 from pulsar.utils.config import pass_through
 
@@ -215,19 +217,23 @@ class SocketServer(pulsar.Application):
                 or cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
         if not cfg.address:
-            raise pulsar.ImproperlyConfigured('Could not open a socket. '
-                                              'No address to bind to')
+            raise ImproperlyConfigured('Could not open a socket. '
+                                       'No address to bind to')
         ssl = None
         if cfg.cert_file or cfg.key_file:
             if cfg.cert_file and not os.path.exists(cfg.cert_file):
-                raise ValueError('cert_file "%s" does not exist' %
-                                 cfg.cert_file)
+                raise ImproperlyConfigured('cert_file "%s" does not exist' %
+                                           cfg.cert_file)
             if cfg.key_file and not os.path.exists(cfg.key_file):
-                raise ValueError('key_file "%s" does not exist' % cfg.key_file)
+                raise ImproperlyConfigured('key_file "%s" does not exist' %
+                                           cfg.key_file)
             ssl = SSLContext(keyfile=cfg.key_file, certfile=cfg.cert_file)
         address = parse_address(self.cfg.address)
         # First create the sockets
-        server = yield loop.create_server(asyncio.Protocol, *address)
+        try:
+            server = yield loop.create_server(asyncio.Protocol, *address)
+        except (OSError, socket.error) as e:
+            raise ImproperlyConfigured(str(e))
         addresses = []
         sockets = []
         for sock in server.sockets:
