@@ -557,4 +557,3 @@ class MultiFuture(Future):
         else:
             stream[key] = value
         return value
-
