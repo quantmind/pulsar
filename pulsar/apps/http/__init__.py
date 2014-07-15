@@ -269,7 +269,7 @@ from io import StringIO, BytesIO
 
 import pulsar
 from pulsar import (AbstractClient, Pool, coroutine_return, task, Connection,
-                    get_event_loop, ProtocolConsumer, new_event_loop)
+                    ProtocolConsumer)
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy3k
 from pulsar.utils.structures import mapping_iterator
@@ -279,7 +279,7 @@ from pulsar.utils.multipart import parse_options_header
 from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata, urlencode,
-                                  Headers, urllibr, get_environ_proxies,
+                                  Headers, get_environ_proxies,
                                   choose_boundary, urlunparse, request_host,
                                   is_succesful, HTTPError, URLError,
                                   get_hostport, cookiejar_from_dict,

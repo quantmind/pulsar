@@ -41,7 +41,6 @@ import gc
 import logging
 import unittest
 from inspect import isclass
-from functools import partial
 from contextlib import contextmanager
 
 try:
@@ -52,7 +51,7 @@ except ImportError:
 import pulsar
 from pulsar import (get_actor, send, multi_async, async, future_timeout,
                     TcpServer, coroutine_return, new_event_loop, task,
-                    Future, format_traceback, ImproperlyConfigured)
+                    format_traceback, ImproperlyConfigured)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.data import create_store
@@ -361,7 +360,6 @@ def check_server(name):
     :rtype: boolean
     '''
     cfg = get_actor().cfg
-    cfgname = '%s_server' % name
     addr = cfg.get('%s_server' % name)
     if addr:
         if ('%s://' % name) not in addr:

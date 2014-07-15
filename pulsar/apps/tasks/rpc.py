@@ -2,7 +2,7 @@ import pulsar
 from pulsar import coroutine_return, get_application
 from pulsar.apps import rpc
 
-from .backend import Task, TaskNotAvailable
+from .backend import Task
 
 
 __all__ = ['TaskQueueRpcMixin']

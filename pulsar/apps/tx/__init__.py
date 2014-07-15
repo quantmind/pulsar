@@ -7,13 +7,12 @@ for several protocols which can be used in pulsar by importing the
 .. warning::
 
     This is an experimental implementation, by any means complete.
-    Use at your own risk
+    Use at your own risk.
 
 The implementation replaces the twisted reactor with a proxy for
 an :ref:`asyncio event loop <asyncio-event-loop>`.
 Twisted Deferred and Failures are made compatible with pulsar
-by installing twisted asynchronous binding via the
-:func:`.add_async_binding` function.
+by decorating a callable with the :func:`.tx` decorator.
 
 Threads, signal handling, scheduling and so forth is handled by pulsar itself,
 twisted implementation is switched off.
@@ -22,20 +21,18 @@ twisted implementation is switched off.
 Implementation
 ====================
 
-.. autofunction:: check_twisted
-
-.. autoclass:: PulsarReactor
-   :members:
-   :member-order: bysource
+.. autofunction:: tx
 
 
 .. _twisted: http://twistedmatrix.com/
 '''
+import types
+from functools import wraps
+
 try:    # pragma    nocover
-    import twisted
     from twisted.internet.main import installReactor
     from twisted.internet.posixbase import PosixReactorBase
-    from twisted.internet.defer import Deferred
+    from twisted.internet.defer import Deferred, _inlineCallbacks
 except ImportError:     # pragma    nocover
     # This is for when we build documentation with sphinx in python 3
     import os
@@ -45,27 +42,30 @@ except ImportError:     # pragma    nocover
     else:
         raise
 
-import pulsar
-from pulsar import get_event_loop, Future, add_async_binding
+from pulsar import get_event_loop, Future
 
 
-def check_twisted(deferred, loop):
-    '''Binding for twisted.
-
-    Added to pulsar asynchronous engine via the :func:`.add_async_binding`
-    function.
+def tx(callable):
+    '''Decorator for callables returning a twisted deferred.
     '''
-    if isinstance(deferred, Deferred):
-        future = Future(loop=loop)
+    @wraps(callable)
+    def _(*args, **kwargs):
+        res = callable(*args, **kwargs)
+        if isinstance(res, types.GeneratorType):
+            res = _inlineCallbacks(None, res, Deferred())
+        if isinstance(res, Deferred):
+            future = Future()
+            res.addCallbacks(
+                future.set_result,
+                lambda failure: future.set_exception(failure.value))
+            future._deferred = res
+            return future
+        else:
+            raise TypeError(
+                "Callable %r should return a generator or a twisted Deferred"
+                % callable)
 
-        deferred.addCallbacks(
-            future.set_result,
-            lambda failure: future.set_exception(failure.value))
-
-        return future
-
-
-add_async_binding(check_twisted)
+    return _
 
 
 class PulsarReactor(PosixReactorBase):  # pragma    nocover

@@ -77,19 +77,17 @@ And the backend will be selected via::
 
 .. _redis: http://redis.io/
 '''
-import sys
 import time
 from functools import partial
 from datetime import datetime, timedelta
 from hashlib import sha1
 
 from pulsar import (task, async, EventHandler, PulsarException,
-                    Future, coroutine_return)
-from pulsar.utils.pep import itervalues, to_string
+                    Future, coroutine_return, future_timeout)
+from pulsar.utils.pep import itervalues
 from pulsar.utils.security import gen_unique_id
-from pulsar.apps.data import create_store, PubSubClient, odm
-from pulsar.utils.log import (LocalMixin, lazyproperty, lazymethod,
-                              LazyString)
+from pulsar.apps.data import odm
+from pulsar.utils.log import lazyproperty, LazyString
 
 from .models import JobRegistry
 from . import states
@@ -475,7 +473,6 @@ class TaskBackend(EventHandler):
         assert self.task_poller is None
         self.task_poller = worker._loop.call_soon(self.may_pool_task, worker)
         self.logger.debug('started polling tasks')
-        store = self.store
 
     def close(self):
         '''Close this :class:`TaskBackend`.
@@ -669,13 +666,13 @@ class TaskBackend(EventHandler):
         entries = {}
         if not self.schedule_periodic:
             return entries
-        for name, task in self.registry.filter_types('periodic'):
-            every = task.run_every
+        for name, t in self.registry.filter_types('periodic'):
+            every = t.run_every
             if isinstance(every, int):
                 every = timedelta(seconds=every)
             if not isinstance(every, timedelta):
                 raise ValueError('Schedule %s is not a timedelta' % every)
-            entries[name] = SchedulerEntry(name, every, task.anchor)
+            entries[name] = SchedulerEntry(name, every, t.anchor)
         return entries
 
     def task_done_callback(self, task_id, exc=None):

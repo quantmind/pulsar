@@ -47,7 +47,7 @@ class _localimpl:
             # as soon as the OS-level greenlet ends instead.
             local = wrlocal()
             if local is not None:
-                dct = local.dicts.pop(idt)
+                local.dicts.pop(idt)
 
         wrlocal = ref(self, local_deleted)
         wrgreenlet = ref(greenlet, greenlet_deleted)

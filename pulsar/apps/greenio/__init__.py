@@ -142,15 +142,11 @@ Psycopg2
 
 .. _gevent: http://www.gevent.org/
 '''
-from inspect import isgeneratorfunction
 from functools import wraps, partial
 
 import greenlet
 
-from pulsar import Future, get_event_loop, async, task, coroutine_return
-from pulsar.async.futures import Task, chain_future
-from pulsar.async.threads import run_in_executor
-from pulsar.utils.config import Global
+from pulsar import Future, get_event_loop, async, coroutine_return
 
 from .pool import GreenPool, RunInPool
 from .local import local

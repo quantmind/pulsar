@@ -40,22 +40,26 @@ Implementation
 import os
 import sys
 
-from pulsar import coroutine_return
 from pulsar.apps import ws, wsgi
 from pulsar.utils.log import process_global
 from pulsar.utils.system import json
 try:
-    from pulsar.apps.tx import twisted
+    twisted = True
+    from pulsar.apps.tx import tx
     from twisted.internet import protocol, endpoints, reactor
+    from twisted.internet.defer import returnValue
     from twisted.mail import imap4
 except ImportError:  # pragma    nocover
-    twisted = None    # This is for when we build docs
+    tx = lambda x: x
+    twisted = False    # This is for when we build docs
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
 
+@tx
 def mail_client(cfg, timeout=10):
     '''Create a new mail client using twisted IMAP4 library.'''
+    assert twisted, 'Twisted is not available'
     key = (cfg.mail_incoming, cfg.mail_username, cfg.mail_password)
     client = process_global(key)
     if not client:
@@ -67,7 +71,7 @@ def mail_client(cfg, timeout=10):
         yield client.login(cfg.mail_username, cfg.mail_password)
         yield client.select('INBOX')
         process_global(key, client, True)
-    coroutine_return(client)
+    returnValue(client)
     # info = yield client.fetchEnvelope(imap4.MessageSet(1))
     # print 'First message subject:', info[1]['ENVELOPE'][1]
 
@@ -94,6 +98,7 @@ class WsMail(ws.WS):
                 mailbox = yield client.examine(msg['mailbox'])
                 self.write(request, json.dumps({'mailbox': mailbox}))
 
+    @tx
     def _send_mailboxes(self, websocket):
         request = websocket.handshake
         result = yield request.cache.mailclient.list("", "*")

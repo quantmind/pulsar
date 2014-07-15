@@ -1,6 +1,3 @@
-import sys
-import unittest
-
 import pulsar
 from pulsar import coroutine_return
 from pulsar.utils.pep import ispy3k

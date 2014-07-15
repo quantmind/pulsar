@@ -30,7 +30,7 @@ as the waiting callback in psycopg2.
 .. autofunction:: make_asynchronous
 
 """
-from psycopg2 import ProgrammingError, OperationalError
+from psycopg2 import OperationalError
 from psycopg2 import extensions
 
 from pulsar import ImproperlyConfigured

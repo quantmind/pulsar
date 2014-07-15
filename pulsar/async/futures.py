@@ -20,10 +20,8 @@ __all__ = ['Future',
            'CancelledError',
            'TimeoutError',
            'InvalidStateError',
-           'FutureTypeError',
            'Return',
            'coroutine_return',
-           'add_async_binding',
            'maybe_async',
            'run_in_loop',
            'async',
@@ -39,10 +37,6 @@ __all__ = ['Future',
            'chain_future',
            'future_result_exc',
            'AsyncObject']
-
-
-class FutureTypeError(TypeError):
-    '''raised when invoking ``async`` on a wrong type.'''
 
 
 if hasattr(asyncio, 'Return'):
@@ -201,18 +195,13 @@ def async(coro_or_future, loop=None):
     '''Handle an asynchronous ``coro_or_future``.
 
     Equivalent to the ``asyncio.async`` function but returns a
-    :class:`.Future`. Raises :class:`.FutureTypeError` if ``value``
+    :class:`.Future`. Raises :class:`TypeError` if ``value``
     is not a generator nor a :class:`.Future`.
 
     :parameter coro_or_future: the value to convert to a :class:`.Future`.
     :parameter loop: optional :class:`.EventLoop`.
     :return: a :class:`.Future`.
     '''
-    if _bindings:
-        for binding in _bindings:
-            d = binding(coro_or_future, loop)
-            if d is not None:
-                return d
     if isinstance(coro_or_future, Future):
         return coro_or_future
     elif isinstance(coro_or_future, GeneratorType):
@@ -220,7 +209,7 @@ def async(coro_or_future, loop=None):
         task_factory = getattr(loop, 'task_factory', Task)
         return task_factory(coro_or_future, loop=loop)
     else:
-        raise FutureTypeError
+        raise TypeError
 
 
 def maybe_async(value, loop=None):
@@ -236,7 +225,7 @@ def maybe_async(value, loop=None):
     '''
     try:
         return async(value, loop=loop)
-    except FutureTypeError:
+    except TypeError:
         return value
 
 
@@ -288,7 +277,7 @@ def run_in_loop(loop, callback, *args, **kwargs):
         result = callback(*args, **kwargs)
         try:
             future = async(result, loop=loop)
-        except FutureTypeError:
+        except TypeError:
             coroutine_return(result)
         else:
             result = yield future
@@ -460,7 +449,7 @@ class Task(asyncio.Task):
                     # handle possibly asynchronous results
                     try:
                         result = async(result, loop=self._loop)
-                    except FutureTypeError:
+                    except TypeError:
                         pass
                 except Return as exc:
                     exc.raised = True
@@ -569,10 +558,3 @@ class MultiFuture(Future):
             stream[key] = value
         return value
 
-
-def add_async_binding(callable):
-    global _bindings
-    _bindings.append(callable)
-
-
-_bindings = []

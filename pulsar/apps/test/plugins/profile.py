@@ -187,7 +187,7 @@ class Profile(test.TestPlugin):
                         break
                     bits = line.split(' ')
                     try:
-                        ncalls = int(bits[0])
+                        int(bits[0])
                     except Exception:
                         continue
                     else:

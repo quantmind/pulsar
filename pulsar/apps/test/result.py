@@ -1,7 +1,6 @@
 import unittest
 from copy import deepcopy
 
-from pulsar import format_traceback
 from pulsar.utils.structures import AttributeDictionary
 
 from .utils import TestFailure, LOGGER

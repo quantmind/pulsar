@@ -133,7 +133,6 @@ class HTTPDigestAuth(Auth):
             s_auth = response.headers.get('www-authenticate', '')
             if 'digest' in s_auth.lower() and response._handle_401 < 2:
                 self.options = parse_dict_header(s_auth.replace('Digest ', ''))
-                client = response.producer
                 params = request.inp_params.copy()
                 headers = params.pop('headers', [])
                 headers.append(('authorization', self.encode(

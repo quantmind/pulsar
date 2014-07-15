@@ -1,9 +1,8 @@
-import sys
 from functools import partial
 from collections import namedtuple
 from copy import copy
 
-from pulsar import OneTime, async, Future
+from pulsar import OneTime, Future
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.internet import is_tls
@@ -59,7 +58,6 @@ def handle_redirect(response, exc=None):
 
 def _do_redirect(response, exc=None):
     request = response.request
-    client = request.client
     # done with current response
     url = response.headers.get('location')
     # Handle redirection without scheme (see: RFC 1808 Section 4)
@@ -189,9 +187,9 @@ class Tunneling:
         connection._processed -= 1
         connection.producer._requests_processed -= 1
         waiter = Future(loop=loop)
-        sslt = loop._make_ssl_transport(sock, connection, request._ssl,
-                                        waiter, server_side=False,
-                                        server_hostname=request._netloc)
+        loop._make_ssl_transport(sock, connection, request._ssl,
+                                 waiter, server_side=False,
+                                 server_hostname=request._netloc)
         yield waiter
         response = connection.current_consumer()
         response.start(request)

@@ -19,6 +19,7 @@ Ver. 0.8.5 - Development
 * Finally removed the ``get_request_loop`` method. Full compatibility with
   asyncio.
 * Bug fix in :class:`.Store` constructor
+* :ref:`Twisted integration <tutorials-twisted>` via the :func:`.tx` decorator
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================
