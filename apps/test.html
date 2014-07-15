@@ -98,10 +98,12 @@ In the above example the test suite will look for all python files
 in the <tt class="docutils literal"><span class="pre">regression</span></tt> module (in a recursive fashion), and for modules
 called <tt class="docutils literal"><span class="pre">tests</span></tt> in the <tt class="docutils literal"><span class="pre">examples</span></tt> module.</p>
 <p>To run the test suite:</p>
-<div class="highlight-python"><pre>python runtests.py</pre>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py
+</pre></div>
 </div>
 <p>Type:</p>
-<div class="highlight-python"><pre>python runtests.py --help</pre>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py --help
+</pre></div>
 </div>
 <p>For a list different options/parameters which can be used when running tests.</p>
 <div class="admonition note">
@@ -230,7 +232,8 @@ may be executed at once depending on their return values.
 By specifying the <a class="reference internal" href="../settings.html#setting-sequential"><em>&#8211;sequential</em></a> command line option,
 the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a>
 forces tests to be run in a sequential model, one after the other:</p>
-<div class="highlight-python"><pre>python runtests.py --sequential</pre>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py --sequential
+</pre></div>
 </div>
 <p>Alternatively, if you need to specify a Testcase which always runs its test
 functions in a sequential way, you can use the <a class="reference internal" href="#pulsar.apps.test.utils.sequential" title="pulsar.apps.test.utils.sequential"><tt class="xref py py-func docutils literal"><span class="pre">sequential()</span></tt></a> decorator:</p>
@@ -246,7 +249,8 @@ functions in a sequential way, you can use the <a class="reference internal" hre
 <h3>list labels<a class="headerlink" href="#list-labels" title="Permalink to this headline">¶</a></h3>
 <p>By passing the <tt class="docutils literal"><span class="pre">-l</span></tt> or <a class="reference internal" href="../settings.html#setting-list-labels"><em>&#8211;list-labels</em></a> flag
 to the command line, the full list of test labels available is displayed:</p>
-<div class="highlight-python"><pre>python runtests.py -l</pre>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py -l
+</pre></div>
 </div>
 </div>
 <div class="section" id="test-timeout">
@@ -254,7 +258,8 @@ to the command line, the full list of test labels available is displayed:</p>
 <p>When running asynchronous tests, it can be useful to set a cap on how
 long a test function can wait for results. This is what the
 <a class="reference internal" href="../settings.html#setting-test-timeout"><em>&#8211;test-timeout</em></a> command line flag does:</p>
-<div class="highlight-python"><pre>python runtests.py --test-timeout 10</pre>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py --test-timeout 10
+</pre></div>
 </div>
 <p>Set the test timeout to 10 seconds.</p>
 </div>
@@ -890,7 +895,7 @@ method.</p>
 <h3>AsyncAssert<a class="headerlink" href="#asyncassert" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.utils.AsyncAssert">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">AsyncAssert</tt><big>(</big><em>test=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#AsyncAssert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.AsyncAssert" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">AsyncAssert</tt><big>(</big><em>test</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#AsyncAssert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.AsyncAssert" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference external" href="http://users.rcn.com/python/download/Descriptor.htm">descriptor</a> added by the <em class="xref std std-ref">test-suite</em> to all python
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> loaded.</p>
 <p>It can be used to invoke the same <tt class="docutils literal"><span class="pre">assertXXX</span></tt> methods available in
@@ -911,7 +916,7 @@ For example:</p>
 <h3>run test server<a class="headerlink" href="#run-test-server" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.test.utils.run_test_server">
-<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">run_test_server</tt><big>(</big><em>*args</em>, <em>**kwds</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#run_test_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.run_test_server" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">run_test_server</tt><big>(</big><em>protocol_factory</em>, <em>loop</em>, <em>address=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#run_test_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.run_test_server" title="Permalink to this definition">¶</a></dt>
 <dd><p>A context manager for running a test server:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">run_test_server</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">)</span> <span class="k">as</span> <span class="n">server</span><span class="p">:</span>
     <span class="o">...</span>
@@ -1038,7 +1043,7 @@ For example:</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

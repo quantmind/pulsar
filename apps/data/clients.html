@@ -108,7 +108,8 @@ parameters. For example:</p>
 <p>The connection string is a way to specify the various parameters for the
 data store connection. All <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> support a connection string
 of the form:</p>
-<div class="highlight-python"><pre>&lt;scheme&gt;://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;/&lt;database&gt;?param1=...&amp;param2=...</pre>
+<div class="highlight-python"><div class="highlight"><pre>&lt;scheme&gt;://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;/&lt;database&gt;?param1=...&amp;param2=...
+</pre></div>
 </div>
 <p>where:</p>
 <ul class="simple">
@@ -165,14 +166,17 @@ or indirectly via the <a class="reference internal" href="odm.html#odm"><em>obje
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>url</strong> &#8211; <p>a valid <tt class="docutils literal"><span class="pre">url</span></tt> takes the following forms:</p>
 <p><a class="reference internal" href="stores.html#store-pulsar"><em>Pulsar datastore</em></a>:</p>
-<div class="highlight-python"><pre>pulsar://user:password@127.0.0.1:6410</pre>
+<div class="highlight-python"><div class="highlight"><pre>pulsar://user:password@127.0.0.1:6410
+</pre></div>
 </div>
 <p><a class="reference internal" href="stores.html#store-redis"><em>Redis</em></a>:</p>
-<div class="highlight-python"><pre>redis://user:password@127.0.0.1:6500/11?namespace=testdb</pre>
+<div class="highlight-python"><div class="highlight"><pre>redis://user:password@127.0.0.1:6500/11?namespace=testdb
+</pre></div>
 </div>
 <p><a class="reference internal" href="stores.html#store-couchdb"><em>CouchDb</em></a>:</p>
-<div class="highlight-python"><pre>couchdb://user:password@127.0.0.1:6500/testdb
-https+couchdb://user:password@127.0.0.1:6500/testdb</pre>
+<div class="highlight-python"><div class="highlight"><pre>couchdb://user:password@127.0.0.1:6500/testdb
+https+couchdb://user:password@127.0.0.1:6500/testdb
+</pre></div>
 </div>
 </li>
 <li><strong>loop</strong> &#8211; optional event loop, obtained by
@@ -688,7 +692,7 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.data.st
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

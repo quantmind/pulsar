@@ -31,7 +31,6 @@
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
-    <link rel="next" title="Distributed Task Queue" href="../tasks.html" />
     <link rel="prev" title="Object Data Mapper" href="odm.html" /> 
 </head>
  <body>
@@ -47,9 +46,6 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="../tasks.html" title="Distributed Task Queue"
-             accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="odm.html" title="Object Data Mapper"
              accesskey="P">previous</a> |</li>
@@ -282,7 +278,7 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
 
 <dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_delete">
-<tt class="descname">design_delete</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.design_delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_delete" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">design_delete</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.design_delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_delete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete an existing design document at <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
 </dd></dl>
 
@@ -314,7 +310,7 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
 
 <dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.request">
-<tt class="descname">request</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.request" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">request</tt><big>(</big><em>method</em>, <em>*bits</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute the HTTP request</p>
 </dd></dl>
 
@@ -377,9 +373,6 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
   <h4>Previous topic</h4>
   <p class="topless"><a href="odm.html"
                         title="previous chapter">Object Data Mapper</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../tasks.html"
-                        title="next chapter">Distributed Task Queue</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../sources/apps/data/stores.txt"
@@ -406,7 +399,7 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

@@ -282,7 +282,6 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
-                <span class="n">callbacks</span> <span class="o">=</span> <span class="n">events</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">events</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
 </div>
 <div class="viewcode-block" id="EventHandler.fire_event"><a class="viewcode-back" href="../../../api/events.html#pulsar.async.events.EventHandler.fire_event">[docs]</a>    <span class="k">def</span> <span class="nf">fire_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -385,7 +384,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

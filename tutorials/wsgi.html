@@ -97,7 +97,8 @@ which will be used to run your server:</p>
 <span id="multi-wsgi"></span><h2>Multiple Process<a class="headerlink" href="#multiple-process" title="Permalink to this headline">¶</a></h2>
 <p>When serving lots of requests, an asynchronous single-process server may not be
 enough. To add power, you can run the server using 2 or more process (workers):</p>
-<div class="highlight-python"><pre>python manage.py --workers 4</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py --workers 4
+</pre></div>
 </div>
 <p>Multi-process servers are only available for:</p>
 <ul class="simple">
@@ -142,7 +143,8 @@ executor (threading pool) of the actor serving the request.</li>
 <p>To control the number of thread workers in the event loop executor, one uses the
 <a class="reference internal" href="../settings.html#setting-thread-workers"><em>thread-workers</em></a> option. For example, the
 following command:</p>
-<div class="highlight-python"><pre>python manage.py -w 4 --thread-workers 10</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py -w 4 --thread-workers 10
+</pre></div>
 </div>
 <p>will run four <a class="reference internal" href="../design.html#concurrency"><em>process based actors</em></a>, each with
 an executor with up to 10 threads.</p>
@@ -236,7 +238,7 @@ For example, our <tt class="docutils literal"><span class="pre">manage.py</span>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

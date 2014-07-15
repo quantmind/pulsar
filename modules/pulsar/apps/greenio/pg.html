@@ -101,7 +101,7 @@
 <span class="sd">.. autofunction:: make_asynchronous</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">psycopg2</span> <span class="kn">import</span> <span class="n">ProgrammingError</span><span class="p">,</span> <span class="n">OperationalError</span>
+<span class="kn">from</span> <span class="nn">psycopg2</span> <span class="kn">import</span> <span class="n">OperationalError</span>
 <span class="kn">from</span> <span class="nn">psycopg2</span> <span class="kn">import</span> <span class="n">extensions</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ImproperlyConfigured</span>
@@ -119,10 +119,8 @@
             <span class="c"># Done with waiting</span>
             <span class="k">break</span>
         <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">extensions</span><span class="o">.</span><span class="n">POLL_READ</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&#39;reading&#39;</span><span class="p">)</span>
             <span class="n">wait_fd</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">extensions</span><span class="o">.</span><span class="n">POLL_WRITE</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&#39;writing&#39;</span><span class="p">)</span>
             <span class="n">wait_fd</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">read</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">OperationalError</span><span class="p">(</span><span class="s">&quot;Bad result from poll: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">state</span><span class="p">)</span>
@@ -181,7 +179,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

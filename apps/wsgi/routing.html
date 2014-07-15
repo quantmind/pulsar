@@ -314,6 +314,12 @@ set to the url of this <a class="reference internal" href="#pulsar.apps.wsgi.rou
 <dd><p>Check if <tt class="docutils literal"><span class="pre">router</span></tt> is <tt class="docutils literal"><span class="pre">self</span></tt> or a parent or <tt class="docutils literal"><span class="pre">self</span></tt></p>
 </dd></dl>
 
+<dl class="classmethod">
+<dt id="pulsar.apps.wsgi.routers.Router.make_router">
+<em class="property">classmethod </em><tt class="descname">make_router</tt><big>(</big><em>rule</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.make_router"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.make_router" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> form rule and parameters</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -517,6 +523,12 @@ variables, the set is empty.</p>
 <p>Derived from <a class="reference internal" href="#pulsar.apps.wsgi.route.Route.rule" title="pulsar.apps.wsgi.route.Route.rule"><tt class="xref py py-attr docutils literal"><span class="pre">rule</span></tt></a> replacing underscores and dashes.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.route.Route.ordered_variables">
+<tt class="descname">ordered_variables</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#Route.ordered_variables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.ordered_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuple of ordered url <a class="reference internal" href="#pulsar.apps.wsgi.route.Route.variables" title="pulsar.apps.wsgi.route.Route.variables"><tt class="xref py py-attr docutils literal"><span class="pre">variables</span></tt></a></p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.apps.wsgi.route.Route.url">
 <tt class="descname">url</tt><big>(</big><em>**urlargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#Route.url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.Route.url" title="Permalink to this definition">¶</a></dt>
@@ -616,7 +628,7 @@ the root route and <tt class="docutils literal"><span class="pre">None</span></t
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

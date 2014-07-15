@@ -84,7 +84,7 @@ another HTTP server such as <a class="reference external" href="http://nginx.org
 <p>The best way to deploy web apps using pulsar wsgi http server is
 to use nginx as reverse proxy server to pulsar server.</p>
 <p>For example, this minimal configuration does the trick:</p>
-<div class="highlight-python"><pre>server {
+<div class="highlight-python"><div class="highlight"><pre>server {
     listen 80;
     server_name example.org;
     access_log  /var/log/nginx/example.log;
@@ -96,14 +96,17 @@ to use nginx as reverse proxy server to pulsar server.</p>
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_redirect off;
     }
-}</pre>
+}
+</pre></div>
 </div>
 <p>Link the configuration file to the nginx site_enabled directory
 (usually in <tt class="docutils literal"><span class="pre">/etc/nginx/site_enabled</span></tt>):</p>
-<div class="highlight-python"><pre>sudo ln -s site.conf /etc/nginx/sites-enabled/site.conf</pre>
+<div class="highlight-python"><div class="highlight"><pre>sudo ln -s site.conf /etc/nginx/sites-enabled/site.conf
+</pre></div>
 </div>
 <p>and <a class="reference external" href="http://wiki.nginx.org/CommandLine">reload nginx</a>:</p>
-<div class="highlight-python"><pre>nginx -s reload</pre>
+<div class="highlight-python"><div class="highlight"><pre>nginx -s reload
+</pre></div>
 </div>
 </div>
 <div class="section" id="apache">
@@ -179,7 +182,7 @@ how it works.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

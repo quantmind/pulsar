@@ -418,43 +418,50 @@
         <span class="sd">&#39;&#39;&#39;Configured logger.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">loggers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">internal_level</span> <span class="o">=</span> <span class="s">&#39;warning&#39;</span>
         <span class="n">loghandlers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loghandlers</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_name</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_name</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;pulsar.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">default_loglevel</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c"># base name is always pulsar</span>
+        <span class="n">basename</span> <span class="o">=</span> <span class="s">&#39;pulsar&#39;</span>
+        <span class="c"># the namespace which uses the default log level</span>
+        <span class="c"># (the one without namespace prefix)</span>
+        <span class="n">defname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_name</span> <span class="ow">or</span> <span class="n">basename</span>
+        <span class="c"># the namespace name for this config</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="c">#</span>
+        <span class="n">namespaces</span> <span class="o">=</span> <span class="p">{</span><span class="n">basename</span><span class="p">:</span> <span class="n">internal_level</span><span class="p">,</span>
+                      <span class="s">&#39;asyncio&#39;</span><span class="p">:</span> <span class="n">internal_level</span><span class="p">,</span>
+                      <span class="s">&#39;trollius&#39;</span><span class="p">:</span> <span class="n">internal_level</span><span class="p">}</span>
+
         <span class="k">for</span> <span class="n">loglevel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loglevel</span> <span class="ow">or</span> <span class="p">():</span>
             <span class="n">bits</span> <span class="o">=</span> <span class="n">loglevel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
-            <span class="n">loglevel</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">namespace</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">namespace</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="n">namespaces</span><span class="p">[</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="ow">or</span> <span class="n">defname</span><span class="p">]</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">defname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespaces</span><span class="p">:</span>
+            <span class="n">namespaces</span><span class="p">[</span><span class="n">defname</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s">&#39;loglevel&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespaces</span><span class="p">:</span>
+            <span class="n">namespaces</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">namespaces</span><span class="p">[</span><span class="n">basename</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">namespaces</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="n">loggers</span><span class="p">:</span>
                 <span class="k">continue</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">daemon</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
+                <span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">hnd</span> <span class="ow">in</span> <span class="n">loghandlers</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">hnd</span> <span class="o">!=</span> <span class="s">&#39;console&#39;</span><span class="p">:</span>
+                        <span class="n">handlers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hnd</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">handlers</span><span class="p">:</span>
+                    <span class="n">handlers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;file&#39;</span><span class="p">)</span>
+                <span class="n">loghandlers</span> <span class="o">=</span> <span class="n">handlers</span>
             <span class="n">logger</span> <span class="o">=</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span>
                                        <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
-                                       <span class="n">level</span><span class="o">=</span><span class="n">loglevel</span><span class="p">,</span>
-                                       <span class="n">handlers</span><span class="o">=</span><span class="n">loghandlers</span><span class="p">)</span>
+                                       <span class="n">level</span><span class="o">=</span><span class="n">namespaces</span><span class="p">[</span><span class="n">namespace</span><span class="p">],</span>
+                                       <span class="n">handlers</span><span class="o">=</span><span class="n">loghandlers</span><span class="p">,</span>
+                                       <span class="n">rootlevel</span><span class="o">=</span><span class="n">internal_level</span><span class="p">)</span>
             <span class="n">loggers</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">logger</span>
-            <span class="k">if</span> <span class="n">namespace</span> <span class="o">==</span> <span class="s">&#39;pulsar&#39;</span> <span class="ow">or</span> <span class="n">default_loglevel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">default_loglevel</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">level</span>
-
-        <span class="n">default_loglevel</span> <span class="o">=</span> <span class="n">asyncio_loglevel</span> <span class="o">=</span> <span class="n">default_loglevel</span> <span class="ow">or</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="n">asyncio_loglevel</span><span class="p">:</span>
-            <span class="n">asyncio_loglevel</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">asyncio_loglevel</span><span class="p">,</span>
-                                   <span class="n">logging</span><span class="o">.</span><span class="n">_checkLevel</span><span class="p">(</span><span class="s">&#39;WARNING&#39;</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">loglevel</span> <span class="ow">in</span> <span class="p">((</span><span class="s">&#39;pulsar&#39;</span><span class="p">,</span> <span class="n">default_loglevel</span><span class="p">),</span>
-                                    <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default_loglevel</span><span class="p">),</span>
-                                    <span class="p">(</span><span class="s">&#39;asyncio&#39;</span><span class="p">,</span> <span class="n">asyncio_loglevel</span><span class="p">),</span>
-                                    <span class="p">(</span><span class="s">&#39;trollius&#39;</span><span class="p">,</span> <span class="n">asyncio_loglevel</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">namespace</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loggers</span><span class="p">:</span>
-                <span class="n">loggers</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span>
-                                                       <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
-                                                       <span class="n">level</span><span class="o">=</span><span class="n">loglevel</span><span class="p">,</span>
-                                                       <span class="n">handlers</span><span class="o">=</span><span class="n">loghandlers</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">loggers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">loggers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -864,6 +871,19 @@
 
 <span class="s">        Detaches the server from the controlling terminal and enters the</span>
 <span class="s">        background.</span>
+<span class="s">        &quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">Reload</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;reload&quot;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--reload&quot;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_bool</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="s">&quot;store_true&quot;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">        Auto reload modules when changes occurs.</span>
+
+<span class="s">        Useful during development.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
 
@@ -1300,7 +1320,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

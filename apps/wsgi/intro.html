@@ -110,10 +110,12 @@ module which responds with <tt class="docutils literal"><span class="pre">Hello<
 </div>
 <p>For more information regarding WSGI check the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep3333</a> specification.
 To run the application:</p>
-<div class="highlight-python"><pre>python script.py</pre>
+<div class="highlight-python"><div class="highlight"><pre>python script.py
+</pre></div>
 </div>
 <p>For available run options:</p>
-<div class="highlight-python"><pre>python script.py --help</pre>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --help
+</pre></div>
 </div>
 <div class="section" id="id2">
 <h2>WSGI Server<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
@@ -187,10 +189,13 @@ This argument should be supplied by the application only if
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> &#8211; bytes to write</li>
-<li><strong>force</strong> &#8211; Optional flag used internally.</li>
+<li><strong>force</strong> &#8211; Optional flag used internally</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> or the number of bytes written</p>
 </td>
 </tr>
 </tbody>
@@ -310,7 +315,7 @@ or newer and there was no Content-Length header set.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

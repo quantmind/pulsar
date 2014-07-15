@@ -82,10 +82,12 @@ module.</p>
 site with pulsar and how to include pulsar asynchronous request middlewares
 into django.
 Requires django 1.4 or above. To run:</p>
-<div class="highlight-python"><pre>python manage.py pulse</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse
+</pre></div>
 </div>
 <p>If running for the first time, issue the:</p>
-<div class="highlight-python"><pre>python manage.py syncdb</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py syncdb
+</pre></div>
 </div>
 <p>command and create the super user.</p>
 <p>This example uses the <a class="reference internal" href="../apps/pulse.html#apps-pulse"><em>django pulse</em></a> application.</p>
@@ -97,7 +99,8 @@ site starts. It is possible to specify a different data store via the
 <a class="reference internal" href="../settings.html#setting-data-store"><em>data-store option</em></a>.</p>
 <p>For example, it is possible to use <a class="reference external" href="http://redis.io/">redis</a> as an alternative data store
 simply by issuing the following start up command:</p>
-<div class="highlight-python"><pre>python manage.py pulse --data-store redis://127.0.0.1:6379/3</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse --data-store redis://127.0.0.1:6379/3
+</pre></div>
 </div>
 </div>
 <div class="section" id="views-and-middleware">
@@ -208,7 +211,7 @@ classes are used.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

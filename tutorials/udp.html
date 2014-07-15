@@ -82,7 +82,8 @@ module.</p>
 <div class="section" id="run-the-example">
 <h2>Run The example<a class="headerlink" href="#run-the-example" title="Permalink to this headline">¶</a></h2>
 <p>To run the server:</p>
-<div class="highlight-python"><pre>python manage.py</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py
+</pre></div>
 </div>
 <p>Open a new shell, in this directory, launch python and type:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">manage</span> <span class="kn">import</span> <span class="n">Echo</span>
@@ -113,7 +114,7 @@ The <a class="reference internal" href="#examples.echoudp.manage.EchoUdpProtocol
 <h3>Echo Udp Protocol<a class="headerlink" href="#echo-udp-protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="examples.echoudp.manage.EchoUdpProtocol">
-<em class="property">class </em><tt class="descclassname">examples.echoudp.manage.</tt><tt class="descname">EchoUdpProtocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>timeout=0</em><big>)</big><a class="reference internal" href="../modules/examples/echoudp/manage.html#EchoUdpProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echoudp.manage.EchoUdpProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">examples.echoudp.manage.</tt><tt class="descname">EchoUdpProtocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/examples/echoudp/manage.html#EchoUdpProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echoudp.manage.EchoUdpProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>A base <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.DatagramProtocol" title="pulsar.async.protocols.DatagramProtocol"><tt class="xref py py-class docutils literal"><span class="pre">DatagramProtocol</span></tt></a> for UDP echo clients and servers.</p>
 <p>The only difference between client and server is the implementation
 of the <a class="reference internal" href="#examples.echoudp.manage.EchoUdpProtocol.response" title="examples.echoudp.manage.EchoUdpProtocol.response"><tt class="xref py py-meth docutils literal"><span class="pre">response()</span></tt></a> method.</p>
@@ -185,7 +186,7 @@ method decorators such as <a class="reference internal" href="../api/async.html#
 
 <dl class="method">
 <dt id="examples.echoudp.manage.Echo.__call__">
-<tt class="descname">__call__</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/examples/echoudp/manage.html#Echo.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echoudp.manage.Echo.__call__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__call__</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="../modules/examples/echoudp/manage.html#Echo.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echoudp.manage.Echo.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a <tt class="docutils literal"><span class="pre">message</span></tt> to the server and wait for a response.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -282,7 +283,7 @@ method decorators such as <a class="reference internal" href="../api/async.html#
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

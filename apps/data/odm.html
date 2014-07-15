@@ -193,9 +193,10 @@ specify different back-ends for <tt class="docutils literal"><span class="pre">w
 operations.</p>
 <p>To specify a different back-end for read operations one registers a model in
 the following way:</p>
-<div class="highlight-python"><pre>models.register(User,
-                store=&#x27;redis://127.0.0.1:6379/8,
-                read_store=&#x27;redis://127.0.0.1:6380/1&#x27;)</pre>
+<div class="highlight-python"><div class="highlight"><pre>models.register(User,
+                store=&#39;redis://127.0.0.1:6379/8,
+                read_store=&#39;redis://127.0.0.1:6380/1&#39;)
+</pre></div>
 </div>
 </div>
 <div class="section" id="custom-managers">
@@ -247,10 +248,11 @@ related <a class="reference internal" href="#pulsar.apps.data.odm.model.Model" t
 field name in the back-end data-server. In other words, the
 <a class="reference internal" href="#odm-intro"><em>Session model</em></a> is mapped into a data-store
 object with the following entries:</p>
-<div class="highlight-python"><pre>{&#x27;id&#x27;: ...,
- &#x27;user_id&#x27;: ...,
- &#x27;expiry&#x27;: ...
- &#x27;data&#x27;: ...}</pre>
+<div class="highlight-python"><div class="highlight"><pre>{&#39;id&#39;: ...,
+ &#39;user_id&#39;: ...,
+ &#39;expiry&#39;: ...
+ &#39;data&#39;: ...}
+</pre></div>
 </div>
 </li>
 <li><p class="first">The attribute of a <tt class="xref py py-class docutils literal"><span class="pre">ForeignKey</span></tt> can be used to access the related
@@ -604,7 +606,7 @@ read-only operations</p>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.manager.Manager.create_table">
-<tt class="descname">create_table</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/manager.html#Manager.create_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.manager.Manager.create_table" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">create_table</tt><big>(</big><em>remove_existing=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/manager.html#Manager.create_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.manager.Manager.create_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the table/collection for the <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager._model" title="pulsar.apps.data.odm.manager.Manager._model"><tt class="xref py py-attr docutils literal"><span class="pre">_model</span></tt></a></p>
 </dd></dl>
 
@@ -622,7 +624,7 @@ read-only operations</p>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.manager.Manager.get">
-<tt class="descname">get</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/manager.html#Manager.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.manager.Manager.get" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get</tt><big>(</big><em>*args</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/manager.html#Manager.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.manager.Manager.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a single model</p>
 </dd></dl>
 
@@ -877,14 +879,14 @@ application to a store
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.mapper.Mapper.create_tables">
-<tt class="descclassname">Mapper.</tt><tt class="descname">create_tables</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/mapper.html#Mapper.create_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.mapper.Mapper.create_tables" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">Mapper.</tt><tt class="descname">create_tables</tt><big>(</big><em>remove_existing=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/mapper.html#Mapper.create_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.mapper.Mapper.create_tables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loop though <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper.registered_models" title="pulsar.apps.data.odm.mapper.Mapper.registered_models"><tt class="xref py py-attr docutils literal"><span class="pre">registered_models</span></tt></a> and issue the
 <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager.create_table" title="pulsar.apps.data.odm.manager.Manager.create_table"><tt class="xref py py-meth docutils literal"><span class="pre">Manager.create_table()</span></tt></a> method.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.mapper.Mapper.drop_tables">
-<tt class="descclassname">Mapper.</tt><tt class="descname">drop_tables</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/mapper.html#Mapper.drop_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.mapper.Mapper.drop_tables" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">Mapper.</tt><tt class="descname">drop_tables</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/mapper.html#Mapper.drop_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.mapper.Mapper.drop_tables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loop though <a class="reference internal" href="#pulsar.apps.data.odm.mapper.Mapper.registered_models" title="pulsar.apps.data.odm.mapper.Mapper.registered_models"><tt class="xref py py-attr docutils literal"><span class="pre">registered_models</span></tt></a> and issue the
 <a class="reference internal" href="#pulsar.apps.data.odm.manager.Manager.drop_table" title="pulsar.apps.data.odm.manager.Manager.drop_table"><tt class="xref py py-meth docutils literal"><span class="pre">Manager.drop_table()</span></tt></a> method.</p>
 </dd></dl>
@@ -1024,7 +1026,7 @@ with the <a class="reference internal" href="#pulsar.apps.data.odm.transaction.T
 <tt class="descname">commit</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/transaction.html#Transaction.commit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.transaction.Transaction.commit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Commit the transaction.</p>
 <p>This method can be invoked once only otherwise an
-<tt class="xref py py-class docutils literal"><span class="pre">InvalidOperation</span></tt> occurs.</p>
+<a class="reference internal" href="../../api/exceptions.html#pulsar.utils.exceptions.InvalidOperation" title="pulsar.utils.exceptions.InvalidOperation"><tt class="xref py py-class docutils literal"><span class="pre">InvalidOperation</span></tt></a> occurs.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1366,7 +1368,7 @@ follows the foreign-key relationship <tt class="docutils literal"><span class="p
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.query.Query.count">
-<tt class="descname">count</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query.count" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">count</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query.count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Count the number of objects selected by this <a class="reference internal" href="#pulsar.apps.data.odm.query.Query" title="pulsar.apps.data.odm.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a>.</p>
 <p>This method is efficient since the <a class="reference internal" href="#pulsar.apps.data.odm.query.Query" title="pulsar.apps.data.odm.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> does not
 receive any data from the server apart from the number of
@@ -1375,13 +1377,13 @@ matched elements.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.query.Query.all">
-<tt class="descname">all</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query.all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query.all" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">all</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query.all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query.all" title="Permalink to this definition">¶</a></dt>
 <dd><p>All objects selected by this <a class="reference internal" href="#pulsar.apps.data.odm.query.Query" title="pulsar.apps.data.odm.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.odm.query.Query.delete">
-<tt class="descname">delete</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query.delete" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">delete</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/odm/query.html#Query.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.odm.query.Query.delete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete all objects selected by this <a class="reference internal" href="#pulsar.apps.data.odm.query.Query" title="pulsar.apps.data.odm.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a>.</p>
 </dd></dl>
 
@@ -1585,7 +1587,7 @@ may need to do something here</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

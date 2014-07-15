@@ -134,7 +134,8 @@ a combination of the two.</p>
 <li>For python 2.7 it requires <a class="reference external" href="https://pypi.python.org/pypi/trollius">trollius</a>.</li>
 </ul>
 <p>Pulsar can be installed via <cite>pip</cite>:</p>
-<div class="highlight-python"><pre>pip install pulsar</pre>
+<div class="highlight-python"><div class="highlight"><pre>pip install pulsar
+</pre></div>
 </div>
 <p>or downloading the tarball from <a class="reference external" href="http://pypi.python.org/pypi/pulsar">pypi</a>.</p>
 <p>If <a class="reference external" href="http://cython.org/">cython</a> is available, c extensions will be compiled and installed.</p>
@@ -202,16 +203,18 @@ returned by Actor info method.</li>
 </div>
 <div class="section" id="running-tests">
 <h2>Running Tests<a class="headerlink" href="#running-tests" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar test suite uses the pulsar test application. If you are using python 2.6
-you need to install <a class="reference external" href="http://pypi.python.org/pypi/unittest2">unittest2</a>, and if not running on python 3.3, the <a class="reference external" href="http://pypi.python.org/pypi/mock">mock</a>
-library is also needed. To run tests:</p>
-<div class="highlight-python"><pre>python runtests.py</pre>
+<p>Pulsar test suite uses the pulsar test application.
+If not running on python 3.3 or above the <a class="reference external" href="http://pypi.python.org/pypi/mock">mock</a> is needed. To run tests:</p>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py
+</pre></div>
 </div>
 <p>For options and help type:</p>
-<div class="highlight-python"><pre>python runtests.py -h</pre>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py -h
+</pre></div>
 </div>
 <p><a class="reference external" href="http://www.python.org/dev/peps/pep-0008/">pep8</a> check (requires pep8 package):</p>
-<div class="highlight-python"><pre>python runtests.py --pep8</pre>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py --pep8 pulsar
+</pre></div>
 </div>
 </div>
 <div class="section" id="kudos">
@@ -236,8 +239,15 @@ of course. To do so, simply follow these guidelines:</p>
 <li>Fork <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar</a> on github</li>
 <li>Create a topic branch <tt class="docutils literal"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">my_branch</span></tt></li>
 <li>Push to your branch <tt class="docutils literal"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">my_branch</span></tt></li>
-<li>Create an issue at <a class="reference external" href="https://github.com/quantmind/pulsar/issues">https://github.com/quantmind/pulsar/issues</a> with pull request
-for the <tt class="docutils literal"><span class="pre">dev</span></tt> branch.</li>
+<li>Create an issue at <a class="reference external" href="https://github.com/quantmind/pulsar/issues">https://github.com/quantmind/pulsar/issues</a> with
+pull request for the <strong>dev branch</strong>.</li>
+</ul>
+<p>A good <tt class="docutils literal"><span class="pre">pull</span></tt> request should:</p>
+<ul class="simple">
+<li>Cover one bug fix or new feature only</li>
+<li>Include tests to cover the new code (inside the <tt class="docutils literal"><span class="pre">tests</span></tt> directory)</li>
+<li>Preferably have one commit only (you can use <a class="reference external" href="https://help.github.com/articles/about-git-rebase">rebase</a> to combine several
+commits into one)</li>
 </ul>
 </div>
 <div class="section" id="license">
@@ -318,7 +328,7 @@ file in the top distribution directory for the full license text.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

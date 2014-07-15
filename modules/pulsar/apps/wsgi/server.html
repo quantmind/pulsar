@@ -107,6 +107,7 @@
 
 
 <span class="n">MAX_CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
+<span class="n">MAX_TIME_IN_LOOP</span> <span class="o">=</span> <span class="mf">0.5</span>
 
 
 <span class="k">class</span> <span class="nc">FakeConnection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -382,21 +383,22 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span> <span class="o">=</span> <span class="n">StreamReader</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wsgi_environ</span><span class="p">())</span>
         <span class="c">#</span>
-        <span class="n">done</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">is_message_complete</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">done</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
-        <span class="c">#</span>
-        <span class="k">if</span> <span class="n">processed</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
-                <span class="c"># This is a parsing error, the client must have sent</span>
-                <span class="c"># bogus data</span>
-                <span class="k">raise</span> <span class="n">ProtocolError</span>
-            <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parser</span><span class="o">.</span><span class="n">is_message_complete</span><span class="p">():</span>
+            <span class="c">#</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">processed</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">processed</span><span class="p">:]</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_request</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="n">processed</span><span class="p">:]</span>
+        <span class="c">#</span>
+        <span class="k">elif</span> <span class="n">processed</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="c"># This is a parsing error, the client must have sent</span>
+            <span class="c"># bogus data</span>
+            <span class="k">raise</span> <span class="n">ProtocolError</span>
 </div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -479,26 +481,29 @@
 <span class="sd">        Required by the WSGI specification.</span>
 
 <span class="sd">        :param data: bytes to write</span>
-<span class="sd">        :param force: Optional flag used internally.</span>
+<span class="sd">        :param force: Optional flag used internally</span>
+<span class="sd">        :return: a :class:`~asyncio.Future` or the number of bytes written</span>
 <span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">write</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">HttpServerResponse</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">write</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">:</span>
             <span class="n">tosend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_headers</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span> <span class="o">=</span> <span class="n">tosend</span><span class="o">.</span><span class="n">flat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;on_headers&#39;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">)</span>
+            <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunked</span><span class="p">:</span>
-                <span class="n">chunks</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MAX_CHUNK_SIZE</span><span class="p">:</span>
                     <span class="n">chunk</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">:]</span>
                     <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
                     <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">force</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunked</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+            <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">chunks</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span>
 
     <span class="c">########################################################################</span>
     <span class="c">#    INTERNALS</span></div>
@@ -524,17 +529,32 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
                                         <span class="n">response</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span> <span class="n">exc_info</span><span class="p">)</span>
                 <span class="c">#</span>
+                <span class="c"># Do the actual writing</span>
+                <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
                     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
                         <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">chunk</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                        <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+                        <span class="k">yield</span> <span class="n">result</span>
+                        <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">time_in_loop</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+                        <span class="k">if</span> <span class="n">time_in_loop</span> <span class="o">&gt;</span> <span class="n">MAX_TIME_IN_LOOP</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                <span class="s">&#39;Released the event loop after </span><span class="si">%.3f</span><span class="s"> seconds&#39;</span><span class="p">,</span>
+                                <span class="n">time_in_loop</span><span class="p">)</span>
+                            <span class="k">yield</span> <span class="bp">None</span>
+                            <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="c">#</span>
-                <span class="c"># make sure we write headers</span>
+                <span class="c"># make sure we write headers and last chunk if needed</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
 
             <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>     <span class="c"># client disconnected, end this connection</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">wsgi_request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">handle_wsgi_error</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="bp">False</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -606,12 +626,9 @@
                              <span class="p">(</span><span class="s">&#39;Date&#39;</span><span class="p">,</span> <span class="n">format_date_time</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))])</span>
         <span class="k">return</span> <span class="n">environ</span>
 
-    <span class="k">def</span> <span class="nf">_new_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">_connection</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="o">.</span><span class="n">closed</span><span class="p">:</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">data_received</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">_buffer</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">connection</span><span class="o">.</span><span class="n">_current_consumer</span>
-        <span class="k">return</span> <span class="n">response</span></div>
+    <span class="k">def</span> <span class="nf">_new_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">data_received</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -657,7 +674,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

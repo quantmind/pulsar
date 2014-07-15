@@ -30,7 +30,7 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../index.html" />
-    <link rel="next" title="Pulsar Data Store Server" href="ds.html" />
+    <link rel="next" title="Greenlet Support" href="greenio.html" />
     <link rel="prev" title="Asynchronous HTTP client" href="http.html" /> 
 </head>
  <body>
@@ -47,7 +47,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="ds.html" title="Pulsar Data Store Server"
+          <a href="greenio.html" title="Greenlet Support"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="http.html" title="Asynchronous HTTP client"
@@ -77,14 +77,16 @@
 <p>The <a class="reference internal" href="#module-pulsar.apps.pulse" title="pulsar.apps.pulse"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pulse</span></tt></a> module is a <a class="reference external" href="https://www.djangoproject.com/">django application</a>
 for running a django web site with pulsar.
 Add it to the list of your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>:</p>
-<div class="highlight-python"><pre>INSTALLED_APPS = (
+<div class="highlight-python"><div class="highlight"><pre>INSTALLED_APPS = (
     ...,
-    &#x27;pulsar.apps.pulse&#x27;,
+    &#39;pulsar.apps.pulse&#39;,
     ...
-)</pre>
+)
+</pre></div>
 </div>
 <p>and run the site via the <tt class="docutils literal"><span class="pre">pulse</span></tt> command:</p>
-<div class="highlight-python"><pre>python manage.py pulse</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse
+</pre></div>
 </div>
 <p>Check the <a class="reference internal" href="../tutorials/django.html#tutorials-django"><em>django chat example</em></a> for a django chat
 application served by a multiprocessing pulsar server.</p>
@@ -97,7 +99,8 @@ To control the number of thread workers in the event loop executor (which
 is a pool of threads) one uses the
 <a class="reference internal" href="../settings.html#setting-thread-workers"><em>thread-workers</em></a> option. For example, the
 following command:</p>
-<div class="highlight-python"><pre>python manage.py pulse -w 4 --thread-workers 20</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse -w 4 --thread-workers 20
+</pre></div>
 </div>
 <p>will run four <a class="reference internal" href="../design.html#concurrency"><em>process based actors</em></a>, each with
 an executor with up to 20 threads.</p>
@@ -108,12 +111,14 @@ running the middleware in the event loop executor.
 Currently, this is available when using <a class="reference external" href="http://www.postgresql.org/">PostgreSql backend</a>
 only, and it requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet library</a>.</p>
 <p>To run django using greenlet support:</p>
-<div class="highlight-python"><pre>python manage.py pulse -w 4 --greenlet</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse -w 4 --greenlet
+</pre></div>
 </div>
 <p>By default it will run the django middleware on a pool of 100 greenlets (and
 therefore approximately 100 separate database connections per actor). To
 adjust this number:</p>
-<div class="highlight-python"><pre>python manage.py pulse -w 4 --greenlet 200</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse -w 4 --greenlet 200
+</pre></div>
 </div>
 </div>
 <div class="section" id="wsgi-middleware">
@@ -170,8 +175,8 @@ middleware is accessed.</p>
   <p class="topless"><a href="http.html"
                         title="previous chapter">Asynchronous HTTP client</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="ds.html"
-                        title="next chapter">Pulsar Data Store Server</a></p>
+  <p class="topless"><a href="greenio.html"
+                        title="next chapter">Greenlet Support</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/apps/pulse.txt"
@@ -198,7 +203,7 @@ middleware is accessed.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

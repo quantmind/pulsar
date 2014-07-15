@@ -148,19 +148,17 @@
 
 <span class="sd">.. _redis: http://redis.io/</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">PulsarException</span><span class="p">,</span> <span class="n">get_logger</span><span class="p">,</span>
-                    <span class="n">Future</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">get_request_loop</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">itervalues</span><span class="p">,</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">PulsarException</span><span class="p">,</span>
+                    <span class="n">Future</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">future_timeout</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">itervalues</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span><span class="p">,</span> <span class="n">PubSubClient</span><span class="p">,</span> <span class="n">odm</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="p">(</span><span class="n">LocalMixin</span><span class="p">,</span> <span class="n">lazyproperty</span><span class="p">,</span> <span class="n">lazymethod</span><span class="p">,</span>
-                              <span class="n">LazyString</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">odm</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">lazyproperty</span><span class="p">,</span> <span class="n">LazyString</span>
 
 <span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">JobRegistry</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">states</span>
@@ -247,8 +245,7 @@
 <span class="sd">        tasks from within a :ref:`job callable &lt;job-callable&gt;`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">get_request_loop</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">logger</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">logger</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">worker</span> <span class="o">=</span> <span class="n">worker</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">job</span> <span class="o">=</span> <span class="n">job</span>
@@ -277,8 +274,11 @@
     <span class="sd">&#39;&#39;&#39;flag indicating the :ref:`task status &lt;task-state&gt;`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">PickleField</span><span class="p">()</span>
+    <span class="sd">&#39;&#39;&#39;Key-valued parameters used by this task</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">odm</span><span class="o">.</span><span class="n">PickleField</span><span class="p">()</span>
-
+    <span class="sd">&#39;&#39;&#39;Result as a json object</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 <div class="viewcode-block" id="Task.done"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.Task.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return ``True`` if the :class:`Task` has finshed.</span>
 
@@ -544,7 +544,6 @@
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="ow">is</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">may_pool_task</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;started polling tasks&#39;</span><span class="p">)</span>
-        <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span>
 </div>
 <div class="viewcode-block" id="TaskBackend.close"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close this :class:`TaskBackend`.</span>
@@ -684,7 +683,7 @@
     <span class="k">def</span> <span class="nf">_execute_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
         <span class="c"># Asynchronous execution of a Task. This method is called</span>
         <span class="c"># on a separate thread of execution from the worker event loop thread.</span>
-        <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="n">worker</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">logger</span>
         <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span>
         <span class="n">task_id</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span>
         <span class="n">lock_id</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;lock_id&#39;</span><span class="p">)</span>
@@ -714,7 +713,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">concurrent_tasks</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
                 <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">TaskTimeout</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> timed-out&#39;</span><span class="p">,</span> <span class="n">task_info</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> timed-out&#39;</span><span class="p">,</span> <span class="n">task_info</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="n">status</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">REVOKED</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -738,13 +737,13 @@
         <span class="n">entries</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_periodic</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">entries</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">filter_types</span><span class="p">(</span><span class="s">&#39;periodic&#39;</span><span class="p">):</span>
-            <span class="n">every</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">run_every</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">filter_types</span><span class="p">(</span><span class="s">&#39;periodic&#39;</span><span class="p">):</span>
+            <span class="n">every</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">run_every</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">every</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
                 <span class="n">every</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">every</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">every</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Schedule </span><span class="si">%s</span><span class="s"> is not a timedelta&#39;</span> <span class="o">%</span> <span class="n">every</span><span class="p">)</span>
-            <span class="n">entries</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">SchedulerEntry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">every</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">anchor</span><span class="p">)</span>
+            <span class="n">entries</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">SchedulerEntry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">every</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">anchor</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">entries</span>
 
     <span class="k">def</span> <span class="nf">task_done_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -946,7 +945,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

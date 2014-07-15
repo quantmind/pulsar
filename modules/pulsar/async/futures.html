@@ -67,18 +67,16 @@
           <div class="body">
             
   <h1>Source code for pulsar.async.futures</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">traceback</span>
 <span class="kn">import</span> <span class="nn">types</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">namedtuple</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isgeneratorfunction</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span><span class="p">,</span> <span class="n">partial</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">default_timer</span><span class="p">,</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="nb">range</span>
 
 <span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">MAX_ASYNC_WHILE</span>
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="p">(</span><span class="n">asyncio</span><span class="p">,</span> <span class="n">get_request_loop</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">,</span>
-                     <span class="n">_PENDING</span><span class="p">,</span> <span class="n">_CANCELLED</span><span class="p">,</span> <span class="n">_FINISHED</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="p">(</span><span class="n">asyncio</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span>
+                     <span class="n">LOGGER</span><span class="p">,</span> <span class="n">_PENDING</span><span class="p">,</span> <span class="n">_CANCELLED</span><span class="p">,</span> <span class="n">_FINISHED</span><span class="p">)</span>
 
 
 <span class="n">CancelledError</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span>
@@ -91,10 +89,8 @@
            <span class="s">&#39;CancelledError&#39;</span><span class="p">,</span>
            <span class="s">&#39;TimeoutError&#39;</span><span class="p">,</span>
            <span class="s">&#39;InvalidStateError&#39;</span><span class="p">,</span>
-           <span class="s">&#39;FutureTypeError&#39;</span><span class="p">,</span>
            <span class="s">&#39;Return&#39;</span><span class="p">,</span>
            <span class="s">&#39;coroutine_return&#39;</span><span class="p">,</span>
-           <span class="s">&#39;add_async_binding&#39;</span><span class="p">,</span>
            <span class="s">&#39;maybe_async&#39;</span><span class="p">,</span>
            <span class="s">&#39;run_in_loop&#39;</span><span class="p">,</span>
            <span class="s">&#39;async&#39;</span><span class="p">,</span>
@@ -110,10 +106,6 @@
            <span class="s">&#39;chain_future&#39;</span><span class="p">,</span>
            <span class="s">&#39;future_result_exc&#39;</span><span class="p">,</span>
            <span class="s">&#39;AsyncObject&#39;</span><span class="p">]</span>
-
-
-<span class="k">class</span> <span class="nc">FutureTypeError</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;raised when invoking ``async`` on a wrong type.&#39;&#39;&#39;</span>
 
 
 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">asyncio</span><span class="p">,</span> <span class="s">&#39;Return&#39;</span><span class="p">):</span>
@@ -219,8 +211,8 @@
                 <span class="n">exc</span> <span class="o">=</span> <span class="n">e</span>
             <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">errback</span><span class="p">:</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">errback</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
                     <span class="n">exc</span> <span class="o">=</span> <span class="bp">None</span>
-                    <span class="n">result</span> <span class="o">=</span> <span class="n">errback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">callback</span><span class="p">:</span>
@@ -231,7 +223,7 @@
             <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="nb">next</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
-                <span class="n">chain</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">next</span><span class="o">=</span><span class="nb">next</span><span class="p">)</span>
+                <span class="n">chain_future</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">next</span><span class="o">=</span><span class="nb">next</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">next</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
@@ -254,7 +246,7 @@
     <span class="k">if</span> <span class="n">future</span><span class="o">.</span><span class="n">_state</span> <span class="o">==</span> <span class="n">_CANCELLED</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="n">CancelledError</span><span class="p">()</span>
     <span class="k">elif</span> <span class="n">future</span><span class="o">.</span><span class="n">_exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="n">fut</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(),</span> <span class="bp">None</span>
 
@@ -272,26 +264,21 @@
     <span class="sd">&#39;&#39;&#39;Handle an asynchronous ``coro_or_future``.</span>
 
 <span class="sd">    Equivalent to the ``asyncio.async`` function but returns a</span>
-<span class="sd">    :class:`.Future`. Raises :class:`.FutureTypeError` if ``value``</span>
+<span class="sd">    :class:`.Future`. Raises :class:`TypeError` if ``value``</span>
 <span class="sd">    is not a generator nor a :class:`.Future`.</span>
 
 <span class="sd">    :parameter coro_or_future: the value to convert to a :class:`.Future`.</span>
 <span class="sd">    :parameter loop: optional :class:`.EventLoop`.</span>
 <span class="sd">    :return: a :class:`.Future`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">_bindings</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">binding</span> <span class="ow">in</span> <span class="n">_bindings</span><span class="p">:</span>
-            <span class="n">d</span> <span class="o">=</span> <span class="n">binding</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">d</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">coro_or_future</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">GeneratorType</span><span class="p">):</span>
-        <span class="n">loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_request_loop</span><span class="p">()</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span>
         <span class="n">task_factory</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="s">&#39;task_factory&#39;</span><span class="p">,</span> <span class="n">Task</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">task_factory</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">FutureTypeError</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span>
 
 </div>
 <div class="viewcode-block" id="maybe_async"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.maybe_async">[docs]</a><span class="k">def</span> <span class="nf">maybe_async</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -306,8 +293,8 @@
 <span class="sd">    :return: a :class:`.Future` or a synchronous ``value``.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">FutureTypeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value</span>
 
 </div>
@@ -359,7 +346,7 @@
         <span class="n">result</span> <span class="o">=</span> <span class="n">callback</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">FutureTypeError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
             <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">future</span>
@@ -530,8 +517,8 @@
                         <span class="n">result</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">coro</span><span class="p">)</span>
                     <span class="c"># handle possibly asynchronous results</span>
                     <span class="k">try</span><span class="p">:</span>
-                        <span class="n">result</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-                    <span class="k">except</span> <span class="n">FutureTypeError</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
                         <span class="k">pass</span>
                 <span class="k">except</span> <span class="n">Return</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                     <span class="n">exc</span><span class="o">.</span><span class="n">raised</span> <span class="o">=</span> <span class="bp">True</span>
@@ -639,14 +626,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stream</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">return</span> <span class="n">value</span>
-
-
-<div class="viewcode-block" id="add_async_binding"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.add_async_binding">[docs]</a><span class="k">def</span> <span class="nf">add_async_binding</span><span class="p">(</span><span class="nb">callable</span><span class="p">):</span>
-    <span class="k">global</span> <span class="n">_bindings</span>
-    <span class="n">_bindings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
-
-</div>
-<span class="n">_bindings</span> <span class="o">=</span> <span class="p">[]</span>
 </pre></div>
 
           </div>
@@ -692,7 +671,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

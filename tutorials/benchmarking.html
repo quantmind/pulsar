@@ -76,6 +76,11 @@
             
   <div class="section" id="benchmarking">
 <h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="test-concurrency">
+<h2>Test Concurrency<a class="headerlink" href="#test-concurrency" title="Permalink to this headline">¶</a></h2>
+<p>The simpliest way to benchmark pulsar is to use the <em class="xref std std-ref">HttpBin</em> example
+application. It is a web server responding to several urls.</p>
+</div>
 <div class="section" id="test-slow-clients">
 <h2>Test slow clients<a class="headerlink" href="#test-slow-clients" title="Permalink to this headline">¶</a></h2>
 <p>Testing pulsar with <a class="reference external" href="http://ha.ckers.org/slowloris/">slowloris</a> is a great way to check the performance under
@@ -85,13 +90,16 @@ low bandwidth yet greedy clients.</p>
 </pre></div>
 </div>
 <p>and set:</p>
-<div class="highlight-python"><pre>ulimit -n 1000</pre>
+<div class="highlight-python"><div class="highlight"><pre>ulimit -n 1000
+</pre></div>
 </div>
 <p>Check <a class="reference external" href="http://ha.ckers.org/slowloris/">slowloris</a> usage with:</p>
-<div class="highlight-python"><pre>perldoc slowloris.pl</pre>
+<div class="highlight-python"><div class="highlight"><pre>perldoc slowloris.pl
+</pre></div>
 </div>
 <p>To test for slow bandwidth greedy clients:</p>
-<div class="highlight-python"><pre>./slowloris.pl -dns www.example.com -port 80 -timeout 30 -num 1000</pre>
+<div class="highlight-python"><div class="highlight"><pre>./slowloris.pl -dns www.example.com -port 80 -timeout 30 -num 1000
+</pre></div>
 </div>
 </div>
 <div class="section" id="pulsar-store-versus-redis">
@@ -100,10 +108,12 @@ low bandwidth yet greedy clients.</p>
 measuring the speed of the python event loop and parsing with respect
 a superfast C implementation like redis.</p>
 <p>First lunch the pulsar ds example:</p>
-<div class="highlight-python"><pre>python manage.py</pre>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py
+</pre></div>
 </div>
 <p>Than use the <tt class="docutils literal"><span class="pre">redis-benchmark</span></tt> executable, for example:</p>
-<div class="highlight-python"><pre>./redis-benchmark -t set -n 1000000 -d 20 -c 100 -p 6410</pre>
+<div class="highlight-python"><div class="highlight"><pre>./redis-benchmark -t set -n 1000000 -d 20 -c 100 -p 6410
+</pre></div>
 </div>
 <p>Test the set command with 100 concurrent clients with a payload of 20 bytes,
 1 million times.</p>
@@ -138,6 +148,7 @@ a superfast C implementation like redis.</p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Benchmarking</a><ul>
+<li><a class="reference internal" href="#test-concurrency">Test Concurrency</a></li>
 <li><a class="reference internal" href="#test-slow-clients">Test slow clients</a></li>
 <li><a class="reference internal" href="#pulsar-store-versus-redis">Pulsar store versus Redis</a></li>
 </ul>
@@ -176,7 +187,7 @@ a superfast C implementation like redis.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

@@ -103,12 +103,67 @@
 
 <span class="sd">In both cases, the :class:`~pulsar.apps.greenio` application is what you need.</span>
 
+<span class="sd">.. _green-wsgi:</span>
+
+<span class="sd">Green WSGI</span>
+<span class="sd">---------------</span>
+
+<span class="sd">Assume you are using pulsar web server and would like to write your application</span>
+<span class="sd">in an implicit asynchronous mode, i.e. without dealing with futures nor</span>
+<span class="sd">coroutines, then you can wrap your wsgi ``app`` with the :class:`.RunInPool`</span>
+<span class="sd">utility::</span>
+
+<span class="sd">    from pulsar.apps import wsgi, greenio</span>
+
+<span class="sd">    callable = wsgi.WsgiHandler([wsgi.wait_for_body_middleware,</span>
+<span class="sd">                                 greenio.RunInPool(app, 20)])</span>
+
+<span class="sd">    wsgi.WsgiServer(callable=callable).start()</span>
+
+<span class="sd">The :class:`.RunInPool` manages a pool of greenlets which execute your</span>
+<span class="sd">application. In this way, within your ``app`` you can invoke the</span>
+<span class="sd">:func:`.wait` function when needing to wait for asynchronous results to be</span>
+<span class="sd">ready.</span>
+
+<span class="sd">.. _green-http:</span>
+
+<span class="sd">Green Http</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">The :class:`.HttpClient` can be used with greenlets::</span>
+
+<span class="sd">    &gt;&gt;&gt; from pulsar.apps.http import HttpClient</span>
+<span class="sd">    &gt;&gt;&gt; http = HttpClient(green=True)</span>
+<span class="sd">    &gt;&gt;&gt; http.green</span>
+<span class="sd">    True</span>
+
+<span class="sd">And now you can write synchronous looking code and run it in a separate</span>
+<span class="sd">greenlet via the :func:`.run_in_greenlet` decorator::</span>
+
+<span class="sd">    @greenio.run_in_greenlet</span>
+<span class="sd">    def example():</span>
+<span class="sd">        response = http.get(&#39;http://bbc.co.uk&#39;)</span>
+<span class="sd">        ...</span>
+<span class="sd">        return &#39;done&#39;</span>
+
+
+<span class="sd">and somewhere, in your asynchronous code::</span>
+
+<span class="sd">        result = yield example()</span>
+<span class="sd">        result == &#39;done&#39;</span>
+
+
+<span class="sd">the :func:`.run_in_greenlet` decorator, execute the function on a child</span>
+<span class="sd">greenlet without blocking the asynchronous engine. Once the ``example``</span>
+<span class="sd">function returns, the asynchronous code continue from the ``yield``</span>
+<span class="sd">statement as usual.</span>
+
 
 <span class="sd">API</span>
 <span class="sd">======</span>
 
 <span class="sd">Wait</span>
-<span class="sd">------</span>
+<span class="sd">----------</span>
 
 <span class="sd">.. autofunction:: wait</span>
 
@@ -157,15 +212,11 @@
 
 <span class="sd">.. _gevent: http://www.gevent.org/</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isgeneratorfunction</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span><span class="p">,</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">greenlet</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">coroutine_return</span>
-<span class="kn">from</span> <span class="nn">pulsar.async.futures</span> <span class="kn">import</span> <span class="n">Task</span><span class="p">,</span> <span class="n">chain_future</span>
-<span class="kn">from</span> <span class="nn">pulsar.async.threads</span> <span class="kn">import</span> <span class="n">run_in_executor</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">Global</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span>
 
 <span class="kn">from</span> <span class="nn">.pool</span> <span class="kn">import</span> <span class="n">GreenPool</span><span class="p">,</span> <span class="n">RunInPool</span>
 <span class="kn">from</span> <span class="nn">.local</span> <span class="kn">import</span> <span class="n">local</span>
@@ -178,7 +229,7 @@
 <div class="viewcode-block" id="run_in_greenlet"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.run_in_greenlet">[docs]</a><span class="k">def</span> <span class="nf">run_in_greenlet</span><span class="p">(</span><span class="nb">callable</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Decorator to run a ``callable`` on a new greenlet.</span>
 
-<span class="sd">    A callable decorated with this decorator returns a coroutine.</span>
+<span class="sd">    A ``callable`` decorated with this decorator returns a coroutine</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="nd">@wraps</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -242,9 +293,9 @@
 
 </div>
 <div class="viewcode-block" id="wait"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.wait">[docs]</a><span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Wait for a coroutine or a future to complete.</span>
+    <span class="sd">&#39;&#39;&#39;Wait for a coroutine or a :class:&#39;~asyncio.Future` to complete.</span>
 
-<span class="sd">    This method must be called from a greenlet other than the main one</span>
+<span class="sd">    **This function must be called from a greenlet other than the main one**.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">current</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span>
     <span class="n">parent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
@@ -332,7 +383,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

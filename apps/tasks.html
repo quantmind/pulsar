@@ -31,7 +31,7 @@
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../index.html" />
     <link rel="next" title="Test Suite" href="test.html" />
-    <link rel="prev" title="Available Clients" href="data/stores.html" /> 
+    <link rel="prev" title="Greenlet Support" href="greenio.html" /> 
 </head>
  <body>
 
@@ -50,7 +50,7 @@
           <a href="test.html" title="Test Suite"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="data/stores.html" title="Available Clients"
+          <a href="greenio.html" title="Greenlet Support"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li> 
       </ul>
@@ -252,7 +252,8 @@ class:<cite>.Task</cite> is created and ready to be queued.</li>
 </pre></div>
 </div>
 <p>And the backend will be selected via:</p>
-<div class="highlight-python"><pre>--task-backend mybackend://host:port</pre>
+<div class="highlight-python"><div class="highlight"><pre>--task-backend mybackend://host:port
+</pre></div>
 </div>
 </div>
 </div>
@@ -492,6 +493,18 @@ instance.</p>
 <dd><p>flag indicating the <a class="reference internal" href="#task-state"><em>task status</em></a></p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backend.Task.kwargs">
+<tt class="descname">kwargs</tt><em class="property"> = None</em><a class="headerlink" href="#pulsar.apps.tasks.backend.Task.kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Key-valued parameters used by this task</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.tasks.backend.Task.result">
+<tt class="descname">result</tt><em class="property"> = None</em><a class="headerlink" href="#pulsar.apps.tasks.backend.Task.result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result as a json object</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.apps.tasks.backend.Task.done">
 <tt class="descname">done</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks/backend.html#Task.done"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backend.Task.done" title="Permalink to this definition">¶</a></dt>
@@ -556,7 +569,8 @@ Passed by the task-queue application
 <dd><p>The (asynchronous) timeout for polling tasks from the task queue.</p>
 <p>It is always a positive number and it can be specified via the
 backend connection string:</p>
-<div class="highlight-python"><pre>local://?poll_timeout=3</pre>
+<div class="highlight-python"><div class="highlight"><pre>local://?poll_timeout=3
+</pre></div>
 </div>
 <p>There shouldn&#8217;t be any reason to modify the default value.</p>
 <p>Default: <tt class="docutils literal"><span class="pre">2</span></tt>.</p>
@@ -594,7 +608,7 @@ or <tt class="docutils literal"><span class="pre">task_done</span></tt></p>
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.backend.TaskBackend.queue_task">
-<tt class="descname">queue_task</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks/backend.html#TaskBackend.queue_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backend.TaskBackend.queue_task" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">queue_task</tt><big>(</big><em>jobname</em>, <em>meta_params=None</em>, <em>expiry=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks/backend.html#TaskBackend.queue_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backend.TaskBackend.queue_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Try to queue a new <em class="xref std std-ref">Task</em>.</p>
 <p>This method returns a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> which results in the
 task <tt class="docutils literal"><span class="pre">id</span></tt> created. If <tt class="docutils literal"><span class="pre">jobname</span></tt> is not a valid
@@ -980,8 +994,8 @@ By default it returns an empty dictionary.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="data/stores.html"
-                        title="previous chapter">Available Clients</a></p>
+  <p class="topless"><a href="greenio.html"
+                        title="previous chapter">Greenlet Support</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="test.html"
                         title="next chapter">Test Suite</a></p>
@@ -1011,7 +1025,7 @@ By default it returns an empty dictionary.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

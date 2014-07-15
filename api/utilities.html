@@ -417,7 +417,7 @@ by the client)</li>
 <tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">parse_close</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#parse_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.parse_close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse the body of a close <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
 <p>Returns a tuple (<tt class="docutils literal"><span class="pre">code</span></tt>, <tt class="docutils literal"><span class="pre">reason</span></tt>) if successful otherwise
-raise <tt class="xref py py-class docutils literal"><span class="pre">ProtocolError</span></tt>.</p>
+raise <a class="reference internal" href="exceptions.html#pulsar.utils.exceptions.ProtocolError" title="pulsar.utils.exceptions.ProtocolError"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolError</span></tt></a>.</p>
 </dd></dl>
 
 </div>
@@ -806,7 +806,8 @@ it returns an empty dictionary.</p>
 <dt id="pulsar.utils.tools.checkarity">
 <tt class="descclassname">pulsar.utils.tools.</tt><tt class="descname">checkarity</tt><big>(</big><em>func</em>, <em>args</em>, <em>kwargs</em>, <em>discount=0</em><big>)</big><a class="headerlink" href="#pulsar.utils.tools.checkarity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if arguments respect a given function arity and return
-a error message if the check did not pass, otherwise it returns <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+an error message if the check did not pass,
+otherwise it returns <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1152,7 +1153,7 @@ taken from python.</p>
 
 <dl class="function">
 <dt id="pulsar.utils.log.configured_logger">
-<tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">configured_logger</tt><big>(</big><em>name</em>, <em>config=None</em>, <em>level=None</em>, <em>handlers=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.configured_logger" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">configured_logger</tt><big>(</big><em>name</em>, <em>config=None</em>, <em>level=None</em>, <em>handlers=None</em>, <em>rootlevel=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.configured_logger" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configured logger.</p>
 </dd></dl>
 
@@ -1320,7 +1321,7 @@ front of <tt class="docutils literal"><span class="pre">sys.path</span></tt> usi
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

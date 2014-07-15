@@ -76,6 +76,26 @@
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="ver-0-8-5-development">
 <h2>Ver. 0.8.5 - Development<a class="headerlink" href="#ver-0-8-5-development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Added <a class="reference internal" href="api/protocols.html#protocol-wrappers-api"><em>protocol wrappers</em></a> for
+better managing extensions on protocols</li>
+<li>Better handling of streaming responses by the wsgi server</li>
+<li>Added the <a class="reference internal" href="settings.html#setting-reload"><em>&#8211;reload</em></a> command line option and
+configuration parameter. If used, pulsar auto-reload code changes (useful
+during development)</li>
+<li>Added <tt class="docutils literal"><span class="pre">file</span></tt> log handler</li>
+<li>Javascript and Css defaults libraries moved to a new project
+(<a class="reference external" href="https://github.com/quantmind/jslibs">https://github.com/quantmind/jslibs</a>) and the json file
+(<a class="reference external" href="http://quantmind.github.io/jslibs/libs.json">http://quantmind.github.io/jslibs/libs.json</a>) lazily loaded if needed by
+either <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Links" title="pulsar.apps.wsgi.content.Links"><tt class="xref py py-class docutils literal"><span class="pre">Links</span></tt></a> or <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Scripts" title="pulsar.apps.wsgi.content.Scripts"><tt class="xref py py-class docutils literal"><span class="pre">Scripts</span></tt></a> classes</li>
+<li>The <a class="reference internal" href="apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">HttpClient</span></tt></a> can be used in conjunction with
+<a class="reference internal" href="apps/greenio.html#green-http"><em>greenlet support</em></a> to write implicit asynchronous HTTP
+requests</li>
+<li>Finally removed the <tt class="docutils literal"><span class="pre">get_request_loop</span></tt> method. Full compatibility with
+asyncio.</li>
+<li>Bug fix in <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> constructor</li>
+<li><a class="reference internal" href="tutorials/webmail.html#tutorials-twisted"><em>Twisted integration</em></a> via the <a class="reference internal" href="tutorials/webmail.html#pulsar.apps.tx.tx" title="pulsar.apps.tx.tx"><tt class="xref py py-func docutils literal"><span class="pre">tx()</span></tt></a> decorator</li>
+</ul>
 </div>
 <div class="section" id="ver-0-8-4-2014-jul-07">
 <h2>Ver. 0.8.4 - 2014-Jul-07<a class="headerlink" href="#ver-0-8-4-2014-jul-07" title="Permalink to this headline">¶</a></h2>
@@ -714,7 +734,7 @@ asynchronous test suite and asynchronous shell.</li>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

@@ -85,7 +85,7 @@ implementing the Protocol/Transport paradigm. They are based on
 <h3>PulsarProtocol<a class="headerlink" href="#pulsarprotocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.PulsarProtocol">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">PulsarProtocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>timeout=0</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">PulsarProtocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>A mixin class for both <a class="reference internal" href="#pulsar.async.protocols.Protocol" title="pulsar.async.protocols.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> and
 <a class="reference internal" href="#pulsar.async.protocols.DatagramProtocol" title="pulsar.async.protocols.DatagramProtocol"><tt class="xref py py-class docutils literal"><span class="pre">DatagramProtocol</span></tt></a>.</p>
 <p>A <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a> is an <a class="reference internal" href="events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> which has
@@ -124,13 +124,6 @@ the producer has processed at the time it created this
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.async.protocols.PulsarProtocol.timeout">
-<tt class="descname">timeout</tt><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol.timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol.timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of seconds to keep alive this connection when idle.</p>
-<p>A value of <tt class="docutils literal"><span class="pre">0</span></tt> means no timeout.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.async.protocols.PulsarProtocol.producer">
 <tt class="descname">producer</tt><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol.producer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol.producer" title="Permalink to this definition">¶</a></dt>
 <dd><p>The producer of this <a class="reference internal" href="#pulsar.async.protocols.Protocol" title="pulsar.async.protocols.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a>.</p>
@@ -158,7 +151,7 @@ the producer has processed at the time it created this
 <dt id="pulsar.async.protocols.PulsarProtocol.connection_made">
 <tt class="descname">connection_made</tt><big>(</big><em>transport</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol.connection_made"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol.connection_made" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol.transport" title="pulsar.async.protocols.PulsarProtocol.transport"><tt class="xref py py-attr docutils literal"><span class="pre">transport</span></tt></a>, fire the <tt class="docutils literal"><span class="pre">connection_made</span></tt> event
-and adds a <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol.timeout" title="pulsar.async.protocols.PulsarProtocol.timeout"><tt class="xref py py-attr docutils literal"><span class="pre">timeout</span></tt></a> for idle connections.</p>
+and adds a <tt class="xref py py-attr docutils literal"><span class="pre">timeout</span></tt> for idle connections.</p>
 </dd></dl>
 
 <dl class="method">
@@ -173,12 +166,6 @@ and adds a <a class="reference internal" href="#pulsar.async.protocols.PulsarPro
 <dd><p>The socket was closed from the remote end</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pulsar.async.protocols.PulsarProtocol.set_timeout">
-<tt class="descname">set_timeout</tt><big>(</big><em>timeout</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol.set_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol.set_timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set a new <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol.timeout" title="pulsar.async.protocols.PulsarProtocol.timeout"><tt class="xref py py-attr docutils literal"><span class="pre">timeout</span></tt></a> for this connection.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -186,8 +173,14 @@ and adds a <a class="reference internal" href="#pulsar.async.protocols.PulsarPro
 <h3>Protocol<a class="headerlink" href="#protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.Protocol">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Protocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>timeout=0</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Protocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Protocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Protocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Protocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Protocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio.Protocol" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Protocol</span></tt></a> with <a class="reference internal" href="../tutorials/events.html#event-handling"><em>events</em></a></p>
+<dl class="method">
+<dt id="pulsar.async.protocols.Protocol.write">
+<tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Protocol.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Protocol.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data into the transport</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -195,7 +188,7 @@ and adds a <a class="reference internal" href="#pulsar.async.protocols.PulsarPro
 <h3>Connection<a class="headerlink" href="#connection" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.Connection">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Connection</tt><big>(</big><em>consumer_factory=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Connection</tt><big>(</big><em>consumer_factory=None</em>, <em>timeout=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.async.protocols.Protocol" title="pulsar.async.protocols.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> to handle multiple TCP requests/responses.</p>
 <p>It is a class which acts as bridge between a
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio-transport" title="(in Python v3.5)"><em class="xref std std-ref">transport</em></a> and a <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.
@@ -367,7 +360,7 @@ into the transport. Something like this:</p>
 <p>There is no need to override this method,
 implement <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer.start_request" title="pulsar.async.protocols.ProtocolConsumer.start_request"><tt class="xref py py-meth docutils literal"><span class="pre">start_request()</span></tt></a> instead.
 If either <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer.connection" title="pulsar.async.protocols.ProtocolConsumer.connection"><tt class="xref py py-attr docutils literal"><span class="pre">connection</span></tt></a> or <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer.transport" title="pulsar.async.protocols.ProtocolConsumer.transport"><tt class="xref py py-attr docutils literal"><span class="pre">transport</span></tt></a> are missing, a
-<tt class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></tt> occurs.</p>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#RuntimeError" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></tt></a> occurs.</p>
 <p>For server side consumer, this method simply fires the <tt class="docutils literal"><span class="pre">pre_request</span></tt>
 event.</p>
 </dd></dl>
@@ -398,9 +391,9 @@ They are used by both servers and clients classes.</p>
 <h3>Producer<a class="headerlink" href="#producer" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.Producer">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Producer</tt><big>(</big><em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Producer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Producer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Producer</tt><big>(</big><em>loop</em>, <em>protocol_factory=None</em>, <em>name=None</em>, <em>max_requests=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Producer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Producer" title="Permalink to this definition">¶</a></dt>
 <dd><p>An Abstract <a class="reference internal" href="events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> class for all producers of
-connections.</p>
+socket (client and servers)</p>
 <dl class="attribute">
 <dt id="pulsar.async.protocols.Producer.protocol_factory">
 <tt class="descname">protocol_factory</tt><em class="property"> = None</em><a class="headerlink" href="#pulsar.async.protocols.Producer.protocol_factory" title="Permalink to this definition">¶</a></dt>
@@ -425,7 +418,7 @@ connections.</p>
 
 <dl class="method">
 <dt id="pulsar.async.protocols.Producer.create_protocol">
-<tt class="descname">create_protocol</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Producer.create_protocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Producer.create_protocol" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">create_protocol</tt><big>(</big><em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Producer.create_protocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Producer.create_protocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new protocol via the <a class="reference internal" href="#pulsar.async.protocols.Producer.protocol_factory" title="pulsar.async.protocols.Producer.protocol_factory"><tt class="xref py py-meth docutils literal"><span class="pre">protocol_factory()</span></tt></a></p>
 <p>This method increase the count of <a class="reference internal" href="#pulsar.async.protocols.Producer.sessions" title="pulsar.async.protocols.Producer.sessions"><tt class="xref py py-attr docutils literal"><span class="pre">sessions</span></tt></a> and build
 the protocol passing <tt class="docutils literal"><span class="pre">self</span></tt> as the producer.</p>
@@ -454,7 +447,7 @@ for example the <a class="reference internal" href="#pulsar.async.protocols.Conn
 <h3>TCP Server<a class="headerlink" href="#tcp-server" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.TcpServer">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">TcpServer</tt><big>(</big><em>protocol_factory</em>, <em>loop</em>, <em>address=None</em>, <em>name=None</em>, <em>sockets=None</em>, <em>max_connections=None</em>, <em>keep_alive=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#TcpServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.TcpServer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">TcpServer</tt><big>(</big><em>protocol_factory</em>, <em>loop</em>, <em>address=None</em>, <em>name=None</em>, <em>sockets=None</em>, <em>max_requests=None</em>, <em>keep_alive=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#TcpServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.TcpServer" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> of server <a class="reference internal" href="#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a> for TCP servers.</p>
 <dl class="attribute">
 <dt id="pulsar.async.protocols.TcpServer._server">
@@ -472,7 +465,7 @@ for example the <a class="reference internal" href="#pulsar.async.protocols.Conn
 
 <dl class="method">
 <dt id="pulsar.async.protocols.TcpServer.start_serving">
-<tt class="descname">start_serving</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#TcpServer.start_serving"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.TcpServer.start_serving" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">start_serving</tt><big>(</big><em>backlog=100</em>, <em>sslcontext=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#TcpServer.start_serving"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.TcpServer.start_serving" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start serving.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -500,7 +493,7 @@ serving the socket.</p>
 
 <dl class="method">
 <dt id="pulsar.async.protocols.TcpServer.close">
-<tt class="descname">close</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#TcpServer.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.TcpServer.close" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#TcpServer.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.TcpServer.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop serving the <tt class="xref py py-attr docutils literal"><span class="pre">Server.sockets</span></tt> and close all
 concurrent connections.</p>
 </dd></dl>
@@ -523,7 +516,7 @@ model with a minimum of protocol mechanism.</p>
 <h3>Datagram Protocol<a class="headerlink" href="#datagram-protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.DatagramProtocol">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">DatagramProtocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>timeout=0</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">DatagramProtocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <tt class="docutils literal"><span class="pre">asyncio.DatagramProtocol</span></tt> with events`</p>
 </dd></dl>
 
@@ -533,7 +526,7 @@ model with a minimum of protocol mechanism.</p>
 <dl class="class">
 <dt id="pulsar.async.protocols.DatagramServer">
 <em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">DatagramServer</tt><big>(</big><em>protocol_factory</em>, <em>loop=None</em>, <em>address=None</em>, <em>name=None</em>, <em>sockets=None</em>, <em>max_requests=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramServer" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference internal" href="events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> for serving UDP sockets.</p>
+<dd><p>An <a class="reference internal" href="#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> for serving UDP sockets.</p>
 <dl class="attribute">
 <dt id="pulsar.async.protocols.DatagramServer._transports">
 <tt class="descname">_transports</tt><a class="headerlink" href="#pulsar.async.protocols.DatagramServer._transports" title="Permalink to this definition">¶</a></dt>
@@ -543,7 +536,7 @@ model with a minimum of protocol mechanism.</p>
 
 <dl class="method">
 <dt id="pulsar.async.protocols.DatagramServer.create_endpoint">
-<tt class="descname">create_endpoint</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramServer.create_endpoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramServer.create_endpoint" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">create_endpoint</tt><big>(</big><em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramServer.create_endpoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramServer.create_endpoint" title="Permalink to this definition">¶</a></dt>
 <dd><p>create the server endpoint.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -558,15 +551,80 @@ serving the socket.</td>
 
 <dl class="method">
 <dt id="pulsar.async.protocols.DatagramServer.close">
-<tt class="descname">close</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramServer.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramServer.close" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramServer.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramServer.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop serving the <tt class="xref py py-attr docutils literal"><span class="pre">Server.sockets</span></tt> and close all
 concurrent connections.</p>
 </dd></dl>
 
+</dd></dl>
+
+<span class="target" id="module-pulsar.async.mixins"></span></div>
+</div>
+<div class="section" id="protocol-wrappers">
+<span id="protocol-wrappers-api"></span><h2>Protocol Wrappers<a class="headerlink" href="#protocol-wrappers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="protocolwrapper">
+<h3>ProtocolWrapper<a class="headerlink" href="#protocolwrapper" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.async.mixins.ProtocolWrapper">
+<em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">ProtocolWrapper</tt><big>(</big><em>protocol</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#ProtocolWrapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.ProtocolWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract class for wrapping a <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a>
+and adding functionalities</p>
 <dl class="method">
-<dt id="pulsar.async.protocols.DatagramServer.create_protocol">
-<tt class="descname">create_protocol</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramServer.create_protocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramServer.create_protocol" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override <a class="reference internal" href="#pulsar.async.protocols.Producer.create_protocol" title="pulsar.async.protocols.Producer.create_protocol"><tt class="xref py py-meth docutils literal"><span class="pre">Producer.create_protocol()</span></tt></a>.</p>
+<dt id="pulsar.async.mixins.ProtocolWrapper.write">
+<tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#ProtocolWrapper.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.ProtocolWrapper.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data into the transport.</p>
+<p>User should use this method rather than the transport write method
+directly.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="flowcontrol">
+<h3>FlowControl<a class="headerlink" href="#flowcontrol" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.async.mixins.FlowControl">
+<em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">FlowControl</tt><big>(</big><em>protocol</em>, <em>low_limit=None</em>, <em>high_limit=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.async.mixins.ProtocolWrapper" title="pulsar.async.mixins.ProtocolWrapper"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolWrapper</span></tt></a> for flow control logic.</p>
+<p>This implements the protocol methods <a class="reference internal" href="#pulsar.async.mixins.FlowControl.pause_writing" title="pulsar.async.mixins.FlowControl.pause_writing"><tt class="xref py py-meth docutils literal"><span class="pre">pause_writing()</span></tt></a>,
+<a class="reference internal" href="#pulsar.async.mixins.FlowControl.resume_writing" title="pulsar.async.mixins.FlowControl.resume_writing"><tt class="xref py py-meth docutils literal"><span class="pre">resume_writing()</span></tt></a>.</p>
+<dl class="method">
+<dt id="pulsar.async.mixins.FlowControl.write">
+<tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data into the transport</p>
+<p>If the transport is buffering it returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
+called back once the transport is available for writing</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.mixins.FlowControl.pause_writing">
+<tt class="descname">pause_writing</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl.pause_writing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl.pause_writing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the transport from writing.</p>
+<p>Successive calls to this mathod will fails unless
+<a class="reference internal" href="#pulsar.async.mixins.FlowControl.resume_writing" title="pulsar.async.mixins.FlowControl.resume_writing"><tt class="xref py py-meth docutils literal"><span class="pre">resume_writing()</span></tt></a> is called first.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.mixins.FlowControl.resume_writing">
+<tt class="descname">resume_writing</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl.resume_writing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl.resume_writing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume writing.</p>
+<p>Successive calls to this method will fails unless
+<a class="reference internal" href="#pulsar.async.mixins.FlowControl.pause_writing" title="pulsar.async.mixins.FlowControl.pause_writing"><tt class="xref py py-meth docutils literal"><span class="pre">pause_writing()</span></tt></a> is called first.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="timeout">
+<h3>Timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.async.mixins.Timeout">
+<em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">Timeout</tt><big>(</big><em>protocol</em>, <em>timeout</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#Timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.Timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.async.mixins.ProtocolWrapper" title="pulsar.async.mixins.ProtocolWrapper"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolWrapper</span></tt></a> which adds a timeout for idle connections</p>
+<dl class="method">
+<dt id="pulsar.async.mixins.Timeout.set_timeout">
+<tt class="descname">set_timeout</tt><big>(</big><em>timeout</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#Timeout.set_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.Timeout.set_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a new <tt class="xref py py-attr docutils literal"><span class="pre">timeout</span></tt> for this protocol</p>
 </dd></dl>
 
 </dd></dl>
@@ -581,7 +639,7 @@ for clients with several connections to a remote <a class="reference internal" h
 <h3>Abstract Client<a class="headerlink" href="#abstract-client" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.clients.AbstractClient">
-<em class="property">class </em><tt class="descclassname">pulsar.async.clients.</tt><tt class="descname">AbstractClient</tt><big>(</big><em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/clients.html#AbstractClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.clients.AbstractClient" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.clients.</tt><tt class="descname">AbstractClient</tt><big>(</big><em>loop</em>, <em>protocol_factory=None</em>, <em>name=None</em>, <em>max_requests=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/clients.html#AbstractClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.clients.AbstractClient" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> for a client connections.</p>
 <dl class="method">
 <dt id="pulsar.async.clients.AbstractClient.connect">
@@ -614,7 +672,7 @@ for clients with several connections to a remote <a class="reference internal" h
 <h3>Abstract UDP Client<a class="headerlink" href="#abstract-udp-client" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.clients.AbstractUdpClient">
-<em class="property">class </em><tt class="descclassname">pulsar.async.clients.</tt><tt class="descname">AbstractUdpClient</tt><big>(</big><em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/clients.html#AbstractUdpClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.clients.AbstractUdpClient" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.clients.</tt><tt class="descname">AbstractUdpClient</tt><big>(</big><em>loop</em>, <em>protocol_factory=None</em>, <em>name=None</em>, <em>max_requests=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/clients.html#AbstractUdpClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.clients.AbstractUdpClient" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> for a client udp connections.</p>
 <dl class="method">
 <dt id="pulsar.async.clients.AbstractUdpClient.create_endpoint">
@@ -790,6 +848,12 @@ method.</p>
 <li><a class="reference internal" href="#datagram-server">Datagram Server</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#protocol-wrappers">Protocol Wrappers</a><ul>
+<li><a class="reference internal" href="#protocolwrapper">ProtocolWrapper</a></li>
+<li><a class="reference internal" href="#flowcontrol">FlowControl</a></li>
+<li><a class="reference internal" href="#timeout">Timeout</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#clients">Clients</a><ul>
 <li><a class="reference internal" href="#abstract-client">Abstract Client</a></li>
 <li><a class="reference internal" href="#abstract-udp-client">Abstract UDP Client</a></li>
@@ -833,7 +897,7 @@ method.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

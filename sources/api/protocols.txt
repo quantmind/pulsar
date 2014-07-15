@@ -34,7 +34,6 @@ Connection
    :members:
    :member-order: bysource
 
-
 Protocol Consumer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: ProtocolConsumer
@@ -82,6 +81,32 @@ Datagram Server
    :members:
    :member-order: bysource
 
+
+.. module:: pulsar.async.mixins
+
+.. _protocol-wrappers-api:
+
+Protocol Wrappers
+=====================
+
+ProtocolWrapper
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: ProtocolWrapper
+   :members:
+   :member-order: bysource
+
+FlowControl
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: FlowControl
+   :members:
+   :member-order: bysource
+
+Timeout
+~~~~~~~~~~~~~~
+.. autoclass:: Timeout
+   :members:
+   :member-order: bysource
+   
 
 .. module:: pulsar.async.clients
 

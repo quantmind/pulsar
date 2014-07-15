@@ -90,7 +90,7 @@ This is an example of a script for an Echo server:</p>
 </pre></div>
 </div>
 <p>Check the <a class="reference internal" href="../tutorials/clients.html#tutorials-writing-clients"><em>echo server example</em></a> for detailed
-implementation of the <tt class="docutils literal"><span class="pre">.EchoServerProtocol</span></tt> class.</p>
+implementation of the <tt class="docutils literal"><span class="pre">EchoServerProtocol</span></tt> class.</p>
 <div class="section" id="socket-server-settings">
 <span id="id1"></span><h2>Socket Server Settings<a class="headerlink" href="#socket-server-settings" title="Permalink to this headline">¶</a></h2>
 <p>All standard <a class="reference internal" href="../settings.html#settings"><em>application settings</em></a> can be applied to a
@@ -99,17 +99,20 @@ specific to sockets and can be used to fine tune your application:</p>
 <div class="section" id="bind">
 <h3>bind<a class="headerlink" href="#bind" title="Permalink to this headline">¶</a></h3>
 <p>To specify the address to bind the server to:</p>
-<div class="highlight-python"><pre>python script.py --bind 127.0.0.1:8070</pre>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --bind 127.0.0.1:8070
+</pre></div>
 </div>
 <p>This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080:</p>
-<div class="highlight-python"><pre>python script.py --bind :8080</pre>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --bind :8080
+</pre></div>
 </div>
 </div>
 <div class="section" id="backlog">
 <h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
 <p>To specify the maximum number of queued connections you can use the
 <a class="reference internal" href="../settings.html#setting-backlog"><em>backlog</em></a> settings. For example:</p>
-<div class="highlight-python"><pre>python script.py --backlog 1000</pre>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --backlog 1000
+</pre></div>
 </div>
 <p>rarely used.</p>
 </div>
@@ -118,7 +121,8 @@ specific to sockets and can be used to fine tune your application:</p>
 <p>To control how long a server <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a> is kept alive after the
 last read from the remote client, one can use the
 <a class="reference internal" href="../settings.html#setting-keep-alive"><em>keep-alive</em></a> setting:</p>
-<div class="highlight-python"><pre>python script.py --keep-alive 10</pre>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --keep-alive 10
+</pre></div>
 </div>
 <p>will close client connections which have been idle for 10 seconds.</p>
 </div>
@@ -127,7 +131,8 @@ last read from the remote client, one can use the
 <p>Transport Layer Security (often known as Secure Sockets Layer) is handled by
 the <a class="reference internal" href="../settings.html#setting-cert-file"><em>cert-file</em></a> and <a class="reference internal" href="../settings.html#setting-key-file"><em>key-file</em></a>
 settings:</p>
-<div class="highlight-python"><pre>python script.py --cert-file server.crt --key-file server.key</pre>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --cert-file server.crt --key-file server.key
+</pre></div>
 </div>
 </div>
 </div>
@@ -139,7 +144,8 @@ and then spawn several process-based actors which listen on the
 same shared socket.
 This is how pre-forking servers operate.</p>
 <p>When running a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in threading mode:</p>
-<div class="highlight-python"><pre>python script.py --concurrency thread</pre>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --concurrency thread
+</pre></div>
 </div>
 <p>the number of <a class="reference internal" href="../api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> serving the application is set
 to <tt class="docutils literal"><span class="pre">0</span></tt> so that the application is actually served by the
@@ -344,7 +350,7 @@ number of workers to 0.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

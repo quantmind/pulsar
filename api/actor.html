@@ -319,7 +319,7 @@ started. Calling this method more than once does nothing.</p>
 
 <dl class="method">
 <dt id="pulsar.async.actor.Actor.send">
-<tt class="descname">send</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.send" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">send</tt><big>(</big><em>target</em>, <em>action</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.send" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a message to <tt class="docutils literal"><span class="pre">target</span></tt> to perform <tt class="docutils literal"><span class="pre">action</span></tt> with given
 positional <tt class="docutils literal"><span class="pre">args</span></tt> and key-valued <tt class="docutils literal"><span class="pre">kwargs</span></tt>.
 Always return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a>.</p>
@@ -327,7 +327,7 @@ Always return a <a class="reference external" href="http://python.readthedocs.or
 
 <dl class="method">
 <dt id="pulsar.async.actor.Actor.stop">
-<tt class="descname">stop</tt><big>(</big><em>exc=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.stop" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stop</tt><big>(</big><em>exc=None</em>, <em>exit_code=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gracefully stop the <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>.</p>
 <p>Implemented by the <a class="reference internal" href="#pulsar.async.concurrency.Concurrency.stop" title="pulsar.async.concurrency.Concurrency.stop"><tt class="xref py py-meth docutils literal"><span class="pre">Concurrency.stop()</span></tt></a> method of the <a class="reference internal" href="#pulsar.async.actor.Actor.impl" title="pulsar.async.actor.Actor.impl"><tt class="xref py py-attr docutils literal"><span class="pre">impl</span></tt></a>
 attribute.</p>
@@ -649,7 +649,7 @@ parameter <tt class="docutils literal"><span class="pre">&quot;hello</span> <spa
 <h3>ActorProxyFuture<a class="headerlink" href="#actorproxyfuture" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.proxy.ActorProxyFuture">
-<em class="property">class </em><tt class="descclassname">pulsar.async.proxy.</tt><tt class="descname">ActorProxyFuture</tt><big>(</big><em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyFuture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyFuture" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.proxy.</tt><tt class="descname">ActorProxyFuture</tt><big>(</big><em>*</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyFuture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyFuture" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> for an <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>.</p>
 <p>The callback will be an <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> which will be received once
 the remote <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is fully functional.</p>
@@ -865,7 +865,7 @@ back with the acknowledgement from the monitor.</p>
 
 <dl class="method">
 <dt id="pulsar.async.concurrency.Concurrency.stop">
-<tt class="descname">stop</tt><big>(</big><em>actor</em>, <em>exc</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.stop" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stop</tt><big>(</big><em>actor</em>, <em>exc</em>, <em>exit_code=0</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gracefully stop the <tt class="docutils literal"><span class="pre">actor</span></tt>.</p>
 </dd></dl>
 
@@ -925,7 +925,7 @@ the <a class="reference internal" href="#pulsar.async.arbiter.Arbiter" title="pu
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'INACTIVE': 1, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3, 'INITIAL': 0, 'TERMINATE': 6, 'CLOSE': 5, 'STOPPING': 4, 'STARTING': 2}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'TERMINATE': 6, 'INITIAL': 0, 'RUN': 3, 'INACTIVE': 1, 'STOPPING': 4, 'STARTING': 2, 'CLOSE': 5, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>
@@ -1053,7 +1053,7 @@ periodic task.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

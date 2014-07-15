@@ -30,7 +30,8 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../index.html" />
-    <link rel="prev" title="Pulsar Data Store Server" href="ds.html" /> 
+    <link rel="next" title="Distributed Task Queue" href="tasks.html" />
+    <link rel="prev" title="Django Application" href="pulse.html" /> 
 </head>
  <body>
 
@@ -46,7 +47,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="ds.html" title="Pulsar Data Store Server"
+          <a href="tasks.html" title="Distributed Task Queue"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pulse.html" title="Django Application"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li> 
       </ul>
@@ -98,6 +102,53 @@ coroutines, in other words in an implicit asynchronous style. In this way
 your client code can be used on other frameworks just as well.</li>
 </ul>
 <p>In both cases, the <a class="reference internal" href="#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><tt class="xref py py-class docutils literal"><span class="pre">greenio</span></tt></a> application is what you need.</p>
+<div class="section" id="green-wsgi">
+<span id="id1"></span><h3>Green WSGI<a class="headerlink" href="#green-wsgi" title="Permalink to this headline">¶</a></h3>
+<p>Assume you are using pulsar web server and would like to write your application
+in an implicit asynchronous mode, i.e. without dealing with futures nor
+coroutines, then you can wrap your wsgi <tt class="docutils literal"><span class="pre">app</span></tt> with the <a class="reference internal" href="#pulsar.apps.greenio.pool.RunInPool" title="pulsar.apps.greenio.pool.RunInPool"><tt class="xref py py-class docutils literal"><span class="pre">RunInPool</span></tt></a>
+utility:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">greenio</span>
+
+<span class="nb">callable</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">wsgi</span><span class="o">.</span><span class="n">wait_for_body_middleware</span><span class="p">,</span>
+                             <span class="n">greenio</span><span class="o">.</span><span class="n">RunInPool</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="mi">20</span><span class="p">)])</span>
+
+<span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="nb">callable</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="#pulsar.apps.greenio.pool.RunInPool" title="pulsar.apps.greenio.pool.RunInPool"><tt class="xref py py-class docutils literal"><span class="pre">RunInPool</span></tt></a> manages a pool of greenlets which execute your
+application. In this way, within your <tt class="docutils literal"><span class="pre">app</span></tt> you can invoke the
+<a class="reference internal" href="#pulsar.apps.greenio.wait" title="pulsar.apps.greenio.wait"><tt class="xref py py-func docutils literal"><span class="pre">wait()</span></tt></a> function when needing to wait for asynchronous results to be
+ready.</p>
+</div>
+<div class="section" id="green-http">
+<span id="id2"></span><h3>Green Http<a class="headerlink" href="#green-http" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">HttpClient</span></tt></a> can be used with greenlets:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.http</span> <span class="kn">import</span> <span class="n">HttpClient</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">http</span> <span class="o">=</span> <span class="n">HttpClient</span><span class="p">(</span><span class="n">green</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">http</span><span class="o">.</span><span class="n">green</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>And now you can write synchronous looking code and run it in a separate
+greenlet via the <a class="reference internal" href="#pulsar.apps.greenio.run_in_greenlet" title="pulsar.apps.greenio.run_in_greenlet"><tt class="xref py py-func docutils literal"><span class="pre">run_in_greenlet()</span></tt></a> decorator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@greenio.run_in_greenlet</span>
+<span class="k">def</span> <span class="nf">example</span><span class="p">():</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;http://bbc.co.uk&#39;</span><span class="p">)</span>
+    <span class="o">...</span>
+    <span class="k">return</span> <span class="s">&#39;done&#39;</span>
+</pre></div>
+</div>
+<p>and somewhere, in your asynchronous code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">example</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">==</span> <span class="s">&#39;done&#39;</span>
+</pre></div>
+</div>
+<p>the <a class="reference internal" href="#pulsar.apps.greenio.run_in_greenlet" title="pulsar.apps.greenio.run_in_greenlet"><tt class="xref py py-func docutils literal"><span class="pre">run_in_greenlet()</span></tt></a> decorator, execute the function on a child
+greenlet without blocking the asynchronous engine. Once the <tt class="docutils literal"><span class="pre">example</span></tt>
+function returns, the asynchronous code continue from the <tt class="docutils literal"><span class="pre">yield</span></tt>
+statement as usual.</p>
+</div>
 </div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
@@ -106,8 +157,8 @@ your client code can be used on other frameworks just as well.</li>
 <dl class="function">
 <dt id="pulsar.apps.greenio.wait">
 <tt class="descclassname">pulsar.apps.greenio.</tt><tt class="descname">wait</tt><big>(</big><em>coro_or_future</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/greenio.html#wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.wait" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wait for a coroutine or a future to complete.</p>
-<p>This method must be called from a greenlet other than the main one</p>
+<dd><p>Wait for a coroutine or a :class:&#8217;~asyncio.Future` to complete.</p>
+<p><strong>This function must be called from a greenlet other than the main one</strong>.</p>
 </dd></dl>
 
 </div>
@@ -143,7 +194,7 @@ function.</p>
 <dt id="pulsar.apps.greenio.run_in_greenlet">
 <tt class="descclassname">pulsar.apps.greenio.</tt><tt class="descname">run_in_greenlet</tt><big>(</big><em>callable</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/greenio.html#run_in_greenlet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.run_in_greenlet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator to run a <tt class="docutils literal"><span class="pre">callable</span></tt> on a new greenlet.</p>
-<p>A callable decorated with this decorator returns a coroutine.</p>
+<p>A <tt class="docutils literal"><span class="pre">callable</span></tt> decorated with this decorator returns a coroutine</p>
 </dd></dl>
 
 </div>
@@ -173,8 +224,8 @@ The instance must be an <a class="reference internal" href="../design.html#async
 <dt id="pulsar.apps.greenio.pool.GreenPool">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.greenio.pool.</tt><tt class="descname">GreenPool</tt><big>(</big><em>max_workers=None</em>, <em>loop=None</em>, <em>maxtasks=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/greenio/pool.html#GreenPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.pool.GreenPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool of running greenlets.</p>
-<p>This pool maintains a group of greenlets to perform asynchronous tasks via
-the <a class="reference internal" href="#pulsar.apps.greenio.pool.GreenPool.submit" title="pulsar.apps.greenio.pool.GreenPool.submit"><tt class="xref py py-meth docutils literal"><span class="pre">submit()</span></tt></a> method.</p>
+<p>This pool maintains a group of greenlets to perform asynchronous
+tasks via the <a class="reference internal" href="#pulsar.apps.greenio.pool.GreenPool.submit" title="pulsar.apps.greenio.pool.GreenPool.submit"><tt class="xref py py-meth docutils literal"><span class="pre">submit()</span></tt></a> method.</p>
 <dl class="method">
 <dt id="pulsar.apps.greenio.pool.GreenPool.submit">
 <tt class="descname">submit</tt><big>(</big><em>func</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/greenio/pool.html#GreenPool.submit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.pool.GreenPool.submit" title="Permalink to this definition">¶</a></dt>
@@ -213,7 +264,7 @@ has finished.</p>
 </div>
 </div>
 <div class="section" id="psycopg2">
-<span id="id1"></span><h2>Psycopg2<a class="headerlink" href="#psycopg2" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>Psycopg2<a class="headerlink" href="#psycopg2" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-pulsar.apps.greenio.pg"></span><p>Pulsar <a class="reference internal" href="#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><tt class="xref py py-mod docutils literal"><span class="pre">greenio</span></tt></a> application can be used in conjunction
 with <a class="reference external" href="http://pythonhosted.org/psycopg2/advanced.html#support-for-coroutine-libraries">psycopg2 coroutine support</a> to
 query the <a class="reference external" href="http://www.postgresql.org/">PostgreSql</a> database in an implicit
@@ -278,7 +329,11 @@ The caller must be from a greenlet other than the main one.</p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Greenlet Support</a><ul>
-<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#usage">Usage</a><ul>
+<li><a class="reference internal" href="#green-wsgi">Green WSGI</a></li>
+<li><a class="reference internal" href="#green-http">Green Http</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#api">API</a><ul>
 <li><a class="reference internal" href="#wait">Wait</a></li>
 <li><a class="reference internal" href="#wait-file-descriptor">Wait file descriptor</a></li>
@@ -294,8 +349,11 @@ The caller must be from a greenlet other than the main one.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="ds.html"
-                        title="previous chapter">Pulsar Data Store Server</a></p>
+  <p class="topless"><a href="pulse.html"
+                        title="previous chapter">Django Application</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tasks.html"
+                        title="next chapter">Distributed Task Queue</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/apps/greenio.txt"
@@ -322,7 +380,7 @@ The caller must be from a greenlet other than the main one.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

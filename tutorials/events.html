@@ -123,11 +123,13 @@ therefore you can yield it in a coroutine to wait until it get fired.</p>
 </div>
 <p>To fire an event, one uses the <a class="reference internal" href="../api/events.html#pulsar.async.events.EventHandler.fire_event" title="pulsar.async.events.EventHandler.fire_event"><tt class="xref py py-meth docutils literal"><span class="pre">fire_event()</span></tt></a> method with
 first positional argument given by the event name:</p>
-<div class="highlight-python"><pre>&gt;&gt; o = Events()
-&gt;&gt; o.fire_event(&#x27;start&#x27;)</pre>
+<div class="highlight-python"><div class="highlight"><pre>&gt;&gt; o = Events()
+&gt;&gt; o.fire_event(&#39;start&#39;)
+</pre></div>
 </div>
 <p>Optionally, it is possible to pass one additional parameter:</p>
-<div class="highlight-python"><pre>&gt;&gt; o.fire_event(&#x27;start&#x27;, &#x27;hello&#x27;)</pre>
+<div class="highlight-python"><div class="highlight"><pre>&gt;&gt; o.fire_event(&#39;start&#39;, &#39;hello&#39;)
+</pre></div>
 </div>
 <p>Adding event callbacks is done via the <a class="reference internal" href="../api/events.html#pulsar.async.events.EventHandler.bind_event" title="pulsar.async.events.EventHandler.bind_event"><tt class="xref py py-meth docutils literal"><span class="pre">bind_event()</span></tt></a>
 method. The method accept two parameters, the event name and a callable
@@ -208,7 +210,7 @@ method mentioned above:</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

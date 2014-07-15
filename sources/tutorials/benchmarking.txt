@@ -4,6 +4,12 @@ Benchmarking
 ===================
 
 
+Test Concurrency
+======================
+
+The simpliest way to benchmark pulsar is to use the :ref:`HttpBin` example
+application. It is a web server responding to several urls.
+
 Test slow clients
 ======================
 

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Pulsar-ds &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>Logging &mdash; pulsar 0.8.5-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -31,8 +31,8 @@
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="Udp Server and Client" href="udp.html" />
-    <link rel="prev" title="Dining Philosophers" href="philosophers.html" /> 
+    <link rel="next" title="The Arbiter" href="actors.html" />
+    <link rel="prev" title="Twisted Integration" href="webmail.html" /> 
 </head>
  <body>
 
@@ -48,10 +48,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="udp.html" title="Udp Server and Client"
+          <a href="actors.html" title="The Arbiter"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="philosophers.html" title="Dining Philosophers"
+          <a href="webmail.html" title="Twisted Integration"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
@@ -62,7 +62,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/tutorials/pulsards.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/tutorials/logging.html">release docs here</a>.
         </p>
     
 </div>
@@ -74,28 +74,17 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="pulsar-ds">
-<span id="tutorials-pulsards"></span><h1>Pulsar-ds<a class="headerlink" href="#pulsar-ds" title="Permalink to this headline">¶</a></h1>
-<p>The code for this example is located in the <a class="reference internal" href="#module-examples.pulsards.manage" title="examples.pulsards.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.pulsards.manage</span></tt></a>
-module.</p>
-<span class="target" id="module-examples.pulsards.manage"></span><p>Pulsar key-value store server. To run the server type:</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py
+  <div class="section" id="logging">
+<span id="tutorials-logging"></span><h1>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar provides several <a class="reference internal" href="../settings.html#settings"><em>settings</em></a> for managing the python logging module and display information when running. These configuration parameters can be specified both on the command line
+or in the <a class="reference internal" href="../settings.html#setting-config"><em>config</em></a> file of your application.</p>
+<p>The <em class="xref std std-ref">log-level</em> sets levels of loggers, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level debug
 </pre></div>
 </div>
-<p>Open a new shell and launch python and type:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;pulsar://localhost:6410&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">client</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s">&#39;Hello!&#39;</span><span class="p">)</span>
-<span class="go">b&#39;Hello!&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;bla&#39;</span><span class="p">,</span> <span class="s">&#39;foo&#39;</span><span class="p">)</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;bla&#39;</span><span class="p">)</span>
-<span class="go">b&#39;foo&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">dbsize</span><span class="p">()</span>
-<span class="go">1</span>
+<p>Set the log level for the <tt class="docutils literal"><span class="pre">pulsar.*</span></tt> loggers to <tt class="docutils literal"><span class="pre">DEBUG</span></tt>.</p>
+<p>You can pass several namespaces to the command, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level warning pulsar.wsgi.debug
 </pre></div>
 </div>
 </div>
@@ -124,14 +113,14 @@ module.</p>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
   <h4>Previous topic</h4>
-  <p class="topless"><a href="philosophers.html"
-                        title="previous chapter">Dining Philosophers</a></p>
+  <p class="topless"><a href="webmail.html"
+                        title="previous chapter">Twisted Integration</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="udp.html"
-                        title="next chapter">Udp Server and Client</a></p>
+  <p class="topless"><a href="actors.html"
+                        title="next chapter">The Arbiter</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/pulsards.txt"
+    <li><a href="../sources/tutorials/logging.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

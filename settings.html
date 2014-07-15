@@ -125,6 +125,14 @@ to 1 and changes some error handling that&#8217;s sent to clients.</p>
 <p>Detaches the server from the controlling terminal and enters the
 background.</p>
 </div>
+<div class="section" id="reload">
+<span id="setting-reload"></span><h3>reload<a class="headerlink" href="#reload" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">reload</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--reload</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>Auto reload modules when changes occurs.</p>
+<p>Useful during development.</p>
+</div>
 <div class="section" id="noisy">
 <span id="setting-noisy"></span><h3>noisy<a class="headerlink" href="#noisy" title="Permalink to this headline">¶</a></h3>
 <p><em>Config name</em>: <tt class="docutils literal"><span class="pre">noisy</span></tt></p>
@@ -291,13 +299,6 @@ application.</p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--couchdb-server</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">'http+couchdb://127.0.0.1:5984'</span></tt></p>
 <p>Default connection string for the couchdb server</p>
-</div>
-<div class="section" id="postgresql-server">
-<span id="setting-postgresql-server"></span><h3>postgresql_server<a class="headerlink" href="#postgresql-server" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">postgresql_server</span></tt></p>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--postgresql-server</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'postgresql://postgres&#64;127.0.0.1:5432'</span></tt></p>
-<p>Default connection string for the PostgreSql server</p>
 </div>
 </div>
 <div class="section" id="worker-processes">
@@ -690,6 +691,7 @@ the memory leak report.</div></blockquote>
 <li><a class="reference internal" href="#http-py-parser">http_py_parser</a></li>
 <li><a class="reference internal" href="#debug">debug</a></li>
 <li><a class="reference internal" href="#daemon">daemon</a></li>
+<li><a class="reference internal" href="#reload">reload</a></li>
 <li><a class="reference internal" href="#noisy">noisy</a></li>
 <li><a class="reference internal" href="#pidfile">pidfile</a></li>
 <li><a class="reference internal" href="#password">password</a></li>
@@ -709,7 +711,6 @@ the memory leak report.</div></blockquote>
 <li><a class="reference internal" href="#redis-py-parser">redis_py_parser</a></li>
 <li><a class="reference internal" href="#redis-server">redis_server</a></li>
 <li><a class="reference internal" href="#couchdb-server">couchdb_server</a></li>
-<li><a class="reference internal" href="#postgresql-server">postgresql_server</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#worker-processes">Worker Processes</a><ul>
@@ -801,7 +802,7 @@ the memory leak report.</div></blockquote>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

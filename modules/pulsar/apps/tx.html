@@ -77,13 +77,12 @@
 <span class="sd">.. warning::</span>
 
 <span class="sd">    This is an experimental implementation, by any means complete.</span>
-<span class="sd">    Use at your own risk</span>
+<span class="sd">    Use at your own risk.</span>
 
 <span class="sd">The implementation replaces the twisted reactor with a proxy for</span>
 <span class="sd">an :ref:`asyncio event loop &lt;asyncio-event-loop&gt;`.</span>
 <span class="sd">Twisted Deferred and Failures are made compatible with pulsar</span>
-<span class="sd">by installing twisted asynchronous binding via the</span>
-<span class="sd">:func:`.add_async_binding` function.</span>
+<span class="sd">by decorating a callable with the :func:`.tx` decorator.</span>
 
 <span class="sd">Threads, signal handling, scheduling and so forth is handled by pulsar itself,</span>
 <span class="sd">twisted implementation is switched off.</span>
@@ -92,20 +91,18 @@
 <span class="sd">Implementation</span>
 <span class="sd">====================</span>
 
-<span class="sd">.. autofunction:: check_twisted</span>
-
-<span class="sd">.. autoclass:: PulsarReactor</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
+<span class="sd">.. autofunction:: tx</span>
 
 
 <span class="sd">.. _twisted: http://twistedmatrix.com/</span>
 <span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+
 <span class="k">try</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
-    <span class="kn">import</span> <span class="nn">twisted</span>
     <span class="kn">from</span> <span class="nn">twisted.internet.main</span> <span class="kn">import</span> <span class="n">installReactor</span>
     <span class="kn">from</span> <span class="nn">twisted.internet.posixbase</span> <span class="kn">import</span> <span class="n">PosixReactorBase</span>
-    <span class="kn">from</span> <span class="nn">twisted.internet.defer</span> <span class="kn">import</span> <span class="n">Deferred</span>
+    <span class="kn">from</span> <span class="nn">twisted.internet.defer</span> <span class="kn">import</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">_inlineCallbacks</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
     <span class="c"># This is for when we build documentation with sphinx in python 3</span>
     <span class="kn">import</span> <span class="nn">os</span>
@@ -115,30 +112,33 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span>
 
-<span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">add_async_binding</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">Future</span>
 
 
-<div class="viewcode-block" id="check_twisted"><a class="viewcode-back" href="../../../tutorials/webmail.html#pulsar.apps.tx.check_twisted">[docs]</a><span class="k">def</span> <span class="nf">check_twisted</span><span class="p">(</span><span class="n">deferred</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Binding for twisted.</span>
-
-<span class="sd">    Added to pulsar asynchronous engine via the :func:`.add_async_binding`</span>
-<span class="sd">    function.</span>
+<div class="viewcode-block" id="tx"><a class="viewcode-back" href="../../../tutorials/webmail.html#pulsar.apps.tx.tx">[docs]</a><span class="k">def</span> <span class="nf">tx</span><span class="p">(</span><span class="nb">callable</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Decorator for callables returning a twisted deferred.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">deferred</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">):</span>
-        <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">GeneratorType</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">_inlineCallbacks</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">):</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">addCallbacks</span><span class="p">(</span>
+                <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">failure</span><span class="p">:</span> <span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">failure</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+            <span class="n">future</span><span class="o">.</span><span class="n">_deferred</span> <span class="o">=</span> <span class="n">res</span>
+            <span class="k">return</span> <span class="n">future</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s">&quot;Callable </span><span class="si">%r</span><span class="s"> should return a generator or a twisted Deferred&quot;</span>
+                <span class="o">%</span> <span class="nb">callable</span><span class="p">)</span>
 
-        <span class="n">deferred</span><span class="o">.</span><span class="n">addCallbacks</span><span class="p">(</span>
-            <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">failure</span><span class="p">:</span> <span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">failure</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="n">future</span>
+    <span class="k">return</span> <span class="n">_</span>
 
 </div>
-<span class="n">add_async_binding</span><span class="p">(</span><span class="n">check_twisted</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="PulsarReactor"><a class="viewcode-back" href="../../../tutorials/webmail.html#pulsar.apps.tx.PulsarReactor">[docs]</a><span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
+<span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
     <span class="sd">&#39;&#39;&#39;A twisted reactor which acts as a proxy to pulsar eventloop.</span>
 
 <span class="sd">    The event loop is obtained via the ``get_event_loop`` function.</span>
@@ -189,7 +189,7 @@
     <span class="k">def</span> <span class="nf">_handleSignals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>
 
-</div>
+
 <span class="k">if</span> <span class="n">installReactor</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
     <span class="n">_reactor</span> <span class="o">=</span> <span class="n">PulsarReactor</span><span class="p">()</span>
     <span class="n">installReactor</span><span class="p">(</span><span class="n">_reactor</span><span class="p">)</span>
@@ -239,7 +239,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

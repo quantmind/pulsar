@@ -239,7 +239,7 @@ It returns an iterable (list, tuple or a generator) over
 strings (<tt class="docutils literal"><span class="pre">unicode/str</span></tt> for python 2, <tt class="docutils literal"><span class="pre">str</span></tt> only for python 3) or
 <a class="reference internal" href="../../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous elements</em></a> which result in
 strings. This method can be called <strong>once only</strong>, otherwise a
-<tt class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></tt> occurs.</p>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#RuntimeError" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></tt></a> occurs.</p>
 <p>This method should not be overwritten, instead one should use the
 <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.do_stream" title="pulsar.apps.wsgi.content.AsyncString.do_stream"><tt class="xref py py-meth docutils literal"><span class="pre">do_stream()</span></tt></a> to customise behaviour.</p>
 </dd></dl>
@@ -581,7 +581,7 @@ its content is replaced.</p>
 <h3>Media<a class="headerlink" href="#media" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.Media">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Media</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>known_libraries=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Media</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>known_libraries=None</em>, <em>dependencies=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media" title="Permalink to this definition">¶</a></dt>
 <dd><p>A container for both <a class="reference internal" href="#pulsar.apps.wsgi.content.Links" title="pulsar.apps.wsgi.content.Links"><tt class="xref py py-class docutils literal"><span class="pre">Links</span></tt></a> and <a class="reference internal" href="#pulsar.apps.wsgi.content.Scripts" title="pulsar.apps.wsgi.content.Scripts"><tt class="xref py py-class docutils literal"><span class="pre">Scripts</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.Media.media_path">
@@ -689,7 +689,7 @@ case the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.med
 <h3>Links<a class="headerlink" href="#links" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.Links">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Links</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>known_libraries=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Links" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Links</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>known_libraries=None</em>, <em>dependencies=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Links" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.content.Media" title="pulsar.apps.wsgi.content.Media"><tt class="xref py py-class docutils literal"><span class="pre">Media</span></tt></a> container for <tt class="docutils literal"><span class="pre">link</span></tt> tags.</p>
 <p>The <tt class="docutils literal"><span class="pre">&lt;link&gt;</span></tt> tag defines the relationship between a
 <a class="reference internal" href="#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a> and an external resource.
@@ -814,7 +814,7 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

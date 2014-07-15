@@ -219,8 +219,8 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isgenerator</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">chain_future</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">ispy3k</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">chain_future</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">ispy3k</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.html</span> <span class="kn">import</span> <span class="p">(</span><span class="n">slugify</span><span class="p">,</span> <span class="n">INLINE_TAGS</span><span class="p">,</span> <span class="n">escape</span><span class="p">,</span>
                                <span class="n">dump_data_value</span><span class="p">,</span> <span class="n">child_tag</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">remove_double_slash</span>
@@ -233,19 +233,27 @@
            <span class="s">&#39;html_factory&#39;</span><span class="p">,</span> <span class="s">&#39;media_libraries&#39;</span><span class="p">]</span>
 
 
-<span class="n">JS_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;js&#39;</span><span class="p">)</span>
+<span class="n">_libs_url</span> <span class="o">=</span> <span class="s">&#39;http://quantmind.github.io/jslibs/libs.json&#39;</span>
+<span class="n">_media_libraries</span> <span class="o">=</span> <span class="bp">None</span>
 
 
-<span class="k">def</span> <span class="nf">load_pkg</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span>
-    <span class="nb">dir</span> <span class="o">=</span> <span class="nb">dir</span> <span class="ow">or</span> <span class="n">JS_DIR</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-
-<span class="n">media_libraries</span> <span class="o">=</span> <span class="n">load_pkg</span><span class="p">(</span><span class="s">&#39;libs.json&#39;</span><span class="p">)</span>
-<span class="n">javascript_dependencies</span> <span class="o">=</span> <span class="n">load_pkg</span><span class="p">(</span><span class="s">&#39;deps.json&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">media_libraries</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">_media_libraries</span>
+    <span class="k">if</span> <span class="n">_media_libraries</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s">&#39;libs.json&#39;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;libs.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">_media_libraries</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">new_event_loop</span>
+            <span class="kn">from</span> <span class="nn">pulsar.apps.http</span> <span class="kn">import</span> <span class="n">HttpClient</span>
+            <span class="n">http</span> <span class="o">=</span> <span class="n">HttpClient</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">new_event_loop</span><span class="p">())</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_libs_url</span><span class="p">)</span>
+                <span class="n">_media_libraries</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
+                <span class="n">_media_libraries</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;libs&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+    <span class="k">return</span> <span class="n">_media_libraries</span>
 
 
 <span class="k">if</span> <span class="n">ispy3k</span><span class="p">:</span>
@@ -275,7 +283,6 @@
 
 <span class="k">def</span> <span class="nf">stream_mapping</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">async</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
@@ -860,12 +867,17 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">mediatype</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">media_path</span><span class="p">,</span> <span class="n">minified</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">known_libraries</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">media_path</span><span class="p">,</span> <span class="n">minified</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">known_libraries</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">dependencies</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Media</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">media_path</span> <span class="o">=</span> <span class="n">media_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">minified</span> <span class="o">=</span> <span class="n">minified</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span> <span class="o">=</span> <span class="p">(</span><span class="n">media_libraries</span> <span class="k">if</span> <span class="n">known_libraries</span> <span class="ow">is</span> <span class="bp">None</span>
-                                <span class="k">else</span> <span class="n">known_libraries</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">known_libraries</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">known_libraries</span> <span class="o">=</span> <span class="n">media_libraries</span><span class="p">()[</span><span class="s">&#39;libs&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">dependencies</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">dependencies</span> <span class="o">=</span> <span class="n">media_libraries</span><span class="p">()[</span><span class="s">&#39;deps&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span> <span class="o">=</span> <span class="n">known_libraries</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span> <span class="o">=</span> <span class="n">dependencies</span>
 
 <div class="viewcode-block" id="Media.is_relative"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.is_relative">[docs]</a>    <span class="k">def</span> <span class="nf">is_relative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Check if ``path`` is a local relative path.</span>
@@ -889,15 +901,21 @@
 
 <span class="sd">        :return: A url path to insert in a HTML ``link`` or ``script``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">urlparams</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
         <span class="n">ending</span> <span class="o">=</span> <span class="s">&#39;.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span>
+        <span class="n">minify</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">urlparams</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">urlparams</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;urlparams&#39;</span><span class="p">,</span> <span class="n">urlparams</span><span class="p">)</span>
+            <span class="n">minify</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;minify&#39;</span><span class="p">,</span> <span class="n">minify</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="s">&#39;url&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">:</span>
             <span class="n">lib</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">[</span><span class="n">path</span><span class="p">]</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lib</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
                 <span class="n">urlparams</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;urlparams&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+                <span class="n">minify</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;minify&#39;</span><span class="p">,</span> <span class="n">minify</span><span class="p">)</span>
                 <span class="n">lib</span> <span class="o">=</span> <span class="n">lib</span><span class="p">[</span><span class="s">&#39;url&#39;</span><span class="p">]</span>
             <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">lib</span><span class="p">,</span> <span class="n">ending</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minified</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minified</span> <span class="ow">and</span> <span class="n">minify</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ending</span><span class="p">):</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_minify</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ending</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">with_media_ending</span><span class="p">:</span>
@@ -962,8 +980,6 @@
     <span class="n">mediatype</span> <span class="o">=</span> <span class="s">&#39;js&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">deps</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;dependencies&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span> <span class="o">=</span> <span class="n">javascript_dependencies</span> <span class="k">if</span> <span class="n">deps</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">deps</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">require_callback</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;require_callback&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;wait&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="p">[]</span>
@@ -990,8 +1006,10 @@
         <span class="k">for</span> <span class="n">script</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">script</span> <span class="o">==</span> <span class="s">&#39;require&#39;</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">script</span> <span class="o">=</span> <span class="n">script</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">script</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">script</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">script</span><span class="p">[</span><span class="s">&#39;url&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">:</span>
                 <span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">script</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
                 <span class="n">required</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
@@ -1107,13 +1125,11 @@
                  <span class="n">known_libraries</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">scripts_dependencies</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">require_callback</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Head</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s">&#39;head&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">known_libraries</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">known_libraries</span> <span class="o">=</span> <span class="n">media_libraries</span>
-            <span class="n">scripts_dependencies</span> <span class="o">=</span> <span class="n">javascript_dependencies</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Html</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">meta</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Links</span><span class="p">(</span><span class="n">media_path</span><span class="p">,</span> <span class="n">minified</span><span class="o">=</span><span class="n">minified</span><span class="p">,</span>
-                          <span class="n">known_libraries</span><span class="o">=</span><span class="n">known_libraries</span><span class="p">))</span>
+                          <span class="n">known_libraries</span><span class="o">=</span><span class="n">known_libraries</span><span class="p">,</span>
+                          <span class="n">dependencies</span><span class="o">=</span><span class="n">scripts_dependencies</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Embedded</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&#39;text/css&#39;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Embedded</span><span class="p">(</span><span class="s">&#39;script&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&#39;text/javascript&#39;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Scripts</span><span class="p">(</span><span class="n">media_path</span><span class="p">,</span> <span class="n">minified</span><span class="o">=</span><span class="n">minified</span><span class="p">,</span>
@@ -1151,7 +1167,7 @@
     <span class="k">def</span> <span class="nf">__get_js</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__set_js</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">css</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__set_js</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">js</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">js</span>
     <span class="n">embedded_js</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">__get_js</span><span class="p">,</span> <span class="n">__set_js</span><span class="p">)</span>
 
@@ -1311,7 +1327,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

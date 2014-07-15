@@ -190,16 +190,13 @@
                 <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="o">*</span><span class="n">command</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">update_insert</span><span class="p">:</span>
                 <span class="n">model</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">args</span>
+                <span class="n">model</span><span class="p">[</span><span class="s">&#39;_rev&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;_rev&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
                 <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
                 <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basekey</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
                 <span class="n">pipe</span><span class="o">.</span><span class="n">hmset</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span>
         <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">pipe</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">transaction</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">command</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="n">Command</span><span class="o">.</span><span class="n">INSERT</span><span class="p">:</span>
-                <span class="n">model</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">args</span>
-                <span class="n">model</span><span class="p">[</span><span class="s">&#39;_rev&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
@@ -284,7 +281,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

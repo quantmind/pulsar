@@ -31,7 +31,7 @@
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
-    <link rel="next" title="Data Stores" href="../data/index.html" />
+    <link rel="next" title="JSON-RPC" href="../rpc.html" />
     <link rel="prev" title="Asynchronous Content" href="content.html" /> 
 </head>
  <body>
@@ -48,7 +48,7 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../data/index.html" title="Data Stores"
+          <a href="../rpc.html" title="JSON-RPC"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="content.html" title="Asynchronous Content"
@@ -199,7 +199,7 @@ the one is returned that comes first.</p>
 </tbody>
 </table>
 <div class="versionchanged">
-<p><span>Changed in version 0.5: </span>This used to raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#IndexError" title="(in Python v3.5)"><tt class="xref py py-exc docutils literal"><span class="pre">IndexError</span></tt></a>, which was inconsistent
+<p><span class="versionmodified">Changed in version 0.5: </span>This used to raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#IndexError" title="(in Python v3.5)"><tt class="xref py py-exc docutils literal"><span class="pre">IndexError</span></tt></a>, which was inconsistent
 with the list API.</p>
 </div>
 </dd></dl>
@@ -215,7 +215,7 @@ with the list API.</p>
 <tt class="descname">quality</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.quality"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.quality" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the quality of the key.</p>
 <div class="versionadded">
-<p><span>New in version 0.6: </span>In previous versions you had to use the item-lookup syntax
+<p><span class="versionmodified">New in version 0.6: </span>In previous versions you had to use the item-lookup syntax
 (eg: <tt class="docutils literal"><span class="pre">obj[key]</span></tt> instead of <tt class="docutils literal"><span class="pre">obj.quality(key)</span></tt>)</p>
 </div>
 </dd></dl>
@@ -348,8 +348,8 @@ by various components in the <a class="reference internal" href="index.html#apps
   <p class="topless"><a href="content.html"
                         title="previous chapter">Asynchronous Content</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../data/index.html"
-                        title="next chapter">Data Stores</a></p>
+  <p class="topless"><a href="../rpc.html"
+                        title="next chapter">JSON-RPC</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../sources/apps/wsgi/tools.txt"
@@ -376,7 +376,7 @@ by various components in the <a class="reference internal" href="index.html#apps
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

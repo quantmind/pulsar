@@ -338,8 +338,6 @@
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">store_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
                 <span class="k">yield</span> <span class="n">_id</span> <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">pkname</span> <span class="k">else</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
             <span class="k">yield</span> <span class="s">&#39;Type&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span>
-        <span class="k">if</span> <span class="s">&#39;_rev&#39;</span> <span class="ow">in</span> <span class="n">model</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="s">&#39;_rev&#39;</span><span class="p">,</span> <span class="n">model</span><span class="p">[</span><span class="s">&#39;_rev&#39;</span><span class="p">]</span>
 
 </div></div>
 <span class="n">register_store</span><span class="p">(</span><span class="s">&quot;couchdb&quot;</span><span class="p">,</span> <span class="s">&quot;pulsar.apps.data.stores.CouchDBStore&quot;</span><span class="p">)</span>
@@ -390,7 +388,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 

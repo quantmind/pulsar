@@ -84,7 +84,7 @@
 <span class="sd">        SocketServer(EchoServerProtocol).start()</span>
 
 <span class="sd">Check the :ref:`echo server example &lt;tutorials-writing-clients&gt;` for detailed</span>
-<span class="sd">implementation of the ``.EchoServerProtocol`` class.</span>
+<span class="sd">implementation of the ``EchoServerProtocol`` class.</span>
 
 <span class="sd">.. _socket-server-settings:</span>
 
@@ -171,8 +171,9 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">TcpServer</span><span class="p">,</span> <span class="n">DatagramServer</span><span class="p">,</span> <span class="n">Connection</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">parse_address</span><span class="p">,</span> <span class="n">SSLContext</span><span class="p">,</span> <span class="n">format_address</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">asyncio</span><span class="p">,</span> <span class="n">TcpServer</span><span class="p">,</span> <span class="n">DatagramServer</span><span class="p">,</span> <span class="n">Connection</span><span class="p">,</span>
+                    <span class="n">ImproperlyConfigured</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">parse_address</span><span class="p">,</span> <span class="n">SSLContext</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">pass_through</span>
 
 
@@ -286,19 +287,23 @@
                 <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;thread&#39;</span><span class="p">):</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">address</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;Could not open a socket. &#39;</span>
-                                              <span class="s">&#39;No address to bind to&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;Could not open a socket. &#39;</span>
+                                       <span class="s">&#39;No address to bind to&#39;</span><span class="p">)</span>
         <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">key_file</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;cert_file &quot;</span><span class="si">%s</span><span class="s">&quot; does not exist&#39;</span> <span class="o">%</span>
-                                 <span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;cert_file &quot;</span><span class="si">%s</span><span class="s">&quot; does not exist&#39;</span> <span class="o">%</span>
+                                           <span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">key_file</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">key_file</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;key_file &quot;</span><span class="si">%s</span><span class="s">&quot; does not exist&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">key_file</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;key_file &quot;</span><span class="si">%s</span><span class="s">&quot; does not exist&#39;</span> <span class="o">%</span>
+                                           <span class="n">cfg</span><span class="o">.</span><span class="n">key_file</span><span class="p">)</span>
             <span class="n">ssl</span> <span class="o">=</span> <span class="n">SSLContext</span><span class="p">(</span><span class="n">keyfile</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">key_file</span><span class="p">,</span> <span class="n">certfile</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span><span class="p">)</span>
         <span class="n">address</span> <span class="o">=</span> <span class="n">parse_address</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
         <span class="c"># First create the sockets</span>
-        <span class="n">server</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">loop</span><span class="o">.</span><span class="n">create_server</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="o">*</span><span class="n">address</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">loop</span><span class="o">.</span><span class="n">create_server</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="o">*</span><span class="n">address</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
         <span class="n">addresses</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">sockets</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">server</span><span class="o">.</span><span class="n">sockets</span><span class="p">:</span>
@@ -350,7 +355,7 @@
         <span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span><span class="p">(),</span>
                                      <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span>
                                      <span class="n">sockets</span><span class="o">=</span><span class="n">sockets</span><span class="p">,</span>
-                                     <span class="n">max_connections</span><span class="o">=</span><span class="n">max_requests</span><span class="p">,</span>
+                                     <span class="n">max_requests</span><span class="o">=</span><span class="n">max_requests</span><span class="p">,</span>
                                      <span class="n">keep_alive</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">,</span>
                                      <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">,</span> <span class="s">&#39;pre_request&#39;</span><span class="p">,</span> <span class="s">&#39;post_request&#39;</span><span class="p">,</span>
@@ -478,7 +483,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
  </div>
 
 
