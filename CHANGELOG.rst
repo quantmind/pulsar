@@ -1,9 +1,7 @@
 Ver. 0.8.5 - Development
 ===========================
-* Added new :meth:`.Connection.write` method so that when the keep-alive
-  connection timeout is set, the write method reset it accordingly. Previously
-  only when reading the timeout was reset and therefore causing long
-  streaming responses to fail
+* Added :ref:`protocol wrappers <protocol-wrappers-api>` for
+  better managing extensions on protocols
 * Better handling of streaming responses by the wsgi server
 * Added the :ref:`--reload <setting-reload>` command line option and
   configuration parameter. If used, pulsar auto-reload code changes (useful
@@ -20,6 +18,11 @@ Ver. 0.8.5 - Development
   asyncio.
 * Bug fix in :class:`.Store` constructor
 * :ref:`Twisted integration <tutorials-twisted>` via the :func:`.tx` decorator
+* When throwing an :class:`.ImproperlyConfigured` exception, pulsar will log
+  and error without the full stack-trace
+  (:class:`~.ImproperlyConfigured.exit_code` attribute is set to 2).
+  Useful when stopping execution because of a wrong input rather than an
+  internal exception.
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

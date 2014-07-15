@@ -31,13 +31,13 @@ located in the :mod:`pulsar.apps` module.
 
    apps/socket
    apps/wsgi/index
-   apps/data/index
-   apps/tasks
-   apps/test
-   apps/shell
    apps/rpc
    apps/websockets
    apps/http
    apps/pulse
-   apps/ds
    apps/greenio
+   apps/tasks
+   apps/test
+   apps/shell
+   apps/ds
+   apps/data/index

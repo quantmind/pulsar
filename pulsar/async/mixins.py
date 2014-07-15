@@ -4,7 +4,9 @@ from .futures import Future, asyncio
 
 
 class ProtocolWrapper(object):
-
+    '''Abstract class for wrapping a :class:`.PulsarProtocol`
+    and adding functionalities
+    '''
     def __init__(self, protocol):
         self.protocol = protocol
 
@@ -16,6 +18,11 @@ class ProtocolWrapper(object):
         return getattr(self.protocol, name)
 
     def write(self, data):
+        '''Write data into the transport.
+
+        User should use this method rather than the transport write method
+        directly.
+        '''
         return self.protocol.write(data)
 
     def gather(self, a, b):
@@ -31,15 +38,10 @@ def _set_flow_limits(low, high, protocol, exc=None):
 
 
 class FlowControl(ProtocolWrapper):
-    """Reusable flow control logic for StreamWriter.drain().
+    """A :class:`.ProtocolWrapper` for flow control logic.
 
-    This implements the protocol methods pause_writing(),
-    resume_reading() and connection_lost().  If the subclass overrides
-    these it must call the super methods.
-
-    StreamWriter.drain() must check for error conditions and then call
-    _make_drain_waiter(), which will return either () or a Future
-    depending on the paused state.
+    This implements the protocol methods :meth:`pause_writing`,
+    :meth:`resume_writing`.
     """
     _paused = False
     _drain_waiter = None
@@ -51,15 +53,30 @@ class FlowControl(ProtocolWrapper):
         protocol.bind_event('connection_lost', self._wakeup_waiter)
 
     def write(self, data):
+        '''Write data into the transport
+
+        If the transport is buffering it returns a :class:`~asyncio.Future`
+        called back once the transport is available for writing
+        '''
         result = self.protocol.write(data)
         waiter = self._make_drain_waiter()
         return self.gather(result, waiter)
 
     def pause_writing(self):
+        '''Pause the transport from writing.
+
+        Successive calls to this mathod will fails unless
+        :meth:`resume_writing` is called first.
+        '''
         assert not self._paused
         self._paused = True
 
     def resume_writing(self):
+        '''Resume writing.
+
+        Successive calls to this method will fails unless
+        :meth:`pause_writing` is called first.
+        '''
         assert self._paused
         self._paused = False
         waiter = self._drain_waiter
@@ -95,7 +112,8 @@ class FlowControl(ProtocolWrapper):
 
 
 class Timeout(ProtocolWrapper):
-
+    '''A :class:`.ProtocolWrapper` which adds a timeout for idle connections
+    '''
     def __init__(self, protocol, timeout):
         self.protocol = protocol
         self.timeout = timeout

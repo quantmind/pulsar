@@ -8,12 +8,18 @@ class PulsarException(Exception):
 
 
 class MonitorStarted(PulsarException):
-    pass
+    exit_code = 0
 
 
 class ImproperlyConfigured(PulsarException):
     '''A :class:`PulsarException` raised when an inconsistent configuration
-    has occured.'''
+    has occured.
+
+    .. attribute:: exit_code
+
+        the exit code when rising this exception is set to 2. This will
+        cause pulsar to log the error rather than the full stack trace.
+    '''
     exit_code = 2
 
 
@@ -29,21 +35,16 @@ class CommandNotFound(CommandError):
 
 
 class ProtocolError(PulsarException):
-    '''Raised when the protocol encounter unexpected data. It will close
-the socket connection.'''
+    '''A :class:`PulsarException` raised when the protocol encounter
+    unexpected data.
+
+    It will close the socket connection
+    '''
     status_code = None
 
     def ProtocolError(self, msg=None, status_code=None):
         super(ProtocolError, self).__init__(msg)
         self.status_code = status_code
-
-
-class TooManyConsecutiveWrite(PulsarException):
-    '''Raise when too many consecutive writes are attempted.'''
-
-
-class TooManyConnections(PulsarException):
-    '''Raised when there are too many concurrent connections.'''
 
 
 class EventAlreadyRegistered(PulsarException):
@@ -60,7 +61,7 @@ class HaltServer(BaseException):
 
     When ``exit_code`` is greater than 1, it is considered an expected
     failure and therefore the full stack trace is not logged.'''
-    def __init__(self, reason='Exiting server.', exit_code=2):
+    def __init__(self, reason='Exiting server.', exit_code=3):
         super(HaltServer, self).__init__(reason)
         self.exit_code = exit_code
 
