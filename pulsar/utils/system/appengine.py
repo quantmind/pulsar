@@ -5,7 +5,6 @@ import subprocess
 from .base import *
 
 __all__ = ['close_on_exec',
-           'Waker',
            'daemonize',
            'socketpair',
            'EXIT_SIGNALS',
@@ -78,12 +77,3 @@ _process = MockProcess()
 
 def current_process():
     return _process
-
-
-class Waker(object):
-
-    def fileno(self):
-        pass
-
-    def wake(self):
-        pass

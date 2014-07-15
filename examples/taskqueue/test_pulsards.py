@@ -112,12 +112,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertNotEqual(id, id1)
         self.assertFalse(oid)
 
-    def __test_pubsub(self):
-        '''Tests pubsub handler'''
-        app = self.tq
-        pubsub = app.backend.pubsub()
-        self.assertEqual(pubsub.store, app.backend.store)
-
     def test_rpc_meta(self):
         app = self.rpc
         cfg = app.cfg

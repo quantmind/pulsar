@@ -12,7 +12,6 @@ from multiprocessing import Pipe, current_process
 from .base import *
 
 __all__ = ['close_on_exec',
-           'Waker',
            'daemonize',
            'socketpair',
            'EXIT_SIGNALS',
@@ -132,35 +131,3 @@ def daemonize(auto_close_fds=True, keep_fds=None):    # pragma    nocover
     # 027 is an octal number which we are typing as 0o27
     # for Python3 compatibility
     os.umask(0o27)
-
-
-class Waker(object):
-
-    def __init__(self):
-        r, w = Pipe(duplex=False)
-        _set_non_blocking(r.fileno())
-        _set_non_blocking(w.fileno())
-        close_on_exec(r.fileno())
-        close_on_exec(w.fileno())
-        self._writer = w
-        self._reader = r
-
-    def __str__(self):
-        return 'Pipe waker %s' % self.fileno()
-
-    def fileno(self):
-        return self._reader.fileno()
-
-    def wake(self):
-        try:
-            self._writer.send(b'x')
-        except IOError:
-            pass
-
-    def consume(self):
-        r = self._reader
-        try:
-            while r.poll():
-                r.recv()
-        except (IOError, EOFError):
-            pass

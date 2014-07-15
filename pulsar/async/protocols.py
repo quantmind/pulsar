@@ -339,7 +339,7 @@ class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
 
 
 class Connection(FlowControl):
-    '''A :class:`Protocol` to handle multiple TCP requests/responses.
+    '''A :class:`.FlowControl` to handle multiple TCP requests/responses.
 
     It is a class which acts as bridge between a
     :ref:`transport <asyncio-transport>` and a :class:`.ProtocolConsumer`.
@@ -386,6 +386,7 @@ class Connection(FlowControl):
         Once done set a timeout for idle connections when a
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         '''
+        self.protocol.data_received(data)
         while data:
             consumer = self.current_consumer()
             data = consumer._data_received(data)

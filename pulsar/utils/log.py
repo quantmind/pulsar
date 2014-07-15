@@ -331,7 +331,7 @@ class ColoredStream(logging.StreamHandler):   # pragma    nocover
     def color(self, record):
         text = self.format(record)
         file = self.stream
-        if file.isatty() or True:
+        if hasattr(file, 'isatty') and file.isatty():
             colour = self.COLORS.get(record.levelname)
             code = COLOURS.get(colour, WHITE)
             if win32:

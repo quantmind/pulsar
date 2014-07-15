@@ -17,6 +17,11 @@ class ProtocolWrapper(object):
     def __getattr__(self, name):
         return getattr(self.protocol, name)
 
+    def data_received(self, data):
+        '''Received data from transport
+        '''
+        return self.protocol.data_received(data)
+
     def write(self, data):
         '''Write data into the transport.
 
@@ -125,7 +130,7 @@ class Timeout(ProtocolWrapper):
         return self._with_timeout(self.protocol.write, data)
 
     def data_received(self, data):
-        self._with_timeout(self.protocol.data_received, data)
+        return self._with_timeout(self.protocol.data_received, data)
 
     def set_timeout(self, timeout):
         '''Set a new :attr:`timeout` for this protocol

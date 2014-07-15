@@ -9,7 +9,6 @@ from multiprocessing import current_process
 from .base import *
 
 __all__ = ['close_on_exec',
-           'Waker',
            'daemonize',
            'socketpair',
            'EXIT_SIGNALS',
@@ -100,35 +99,3 @@ def socketpair(family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0):
     csock.setblocking(True)
     lsock.close()
     return (ssock, csock)
-
-
-class Waker(object):
-    '''In windows'''
-    def __init__(self):
-        self._reader, self._writer = socketpair()
-        self._writer.setblocking(False)
-        self._reader.setblocking(False)
-
-    def __str__(self):
-        return 'Socket waker {0}'.format(self.fileno())
-
-    def fileno(self):
-        return self._reader.fileno()
-
-    def wake(self):
-        try:
-            self._writer.send(b'x')
-        except IOError:
-            pass
-
-    def consume(self):
-        try:
-            result = True
-            while result:
-                result = self._reader.recv(1024)
-        except IOError:
-            pass
-
-    def close(self):
-        self.reader.close()
-        self.writer.close()
