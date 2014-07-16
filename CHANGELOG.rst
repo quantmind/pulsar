@@ -15,14 +15,16 @@ Ver. 0.8.5 - Development
   :ref:`greenlet support <green-http>` to write implicit asynchronous HTTP
   requests
 * Finally removed the ``get_request_loop`` method. Full compatibility with
-  asyncio.
+  asyncio
 * Bug fix in :class:`.Store` constructor
 * :ref:`Twisted integration <tutorials-twisted>` via the :func:`.tx` decorator
 * When throwing an :class:`.ImproperlyConfigured` exception, pulsar will log
   and error without the full stack-trace
   (:class:`~.ImproperlyConfigured.exit_code` attribute is set to 2).
   Useful when stopping execution because of a wrong input rather than an
-  internal exception.
+  internal exception
+* Critical bug fix in :class:`.Router` when children are added via a decorated
+  method
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

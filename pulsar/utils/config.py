@@ -77,6 +77,14 @@ def ordered_settings():
         yield KNOWN_SETTINGS[name]
 
 
+def valid_config_value(val):
+    try:
+        pickle.loads(pickle.dumps(val))
+        return True
+    except Exception:
+        return False
+
+
 class Config(object):
     '''A dictionary-like container of :class:`Setting` parameters for
     fine tuning pulsar servers.
@@ -269,7 +277,8 @@ class Config(object):
                 val = getattr(mod, k)
                 # add unknown names to list
                 if kl not in self.settings:
-                    unknowns.append((k, val))
+                    if valid_config_value(val):
+                        unknowns.append((k, val))
                 else:
                     self.set(kl, val)
         return unknowns

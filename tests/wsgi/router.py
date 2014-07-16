@@ -7,6 +7,10 @@ from pulsar.apps.wsgi import Router, RouterParam, route
 from examples.httpbin.manage import HttpBin
 
 
+class TRouter(Router):
+    random = RouterParam(6)
+
+
 class HttpBin2(HttpBin):
 
     def gzip(self):
@@ -142,8 +146,38 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(router.name, '')
         router = HttpBin2('/', name='root')
         self.assertEqual(router.name, 'root')
-        child = router.get_route('async')
-        self.assertTrue(child)
+        async = router.get_route('async')
+        self.assertTrue(async)
         # It has both get and post methods
-        get = child.get
-        post = child.post
+        self.assertTrue(async.get)
+        self.assertTrue(async.post)
+
+    def test_router_child(self):
+        router = TRouter('/', HttpBin2('bin'), random=9)
+        self.assertEqual(len(router.routes), 1)
+        self.assertEqual(router.random, 9)
+        self.assertEqual(router.root, router)
+        child = router.get_route('binx')
+        self.assertFalse(child)
+        child = router.get_route('bin')
+        self.assertTrue(child)
+        self.assertEqual(router.root, child.root)
+        self.assertTrue(router.has_parent(router))
+        self.assertFalse(router.has_parent(child))
+        self.assertTrue(child.has_parent(router))
+
+    def test_child_methods(self):
+        router = TRouter('/', HttpBin2('bin'))
+        child = router.get_route('bin')
+        self.assertTrue(child)
+        #
+        async = router.get_route('async')
+        self.assertTrue(async)
+        self.assertEqual(async.root, router)
+        self.assertEqual(async.parent, child)
+        self.assertEqual(async.random, 6)
+        #
+        # It has both get and post methods
+        self.assertTrue(async.get)
+        self.assertTrue(async.post)
+

@@ -200,15 +200,6 @@ class Router(RouterType('RouterBase', (object,), {})):
                 ...
                 return handler(request)
 
-    .. attribute:: allows_redirects
-
-        boolean indicating if this router can redirect requests to valid urls
-        within this router and its children. For example, if a router serves
-        the '/echo' url but not the ``/echo/`` one, a request on ``/echo/``
-        will be redirected to ``/echo``.
-
-        Default: ``False``
-
     .. attribute:: parameters
 
         A :class:`.AttributeDictionary` of parameters for
@@ -221,7 +212,6 @@ class Router(RouterType('RouterBase', (object,), {})):
     _name = None
 
     response_content_types = RouterParam(None)
-    allows_redirects = RouterParam(False)
     response_wrapper = RouterParam(None)
 
     def __init__(self, rule, *routes, **parameters):
@@ -381,17 +371,6 @@ class Router(RouterType('RouterBase', (object,), {})):
         if router_args:
             router, args = router_args
             return router.response(environ, args)
-        elif self.allows_redirects:
-            if self.route.is_leaf:
-                if path.endswith('/'):
-                    router_args = self.resolve(path[:-1])
-                    if router_args is not None:
-                        return self.redirect('/%s' % path[:-1])
-            else:
-                if not path.endswith('/'):
-                    router_args = self.resolve('%s/' % path)
-                    if router_args is not None:
-                        return self.redirect('/%s/' % path)
 
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
@@ -443,15 +422,17 @@ class Router(RouterType('RouterBase', (object,), {})):
         '''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
+        #
+        # Remove from previous parent
+        if router.parent:
+            router.parent.remove_child(router)
+        router._parent = self
         # Loop over available routers to check it the router
         # is already available
         for r in self.routes:
             if r.route == router.route:
                 r.parameters.update(router.parameters)
                 return r
-        if router.parent:
-            router.parent.remove_child(router)
-        router._parent = self
         self.routes.append(router)
         return router
 
@@ -462,9 +443,16 @@ class Router(RouterType('RouterBase', (object,), {})):
             router._parent = None
 
     def get_route(self, name):
-        '''Get a child :class:`Router` by its :attr:`name`.'''
+        '''Get a child :class:`Router` by its :attr:`name`.
+
+        This method search child routes recursively.
+        '''
         for route in self.routes:
             if route.name == name:
+                return route
+        for child in self.routes:
+            route = child.get_route(name)
+            if route:
                 return route
 
     def link(self, *args, **urlargs):
