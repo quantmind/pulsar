@@ -5,7 +5,7 @@ from .store import CouchDBStore
 from pulsar.utils.config import Global
 
 
-class CouchDbServerTestOption(Global):
+class CouchDbServerOption(Global):
     name = 'couchdb_server'
     flags = ['--couchdb-server']
     meta = "CONNECTION_STRING"

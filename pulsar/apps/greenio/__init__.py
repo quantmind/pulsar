@@ -146,7 +146,7 @@ from functools import wraps, partial
 
 import greenlet
 
-from pulsar import Future, get_event_loop, async, coroutine_return
+from pulsar import Future, async
 
 from .pool import GreenPool, RunInPool
 from .local import local
@@ -164,10 +164,12 @@ def run_in_greenlet(callable):
     @wraps(callable)
     def _(*args, **kwargs):
         gr = PulsarGreenlet(callable)
+        # switch to the new greenlet
         result = gr.switch(*args, **kwargs)
+        # back to the parent
         while isinstance(result, Future):
+            # keep on switching back to the greenlet if we get a Future
             result = gr.switch((yield result))
-        coroutine_return(result)
 
     return _
 
@@ -191,6 +193,21 @@ def green_task(method):
     return _
 
 
+def wait(coro_or_future, loop=None):
+    '''Wait for a coroutine or a :class:`~asyncio.Future` to complete.
+
+    **This function must be called from a greenlet other than the main one**.
+    It can be used in conjunction with the :func:`run_in_greenlet`
+    decorator or the :class:`.GreenPool`.
+    '''
+    current = greenlet.getcurrent()
+    parent = current.parent
+    assert parent, 'Waiter cannot be initialised in main greenlet'
+    future = async(coro_or_future, loop=loop)
+    parent.switch(future)
+    return future.result()
+
+
 def wait_fd(fd, read=True):
     '''Wait for an event on file descriptor ``fd``.
 
@@ -210,33 +227,18 @@ def wait_fd(fd, read=True):
         fileno = fd.fileno()
     except AttributeError:
         fileno = fd
-    loop = get_event_loop()
-    future = Future(loop=loop)
+    future = Future()
     # When the event on fd occurs switch back to the current greenlet
     if read:
-        loop.add_reader(fileno, _done_wait_fd, fileno, future, read)
+        future._loop.add_reader(fileno, _done_wait_fd, fileno, future, read)
     else:
-        loop.add_writer(fileno, _done_wait_fd, fileno, future, read)
+        future._loop.add_writer(fileno, _done_wait_fd, fileno, future, read)
     # switch back to parent greenlet
     parent.switch(future)
     return future.result()
 
 
-def wait(coro_or_future, loop=None):
-    '''Wait for a coroutine or a :class:'~asyncio.Future` to complete.
-
-    **This function must be called from a greenlet other than the main one**.
-    '''
-    current = greenlet.getcurrent()
-    parent = current.parent
-    assert parent, 'Waiter cannot be initialised in main greenlet'
-    future = async(coro_or_future, loop)
-    parent.switch(future)
-    return future.result()
-
-
 # INTERNALS
-
 def _done_wait_fd(fd, future, read):
     if read:
         future._loop.remove_reader(fd)

@@ -51,14 +51,14 @@ def psycopg2_wait_callback(conn):
             wait_fd(conn)
         elif state == extensions.POLL_WRITE:
             wait_fd(conn, read=False)
-        else:
+        else:  # pragma    nocover
             raise OperationalError("Bad result from poll: %r" % state)
 
 
 def make_asynchronous():
     try:
         extensions.POLL_OK
-    except AttributeError:
+    except AttributeError:  # pragma    nocover
         raise ImproperlyConfigured(
             'Psycopg2 does not have support for asynchronous connections. '
             'You need at least version 2.2.0 of Psycopg2.')

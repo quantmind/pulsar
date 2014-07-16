@@ -232,17 +232,18 @@ class SocketServer(pulsar.Application):
         # First create the sockets
         try:
             server = yield loop.create_server(asyncio.Protocol, *address)
-        except (OSError, socket.error) as e:
-            raise ImproperlyConfigured(str(e))
-        addresses = []
-        sockets = []
-        for sock in server.sockets:
-            addresses.append(sock.getsockname())
-            sockets.append(sock)
-            server.loop.remove_reader(sock.fileno())
-        monitor.sockets = sockets
-        monitor.ssl = ssl
-        cfg.addresses = addresses
+        except socket.error as e:
+            raise ImproperlyConfigured(e)
+        else:
+            addresses = []
+            sockets = []
+            for sock in server.sockets:
+                addresses.append(sock.getsockname())
+                sockets.append(sock)
+                server.loop.remove_reader(sock.fileno())
+            monitor.sockets = sockets
+            monitor.ssl = ssl
+            cfg.addresses = addresses
 
     def actorparams(self, monitor, params):
         params.update({'sockets': monitor.sockets, 'ssl': monitor.ssl})

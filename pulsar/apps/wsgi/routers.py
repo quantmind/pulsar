@@ -420,12 +420,14 @@ class Router(RouterType('RouterBase', (object,), {})):
         '''
         request = wsgi_request(environ, self, args)
         # Set the response content type
-        request.response.content_type = self.content_type(request)
+        content_type = self.content_type(request)
+        if not content_type:
+            raise HttpException(status=415, msg=request.content_types)
+        request.response.content_type = content_type
         method = request.method.lower()
         callable = getattr(self, method, None)
         if callable is None:
-            raise HttpException(status=405,
-                                msg='Method "%s" not allowed' % method)
+            raise HttpException(status=405)
         response_wrapper = self.response_wrapper
         if response_wrapper:
             return response_wrapper(callable, request)

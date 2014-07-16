@@ -19,12 +19,12 @@ install:
 
 services:
   - redis-server
-  - mongodb
+  - postgresql
 
 script:
   - python -m covrun --pep8 pulsar examples tests
   - sudo rm -rf pulsar
-  - python -m covrun -w 2 -e taskqueue pshell webmail stores.query stores.odm.couchdb stores.odm.redis stores.couchdb stores.redis
+  - python -m covrun -w 2 -e taskqueue pshell webmail stores.couchdb stores.redis stores.query stores.odm.couchdb stores.odm.postgresql stores.odm.redis
   - if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then python -m runtests --coveralls; fi
 
 notifications:

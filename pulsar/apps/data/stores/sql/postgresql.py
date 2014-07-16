@@ -4,7 +4,7 @@ from pulsar.apps.data import register_store, create_store
 from .base import SqlStore, green_task
 
 
-class PostgreSqlTestOption(Global):
+class PostgreSqlOption(Global):
     name = 'postgresql_server'
     flags = ['--postgresql-server']
     meta = "CONNECTION_STRING"

@@ -4,5 +4,7 @@ django
 pep8
 setproctitle
 psutil
-trollius
 greenlet
+sqlalchemy
+psycopg2
+trollius

@@ -10,14 +10,27 @@ from pulsar.utils.system import platform, current_process
 
 # Dance between different versions. So boring!
 appengine = False
-reraise = None
-try:
+
+if ispy3k:
+
     import asyncio
     from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
     from asyncio.base_events import BaseEventLoop, _StopError
     from asyncio import selectors, events
-except ImportError:  # pragma    nocover
+
+    import builtins
+    ConnectionRefusedError = builtins.ConnectionRefusedError
+    ConnectionResetError = builtins.ConnectionResetError
+
+    def reraise(tp, value, tb=None):
+        if value.__traceback__ is not tb:
+            raise value.with_traceback(tb)
+        raise value
+
+else:  # pragma    nocover
+
     if platform.is_appengine:
+
         from . import appengine as asyncio
         _PENDING = 'PENDING'
         _CANCELLED = 'CANCELLED'
@@ -26,28 +39,16 @@ except ImportError:  # pragma    nocover
         _StopError = asyncio._StopError
         appengine = True
         reraise = asyncio.reraise
-    elif not ispy3k:
+    else:    # python 2.7
+
         import trollius as asyncio
         from trollius.futures import _PENDING, _CANCELLED, _FINISHED
         from trollius.base_events import BaseEventLoop, _StopError
         from trollius import selectors, events
         from trollius.py33_exceptions import reraise
-    else:
-        raise
 
-if ispy3k:
-    ConnectionRefusedError = __builtins__['ConnectionRefusedError']
-    ConnectionResetError = __builtins__['ConnectionResetError']
-
-    def reraise(tp, value, tb=None):
-        if value.__traceback__ is not tb:
-            raise value.with_traceback(tb)
-        raise value
-else:   # pragma    nocover
     ConnectionRefusedError = asyncio.ConnectionRefusedError
     ConnectionResetError = asyncio.ConnectionResetError
-    if reraise is None:  # trollius name change
-        from asyncio.py33_exceptions import reraise
 
 
 __all__ = ['get_event_loop',

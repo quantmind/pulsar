@@ -1,5 +1,3 @@
-import sys
-import os
 import socket
 from functools import partial
 
@@ -26,51 +24,9 @@ except ImportError:  # pragma: no cover
     pass
 
 
-from .system import platform, socketpair
 from .httpurl import urlsplit, parse_qsl, urlencode
-from .pep import native_str, ispy3k
+from .pep import native_str
 from .exceptions import SSLError
-
-BUFFER_MAX_SIZE = 256 * 1024  # 256 kb
-
-if platform.is_windows:    # pragma    nocover
-    EPERM = object()
-    from errno import WSAEINVAL as EINVAL
-    from errno import WSAEWOULDBLOCK as EWOULDBLOCK
-    from errno import WSAEINPROGRESS as EINPROGRESS
-    from errno import WSAEALREADY as EALREADY
-    from errno import WSAECONNRESET as ECONNRESET
-    from errno import WSAEISCONN as EISCONN
-    from errno import WSAENOTCONN as ENOTCONN
-    from errno import WSAEINTR as EINTR
-    from errno import WSAENOBUFS as ENOBUFS
-    from errno import WSAEMFILE as EMFILE
-    from errno import WSAECONNRESET as ECONNABORTED
-    from errno import WSAEADDRINUSE as EADDRINUSE
-    from errno import WSAEMSGSIZE as EMSGSIZE
-    from errno import WSAENETRESET as ENETRESET
-    from errno import WSAETIMEDOUT as ETIMEDOUT
-    from errno import WSAECONNREFUSED as ECONNREFUSED
-    from errno import WSAESHUTDOWN as ESHUTDOWN
-    # No such thing as WSAENFILE, either.
-    ENFILE = object()
-    # Nor ENOMEM
-    ENOMEM = object()
-    EAGAIN = EWOULDBLOCK
-    SOCKET_WRITE_ERRORS = (EINTR, ECONNRESET)
-else:
-    from errno import (EPERM, EINVAL, EWOULDBLOCK, EINPROGRESS, EALREADY,
-                       ECONNRESET, EISCONN, ENOTCONN, EINTR, ENOBUFS, EMFILE,
-                       ENFILE, ENOMEM, EAGAIN, ECONNABORTED, EADDRINUSE,
-                       EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED, ESHUTDOWN,
-                       EPIPE)
-    SOCKET_WRITE_ERRORS = (EPIPE, EINTR, ECONNRESET)
-
-ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
-TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
-TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
-
-SOCKET_INTERRUPT_ERRORS = (EINTR, ECONNRESET)
 
 
 def parse_address(netloc, default_port=8000):
@@ -112,21 +68,21 @@ def parse_address(netloc, default_port=8000):
 
 def parse_connection_string(connection_string, default_port=8000):
     """Converts the ``connection_string`` into a three elements tuple
-``(scheme, host, params)`` where ``scheme`` is a string, ``host`` could
-be a string or a two elements tuple (for a tcp address) and ``params`` a
-dictionary of parameters. The ``default_port`` parameter can be used to
-set the port if a port is not available in the ``connection_string``.
+    ``(scheme, host, params)`` where ``scheme`` is a string, ``host`` could
+    be a string or a two elements tuple (for a tcp address) and ``params`` a
+    dictionary of parameters. The ``default_port`` parameter can be used to
+    set the port if a port is not available in the ``connection_string``.
 
-For example::
+    For example::
 
-    >>> parse_connection_string('http://127.0.0.1:9080')
-    ('http', ('127.0.0.1', 9080), {})
+        >>> parse_connection_string('http://127.0.0.1:9080')
+        ('http', ('127.0.0.1', 9080), {})
 
-and this example::
+    and this example::
 
-    >>> parse_connection_string('redis://127.0.0.1:6379?db=3&password=bla')
-    ('redis', ('127.0.0.1', 6379), {'db': '3', 'password': 'bla'})
-"""
+        >>> parse_connection_string('redis://127.0.0.1:6379?db=3&password=bla')
+        ('redis', ('127.0.0.1', 6379), {'db': '3', 'password': 'bla'})
+    """
     if '://' not in connection_string:
         connection_string = 'dummy://%s' % connection_string
     scheme, host, path, query, fragment = urlsplit(connection_string)

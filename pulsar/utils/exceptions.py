@@ -148,8 +148,3 @@ class Http404(HttpException):
 class MethodNotAllowed(HttpException):
     '''An :class:`HttpException` with default ``405`` status code.'''
     status = 405
-
-
-class ContentNotAccepted(HttpException):
-    '''An :class:`HttpException` with default ``406`` status code.'''
-    status = 406

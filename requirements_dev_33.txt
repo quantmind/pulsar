@@ -4,5 +4,7 @@ django
 pep8
 setproctitle
 psutil
-asyncio
 greenlet
+sqlalchemy
+psycopg2
+asyncio

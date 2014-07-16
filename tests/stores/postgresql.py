@@ -7,8 +7,18 @@ from pulsar.apps.test import check_server
 
 OK = check_server('postgresql')
 
+if not OK:
+    try:
+        import pulsar.apps.greenio.pg
+    except ImportError as e:
+        MSG = str(e)
+    else:
+        MSG = 'Requires a running postgresql database'
+else:
+    MSG = ''
 
-@unittest.skipUnless(OK, 'Requires postgresql binding')
+
+@unittest.skipUnless(OK, MSG)
 class PostgreSqlTest(object):
 
     @classmethod
