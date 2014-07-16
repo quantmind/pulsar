@@ -12,7 +12,6 @@ omit =
     *pulsar/apps/test/cov.py
     *pulsar/apps/test/plugins/profile.py
     *pulsar/apps/test/pep.py
-    *pulsar/apps/data/stores/*
     *pulsar/apps/tx/*
     examples/httpbin/config.py
     examples/philosophers/config.py
