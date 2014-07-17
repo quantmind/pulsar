@@ -146,7 +146,7 @@ from functools import wraps, partial
 
 import greenlet
 
-from pulsar import Future, async
+from pulsar import Future, async, coroutine_return
 
 from .pool import GreenPool, RunInPool
 from .local import local
@@ -170,6 +170,7 @@ def run_in_greenlet(callable):
         while isinstance(result, Future):
             # keep on switching back to the greenlet if we get a Future
             result = gr.switch((yield result))
+        coroutine_return(result)
 
     return _
 
