@@ -21,9 +21,9 @@ def register_transport(klass):
 
 @register_transport
 class WebSocket(wsgi.Router):
-    """A :ref:`Router <wsgi-router>` for a websocket handshake.
+    """A specialised :class:`.Router` for a websocket handshake.
 
-    Once the handshake is succesful, the protocol consumer
+    Once the handshake is successful, the protocol consumer
     is upgraded to :class:`WebSocketProtocol` and messages are handled by
     the :attr:`handle` attribute, an instance of :class:`.WS`.
 

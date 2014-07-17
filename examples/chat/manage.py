@@ -50,6 +50,7 @@ from pulsar.apps.wsgi import Router, WsgiHandler, LazyWsgi, WSGIServer
 from pulsar.apps.ws import WS, WebSocket
 from pulsar.apps.rpc import PulsarServerCommands
 from pulsar.apps.data import create_store, PubSubClient
+from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 from pulsar.apps.ds import pulsards_url
 from pulsar.utils.system import json
 from pulsar.utils.pep import to_string
@@ -148,7 +149,8 @@ class WebChat(LazyWsgi):
         pubsub.subscribe(channel)
         return WsgiHandler([Router('/', get=self.home_page),
                             WebSocket('/message', Chat(pubsub, channel)),
-                            Router('/rpc', post=Rpc(pubsub, channel))])
+                            Router('/rpc', post=Rpc(pubsub, channel),
+                                   response_content_types=JSON_CONTENT_TYPES)])
 
     def home_page(self, request):
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()

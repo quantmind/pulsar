@@ -180,4 +180,3 @@ class TestRouter(unittest.TestCase):
         # It has both get and post methods
         self.assertTrue(async.get)
         self.assertTrue(async.post)
-

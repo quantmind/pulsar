@@ -3,6 +3,31 @@ JSON-RPC_ server and client. Check out the
 :ref:`json-rpc tutorial <tutorials-calculator>` if you want to get started
 quickly with a working example.
 
+To quickly setup a server::
+
+    class MyRpc(rpc.JSONRPC):
+
+        def rpc_ping(self, request):
+            return 'pong'
+
+
+    class Wsgi(wsgi.LazyWsgi):
+
+        def handler(self, environ=None):
+            app = wsgi.Router('/',
+                              post=MyRpc(),
+                              response_content_types=['application/json'])
+            return wsgi.wsgiHandler([app])
+
+    if __name__ == '__main__':
+        wsgi.WsgiServer(Wsgi()).start()
+
+
+* The ``MyRpc`` handles the requests
+* Routing is delegated to the :class:`.Router` which handle only ``post``
+  requests with content type ``application/json``.
+
+
 API
 ===========
 

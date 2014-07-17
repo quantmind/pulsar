@@ -1,3 +1,4 @@
+trollius
 coverage
 cython
 django
@@ -7,4 +8,3 @@ psutil
 greenlet
 sqlalchemy
 psycopg2
-trollius

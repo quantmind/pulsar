@@ -1,4 +1,4 @@
-asyncio
+trollius
 coverage
 cython
 django
@@ -7,4 +7,3 @@ setproctitle
 psutil
 greenlet
 sqlalchemy
-psycopg2

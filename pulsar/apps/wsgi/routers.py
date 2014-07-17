@@ -350,7 +350,11 @@ class Router(RouterType('RouterBase', (object,), {})):
         accepted content types and the content types accepted by the client
         and figure out the best match.
         '''
-        return request.content_types.best_match(self.response_content_types)
+        content_types = self.response_content_types
+        ct = request.content_types.best_match(content_types)
+        if not ct and content_types:
+            raise HttpException(status=415, msg=request.content_types)
+        return ct
 
     def accept_content_type(self, content_type):
         '''Check if ``content_type`` is accepted by this :class:`Router`.
@@ -398,11 +402,7 @@ class Router(RouterType('RouterBase', (object,), {})):
         this method to produce the WSGI response.
         '''
         request = wsgi_request(environ, self, args)
-        # Set the response content type
-        content_type = self.content_type(request)
-        if not content_type:
-            raise HttpException(status=415, msg=request.content_types)
-        request.response.content_type = content_type
+        request.response.content_type = self.content_type(request)
         method = request.method.lower()
         callable = getattr(self, method, None)
         if callable is None:
