@@ -103,9 +103,14 @@ class CouchDBStore(CouchDBMixin, Store):
     def design_info(self, name):
         return self.request('get', self._database, '_design', name, '_info')
 
-    # DOCUMENTS
-    def update_document(self, document):
-        return self.request('post', self._database, **document)
+    # DOCUMENTS API
+    def get_document(self, dbname, pkvalue):
+        '''Fetch a document from ``dbname`` with id ``pkvalue``
+        '''
+        return self.request('get', dbname, pkvalue)
+
+    def update_document(self, dbname, document):
+        return self.request('post', dbname, **document)
 
     def update_documents(self, dbname, documents, new_edits=True):
         '''Bulk update/insert of documents in a database

@@ -170,7 +170,9 @@ def run_in_greenlet(callable):
         while isinstance(result, Future):
             # keep on switching back to the greenlet if we get a Future
             result = gr.switch((yield result))
-        coroutine_return(result)
+        # For some reason this line does not show in coverage reports
+        # but it is covered!
+        coroutine_return(result)    # prgma nocover
 
     return _
 

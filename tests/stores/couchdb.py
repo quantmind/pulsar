@@ -71,8 +71,6 @@ class TestCouchDbStore(TestStoreWithDb, unittest.TestCase):
         store = self.store
         self.assertEqual(store.name, 'couchdb')
         self.assertEqual(store.scheme[:4], 'http')
-        client = self.store.client()
-        self.assertEqual(client.store, store)
 
     def test_admin(self):
         result = yield self.store.info()
@@ -95,36 +93,29 @@ class TestCouchDbStore(TestStoreWithDb, unittest.TestCase):
                                       store.delete_database, name)
 
     def test_databases(self):
-        client = self.store.client()
-        dbs = yield client.databases()
+        store = self.store
+        dbs = yield store.all_databases()
         self.assertTrue(dbs)
         self.assertTrue('_users' in dbs)
 
-    def test_users(self):
-        client = self.store.client()
-        users = yield client.users()
-        self.assertTrue(users)
-        # self.assertTrue('_users' in dbs)
-
     # DOCUMENTS
     def test_get_invalid_document(self):
-        client = self.store.client()
+        store = self.store
         yield self.async.assertRaises(CouchDbNoDbError,
-                                      client.get, 'bla', '234234')
+                                      store.get_document, 'bla', '234234')
 
     def test_create_document(self):
-        client = self.store.client()
+        store = self.store
         result = yield self.createdb('test1')
         self.assertTrue(result['ok'])
-        result = yield client.post(self.name('test1'),
-                                   {'title': 'Hello World',
-                                    'author': 'lsbardel'})
+        result = yield store.update_document(self.name('test1'),
+                                             {'title': 'Hello World',
+                                              'author': 'lsbardel'})
         self.assertTrue(result['ok'])
         id = result['id']
-        doc = yield client.get(self.name('test1'), result['id'])
-        data = doc['data']
-        self.assertEqual(data['author'], 'lsbardel')
-        self.assertEqual(data['title'], 'Hello World')
+        doc = yield store.get_document(self.name('test1'), result['id'])
+        self.assertEqual(doc['author'], 'lsbardel')
+        self.assertEqual(doc['title'], 'Hello World')
 
     def test_sync_store(self):
         loop = new_event_loop()
