@@ -3,6 +3,7 @@ import unittest
 
 from pulsar.utils.log import lazy_string
 
+
 @lazy_string
 def blabla(n):
     return 'AAAAAAAAAAAAAAAAAAAA %s' % n

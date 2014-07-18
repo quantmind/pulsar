@@ -233,7 +233,8 @@ class Router(RouterType('RouterBase', (object,), {})):
             rule, method, params, _, _ = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
-            router = self.add_child(self.make_router(rule, **rparameters))
+            cls = rparameters.pop('cls', self.__class__)
+            router = self.add_child(cls(rule, **rparameters))
             setattr(router, method, handler)
         for name, value in parameters.items():
             if name in self.parameters:
@@ -463,12 +464,6 @@ class Router(RouterType('RouterBase', (object,), {})):
         while parent and parent is not router:
             parent = parent._parent
         return parent is not None
-
-    @classmethod
-    def make_router(cls, rule, **params):
-        '''Create a new :class:`.Router` form rule and parameters
-        '''
-        return Router(rule, **params)
 
     def no_param(self, name):
         raise AttributeError("'%s' object has no attribute '%s'" %
