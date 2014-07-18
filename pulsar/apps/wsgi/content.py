@@ -150,8 +150,8 @@ from inspect import isgenerator
 
 from pulsar import multi_async, async, coroutine_return, chain_future
 from pulsar.utils.pep import iteritems, to_string, ispy3k
-from pulsar.utils.html import (slugify, INLINE_TAGS, escape,
-                               dump_data_value, child_tag)
+from pulsar.utils.slugify import slugify
+from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
 from pulsar.utils.httpurl import remove_double_slash
 from pulsar.utils.system import json
 
@@ -655,7 +655,7 @@ class Html(AsyncString):
                     self._extra['classes'] = classes = set()
                 add = classes.add
                 for cn in cn.split():
-                    add(slugify(cn, rtx='-'))
+                    add(slugify(cn))
         return self
 
     def hasClass(self, cn):

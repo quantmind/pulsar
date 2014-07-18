@@ -1,11 +1,9 @@
 '''Utilities for HTML and text manipulation.
 '''
-import re
-from unicodedata import normalize
-
 from .system import json
 from .pep import (ispy3k, native_str, to_string, iteritems, is_string,
                   string_type)
+
 
 NOTHING = ('', b'', None)
 '''Tuple of elements considered as null.'''
@@ -33,14 +31,6 @@ HTML_EMDASH = '&mdash;'
 def child_tag(tag):
     '''The default children ``tag`` for a given ``tag``.'''
     return HTML_CHILDREN_TAG.get(tag)
-
-
-def slugify(value, rtx='_'):
-    '''Normalizes string, removes non-alpha characters,
-and converts spaces to ``rtx`` character (hyphens or underscore).'''
-    value = normalize('NFKD', to_string(value)).encode('ascii', 'ignore')
-    value = to_string(re.sub('[^\w\s-]', rtx, value.decode()).strip())
-    return re.sub('[-\s]+', rtx, value)
 
 
 def mark_safe(v):

@@ -64,6 +64,12 @@ HTML & Text
 .. automodule:: pulsar.utils.html
    :members:
 
+Slugify
+==================
+
+.. automodule:: pulsar.utils.slugify
+
+
 Logging
 ==================
 

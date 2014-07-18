@@ -18,6 +18,14 @@ try:
 except ImportError:
     libparams = None
 
+install_requires = ['unidecode']
+
+if sys.version_info < (3,):
+    install_requires.append('trollius')
+elif sys.version_info < (3,4):
+    install_requires.append('asyncio')
+
+
 
 class osx_install_data(install_data):
 
@@ -95,6 +103,8 @@ def run_setup(params=None):
         params = {'cmdclass': {}}
     else:
         params = params()
+    if command != 'sdist':
+        params['install_requires'] = install_requires
     if sys.platform == "darwin":
         params['cmdclass']['install_data'] = osx_install_data
     else:

@@ -1,4 +1,3 @@
-asyncio
 coverage
 cython
 django

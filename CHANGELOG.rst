@@ -25,6 +25,9 @@ Ver. 0.8.5 - Development
   internal exception
 * Critical bug fix in :class:`.Router` when children are added via a decorated
   method
+* ``trollius`` and ``asyncio`` added as dependencies in the ``setup.py``
+  script during installation
+* Better :func:`.slugify` function
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

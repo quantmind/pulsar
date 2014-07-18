@@ -3,13 +3,14 @@ import unittest
 
 from pulsar.utils.log import lazy_string
 
+@lazy_string
+def blabla(n):
+    return 'AAAAAAAAAAAAAAAAAAAA %s' % n
+
 
 class TestTextUtils(unittest.TestCase):
 
     def testLazy(self):
-        @lazy_string
-        def blabla(n):
-            return 'AAAAAAAAAAAAAAAAAAAA %s' % n
         r = blabla(3)
         self.assertEqual(r.value, None)
         v = str(r)

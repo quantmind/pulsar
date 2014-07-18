@@ -70,6 +70,7 @@ from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
+from pulsar.utils.slugify import slugify
 from pulsar import Http404, HttpException
 
 from .route import Route
@@ -205,7 +206,8 @@ class Router(RouterType('RouterBase', (object,), {})):
         A :class:`.AttributeDictionary` of parameters for
         this :class:`Router`. Parameters are created at initialisation from
         the ``parameters`` class attribute and the key-valued parameters
-        passed to the ``__init__`` method for which the value is not callable.
+        passed to the ``__init__`` method which are available in the
+        class ``parameters`` attribute.
     '''
     _creation_count = 0
     _parent = None
@@ -237,7 +239,7 @@ class Router(RouterType('RouterBase', (object,), {})):
             if name in self.parameters:
                 self.parameters[name] = value
             else:
-                setattr(self, name, value)
+                setattr(self, slugify(name, separator='_'), value)
 
     @property
     def route(self):
@@ -285,15 +287,6 @@ class Router(RouterType('RouterBase', (object,), {})):
         return self._parent
 
     @property
-    def default_content_type(self):
-        '''The default content type for responses.
-
-        This is the first element in the :attr:`response_content_types` list.
-        '''
-        ct = self.response_content_types
-        return ct[0] if ct else None
-
-    @property
     def creation_count(self):
         '''Integer for sorting :class:`Router` by creation.
 
@@ -338,10 +331,6 @@ class Router(RouterType('RouterBase', (object,), {})):
                 self.no_param(name)
         else:
             return value
-
-    def no_param(self, name):
-        raise AttributeError("'%s' object has no attribute '%s'" %
-                             (self.__class__.__name__, name))
 
     def content_type(self, request):
         '''Evaluate the content type for the response to a client ``request``.
@@ -480,6 +469,10 @@ class Router(RouterType('RouterBase', (object,), {})):
         '''Create a new :class:`.Router` form rule and parameters
         '''
         return Router(rule, **params)
+
+    def no_param(self, name):
+        raise AttributeError("'%s' object has no attribute '%s'" %
+                             (self.__class__.__name__, name))
 
 
 class MediaMixin(Router):
