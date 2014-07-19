@@ -233,8 +233,7 @@ class Router(RouterType('RouterBase', (object,), {})):
             rule, method, params, _, _ = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
-            cls = rparameters.pop('cls', self.__class__)
-            router = self.add_child(cls(rule, **rparameters))
+            router = self.add_child(self.make_router(rule, **rparameters))
             setattr(router, method, handler)
         for name, value in parameters.items():
             if name in self.parameters:
@@ -468,6 +467,12 @@ class Router(RouterType('RouterBase', (object,), {})):
     def no_param(self, name):
         raise AttributeError("'%s' object has no attribute '%s'" %
                              (self.__class__.__name__, name))
+
+    def make_router(self, rule, cls=None, **params):
+        '''Create a new :class:`.Router` form rule and parameters
+        '''
+        cls = cls or Router
+        return cls(rule, **params)
 
 
 class MediaMixin(Router):
