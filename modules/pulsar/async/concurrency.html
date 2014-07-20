@@ -98,13 +98,13 @@
 
 <span class="k">def</span> <span class="nf">concurrency</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">actor_class</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Function invoked by the :class:`.Arbiter` or a :class:`.Monitor` when</span>
-<span class="sd">spawning a new :class:`.Actor`. It created a :class:`.Concurrency` instance</span>
-<span class="sd">which handle the initialisation and the life of an :class:`.Actor`.</span>
+<span class="sd">    spawning a new :class:`.Actor`. It created a :class:`.Concurrency` instance</span>
+<span class="sd">    which handle the initialisation and the life of an :class:`.Actor`.</span>
 
-<span class="sd">:parameter kind: Type of concurrency.</span>
-<span class="sd">:parameter monitor: The monitor (or arbiter) managing the :class:`.Actor`.</span>
-<span class="sd">:return: a :class:`.Councurrency` instance.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    :parameter kind: Type of concurrency.</span>
+<span class="sd">    :parameter monitor: The monitor (or arbiter) managing the :class:`.Actor`.</span>
+<span class="sd">    :return: a :class:`.Councurrency` instance.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">maker</span> <span class="o">=</span> <span class="n">concurrency_models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">maker</span><span class="p">:</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">maker</span><span class="p">()</span>

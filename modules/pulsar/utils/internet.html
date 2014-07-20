@@ -296,19 +296,7 @@
 <div class="viewcode-block" id="is_tls"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.internet.is_tls">[docs]</a><span class="k">def</span> <span class="nf">is_tls</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Check if ``sock`` is a socket over transport layer security</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">return</span> <span class="n">ssl</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLSocket</span><span class="p">)</span>
-
-</div>
-<span class="k">def</span> <span class="nf">ssl_context</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">server_side</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">ssl</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-    <span class="k">if</span> <span class="n">server_side</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">context</span><span class="p">,</span> <span class="n">SSLContext</span><span class="p">),</span> <span class="s">&#39;Must pass an SSLContext&#39;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c"># Client-side may pass ssl=True to use a default context.</span>
-        <span class="n">context</span> <span class="o">=</span> <span class="n">context</span> <span class="ow">or</span> <span class="n">SSLContext</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">context</span>
+    <span class="k">return</span> <span class="n">ssl</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLSocket</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

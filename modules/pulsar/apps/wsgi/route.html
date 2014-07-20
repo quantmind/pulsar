@@ -97,7 +97,6 @@
 
 <span class="sd">    # accept any path (including slashes)</span>
 <span class="sd">    Route(&#39;&lt;path:pages&gt;&#39;)</span>
-<span class="sd">    # accept an integer between 1 and 200 only</span>
 <span class="sd">    Route(&#39;&lt;path:pages&gt;/edit&#39;)</span>
 
 
@@ -205,25 +204,43 @@
 
 <span class="sd">    Typical usage::</span>
 
-<span class="sd">        from pulsar.apps import wsgi</span>
+<span class="sd">        from pulsar.apps.wsgi import Router, route</span>
 
-<span class="sd">        class View(wsgi.Router):</span>
+<span class="sd">        class View(Router):</span>
 
-<span class="sd">            wsgi.route(&#39;/foo&#39;)</span>
-<span class="sd">            def handle1(self, request):</span>
+<span class="sd">            def get(self, request):</span>
 <span class="sd">                ...</span>
 
-<span class="sd">            wsgi.route(&#39;/bla&#39;, method=&#39;post&#39;)</span>
+<span class="sd">            @route()</span>
+<span class="sd">            def foo(self, request):</span>
+<span class="sd">                ...</span>
+
+<span class="sd">            @route(&#39;/bla&#39;, method=&#39;post&#39;)</span>
 <span class="sd">            def handle2(self, request):</span>
 <span class="sd">                ...</span>
 
 
-<span class="sd">    In this example, ``View`` is the **parent router**.</span>
+<span class="sd">    In this example, ``View`` is the **parent router** which handle get</span>
+<span class="sd">    requests only.</span>
 
 <span class="sd">    The decorator injects the :attr:`rule_method` attribute to the</span>
 <span class="sd">    method it decorates. The attribute is a four elements tuple</span>
 <span class="sd">    contains the :class:`Route`, the HTTP ``method``, a</span>
 <span class="sd">    dictionary of additional ``parameters`` and the ``position`` for ordering.</span>
+
+<span class="sd">    The decorated method are stored in the :attr:`.Router.rule_methods` class</span>
+<span class="sd">    attribute ``rule_methods``.</span>
+
+<span class="sd">        &gt;&gt;&gt; len(View.rule_methods)</span>
+<span class="sd">        2</span>
+<span class="sd">        &gt;&gt;&gt; View.rule_methods[&#39;foo&#39;].rule</span>
+<span class="sd">        /foo</span>
+<span class="sd">        &gt;&gt;&gt; View.rule_methods[&#39;foo&#39;].method</span>
+<span class="sd">        &#39;get&#39;</span>
+<span class="sd">        &gt;&gt;&gt; View.rule_methods[&#39;handle2&#39;].rule</span>
+<span class="sd">        /bla</span>
+<span class="sd">        &gt;&gt;&gt; View.rule_methods[&#39;handle2&#39;].method</span>
+<span class="sd">        &#39;post&#39;</span>
 
 <span class="sd">    Check the :ref:`HttpBin example &lt;tutorials-httpbin&gt;`</span>
 <span class="sd">    for a sample usage.</span>
@@ -236,8 +253,7 @@
 <span class="sd">    :param position: Optional positioning of the router within the</span>
 <span class="sd">        list of child routers of the parent router</span>
 <span class="sd">    :param parameters: Additional parameters used when initialising</span>
-<span class="sd">        the :class:`pulsar.apps.wsgi.handlers.Router` created by this</span>
-<span class="sd">        decorator</span>
+<span class="sd">        the :class:`.Router` created by this decorator</span>
 
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">creation_count</span> <span class="o">=</span> <span class="mi">0</span>

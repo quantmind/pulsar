@@ -246,6 +246,13 @@
 <span class="sd">        exception of :attr:`response_content_types` and</span>
 <span class="sd">        :attr:`response_wrapper`</span>
 
+<span class="sd">    .. attribute:: rule_methods</span>
+
+<span class="sd">        A class attribute built during class creation. It is an ordered</span>
+<span class="sd">        dictionary mapping method names with a five-elements tuple</span>
+<span class="sd">        containing information</span>
+<span class="sd">        about a child route (See the :class:`.route` decorator).</span>
+
 <span class="sd">    .. attribute:: routes</span>
 
 <span class="sd">        List of children :class:`Router` of this :class:`Router`.</span>
@@ -295,9 +302,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_route</span> <span class="o">=</span> <span class="n">rule</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c"># add routes specified via the initialiser</span>
-        <span class="k">for</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
         <span class="c"># copy parameters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">AttributeDictionary</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">rule_method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule_methods</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -311,6 +315,9 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s">&#39;_&#39;</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
+        <span class="c"># add routes specified via the initialiser</span>
+        <span class="k">for</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Router.route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.route">[docs]</a>    <span class="k">def</span> <span class="nf">route</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -540,7 +547,10 @@
                              <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Router.make_router"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.make_router">[docs]</a>    <span class="k">def</span> <span class="nf">make_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a new :class:`.Router` form rule and parameters</span>
+        <span class="sd">&#39;&#39;&#39;Create a new :class:`.Router` from a ``rule`` and parameters.</span>
+
+<span class="sd">        This method is used during initialisation when building child</span>
+<span class="sd">        Routers from the :attr:`rule_methods`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">cls</span> <span class="o">=</span> <span class="n">cls</span> <span class="ow">or</span> <span class="n">Router</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>

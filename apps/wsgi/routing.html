@@ -134,6 +134,15 @@ exception of <a class="reference internal" href="#pulsar.apps.wsgi.routers.Route
 </tbody>
 </table>
 <dl class="attribute">
+<dt id="pulsar.apps.wsgi.routers.Router.rule_methods">
+<tt class="descname">rule_methods</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.rule_methods" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class attribute built during class creation. It is an ordered
+dictionary mapping method names with a five-elements tuple
+containing information
+about a child route (See the <a class="reference internal" href="#pulsar.apps.wsgi.route.route" title="pulsar.apps.wsgi.route.route"><tt class="xref py py-class docutils literal"><span class="pre">route</span></tt></a> decorator).</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.Router.routes">
 <tt class="descname">routes</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.routes" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of children <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> of this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
@@ -302,7 +311,9 @@ set to the url of this <a class="reference internal" href="#pulsar.apps.wsgi.rou
 <dl class="method">
 <dt id="pulsar.apps.wsgi.routers.Router.make_router">
 <tt class="descname">make_router</tt><big>(</big><em>rule</em>, <em>cls=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.make_router"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.make_router" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> form rule and parameters</p>
+<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> from a <tt class="docutils literal"><span class="pre">rule</span></tt> and parameters.</p>
+<p>This method is used during initialisation when building child
+Routers from the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.rule_methods" title="pulsar.apps.wsgi.routers.Router.rule_methods"><tt class="xref py py-attr docutils literal"><span class="pre">rule_methods</span></tt></a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -398,7 +409,6 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <p>Paths:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># accept any path (including slashes)</span>
 <span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;path:pages&gt;&#39;</span><span class="p">)</span>
-<span class="c"># accept an integer between 1 and 200 only</span>
 <span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;path:pages&gt;/edit&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -409,24 +419,42 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.route.</tt><tt class="descname">route</tt><big>(</big><em>rule=None</em>, <em>method=None</em>, <em>defaults=None</em>, <em>position=None</em>, <em>**parameters</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.route" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator to create a child route from a <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> method.</p>
 <p>Typical usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">Router</span><span class="p">,</span> <span class="n">route</span>
 
-<span class="k">class</span> <span class="nc">View</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">View</span><span class="p">(</span><span class="n">Router</span><span class="p">):</span>
 
-    <span class="n">wsgi</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s">&#39;/foo&#39;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">handle1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="o">...</span>
 
-    <span class="n">wsgi</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;post&#39;</span><span class="p">)</span>
+    <span class="nd">@route</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="s">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;post&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">handle2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="o">...</span>
 </pre></div>
 </div>
-<p>In this example, <tt class="docutils literal"><span class="pre">View</span></tt> is the <strong>parent router</strong>.</p>
+<p>In this example, <tt class="docutils literal"><span class="pre">View</span></tt> is the <strong>parent router</strong> which handle get
+requests only.</p>
 <p>The decorator injects the <tt class="xref py py-attr docutils literal"><span class="pre">rule_method</span></tt> attribute to the
 method it decorates. The attribute is a four elements tuple
 contains the <a class="reference internal" href="#pulsar.apps.wsgi.route.Route" title="pulsar.apps.wsgi.route.Route"><tt class="xref py py-class docutils literal"><span class="pre">Route</span></tt></a>, the HTTP <tt class="docutils literal"><span class="pre">method</span></tt>, a
 dictionary of additional <tt class="docutils literal"><span class="pre">parameters</span></tt> and the <tt class="docutils literal"><span class="pre">position</span></tt> for ordering.</p>
+<p>The decorated method are stored in the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.rule_methods" title="pulsar.apps.wsgi.routers.Router.rule_methods"><tt class="xref py py-attr docutils literal"><span class="pre">Router.rule_methods</span></tt></a> class
+attribute <tt class="docutils literal"><span class="pre">rule_methods</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">)</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rule</span>
+<span class="go">/foo</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">method</span>
+<span class="go">&#39;get&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;handle2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rule</span>
+<span class="go">/bla</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;handle2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">method</span>
+<span class="go">&#39;post&#39;</span>
+</pre></div>
+</div>
 <p>Check the <a class="reference internal" href="../../tutorials/httpbin.html#tutorials-httpbin"><em>HttpBin example</em></a>
 for a sample usage.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -442,8 +470,7 @@ initialising the <a class="reference internal" href="#pulsar.apps.wsgi.route.Rou
 <li><strong>position</strong> &#8211; Optional positioning of the router within the
 list of child routers of the parent router</li>
 <li><strong>parameters</strong> &#8211; Additional parameters used when initialising
-the <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.handlers.Router</span></tt> created by this
-decorator</li>
+the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> created by this decorator</li>
 </ul>
 </td>
 </tr>

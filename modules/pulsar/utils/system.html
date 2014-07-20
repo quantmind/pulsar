@@ -80,7 +80,7 @@
 
 <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;win&#39;</span><span class="p">:</span>    <span class="c"># pragma nocover</span>
     <span class="kn">from</span> <span class="nn">.windowssystem</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="k">elif</span> <span class="n">platform</span><span class="o">.</span><span class="n">is_appengine</span><span class="p">:</span>
+<span class="k">elif</span> <span class="n">platform</span><span class="o">.</span><span class="n">is_appengine</span><span class="p">:</span>    <span class="c"># pragma nocover</span>
     <span class="kn">from</span> <span class="nn">.appengine</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.posixsystem</span> <span class="kn">import</span> <span class="o">*</span>
