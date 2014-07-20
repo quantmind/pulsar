@@ -26,7 +26,6 @@ Paths::
 
     # accept any path (including slashes)
     Route('<path:pages>')
-    # accept an integer between 1 and 200 only
     Route('<path:pages>/edit')
 
 
@@ -134,25 +133,43 @@ class route(object):
 
     Typical usage::
 
-        from pulsar.apps import wsgi
+        from pulsar.apps.wsgi import Router, route
 
-        class View(wsgi.Router):
+        class View(Router):
 
-            wsgi.route('/foo')
-            def handle1(self, request):
+            def get(self, request):
                 ...
 
-            wsgi.route('/bla', method='post')
+            @route()
+            def foo(self, request):
+                ...
+
+            @route('/bla', method='post')
             def handle2(self, request):
                 ...
 
 
-    In this example, ``View`` is the **parent router**.
+    In this example, ``View`` is the **parent router** which handle get
+    requests only.
 
     The decorator injects the :attr:`rule_method` attribute to the
     method it decorates. The attribute is a four elements tuple
     contains the :class:`Route`, the HTTP ``method``, a
     dictionary of additional ``parameters`` and the ``position`` for ordering.
+
+    The decorated method are stored in the :attr:`.Router.rule_methods` class
+    attribute ``rule_methods``.
+
+        >>> len(View.rule_methods)
+        2
+        >>> View.rule_methods['foo'].rule
+        /foo
+        >>> View.rule_methods['foo'].method
+        'get'
+        >>> View.rule_methods['handle2'].rule
+        /bla
+        >>> View.rule_methods['handle2'].method
+        'post'
 
     Check the :ref:`HttpBin example <tutorials-httpbin>`
     for a sample usage.
@@ -165,8 +182,7 @@ class route(object):
     :param position: Optional positioning of the router within the
         list of child routers of the parent router
     :param parameters: Additional parameters used when initialising
-        the :class:`pulsar.apps.wsgi.handlers.Router` created by this
-        decorator
+        the :class:`.Router` created by this decorator
 
     '''
     creation_count = 0

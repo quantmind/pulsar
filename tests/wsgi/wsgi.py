@@ -233,3 +233,12 @@ class WsgiRequestTests(unittest.TestCase):
         response = yield handler(environ, start)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(start.call_count, 1)
+
+    def test_request_redirect(self):
+        request = self.request()
+        response = request.redirect('/foo')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/foo')
+        response = request.redirect('/foo2', permanent=True)
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['location'], '/foo2')

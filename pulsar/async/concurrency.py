@@ -29,13 +29,13 @@ __all__ = ['Concurrency', 'concurrency']
 
 def concurrency(kind, actor_class, monitor, cfg, **params):
     '''Function invoked by the :class:`.Arbiter` or a :class:`.Monitor` when
-spawning a new :class:`.Actor`. It created a :class:`.Concurrency` instance
-which handle the initialisation and the life of an :class:`.Actor`.
+    spawning a new :class:`.Actor`. It created a :class:`.Concurrency` instance
+    which handle the initialisation and the life of an :class:`.Actor`.
 
-:parameter kind: Type of concurrency.
-:parameter monitor: The monitor (or arbiter) managing the :class:`.Actor`.
-:return: a :class:`.Councurrency` instance.
-'''
+    :parameter kind: Type of concurrency.
+    :parameter monitor: The monitor (or arbiter) managing the :class:`.Actor`.
+    :return: a :class:`.Councurrency` instance.
+    '''
     maker = concurrency_models.get(kind)
     if maker:
         c = maker()

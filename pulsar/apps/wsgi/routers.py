@@ -175,6 +175,13 @@ class Router(RouterType('RouterBase', (object,), {})):
         exception of :attr:`response_content_types` and
         :attr:`response_wrapper`
 
+    .. attribute:: rule_methods
+
+        A class attribute built during class creation. It is an ordered
+        dictionary mapping method names with a five-elements tuple
+        containing information
+        about a child route (See the :class:`.route` decorator).
+
     .. attribute:: routes
 
         List of children :class:`Router` of this :class:`Router`.
@@ -224,9 +231,6 @@ class Router(RouterType('RouterBase', (object,), {})):
         self._route = rule
         self._name = parameters.pop('name', rule.name)
         self.routes = []
-        # add routes specified via the initialiser
-        for router in routes:
-            self.add_child(router)
         # copy parameters
         self.parameters = AttributeDictionary(self.parameters)
         for name, rule_method in self.rule_methods.items():
@@ -240,6 +244,9 @@ class Router(RouterType('RouterBase', (object,), {})):
                 self.parameters[name] = value
             else:
                 setattr(self, slugify(name, separator='_'), value)
+        # add routes specified via the initialiser
+        for router in routes:
+            self.add_child(router)
 
     @property
     def route(self):
@@ -469,7 +476,10 @@ class Router(RouterType('RouterBase', (object,), {})):
                              (self.__class__.__name__, name))
 
     def make_router(self, rule, cls=None, **params):
-        '''Create a new :class:`.Router` form rule and parameters
+        '''Create a new :class:`.Router` from a ``rule`` and parameters.
+
+        This method is used during initialisation when building child
+        Routers from the :attr:`rule_methods`.
         '''
         cls = cls or Router
         return cls(rule, **params)
