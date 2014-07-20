@@ -92,9 +92,9 @@
 
 <span class="nd">@register_transport</span>
 <div class="viewcode-block" id="WebSocket"><a class="viewcode-back" href="../../../../apps/websockets.html#pulsar.apps.ws.websocket.WebSocket">[docs]</a><span class="k">class</span> <span class="nc">WebSocket</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A :ref:`Router &lt;wsgi-router&gt;` for a websocket handshake.</span>
+    <span class="sd">&quot;&quot;&quot;A specialised :class:`.Router` for a websocket handshake.</span>
 
-<span class="sd">    Once the handshake is succesful, the protocol consumer</span>
+<span class="sd">    Once the handshake is successful, the protocol consumer</span>
 <span class="sd">    is upgraded to :class:`WebSocketProtocol` and messages are handled by</span>
 <span class="sd">    the :attr:`handle` attribute, an instance of :class:`.WS`.</span>
 

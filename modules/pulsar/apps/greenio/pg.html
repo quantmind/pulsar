@@ -122,14 +122,14 @@
             <span class="n">wait_fd</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">extensions</span><span class="o">.</span><span class="n">POLL_WRITE</span><span class="p">:</span>
             <span class="n">wait_fd</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">read</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
             <span class="k">raise</span> <span class="n">OperationalError</span><span class="p">(</span><span class="s">&quot;Bad result from poll: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">state</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="make_asynchronous"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.pg.make_asynchronous">[docs]</a><span class="k">def</span> <span class="nf">make_asynchronous</span><span class="p">():</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">extensions</span><span class="o">.</span><span class="n">POLL_OK</span>
-    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
         <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span>
             <span class="s">&#39;Psycopg2 does not have support for asynchronous connections. &#39;</span>
             <span class="s">&#39;You need at least version 2.2.0 of Psycopg2.&#39;</span><span class="p">)</span>

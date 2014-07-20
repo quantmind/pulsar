@@ -114,10 +114,26 @@ Executor
 ================
 
 Classes used by pulsar to create event loop executors.
+For more information on how to use an event loop executor check the
+asyncio documentation and pulsar :ref:`CPU based actors <cpubound>`.
 
 Thread pool
 ~~~~~~~~~~~~~~~~
 
 .. autoclass:: ThreadPool
+   :members:
+   :member-order: bysource
+
+Queue Event Loop
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: QueueEventLoop
+   :members:
+   :member-order: bysource
+
+IOqueue
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: IOqueue
    :members:
    :member-order: bysource

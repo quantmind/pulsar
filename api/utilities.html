@@ -1111,11 +1111,15 @@ quotes and angle brackets encoded.</p>
 <p>Capitalise the first letter and replace dash and underscores with a space</p>
 </dd></dl>
 
+</div>
+<div class="section" id="module-pulsar.utils.slugify">
+<span id="slugify"></span><h2>Slugify<a class="headerlink" href="#module-pulsar.utils.slugify" title="Permalink to this headline">¶</a></h2>
+<p>A slugify function which handle unicode</p>
 <dl class="function">
-<dt id="pulsar.utils.html.slugify">
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">slugify</tt><big>(</big><em>value</em>, <em>rtx='_'</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#slugify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.slugify" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.slugify.slugify">
+<tt class="descclassname">pulsar.utils.slugify.</tt><tt class="descname">slugify</tt><big>(</big><em>value</em>, <em>separator='-'</em>, <em>max_length=0</em>, <em>word_boundary=False</em>, <em>entities=True</em>, <em>decimal=True</em>, <em>hexadecimal=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/slugify.html#slugify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.slugify.slugify" title="Permalink to this definition">¶</a></dt>
 <dd><p>Normalizes string, removes non-alpha characters,
-and converts spaces to <tt class="docutils literal"><span class="pre">rtx</span></tt> character (hyphens or underscore).</p>
+and converts spaces to <tt class="docutils literal"><span class="pre">separator</span></tt> character</p>
 </dd></dl>
 
 </div>
@@ -1283,6 +1287,7 @@ front of <tt class="docutils literal"><span class="pre">sys.path</span></tt> usi
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.utils.html">HTML &amp; Text</a></li>
+<li><a class="reference internal" href="#module-pulsar.utils.slugify">Slugify</a></li>
 <li><a class="reference internal" href="#module-pulsar.utils.log">Logging</a></li>
 <li><a class="reference internal" href="#module-pulsar.utils.path">Path</a></li>
 </ul>

@@ -221,8 +221,8 @@
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">chain_future</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">ispy3k</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.html</span> <span class="kn">import</span> <span class="p">(</span><span class="n">slugify</span><span class="p">,</span> <span class="n">INLINE_TAGS</span><span class="p">,</span> <span class="n">escape</span><span class="p">,</span>
-                               <span class="n">dump_data_value</span><span class="p">,</span> <span class="n">child_tag</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.slugify</span> <span class="kn">import</span> <span class="n">slugify</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.html</span> <span class="kn">import</span> <span class="n">INLINE_TAGS</span><span class="p">,</span> <span class="n">escape</span><span class="p">,</span> <span class="n">dump_data_value</span><span class="p">,</span> <span class="n">child_tag</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">remove_double_slash</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 
@@ -726,7 +726,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;classes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">classes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
                 <span class="n">add</span> <span class="o">=</span> <span class="n">classes</span><span class="o">.</span><span class="n">add</span>
                 <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="n">cn</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
-                    <span class="n">add</span><span class="p">(</span><span class="n">slugify</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="n">rtx</span><span class="o">=</span><span class="s">&#39;-&#39;</span><span class="p">))</span>
+                    <span class="n">add</span><span class="p">(</span><span class="n">slugify</span><span class="p">(</span><span class="n">cn</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
 <div class="viewcode-block" id="Html.hasClass"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.hasClass">[docs]</a>    <span class="k">def</span> <span class="nf">hasClass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">):</span>

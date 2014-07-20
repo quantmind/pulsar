@@ -77,12 +77,18 @@
 
 </div>
 <span class="k">class</span> <span class="nc">MonitorStarted</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="k">pass</span>
+    <span class="n">exit_code</span> <span class="o">=</span> <span class="mi">0</span>
 
 
 <div class="viewcode-block" id="ImproperlyConfigured"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.ImproperlyConfigured">[docs]</a><span class="k">class</span> <span class="nc">ImproperlyConfigured</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`PulsarException` raised when an inconsistent configuration</span>
-<span class="sd">    has occured.&#39;&#39;&#39;</span>
+<span class="sd">    has occured.</span>
+
+<span class="sd">    .. attribute:: exit_code</span>
+
+<span class="sd">        the exit code when rising this exception is set to 2. This will</span>
+<span class="sd">        cause pulsar to log the error rather than the full stack trace.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">exit_code</span> <span class="o">=</span> <span class="mi">2</span>
 
 </div>
@@ -98,21 +104,16 @@
 
 
 <div class="viewcode-block" id="ProtocolError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.ProtocolError">[docs]</a><span class="k">class</span> <span class="nc">ProtocolError</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Raised when the protocol encounter unexpected data. It will close</span>
-<span class="sd">the socket connection.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`PulsarException` raised when the protocol encounter</span>
+<span class="sd">    unexpected data.</span>
+
+<span class="sd">    It will close the socket connection</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">status_code</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">ProtocolError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ProtocolError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status_code</span>
-
-</div>
-<div class="viewcode-block" id="TooManyConsecutiveWrite"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.TooManyConsecutiveWrite">[docs]</a><span class="k">class</span> <span class="nc">TooManyConsecutiveWrite</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Raise when too many consecutive writes are attempted.&#39;&#39;&#39;</span>
-
-</div>
-<div class="viewcode-block" id="TooManyConnections"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.TooManyConnections">[docs]</a><span class="k">class</span> <span class="nc">TooManyConnections</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Raised when there are too many concurrent connections.&#39;&#39;&#39;</span>
 
 </div>
 <span class="k">class</span> <span class="nc">EventAlreadyRegistered</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
@@ -129,7 +130,7 @@
 
 <span class="sd">    When ``exit_code`` is greater than 1, it is considered an expected</span>
 <span class="sd">    failure and therefore the full stack trace is not logged.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s">&#39;Exiting server.&#39;</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s">&#39;Exiting server.&#39;</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">HaltServer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">=</span> <span class="n">exit_code</span>
 
@@ -215,12 +216,7 @@
 </div>
 <div class="viewcode-block" id="MethodNotAllowed"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.MethodNotAllowed">[docs]</a><span class="k">class</span> <span class="nc">MethodNotAllowed</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``405`` status code.&#39;&#39;&#39;</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="mi">405</span>
-
-</div>
-<div class="viewcode-block" id="ContentNotAccepted"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.ContentNotAccepted">[docs]</a><span class="k">class</span> <span class="nc">ContentNotAccepted</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``406`` status code.&#39;&#39;&#39;</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="mi">406</span></div>
+    <span class="n">status</span> <span class="o">=</span> <span class="mi">405</span></div>
 </pre></div>
 
           </div>

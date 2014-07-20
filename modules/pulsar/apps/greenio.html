@@ -216,7 +216,7 @@
 
 <span class="kn">import</span> <span class="nn">greenlet</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span>
 
 <span class="kn">from</span> <span class="nn">.pool</span> <span class="kn">import</span> <span class="n">GreenPool</span><span class="p">,</span> <span class="n">RunInPool</span>
 <span class="kn">from</span> <span class="nn">.local</span> <span class="kn">import</span> <span class="n">local</span>
@@ -234,10 +234,15 @@
     <span class="nd">@wraps</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">gr</span> <span class="o">=</span> <span class="n">PulsarGreenlet</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
+        <span class="c"># switch to the new greenlet</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c"># back to the parent</span>
         <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+            <span class="c"># keep on switching back to the greenlet if we get a Future</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">yield</span> <span class="n">result</span><span class="p">))</span>
-        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="c"># For some reason this line does not show in coverage reports</span>
+        <span class="c"># but it is covered!</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>    <span class="c"># prgma nocover</span>
 
     <span class="k">return</span> <span class="n">_</span>
 
@@ -261,6 +266,21 @@
     <span class="k">return</span> <span class="n">_</span>
 
 </div>
+<div class="viewcode-block" id="wait"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.wait">[docs]</a><span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Wait for a coroutine or a :class:`~asyncio.Future` to complete.</span>
+
+<span class="sd">    **This function must be called from a greenlet other than the main one**.</span>
+<span class="sd">    It can be used in conjunction with the :func:`run_in_greenlet`</span>
+<span class="sd">    decorator or the :class:`.GreenPool`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">assert</span> <span class="n">parent</span><span class="p">,</span> <span class="s">&#39;Waiter cannot be initialised in main greenlet&#39;</span>
+    <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+</div>
 <div class="viewcode-block" id="wait_fd"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.wait_fd">[docs]</a><span class="k">def</span> <span class="nf">wait_fd</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">read</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Wait for an event on file descriptor ``fd``.</span>
 
@@ -280,33 +300,18 @@
         <span class="n">fileno</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
         <span class="n">fileno</span> <span class="o">=</span> <span class="n">fd</span>
-    <span class="n">loop</span> <span class="o">=</span> <span class="n">get_event_loop</span><span class="p">()</span>
-    <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
+    <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
     <span class="c"># When the event on fd occurs switch back to the current greenlet</span>
     <span class="k">if</span> <span class="n">read</span><span class="p">:</span>
-        <span class="n">loop</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">fileno</span><span class="p">,</span> <span class="n">_done_wait_fd</span><span class="p">,</span> <span class="n">fileno</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">read</span><span class="p">)</span>
+        <span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">fileno</span><span class="p">,</span> <span class="n">_done_wait_fd</span><span class="p">,</span> <span class="n">fileno</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">read</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">loop</span><span class="o">.</span><span class="n">add_writer</span><span class="p">(</span><span class="n">fileno</span><span class="p">,</span> <span class="n">_done_wait_fd</span><span class="p">,</span> <span class="n">fileno</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">read</span><span class="p">)</span>
+        <span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">add_writer</span><span class="p">(</span><span class="n">fileno</span><span class="p">,</span> <span class="n">_done_wait_fd</span><span class="p">,</span> <span class="n">fileno</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">read</span><span class="p">)</span>
     <span class="c"># switch back to parent greenlet</span>
     <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 
-</div>
-<div class="viewcode-block" id="wait"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.wait">[docs]</a><span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Wait for a coroutine or a :class:&#39;~asyncio.Future` to complete.</span>
 
-<span class="sd">    **This function must be called from a greenlet other than the main one**.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">current</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span>
-    <span class="n">parent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
-    <span class="k">assert</span> <span class="n">parent</span><span class="p">,</span> <span class="s">&#39;Waiter cannot be initialised in main greenlet&#39;</span>
-    <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
-    <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
-
-
-<span class="c"># INTERNALS</span>
-</div>
+<span class="c"># INTERNALS</span></div>
 <span class="k">def</span> <span class="nf">_done_wait_fd</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">read</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">read</span><span class="p">:</span>
         <span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>

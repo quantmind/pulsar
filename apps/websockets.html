@@ -162,8 +162,8 @@ sent (servers) or received (clients).</p>
 <dl class="class">
 <dt id="pulsar.apps.ws.websocket.WebSocket">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.ws.websocket.</tt><tt class="descname">WebSocket</tt><big>(</big><em>route</em>, <em>handle</em>, <em>parser_factory=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws/websocket.html#WebSocket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.websocket.WebSocket" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="wsgi/routing.html#wsgi-router"><em>Router</em></a> for a websocket handshake.</p>
-<p>Once the handshake is succesful, the protocol consumer
+<dd><p>A specialised <a class="reference internal" href="wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for a websocket handshake.</p>
+<p>Once the handshake is successful, the protocol consumer
 is upgraded to <a class="reference internal" href="#pulsar.apps.ws.websocket.WebSocketProtocol" title="pulsar.apps.ws.websocket.WebSocketProtocol"><tt class="xref py py-class docutils literal"><span class="pre">WebSocketProtocol</span></tt></a> and messages are handled by
 the <tt class="xref py py-attr docutils literal"><span class="pre">handle</span></tt> attribute, an instance of <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a>.</p>
 <p>See <a class="reference external" href="http://tools.ietf.org/html/rfc6455">http://tools.ietf.org/html/rfc6455</a> for the websocket server protocol

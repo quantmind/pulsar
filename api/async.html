@@ -363,7 +363,9 @@ the bound <tt class="docutils literal"><span class="pre">method</span></tt>.</p>
 </div>
 <div class="section" id="executor">
 <h2>Executor<a class="headerlink" href="#executor" title="Permalink to this headline">¶</a></h2>
-<p>Classes used by pulsar to create event loop executors.</p>
+<p>Classes used by pulsar to create event loop executors.
+For more information on how to use an event loop executor check the
+asyncio documentation and pulsar <a class="reference internal" href="../design.html#cpubound"><em>CPU based actors</em></a>.</p>
 <div class="section" id="thread-pool">
 <h3>Thread pool<a class="headerlink" href="#thread-pool" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
@@ -382,6 +384,34 @@ Return a <a class="reference external" href="http://python.readthedocs.org/en/la
 has finished.</p>
 </dd></dl>
 
+</dd></dl>
+
+</div>
+<div class="section" id="queue-event-loop">
+<h3>Queue Event Loop<a class="headerlink" href="#queue-event-loop" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.async.threads.QueueEventLoop">
+<em class="property">class </em><tt class="descclassname">pulsar.async.threads.</tt><tt class="descname">QueueEventLoop</tt><big>(</big><em>executor</em>, <em>iothreadloop=False</em>, <em>logger=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/threads.html#QueueEventLoop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.threads.QueueEventLoop" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">asyncio event loop</em></a> which
+uses <a class="reference internal" href="#pulsar.async.threads.IOqueue" title="pulsar.async.threads.IOqueue"><tt class="xref py py-class docutils literal"><span class="pre">IOqueue</span></tt></a> as its selector.</p>
+<dl class="attribute">
+<dt id="pulsar.async.threads.QueueEventLoop.task_factory">
+<tt class="descname">task_factory</tt><a class="headerlink" href="#pulsar.async.threads.QueueEventLoop.task_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="ioqueue">
+<h3>IOqueue<a class="headerlink" href="#ioqueue" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.async.threads.IOqueue">
+<em class="property">class </em><tt class="descclassname">pulsar.async.threads.</tt><tt class="descname">IOqueue</tt><big>(</big><em>executor</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/threads.html#IOqueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.threads.IOqueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>A selector based on a distributed queue</p>
+<p>Since there is no way to my knowledge to wake up the queue while
+getting an item from the task queue, the timeout cannot be larger than
+a small number which by default is <tt class="docutils literal"><span class="pre">0.5</span></tt> seconds.</p>
 </dd></dl>
 
 </div>
@@ -433,6 +463,8 @@ has finished.</p>
 </li>
 <li><a class="reference internal" href="#executor">Executor</a><ul>
 <li><a class="reference internal" href="#thread-pool">Thread pool</a></li>
+<li><a class="reference internal" href="#queue-event-loop">Queue Event Loop</a></li>
+<li><a class="reference internal" href="#ioqueue">IOqueue</a></li>
 </ul>
 </li>
 </ul>

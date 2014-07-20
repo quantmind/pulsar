@@ -408,7 +408,7 @@
 
 </div>
 <div class="viewcode-block" id="Connection"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection">[docs]</a><span class="k">class</span> <span class="nc">Connection</span><span class="p">(</span><span class="n">FlowControl</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`Protocol` to handle multiple TCP requests/responses.</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`.FlowControl` to handle multiple TCP requests/responses.</span>
 
 <span class="sd">    It is a class which acts as bridge between a</span>
 <span class="sd">    :ref:`transport &lt;asyncio-transport&gt;` and a :class:`.ProtocolConsumer`.</span>
@@ -455,6 +455,7 @@
 <span class="sd">        Once done set a timeout for idle connections when a</span>
 <span class="sd">        :attr:`~Protocol.timeout` is a positive number (of seconds).</span>
 <span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="o">.</span><span class="n">data_received</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">while</span> <span class="n">data</span><span class="p">:</span>
             <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">_data_received</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>

@@ -189,7 +189,7 @@ and adds a <tt class="xref py py-attr docutils literal"><span class="pre">timeou
 <dl class="class">
 <dt id="pulsar.async.protocols.Connection">
 <em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Connection</tt><big>(</big><em>consumer_factory=None</em>, <em>timeout=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.async.protocols.Protocol" title="pulsar.async.protocols.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> to handle multiple TCP requests/responses.</p>
+<dd><p>A <a class="reference internal" href="#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a> to handle multiple TCP requests/responses.</p>
 <p>It is a class which acts as bridge between a
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio-transport" title="(in Python v3.5)"><em class="xref std std-ref">transport</em></a> and a <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.
 It routes data arriving from the transport to the
@@ -569,6 +569,12 @@ concurrent connections.</p>
 <em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">ProtocolWrapper</tt><big>(</big><em>protocol</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#ProtocolWrapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.ProtocolWrapper" title="Permalink to this definition">¶</a></dt>
 <dd><p>Abstract class for wrapping a <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a>
 and adding functionalities</p>
+<dl class="method">
+<dt id="pulsar.async.mixins.ProtocolWrapper.data_received">
+<tt class="descname">data_received</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#ProtocolWrapper.data_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.ProtocolWrapper.data_received" title="Permalink to this definition">¶</a></dt>
+<dd><p>Received data from transport</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.async.mixins.ProtocolWrapper.write">
 <tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#ProtocolWrapper.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.ProtocolWrapper.write" title="Permalink to this definition">¶</a></dt>

@@ -302,17 +302,18 @@
         <span class="c"># First create the sockets</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">server</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">loop</span><span class="o">.</span><span class="n">create_server</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="o">*</span><span class="n">address</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-        <span class="n">addresses</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">sockets</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">server</span><span class="o">.</span><span class="n">sockets</span><span class="p">:</span>
-            <span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">getsockname</span><span class="p">())</span>
-            <span class="n">sockets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sock</span><span class="p">)</span>
-            <span class="n">server</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
-        <span class="n">monitor</span><span class="o">.</span><span class="n">sockets</span> <span class="o">=</span> <span class="n">sockets</span>
-        <span class="n">monitor</span><span class="o">.</span><span class="n">ssl</span> <span class="o">=</span> <span class="n">ssl</span>
-        <span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span> <span class="o">=</span> <span class="n">addresses</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">addresses</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">sockets</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">server</span><span class="o">.</span><span class="n">sockets</span><span class="p">:</span>
+                <span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">getsockname</span><span class="p">())</span>
+                <span class="n">sockets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sock</span><span class="p">)</span>
+                <span class="n">server</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
+            <span class="n">monitor</span><span class="o">.</span><span class="n">sockets</span> <span class="o">=</span> <span class="n">sockets</span>
+            <span class="n">monitor</span><span class="o">.</span><span class="n">ssl</span> <span class="o">=</span> <span class="n">ssl</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span> <span class="o">=</span> <span class="n">addresses</span>
 </div>
     <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
         <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;sockets&#39;</span><span class="p">:</span> <span class="n">monitor</span><span class="o">.</span><span class="n">sockets</span><span class="p">,</span> <span class="s">&#39;ssl&#39;</span><span class="p">:</span> <span class="n">monitor</span><span class="o">.</span><span class="n">ssl</span><span class="p">})</span>

@@ -168,22 +168,13 @@ and the <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrapp
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.wsgi.routers.Router.allows_redirects">
-<tt class="descname">allows_redirects</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.allows_redirects" title="Permalink to this definition">¶</a></dt>
-<dd><p>boolean indicating if this router can redirect requests to valid urls
-within this router and its children. For example, if a router serves
-the &#8216;/echo&#8217; url but not the <tt class="docutils literal"><span class="pre">/echo/</span></tt> one, a request on <tt class="docutils literal"><span class="pre">/echo/</span></tt>
-will be redirected to <tt class="docutils literal"><span class="pre">/echo</span></tt>.</p>
-<p>Default: <tt class="docutils literal"><span class="pre">False</span></tt></p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.Router.parameters">
 <tt class="descname">parameters</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.parameters" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.misc.AttributeDictionary" title="pulsar.utils.structures.misc.AttributeDictionary"><tt class="xref py py-class docutils literal"><span class="pre">AttributeDictionary</span></tt></a> of parameters for
 this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>. Parameters are created at initialisation from
 the <tt class="docutils literal"><span class="pre">parameters</span></tt> class attribute and the key-valued parameters
-passed to the <tt class="docutils literal"><span class="pre">__init__</span></tt> method for which the value is not callable.</p>
+passed to the <tt class="docutils literal"><span class="pre">__init__</span></tt> method which are available in the
+class <tt class="docutils literal"><span class="pre">parameters</span></tt> attribute.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -214,13 +205,6 @@ by name via the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Ro
 <dt id="pulsar.apps.wsgi.routers.Router.root">
 <tt class="descname">root</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.root" title="Permalink to this definition">¶</a></dt>
 <dd><p>The root <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.routers.Router.default_content_type">
-<tt class="descname">default_content_type</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.default_content_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.default_content_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>The default content type for responses.</p>
-<p>This is the first element in the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.response_content_types" title="pulsar.apps.wsgi.routers.Router.response_content_types"><tt class="xref py py-attr docutils literal"><span class="pre">response_content_types</span></tt></a> list.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -299,6 +283,7 @@ this method to produce the WSGI response.</p>
 <dt id="pulsar.apps.wsgi.routers.Router.get_route">
 <tt class="descname">get_route</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.get_route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.get_route" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a child <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> by its <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.name" title="pulsar.apps.wsgi.routers.Router.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a>.</p>
+<p>This method search child routes recursively.</p>
 </dd></dl>
 
 <dl class="method">
@@ -314,9 +299,9 @@ set to the url of this <a class="reference internal" href="#pulsar.apps.wsgi.rou
 <dd><p>Check if <tt class="docutils literal"><span class="pre">router</span></tt> is <tt class="docutils literal"><span class="pre">self</span></tt> or a parent or <tt class="docutils literal"><span class="pre">self</span></tt></p>
 </dd></dl>
 
-<dl class="classmethod">
+<dl class="method">
 <dt id="pulsar.apps.wsgi.routers.Router.make_router">
-<em class="property">classmethod </em><tt class="descname">make_router</tt><big>(</big><em>rule</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.make_router"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.make_router" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">make_router</tt><big>(</big><em>rule</em>, <em>cls=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.make_router"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.make_router" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> form rule and parameters</p>
 </dd></dl>
 

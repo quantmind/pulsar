@@ -88,25 +88,21 @@
 <em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">ImproperlyConfigured</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#ImproperlyConfigured"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.ImproperlyConfigured" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.utils.exceptions.PulsarException" title="pulsar.utils.exceptions.PulsarException"><tt class="xref py py-class docutils literal"><span class="pre">PulsarException</span></tt></a> raised when an inconsistent configuration
 has occured.</p>
+<dl class="attribute">
+<dt id="pulsar.utils.exceptions.ImproperlyConfigured.exit_code">
+<tt class="descname">exit_code</tt><a class="headerlink" href="#pulsar.utils.exceptions.ImproperlyConfigured.exit_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>the exit code when rising this exception is set to 2. This will
+cause pulsar to log the error rather than the full stack trace.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="exception">
 <dt id="pulsar.utils.exceptions.ProtocolError">
 <em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">ProtocolError</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#ProtocolError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.ProtocolError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raised when the protocol encounter unexpected data. It will close
-the socket connection.</p>
-</dd></dl>
-
-<dl class="exception">
-<dt id="pulsar.utils.exceptions.TooManyConsecutiveWrite">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">TooManyConsecutiveWrite</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#TooManyConsecutiveWrite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.TooManyConsecutiveWrite" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raise when too many consecutive writes are attempted.</p>
-</dd></dl>
-
-<dl class="exception">
-<dt id="pulsar.utils.exceptions.TooManyConnections">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">TooManyConnections</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#TooManyConnections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.TooManyConnections" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raised when there are too many concurrent connections.</p>
+<dd><p>A <a class="reference internal" href="#pulsar.utils.exceptions.PulsarException" title="pulsar.utils.exceptions.PulsarException"><tt class="xref py py-class docutils literal"><span class="pre">PulsarException</span></tt></a> raised when the protocol encounter
+unexpected data.</p>
+<p>It will close the socket connection</p>
 </dd></dl>
 
 <dl class="exception">
@@ -117,7 +113,7 @@ the socket connection.</p>
 
 <dl class="exception">
 <dt id="pulsar.utils.exceptions.HaltServer">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">HaltServer</tt><big>(</big><em>reason='Exiting server.'</em>, <em>exit_code=2</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#HaltServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.HaltServer" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">HaltServer</tt><big>(</big><em>reason='Exiting server.'</em>, <em>exit_code=3</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#HaltServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.HaltServer" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#BaseException" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt></a> raised to stop a running server.</p>
 <p>When <tt class="docutils literal"><span class="pre">exit_code</span></tt> is greater than 1, it is considered an expected
 failure and therefore the full stack trace is not logged.</p>
@@ -185,12 +181,6 @@ failure and therefore the full stack trace is not logged.</p>
 <dt id="pulsar.utils.exceptions.MethodNotAllowed">
 <em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">MethodNotAllowed</tt><big>(</big><em>msg=''</em>, <em>status=None</em>, <em>handler=None</em>, <em>strict=False</em>, <em>headers=None</em>, <em>content_type=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#MethodNotAllowed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.MethodNotAllowed" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference internal" href="#pulsar.utils.exceptions.HttpException" title="pulsar.utils.exceptions.HttpException"><tt class="xref py py-class docutils literal"><span class="pre">HttpException</span></tt></a> with default <tt class="docutils literal"><span class="pre">405</span></tt> status code.</p>
-</dd></dl>
-
-<dl class="exception">
-<dt id="pulsar.utils.exceptions.ContentNotAccepted">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">ContentNotAccepted</tt><big>(</big><em>msg=''</em>, <em>status=None</em>, <em>handler=None</em>, <em>strict=False</em>, <em>headers=None</em>, <em>content_type=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#ContentNotAccepted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.ContentNotAccepted" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference internal" href="#pulsar.utils.exceptions.HttpException" title="pulsar.utils.exceptions.HttpException"><tt class="xref py py-class docutils literal"><span class="pre">HttpException</span></tt></a> with default <tt class="docutils literal"><span class="pre">406</span></tt> status code.</p>
 </dd></dl>
 
 </div>

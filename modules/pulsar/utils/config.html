@@ -146,6 +146,14 @@
         <span class="k">yield</span> <span class="n">KNOWN_SETTINGS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 
 
+<span class="k">def</span> <span class="nf">valid_config_value</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+
 <div class="viewcode-block" id="Config"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A dictionary-like container of :class:`Setting` parameters for</span>
 <span class="sd">    fine tuning pulsar servers.</span>
@@ -338,7 +346,8 @@
                 <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
                 <span class="c"># add unknown names to list</span>
                 <span class="k">if</span> <span class="n">kl</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
-                    <span class="n">unknowns</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">valid_config_value</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                        <span class="n">unknowns</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">kl</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">unknowns</span>

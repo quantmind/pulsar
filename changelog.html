@@ -92,9 +92,19 @@ either <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.ws
 <a class="reference internal" href="apps/greenio.html#green-http"><em>greenlet support</em></a> to write implicit asynchronous HTTP
 requests</li>
 <li>Finally removed the <tt class="docutils literal"><span class="pre">get_request_loop</span></tt> method. Full compatibility with
-asyncio.</li>
+asyncio</li>
 <li>Bug fix in <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> constructor</li>
 <li><a class="reference internal" href="tutorials/webmail.html#tutorials-twisted"><em>Twisted integration</em></a> via the <a class="reference internal" href="tutorials/webmail.html#pulsar.apps.tx.tx" title="pulsar.apps.tx.tx"><tt class="xref py py-func docutils literal"><span class="pre">tx()</span></tt></a> decorator</li>
+<li>When throwing an <a class="reference internal" href="api/exceptions.html#pulsar.utils.exceptions.ImproperlyConfigured" title="pulsar.utils.exceptions.ImproperlyConfigured"><tt class="xref py py-class docutils literal"><span class="pre">ImproperlyConfigured</span></tt></a> exception, pulsar will log
+and error without the full stack-trace
+(<tt class="xref py py-class docutils literal"><span class="pre">exit_code</span></tt> attribute is set to 2).
+Useful when stopping execution because of a wrong input rather than an
+internal exception</li>
+<li>Critical bug fix in <a class="reference internal" href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> when children are added via a decorated
+method</li>
+<li><tt class="docutils literal"><span class="pre">trollius</span></tt> and <tt class="docutils literal"><span class="pre">asyncio</span></tt> added as dependencies in the <tt class="docutils literal"><span class="pre">setup.py</span></tt>
+script during installation</li>
+<li>Better <a class="reference internal" href="api/utilities.html#pulsar.utils.slugify.slugify" title="pulsar.utils.slugify.slugify"><tt class="xref py py-func docutils literal"><span class="pre">slugify()</span></tt></a> function</li>
 </ul>
 </div>
 <div class="section" id="ver-0-8-4-2014-jul-07">

@@ -119,6 +119,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.apps.ws</span> <span class="kn">import</span> <span class="n">WS</span><span class="p">,</span> <span class="n">WebSocket</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.rpc</span> <span class="kn">import</span> <span class="n">PulsarServerCommands</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span><span class="p">,</span> <span class="n">PubSubClient</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">JSON_CONTENT_TYPES</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="kn">import</span> <span class="n">pulsards_url</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
@@ -217,7 +218,8 @@
         <span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">WsgiHandler</span><span class="p">([</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">home_page</span><span class="p">),</span>
                             <span class="n">WebSocket</span><span class="p">(</span><span class="s">&#39;/message&#39;</span><span class="p">,</span> <span class="n">Chat</span><span class="p">(</span><span class="n">pubsub</span><span class="p">,</span> <span class="n">channel</span><span class="p">)),</span>
-                            <span class="n">Router</span><span class="p">(</span><span class="s">&#39;/rpc&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="n">Rpc</span><span class="p">(</span><span class="n">pubsub</span><span class="p">,</span> <span class="n">channel</span><span class="p">))])</span>
+                            <span class="n">Router</span><span class="p">(</span><span class="s">&#39;/rpc&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="n">Rpc</span><span class="p">(</span><span class="n">pubsub</span><span class="p">,</span> <span class="n">channel</span><span class="p">),</span>
+                                   <span class="n">response_content_types</span><span class="o">=</span><span class="n">JSON_CONTENT_TYPES</span><span class="p">)])</span>
 </div>
     <span class="k">def</span> <span class="nf">home_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CHAT_DIR</span><span class="p">,</span> <span class="s">&#39;chat.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>

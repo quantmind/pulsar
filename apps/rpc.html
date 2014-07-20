@@ -78,6 +78,30 @@
 <a class="reference external" href="http://www.jsonrpc.org/specification">JSON-RPC</a> server and client. Check out the
 <a class="reference internal" href="../tutorials/calculator.html#tutorials-calculator"><em>json-rpc tutorial</em></a> if you want to get started
 quickly with a working example.</p>
+<p>To quickly setup a server:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyRpc</span><span class="p">(</span><span class="n">rpc</span><span class="o">.</span><span class="n">JSONRPC</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">rpc_ping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;pong&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">Wsgi</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">LazyWsgi</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span>
+                          <span class="n">post</span><span class="o">=</span><span class="n">MyRpc</span><span class="p">(),</span>
+                          <span class="n">response_content_types</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;application/json&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">wsgiHandler</span><span class="p">([</span><span class="n">app</span><span class="p">])</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiServer</span><span class="p">(</span><span class="n">Wsgi</span><span class="p">())</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">MyRpc</span></tt> handles the requests</li>
+<li>Routing is delegated to the <a class="reference internal" href="wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> which handle only <tt class="docutils literal"><span class="pre">post</span></tt>
+requests with content type <tt class="docutils literal"><span class="pre">application/json</span></tt>.</li>
+</ul>
 <div class="section" id="module-pulsar.apps.rpc.handlers">
 <span id="api"></span><h2>API<a class="headerlink" href="#module-pulsar.apps.rpc.handlers" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="rpchandler">
