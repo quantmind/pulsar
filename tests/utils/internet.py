@@ -8,7 +8,7 @@ import unittest
 import pulsar
 from pulsar import platform
 from pulsar.utils.internet import (parse_address, parse_connection_string,
-                                   socketpair, close_socket, is_socket_closed,
+                                   close_socket, is_socket_closed,
                                    format_address)
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import mock
@@ -84,16 +84,6 @@ class TestParseConnectionString(unittest.TestCase):
 
 
 class TestMisc(unittest.TestCase):
-
-    def test_socketpair(self):
-        server, client = socketpair()
-        self.assertEqual(client.send(b'ciao'), 4)
-        self.assertEqual(server.recv(io.DEFAULT_BUFFER_SIZE), b'ciao')
-        self.assertEqual(server.send(b'ciao a te'), 9)
-        self.assertEqual(client.recv(io.DEFAULT_BUFFER_SIZE), b'ciao a te')
-        close_socket(server)
-        self.assertTrue(is_socket_closed(server))
-        self.assertTrue(is_socket_closed(None))
 
     def test_close_socket(self):
         close_socket(None)

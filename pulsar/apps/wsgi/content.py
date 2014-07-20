@@ -169,8 +169,8 @@ _media_libraries = None
 def media_libraries():
     global _media_libraries
     if _media_libraries is None:
-        if os.path.isfile('libs.json'):
-            with open('libs.json') as f:   # pragma    nocover
+        if os.path.isfile('libs.json'):     # pragma    nocover
+            with open('libs.json') as f:
                 data = f.read()
             _media_libraries = json.loads(data)
         else:

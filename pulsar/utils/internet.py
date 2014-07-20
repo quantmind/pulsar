@@ -228,15 +228,3 @@ def is_tls(sock):
     '''Check if ``sock`` is a socket over transport layer security
     '''
     return ssl and isinstance(sock, ssl.SSLSocket)
-
-
-def ssl_context(context, server_side=False):
-    if not ssl:
-        raise NotImplementedError
-    if server_side:
-        assert isinstance(
-            context, SSLContext), 'Must pass an SSLContext'
-    else:
-        # Client-side may pass ssl=True to use a default context.
-        context = context or SSLContext()
-    return context
