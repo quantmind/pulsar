@@ -133,7 +133,7 @@ thread-based actors always exist in the master process (the same process
 as the arbiter) and control threads other than the main thread.
 
 An :class:`.Actor` can control more than one thread if it needs to, via the
-:attr:`~.Actor.thread_pool` as explained in the :ref:`CPU bound <cpubound>`
+:meth:`~.Actor.executor` as explained in the :ref:`CPU bound <cpubound>`
 paragraph.
 The actor :ref:`event loop <asyncio-event-loop>` is installed in all threads
 controlled by the actor so that when the :func:`~asyncio.get_event_loop`
@@ -169,7 +169,7 @@ connections can be served simultaneously.
 
 CPU-bound
 ~~~~~~~~~~~~~~~
-Another way for an actor to function is to use its :attr:`~.Actor.executor`
+Another way for an actor to function is to use its :meth:`~.Actor.executor`
 to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
 CPU-bound :class:`.Actor` have the following properties:
@@ -192,9 +192,6 @@ CPU-bound :class:`.Actor` have the following properties:
     have installed two events loops: the event loop running on the
     :ref:`IO thread <actor-io-thread>` and the :ref:`request-loop <request-loop>`.
 
-The :attr:`.Actor.thread_pool` needs to be initialised via the
-:attr:`.Actor.create_thread_pool` method before it can be used.
-
 
 .. _actor-periodic-task:
 
@@ -203,10 +200,10 @@ Periodic task
 
 Each :class:`.Actor`, including the :class:`.Arbiter` and :class:`.Monitor`,
 perform one crucial periodic task at given intervals. The next
-call of the task is stored in the :class:`.Actor.next_periodic_task`
+call of the task is stored in the :attr:`.Actor.next_periodic_task`
 attribute.
 
-Periodic task are implemented by the :class:`Concurrency.periodic_task` method.
+Periodic task are implemented by the :meth:`Concurrency.periodic_task` method.
 
 .. _design-spawning:
 

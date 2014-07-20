@@ -181,6 +181,9 @@ class IOqueue(selectors.BaseSelector):
 
 
 class QueueEventLoop(BaseEventLoop):
+    '''An :ref:`asyncio event loop <asyncio-event-loop>` which
+    uses :class:`.IOqueue` as its selector.
+    '''
     task_factory = Task
 
     def __init__(self, executor, iothreadloop=False, logger=None):
