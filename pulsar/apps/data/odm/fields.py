@@ -4,7 +4,7 @@ from datetime import date, datetime
 from pulsar.utils.pep import pickle
 from pulsar.utils.system import json
 from pulsar.utils.html import UnicodeMixin
-from pulsar.utils.numbers import date2timestamp
+from pulsar.utils.tools import date2timestamp
 
 from .manager import (OneToManyRelatedManager, load_relmodel, LazyForeignKey,
                       OdmError)

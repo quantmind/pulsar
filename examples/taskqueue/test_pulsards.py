@@ -69,11 +69,38 @@ class TaskQueueBase(object):
 
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
-    def test_run_new_simple_task(self):
-        r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
-        r = yield self.proxy.wait_for_task(r)
-        self.assertEqual(r['status'], tasks.SUCCESS)
-        self.assertEqual(r['result'], 90)
+    #    RPC TESTS
+    def test_check_next_run(self):
+        app = self.tq
+        backend = app.backend
+        backend.tick()
+
+    def test_rpc_ping(self):
+        yield self.async.assertEqual(self.proxy.ping(), 'pong')
+
+    def test_rpc_job_list(self):
+        jobs = yield self.proxy.job_list()
+        self.assertTrue(jobs)
+        self.assertTrue(isinstance(jobs, list))
+        d = dict(jobs)
+        pycode = d['runpycode']
+        self.assertEqual(pycode['type'], 'regular')
+
+    def test_rpc_job_list_with_names(self):
+        jobs = yield self.proxy.job_list(jobnames=['runpycode'])
+        self.assertEqual(len(jobs), 1)
+        jobs = yield self.proxy.job_list(jobnames=['xxxxxx'])
+        self.assertEqual(len(jobs), 0)
+
+    def test_rpc_next_scheduled_tasks(self):
+        next = yield self.proxy.next_scheduled_tasks()
+        self.assertTrue(next)
+        self.assertEqual(len(next), 2)
+        next = yield self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
+        self.assertTrue(next)
+        self.assertEqual(len(next), 2)
+        self.assertEqual(next[0], 'testperiodic')
+        self.assertTrue(next[1] >= 0)
 
     def test_ping_store(self):
         tq = self.tq
@@ -135,6 +162,15 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         periodic = app.backend.registry.periodic()
         self.assertTrue(regular)
         self.assertTrue(periodic)
+
+    def test_run_new_simple_task(self):
+        r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 90)
+
+
+class f:
 
     def test_queue_task_asynchronous_from_test(self):
         app = self.tq
@@ -241,40 +277,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         # self.assertEqual(len(created), sample)
         # for task in created:
         #     self.assertEqual(task['status'], tasks.SUCCESS)
-
-    #    RPC TESTS
-    def test_check_next_run(self):
-        app = self.tq
-        backend = app.backend
-        backend.tick()
-        # self.assertTrue(backend.next_run > now)
-
-    def test_rpc_ping(self):
-        yield self.async.assertEqual(self.proxy.ping(), 'pong')
-
-    def test_rpc_job_list(self):
-        jobs = yield self.proxy.job_list()
-        self.assertTrue(jobs)
-        self.assertTrue(isinstance(jobs, list))
-        d = dict(jobs)
-        pycode = d['runpycode']
-        self.assertEqual(pycode['type'], 'regular')
-
-    def test_rpc_job_list_with_names(self):
-        jobs = yield self.proxy.job_list(jobnames=['runpycode'])
-        self.assertEqual(len(jobs), 1)
-        jobs = yield self.proxy.job_list(jobnames=['xxxxxx'])
-        self.assertEqual(len(jobs), 0)
-
-    def test_rpc_next_scheduled_tasks(self):
-        next = yield self.proxy.next_scheduled_tasks()
-        self.assertTrue(next)
-        self.assertEqual(len(next), 2)
-        next = yield self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
-        self.assertTrue(next)
-        self.assertEqual(len(next), 2)
-        self.assertEqual(next[0], 'testperiodic')
-        self.assertTrue(next[1] >= 0)
 
     def test_id_not_overlap(self):
         '''Check `generate_task_ids` when `can_overlap` attribute is set to

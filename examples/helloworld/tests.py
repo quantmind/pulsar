@@ -55,6 +55,11 @@ class TestHelloWorldThread(unittest.TestCase):
         b = yield c.timeit('get', 5, self.uri)
         self.assertTrue(b.taken >= 0)
 
+    def test405(self):
+        c = self.client
+        response = yield c.post(self.uri, data={'bla': 'foo'})
+        self.assertEqual(response.status_code, 405)
+
 
 @dont_run_with_thread
 class TestHelloWorldProcess(TestHelloWorldThread):

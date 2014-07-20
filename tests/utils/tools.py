@@ -1,9 +1,10 @@
 '''Tests the tools and utilities in pulsar.utils.'''
 import os
 import unittest
+from datetime import datetime, date
 
 from pulsar import system, get_actor, spawn, send
-from pulsar.utils.tools import checkarity, Pidfile, nice_number
+from pulsar.utils.tools import checkarity, Pidfile, nice_number, date2timestamp
 from pulsar.utils.importer import py_file, import_modules
 from pulsar.apps.test import ActorTestMixin
 
@@ -173,3 +174,11 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(import_modules(['gggggggggggg']), [])
         mods = import_modules(['pulsar.async.*'])
         self.assertTrue(mods)
+
+    def test_date2timestamp(self):
+        d1 = date.today()
+        v1 = date2timestamp(d1)
+        d2 = datetime.now()
+        v2 = date2timestamp(d2)
+        self.assertTrue(v2 > v1)
+        self.assertEqual(int(v1), v1)
