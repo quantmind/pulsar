@@ -30,7 +30,7 @@ from . import system
 from .internet import parse_address
 from .importer import import_system_file
 from .httpurl import HttpParser as PyHttpParser
-from .log import configured_logger
+from .log import configured_logger, get_level
 from .pep import to_bytes, iteritems, native_str, pickle
 
 
@@ -358,7 +358,7 @@ class Config(object):
         '''Configured logger.
         '''
         loggers = {}
-        internal_level = 'warning'
+        internal_level = get_level('warning')
         loghandlers = self.loghandlers
         # base name is always pulsar
         basename = 'pulsar'
@@ -370,9 +370,7 @@ class Config(object):
         if name:
             name = '%s.%s' % (basename, name)
         #
-        namespaces = {basename: internal_level,
-                      'asyncio': internal_level,
-                      'trollius': internal_level}
+        namespaces = {}
 
         for loglevel in self.loglevel or ():
             bits = loglevel.split('.')
@@ -380,6 +378,12 @@ class Config(object):
 
         if defname not in namespaces:
             namespaces[defname] = self.settings['loglevel'].default[0]
+
+        deflevel = get_level(namespaces[defname])
+        internal_level = max(deflevel, internal_level) if deflevel else 0
+        for namespace in (basename, 'asyncio', 'trollius'):
+            if namespace not in namespaces:
+                namespaces[namespace] = internal_level
 
         if name and name not in namespaces:
             namespaces[name] = namespaces[basename]
