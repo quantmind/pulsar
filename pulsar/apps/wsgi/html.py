@@ -8,6 +8,9 @@ HTML_VISITORS = {}
 __all__ = ['HtmlVisitor']
 
 
+newline = frozenset(('meta', 'link', 'script', 'head', 'body', 'title'))
+
+
 def html_visitor(tag):
     return HTML_VISITORS.get(tag, base)
 

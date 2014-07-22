@@ -1,7 +1,6 @@
 import unittest
 
-from pulsar.utils.httpurl import (Headers, accept_content_type,
-                                  DEFAULT_CHARSET, SimpleCookie)
+from pulsar.utils.httpurl import Headers, SimpleCookie
 
 
 class TestHeaders(unittest.TestCase):
@@ -54,14 +53,6 @@ class TestHeaders(unittest.TestCase):
                     kind='client')
         accept = h['accept-encoding']
         self.assertEqual(accept, 'identity, deflate, compress, gzip')
-
-    def test_accept_content_type(self):
-        accept = accept_content_type()
-        self.assertTrue('text/html' in accept)
-        accept = accept_content_type(
-            'text/*, text/html, text/html;level=1, */*')
-        self.assertTrue('text/html' in accept)
-        self.assertTrue('text/plain' in accept)
 
     def test_init_int(self):
         h = Headers(kind=1)

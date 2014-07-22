@@ -107,20 +107,6 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(all3.index('new'), 1)
         self.assertTrue(all3.index('_post') < all.index('_post'))
 
-    def test_accept(self):
-        router = self.router()
-        self.assertEqual(router.accept_content_type('text/html'), 'text/html')
-        self.assertEqual(router.accept_content_type('text/*'), 'text/html')
-        self.assertEqual(router.accept_content_type('text/plain'),
-                         'text/plain')
-        self.assertEqual(router.accept_content_type('*/*'), 'text/html')
-        self.assertEqual(router.accept_content_type('application/*'),
-                         'application/json')
-        self.assertEqual(router.accept_content_type('application/json'),
-                         'application/json')
-        self.assertEqual(router.accept_content_type('application/javascript'),
-                         None)
-
     def test_path_method(self):
         router = Router('/root',
                         Router('a', get=lambda r: ['route a']))

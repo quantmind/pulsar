@@ -153,12 +153,17 @@ class route(object):
     requests only.
 
     The decorator injects the :attr:`rule_method` attribute to the
-    method it decorates. The attribute is a four elements tuple
-    contains the :class:`Route`, the HTTP ``method``, a
-    dictionary of additional ``parameters`` and the ``position`` for ordering.
+    method it decorates. The attribute is a **five elements tuple**
+    which contains the :class:`Route`, the HTTP ``method``, a
+    dictionary of additional ``parameters``, ``position`` and
+    the ``order``. Position and order are internal integers used by the
+    :class:`.Router` when deciding the order of url matching.
+    If ``position`` is not passed,
+    the order will be given by the position of each method in the
+    :class:`.Router` class.
 
     The decorated method are stored in the :attr:`.Router.rule_methods` class
-    attribute ``rule_methods``.
+    attribute.
 
         >>> len(View.rule_methods)
         2
@@ -209,8 +214,10 @@ class route(object):
             if m in ENCODE_URL_METHODS or m in ENCODE_BODY_METHODS:
                 method = m
                 bits = bits[1:]
+        name = self.parameters.get('name', '_'.join(bits))
+        self.parameters['name'] = name
         method = (self.method or method or 'get').lower()
-        rule = Route(self.rule or '_'.join(bits), defaults=self.defaults)
+        rule = Route(self.rule or name, defaults=self.defaults)
         callable.rule_method = rule_info(rule, method, self.parameters,
                                          self.position, self.order)
         return callable
@@ -393,8 +400,8 @@ class Route(object):
 
     def split(self):
         '''Return a two element tuple containing the parent route and
-the last url bit as route. If this route is the root route, it returns
-the root route and ``None``. '''
+        the last url bit as route. If this route is the root route, it returns
+        the root route and ``None``. '''
         rule = self.rule
         if not self.is_leaf:
             rule = rule[:-1]

@@ -1300,44 +1300,6 @@ def cookiejar_from_dict(cookie_dict, cookiejar=None):
 cc_delim_re = re.compile(r'\s*,\s*')
 
 
-class accept_content_type(object):
-
-    def __init__(self, values=None):
-        self._all = {}
-        self.update(values)
-
-    def update(self, values):
-        if values:
-            all = self._all
-            accept_headers = cc_delim_re.split(values)
-            for h in accept_headers:
-                v = h.split('/')
-                if len(v) == 2:
-                    a, b = v
-                    if a in all:
-                        all[a].append(b)
-                    else:
-                        all[a] = [b]
-
-    def __contains__(self, content_type):
-        all = self._all
-        if not all:
-            # If no Accept header field is present, then it is assumed that the
-            # client accepts all media types.
-            return True
-        a, b = content_type.split('/')
-        if a in all:
-            all = all[a]
-            if '*' in all:
-                return True
-            else:
-                return b in all
-        elif '*' in all:
-            return True
-        else:
-            return False
-
-
 def patch_vary_headers(response, newheaders):
     """\
 Adds (or updates) the "Vary" header in the given HttpResponse object.

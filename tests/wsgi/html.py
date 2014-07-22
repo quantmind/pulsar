@@ -152,7 +152,7 @@ class TestWidgets(unittest.TestCase):
         self.assertTrue(head.links)
         self.assertTrue(head.scripts)
 
-    def testMeta(self):
+    def test_meta(self):
         html = wsgi.HtmlDocument()
         meta = html.head.meta
         self.assertEqual(len(meta.children), 1)
@@ -160,7 +160,7 @@ class TestWidgets(unittest.TestCase):
         html.head.add_meta(name='bla')
         self.assertEqual(len(meta.children), 2)
         text = meta.render()
-        self.assertEqual(text, "<meta charset='utf-8'><meta name='bla'>")
+        self.assertEqual(text, "<meta charset='utf-8'>\n<meta name='bla'>\n")
 
     def test_document_empty_body(self):
         m = wsgi.HtmlDocument(title='test', bla='foo')
@@ -169,28 +169,28 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(m.head.title, 'test')
         txt = m.render()
         self.assertEqual(txt,
-                         ''.join(['<!DOCTYPE html>\n',
-                                  "<html bla='foo'>\n",
-                                  '<head>',
-                                  '<title>test</title>'
-                                  "<meta charset='utf-8'>",
-                                  '</head>\n'
-                                  '<body>',
-                                  '</body>\n',
-                                  '</html>']))
+                         '\n'.join(('<!DOCTYPE html>',
+                                    "<html bla='foo'>",
+                                    '<head>',
+                                    '<title>test</title>',
+                                    "<meta charset='utf-8'>",
+                                    '</head>',
+                                    '<body>',
+                                    '</body>',
+                                    '</html>')))
 
     def test_document(self):
         m = wsgi.HtmlDocument(title='test')
         m.body.append(wsgi.Html('div', 'this is a test'))
         txt = m.render()
         self.assertEqual(txt,
-                         ''.join(['<!DOCTYPE html>\n',
-                                  '<html>\n',
-                                  '<head>',
-                                  '<title>test</title>'
-                                  "<meta charset='utf-8'>",
-                                  '</head>\n'
-                                  '<body>',
-                                  '<div>this is a test</div>',
-                                  '</body>\n',
-                                  '</html>']))
+                         '\n'.join(['<!DOCTYPE html>',
+                                    '<html>',
+                                    '<head>',
+                                    '<title>test</title>',
+                                    "<meta charset='utf-8'>",
+                                    '</head>',
+                                    '<body>',
+                                    '<div>this is a test</div>'
+                                    '</body>',
+                                    '</html>']))

@@ -155,7 +155,7 @@ from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
 from pulsar.utils.httpurl import remove_double_slash
 from pulsar.utils.system import json
 
-from .html import html_visitor
+from .html import html_visitor, newline
 
 __all__ = ['AsyncString', 'Html',
            'Json', 'HtmlDocument', 'Links', 'Scripts', 'Media',
@@ -399,7 +399,8 @@ class AsyncString(object):
         returns a :class:`.WsgiResponse`.
         '''
         response = request.response
-        response.content_type = self.content_type
+        response.content_type = self._content_type
+        response.encoding = self.charset
         if stream:
             stream = stream[0]
         else:
@@ -697,8 +698,11 @@ class Html(AsyncString):
 
     def css(self, mapping=None):
         '''Update the css dictionary if ``mapping`` is a dictionary, otherwise
- return the css value at ``mapping``. If ``mapping`` is not given, return the
- whole ``css`` dictionary if available.'''
+        return the css value at ``mapping``.
+
+        If ``mapping`` is not given, return the whole ``css`` dictionary
+        if available.
+        '''
         css = self._css
         if mapping is None:
             return css
@@ -733,11 +737,16 @@ class Html(AsyncString):
 
     def do_stream(self, request):
         self.add_media(request)
-        if self._tag and self._tag in INLINE_TAGS:
-            yield '<%s%s>' % (self._tag, self.flatatt())
+        tag = self._tag
+        n = '\n' if tag in newline else ''
+        if tag and tag in INLINE_TAGS:
+            yield '<%s%s>%s' % (tag, self.flatatt(), n)
         else:
-            if self._tag:
-                yield '<%s%s>' % (self._tag, self.flatatt())
+            if tag:
+                if not self._children:
+                    yield '<%s%s></%s>%s' % (tag, self.flatatt(), tag, n)
+                else:
+                    yield '<%s%s>%s' % (tag, self.flatatt(), n)
             if self._children:
                 for child in self._children:
                     if isinstance(child, AsyncString):
@@ -747,8 +756,8 @@ class Html(AsyncString):
                         yield async(child, getattr(request, '_loop', None))
                     else:
                         yield child
-            if self._tag:
-                yield '</%s>' % self._tag
+                if tag:
+                    yield '</%s>%s' % (tag, n)
 
     def _attrdata(self, cont, name, *val):
         if not name:
@@ -895,8 +904,8 @@ class Links(Media):
                 value.attr('media', media)
             if condition:
                 value = Html(None, '<!--[if %s]>\n' % condition,
-                             value, '\n<![endif]-->')
-            value = '%s\n' % value.render()
+                             value, '<![endif]-->\n')
+            value = value.render()
             if value not in self.children:
                 self.children.append(value)
 
@@ -918,8 +927,7 @@ class Scripts(Media):
     def script(self, src, type=None, **kwargs):
         type = type or 'application/javascript'
         path = self.absolute_path(src)
-        return '%s\n' % Html('script', src=path, type=type,
-                             **kwargs).render()
+        return Html('script', src=path, type=type, **kwargs).render()
 
     def require(self, *scripts):
         '''Add a ``script`` to the list of :attr:`required` scripts.
@@ -1109,7 +1117,7 @@ class Head(Html):
 
     def do_stream(self, request):
         if self.title:
-            self._children.insert(0, '<title>%s</title>' % self.title)
+            self._children.insert(0, '<title>%s</title>\n' % self.title)
         return super(Head, self).do_stream(request)
 
     def add_meta(self, **kwargs):
@@ -1168,8 +1176,8 @@ class HtmlDocument(Html):
     '''
     _template = ('<!DOCTYPE html>\n'
                  '<html%s>\n'
-                 '%s\n%s'
-                 '\n</html>')
+                 '%s%s'
+                 '</html>')
 
     def __init__(self, title=None, media_path='/media/', charset=None,
                  minified=False, known_libraries=None, require_callback=None,

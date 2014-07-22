@@ -231,6 +231,9 @@ class Router(RouterType('RouterBase', (object,), {})):
         self._route = rule
         self._name = parameters.pop('name', rule.name)
         self.routes = []
+        # add routes specified via the initialiser
+        for router in routes:
+            self.add_child(router)
         # copy parameters
         self.parameters = AttributeDictionary(self.parameters)
         for name, rule_method in self.rule_methods.items():
@@ -244,9 +247,6 @@ class Router(RouterType('RouterBase', (object,), {})):
                 self.parameters[name] = value
             else:
                 setattr(self, slugify(name, separator='_'), value)
-        # add routes specified via the initialiser
-        for router in routes:
-            self.add_child(router)
 
     @property
     def route(self):
@@ -344,22 +344,13 @@ class Router(RouterType('RouterBase', (object,), {})):
 
         The method uses the :attr:`response_content_types` parameter of
         accepted content types and the content types accepted by the client
-        and figure out the best match.
+        ``request`` and figures out the best match.
         '''
         content_types = self.response_content_types
         ct = request.content_types.best_match(content_types)
         if not ct and content_types:
             raise HttpException(status=415, msg=request.content_types)
         return ct
-
-    def accept_content_type(self, content_type):
-        '''Check if ``content_type`` is accepted by this :class:`Router`.
-
-        Return the best mach or ``None`` if not accepted.'''
-        response_content_types = self.response_content_types
-        if response_content_types:
-            return ContentAccept(
-                [(content_type, 1)]).best_match(response_content_types)
 
     def __repr__(self):
         return self.route.__repr__()
@@ -485,13 +476,7 @@ class Router(RouterType('RouterBase', (object,), {})):
         return cls(rule, **params)
 
 
-class MediaMixin(Router):
-    response_content_types = RouterParam(('application/octet-stream',
-                                          'text/css',
-                                          'application/javascript',
-                                          'text/html'))
-    cache_control = CacheControl(maxage=86400)
-    _file_path = ''
+class MediaMixin(object):
 
     def serve_file(self, request, fullpath, status_code=None):
         # Respect the If-Modified-Since header.
@@ -550,9 +535,6 @@ class MediaMixin(Router):
         names.extend(files)
         return self.static_index(request, names)
 
-    def html_title(self, request):
-        return 'Index of %s' % request.path
-
     def static_index(self, request, links):
         doc = request.html_document
         doc.title = 'Index of %s' % request.path
@@ -562,7 +544,7 @@ class MediaMixin(Router):
         return doc.http_response(request)
 
 
-class MediaRouter(MediaMixin):
+class MediaRouter(Router, MediaMixin):
     '''A :class:`Router` for serving static media files from a given
     directory.
 
@@ -584,6 +566,12 @@ class MediaRouter(MediaMixin):
 
         The default file to serve when a directory is requested.
     '''
+    response_content_types = RouterParam(('application/octet-stream',
+                                          'text/css',
+                                          'application/javascript',
+                                          'text/html'))
+    cache_control = CacheControl(maxage=86400)
+
     def __init__(self, rute, path, show_indexes=False, mapping=None,
                  default_suffix=None, default_file='index.html',
                  raise_404=True):
@@ -626,8 +614,15 @@ class MediaRouter(MediaMixin):
             raise Http404
 
 
-class FileRouter(MediaMixin):
-    '''A Router for a single file.'''
+class FileRouter(Router, MediaMixin):
+    '''A Router for a single file
+    '''
+    response_content_types = RouterParam(('application/octet-stream',
+                                          'text/css',
+                                          'application/javascript',
+                                          'text/html'))
+    cache_control = CacheControl(maxage=86400)
+
     def __init__(self, route, file_path, status_code=None, raise_404=True):
         super(FileRouter, self).__init__(route)
         self._status_code = status_code
