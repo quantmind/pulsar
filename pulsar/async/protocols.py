@@ -477,7 +477,7 @@ class Producer(EventHandler):
         the protocol passing ``self`` as the producer.
         '''
         self._sessions = self._sessions + 1
-        kw['sessions'] = self.sessions
+        kw['session'] = self.sessions
         kw['producer'] = self
         return self.protocol_factory(**kw)
 

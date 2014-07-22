@@ -114,6 +114,7 @@ class Concurrency(object):
         loop = EventLoop(self.selector(), logger=actor._logger,
                          iothreadloop=True, cfg=actor.cfg)
         actor.mailbox = self.create_mailbox(actor, loop)
+        return loop
 
     def hand_shake(self, actor):
         '''Perform the hand shake for ``actor``
@@ -295,7 +296,9 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
     def setup_event_loop(self, actor):
         actor._logger = self.cfg.configured_logger(actor.name)
         actor.mailbox = ProxyMailbox(actor)
-        actor.mailbox._loop.call_soon(actor.start)
+        loop = actor._loop
+        loop.call_soon(actor.start)
+        return loop
 
     def run_actor(self, actor):
         actor._loop.call_soon(self.hand_shake, actor)

@@ -1,7 +1,8 @@
 '''Asynchronous application for serving requests
 on sockets. This is the base class of :class:`.WSGIServer`.
-All is needed by a :class:`SocketServer` is a callable which build a
-:class:`.ProtocolConsumer` for each new client request received.
+All is needed by a :class:`.SocketServer` application is a callable
+which build a :class:`.ProtocolConsumer` for each new client request
+received.
 This is an example of a script for an Echo server::
 
     import pulsar
@@ -240,7 +241,7 @@ class SocketServer(pulsar.Application):
             for sock in server.sockets:
                 addresses.append(sock.getsockname())
                 sockets.append(sock)
-                server.loop.remove_reader(sock.fileno())
+                loop.remove_reader(sock.fileno())
             monitor.sockets = sockets
             monitor.ssl = ssl
             cfg.addresses = addresses

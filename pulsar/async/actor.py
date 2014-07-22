@@ -1,6 +1,7 @@
 import sys
 import os
 from time import time
+from itertools import chain
 from threading import current_thread
 
 from pulsar import HaltServer, CommandError, MonitorStarted, system
@@ -153,26 +154,28 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     next_periodic_task = None
 
     def __init__(self, impl):
-        EventHandler.__init__(self)
         self.state = ACTOR_STATES.INITIAL
         self.__impl = impl
-        for name in self.events:
-            hook = impl.params.pop(name, None)
-            if hook:
-                self.bind_event(name, hook)
-        for name, value in impl.params.items():
-            setattr(self, name, value)
         self.servers = {}
         self.extra = {}
         self.stream = get_stream(self.cfg)
-        del impl.params
         self.tid = current_thread().ident
         self.pid = os.getpid()
+        hooks = []
+        for name in chain(self.ONE_TIME_EVENTS, self.MANY_TIMES_EVENTS):
+            hook = impl.params.pop(name, None)
+            if hook:
+                hooks.append((name, hook))
+        for name, value in impl.params.items():
+            setattr(self, name, value)
+        del impl.params
+        super(Actor, self).__init__(loop=impl.setup_event_loop(self))
+        for name, hook in hooks:
+            self.bind_event(name, hook)
         try:
             self.cfg.post_fork(self)
         except Exception:   # pragma    nocover
             pass
-        impl.setup_event_loop(self)
 
     def __repr__(self):
         return self.impl.unique_name
