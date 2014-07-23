@@ -648,3 +648,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(pool.pool_size, 2)
         self.assertEqual(pool.in_use, 0)
         self.assertEqual(pool.available, 0)
+
+    def test_415(self):
+        http = self._client
+        response = yield http.get(self.httpbin(''),
+                                  headers=[('accept', 'application/json')])
+        self.assertEqual(response.status_code, 415)

@@ -17,7 +17,7 @@ class HttpBin2(HttpBin):
         pass    # switch off gzip handler, it is not a route anymore
 
     @route('get2')
-    def _get(self, request):    # override the _get handler
+    def get_get(self, request):    # override the get_get handler
         raise pulsar.Http404
 
     @route()
@@ -39,8 +39,8 @@ class HttpBin3(HttpBin):
     def new(self, request):
         return self.info_data_response(request)
 
-    @route('post', method='post', title='Returns POST data', position=-1)
-    def _post(self, request):
+    @route(method='post', title='Returns POST data', position=-1)
+    def post_post(self, request):
         return self.info_data_response(request)
 
 
@@ -87,25 +87,25 @@ class TestRouter(unittest.TestCase):
         self.assertFalse('gzip' in HttpBin2.rule_methods)
 
     def test_override(self):
-        self.assertTrue('_get' in HttpBin.rule_methods)
-        self.assertEqual(HttpBin.rule_methods['_get'][0].rule, 'get')
-        self.assertTrue('_get' in HttpBin2.rule_methods)
-        self.assertEqual(HttpBin2.rule_methods['_get'][0].rule, 'get2')
+        self.assertTrue('get_get' in HttpBin.rule_methods)
+        self.assertEqual(HttpBin.rule_methods['get_get'][0].rule, 'get')
+        self.assertTrue('get_get' in HttpBin2.rule_methods)
+        self.assertEqual(HttpBin2.rule_methods['get_get'][0].rule, 'get2')
         # The position in the ordered dict should be the same too
         all = list(HttpBin.rule_methods)
         all2 = list(HttpBin2.rule_methods)
-        self.assertEqual(all2.index('_get'), all.index('_get'))
+        self.assertEqual(all2.index('get_get'), all.index('get_get'))
 
     def test_override_change_position(self):
-        self.assertTrue('_post' in HttpBin.rule_methods)
-        self.assertEqual(HttpBin.rule_methods['_post'][0].rule, 'post')
-        self.assertTrue('_get' in HttpBin3.rule_methods)
-        self.assertEqual(HttpBin3.rule_methods['_post'][0].rule, 'post')
+        self.assertTrue('post_post' in HttpBin.rule_methods)
+        self.assertEqual(HttpBin.rule_methods['post_post'][0].rule, 'post')
+        self.assertTrue('post_post' in HttpBin3.rule_methods)
+        self.assertEqual(HttpBin3.rule_methods['post_post'][0].rule, 'post')
         # The position in the ordered dict should be the same too
         all = list(HttpBin.rule_methods)
         all3 = list(HttpBin3.rule_methods)
         self.assertEqual(all3.index('new'), 1)
-        self.assertTrue(all3.index('_post') < all.index('_post'))
+        self.assertTrue(all3.index('post_post') < all.index('post_post'))
 
     def test_path_method(self):
         router = Router('/root',

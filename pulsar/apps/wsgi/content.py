@@ -416,7 +416,7 @@ class AsyncString(object):
             response.content = self.to_string(stream)
             return response
         else:
-            raise HttpException(status=415, msg=self._content_type)
+            raise HttpException(status=415, msg=request.content_types)
 
     def to_string(self, streams):
         '''Called to transform the collection of
