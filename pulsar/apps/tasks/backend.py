@@ -151,11 +151,6 @@ class TaskConsumer(object):
     Instances of this consumer are created by the :class:`TaskBackend` when
     a task is executed.
 
-    .. attribute:: _loop
-
-        the :ref:`queue-based loop <queue-based-loop>` of the thread
-        executing the task.
-
     .. attribute:: task_id
 
         the :attr:`Task.id` being consumed.
@@ -285,12 +280,12 @@ class TaskBackend(EventHandler):
     def __init__(self, store, logger=None, task_paths=None,
                  schedule_periodic=False, backlog=1, max_tasks=0, name=None,
                  poll_timeout=None):
-        self.store = store
-        self._logger = logger
-        super(TaskBackend, self).__init__(self._loop,
+        super(TaskBackend, self).__init__(store._loop,
                                           many_times_events=('task_queued',
                                                              'task_started',
                                                              'task_done'))
+        self.store = store
+        self._logger = logger
         self.name = name
         self.task_paths = task_paths
         self.backlog = backlog
@@ -311,11 +306,6 @@ class TaskBackend(EventHandler):
         else:
             return 'task consumer %s' % self.store.dns
     __str__ = __repr__
-
-    @property
-    def _loop(self):
-        '''Eventloop running this task backend'''
-        return self.store._loop
 
     @property
     def num_concurrent_tasks(self):
@@ -415,7 +405,7 @@ class TaskBackend(EventHandler):
                     task = yield done
                 coroutine_return(task)
 
-        fut = async(_(task_id), self._loop)
+        fut = async(_(task_id), loop=self._loop)
         return future_timeout(fut, timeout) if timeout else fut
 
     def get_tasks(self, ids):

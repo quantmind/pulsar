@@ -245,7 +245,7 @@ class ProxyTunnel(ProxyResponse):
 
 
 class StreamTunnel(pulsar.ProtocolConsumer):
-    ''':class:`ProtocolConsumer` handling encrypted messages from
+    ''':class:`.ProtocolConsumer` handling encrypted messages from
     downstream client and upstream server.
 
     This consumer is created as an upgrade of the standard Http protocol
@@ -258,8 +258,8 @@ class StreamTunnel(pulsar.ProtocolConsumer):
     headers = None
     status_code = None
 
-    def __init__(self, tunnel):
-        super(StreamTunnel, self).__init__()
+    def __init__(self, tunnel, loop=None):
+        super(StreamTunnel, self).__init__(loop)
         self.tunnel = tunnel
 
     def connection_made(self, connection):
@@ -267,14 +267,14 @@ class StreamTunnel(pulsar.ProtocolConsumer):
 
     def data_received(self, data):
         try:
-            self.tunnel._transport.write(data)
+            return self.tunnel.write(data)
         except Exception:
             if not self.tunnel.closed:
                 raise
 
     def _close_tunnel(self, arg, exc=None):
         if not self.tunnel.closed:
-            self.tunnel._loop.call_soon(self.tunnel.close)
+            self._loop.call_soon(self.tunnel.close)
 
 
 def server(name='proxy-server', headers_middleware=None,

@@ -4,7 +4,7 @@ from functools import partial
 from pulsar.utils.pep import iteritems
 
 from .futures import (Future, maybe_async, InvalidStateError,
-                      future_result_exc, AsyncObject)
+                      future_result_exc, AsyncObject, asyncio)
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']
@@ -123,7 +123,7 @@ class OneTime(Future, AbstractEvent):
             try:
                 result = maybe_async(hnd(arg, exc=exc, **kwargs), self._loop)
             except Exception:
-                self.logger.exception('Exception while firing event')
+                self.logger.exception('Exception while firing onetime event')
             else:
                 if isinstance(result, Future):
                     result.add_done_callback(
@@ -136,7 +136,7 @@ class OneTime(Future, AbstractEvent):
 
 
 class EventHandler(AsyncObject):
-    '''A Mixin for handling events.
+    '''A Mixin for handling events on :ref:`async objects <async-object>`.
 
     It handles :class:`OneTime` events and :class:`Event` that occur
     several times.
@@ -147,6 +147,8 @@ class EventHandler(AsyncObject):
     '''Event names which occur several times.'''
     def __init__(self, loop=None, one_time_events=None,
                  many_times_events=None):
+        assert isinstance(loop, asyncio.AbstractEventLoop)
+        self._loop = loop
         one = self.ONE_TIME_EVENTS
         if one_time_events:
             one = set(one)
@@ -170,11 +172,7 @@ class EventHandler(AsyncObject):
 
         If no event is registered for ``name`` returns nothing.
         '''
-        event = self._events.get(name)
-        if event:
-            assert self._loop, "No event loop for %s" % self
-            event._loop = self._loop
-        return event
+        return self._events.get(name)
 
     def fired_event(self, name):
         event = self._events.get(name)

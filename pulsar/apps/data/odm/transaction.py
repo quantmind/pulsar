@@ -1,10 +1,12 @@
-from pulsar import (EventHandler, coroutine_return, InvalidOperation,
-                    chain_future, multi_async)
+from pulsar import EventHandler, InvalidOperation, chain_future, multi_async
 from pulsar.utils.pep import iteritems
 
 from .model import Model
 
 from ..store import Command
+
+
+__all__ = ['ModelDictionary']
 
 
 class ModelDictionary(dict):
@@ -69,8 +71,7 @@ class Transaction(EventHandler):
                          'post_commit', 'post_delete')
 
     def __init__(self, mapper, name=None):
-        super(Transaction, self).__init__()
-        self._loop = mapper._loop
+        super(Transaction, self).__init__(mapper._loop)
         self.name = name or 'transaction'
         self.mapper = mapper
         self._commands = {}

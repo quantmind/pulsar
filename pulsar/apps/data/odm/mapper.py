@@ -5,10 +5,13 @@ from pulsar.utils.pep import native_str
 from pulsar.utils.importer import import_module
 
 from .transaction import Transaction, ModelDictionary
-from .model import ModelType
+from .model import ModelType, Model
 from .manager import Manager
 from . import query
 from ..store import create_store
+
+
+__all__ = ['Mapper', 'Manager', 'Model']
 
 
 class Mapper(EventHandler):
@@ -53,11 +56,11 @@ class Mapper(EventHandler):
     ModelNotFound = query.ModelNotFound
 
     def __init__(self, default_store, **kw):
-        super(Mapper, self).__init__()
+        store = create_store(default_store, **kw)
+        super(Mapper, self).__init__(store._loop)
         self._registered_models = ModelDictionary()
         self._registered_names = {}
-        self._default_store = create_store(default_store, **kw)
-        self._loop = self._default_store._loop
+        self._default_store = store
         self._search_engine = None
 
     @property
@@ -163,8 +166,10 @@ class Mapper(EventHandler):
 
     def from_uuid(self, uuid, session=None):
         '''Retrieve a :class:`.Model` from its universally unique identifier
-``uuid``. If the ``uuid`` does not match any instance an exception will raise.
-'''
+        ``uuid``.
+
+        If the ``uuid`` does not match any instance an exception will raise.
+        '''
         elems = uuid.split('.')
         if len(elems) == 2:
             model = get_model_from_hash(elems[0])
@@ -258,7 +263,6 @@ class Mapper(EventHandler):
         '''Loop though :attr:`registered_models` and issue the
         :meth:`.Manager.create_table` method.'''
         executed = []
-        search_engine = self.search_engine
         for manager in self._registered_models.values():
             executed.append(manager.create_table(remove_existing))
         return multi_async(executed, loop=self._loop)

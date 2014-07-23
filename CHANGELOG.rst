@@ -28,6 +28,9 @@ Ver. 0.8.5 - Development
 * ``trollius`` and ``asyncio`` added as dependencies in the ``setup.py``
   script during installation
 * Better :func:`.slugify` function
+* :class:`.EventHandler` requires a valid :ref:`event loop <asyncio-event-loop>`
+  during initialisation
+* Works with ``trollius`` 1.0
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

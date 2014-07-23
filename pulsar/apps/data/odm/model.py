@@ -4,7 +4,6 @@ from copy import copy
 from base64 import b64encode
 from collections import Mapping
 
-from pulsar import ImproperlyConfigured
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import ispy3k, iteritems, to_string
 
@@ -449,7 +448,7 @@ class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
 
             class Meta:
                 app_label = field.model._meta.app_label
-            through = ModelType(name, (StdModel,), {'Meta': Meta})
+            through = ModelType(name, (Model,), {'Meta': Meta})
             field.through = through
         # The first field
         field1 = ForeignKey(field.model,

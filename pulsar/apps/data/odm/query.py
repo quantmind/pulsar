@@ -4,6 +4,10 @@ from pulsar import wait_complete
 from pulsar.utils.pep import to_string, iteritems
 
 
+__all__ = ['Query', 'CompiledQuery', 'OdmError',
+           'ModelNotFound', 'QueryError']
+
+
 def int_or_float(v):
     v = float(v)
     i = int(v)

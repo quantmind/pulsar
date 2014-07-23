@@ -169,7 +169,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         for name, value in impl.params.items():
             setattr(self, name, value)
         del impl.params
-        super(Actor, self).__init__(loop=impl.setup_event_loop(self))
+        super(Actor, self).__init__(impl.setup_event_loop(self))
         for name, hook in hooks:
             self.bind_event(name, hook)
         try:
@@ -207,10 +207,6 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     @property
     def address(self):
         return self.mailbox.address
-
-    @property
-    def _loop(self):
-        return self.mailbox._loop
 
     @property
     def info_state(self):

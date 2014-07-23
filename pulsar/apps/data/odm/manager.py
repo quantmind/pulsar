@@ -174,7 +174,7 @@ class Manager(AbstractQuery):
         '''Create a new instance of :attr:`_model` and commit to server.
         '''
         with self._mapper.begin() as t:
-            model = t.add(self(*args, **kwargs))
+            t.add(self(*args, **kwargs))
         return t.wait(lambda models: models[self._store][0])
     new = create
     insert = new

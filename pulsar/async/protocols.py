@@ -3,7 +3,7 @@ import sys
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, in_loop, task
+from .futures import multi_async, in_loop, task, Future
 from .events import EventHandler
 from .mixins import FlowControl, Timeout
 from .access import (asyncio, get_event_loop, new_event_loop,
@@ -178,6 +178,8 @@ class ProtocolConsumer(EventHandler):
             return self.fire_event('post_request', *arg, **kw)
 
     def write(self, data):
+        '''Delegate writing to the underlying :class:`.Connection`
+        '''
         c = self._connection
         if c:
             return c.write(data)
@@ -218,8 +220,8 @@ class PulsarProtocol(EventHandler):
     _address = None
     _type = 'server'
 
-    def __init__(self, session=1, producer=None, **kw):
-        super(PulsarProtocol, self).__init__()
+    def __init__(self, loop=None, session=1, producer=None, **kw):
+        super(PulsarProtocol, self).__init__(loop)
         self._session = session
         self._producer = producer
 
@@ -262,13 +264,6 @@ class PulsarProtocol(EventHandler):
         '''The address of the :attr:`transport`.
         '''
         return self._address
-
-    @property
-    def _loop(self):
-        '''The :attr:`transport` event loop.
-        '''
-        if self._transport:
-            return self._transport._loop
 
     @property
     def producer(self):
@@ -377,7 +372,6 @@ class Connection(FlowControl):
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self
-        consumer._loop = self._loop
         consumer.connection_made(self)
 
     def data_received(self, data):
@@ -390,6 +384,8 @@ class Connection(FlowControl):
         while data:
             consumer = self.current_consumer()
             data = consumer._data_received(data)
+            if isinstance(data, Future):
+                return data
 
     def upgrade(self, consumer_factory):
         '''Upgrade the :func:`_consumer_factory` callable.
@@ -450,8 +446,8 @@ class Producer(EventHandler):
 
     def __init__(self, loop, protocol_factory=None, name=None,
                  max_requests=None):
-        self._loop = loop or get_event_loop() or new_event_loop()
-        super(Producer, self).__init__(self._loop)
+        loop = loop or get_event_loop() or new_event_loop()
+        super(Producer, self).__init__(loop)
         self.protocol_factory = protocol_factory or self.protocol_factory
         self._name = name or self.__class__.__name__
         self._requests_processed = 0
@@ -479,6 +475,7 @@ class Producer(EventHandler):
         self._sessions = self._sessions + 1
         kw['session'] = self.sessions
         kw['producer'] = self
+        kw['loop'] = self._loop
         return self.protocol_factory(**kw)
 
     def build_consumer(self, consumer_factory):
@@ -489,7 +486,7 @@ class Producer(EventHandler):
 
         :param consumer_factory: consumer factory to use.
         '''
-        consumer = consumer_factory()
+        consumer = consumer_factory(loop=self._loop)
         consumer.copy_many_times_events(self)
         return consumer
 

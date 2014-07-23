@@ -1,13 +1,13 @@
 from functools import partial
 
-from pulsar import task, in_loop, Protocol, EventHandler, coroutine_return
+from pulsar import task, in_loop, Protocol
 from pulsar.apps import data
 
 
 class PubsubProtocol(Protocol):
 
-    def __init__(self, handler, *args, **kw):
-        super(PubsubProtocol, self).__init__(*args, **kw)
+    def __init__(self, handler, **kw):
+        super(PubsubProtocol, self).__init__(handler._loop, **kw)
         self.parser = self._producer._parser_class()
         self.handler = handler
 
@@ -88,4 +88,3 @@ class PubSub(data.PubSub):
                                        producer=self.store)
             self._connection = yield self.store.connect(protocol_factory)
             self._connection.execute(*args)
-        coroutine_return()

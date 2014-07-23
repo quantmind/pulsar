@@ -296,7 +296,7 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
     def setup_event_loop(self, actor):
         actor._logger = self.cfg.configured_logger(actor.name)
         actor.mailbox = ProxyMailbox(actor)
-        loop = actor._loop
+        loop = actor.mailbox._loop
         loop.call_soon(actor.start)
         return loop
 

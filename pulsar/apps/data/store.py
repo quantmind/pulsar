@@ -6,15 +6,11 @@ A :class:`.Store` can also implement several methods for managing
 the higher level :ref:`object data mapper <odm>`.
 '''
 import logging
-import socket
-from functools import partial
 
 from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
-                    coroutine_return, get_application, in_loop,
-                    EventHandler, Producer)
+                    Producer)
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
-from pulsar.utils.system import json
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 __all__ = ['Command',
@@ -307,16 +303,6 @@ class Store(Producer):
         instance = manager(*args, **kwargs)
         instance['_store'] = self
         return instance
-
-    def model_data(self, model, action):
-        '''A generator of field/value pair for the store
-        '''
-        fields = model._meta.dfields
-        for key, value in model.items():
-            if key in fields:
-                value = fields[key].to_store(value, self)
-            if value is not None:
-                yield key, value
 
     def model_data(self, model, action):
         '''Generator of ``field, value`` pair for the data store.

@@ -139,8 +139,8 @@ class WebSocketProtocol(ProtocolConsumer):
     '''
     close_reason = None
 
-    def __init__(self, handshake, handler, parser):
-        super(WebSocketProtocol, self).__init__()
+    def __init__(self, handshake, handler, parser, loop=None):
+        super(WebSocketProtocol, self).__init__(loop)
         self.bind_event('post_request', self._shut_down)
         self.handshake = handshake
         self.handler = handler
@@ -166,16 +166,16 @@ class WebSocketProtocol(ProtocolConsumer):
                     self._connection.close()
                 break
             if frame.is_message:
-                maybe_async(self.handler.on_message(self, frame.body))
+                self._on(self.handler.on_message, frame)
             elif frame.is_bytes:
-                maybe_async(self.handler.on_bytes(self, frame.body))
+                self._on(self.handler.on_bytes, frame)
             elif frame.is_ping:
-                maybe_async(self.handler.on_ping(self, frame.body))
+                self._on(self.handler.on_ping, frame)
             elif frame.is_pong:
-                maybe_async(self.handler.on_pong(self, frame.body))
+                self._on(self.handler.on_pong, frame)
             frame = self.parser.decode()
 
-    def write(self, message, opcode=None, **kw):
+    def write(self, message, opcode=None, encode=True, **kw):
         '''Write a new ``message`` into the wire.
 
         It uses the :meth:`~.FrameParser.encode` method of the
@@ -186,26 +186,30 @@ class WebSocketProtocol(ProtocolConsumer):
             if ``message`` is a string, otherwise ``2`` when the message
             are bytes.
          '''
-        chunk = self.parser.encode(message, opcode=opcode, **kw)
-        self.transport.write(chunk)
-        if opcode == 8:
+        if encode:
+            message = self.parser.encode(message, opcode=opcode, **kw)
+        result = super(WebSocketProtocol, self).write(message)
+        if opcode == 0x8:
             self.finish()
+        return result
 
     def ping(self, message=None):
         '''Write a ping ``frame``.
         '''
-        self.transport.write(self.parser.ping(message))
+        return self.write(self.parser.ping(message), encode=False)
 
     def pong(self, message=None):
         '''Write a pong ``frame``.
         '''
-        self.transport.write(self.parser.pong(message))
+        return self.write(self.parser.pong(message), encode=False)
 
     def write_close(self, code=None):
         '''Write a close ``frame`` with ``code``.
         '''
-        self.transport.write(self.parser.close(code))
-        self._connection.close()
+        return self.write(self.parser.close(code), opcode=0x8, encode=False)
+
+    def _on(self, handler, frame):
+        maybe_async(handler(self, frame.body), loop=self._loop)
 
     def _shut_down(self, result, exc=None):
         maybe_async(self.handler.on_close(self))

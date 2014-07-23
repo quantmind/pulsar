@@ -12,6 +12,17 @@ from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
 from pulsar import PulsarException
 
 
+def noerror(callback):
+    '''Decorator to run a callback of a :class:`.EventHandler`
+    only when no errors occur
+    '''
+    def _(*response, **kw):
+        if response[-1] and not kw.get('exc'):
+            return callback(*response)
+
+    return _
+
+
 class request_again(namedtuple('request_again', 'method url params')):
 
     @property
@@ -48,14 +59,16 @@ class WebSocketClient(WebSocketProtocol):
                                  (self.__class__.__name__, name))
 
 
+@noerror
 def handle_redirect(response, exc=None):
-    if not exc and (response.status_code in REDIRECT_CODES and
-                    'location' in response.headers and
-                    response._request.allow_redirects):
+    if (response.status_code in REDIRECT_CODES and
+            'location' in response.headers and
+            response._request.allow_redirects):
         # put at the end of the pile
         response.bind_event('post_request', _do_redirect)
 
 
+@noerror
 def _do_redirect(response, exc=None):
     request = response.request
     # done with current response
@@ -88,6 +101,7 @@ def _do_redirect(response, exc=None):
         response.request_again = request_again(method, url, params)
 
 
+@noerror
 def handle_cookies(response, exc=None):
     '''Handle response cookies.
     '''
@@ -104,6 +118,7 @@ def handle_cookies(response, exc=None):
             client.cookies.extract_cookies(response, request)
 
 
+@noerror
 def handle_100(response, exc=None):
     '''Handle Except: 100-continue.
 
@@ -111,24 +126,25 @@ def handle_100(response, exc=None):
     have the ``Expect: 100-continue`` value. If so add a ``on_headers``
     callback to handle the response from the server.
     '''
-    if not exc:
-        request = response.request
-        if (request.headers.has('expect', '100-continue') and
-                response.status_code == 100):
-            response.bind_event('on_headers', _write_body)
+    request = response.request
+    if (request.headers.has('expect', '100-continue') and
+            response.status_code == 100):
+        response.bind_event('on_headers', _write_body)
 
 
+@noerror
 def _write_body(response, exc=None):
     if response.status_code == 100:
         response.request.new_parser()
         if response.request.data:
-            response.transport.write(response.request.data)
+            response.write(response.request.data)
 
 
+@noerror
 def handle_101(response, exc=None):
     '''Websocket upgrade as ``on_headers`` event.'''
 
-    if not exc and response.status_code == 101:
+    if response.status_code == 101:
         connection = response.connection
         request = response._request
         handler = request.websocket_handler
@@ -147,6 +163,7 @@ class Tunneling:
     the writing of the actual request until headers from the proxy server
     are received.
     '''
+    @noerror
     def __call__(self, response, exc=None):
         # the pre_request handler
         request = response._request
@@ -163,18 +180,19 @@ class Tunneling:
                     request._apply_tunnel = True
                     response.bind_event('pre_request', self)
 
+    @noerror
     def on_headers(self, response, exc=None):
         '''Called back once the headers have arrived.'''
-        if not exc and response.status_code == 200:
+        if response.status_code == 200:
             response.bind_event('post_request', self._tunnel_consumer)
             response.finished()
 
+    @noerror
     def _tunnel_consumer(self, response, exc=None):
-        if not exc:
-            response.transport.pause_reading()
-            # Return a coroutine which wraps the socket
-            # at the next iteration loop. Important!
-            return self.switch_to_ssl(response)
+        response.transport.pause_reading()
+        # Return a coroutine which wraps the socket
+        # at the next iteration loop. Important!
+        return self.switch_to_ssl(response)
 
     def switch_to_ssl(self, prev_response):
         '''Wrap the transport for SSL communication.'''
@@ -183,7 +201,7 @@ class Tunneling:
         loop = connection._loop
         sock = connection._transport._sock
         # set a new connection_made event
-        connection.events['connection_made'] = OneTime()
+        connection.events['connection_made'] = OneTime(loop=loop)
         connection._processed -= 1
         connection.producer._requests_processed -= 1
         waiter = Future(loop=loop)

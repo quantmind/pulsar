@@ -2,7 +2,7 @@ from functools import partial
 
 from pulsar import coroutine_return, task, Connection, Pool, get_actor
 from pulsar.utils.pep import to_string
-from pulsar.apps.data import register_store, Store, Command
+from pulsar.apps.data import Store, Command
 from pulsar.apps.ds import redis_parser
 
 from .client import RedisClient, Pipeline, Consumer, ResponseError
@@ -125,7 +125,7 @@ class RedisStore(Store):
                 pipe.hmset(key, self.model_data(model, action))
             else:
                 raise NotImplementedError
-        response = yield pipe.commit()
+        yield pipe.commit()
         coroutine_return(models)
 
     def get_model(self, manager, pk):
@@ -155,7 +155,7 @@ class RedisStore(Store):
 
     def meta(self, meta):
         '''Extract model metadata for lua script stdnet/lib/lua/odm.lua'''
-        indices = dict(((idx.attname, idx.unique) for idx in meta.indices))
+        #  indices = dict(((idx.attname, idx.unique) for idx in meta.indices))
         data = meta.as_dict()
         data['namespace'] = self.basekey(meta)
         return data

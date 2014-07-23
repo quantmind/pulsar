@@ -1,7 +1,11 @@
-from pulsar import get_event_loop, new_event_loop
+from pulsar import get_event_loop
 from pulsar.apps.data import Store, parse_store_url
 from pulsar.utils.exceptions import ImproperlyConfigured, InvalidOperation
 from pulsar.utils.importer import module_attribute
+
+
+__all__ = ['register_searchengine', 'search_engine', 'SearchEngine',
+           'search_engines']
 
 
 search_engines = {}

@@ -290,7 +290,7 @@ class RedisClient(object):
         pieces = []
         if args:
             if len(args) % 2 != 0:
-                raise vALUEeRROR("ZADD requires an equal number of "
+                raise ValueError("ZADD requires an equal number of "
                                  "values and scores")
             pieces.extend(args)
         for pair in iteritems(kwargs):
@@ -476,8 +476,8 @@ class RedisScriptMeta(type):
         abstract = attrs.pop('abstract', False)
         new_class = super_new(cls, name, bases, attrs)
         if not abstract:
-            self = new_class(new_class.script, new_class.__name__)
-            _scripts[self.name] = self
+            o = new_class(new_class.script, new_class.__name__)
+            new_class._scripts[o.name] = o
         return new_class
 
 
@@ -505,6 +505,7 @@ class RedisScript(RedisScriptMeta('_RS', (object,), {'abstract': True})):
     '''
     abstract = True
     script = None
+    _scripts = {}
     required_scripts = ()
 
     def __init__(self, script, name):

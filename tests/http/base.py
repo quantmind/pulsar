@@ -127,7 +127,7 @@ class TestHttpClientBase:
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_HttpResponse(self):
-        r = HttpResponse()
+        r = HttpResponse(loop=self._loop)
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<None>')
         self.assertEqual(r.headers, None)
