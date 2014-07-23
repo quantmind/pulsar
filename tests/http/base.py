@@ -390,7 +390,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_response_headers(self):
         http = self._client
-        response = yield http.get(self.httpbin('response-headers'))
+        response = yield http.get(self.httpbin('response_headers'))
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertEqual(result['Transfer-Encoding'], 'chunked')

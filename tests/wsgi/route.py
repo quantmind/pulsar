@@ -81,7 +81,7 @@ class Routes(unittest.TestCase):
         self.assertRaises(KeyError, r.url, name='luca')
         self.assertEqual(r.url(name='luca', child='joshua'), '/luca/joshua/')
 
-    def testAddDirLeaf(self):
+    def test_add_dir_Leaf(self):
         r = Route('bla/')
         self.assertFalse(r.is_leaf)
         r2 = Route('foo')

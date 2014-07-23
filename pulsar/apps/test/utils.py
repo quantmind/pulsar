@@ -26,10 +26,6 @@ AsyncAssert
    :members:
    :member-order: bysource
 
-run test server
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: run_test_server
 
 check server
 ~~~~~~~~~~~~~~~~~~
@@ -41,7 +37,6 @@ import gc
 import logging
 import unittest
 from inspect import isclass
-from contextlib import contextmanager
 
 try:
     from unittest.case import _ExpectedFailure as ExpectedFailure
@@ -64,14 +59,13 @@ __all__ = ['run_on_arbiter',
            'AsyncAssert',
            'show_leaks',
            'hide_leaks',
-           'run_test_server',
            'check_server',
            'dont_run_with_thread']
 
 
 LOGGER = logging.getLogger('pulsar.test')
 NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
-                    'setUpClass', 'tearDownClass', 'run_test_server')
+                    'setUpClass', 'tearDownClass')
 
 
 class TestFailure:
@@ -333,24 +327,6 @@ def show_leaks(actor, show=True):
 
 def hide_leaks(actor):
     show_leaks(actor, False)
-
-
-@contextmanager
-def run_test_server(protocol_factory, loop, address=None, **kw):
-    '''A context manager for running a test server::
-
-        with run_test_server(loop, protocol_factory) as server:
-            ...
-
-    It creates a :class:`.TcpServer` and invoke
-    :meth:`~.TcpServer.stop_serving` on exit.
-    '''
-    address = address or ('127.0.0.1', 0)
-    server = TcpServer(protocol_factory, loop, address, **kw)
-    try:
-        yield server
-    finally:
-        server.stop_serving()
 
 
 def check_server(name):

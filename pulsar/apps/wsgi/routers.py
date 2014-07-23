@@ -77,7 +77,6 @@ from .route import Route
 from .utils import wsgi_request
 from .content import Html
 from .structures import ContentAccept
-from .wrappers import redirect
 
 
 __all__ = ['Router', 'MediaRouter', 'FileRouter', 'MediaMixin',
@@ -192,7 +191,7 @@ class Router(RouterType('RouterBase', (object,), {})):
 
     .. attribute:: response_content_types
 
-        a list/tuple of possible content types of a response to a
+        A list/tuple of possible content types of a response to a
         client request.
 
         The client request must accept at least one of the response content
@@ -231,7 +230,7 @@ class Router(RouterType('RouterBase', (object,), {})):
         self._route = rule
         self._name = parameters.pop('name', rule.name)
         self.routes = []
-        # add routes specified via the initialiser
+        # add routes specified via the initialiser first
         for router in routes:
             self.add_child(router)
         # copy parameters
@@ -317,6 +316,14 @@ class Router(RouterType('RouterBase', (object,), {})):
         '''
         return self.full_route.url(**urlargs)
 
+    def getparam(self, name, default=None):
+        '''A parameter in this :class:`.Router`
+        '''
+        try:
+            return getattr(self, name)
+        except AttributeError:
+            return default
+
     def __getattr__(self, name):
         '''Check the value of a :attr:`parameters` ``name``.
 
@@ -324,20 +331,8 @@ class Router(RouterType('RouterBase', (object,), {})):
         :attr:`parent` :class:`Router` if it exists.
         '''
         if not name.startswith('_'):
-            return self.get_parameter(name, False)
-        self.no_param(name)
-
-    def get_parameter(self, name, safe=True):
-        value = self.parameters.get(name)
-        if value is None:
-            if self._parent:
-                return self._parent.get_parameter(name, safe)
-            elif name in self.parameters:
-                return value
-            elif not safe:
-                self.no_param(name)
-        else:
-            return value
+            return self._get_router_parameter(name, False)
+        self._no_param(name)
 
     def content_type(self, request):
         '''Evaluate the content type for the response to a client ``request``.
@@ -348,6 +343,8 @@ class Router(RouterType('RouterBase', (object,), {})):
         '''
         content_types = self.response_content_types
         ct = request.content_types.best_match(content_types)
+        if ct and '*' in ct:
+            ct = None
         if not ct and content_types:
             raise HttpException(status=415, msg=request.content_types)
         return ct
@@ -398,11 +395,6 @@ class Router(RouterType('RouterBase', (object,), {})):
         if response_wrapper:
             return response_wrapper(callable, request)
         return callable(request)
-
-    def redirect(self, path, **kw):
-        '''Redirect to a different ``path``
-        '''
-        return redirect(path, **kw)
 
     def add_child(self, router):
         '''Add a new :class:`Router` to the :attr:`routes` list.
@@ -462,10 +454,6 @@ class Router(RouterType('RouterBase', (object,), {})):
             parent = parent._parent
         return parent is not None
 
-    def no_param(self, name):
-        raise AttributeError("'%s' object has no attribute '%s'" %
-                             (self.__class__.__name__, name))
-
     def make_router(self, rule, cls=None, **params):
         '''Create a new :class:`.Router` from a ``rule`` and parameters.
 
@@ -474,6 +462,22 @@ class Router(RouterType('RouterBase', (object,), {})):
         '''
         cls = cls or Router
         return cls(rule, **params)
+
+    def _no_param(self, name):
+        raise AttributeError("'%s' object has no attribute '%s'" %
+                             (self.__class__.__name__, name))
+
+    def _get_router_parameter(self, name, safe=True):
+        value = self.parameters.get(name)
+        if value is None:
+            if self._parent:
+                return self._parent._get_router_parameter(name, safe)
+            elif name in self.parameters:
+                return value
+            elif not safe:
+                self._no_param(name)
+        else:
+            return value
 
 
 class MediaMixin(object):

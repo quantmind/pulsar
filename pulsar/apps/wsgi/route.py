@@ -56,6 +56,7 @@ from pulsar import Http404
 from pulsar.utils.httpurl import (iteritems, iri_to_uri, remove_double_slash,
                                   ENCODE_URL_METHODS, ENCODE_BODY_METHODS)
 from pulsar.utils.pep import to_string
+from pulsar.utils.slugify import slugify
 
 
 __all__ = ['route', 'Route']
@@ -309,10 +310,7 @@ class Route(object):
 
         Derived from :attr:`rule` replacing underscores and dashes.
         '''
-        name = self.rule.replace('/', ' ')
-        if not self.variables:
-            name = name.replace('_', ' ').replace('-', ' ')
-        return name.strip()
+        return slugify(self.rule, separator='_')
 
     @property
     def regex(self):

@@ -13,7 +13,7 @@ import os
 import sys
 import string
 import mimetypes
-from itertools import repeat
+from itertools import repeat, chain
 from random import choice, random
 
 try:
@@ -24,13 +24,17 @@ except ImportError:     # pragma    nocover
 
 from pulsar import (HttpRedirect, HttpException, version, JAPANESE,
                     CHINESE, coroutine_return)
-from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
+from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
+                                  ENCODE_BODY_METHODS)
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
-from pulsar.apps.wsgi import route, Html, Json, HtmlDocument, GZipMiddleware
+from pulsar.apps.wsgi import (route, Html, Json, HtmlDocument, GZipMiddleware,
+                              AsyncString)
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.system import json
 
+METHODS = frozenset(chain((m.lower() for m in ENCODE_URL_METHODS),
+                          (m.lower() for m in ENCODE_BODY_METHODS)))
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
 FAVICON = os.path.join(ASSET_DIR, 'favicon.ico')
@@ -55,7 +59,7 @@ def asset(name, mode='r', chunk_size=None):
                         yield data
             data = _chunks()
         else:
-            with open(name, 'r') as file:
+            with open(name, mode) as file:
                 data = file.read()
         return data, content_type, encoding
 
@@ -71,38 +75,42 @@ class HttpBin(wsgi.Router):
         ul = Html('ul')
         for router in sorted(self.routes, key=lambda r: r.creation_count):
             a = router.link(escape(router.route.path))
-            li = Html('li', a, ' %s' % router.parameters.get('title', ''))
+            a.addClass(router.name)
+            for method in METHODS:
+                if router.getparam(method):
+                    a.addClass(method)
+            li = Html('li', a, ' %s' % router.getparam('title', ''))
             ul.append(li)
         title = 'Pulsar HttpBin'
         html = request.html_document
         html.head.title = title
-        html.head.links.append('/media/httpbin.css')
-        html.head.scripts.append('//code.jquery.com/jquery.min.js')
-        html.head.scripts.append('/media/httpbin.js')
+        html.head.links.append('httpbin.css')
+        html.head.scripts.append('jquery')
+        html.head.scripts.append('httpbin.js')
         ul = ul.render(request)
         templ, _, _ = asset('template.html')
         body = templ % (title, JAPANESE, CHINESE, version, ul, pyversion)
         html.body.append(body)
         return html.http_response(request)
 
-    @route('get', title='Returns GET data')
-    def _get(self, request):
+    @route(title='Returns GET data')
+    def get_get(self, request):
         return self.info_data_response(request)
 
-    @route('post', method='post', title='Returns POST data')
-    def _post(self, request):
+    @route(title='Returns POST data')
+    def post_post(self, request):
         return self.info_data_response(request)
 
-    @route('patch', method='patch', title='Returns PATCH data')
-    def _patch(self, request):
+    @route(title='Returns PATCH data')
+    def patch_patch(self, request):
         return self.info_data_response(request)
 
-    @route('put', method='put', title='Returns PUT data')
-    def _put(self, request):
+    @route(title='Returns PUT data')
+    def put_put(self, request):
         return self.info_data_response(request)
 
-    @route('delete', method='delete', title='Returns DELETE data')
-    def _delete(self, request):
+    @route(title='Returns DELETE data')
+    def delete_delete(self, request):
         return self.info_data_response(request)
 
     @route('redirect/<int(min=1,max=10):times>', defaults={'times': 5},
@@ -122,12 +130,12 @@ class HttpBin(wsgi.Router):
                 'data': ''.join(('d' for n in range(size)))}
         return self.info_data_response(request, **data)
 
-    @route('gzip', title='Returns gzip encoded data')
+    @route(title='Returns gzip encoded data')
     def gzip(self, request):
         response = yield self.info_data_response(request, gzipped=True)
         coroutine_return(GZipMiddleware(10)(request.environ, response))
 
-    @route('cookies', title='Returns cookie data')
+    @route(title='Returns cookie data')
     def cookies(self, request):
         cookies = request.cookies
         d = dict(((c.key, c.value) for c in cookies.values()))
@@ -150,7 +158,7 @@ class HttpBin(wsgi.Router):
         request.response.content_type = 'text/html'
         raise HttpException(status=request.urlargs['status'])
 
-    @route('response-headers', title='Returns response headers')
+    @route(title='Returns response headers')
     def response_headers(self, request):
         class Gen:
             headers = None
@@ -201,8 +209,8 @@ class HttpBin(wsgi.Router):
         request.response.content = repeat(b'a' * m, n)
         return request.response
 
-    @route('websocket', title='A web socket graph')
-    def request_websocket(self, request):
+    @route(title='A web socket graph')
+    def websocket(self, request):
         data = open(os.path.join(os.path.dirname(__file__),
                                  'assets', 'websocket.html')).read()
         scheme = 'wss' if request.is_secure else 'ws'
@@ -212,8 +220,8 @@ class HttpBin(wsgi.Router):
         request.response.content = data
         return request.response
 
-    @route('stats', title='Live server statistics')
-    def request_stats(self, request):
+    @route(title='Live server statistics')
+    def stats(self, request):
         '''Live stats for the server.
 
         Try sending lots of requests
@@ -225,8 +233,8 @@ class HttpBin(wsgi.Router):
         # docs.head.scripts
         return doc.http_response(request)
 
-    @route('expect', method='post', title='Expectation Failed')
-    def expectation_failure(self, request):
+    @route(title='Expectation Failed')
+    def post_expect(self, request):
         stream = request.get('wsgi.input')
         stream.fail()
         return self.info_data_response(request)
@@ -245,16 +253,13 @@ class HttpBin(wsgi.Router):
 
     ########################################################################
     #    BENCHMARK ROUTES
-    @route('json')
-    def bench_json(self, request):
+    @route()
+    def json(self, request):
         return Json({'message': "Hello, World!"}).http_response(request)
 
-    @route('plaintext')
-    def bench_text(self, request):
-        r = request.response
-        r.content = 'Hello, World!'
-        r.content_type = 'text/plain; charset=utf-8'
-        return r
+    @route()
+    def plaintext(self, request):
+        return AsyncString('Hello, World!').http_response(request)
 
     ########################################################################
     #    INTERNALS

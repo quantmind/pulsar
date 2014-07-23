@@ -148,6 +148,7 @@ from collections import Mapping, OrderedDict
 from functools import partial
 from inspect import isgenerator
 
+from pulsar import HttpException
 from pulsar import multi_async, async, coroutine_return, chain_future
 from pulsar.utils.pep import iteritems, to_string, ispy3k
 from pulsar.utils.slugify import slugify
@@ -398,20 +399,24 @@ class AsyncString(object):
         This method asynchronously wait for :meth:`stream` and subsequently
         returns a :class:`.WsgiResponse`.
         '''
-        response = request.response
-        response.content_type = self._content_type
-        response.encoding = self.charset
-        if stream:
-            stream = stream[0]
-        else:
-            stream = multi_async(self.stream(request))
-            if stream.done():
-                stream = stream.result()
+        content_types = request.content_types
+        if not content_types or self._content_type in content_types:
+            response = request.response
+            response.content_type = self._content_type
+            response.encoding = self.charset
+            if stream:
+                stream = stream[0]
             else:
-                return chain_future(
-                    stream, callback=partial(self.http_response, request))
-        response.content = self.to_string(stream)
-        return response
+                stream = multi_async(self.stream(request))
+                if stream.done():
+                    stream = stream.result()
+                else:
+                    return chain_future(
+                        stream, callback=partial(self.http_response, request))
+            response.content = self.to_string(stream)
+            return response
+        else:
+            raise HttpException(status=415, msg=self._content_type)
 
     def to_string(self, streams):
         '''Called to transform the collection of
@@ -630,17 +635,6 @@ class Html(AsyncString):
             return self
         else:
             return result
-
-    def addDir(self, key, value=None):
-        '''Add a directive to the element
-
-        The ``value`` can be ``None``.
-        '''
-        attr = self._attr
-        if attr is None:
-            self._extra['attr'] = attr = {}
-        attr[key] = value or ''
-        return self
 
     def addClass(self, cn):
         '''Add the specific class names to the class set and return ``self``.
