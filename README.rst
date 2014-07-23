@@ -185,13 +185,15 @@ A good ``pull`` request should:
 * Include tests to cover the new code (inside the ``tests`` directory)
 * Preferably have one commit only (you can use rebase_ to combine several
   commits into one)
+* Make sure ``pep8`` tests pass::
 
+    python runtests.py --pep8 pulsar examples tests
 
 .. _license:
 
 License
 =============
-This software is licensed under the New BSD_ License. See the LICENSE
+This software is licensed under the BSD_ 3-clause License. See the LICENSE
 file in the top distribution directory for the full license text.
 
 .. _asyncio: https://pypi.python.org/pypi/asyncio
@@ -207,7 +209,7 @@ file in the top distribution directory for the full license text.
 .. _psutil: http://code.google.com/p/psutil/
 .. _pypi: http://pypi.python.org/pypi/pulsar
 .. _pypy: http://pypy.org/
-.. _BSD: http://www.opensource.org/licenses/bsd-license.php
+.. _BSD: http://opensource.org/licenses/BSD-3-Clause
 .. _pulsar: https://github.com/quantmind/pulsar
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
 .. _benoitc: https://github.com/benoitc
