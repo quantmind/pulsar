@@ -84,16 +84,10 @@ Datagram Server
 
 .. module:: pulsar.async.mixins
 
-.. _protocol-wrappers-api:
+.. _protocol-mixins-api:
 
-Protocol Wrappers
+Protocol Mixins
 =====================
-
-ProtocolWrapper
-~~~~~~~~~~~~~~~~~~
-.. autoclass:: ProtocolWrapper
-   :members:
-   :member-order: bysource
 
 FlowControl
 ~~~~~~~~~~~~~~~~~~

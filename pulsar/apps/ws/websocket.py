@@ -153,7 +153,7 @@ class WebSocketProtocol(ProtocolConsumer):
         return self.handshake.cfg
 
     def connection_made(self, connection):
-        connection.set_timeout(0)
+        connection.timeout = 0
         maybe_async(self.handler.on_open(self), self._loop)
 
     def data_received(self, data):

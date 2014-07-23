@@ -1,7 +1,7 @@
 Ver. 0.8.5 - Development
 ===========================
-* Added :ref:`protocol wrappers <protocol-wrappers-api>` for
-  better managing extensions on protocols
+* Added :class:`.FlowControl` and :class:`.Timeout` protocol mixins,
+  :class:`.PulsarProtocol` now inherits from :class:`.FlowControl`
 * Better handling of streaming responses by the wsgi server
 * Added the :ref:`--reload <setting-reload>` command line option and
   configuration parameter. If used, pulsar auto-reload code changes (useful

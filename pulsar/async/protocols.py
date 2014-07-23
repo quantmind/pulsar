@@ -334,7 +334,7 @@ class Protocol(PulsarProtocol, asyncio.Protocol):
         if t:
             if t._closing:  # Uses private variable.
                 raise ConnectionResetError('Connection lost')
-            if self._write_waiter and not self._write_waiter.done():
+            if self._paused:
                 # # Uses private variable once again!
                 # This occurs when the protocol is paused from writing
                 # but another data ready callback is fired in the same
