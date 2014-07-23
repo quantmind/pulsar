@@ -99,7 +99,7 @@
 <span class="kn">from</span> <span class="nn">.internet</span> <span class="kn">import</span> <span class="n">parse_address</span>
 <span class="kn">from</span> <span class="nn">.importer</span> <span class="kn">import</span> <span class="n">import_system_file</span>
 <span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">HttpParser</span> <span class="k">as</span> <span class="n">PyHttpParser</span>
-<span class="kn">from</span> <span class="nn">.log</span> <span class="kn">import</span> <span class="n">configured_logger</span>
+<span class="kn">from</span> <span class="nn">.log</span> <span class="kn">import</span> <span class="n">configured_logger</span><span class="p">,</span> <span class="n">get_level</span>
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">pickle</span>
 
 
@@ -427,7 +427,7 @@
         <span class="sd">&#39;&#39;&#39;Configured logger.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">loggers</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">internal_level</span> <span class="o">=</span> <span class="s">&#39;warning&#39;</span>
+        <span class="n">internal_level</span> <span class="o">=</span> <span class="n">get_level</span><span class="p">(</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
         <span class="n">loghandlers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loghandlers</span>
         <span class="c"># base name is always pulsar</span>
         <span class="n">basename</span> <span class="o">=</span> <span class="s">&#39;pulsar&#39;</span>
@@ -439,9 +439,7 @@
         <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="c">#</span>
-        <span class="n">namespaces</span> <span class="o">=</span> <span class="p">{</span><span class="n">basename</span><span class="p">:</span> <span class="n">internal_level</span><span class="p">,</span>
-                      <span class="s">&#39;asyncio&#39;</span><span class="p">:</span> <span class="n">internal_level</span><span class="p">,</span>
-                      <span class="s">&#39;trollius&#39;</span><span class="p">:</span> <span class="n">internal_level</span><span class="p">}</span>
+        <span class="n">namespaces</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">for</span> <span class="n">loglevel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loglevel</span> <span class="ow">or</span> <span class="p">():</span>
             <span class="n">bits</span> <span class="o">=</span> <span class="n">loglevel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
@@ -449,6 +447,12 @@
 
         <span class="k">if</span> <span class="n">defname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespaces</span><span class="p">:</span>
             <span class="n">namespaces</span><span class="p">[</span><span class="n">defname</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s">&#39;loglevel&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">deflevel</span> <span class="o">=</span> <span class="n">get_level</span><span class="p">(</span><span class="n">namespaces</span><span class="p">[</span><span class="n">defname</span><span class="p">])</span>
+        <span class="n">internal_level</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">deflevel</span><span class="p">,</span> <span class="n">internal_level</span><span class="p">)</span> <span class="k">if</span> <span class="n">deflevel</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="s">&#39;asyncio&#39;</span><span class="p">,</span> <span class="s">&#39;trollius&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">namespace</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespaces</span><span class="p">:</span>
+                <span class="n">namespaces</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">internal_level</span>
 
         <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespaces</span><span class="p">:</span>
             <span class="n">namespaces</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">namespaces</span><span class="p">[</span><span class="n">basename</span><span class="p">]</span>

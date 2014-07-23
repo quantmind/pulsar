@@ -78,8 +78,37 @@
 <h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="test-concurrency">
 <h2>Test Concurrency<a class="headerlink" href="#test-concurrency" title="Permalink to this headline">¶</a></h2>
-<p>The simpliest way to benchmark pulsar is to use the <em class="xref std std-ref">HttpBin</em> example
-application. It is a web server responding to several urls.</p>
+<p>The simpliest way to benchmark pulsar is to use the <a class="reference internal" href="httpbin.html#tutorials-httpbin"><em>HttpBin</em></a>
+example application. It is a web server responding to several urls:</p>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py -b :9060
+</pre></div>
+</div>
+<div class="section" id="test-streaming">
+<h3>Test streaming<a class="headerlink" href="#test-streaming" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">stream</span></tt> url simulates a streaming response of chunks of length given by the
+first url parameter repeated by the second url parameter.</p>
+<p>For example, this measure the download speed when streaming chunks of 4KB 1,048,576 times
+for a total of 4GB of data:</p>
+<div class="highlight-python"><div class="highlight"><pre>curl http://localhost:9060/stream/4096/1048576 &gt; /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 4096M    0 4096M    0     0  87.8M      0 --:--:--  0:00:46 --:--:-- 73.1M
+</pre></div>
+</div>
+<p>The download speed is relatively slow considering the test is on localhost.
+However, when switching the two numbers:</p>
+<div class="highlight-python"><div class="highlight"><pre>curl http://localhost:9060/stream/1048576/4096 &gt; /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 4096M    0 4096M    0     0   658M      0 --:--:--  0:00:06 --:--:--  673M
+</pre></div>
+</div>
+<p>We have a download speed almost 10 times higher. Why?</p>
+<p>Because the iterator send large chunks to pulsar and the buffering is handled
+by asyncio rather than the iterator and therefore it is much more efficient.
+In other words the bigger the chunks the faster the transfer rate and
+the more responsive (in term of concurrent connections) the server will be.</p>
+</div>
 </div>
 <div class="section" id="test-slow-clients">
 <h2>Test slow clients<a class="headerlink" href="#test-slow-clients" title="Permalink to this headline">¶</a></h2>
@@ -148,7 +177,10 @@ a superfast C implementation like redis.</p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Benchmarking</a><ul>
-<li><a class="reference internal" href="#test-concurrency">Test Concurrency</a></li>
+<li><a class="reference internal" href="#test-concurrency">Test Concurrency</a><ul>
+<li><a class="reference internal" href="#test-streaming">Test streaming</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#test-slow-clients">Test slow clients</a></li>
 <li><a class="reference internal" href="#pulsar-store-versus-redis">Pulsar store versus Redis</a></li>
 </ul>

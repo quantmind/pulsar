@@ -314,7 +314,7 @@
 
 
 <span class="k">class</span> <span class="nc">StreamTunnel</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;:class:`ProtocolConsumer` handling encrypted messages from</span>
+    <span class="sd">&#39;&#39;&#39;:class:`.ProtocolConsumer` handling encrypted messages from</span>
 <span class="sd">    downstream client and upstream server.</span>
 
 <span class="sd">    This consumer is created as an upgrade of the standard Http protocol</span>
@@ -327,8 +327,8 @@
     <span class="n">headers</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">status_code</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tunnel</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">StreamTunnel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tunnel</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">StreamTunnel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span> <span class="o">=</span> <span class="n">tunnel</span>
 
     <span class="k">def</span> <span class="nf">connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
@@ -336,14 +336,14 @@
 
     <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">closed</span><span class="p">:</span>
                 <span class="k">raise</span>
 
     <span class="k">def</span> <span class="nf">_close_tunnel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">closed</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;proxy-server&#39;</span><span class="p">,</span> <span class="n">headers_middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>

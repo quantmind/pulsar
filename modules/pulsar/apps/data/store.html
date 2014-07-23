@@ -76,15 +76,11 @@
 <span class="sd">the higher level :ref:`object data mapper &lt;odm&gt;`.</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">socket</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_event_loop</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span>
-                    <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">get_application</span><span class="p">,</span> <span class="n">in_loop</span><span class="p">,</span>
-                    <span class="n">EventHandler</span><span class="p">,</span> <span class="n">Producer</span><span class="p">)</span>
+                    <span class="n">Producer</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">module_attribute</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span> <span class="n">urlencode</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Command&#39;</span><span class="p">,</span>
@@ -377,16 +373,6 @@
         <span class="n">instance</span> <span class="o">=</span> <span class="n">manager</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">instance</span><span class="p">[</span><span class="s">&#39;_store&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="k">return</span> <span class="n">instance</span>
-
-    <span class="k">def</span> <span class="nf">model_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A generator of field/value pair for the store</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">fields</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">to_store</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
 
 <div class="viewcode-block" id="Store.model_data"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.model_data">[docs]</a>    <span class="k">def</span> <span class="nf">model_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Generator of ``field, value`` pair for the data store.</span>

@@ -68,7 +68,6 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.data.odm.fields</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">pickle</span>
@@ -79,6 +78,10 @@
 <span class="kn">from</span> <span class="nn">.manager</span> <span class="kn">import</span> <span class="p">(</span><span class="n">OneToManyRelatedManager</span><span class="p">,</span> <span class="n">load_relmodel</span><span class="p">,</span> <span class="n">LazyForeignKey</span><span class="p">,</span>
                       <span class="n">OdmError</span><span class="p">)</span>
 
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Field&#39;</span><span class="p">,</span> <span class="s">&#39;CharField&#39;</span><span class="p">,</span> <span class="s">&#39;FloatField&#39;</span><span class="p">,</span> <span class="s">&#39;IntegerField&#39;</span><span class="p">,</span> <span class="s">&#39;PickleField&#39;</span><span class="p">,</span>
+           <span class="s">&#39;BooleanField&#39;</span><span class="p">,</span> <span class="s">&#39;AutoIdField&#39;</span><span class="p">,</span> <span class="s">&#39;DateField&#39;</span><span class="p">,</span> <span class="s">&#39;DateTimeField&#39;</span><span class="p">,</span>
+           <span class="s">&#39;JSONField&#39;</span><span class="p">,</span> <span class="s">&#39;CompositeIdField&#39;</span><span class="p">,</span> <span class="s">&#39;ForeignKey&#39;</span><span class="p">,</span> <span class="s">&#39;ManyToManyField&#39;</span><span class="p">,</span>
+           <span class="s">&#39;FieldError&#39;</span><span class="p">,</span> <span class="s">&#39;FieldValueError&#39;</span><span class="p">]</span>
 
 <span class="n">NONE_EMPTY</span> <span class="o">=</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">)</span>
 

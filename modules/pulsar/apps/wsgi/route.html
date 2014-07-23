@@ -127,6 +127,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">iteritems</span><span class="p">,</span> <span class="n">iri_to_uri</span><span class="p">,</span> <span class="n">remove_double_slash</span><span class="p">,</span>
                                   <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span> <span class="n">ENCODE_BODY_METHODS</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.slugify</span> <span class="kn">import</span> <span class="n">slugify</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;route&#39;</span><span class="p">,</span> <span class="s">&#39;Route&#39;</span><span class="p">]</span>
@@ -224,12 +225,17 @@
 <span class="sd">    requests only.</span>
 
 <span class="sd">    The decorator injects the :attr:`rule_method` attribute to the</span>
-<span class="sd">    method it decorates. The attribute is a four elements tuple</span>
-<span class="sd">    contains the :class:`Route`, the HTTP ``method``, a</span>
-<span class="sd">    dictionary of additional ``parameters`` and the ``position`` for ordering.</span>
+<span class="sd">    method it decorates. The attribute is a **five elements tuple**</span>
+<span class="sd">    which contains the :class:`Route`, the HTTP ``method``, a</span>
+<span class="sd">    dictionary of additional ``parameters``, ``position`` and</span>
+<span class="sd">    the ``order``. Position and order are internal integers used by the</span>
+<span class="sd">    :class:`.Router` when deciding the order of url matching.</span>
+<span class="sd">    If ``position`` is not passed,</span>
+<span class="sd">    the order will be given by the position of each method in the</span>
+<span class="sd">    :class:`.Router` class.</span>
 
 <span class="sd">    The decorated method are stored in the :attr:`.Router.rule_methods` class</span>
-<span class="sd">    attribute ``rule_methods``.</span>
+<span class="sd">    attribute.</span>
 
 <span class="sd">        &gt;&gt;&gt; len(View.rule_methods)</span>
 <span class="sd">        2</span>
@@ -280,8 +286,10 @@
             <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ENCODE_URL_METHODS</span> <span class="ow">or</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ENCODE_BODY_METHODS</span><span class="p">:</span>
                 <span class="n">method</span> <span class="o">=</span> <span class="n">m</span>
                 <span class="n">bits</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
         <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">or</span> <span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;get&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="n">rule</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="ow">or</span> <span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">),</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="ow">or</span> <span class="n">name</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
         <span class="nb">callable</span><span class="o">.</span><span class="n">rule_method</span> <span class="o">=</span> <span class="n">rule_info</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
                                          <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">callable</span>
@@ -373,10 +381,7 @@
 
 <span class="sd">        Derived from :attr:`rule` replacing underscores and dashes.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">slugify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s">&#39;_&#39;</span><span class="p">)</span>
 </div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -464,8 +469,8 @@
 </div>
 <div class="viewcode-block" id="Route.split"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a two element tuple containing the parent route and</span>
-<span class="sd">the last url bit as route. If this route is the root route, it returns</span>
-<span class="sd">the root route and ``None``. &#39;&#39;&#39;</span>
+<span class="sd">        the last url bit as route. If this route is the root route, it returns</span>
+<span class="sd">        the root route and ``None``. &#39;&#39;&#39;</span>
         <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>
             <span class="n">rule</span> <span class="o">=</span> <span class="n">rule</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>

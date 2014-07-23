@@ -912,21 +912,6 @@ For example:</p>
 </dd></dl>
 
 </div>
-<div class="section" id="run-test-server">
-<h3>run test server<a class="headerlink" href="#run-test-server" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.apps.test.utils.run_test_server">
-<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">run_test_server</tt><big>(</big><em>protocol_factory</em>, <em>loop</em>, <em>address=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#run_test_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.run_test_server" title="Permalink to this definition">¶</a></dt>
-<dd><p>A context manager for running a test server:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">run_test_server</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">)</span> <span class="k">as</span> <span class="n">server</span><span class="p">:</span>
-    <span class="o">...</span>
-</pre></div>
-</div>
-<p>It creates a <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.TcpServer" title="pulsar.async.protocols.TcpServer"><tt class="xref py py-class docutils literal"><span class="pre">TcpServer</span></tt></a> and invoke
-<a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.TcpServer.stop_serving" title="pulsar.async.protocols.TcpServer.stop_serving"><tt class="xref py py-meth docutils literal"><span class="pre">stop_serving()</span></tt></a> on exit.</p>
-</dd></dl>
-
-</div>
 <div class="section" id="check-server">
 <h3>check server<a class="headerlink" href="#check-server" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
@@ -1003,7 +988,6 @@ For example:</p>
 <li><a class="reference internal" href="#id2">sequential</a></li>
 <li><a class="reference internal" href="#actortestmixin">ActorTestMixin</a></li>
 <li><a class="reference internal" href="#asyncassert">AsyncAssert</a></li>
-<li><a class="reference internal" href="#run-test-server">run test server</a></li>
 <li><a class="reference internal" href="#check-server">check server</a></li>
 </ul>
 </li>

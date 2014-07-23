@@ -68,13 +68,15 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.data.odm.transaction</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">EventHandler</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">InvalidOperation</span><span class="p">,</span>
-                    <span class="n">chain_future</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">InvalidOperation</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">multi_async</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
 
 <span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Model</span>
 
 <span class="kn">from</span> <span class="nn">..store</span> <span class="kn">import</span> <span class="n">Command</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;ModelDictionary&#39;</span><span class="p">]</span>
 
 
 <span class="k">class</span> <span class="nc">ModelDictionary</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
@@ -139,8 +141,7 @@
                          <span class="s">&#39;post_commit&#39;</span><span class="p">,</span> <span class="s">&#39;post_delete&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mapper</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Transaction</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">mapper</span><span class="o">.</span><span class="n">_loop</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Transaction</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">mapper</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="s">&#39;transaction&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span> <span class="o">=</span> <span class="n">mapper</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span> <span class="o">=</span> <span class="p">{}</span>

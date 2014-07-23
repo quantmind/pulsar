@@ -157,7 +157,7 @@ about a child route (See the <a class="reference internal" href="#pulsar.apps.ws
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.Router.response_content_types">
 <tt class="descname">response_content_types</tt><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.response_content_types" title="Permalink to this definition">¶</a></dt>
-<dd><p>a list/tuple of possible content types of a response to a
+<dd><p>A list/tuple of possible content types of a response to a
 client request.</p>
 <p>The client request must accept at least one of the response content
 types, otherwise an HTTP <tt class="docutils literal"><span class="pre">415</span></tt> exception occurs.</p>
@@ -240,19 +240,18 @@ is available.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.wsgi.routers.Router.getparam">
+<tt class="descname">getparam</tt><big>(</big><em>name</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.getparam"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.getparam" title="Permalink to this definition">¶</a></dt>
+<dd><p>A parameter in this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a></p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.wsgi.routers.Router.content_type">
 <tt class="descname">content_type</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.content_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.content_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the content type for the response to a client <tt class="docutils literal"><span class="pre">request</span></tt>.</p>
 <p>The method uses the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.response_content_types" title="pulsar.apps.wsgi.routers.Router.response_content_types"><tt class="xref py py-attr docutils literal"><span class="pre">response_content_types</span></tt></a> parameter of
 accepted content types and the content types accepted by the client
-and figure out the best match.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.wsgi.routers.Router.accept_content_type">
-<tt class="descname">accept_content_type</tt><big>(</big><em>content_type</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.accept_content_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.accept_content_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if <tt class="docutils literal"><span class="pre">content_type</span></tt> is accepted by this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
-<p>Return the best mach or <tt class="docutils literal"><span class="pre">None</span></tt> if not accepted.</p>
+<tt class="docutils literal"><span class="pre">request</span></tt> and figures out the best match.</p>
 </dd></dl>
 
 <dl class="method">
@@ -268,12 +267,6 @@ and figure out the best match.</p>
 <dd><p>Once the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.resolve" title="pulsar.apps.wsgi.routers.Router.resolve"><tt class="xref py py-meth docutils literal"><span class="pre">resolve()</span></tt></a> method has matched the correct
 <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for serving the request, this matched router invokes
 this method to produce the WSGI response.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.wsgi.routers.Router.redirect">
-<tt class="descname">redirect</tt><big>(</big><em>path</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.redirect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.redirect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Redirect to a different <tt class="docutils literal"><span class="pre">path</span></tt></p>
 </dd></dl>
 
 <dl class="method">
@@ -438,11 +431,16 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <p>In this example, <tt class="docutils literal"><span class="pre">View</span></tt> is the <strong>parent router</strong> which handle get
 requests only.</p>
 <p>The decorator injects the <tt class="xref py py-attr docutils literal"><span class="pre">rule_method</span></tt> attribute to the
-method it decorates. The attribute is a four elements tuple
-contains the <a class="reference internal" href="#pulsar.apps.wsgi.route.Route" title="pulsar.apps.wsgi.route.Route"><tt class="xref py py-class docutils literal"><span class="pre">Route</span></tt></a>, the HTTP <tt class="docutils literal"><span class="pre">method</span></tt>, a
-dictionary of additional <tt class="docutils literal"><span class="pre">parameters</span></tt> and the <tt class="docutils literal"><span class="pre">position</span></tt> for ordering.</p>
+method it decorates. The attribute is a <strong>five elements tuple</strong>
+which contains the <a class="reference internal" href="#pulsar.apps.wsgi.route.Route" title="pulsar.apps.wsgi.route.Route"><tt class="xref py py-class docutils literal"><span class="pre">Route</span></tt></a>, the HTTP <tt class="docutils literal"><span class="pre">method</span></tt>, a
+dictionary of additional <tt class="docutils literal"><span class="pre">parameters</span></tt>, <tt class="docutils literal"><span class="pre">position</span></tt> and
+the <tt class="docutils literal"><span class="pre">order</span></tt>. Position and order are internal integers used by the
+<a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> when deciding the order of url matching.
+If <tt class="docutils literal"><span class="pre">position</span></tt> is not passed,
+the order will be given by the position of each method in the
+<a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> class.</p>
 <p>The decorated method are stored in the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.rule_methods" title="pulsar.apps.wsgi.routers.Router.rule_methods"><tt class="xref py py-attr docutils literal"><span class="pre">Router.rule_methods</span></tt></a> class
-attribute <tt class="docutils literal"><span class="pre">rule_methods</span></tt>.</p>
+attribute.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">)</span>
 <span class="go">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rule</span>

@@ -77,8 +77,8 @@
 <div class="section" id="ver-0-8-5-development">
 <h2>Ver. 0.8.5 - Development<a class="headerlink" href="#ver-0-8-5-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Added <a class="reference internal" href="api/protocols.html#protocol-wrappers-api"><em>protocol wrappers</em></a> for
-better managing extensions on protocols</li>
+<li>Added <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a> and <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.Timeout" title="pulsar.async.mixins.Timeout"><tt class="xref py py-class docutils literal"><span class="pre">Timeout</span></tt></a> protocol mixins,
+<a class="reference internal" href="api/protocols.html#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a> now inherits from <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a></li>
 <li>Better handling of streaming responses by the wsgi server</li>
 <li>Added the <a class="reference internal" href="settings.html#setting-reload"><em>&#8211;reload</em></a> command line option and
 configuration parameter. If used, pulsar auto-reload code changes (useful
@@ -105,6 +105,9 @@ method</li>
 <li><tt class="docutils literal"><span class="pre">trollius</span></tt> and <tt class="docutils literal"><span class="pre">asyncio</span></tt> added as dependencies in the <tt class="docutils literal"><span class="pre">setup.py</span></tt>
 script during installation</li>
 <li>Better <a class="reference internal" href="api/utilities.html#pulsar.utils.slugify.slugify" title="pulsar.utils.slugify.slugify"><tt class="xref py py-func docutils literal"><span class="pre">slugify()</span></tt></a> function</li>
+<li><a class="reference internal" href="api/events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> requires a valid <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a>
+during initialisation</li>
+<li>Works with <tt class="docutils literal"><span class="pre">trollius</span></tt> 1.0</li>
 </ul>
 </div>
 <div class="section" id="ver-0-8-4-2014-jul-07">
@@ -122,7 +125,7 @@ windows</li>
 <ul class="simple">
 <li>Fixed critical bug in python 2 for <a class="reference internal" href="apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.middleware_in_executor" title="pulsar.apps.wsgi.middleware.middleware_in_executor"><tt class="xref py py-func docutils literal"><span class="pre">middleware_in_executor()</span></tt></a></li>
 <li>Set trollius logger to warning by default (same as asyncio)</li>
-<li>Added <a class="reference internal" href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect" title="pulsar.apps.wsgi.wrappers.WsgiRequest.redirect"><tt class="xref py py-meth docutils literal"><span class="pre">WsgiRequest.redirect()</span></tt></a> and <a class="reference internal" href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.redirect" title="pulsar.apps.wsgi.routers.Router.redirect"><tt class="xref py py-meth docutils literal"><span class="pre">Router.redirect()</span></tt></a> methods
+<li>Added <a class="reference internal" href="apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect" title="pulsar.apps.wsgi.wrappers.WsgiRequest.redirect"><tt class="xref py py-meth docutils literal"><span class="pre">WsgiRequest.redirect()</span></tt></a> and <tt class="xref py py-meth docutils literal"><span class="pre">Router.redirect()</span></tt> methods
 to simplify redirection.</li>
 <li>Renamed css container as <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Links" title="pulsar.apps.wsgi.content.Links"><tt class="xref py py-class docutils literal"><span class="pre">Links</span></tt></a></li>
 </ul>

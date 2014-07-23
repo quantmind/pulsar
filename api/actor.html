@@ -235,7 +235,7 @@ an <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pu
 
 <dl class="attribute">
 <dt id="pulsar.async.actor.Actor._loop">
-<tt class="descname">_loop</tt><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor._loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor._loop" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">_loop</tt><a class="headerlink" href="#pulsar.async.actor.Actor._loop" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> which listen
 for input/output events on sockets or socket-like objects.
 It is the driver of the <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>.
@@ -925,7 +925,7 @@ the <a class="reference internal" href="#pulsar.async.arbiter.Arbiter" title="pu
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'TERMINATE': 6, 'RUN': 3, 'INACTIVE': 1, 'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'STOPPING': 4, 'CLOSE': 5, 'STARTING': 2}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'INACTIVE': 1, 'STOPPING': 4, 'RUN': 3, 'CLOSE': 5, 'STARTING': 2, 'TERMINATE': 6, 'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>

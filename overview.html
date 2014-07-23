@@ -243,16 +243,24 @@ of course. To do so, simply follow these guidelines:</p>
 pull request for the <strong>dev branch</strong>.</li>
 </ul>
 <p>A good <tt class="docutils literal"><span class="pre">pull</span></tt> request should:</p>
-<ul class="simple">
-<li>Cover one bug fix or new feature only</li>
-<li>Include tests to cover the new code (inside the <tt class="docutils literal"><span class="pre">tests</span></tt> directory)</li>
-<li>Preferably have one commit only (you can use <a class="reference external" href="https://help.github.com/articles/about-git-rebase">rebase</a> to combine several
-commits into one)</li>
+<ul>
+<li><p class="first">Cover one bug fix or new feature only</p>
+</li>
+<li><p class="first">Include tests to cover the new code (inside the <tt class="docutils literal"><span class="pre">tests</span></tt> directory)</p>
+</li>
+<li><p class="first">Preferably have one commit only (you can use <a class="reference external" href="https://help.github.com/articles/about-git-rebase">rebase</a> to combine several
+commits into one)</p>
+</li>
+<li><p class="first">Make sure <tt class="docutils literal"><span class="pre">pep8</span></tt> tests pass:</p>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py --pep8 pulsar examples tests
+</pre></div>
+</div>
+</li>
 </ul>
 </div>
 <div class="section" id="license">
 <span id="id3"></span><h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
-<p>This software is licensed under the New <a class="reference external" href="http://www.opensource.org/licenses/bsd-license.php">BSD</a> License. See the LICENSE
+<p>This software is licensed under the <a class="reference external" href="http://opensource.org/licenses/BSD-3-Clause">BSD</a> 3-clause License. See the LICENSE
 file in the top distribution directory for the full license text.</p>
 </div>
 </div>

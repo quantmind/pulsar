@@ -222,11 +222,6 @@
 <span class="sd">    Instances of this consumer are created by the :class:`TaskBackend` when</span>
 <span class="sd">    a task is executed.</span>
 
-<span class="sd">    .. attribute:: _loop</span>
-
-<span class="sd">        the :ref:`queue-based loop &lt;queue-based-loop&gt;` of the thread</span>
-<span class="sd">        executing the task.</span>
-
 <span class="sd">    .. attribute:: task_id</span>
 
 <span class="sd">        the :attr:`Task.id` being consumed.</span>
@@ -356,12 +351,12 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">task_paths</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">schedule_periodic</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">backlog</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_tasks</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">poll_timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">store</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">TaskBackend</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TaskBackend</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span>
                                           <span class="n">many_times_events</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;task_queued&#39;</span><span class="p">,</span>
                                                              <span class="s">&#39;task_started&#39;</span><span class="p">,</span>
                                                              <span class="s">&#39;task_done&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_paths</span> <span class="o">=</span> <span class="n">task_paths</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backlog</span> <span class="o">=</span> <span class="n">backlog</span>
@@ -382,11 +377,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;task consumer </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">dns</span>
     <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Eventloop running this task backend&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_loop</span>
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="TaskBackend.num_concurrent_tasks"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.num_concurrent_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">num_concurrent_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -486,7 +476,7 @@
                     <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">done</span>
                 <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
-        <span class="n">fut</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="n">task_id</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+        <span class="n">fut</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="n">task_id</span><span class="p">),</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">future_timeout</span><span class="p">(</span><span class="n">fut</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span> <span class="k">if</span> <span class="n">timeout</span> <span class="k">else</span> <span class="n">fut</span>
 </div>
     <span class="k">def</span> <span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>

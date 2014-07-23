@@ -68,10 +68,14 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.data.odm.searchengine</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">new_event_loop</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">Store</span><span class="p">,</span> <span class="n">parse_store_url</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.exceptions</span> <span class="kn">import</span> <span class="n">ImproperlyConfigured</span><span class="p">,</span> <span class="n">InvalidOperation</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">module_attribute</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;register_searchengine&#39;</span><span class="p">,</span> <span class="s">&#39;search_engine&#39;</span><span class="p">,</span> <span class="s">&#39;SearchEngine&#39;</span><span class="p">,</span>
+           <span class="s">&#39;search_engines&#39;</span><span class="p">]</span>
 
 
 <span class="n">search_engines</span> <span class="o">=</span> <span class="p">{}</span>

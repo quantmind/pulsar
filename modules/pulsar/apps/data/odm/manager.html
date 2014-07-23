@@ -244,7 +244,7 @@
         <span class="sd">&#39;&#39;&#39;Create a new instance of :attr:`_model` and commit to server.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapper</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
-            <span class="n">model</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="k">lambda</span> <span class="n">models</span><span class="p">:</span> <span class="n">models</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span></div>
     <span class="n">new</span> <span class="o">=</span> <span class="n">create</span>
     <span class="n">insert</span> <span class="o">=</span> <span class="n">new</span>

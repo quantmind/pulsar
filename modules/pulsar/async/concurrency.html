@@ -183,6 +183,7 @@
         <span class="n">loop</span> <span class="o">=</span> <span class="n">EventLoop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selector</span><span class="p">(),</span> <span class="n">logger</span><span class="o">=</span><span class="n">actor</span><span class="o">.</span><span class="n">_logger</span><span class="p">,</span>
                          <span class="n">iothreadloop</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">cfg</span><span class="o">=</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_mailbox</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loop</span>
 </div>
 <div class="viewcode-block" id="Concurrency.hand_shake"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency.hand_shake">[docs]</a>    <span class="k">def</span> <span class="nf">hand_shake</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Perform the hand shake for ``actor``</span>
@@ -364,7 +365,9 @@
     <span class="k">def</span> <span class="nf">setup_event_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">configured_logger</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span> <span class="o">=</span> <span class="n">ProxyMailbox</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
-        <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span><span class="o">.</span><span class="n">_loop</span>
+        <span class="n">loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loop</span>
 
     <span class="k">def</span> <span class="nf">run_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hand_shake</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>

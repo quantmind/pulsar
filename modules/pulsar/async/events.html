@@ -73,7 +73,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
 
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Future</span><span class="p">,</span> <span class="n">maybe_async</span><span class="p">,</span> <span class="n">InvalidStateError</span><span class="p">,</span>
-                      <span class="n">future_result_exc</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">)</span>
+                      <span class="n">future_result_exc</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">asyncio</span><span class="p">)</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;EventHandler&#39;</span><span class="p">,</span> <span class="s">&#39;Event&#39;</span><span class="p">,</span> <span class="s">&#39;OneTime&#39;</span><span class="p">]</span>
@@ -192,7 +192,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">maybe_async</span><span class="p">(</span><span class="n">hnd</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Exception while firing event&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Exception while firing onetime event&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
                     <span class="n">result</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span>
@@ -205,7 +205,7 @@
 
 </div>
 <div class="viewcode-block" id="EventHandler"><a class="viewcode-back" href="../../../api/events.html#pulsar.async.events.EventHandler">[docs]</a><span class="k">class</span> <span class="nc">EventHandler</span><span class="p">(</span><span class="n">AsyncObject</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A Mixin for handling events.</span>
+    <span class="sd">&#39;&#39;&#39;A Mixin for handling events on :ref:`async objects &lt;async-object&gt;`.</span>
 
 <span class="sd">    It handles :class:`OneTime` events and :class:`Event` that occur</span>
 <span class="sd">    several times.</span>
@@ -216,6 +216,8 @@
     <span class="sd">&#39;&#39;&#39;Event names which occur several times.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">one_time_events</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">many_times_events</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">AbstractEventLoop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span>
         <span class="n">one</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span>
         <span class="k">if</span> <span class="n">one_time_events</span><span class="p">:</span>
             <span class="n">one</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">one</span><span class="p">)</span>
@@ -239,11 +241,7 @@
 
 <span class="sd">        If no event is registered for ``name`` returns nothing.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">event</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="s">&quot;No event loop for </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span>
-            <span class="n">event</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
-        <span class="k">return</span> <span class="n">event</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">fired_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="n">event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>

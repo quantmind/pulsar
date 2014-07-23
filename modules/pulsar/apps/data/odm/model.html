@@ -74,7 +74,6 @@
 <span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ImproperlyConfigured</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">to_string</span>
 
@@ -519,7 +518,7 @@
 
             <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
                 <span class="n">app_label</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span>
-            <span class="n">through</span> <span class="o">=</span> <span class="n">ModelType</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">StdModel</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;Meta&#39;</span><span class="p">:</span> <span class="n">Meta</span><span class="p">})</span>
+            <span class="n">through</span> <span class="o">=</span> <span class="n">ModelType</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">Model</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;Meta&#39;</span><span class="p">:</span> <span class="n">Meta</span><span class="p">})</span>
             <span class="n">field</span><span class="o">.</span><span class="n">through</span> <span class="o">=</span> <span class="n">through</span>
         <span class="c"># The first field</span>
         <span class="n">field1</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>

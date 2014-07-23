@@ -206,7 +206,7 @@ implementation.</li>
 <h3>WebSocket protocol<a class="headerlink" href="#websocket-protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.ws.websocket.WebSocketProtocol">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.websocket.</tt><tt class="descname">WebSocketProtocol</tt><big>(</big><em>handshake</em>, <em>handler</em>, <em>parser</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws/websocket.html#WebSocketProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.websocket.WebSocketProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.websocket.</tt><tt class="descname">WebSocketProtocol</tt><big>(</big><em>handshake</em>, <em>handler</em>, <em>parser</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws/websocket.html#WebSocketProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.websocket.WebSocketProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> for websocket servers and clients.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.ws.websocket.WebSocketProtocol.handshake">
@@ -241,7 +241,7 @@ implementation.</li>
 
 <dl class="method">
 <dt id="pulsar.apps.ws.websocket.WebSocketProtocol.write">
-<tt class="descname">write</tt><big>(</big><em>message</em>, <em>opcode=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws/websocket.html#WebSocketProtocol.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.websocket.WebSocketProtocol.write" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">write</tt><big>(</big><em>message</em>, <em>opcode=None</em>, <em>encode=True</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws/websocket.html#WebSocketProtocol.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.websocket.WebSocketProtocol.write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write a new <tt class="docutils literal"><span class="pre">message</span></tt> into the wire.</p>
 <p>It uses the <a class="reference internal" href="../api/utilities.html#pulsar.utils.websocket.FrameParser.encode" title="pulsar.utils.websocket.FrameParser.encode"><tt class="xref py py-meth docutils literal"><span class="pre">encode()</span></tt></a> method of the
 websocket <a class="reference internal" href="#pulsar.apps.ws.websocket.WebSocketProtocol.parser" title="pulsar.apps.ws.websocket.WebSocketProtocol.parser"><tt class="xref py py-attr docutils literal"><span class="pre">parser</span></tt></a>.</p>

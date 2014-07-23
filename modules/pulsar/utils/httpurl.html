@@ -1369,44 +1369,6 @@
 <span class="n">cc_delim_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\s*,\s*&#39;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">accept_content_type</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_all</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">values</span><span class="p">:</span>
-            <span class="nb">all</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all</span>
-            <span class="n">accept_headers</span> <span class="o">=</span> <span class="n">cc_delim_re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">accept_headers</span><span class="p">:</span>
-                <span class="n">v</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-                    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">v</span>
-                    <span class="k">if</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">all</span><span class="p">:</span>
-                        <span class="nb">all</span><span class="p">[</span><span class="n">a</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="nb">all</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
-        <span class="nb">all</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">:</span>
-            <span class="c"># If no Accept header field is present, then it is assumed that the</span>
-            <span class="c"># client accepts all media types.</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">content_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">all</span><span class="p">:</span>
-            <span class="nb">all</span> <span class="o">=</span> <span class="nb">all</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
-            <span class="k">if</span> <span class="s">&#39;*&#39;</span> <span class="ow">in</span> <span class="nb">all</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">True</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">all</span>
-        <span class="k">elif</span> <span class="s">&#39;*&#39;</span> <span class="ow">in</span> <span class="nb">all</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-
-
 <span class="k">def</span> <span class="nf">patch_vary_headers</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">newheaders</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;\</span>
 <span class="sd">Adds (or updates) the &quot;Vary&quot; header in the given HttpResponse object.</span>

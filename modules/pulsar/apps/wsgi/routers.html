@@ -148,7 +148,6 @@
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">wsgi_request</span>
 <span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="n">Html</span>
 <span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">ContentAccept</span>
-<span class="kn">from</span> <span class="nn">.wrappers</span> <span class="kn">import</span> <span class="n">redirect</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Router&#39;</span><span class="p">,</span> <span class="s">&#39;MediaRouter&#39;</span><span class="p">,</span> <span class="s">&#39;FileRouter&#39;</span><span class="p">,</span> <span class="s">&#39;MediaMixin&#39;</span><span class="p">,</span>
@@ -263,7 +262,7 @@
 
 <span class="sd">    .. attribute:: response_content_types</span>
 
-<span class="sd">        a list/tuple of possible content types of a response to a</span>
+<span class="sd">        A list/tuple of possible content types of a response to a</span>
 <span class="sd">        client request.</span>
 
 <span class="sd">        The client request must accept at least one of the response content</span>
@@ -302,6 +301,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_route</span> <span class="o">=</span> <span class="n">rule</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c"># add routes specified via the initialiser first</span>
+        <span class="k">for</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
         <span class="c"># copy parameters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">AttributeDictionary</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">rule_method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule_methods</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -315,9 +317,6 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s">&#39;_&#39;</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
-        <span class="c"># add routes specified via the initialiser</span>
-        <span class="k">for</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Router.route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.route">[docs]</a>    <span class="k">def</span> <span class="nf">route</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -388,6 +387,14 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_route</span><span class="o">.</span><span class="n">url</span><span class="p">(</span><span class="o">**</span><span class="n">urlargs</span><span class="p">)</span>
 </div>
+<div class="viewcode-block" id="Router.getparam"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.getparam">[docs]</a>    <span class="k">def</span> <span class="nf">getparam</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;A parameter in this :class:`.Router`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default</span>
+</div>
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Check the value of a :attr:`parameters` ``name``.</span>
 
@@ -395,42 +402,23 @@
 <span class="sd">        :attr:`parent` :class:`Router` if it exists.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">no_param</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">get_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">safe</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">value</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">safe</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">no_param</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">value</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_router_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_no_param</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Router.content_type"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.content_type">[docs]</a>    <span class="k">def</span> <span class="nf">content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Evaluate the content type for the response to a client ``request``.</span>
 
 <span class="sd">        The method uses the :attr:`response_content_types` parameter of</span>
 <span class="sd">        accepted content types and the content types accepted by the client</span>
-<span class="sd">        and figure out the best match.</span>
+<span class="sd">        ``request`` and figures out the best match.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">content_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_content_types</span>
         <span class="n">ct</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">content_types</span><span class="o">.</span><span class="n">best_match</span><span class="p">(</span><span class="n">content_types</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ct</span> <span class="ow">and</span> <span class="s">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">ct</span><span class="p">:</span>
+            <span class="n">ct</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ct</span> <span class="ow">and</span> <span class="n">content_types</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">415</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">content_types</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ct</span>
-</div>
-<div class="viewcode-block" id="Router.accept_content_type"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.accept_content_type">[docs]</a>    <span class="k">def</span> <span class="nf">accept_content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Check if ``content_type`` is accepted by this :class:`Router`.</span>
-
-<span class="sd">        Return the best mach or ``None`` if not accepted.&#39;&#39;&#39;</span>
-        <span class="n">response_content_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_content_types</span>
-        <span class="k">if</span> <span class="n">response_content_types</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ContentAccept</span><span class="p">(</span>
-                <span class="p">[(</span><span class="n">content_type</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span><span class="o">.</span><span class="n">best_match</span><span class="p">(</span><span class="n">response_content_types</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
@@ -478,11 +466,6 @@
         <span class="k">if</span> <span class="n">response_wrapper</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">response_wrapper</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="Router.redirect"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.redirect">[docs]</a>    <span class="k">def</span> <span class="nf">redirect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Redirect to a different ``path``</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Router.add_child"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.add_child">[docs]</a>    <span class="k">def</span> <span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add a new :class:`Router` to the :attr:`routes` list.</span>
@@ -542,10 +525,6 @@
             <span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_parent</span>
         <span class="k">return</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
 </div>
-    <span class="k">def</span> <span class="nf">no_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39; object has no attribute &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
-                             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
-
 <div class="viewcode-block" id="Router.make_router"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.make_router">[docs]</a>    <span class="k">def</span> <span class="nf">make_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create a new :class:`.Router` from a ``rule`` and parameters.</span>
 
@@ -554,15 +533,25 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">cls</span> <span class="o">=</span> <span class="n">cls</span> <span class="ow">or</span> <span class="n">Router</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_no_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39; object has no attribute &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
 
-</div></div>
-<span class="k">class</span> <span class="nc">MediaMixin</span><span class="p">(</span><span class="n">Router</span><span class="p">):</span>
-    <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">((</span><span class="s">&#39;application/octet-stream&#39;</span><span class="p">,</span>
-                                          <span class="s">&#39;text/css&#39;</span><span class="p">,</span>
-                                          <span class="s">&#39;application/javascript&#39;</span><span class="p">,</span>
-                                          <span class="s">&#39;text/html&#39;</span><span class="p">))</span>
-    <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
-    <span class="n">_file_path</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">_get_router_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">_get_router_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">safe</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">value</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">safe</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_no_param</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+
+</div>
+<span class="k">class</span> <span class="nc">MediaMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">serve_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c"># Respect the If-Modified-Since header.</span>
@@ -621,9 +610,6 @@
         <span class="n">names</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_index</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">names</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">html_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;Index of </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span>
-
     <span class="k">def</span> <span class="nf">static_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">links</span><span class="p">):</span>
         <span class="n">doc</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">html_document</span>
         <span class="n">doc</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#39;Index of </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span>
@@ -633,7 +619,7 @@
         <span class="k">return</span> <span class="n">doc</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="MediaRouter"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.MediaRouter">[docs]</a><span class="k">class</span> <span class="nc">MediaRouter</span><span class="p">(</span><span class="n">MediaMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="MediaRouter"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.MediaRouter">[docs]</a><span class="k">class</span> <span class="nc">MediaRouter</span><span class="p">(</span><span class="n">Router</span><span class="p">,</span> <span class="n">MediaMixin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`Router` for serving static media files from a given</span>
 <span class="sd">    directory.</span>
 
@@ -655,6 +641,12 @@
 
 <span class="sd">        The default file to serve when a directory is requested.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">((</span><span class="s">&#39;application/octet-stream&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;text/css&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;application/javascript&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;text/html&#39;</span><span class="p">))</span>
+    <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rute</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">show_indexes</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">default_suffix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">default_file</span><span class="o">=</span><span class="s">&#39;index.html&#39;</span><span class="p">,</span>
                  <span class="n">raise_404</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
@@ -697,8 +689,15 @@
             <span class="k">raise</span> <span class="n">Http404</span>
 
 </div>
-<span class="k">class</span> <span class="nc">FileRouter</span><span class="p">(</span><span class="n">MediaMixin</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A Router for a single file.&#39;&#39;&#39;</span>
+<span class="k">class</span> <span class="nc">FileRouter</span><span class="p">(</span><span class="n">Router</span><span class="p">,</span> <span class="n">MediaMixin</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A Router for a single file</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">((</span><span class="s">&#39;application/octet-stream&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;text/css&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;application/javascript&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;text/html&#39;</span><span class="p">))</span>
+    <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">raise_404</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FileRouter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">route</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span> <span class="o">=</span> <span class="n">status_code</span>

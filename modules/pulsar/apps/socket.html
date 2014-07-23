@@ -70,8 +70,9 @@
   <h1>Source code for pulsar.apps.socket</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;Asynchronous application for serving requests</span>
 <span class="sd">on sockets. This is the base class of :class:`.WSGIServer`.</span>
-<span class="sd">All is needed by a :class:`SocketServer` is a callable which build a</span>
-<span class="sd">:class:`.ProtocolConsumer` for each new client request received.</span>
+<span class="sd">All is needed by a :class:`.SocketServer` application is a callable</span>
+<span class="sd">which build a :class:`.ProtocolConsumer` for each new client request</span>
+<span class="sd">received.</span>
 <span class="sd">This is an example of a script for an Echo server::</span>
 
 <span class="sd">    import pulsar</span>
@@ -310,7 +311,7 @@
             <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">server</span><span class="o">.</span><span class="n">sockets</span><span class="p">:</span>
                 <span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">getsockname</span><span class="p">())</span>
                 <span class="n">sockets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sock</span><span class="p">)</span>
-                <span class="n">server</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
+                <span class="n">loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
             <span class="n">monitor</span><span class="o">.</span><span class="n">sockets</span> <span class="o">=</span> <span class="n">sockets</span>
             <span class="n">monitor</span><span class="o">.</span><span class="n">ssl</span> <span class="o">=</span> <span class="n">ssl</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span> <span class="o">=</span> <span class="n">addresses</span>

@@ -75,10 +75,13 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">import_module</span>
 
 <span class="kn">from</span> <span class="nn">.transaction</span> <span class="kn">import</span> <span class="n">Transaction</span><span class="p">,</span> <span class="n">ModelDictionary</span>
-<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">ModelType</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">ModelType</span><span class="p">,</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">.manager</span> <span class="kn">import</span> <span class="n">Manager</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">query</span>
 <span class="kn">from</span> <span class="nn">..store</span> <span class="kn">import</span> <span class="n">create_store</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Mapper&#39;</span><span class="p">,</span> <span class="s">&#39;Manager&#39;</span><span class="p">,</span> <span class="s">&#39;Model&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="Mapper"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper">[docs]</a><span class="k">class</span> <span class="nc">Mapper</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
@@ -123,11 +126,11 @@
     <span class="n">ModelNotFound</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">ModelNotFound</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_store</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Mapper</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">default_store</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Mapper</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span> <span class="o">=</span> <span class="n">ModelDictionary</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_registered_names</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_default_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">default_store</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_store</span><span class="o">.</span><span class="n">_loop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_store</span> <span class="o">=</span> <span class="n">store</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_search_engine</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="nd">@property</span>
@@ -233,8 +236,10 @@
 </div>
 <div class="viewcode-block" id="Mapper.from_uuid"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.from_uuid">[docs]</a>    <span class="k">def</span> <span class="nf">from_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Retrieve a :class:`.Model` from its universally unique identifier</span>
-<span class="sd">``uuid``. If the ``uuid`` does not match any instance an exception will raise.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        ``uuid``.</span>
+
+<span class="sd">        If the ``uuid`` does not match any instance an exception will raise.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">elems</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="n">get_model_from_hash</span><span class="p">(</span><span class="n">elems</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -328,7 +333,6 @@
         <span class="sd">&#39;&#39;&#39;Loop though :attr:`registered_models` and issue the</span>
 <span class="sd">        :meth:`.Manager.create_table` method.&#39;&#39;&#39;</span>
         <span class="n">executed</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">search_engine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_engine</span>
         <span class="k">for</span> <span class="n">manager</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered_models</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">executed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">manager</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="n">remove_existing</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>

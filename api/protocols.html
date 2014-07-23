@@ -85,7 +85,7 @@ implementing the Protocol/Transport paradigm. They are based on
 <h3>PulsarProtocol<a class="headerlink" href="#pulsarprotocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.PulsarProtocol">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">PulsarProtocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">PulsarProtocol</tt><big>(</big><em>loop=None</em>, <em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>A mixin class for both <a class="reference internal" href="#pulsar.async.protocols.Protocol" title="pulsar.async.protocols.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> and
 <a class="reference internal" href="#pulsar.async.protocols.DatagramProtocol" title="pulsar.async.protocols.DatagramProtocol"><tt class="xref py py-class docutils literal"><span class="pre">DatagramProtocol</span></tt></a>.</p>
 <p>A <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a> is an <a class="reference internal" href="events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> which has
@@ -173,12 +173,14 @@ and adds a <tt class="xref py py-attr docutils literal"><span class="pre">timeou
 <h3>Protocol<a class="headerlink" href="#protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.Protocol">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Protocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Protocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Protocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Protocol</tt><big>(</big><em>loop=None</em>, <em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Protocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Protocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio.Protocol" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Protocol</span></tt></a> with <a class="reference internal" href="../tutorials/events.html#event-handling"><em>events</em></a></p>
 <dl class="method">
 <dt id="pulsar.async.protocols.Protocol.write">
 <tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Protocol.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Protocol.write" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data into the transport</p>
+<dd><p>Write <tt class="docutils literal"><span class="pre">data</span></tt> into the wire.</p>
+<p>Returns an empty tuple or a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> if this
+protocol has paused writing.</p>
 </dd></dl>
 
 </dd></dl>
@@ -188,7 +190,7 @@ and adds a <tt class="xref py py-attr docutils literal"><span class="pre">timeou
 <h3>Connection<a class="headerlink" href="#connection" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.Connection">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Connection</tt><big>(</big><em>consumer_factory=None</em>, <em>timeout=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">Connection</tt><big>(</big><em>consumer_factory=None</em>, <em>timeout=None</em>, <em>low_limit=None</em>, <em>high_limit=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a> to handle multiple TCP requests/responses.</p>
 <p>It is a class which acts as bridge between a
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio-transport" title="(in Python v3.5)"><em class="xref std std-ref">transport</em></a> and a <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.
@@ -379,6 +381,13 @@ to handle the potential exception <tt class="docutils literal"><span class="pre"
 <dd><p>Fire the <tt class="docutils literal"><span class="pre">post_request</span></tt> event if it wasn&#8217;t already fired.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="pulsar.async.protocols.ProtocolConsumer.write">
+<tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#ProtocolConsumer.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.ProtocolConsumer.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delegate writing to the underlying <a class="reference internal" href="#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a></p>
+<p>Return an empty tuple or a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a></p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -516,7 +525,7 @@ model with a minimum of protocol mechanism.</p>
 <h3>Datagram Protocol<a class="headerlink" href="#datagram-protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.protocols.DatagramProtocol">
-<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">DatagramProtocol</tt><big>(</big><em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.protocols.</tt><tt class="descname">DatagramProtocol</tt><big>(</big><em>loop=None</em>, <em>session=1</em>, <em>producer=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#DatagramProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.DatagramProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <tt class="docutils literal"><span class="pre">asyncio.DatagramProtocol</span></tt> with events`</p>
 </dd></dl>
 
@@ -560,59 +569,28 @@ concurrent connections.</p>
 
 <span class="target" id="module-pulsar.async.mixins"></span></div>
 </div>
-<div class="section" id="protocol-wrappers">
-<span id="protocol-wrappers-api"></span><h2>Protocol Wrappers<a class="headerlink" href="#protocol-wrappers" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="protocolwrapper">
-<h3>ProtocolWrapper<a class="headerlink" href="#protocolwrapper" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.async.mixins.ProtocolWrapper">
-<em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">ProtocolWrapper</tt><big>(</big><em>protocol</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#ProtocolWrapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.ProtocolWrapper" title="Permalink to this definition">¶</a></dt>
-<dd><p>Abstract class for wrapping a <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a>
-and adding functionalities</p>
-<dl class="method">
-<dt id="pulsar.async.mixins.ProtocolWrapper.data_received">
-<tt class="descname">data_received</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#ProtocolWrapper.data_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.ProtocolWrapper.data_received" title="Permalink to this definition">¶</a></dt>
-<dd><p>Received data from transport</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.mixins.ProtocolWrapper.write">
-<tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#ProtocolWrapper.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.ProtocolWrapper.write" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data into the transport.</p>
-<p>User should use this method rather than the transport write method
-directly.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
+<div class="section" id="protocol-mixins">
+<span id="protocol-mixins-api"></span><h2>Protocol Mixins<a class="headerlink" href="#protocol-mixins" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="flowcontrol">
 <h3>FlowControl<a class="headerlink" href="#flowcontrol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.mixins.FlowControl">
-<em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">FlowControl</tt><big>(</big><em>protocol</em>, <em>low_limit=None</em>, <em>high_limit=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.async.mixins.ProtocolWrapper" title="pulsar.async.mixins.ProtocolWrapper"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolWrapper</span></tt></a> for flow control logic.</p>
+<em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">FlowControl</tt><big>(</big><em>low_limit=None</em>, <em>high_limit=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl" title="Permalink to this definition">¶</a></dt>
+<dd><p>A protocol mixin for flow control logic.</p>
 <p>This implements the protocol methods <a class="reference internal" href="#pulsar.async.mixins.FlowControl.pause_writing" title="pulsar.async.mixins.FlowControl.pause_writing"><tt class="xref py py-meth docutils literal"><span class="pre">pause_writing()</span></tt></a>,
 <a class="reference internal" href="#pulsar.async.mixins.FlowControl.resume_writing" title="pulsar.async.mixins.FlowControl.resume_writing"><tt class="xref py py-meth docutils literal"><span class="pre">resume_writing()</span></tt></a>.</p>
 <dl class="method">
-<dt id="pulsar.async.mixins.FlowControl.write">
-<tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl.write" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data into the transport</p>
-<p>If the transport is buffering it returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
-called back once the transport is available for writing</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.async.mixins.FlowControl.pause_writing">
 <tt class="descname">pause_writing</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl.pause_writing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl.pause_writing" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pause the transport from writing.</p>
-<p>Successive calls to this mathod will fails unless
+<dd><p>Called by the transport when the buffer goes over the
+high-water mark</p>
+<p>Successive calls to this method will fails unless
 <a class="reference internal" href="#pulsar.async.mixins.FlowControl.resume_writing" title="pulsar.async.mixins.FlowControl.resume_writing"><tt class="xref py py-meth docutils literal"><span class="pre">resume_writing()</span></tt></a> is called first.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.async.mixins.FlowControl.resume_writing">
-<tt class="descname">resume_writing</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl.resume_writing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl.resume_writing" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">resume_writing</tt><big>(</big><em>exc=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#FlowControl.resume_writing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.FlowControl.resume_writing" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resume writing.</p>
 <p>Successive calls to this method will fails unless
 <a class="reference internal" href="#pulsar.async.mixins.FlowControl.pause_writing" title="pulsar.async.mixins.FlowControl.pause_writing"><tt class="xref py py-meth docutils literal"><span class="pre">pause_writing()</span></tt></a> is called first.</p>
@@ -625,14 +603,8 @@ called back once the transport is available for writing</p>
 <h3>Timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.mixins.Timeout">
-<em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">Timeout</tt><big>(</big><em>protocol</em>, <em>timeout</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#Timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.Timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.async.mixins.ProtocolWrapper" title="pulsar.async.mixins.ProtocolWrapper"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolWrapper</span></tt></a> which adds a timeout for idle connections</p>
-<dl class="method">
-<dt id="pulsar.async.mixins.Timeout.set_timeout">
-<tt class="descname">set_timeout</tt><big>(</big><em>timeout</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mixins.html#Timeout.set_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.Timeout.set_timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set a new <tt class="xref py py-attr docutils literal"><span class="pre">timeout</span></tt> for this protocol</p>
-</dd></dl>
-
+<em class="property">class </em><tt class="descclassname">pulsar.async.mixins.</tt><tt class="descname">Timeout</tt><a class="reference internal" href="../modules/pulsar/async/mixins.html#Timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mixins.Timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a timeout for idle connections to protocols</p>
 </dd></dl>
 
 <span class="target" id="module-pulsar.async.clients"></span></div>
@@ -854,8 +826,7 @@ method.</p>
 <li><a class="reference internal" href="#datagram-server">Datagram Server</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#protocol-wrappers">Protocol Wrappers</a><ul>
-<li><a class="reference internal" href="#protocolwrapper">ProtocolWrapper</a></li>
+<li><a class="reference internal" href="#protocol-mixins">Protocol Mixins</a><ul>
 <li><a class="reference internal" href="#flowcontrol">FlowControl</a></li>
 <li><a class="reference internal" href="#timeout">Timeout</a></li>
 </ul>
