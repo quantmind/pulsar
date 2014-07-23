@@ -3,7 +3,7 @@ import sys
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, in_loop, task, Future
+from .futures import multi_async, in_loop, task, Future, asyncio
 from .events import EventHandler
 from .mixins import FlowControl, Timeout
 from .access import (asyncio, get_event_loop, new_event_loop,
@@ -179,6 +179,8 @@ class ProtocolConsumer(EventHandler):
 
     def write(self, data):
         '''Delegate writing to the underlying :class:`.Connection`
+
+        Return an empty tuple or a :class:`~asyncio.Future`
         '''
         c = self._connection
         if c:
@@ -204,7 +206,7 @@ class ProtocolConsumer(EventHandler):
             c._current_consumer = None
 
 
-class PulsarProtocol(EventHandler):
+class PulsarProtocol(EventHandler, FlowControl):
     '''A mixin class for both :class:`.Protocol` and
     :class:`.DatagramProtocol`.
 
@@ -215,6 +217,8 @@ class PulsarProtocol(EventHandler):
     * ``connection_lost``
     '''
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
+    MANY_TIMES_EVENTS = ('data_received', 'data_processed',
+                         'before_write', 'after_write')
 
     _transport = None
     _address = None
@@ -222,6 +226,7 @@ class PulsarProtocol(EventHandler):
 
     def __init__(self, loop=None, session=1, producer=None, **kw):
         super(PulsarProtocol, self).__init__(loop)
+        FlowControl.__init__(self, **kw)
         self._session = session
         self._producer = producer
 
@@ -317,14 +322,31 @@ class PulsarProtocol(EventHandler):
 class Protocol(PulsarProtocol, asyncio.Protocol):
     '''An :class:`asyncio.Protocol` with :ref:`events <event-handling>`
     '''
+    _data_received_count = 0
+
     def write(self, data):
-        '''Write data into the transport
+        '''Write ``data`` into the wire.
+
+        Returns an empty tuple or a :class:`~asyncio.Future` if this
+        protocol has paused writing.
         '''
         t = self._transport
         if t:
-            if t._conn_lost:  # Uses private variable.
+            if t._closing:  # Uses private variable.
                 raise ConnectionResetError('Connection lost')
-            t.write(data)
+            if self._write_waiter and not self._write_waiter.done():
+                # # Uses private variable once again!
+                # This occurs when the protocol is paused from writing
+                # but another data ready callback is fired in the same
+                # event-loop frame
+                self.logger.debug('protocol cannot write, add data to the '
+                                  'transport buffer')
+                t._buffer.extend(data)
+            else:
+                self.fire_event('before_write')
+                t.write(data)
+                self.fire_event('after_write')
+            return self._write_waiter or ()
         else:
             raise ConnectionResetError('No Transport')
 
@@ -333,7 +355,7 @@ class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
     '''An ``asyncio.DatagramProtocol`` with events`'''
 
 
-class Connection(FlowControl):
+class Connection(Protocol, Timeout):
     '''A :class:`.FlowControl` to handle multiple TCP requests/responses.
 
     It is a class which acts as bridge between a
@@ -349,13 +371,14 @@ class Connection(FlowControl):
 
         number of separate requests processed.
     '''
-    def __init__(self, consumer_factory=None, timeout=None, **kw):
-        protocol = Timeout(Protocol(**kw), timeout)
-        super(Connection, self).__init__(protocol)
+    def __init__(self, consumer_factory=None, timeout=None,
+                 low_limit=None, high_limit=None, **kw):
+        super(Connection, self).__init__(**kw)
+        self.bind_event('connection_lost', self._connection_lost)
         self._processed = 0
         self._current_consumer = None
         self._consumer_factory = consumer_factory
-        self.protocol.bind_event('connection_lost', self._connection_lost)
+        self.timeout = timeout
 
     def current_consumer(self):
         '''The :class:`ProtocolConsumer` currently handling incoming data.
@@ -380,12 +403,14 @@ class Connection(FlowControl):
         Once done set a timeout for idle connections when a
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         '''
-        self.protocol.data_received(data)
+        self._data_received_count = self._data_received_count + 1
+        self.fire_event('data_received', data=data)
         while data:
             consumer = self.current_consumer()
             data = consumer._data_received(data)
             if isinstance(data, Future):
-                return data
+                break
+        self.fire_event('data_received', data=data)
 
     def upgrade(self, consumer_factory):
         '''Upgrade the :func:`_consumer_factory` callable.
@@ -410,8 +435,11 @@ class Connection(FlowControl):
             self._build_consumer(None)
 
     def info(self):
-        info = self.protocol.info()
-        info['connection']['request_processed'] = self._processed
+        info = super(Connection, self).info()
+        c = info['connection']
+        c['request_processed'] = self._processed
+        c['data_processed_count'] = self._data_received_count
+        c['timeout'] = self.timeout
         return info
 
     def _build_consumer(self, _, exc=None):

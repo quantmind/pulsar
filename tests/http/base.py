@@ -126,6 +126,14 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
+    def _test_stream_response(self, siz=3000, rep=10):
+        http = self._client
+        response = yield http.get(self.httpbin('stream/%d/%d' % (siz, rep)))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.parser.is_chunked())
+        body = response.recv_body()
+        self.assertEqual(len(body), siz*rep)
+
     def test_HttpResponse(self):
         r = HttpResponse(loop=self._loop)
         self.assertEqual(r.request, None)
@@ -398,18 +406,12 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(parser.is_chunked())
 
     def test_stream_response(self):
-        http = self._client
-        response = yield http.get(self.httpbin('stream/3000/20'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.parser.is_chunked())
+        return self._test_stream_response()
 
     def test_stream_response_large_chunk(self):
         # TODO fix this test. Issue #97
-        if not self.with_tls:
-            http = self._client
-            response = yield http.get(self.httpbin('stream/100000/3'))
-            self.assertEqual(response.status_code, 200)
-            self.assertTrue(response.parser.is_chunked())
+        # if not self.with_tls:
+        return self._test_stream_response(100000, 3)
 
     def test_expect(self):
         http = self._client

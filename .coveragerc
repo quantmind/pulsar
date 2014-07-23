@@ -14,6 +14,7 @@ omit =
     *pulsar/apps/test/pep.py
     *pulsar/apps/tx/*
     examples/httpbin/config.py
+    examples/httpbin/throttle.py
     examples/philosophers/config.py
     examples/webmail/*
     examples/taskqueue/winservice.py
