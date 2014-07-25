@@ -1,6 +1,7 @@
 import logging
 import threading
 import weakref
+from functools import partial
 from multiprocessing import dummy, current_process
 
 try:
@@ -19,13 +20,10 @@ from .consts import ACTOR_STATES
 
 
 __all__ = ['Thread', 'IOqueue', 'ThreadPool',
-           'ThreadQueue', 'Empty', 'Full',
-           'get_thread_loop']
+           'ThreadQueue', 'Empty', 'Full']
 
-_THREAD_LOOP = '_thread_loop'
 _MAX_WORKERS = 50
 _threads_queues = weakref.WeakKeyDictionary()
-passthrough = lambda: None
 
 
 def set_as_loop(loop):
@@ -33,15 +31,7 @@ def set_as_loop(loop):
     thread of execution.
     '''
     if loop._iothreadloop:
-        if isinstance(loop, QueueEventLoop):
-            thread_data(_THREAD_LOOP, loop)
-        else:
-            asyncio.set_event_loop(loop)
-
-
-def get_thread_loop():
-    '''Get the loop for the current thread'''
-    return thread_data(_THREAD_LOOP) or asyncio.get_event_loop()
+        asyncio.set_event_loop(loop)
 
 
 def get_executor(loop):
@@ -67,18 +57,16 @@ def run_in_executor(loop, executor, callback, *args):
 
 
 class Thread(dummy.DummyProcess):
+    _pool_loop = None
 
     @property
     def pid(self):
         return current_process().pid
 
-    def loop(self):
-        return thread_data(_THREAD_LOOP, ct=self)
-
     def terminate(self):
         '''Invoke the stop on the event loop method.'''
         if self.is_alive():
-            loop = self.loop()
+            loop = asyncio.get_event_loop()
             if loop:
                 loop.stop()
 
@@ -88,6 +76,7 @@ class PoolThread(Thread):
     '''
     def __init__(self, pool):
         self.pool = pool
+        self._pool_loop = pool._loop
         super(PoolThread, self).__init__(name=pool.worker_name)
 
     def __repr__(self):
@@ -102,7 +91,6 @@ class PoolThread(Thread):
         '''
         if self.pool._actor:
             set_actor(self.pool._actor)
-        asyncio.set_event_loop(self.pool._loop)
         # The run method for the threads in this thread pool
         logger = logging.getLogger('pulsar.%s' % self.name)
         loop = QueueEventLoop(self.pool, logger=logger, iothreadloop=True)
@@ -153,22 +141,34 @@ class IOqueue(selectors.BaseSelector):
             raise _StopError
         return task
 
-    def process_task(self, task):
+    def process_task(self, task, loop):
         self._received += 1
-        future, func, args, kwargs = task
+        p, func, args, kwargs = task
         try:
-            result = yield func(*args, **kwargs)
+            result = func(*args, **kwargs)
         except Exception as exc:
-            self._completed += 1
-            future.set_exception(exc)
+            self._done_task(p, None, exc)
         else:
-            self._completed += 1
             try:
-                future.set_result(result)
-            finally:
-                # IMPORTANT: make sure to wake up the loop of the
-                # waiting future
-                future._loop.call_soon_threadsafe(passthrough)
+                result = async(result, loop=loop)
+            except TypeError:
+                self._done_task(p, None, result)
+            else:
+                result.add_done_callback(partial(self._done_task, p))
+
+    def _done_task(self, p, future, result=None):
+        self._completed += 1
+        #
+        if future:
+            try:
+                result = future.result()
+            except Exception as exc:
+                result = exc
+        #
+        if isinstance(result, Exception):
+            p._loop.call_soon_threadsafe(lambda: p.set_exception(result))
+        else:
+            p._loop.call_soon_threadsafe(lambda: p.set_result(result))
 
     def get_map(self):
         return {}
@@ -184,22 +184,23 @@ class QueueEventLoop(BaseEventLoop):
     '''An :ref:`asyncio event loop <asyncio-event-loop>` which
     uses :class:`.IOqueue` as its selector.
     '''
-    task_factory = Task
-
     def __init__(self, executor, iothreadloop=False, logger=None):
         super(QueueEventLoop, self).__init__()
         self._default_executor = executor
         self._iothreadloop = iothreadloop
         self._selector = IOqueue(executor)
+        set_as_loop(self)
         self.logger = get_logger(logger=logger)
-        self.call_soon(set_as_loop, self)
+
+    def create_task(self, coro):
+        return Task(coro, loop=self)
 
     def _write_to_self(self):
         pass
 
     def _process_events(self, task):
         if task:
-            async(self._selector.process_task(task), loop=self)
+            self._selector.process_task(task, self)
 
     def run_in_executor(self, executor, callback, *args):
         return run_in_executor(self, executor, callback, *args)

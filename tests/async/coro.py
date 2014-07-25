@@ -1,7 +1,7 @@
 import unittest
 
 from pulsar import (Future, maybe_async, coroutine_return, chain_future,
-                    get_event_loop)
+                    get_event_loop, yield_from)
 
 
 def c_summation(value):
@@ -9,7 +9,22 @@ def c_summation(value):
     coroutine_return(result + 2)
 
 
+def coro1():
+    done = yield 3
+    fut = Future()
+    fut._loop.call_soon(fut.set_exception, ValueError('test'))
+    try:
+        yield fut
+    except ValueError:
+        done += 1
+    coroutine_return(done)
+
+
 class TestCoroFuture(unittest.TestCase):
+
+    def test_yield_from(self):
+        result = yield yield_from(coro1())
+        self.assertEqual(result, 4)
 
     def test_coroutine1(self):
         loop = get_event_loop()

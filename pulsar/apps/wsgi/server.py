@@ -20,7 +20,7 @@ from wsgiref.handlers import format_date_time
 
 import pulsar
 from pulsar import (reraise, HttpException, ProtocolError, Future, in_loop,
-                    chain_future)
+                    From, chain_future)
 from pulsar.utils.pep import is_string, native_str
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
@@ -452,7 +452,7 @@ class HttpServerResponse(ProtocolConsumer):
                     response = handle_wsgi_error(environ, exc_info)
                 #
                 if isinstance(response, Future):
-                    response = yield response
+                    response = yield From(response)
                 #
                 if exc_info:
                     self.start_response(response.status,
@@ -463,11 +463,11 @@ class HttpServerResponse(ProtocolConsumer):
                 start = loop.time()
                 for chunk in response:
                     if isinstance(chunk, Future):
-                        chunk = yield chunk
+                        chunk = yield From(chunk)
                         start = loop.time()
                     result = self.write(chunk)
                     if isinstance(result, Future):
-                        yield result
+                        yield From(result)
                         start = loop.time()
                     else:
                         time_in_loop = loop.time() - start
@@ -475,7 +475,7 @@ class HttpServerResponse(ProtocolConsumer):
                             self.logger.debug(
                                 'Released the event loop after %.3f seconds',
                                 time_in_loop)
-                            yield None
+                            yield From(None)
                             start = loop.time()
                 #
                 # make sure we write headers and last chunk if needed

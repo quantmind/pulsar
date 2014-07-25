@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import asyncio
+from pulsar.async import asyncio
 
 if pulsar.appengine:
     def start_store(url, workers=0, **kw):
@@ -7,10 +7,11 @@ if pulsar.appengine:
 
 else:
     from pulsar import (when_monitor_start, coroutine_return, get_application,
-                        send)
+                        task, send)
     from pulsar.apps.data import create_store
     from pulsar.apps.ds import PulsarDS
 
+    @task
     def start_pulsar_ds(arbiter, host, workers=0):
         lock = getattr(arbiter, 'lock', None)
         if lock is None:
@@ -27,6 +28,7 @@ else:
         finally:
             lock.release()
 
+    @task
     def start_store(url, workers=0, **kw):
         '''Equivalent to :func:`.create_store` for most cases excepts when the
         ``url`` is for a pulsar store not yet started.
@@ -55,6 +57,7 @@ else:
         else:
             return host
 
+    @task
     def _start_store(monitor):
         app = monitor.app
         if not isinstance(app, PulsarDS):

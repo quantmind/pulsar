@@ -168,21 +168,34 @@ sequential
 By default, test functions within a :class:`~unittest.TestCase`
 are run in asynchronous fashion. This means that several test functions
 may be executed at once depending on their return values.
+
 By specifying the :ref:`--sequential <setting-sequential>` command line option,
-the :class:`TestSuite`
-forces tests to be run in a sequential model, one after the other::
+the :class:`.TestSuite` forces test functions from a given
+:class:`~unittest.TestCase` to be run in a sequential way,
+one after the other::
 
     python runtests.py --sequential
 
-Alternatively, if you need to specify a Testcase which always runs its test
-functions in a sequential way, you can use the :func:`.sequential` decorator::
+Alternatively, if you need to specify a :class:`~unittest.TestCase` which
+always runs its test functions in a sequential way, you can use
+the :func:`.sequential` decorator::
 
-    from pulsar.apps.test import unittest, sequential
+    from pulsar.apps.test import sequential
 
     @sequential
     class MyTestCase(unittest.TestCase):
         ...
 
+Using the ``sequential`` option, does not mean only one test function
+is executed by the :class:`.TestSuite` at a given time. Indeed, several
+:class:`~unittest.TestCase` are executed at the same time and therefore
+each one of the may have one test function running.
+
+In order to run only one function at any time, the ``sequential``
+option should be used in conjunction with
+:ref:`--concurrent-tasks <setting-concurrent_tasks>` option::
+
+    python runtests.py --sequential --concurrent-tasks 1
 
 list labels
 ~~~~~~~~~~~~~~~~~~~
@@ -306,7 +319,7 @@ import unittest
 from functools import partial
 
 import pulsar
-from pulsar import multi_async
+from pulsar import multi_async, From
 from pulsar.apps import tasks
 from pulsar.apps.data import create_store
 from pulsar.apps.ds import PulsarDS
@@ -528,7 +541,7 @@ class TestSuite(tasks.TaskQueue):
             server = PulsarDS(bind='127.0.0.1:0', workers=0,
                               key_value_save=[],
                               name='%s_store' % self.name)
-            yield server()
+            yield From(server())
             address = 'pulsar://%s:%s' % server.cfg.addresses[0]
         else:
             address = self.cfg.task_backend
@@ -566,10 +579,10 @@ class TestSuite(tasks.TaskQueue):
                     r = self.backend.queue_task('test', testcls=testcls,
                                                 tag=tag)
                     queued.append(r)
-                queued = yield multi_async(queued)
+                queued = yield From(multi_async(queued))
                 self.logger.debug('loaded %s test classes', len(tests))
                 self._tests_queued = set(queued)
-                yield self._test_done(monitor)
+                yield From(self._test_done(monitor))
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:   # pragma    nocover
@@ -601,7 +614,7 @@ class TestSuite(tasks.TaskQueue):
         if self._tests_queued is not None:
             left = self._tests_queued.difference(self._tests_done)
             if not left:
-                tests = yield self.backend.get_tasks(self._tests_done)
+                tests = yield From(self.backend.get_tasks(self._tests_done))
                 self.logger.info('All tests have finished.')
                 time_taken = default_timer() - self._time_start
                 for task in tests:

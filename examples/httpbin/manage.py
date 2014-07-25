@@ -85,6 +85,7 @@ class HttpBin(wsgi.Router):
         html = request.html_document
         html.head.title = title
         html.head.links.append('httpbin.css')
+        html.head.links.append('favicon.ico', rel="icon", type='image/x-icon')
         html.head.scripts.append('jquery')
         html.head.scripts.append('httpbin.js')
         ul = ul.render(request)
@@ -132,7 +133,7 @@ class HttpBin(wsgi.Router):
 
     @route(title='Returns gzip encoded data')
     def gzip(self, request):
-        response = yield self.info_data_response(request, gzipped=True)
+        response = self.info_data_response(request, gzipped=True)
         coroutine_return(GZipMiddleware(10)(request.environ, response))
 
     @route(title='Returns cookie data')
@@ -275,7 +276,7 @@ class HttpBin(wsgi.Router):
         if request.method in ENCODE_URL_METHODS:
             data['args'] = dict(request.url_data)
         else:
-            args, files = yield request.data_and_files()
+            args, files = request.data_and_files()
             jfiles = MultiValueDict()
             for name, parts in files.lists():
                 for part in parts:
@@ -310,9 +311,9 @@ class Site(wsgi.LazyWsgi):
 
     def setup(self, environ):
         router = HttpBin('/')
-        return wsgi.WsgiHandler([wsgi.clean_path_middleware,
+        return wsgi.WsgiHandler([wsgi.wait_for_body_middleware,
+                                 wsgi.clean_path_middleware,
                                  wsgi.authorization_middleware,
-                                 wsgi.FileRouter('/favicon.ico', FAVICON),
                                  wsgi.MediaRouter('media', ASSET_DIR,
                                                   show_indexes=True),
                                  ws.WebSocket('/graph-data', Graph()),

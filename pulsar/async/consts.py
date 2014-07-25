@@ -1,8 +1,7 @@
 '''
 Constants used throughout pulsar.
 '''
-from pulsar import platform
-from pulsar.utils.structures import AttributeDictionary, FrozenDict
+from pulsar.utils.structures import AttributeDictionary
 
 # LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
 ACTOR_STATES = AttributeDictionary(INITIAL=0X0,
@@ -37,7 +36,6 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.STOPPING: 'stopping',
                             ACTOR_STATES.CLOSE: 'closed',
                             ACTOR_STATES.TERMINATE: 'terminated'}
-SPECIAL_ACTORS = ('monitor', 'arbiter')
 #
 ACTOR_ACTION_TIMEOUT = 5
 '''Important constant used by :class:`pulsar.Monitor` to kill actors which
@@ -51,13 +49,3 @@ ACTOR_JOIN_THREAD_POOL_TIMEOUT = 5  # TIMEOUT WHEN JOINING THE THREAD POOL
 MONITOR_TASK_PERIOD = 2
 '''Interval for :class:`pulsar.Monitor` and :class:`pulsar.Arbiter`
 periodic task.'''
-#
-DEFAULT_CONNECT_TIMEOUT = 10
-DEFAULT_ACCEPT_TIMEOUT = 10
-NUMBER_ACCEPTS = 30 if platform.type == "posix" else 1
-LOG_THRESHOLD_FOR_CONNLOST_WRITES = 5
-MAX_CONSECUTIVE_WRITES = 500
-#
-# Globals
-EMPTY_TUPLE = ()
-EMPTY_DICT = FrozenDict()

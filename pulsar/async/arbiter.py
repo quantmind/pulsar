@@ -91,9 +91,9 @@ def stop_arbiter(self, exc=None):     # pragma    nocover
     self.collect_coverage()
     exit_code = self.exit_code or 0
     if exit_code == autoreload.EXIT_CODE:
-        self.stream.writeln("Code changed, reloading server")
+        self.stream.writeln("\nCode changed, reloading server")
     else:
-        self.stream.writeln("Bye (exit code = %s)" % exit_code)
+        self.stream.writeln("\nBye (exit code = %s)" % exit_code)
     try:
         self.cfg.when_exit(self)
     except Exception:

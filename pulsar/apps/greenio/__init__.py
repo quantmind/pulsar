@@ -146,7 +146,7 @@ from functools import wraps, partial
 
 import greenlet
 
-from pulsar import Future, async, coroutine_return
+from pulsar import isfuture, async, coroutine_return, From
 
 from .pool import GreenPool, RunInPool
 from .local import local
@@ -167,9 +167,9 @@ def run_in_greenlet(callable):
         # switch to the new greenlet
         result = gr.switch(*args, **kwargs)
         # back to the parent
-        while isinstance(result, Future):
+        while isfuture(result):
             # keep on switching back to the greenlet if we get a Future
-            result = gr.switch((yield result))
+            result = gr.switch((yield From(result)))
         # For some reason this line does not show in coverage reports
         # but it is covered!
         coroutine_return(result)    # prgma nocover

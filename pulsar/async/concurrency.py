@@ -1,3 +1,4 @@
+import os
 import sys
 from functools import partial
 from multiprocessing import Process, current_process
@@ -177,7 +178,7 @@ class Concurrency(object):
 
         This is an internal method called periodically by the
         :attr:`.Actor._loop` to ping the actor monitor.
-        If successful return a :class:`asyncio.Future` called
+        If successful return a :class:`~asyncio.Future` called
         back with the acknowledgement from the monitor.
         '''
         actor.next_periodic_task = None
@@ -274,7 +275,7 @@ class MonitorMixin(object):
         return self.actor_class(self)
 
     def start(self):
-        '''does nothing'''
+        '''does nothing,'''
         pass
 
     def is_active(self):
@@ -438,7 +439,8 @@ class TerminateActorThread(Exception):
 
 
 class ActorThread(Concurrency, Thread):
-    '''Actor on a thread in the master process.'''
+    '''Actor on a thread of the master process
+    '''
     _actor = None
 
     def run(self):
@@ -446,10 +448,6 @@ class ActorThread(Concurrency, Thread):
 
     def stop_coverage(self, actor):
         pass
-
-    def loop(self):
-        if self._actor:
-            return self._actor._loop
 
 
 concurrency_models = {'arbiter': ArbiterConcurrency,

@@ -4,7 +4,8 @@ import unittest
 from threading import current_thread
 
 import pulsar
-from pulsar import asyncio, send, multi_async, get_event_loop, coroutine_return
+from pulsar import (asyncio, send, multi_async, get_event_loop,
+                    coroutine_return, Future, From)
 from pulsar.async.threads import QueueEventLoop
 from pulsar.apps.test import run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
@@ -17,13 +18,25 @@ def simple_function(actor):
 
 def wait(actor, period=0.5):
     start = actor._loop.time()
-    yield asyncio.sleep(period)
+    yield From(asyncio.sleep(period))
     coroutine_return(actor._loop.time() - start)
 
 
 class TestTestWorker(unittest.TestCase):
 
-    def testWorker(self):
+    def test_ping_pong_monitor(self):
+        value = yield 3
+        self.assertEqual(value, 3)
+        try:
+            future = Future()
+            future.set_exception(ValueError('test'))
+            yield future
+        except ValueError:
+            pass
+        pong = yield send('monitor', 'ping')
+        self.assertEqual(pong, 'pong')
+
+    def test_worker(self):
         '''Test the test worker'''
         worker = pulsar.get_actor()
         self.assertTrue(pulsar.is_actor(worker))
@@ -39,7 +52,7 @@ class TestTestWorker(unittest.TestCase):
 
     def testCPUbound(self):
         worker = pulsar.get_actor()
-        loop = pulsar.get_thread_loop()
+        loop = get_event_loop()
         self.assertIsInstance(loop, QueueEventLoop)
         self.assertNotIsInstance(worker._loop, QueueEventLoop)
 
@@ -68,26 +81,24 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(mailbox.address)
         self.assertTrue(mailbox.name)
 
-    def test_event_loop(self):
+    def test_suite_event_loop(self):
         '''Test event loop in test worker'''
         worker = pulsar.get_actor()
-        loop = pulsar.get_thread_loop()
-        event_loop = get_event_loop()
+        loop = get_event_loop()
         self.assertTrue(loop.is_running())
-        self.assertTrue(event_loop.is_running())
-        self.assertNotEqual(loop, event_loop)
-        self.assertEqual(worker._loop, event_loop)
+        self.assertTrue(worker._loop.is_running())
+        self.assertNotEqual(worker._loop, loop)
 
     def test_yield(self):
         '''Yielding a future calling back on separate thread'''
         worker = pulsar.get_actor()
-        loop = pulsar.get_thread_loop()
+        loop = get_event_loop()
         loop_tid = yield pulsar.loop_thread_id(loop)
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop_tid, current_thread().ident)
         yield None
         self.assertEqual(loop_tid, current_thread().ident)
-        d = asyncio.Future()
+        d = Future()
         # We are calling back the future in the event_loop which is on
         # a separate thread
 
@@ -99,11 +110,9 @@ class TestTestWorker(unittest.TestCase):
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop_tid, current_thread().ident)
 
-    def testInline(self):
-        val = yield 3
-        self.assertEqual(val, 3)
-        future = yield send('monitor', 'ping')
-        self.assertEqual(future, 'pong')
+    def test_ping_pong_monitor(self):
+        pong = yield send('monitor', 'ping')
+        self.assertEqual(pong, 'pong')
 
     def test_run_on_arbiter(self):
         actor = pulsar.get_actor()
@@ -135,9 +144,6 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(len(backend.registry), 1)
         self.assertTrue('test' in backend.registry)
 
-
-class TestTestSuite(unittest.TestCase):
-
     def test_no_plugins(self):
         suite = TestSuite()
         self.assertFalse(suite.cfg.plugins)
@@ -148,9 +154,6 @@ class TestTestSuite(unittest.TestCase):
         self.assertTrue(suite.cfg.plugins)
         self.assertTrue('profile' in suite.cfg.settings)
         self.assertTrue('profile_stats_path' in suite.cfg.settings)
-
-
-class TestPulsar(unittest.TestCase):
 
     def test_version(self):
         self.assertTrue(pulsar.VERSION)

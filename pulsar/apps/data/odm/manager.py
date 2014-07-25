@@ -1,4 +1,4 @@
-from pulsar import Event, wait_complete, chain_future, add_callback, task
+from pulsar import Event, chain_future, add_callback, task
 
 from .query import AbstractQuery, Query, QueryError, ModelNotFound
 from ..store import Command
@@ -131,7 +131,7 @@ class Manager(AbstractQuery):
         '''
         return self.query_class(self)
 
-    @wait_complete
+    @task
     def get(self, *args, **kw):
         '''Get a single model
         '''

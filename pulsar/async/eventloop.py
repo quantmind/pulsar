@@ -1,31 +1,56 @@
 from threading import current_thread
 
-from .access import asyncio, thread_data, LOGGER
-from .futures import Future, maybe_async, Task
+from .access import asyncio, trollius, thread_data, LOGGER
+from .futures import Future, Task, maybe_async
 from .threads import run_in_executor, set_as_loop
 from . import dns
 
 
-__all__ = ['EventLoop', 'call_repeatedly', 'loop_thread_id']
+__all__ = ['EventLoop', 'set_event_loop_policy',
+           'call_repeatedly', 'loop_thread_id']
 
 
-class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
+class EventLoop(trollius.SelectorEventLoop):
+
+    def __init__(self, selector=None, iothreadloop=False, logger=None,
+                 cfg=None):
+        super(EventLoop, self).__init__(selector)
+        self._iothreadloop = iothreadloop
+        self.logger = logger or LOGGER
+        self._dns = dns.resolver(self, cfg)
+        set_as_loop(self)
+
+    def create_task(self, coro):
+        return Task(coro, loop=self)
+
+    def run_in_executor(self, executor, callback, *args):
+        return run_in_executor(self, executor, callback, *args)
+
+    def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
+        return self._dns.getaddrinfo(host, port, family, type, proto, flags)
+
+    def getnameinfo(self, sockaddr, flags=0):
+        return self._dns.getnameinfo(sockaddr, flags)
+
+    def _assert_is_current_event_loop(self):
+        if self._iothreadloop:
+            super(EventLoop, self)._assert_is_current_event_loop()
+
+
+class EventLoopPolicy(asyncio.DefaultEventLoopPolicy):
     '''Pulsar event loop policy
     '''
-    def get_event_loop(self):
-        return thread_data('_event_loop')
-
-    def new_event_loop(self):
-        return EventLoop()
-
-    def set_event_loop(self, event_loop):
-        """Set the event loop."""
-        assert event_loop is None or isinstance(event_loop,
-                                                asyncio.AbstractEventLoop)
-        thread_data('_event_loop', event_loop)
+    _loop_factory = EventLoop
 
 
-asyncio.set_event_loop_policy(EventLoopPolicy())
+def set_event_loop_policy(policy):
+    '''Same event loop policy for asyncio and trollius
+    '''
+    asyncio.set_event_loop_policy(policy)
+    trollius.set_event_loop_policy(policy)
+
+
+set_event_loop_policy(EventLoopPolicy())
 
 
 class LoopingCall(object):
@@ -84,27 +109,6 @@ class LoopingCall(object):
             self._continue()
 
 
-class EventLoop(asyncio.SelectorEventLoop):
-    task_factory = Task
-
-    def __init__(self, selector=None, iothreadloop=False, logger=None,
-                 cfg=None):
-        super(EventLoop, self).__init__(selector)
-        self._iothreadloop = iothreadloop
-        self.logger = logger or LOGGER
-        self._dns = dns.resolver(self, cfg)
-        self.call_soon(set_as_loop, self)
-
-    def run_in_executor(self, executor, callback, *args):
-        return run_in_executor(self, executor, callback, *args)
-
-    def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
-        return self._dns.getaddrinfo(host, port, family, type, proto, flags)
-
-    def getnameinfo(self, sockaddr, flags=0):
-        return self._dns.getnameinfo(sockaddr, flags)
-
-
 def call_repeatedly(loop, interval, callback, *args):
     """Call a ``callback`` every ``interval`` seconds.
 
@@ -117,7 +121,7 @@ def call_repeatedly(loop, interval, callback, *args):
 def loop_thread_id(loop):
     '''Thread ID of the running ``loop``.
     '''
-    waiter = asyncio.Future(loop=loop)
+    waiter = Future(loop=loop)
     loop.call_soon_threadsafe(
         lambda: waiter.set_result(current_thread().ident))
     return waiter

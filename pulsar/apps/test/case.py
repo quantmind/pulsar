@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import coroutine_return
+from pulsar import isfuture, coroutine_return, From, multi_async, task
 from pulsar.utils.pep import ispy3k
 from pulsar.apps import tasks
 
@@ -26,7 +26,7 @@ class Test(tasks.Job):
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
-            return self.run(consumer, runner, testcls, all_tests)
+            return self.run_testcls(consumer, runner, testcls, all_tests)
         else:
             return runner.result
 
@@ -35,7 +35,8 @@ class Test(tasks.Job):
         testcls = kwargs.get('testcls')
         return '%s_%s' % (testcls.__name__, tid) if testcls else tid
 
-    def run(self, consumer, runner, testcls, all_tests):
+    @task
+    def run_testcls(self, consumer, runner, testcls, all_tests):
         '''Run all test functions from the :attr:`testcls`.
 
         It uses the following algorithm:
@@ -61,12 +62,13 @@ class Test(tasks.Job):
                 yield self.run_test(test, runner, error)
         else:
             all = (self.run_test(test, runner, error) for test in all_tests)
-            yield pulsar.multi_async(all, loop=pulsar.get_thread_loop())
+            yield multi_async(all)
         if not skip_tests:
             yield self._run(runner, testcls, 'tearDownClass', add_err=False)
         runner.stopTestClass(testcls)
         coroutine_return(runner.result)
 
+    @task
     def run_test(self, test, runner, error=None):
         '''Run a ``test`` function using the following algorithm
 
@@ -120,10 +122,12 @@ class Test(tasks.Job):
                 method, '__unittest_expecting_failure__', False)
             if tfunc is None:
                 tfunc = TestFunction(method.__name__)
-            try:
-                exc = yield tfunc(test, test.cfg.test_timeout)
-            except Exception as e:
-                exc = e
+            exc = tfunc(test, test.cfg.test_timeout)
+            if isfuture(exc):
+                try:
+                    exc = yield From(exc)
+                except Exception as e:
+                    exc = e
             if exc:
                 add_err = False if previous else add_err
                 previous = self.add_failure(test, runner, exc, add_err,

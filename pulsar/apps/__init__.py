@@ -65,7 +65,7 @@ from functools import partial
 from collections import namedtuple
 
 import pulsar
-from pulsar import (get_actor, coroutine_return, Config,
+from pulsar import (get_actor, coroutine_return, Config, From,
                     multi_async, Future, ImproperlyConfigured)
 from pulsar.utils.structures import OrderedDict
 
@@ -93,14 +93,14 @@ def get_application(name):
 
 
 def _get_remote_app(actor, name):
-    cfg = yield actor.send('arbiter', 'run', _get_app, name)
+    cfg = yield From(actor.send('arbiter', 'run', _get_app, name))
     coroutine_return(cfg.app() if cfg else None)
 
 
 def _get_app(arbiter, name, safe=True):
     monitor = arbiter.get_actor(name)
     if monitor:
-        cfg = yield monitor.start_event
+        cfg = yield From(monitor.start_event)
         if safe:
             coroutine_return(cfg)
         else:
@@ -118,14 +118,14 @@ def monitor_start(self, exc=None):
         self.bind_event('on_info', monitor_info)
         self.bind_event('stopping', monitor_stopping)
         for callback in when_monitor_start:
-            yield callback(self)
+            yield From(callback(self))
         self.monitor_task = lambda: app.monitor_task(self)
-        yield app.monitor_start(self)
+        yield From(app.monitor_start(self))
         if not self.cfg.workers:
-            yield app.worker_start(self)
+            yield From(app.worker_start(self))
         result = self.cfg
     except Exception as exc:
-        yield self.stop(exc)
+        yield From(self.stop(exc))
         start_event.set_result(None)
     else:
         start_event.set_result(result)
@@ -133,8 +133,8 @@ def monitor_start(self, exc=None):
 
 def monitor_stopping(self, exc=None):
     if not self.cfg.workers:
-        yield self.app.worker_stopping(self)
-    yield self.app.monitor_stopping(self)
+        yield From(self.app.worker_stopping(self))
+    yield From(self.app.monitor_stopping(self))
     coroutine_return(self)
 
 

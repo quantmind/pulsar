@@ -50,6 +50,15 @@ class TestWebSocketThread(unittest.TestCase):
         if cls.app_cfg is not None:
             yield send('arbiter', 'kill_actor', cls.app_cfg.name)
 
+    def test_graph(self):
+        c = HttpClient()
+        handler = Echo(loop=self._loop)
+        ws = yield c.get(self.ws_uri, websocket_handler=handler)
+        self.assertEqual(ws.event('post_request').fired(), 0)
+        message = yield handler.get()
+        self.assertTrue(message)
+
+class d:
     def testHyBiKey(self):
         w = WebSocket('/', None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
@@ -135,6 +144,22 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertTrue(ws.close_reason)
         self.assertEqual(ws.close_reason[0], 1001)
         self.assertTrue(ws._connection.closed)
+
+    def test_home(self):
+        c = HttpClient()
+        response = yield c.get(self.uri)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'],
+                         'text/html; charset=utf-8')
+
+    def test_graph(self):
+        c = HttpClient()
+        handler = Echo(loop=self._loop)
+        fut = handler.get()
+        ws = yield c.get(self.ws_uri, websocket_handler=handler)
+        self.assertEqual(ws.event('post_request').fired(), 0)
+        message = yield fut
+        self.assertTrue(message)
 
 
 @dont_run_with_thread

@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import coroutine_return
+from pulsar import task, coroutine_return
 
 from .jsonrpc import JSONRPC
 
@@ -19,6 +19,7 @@ class PulsarServerCommands(JSONRPC):
         '''Echo the server.'''
         return message
 
+    @task
     def rpc_server_info(self, request):
         '''Return a dictionary of information regarding the server and workers.
 

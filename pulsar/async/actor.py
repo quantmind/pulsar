@@ -239,7 +239,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
         positional ``args`` and key-valued ``kwargs``.
-        Always return a :class:`asyncio.Future`.'''
+        Always return a :class:`~asyncio.Future`.'''
         target = self.monitor if target == 'monitor' else target
         mailbox = self.mailbox
         if isinstance(target, ActorProxyMonitor):
@@ -248,7 +248,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
             actor = self.get_actor(target)
             if isinstance(actor, Actor):
                 # this occur when sending a message from arbiter to monitors or
-                # viceversa.
+                # vice-versa.
                 return command_in_context(action, self, actor, args, kwargs)
             elif isinstance(actor, ActorProxyMonitor):
                 mailbox = actor.mailbox

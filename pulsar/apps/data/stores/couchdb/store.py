@@ -33,7 +33,7 @@ CouchDBStore
 '''
 from base64 import b64encode, b64decode
 
-from pulsar import asyncio, coroutine_return, wait_complete, multi_async
+from pulsar import asyncio, coroutine_return, task, multi_async
 from pulsar.utils.system import json
 from pulsar.apps.data import Store, Command, register_store
 from pulsar.utils.pep import zip
@@ -90,7 +90,7 @@ class CouchDBStore(CouchDBMixin, Store):
                             views=views,
                             language=language or 'javascript', **kwargs)
 
-    @wait_complete
+    @task
     def design_delete(self, name):
         '''Delete an existing design document at ``name``.
         '''
@@ -171,7 +171,7 @@ class CouchDBStore(CouchDBMixin, Store):
                 raise errors[0]
         coroutine_return(models)
 
-    @wait_complete
+    @task
     def get_model(self, manager, pkvalue):
         try:
             data = yield self.request('get', self._database, pkvalue)
@@ -218,7 +218,7 @@ class CouchDBStore(CouchDBMixin, Store):
         return super(CouchDBStore, self).build_model(manager, *args, **kwargs)
 
     # INTERNALS
-    @wait_complete
+    @task
     def request(self, method, *bits, **kwargs):
         '''Execute the HTTP request'''
         if self._password:

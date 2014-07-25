@@ -18,11 +18,10 @@ try:
 except ImportError:
     libparams = None
 
-install_requires = ['unidecode']
+install_requires = ['unidecode', 'trollius']
 
-if sys.version_info < (3,):
-    install_requires.append('trollius')
-elif sys.version_info < (3,4):
+
+if sys.version_info >= (3,3) and sys.version_info < (3,4):
     install_requires.append('asyncio')
 
 

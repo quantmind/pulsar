@@ -60,7 +60,7 @@ standard :ref:`application settings <settings>`:
 import time
 
 import pulsar
-from pulsar import command
+from pulsar import command, task
 from pulsar.utils.config import section_docs
 from pulsar.apps.data import create_store
 from pulsar.apps.data.stores import start_store
@@ -156,6 +156,7 @@ class TaskQueue(pulsar.Application):
     name = 'tasks'
     cfg = pulsar.Config(apps=('tasks',), timeout=600)
 
+    @task
     def monitor_start(self, monitor):
         '''Starts running the task queue in ``monitor``.
 

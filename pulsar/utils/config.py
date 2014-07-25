@@ -381,9 +381,11 @@ class Config(object):
 
         deflevel = get_level(namespaces[defname])
         internal_level = max(deflevel, internal_level) if deflevel else 0
-        for namespace in (basename, 'asyncio', 'trollius'):
+        for namespace in (basename, 'asyncio'):
             if namespace not in namespaces:
                 namespaces[namespace] = internal_level
+        # Trollius same as asyncio
+        namespaces['trollius'] = namespaces['asyncio']
 
         if name and name not in namespaces:
             namespaces[name] = namespaces[basename]
@@ -800,7 +802,7 @@ class Debug(Global):
         Turn on debugging in the server.
 
         Set the log level to debug, limits the number of worker processes
-        to 1 and changes some error handling that's sent to clients.
+        to 1, set asyncio debug flag.
         """
 
 

@@ -3,8 +3,9 @@ from functools import partial
 
 from pulsar.utils.pep import iteritems
 
+from .access import _EVENT_LOOP_CLASSES
 from .futures import (Future, maybe_async, InvalidStateError,
-                      future_result_exc, AsyncObject, asyncio)
+                      future_result_exc, AsyncObject)
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']
@@ -147,7 +148,7 @@ class EventHandler(AsyncObject):
     '''Event names which occur several times.'''
     def __init__(self, loop=None, one_time_events=None,
                  many_times_events=None):
-        assert isinstance(loop, asyncio.AbstractEventLoop)
+        assert isinstance(loop, _EVENT_LOOP_CLASSES)
         self._loop = loop
         one = self.ONE_TIME_EVENTS
         if one_time_events:

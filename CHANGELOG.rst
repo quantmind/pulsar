@@ -1,5 +1,6 @@
-Ver. 0.8.5 - Development
+Ver. 0.9.0 - Development
 ===========================
+* Works with ``trollius`` 1.0
 * Added :class:`.FlowControl` and :class:`.Timeout` protocol mixins,
   :class:`.PulsarProtocol` now inherits from :class:`.FlowControl`
 * Better handling of streaming responses by the wsgi server
@@ -30,7 +31,6 @@ Ver. 0.8.5 - Development
 * Better :func:`.slugify` function
 * :class:`.EventHandler` requires a valid :ref:`event loop <asyncio-event-loop>`
   during initialisation
-* Works with ``trollius`` 1.0
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

@@ -102,7 +102,7 @@ from random import lognormvariate
 from functools import partial
 
 import pulsar
-from pulsar import (asyncio, TcpServer, DatagramServer, Connection,
+from pulsar import (asyncio, From, TcpServer, DatagramServer, Connection,
                     ImproperlyConfigured)
 from pulsar.utils.internet import parse_address, SSLContext
 from pulsar.utils.config import pass_through
@@ -232,7 +232,7 @@ class SocketServer(pulsar.Application):
         address = parse_address(self.cfg.address)
         # First create the sockets
         try:
-            server = yield loop.create_server(asyncio.Protocol, *address)
+            server = yield From(loop.create_server(asyncio.Protocol, *address))
         except socket.error as e:
             raise ImproperlyConfigured(e)
         else:
@@ -333,8 +333,8 @@ class UdpSocketServer(SocketServer):
                                               'No address to bind to')
         address = parse_address(self.cfg.address)
         # First create the sockets
-        t, _ = yield loop.create_datagram_endpoint(asyncio.DatagramProtocol,
-                                                   address)
+        t, _ = yield From(loop.create_datagram_endpoint(
+            asyncio.DatagramProtocol, address))
         sock = t.get_extra_info('socket')
         assert loop.remove_reader(sock.fileno())
         monitor.sockets = [WrapTransport(t)]

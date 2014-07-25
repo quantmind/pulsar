@@ -1,12 +1,11 @@
 '''Tests the tools and utilities in pulsar.utils.'''
-import os
 import unittest
 from datetime import datetime, date
 
-from pulsar import system, get_actor, spawn, send
-from pulsar.utils.tools import checkarity, Pidfile, nice_number, date2timestamp
+from pulsar import system, get_actor
+from pulsar.utils.tools import checkarity, nice_number, date2timestamp
 from pulsar.utils.importer import py_file, import_modules
-from pulsar.apps.test import ActorTestMixin
+from pulsar.apps.test import sequential
 
 
 def f0(a, b):
@@ -92,32 +91,6 @@ class TestArityCheck(unittest.TestCase):
         self.assertEqual(checkarity(f2, (), {'a': 3, 'c': 5, 'd': 6}), None)
 
 
-class TestPidfile(ActorTestMixin, unittest.TestCase):
-    concurrency = 'process'
-
-    def testCreate(self):
-        proxy = yield self.spawn_actor(name='pippo')
-        info = yield send(proxy, 'info')
-        result = info['actor']
-        self.assertTrue(result['is_process'])
-        pid = result['process_id']
-        #
-        p = Pidfile()
-        self.assertEqual(p.fname, None)
-        self.assertEqual(p.pid, None)
-        p.create(pid)
-        self.assertTrue(p.fname)
-        self.assertEqual(p.pid, pid)
-        p1 = Pidfile(p.fname)
-        self.assertRaises(RuntimeError, p1.create, p.pid+1)
-        #
-        p1 = Pidfile('bla/ksdcskcbnskcdbskcbksdjcb')
-        self.assertRaises(RuntimeError, p1.create, p.pid+1)
-        p1.unlink()
-        p.unlink()
-        self.assertFalse(os.path.exists(p.fname))
-
-
 class TestSystemInfo(unittest.TestCase):
 
     def testMe(self):
@@ -127,6 +100,8 @@ class TestSystemInfo(unittest.TestCase):
         self.assertTrue(isinstance(info, dict))
 
 
+# sequential decorator, just for coverage.
+@sequential
 class TestFunctions(unittest.TestCase):
 
     def test_convert_bytes(self):

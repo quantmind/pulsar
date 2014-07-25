@@ -269,7 +269,7 @@ from io import StringIO, BytesIO
 
 import pulsar
 from pulsar import (AbstractClient, Pool, coroutine_return, task, Connection,
-                    ProtocolConsumer)
+                    ProtocolConsumer, From)
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy3k
 from pulsar.utils.structures import mapping_iterator
@@ -1111,13 +1111,13 @@ class HttpClient(AbstractClient):
                 partial(self._connect, host, port, request.ssl),
                 pool_size=self.pool_size, loop=self._loop)
             self.connection_pools[request.key] = pool
-        conn = yield pool.connect()
+        conn = yield From(pool.connect())
         with conn:
             consumer = conn.current_consumer()
             # bind request-specific events
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
-            response = yield consumer.on_finished
+            response = yield From(consumer.on_finished)
             if response is not None:
                 consumer = response
             if consumer.request_again:
@@ -1132,7 +1132,7 @@ class HttpClient(AbstractClient):
                 conn.detach()
         if isinstance(consumer.request_again, tuple):
             method, url, params = consumer.request_again
-            consumer = yield self.request(method, url, **params)
+            consumer = yield From(self.request(method, url, **params))
         coroutine_return(consumer)
 
     def close(self, async=True, timeout=5):
@@ -1193,10 +1193,10 @@ class HttpClient(AbstractClient):
                 request.set_proxy(p.scheme, p.netloc)
 
     def _connect(self, host, port, ssl):
-        _, connection = yield self._loop.create_connection(
-            self.create_protocol, host, port, ssl=ssl)
+        _, connection = yield From(self._loop.create_connection(
+            self.create_protocol, host, port, ssl=ssl))
         # Wait for the connection made event
-        yield connection.event('connection_made')
+        yield From(connection.event('connection_made'))
         coroutine_return(connection)
 
 

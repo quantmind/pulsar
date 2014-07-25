@@ -6,7 +6,7 @@ from pulsar import (get_event_loop, multi_async, InvalidStateError, Future,
                     maybe_async)
 
 
-class TestApi(unittest.TestCase):
+class TestMulti(unittest.TestCase):
 
     def test_empy_list(self):
         r = multi_async(())

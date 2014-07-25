@@ -1,4 +1,5 @@
-from pulsar import EventHandler, InvalidOperation, chain_future, multi_async
+from pulsar import (EventHandler, InvalidOperation, chain_future, multi_async,
+                    in_loop)
 from pulsar.utils.pep import iteritems
 
 from .model import Model
@@ -137,10 +138,7 @@ class Transaction(EventHandler):
             of  transaction
         '''
         if self._executed is None:
-            executed = dict(((store, store.execute_transaction(commands)) for
-                             store, commands in iteritems(self._commands)))
-            self._executed = multi_async(executed, loop=self._loop)
-            return self._executed
+            self._executed = self._commit()
         else:
             raise InvalidOperation('Transaction already executed.')
 
@@ -152,9 +150,15 @@ class Transaction(EventHandler):
             transaction.
         :return: a :class:`~asyncio.Future`
         '''
-        if self._executed is None:
-            self.commit()
-        if callback:
-            return chain_future(self._executed, callback)
-        else:
-            return self._executed
+        executed = self._executed
+        if executed is None:
+            executed = self.commit()
+        return chain_future(executed, callback) if callback else executed
+
+    # INTERNAL COMMIT METHOD
+    @in_loop
+    def _commit(self):
+        # Run this method in the event loop so that it is thread safe
+        executed = dict(((store, store.execute_transaction(commands)) for
+                          store, commands in iteritems(self._commands)))
+        return multi_async(executed, loop=self._loop)

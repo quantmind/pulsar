@@ -1,6 +1,6 @@
 from functools import partial
 
-from pulsar import coroutine_return, task, Connection, Pool, get_actor
+from pulsar import coroutine_return, task, Connection, Pool, get_actor, From
 from pulsar.utils.pep import to_string
 from pulsar.apps.data import Store, Command
 from pulsar.apps.ds import redis_parser
@@ -75,18 +75,19 @@ class RedisStore(Store):
 
     @task
     def execute(self, *args, **options):
-        connection = yield self._pool.connect()
+        connection = yield From(self._pool.connect())
         with connection:
-            result = yield connection.execute(*args, **options)
+            result = yield From(connection.execute(*args, **options))
             if isinstance(result, ResponseError):
                 raise result.exception
             coroutine_return(result)
 
     @task
     def execute_pipeline(self, commands, raise_on_error=True):
-        conn = yield self._pool.connect()
+        conn = yield From(self._pool.connect())
         with conn:
-            result = yield conn.execute_pipeline(commands, raise_on_error)
+            result = yield From(conn.execute_pipeline(commands,
+                                                      raise_on_error))
             if isinstance(result, ResponseError):
                 raise result.exception
             coroutine_return(result)
@@ -95,15 +96,15 @@ class RedisStore(Store):
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(self._host, tuple):
             host, port = self._host
-            transport, connection = yield self._loop.create_connection(
-                protocol_factory, host, port)
+            transport, connection = yield From(self._loop.create_connection(
+                protocol_factory, host, port))
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(self._host))
         if self._password:
-            yield connection.execute('AUTH', self._password)
+            yield From(connection.execute('AUTH', self._password))
         if self._database:
-            yield connection.execute('SELECT', self._database)
+            yield From(connection.execute('SELECT', self._database))
         coroutine_return(connection)
 
     def execute_transaction(self, transaction):
@@ -125,7 +126,7 @@ class RedisStore(Store):
                 pipe.hmset(key, self.model_data(model, action))
             else:
                 raise NotImplementedError
-        yield pipe.commit()
+        yield From(pipe.commit())
         coroutine_return(models)
 
     def get_model(self, manager, pk):

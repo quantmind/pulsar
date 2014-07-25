@@ -34,6 +34,7 @@ class JSONRPC(RpcHandler):
     def __call__(self, request):
         return Json(self._call(request)).http_response(request)
 
+    @task
     def _call(self, request):
         response = request.response
         data = {}

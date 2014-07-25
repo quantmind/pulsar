@@ -1,6 +1,8 @@
 import os
+import sys
 import threading
 import logging
+from functools import wraps
 from collections import OrderedDict
 from threading import current_thread
 
@@ -8,53 +10,11 @@ from pulsar.utils.config import Global
 from pulsar.utils.pep import ispy3k
 from pulsar.utils.system import platform, current_process
 
-# Dance between different versions. So boring!
-appengine = False
-
-if ispy3k:
-
-    import asyncio
-    from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
-    from asyncio.base_events import BaseEventLoop, _StopError
-    from asyncio import selectors, events
-
-    import builtins
-    ConnectionRefusedError = builtins.ConnectionRefusedError
-    ConnectionResetError = builtins.ConnectionResetError
-
-    def reraise(tp, value, tb=None):
-        if value.__traceback__ is not tb:
-            raise value.with_traceback(tb)
-        raise value
-
-else:  # pragma    nocover
-
-    if platform.is_appengine:
-
-        from . import appengine as asyncio
-        _PENDING = 'PENDING'
-        _CANCELLED = 'CANCELLED'
-        _FINISHED = 'FINISHED'
-        BaseEventLoop = asyncio.BaseEventLoop
-        _StopError = asyncio._StopError
-        appengine = True
-        reraise = asyncio.reraise
-    else:    # python 2.7
-
-        import trollius as asyncio
-        from trollius.futures import _PENDING, _CANCELLED, _FINISHED
-        from trollius.base_events import BaseEventLoop, _StopError
-        from trollius import selectors, events
-        from trollius.py33_exceptions import reraise
-
-    ConnectionRefusedError = asyncio.ConnectionRefusedError
-    ConnectionResetError = asyncio.ConnectionResetError
-
-
 __all__ = ['get_event_loop',
            'new_event_loop',
            'asyncio',
            'get_actor',
+           'isfuture',
            'is_mainthread',
            'process_data',
            'thread_data',
@@ -62,9 +22,64 @@ __all__ = ['get_event_loop',
            'NOTHING',
            'SELECTORS',
            'appengine',
+           'Future',
            'ConnectionRefusedError',
            'ConnectionResetError',
-           'reraise']
+           'reraise',
+           'From',
+           'async',
+           'sleep',
+           'iscoroutine']
+
+# Dance between different versions. So boring!
+appengine = False
+
+if platform.is_appengine:   # pragma    nocover
+    from . import appengine as asyncio
+    trollius = asyncio
+    _PENDING = 'PENDING'
+    _CANCELLED = 'CANCELLED'
+    _FINISHED = 'FINISHED'
+    _FUTURE_CLASSES = asyncio._FUTURE_CLASSES
+    _EVENT_LOOP_CLASSES = ()
+    BaseEventLoop = asyncio.BaseEventLoop
+    _StopError = asyncio._StopError
+    appengine = True
+    reraise = asyncio.reraise
+
+else:
+
+    # Set the debug flags before importing asyncio
+    if '--debug' in sys.argv:   # pragma    nocover
+        os.environ['PYTHONASYNCIODEBUG'] = 'debug'
+        os.environ['TROLLIUSDEBUG'] = 'debug'
+
+    import trollius
+
+    try:
+        import asyncio
+    except ImportError:     # pragma    nocover
+        asyncio = trollius
+
+    from trollius.futures import (_PENDING, _CANCELLED, _FINISHED,
+                                  _FUTURE_CLASSES)
+    from trollius.base_events import BaseEventLoop, _StopError
+    from trollius import selectors, events
+    from trollius.py33_exceptions import reraise
+
+    _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,
+                           trollius.AbstractEventLoop)
+
+Future = trollius.Future
+From = trollius.From
+Return = trollius.Return
+async = trollius.async
+sleep = trollius.sleep
+iscoroutine = trollius.iscoroutine
+ConnectionRefusedError = trollius.ConnectionRefusedError
+ConnectionResetError = trollius.ConnectionResetError
+
+isfuture = lambda x: isinstance(x, _FUTURE_CLASSES)
 
 
 LOGGER = logging.getLogger('pulsar')

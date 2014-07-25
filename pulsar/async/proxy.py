@@ -60,6 +60,7 @@ class command:
 
 
 class ActorIdentity(object):
+    aid = None
 
     def identity(self):
         return self.aid

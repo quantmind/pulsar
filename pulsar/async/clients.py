@@ -2,7 +2,7 @@ from functools import reduce
 
 from pulsar.utils.internet import is_socket_closed
 
-from .access import asyncio
+from .access import asyncio, From
 from .futures import coroutine_return, AsyncObject, future_timeout
 from .protocols import Producer
 
@@ -89,22 +89,23 @@ class Pool(AsyncObject):
         # wait for one to be available
         elif self.in_use + self._connecting >= queue._maxsize:
             if self._timeout:
-                connection = yield future_timeout(queue.get(), self._timeout)
+                connection = yield From(future_timeout(queue.get(),
+                                                       self._timeout))
             else:
-                connection = yield queue.get()
+                connection = yield From(queue.get())
         else:   # must create a new connection
             self._connecting += 1
             try:
-                connection = yield self._creator()
+                connection = yield From(self._creator())
             finally:
                 self._connecting -= 1
         # None signal that a connection was removed form the queue
         # Go again
         if connection is None:
-            connection = yield self._get()
+            connection = yield From(self._get())
         else:
             if self.is_connection_closed(connection):
-                connection = yield self._get()
+                connection = yield From(self._get())
             else:
                 self._in_use_connections.add(connection)
         coroutine_return(connection)
@@ -188,7 +189,7 @@ class PoolConnection(object):
     def checkout(cls, pool):
         '''Checkout a new connection from ``pool``.
         '''
-        connection = yield pool._get()
+        connection = yield From(pool._get())
         coroutine_return(cls(pool, connection))
 
 
@@ -218,8 +219,8 @@ class AbstractClient(Producer):
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(address, tuple):
             host, port = address
-            _, protocol = yield self._loop.create_connection(
-                protocol_factory, host, port, **kw)
+            _, protocol = yield From(self._loop.create_connection(
+                protocol_factory, host, port, **kw))
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))
@@ -250,7 +251,7 @@ class AbstractUdpClient(Producer):
         '''Helper method for creating a connection to an ``address``.
         '''
         protocol_factory = protocol_factory or self.create_protocol
-        _, protocol = yield self._loop.create_datagram_endpoint(
-            protocol_factory, **kw)
-        yield protocol.event('connection_made')
+        _, protocol = yield From(self._loop.create_datagram_endpoint(
+            protocol_factory, **kw))
+        yield From(protocol.event('connection_made'))
         coroutine_return(protocol)

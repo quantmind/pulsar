@@ -98,7 +98,8 @@ via the ``_loop`` attribute::
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
-from pulsar import async, Http404, coroutine_return, appengine
+from pulsar import (From, Http404, coroutine_return, isfuture,
+                    get_event_loop, task, async)
 from pulsar.utils.log import LocalMixin, local_method
 
 from .utils import handle_wsgi_error
@@ -140,48 +141,81 @@ class WsgiHandler(object):
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
         environ['error.handlers'] = self.error_handlers
-        if appengine:
-            return self._appengine(environ, start_response)
+        response = AsyncResponse(environ, start_response,
+                                 iter(self.middleware),
+                                 iter(self.response_middleware))
+        return response()
+
+
+class AsyncResponse(object):
+
+    def __init__(self, environ, start_response, middleware,
+                 response_middleware):
+        self.environ = environ
+        self.start_response = start_response
+        self.middleware = middleware
+        self.response_middleware = response_middleware
+
+    @property
+    def _loop(self):
+        c = self.environ.get('pulsar.connection')
+        return c._loop if c else get_event_loop()
+
+    def __call__(self, resp=None, exc=None):
+        try:
+            try:
+                while not exc and resp is None:
+                    handler = next(self.middleware)
+                    resp = handler(self.environ, self.start_response)
+                    if resp:
+                        try:
+                            resp = async(resp, loop=self._loop)
+                            return self._async(self, resp, True)
+                        except TypeError:
+                            pass
+            except StopIteration:
+                pass
+            if not exc and resp is None:
+                raise Http404
+        except Exception as exc:
+            resp = handle_wsgi_error(self.environ, exc)
         else:
-            c = environ.get('pulsar.connection')
-            loop = c._loop if c else None
-            return async(self._call(environ, start_response), loop)
-
-    def _call(self, environ, start_response):
-        resp = None
-        try:
-            for middleware in self.middleware:
-                resp = yield middleware(environ, start_response)
-                if resp is not None:
-                    break
-            if resp is None:
-                raise Http404
-        except Exception as exc:
-            resp = yield handle_wsgi_error(environ, exc)
+            if exc:
+                resp = handle_wsgi_error(self.environ, exc)
+        #
         if isinstance(resp, WsgiResponse):
-            # The response is a WSGIResponse
-            for middleware in self.response_middleware:
-                resp = yield middleware(environ, resp)
-            start_response(resp.status, resp.get_headers())
-        coroutine_return(resp)
+            # Response middleware only if response is a pulsar one
+            return self._response(resp)
+        else:
+            return resp
 
-    def _appengine(self, environ, start_response):
-        resp = None
+    def _response(self, resp=None):
         try:
-            for middleware in self.middleware:
-                resp = middleware(environ, start_response)
-                if resp is not None:
-                    break
-            if resp is None:
-                raise Http404
-        except Exception as exc:
-            resp = handle_wsgi_error(environ, exc)
-        if isinstance(resp, WsgiResponse):
-            # The response is a WSGIResponse
-            for middleware in self.response_middleware:
-                resp = middleware(environ, resp)
-            start_response(resp.status, resp.get_headers())
+            handler = next(self.response_middleware)
+            resp = handler(self.environ, resp)
+            try:
+                resp = async(resp, loop=self._loop)
+                return self._async(self._response, resp)
+            except TypeError:
+                pass
+        except StopIteration:
+            pass
+        self.start_response(resp.status, resp.get_headers())
         return resp
+
+    @task
+    def _async(self, callable, future, safe=False):
+        while isfuture(future):
+            kw = {}
+            try:
+                resp = yield From(future)
+            except Exception as exc:
+                if not safe:
+                    raise
+                future = callable(exc=exc)
+            else:
+                future = callable(resp)
+        coroutine_return(future)
 
 
 class LazyWsgi(LocalMixin):

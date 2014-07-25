@@ -2,7 +2,7 @@ from functools import partial
 from collections import namedtuple
 from copy import copy
 
-from pulsar import OneTime, Future
+from pulsar import OneTime, Future, From
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.internet import is_tls
@@ -208,10 +208,10 @@ class Tunneling:
         loop._make_ssl_transport(sock, connection, request._ssl,
                                  waiter, server_side=False,
                                  server_hostname=request._netloc)
-        yield waiter
+        yield From(waiter)
         response = connection.current_consumer()
         response.start(request)
-        yield response.on_finished
+        yield From(response.on_finished)
         if response.request_again:
             response = response.request_again
         prev_response.request_again = response

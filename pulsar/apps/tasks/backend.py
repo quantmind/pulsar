@@ -82,7 +82,7 @@ from functools import partial
 from datetime import datetime, timedelta
 from hashlib import sha1
 
-from pulsar import (task, async, EventHandler, PulsarException,
+from pulsar import (task, async, EventHandler, PulsarException, yield_from,
                     Future, coroutine_return, future_timeout)
 from pulsar.utils.pep import itervalues
 from pulsar.utils.security import gen_unique_id
@@ -396,16 +396,17 @@ class TaskBackend(EventHandler):
                 if task.done():  # task done, simply return it
                     done = callbacks.pop(task_id, None)
                     if done:
-                        done.set_result(task)
+                        done.set_result(task_id)
                 else:
                     done = callbacks.get(task_id)
                     if not done:
                         # No future, create one
                         callbacks[task_id] = done = Future(loop=self._loop)
-                    task = yield done
+                    yield done
+                    task = yield self.get_task(task_id)
                 coroutine_return(task)
 
-        fut = async(_(task_id), loop=self._loop)
+        fut = async(yield_from(_(task_id)), loop=self._loop)
         return future_timeout(fut, timeout) if timeout else fut
 
     def get_tasks(self, ids):
@@ -419,7 +420,7 @@ class TaskBackend(EventHandler):
         # pubsub channels names from event names
         channels = tuple((self.channel(name) for name in self.events))
         pubsub.subscribe(*channels)
-        self.bind_event('task_done', self.task_done_callback)
+        self.bind_event('task_done', self._task_done_callback)
         return pubsub
 
     # #######################################################################
@@ -592,7 +593,8 @@ class TaskBackend(EventHandler):
                     if task:    # Got a new task
                         self.processed += 1
                         self.concurrent_tasks.add(task['id'])
-                        executor.submit(self._execute_task, worker, task)
+                        coro = self._execute_task(worker, task)
+                        executor.submit(yield_from, coro)
             else:
                 self.logger.debug('%s concurrent requests. Cannot poll.',
                                   self.num_concurrent_tasks)
@@ -665,13 +667,15 @@ class TaskBackend(EventHandler):
             entries[name] = SchedulerEntry(name, every, t.anchor)
         return entries
 
-    def task_done_callback(self, task_id, exc=None):
+    def _task_done_callback(self, task_id, exc=None):
         # Got a task_id from the ``<name>_task_done`` channel.
         # Check if a ``callback`` is available in the :attr:`callbacks`
         # dictionary. If so fire the callback with the ``task`` instance
-        # corresponsding to the input ``task_id``.
+        # corresponding to the input ``task_id``.
         # If a callback is not available, it must have been fired already
-        self.wait_for_task(task_id)
+        done = self.callbacks.pop(task_id, None)
+        if done:
+            done.set_result(task_id)
 
     def __call__(self, channel, message):
         # PubSub callback
@@ -767,6 +771,7 @@ class PulsarTaskBackend(TaskBackend):
     def store_client(self):
         return self.store.client()
 
+    @task
     def maybe_queue_task(self, task):
         free = True
         store = self.store
@@ -783,6 +788,7 @@ class PulsarTaskBackend(TaskBackend):
         else:
             coroutine_return()
 
+    @task
     def get_task(self, task_id=None):
         store = self.store
         if not task_id:

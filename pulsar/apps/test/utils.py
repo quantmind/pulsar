@@ -37,6 +37,7 @@ import gc
 import logging
 import unittest
 from inspect import isclass
+from functools import partial
 
 try:
     from unittest.case import _ExpectedFailure as ExpectedFailure
@@ -46,7 +47,8 @@ except ImportError:
 import pulsar
 from pulsar import (get_actor, send, multi_async, async, future_timeout,
                     TcpServer, coroutine_return, new_event_loop, task,
-                    format_traceback, ImproperlyConfigured)
+                    format_traceback, ImproperlyConfigured, Future,
+                    yield_from, iscoroutine, chain_future)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.data import create_store
@@ -95,25 +97,38 @@ class TestCallable(object):
     __str__ = __repr__
 
     def __call__(self, actor):
-        result = async(self._call(actor), loop=pulsar.get_thread_loop())
-        return future_timeout(result, self.timeout) if self.timeout else result
-
-    def _call(self, actor):
-        # Coroutine to run an asynchronous test function
         __skip_traceback__ = True
         test = self.test
         if self.istest:
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(self.test)
         test_function = getattr(test, self.method_name)
-        failure = None
         try:
-            yield test_function()
+            result = test_function()
         except Exception as exc:
-            failure = TestFailure(exc)
+            result = TestFailure(exc)
+        else:
+            # Wraps a generator with yield_form
+            timeout = self.timeout
+            if iscoroutine(result):
+                result = yield_from(result, timeout)
+                timeout = None
+            try:
+                result = future_timeout(async(result), timeout)
+                result.add_done_callback(partial(self._finish, actor))
+                return chain_future(result, callback=self._none)
+            except TypeError:
+                result = None
+        self._finish(actor)
+        return result
+
+    def _finish(self, actor, fut=None):
+        # Callback
         if self.istest:
             actor.app.runner.after_test_function_run(self.test)
-        coroutine_return(failure)
+
+    def _none(self, _):
+        pass
 
 
 class SafeTest(object):
@@ -232,11 +247,14 @@ class AsyncAssert(object):
         return AsyncAssert(instance)
 
     def __getattr__(self, name):
+
+        @task
         def _(*args, **kwargs):
             __skip_traceback__ = True
             args = yield multi_async(args)
             result = yield getattr(self.test, name)(*args, **kwargs)
             coroutine_return(result)
+
         return _
 
     @task
@@ -273,8 +291,10 @@ class ActorTestMixin(object):
             self._spawned = []
         return self._spawned
 
+    @task
     def spawn_actor(self, concurrency=None, **kwargs):
-        '''Spawn a new actor and perform some tests.'''
+        '''Spawn a new actor and perform some tests
+        '''
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
@@ -288,10 +308,7 @@ class ActorTestMixin(object):
 
     def stop_actors(self, *args):
         all = args or self.all_spawned
-        if len(all) == 1:
-            return send(all[0], 'stop')
-        elif all:
-            return multi_async((send(a, 'stop') for a in all))
+        return multi_async((send(a, 'stop') for a in all))
 
     def tearDown(self):
         return self.stop_actors()
@@ -299,7 +316,7 @@ class ActorTestMixin(object):
 
 def inject_async_assert(obj):
     tcls = obj if isclass(obj) else obj.__class__
-    if not hasattr(tcls, 'async'):
+    if not hasattr(tcls, '_loop'):
         tcls._loop = pulsar.get_event_loop()
         tcls.async = AsyncAssert(tcls)
 

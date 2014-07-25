@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from pulsar import wait_complete
+from pulsar import task
 from pulsar.utils.pep import to_string, iteritems
 
 
@@ -214,7 +214,7 @@ class Query(object):
         follows the foreign-key relationship ``related``'''
         return self
 
-    @wait_complete
+    @task
     def count(self):
         '''Count the number of objects selected by this :class:`Query`.
 
@@ -223,13 +223,13 @@ class Query(object):
         matched elements.'''
         return self.compiled().count()
 
-    @wait_complete
+    @task
     def all(self):
         '''All objects selected by this :class:`Query`.
         '''
         return self.compiled().all()
 
-    @wait_complete
+    @task
     def delete(self):
         '''Delete all objects selected by this :class:`.Query`.
         '''

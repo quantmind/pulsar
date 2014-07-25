@@ -51,7 +51,7 @@ Middleware in Executor
 import re
 
 import pulsar
-from pulsar import Future, async, get_event_loop
+from pulsar import isfuture, async, get_event_loop, From
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -105,8 +105,8 @@ def wait_for_body_middleware(environ, start_response=None):
 def _wait_for_body_middleware(environ, start_response):
     stream = environ['wsgi.input']
     chunk = stream.read()
-    if isinstance(chunk, Future):
-        chunk = yield chunk
+    if isfuture(chunk):
+        chunk = yield From(chunk)
     environ['wsgi.input'] = BytesIO(chunk)
 
 

@@ -4,7 +4,7 @@ from collections import deque
 import greenlet
 from greenlet import getcurrent
 
-from pulsar import Future, get_event_loop, AsyncObject, task
+from pulsar import isfuture, Future, From, get_event_loop, AsyncObject, task
 
 
 _DEFAULT_WORKERS = 100
@@ -75,8 +75,8 @@ class GreenPool(AsyncObject):
         # Run in the main greenlet of the evnet-loop thread
         greenlet = self._available.pop()
         result = greenlet.switch(task)
-        while isinstance(result, Future):
-            result = greenlet.switch((yield result))
+        while isfuture(result):
+            result = greenlet.switch((yield From(result)))
 
     def _put(self, task=None):
         # Run in the main greenlet of the evnet-loop thread

@@ -1,14 +1,18 @@
 '''At the moment this module is just an Hack to get pulsar
 imported in the google appengine. It may become better in the future.
 '''
+import time
+
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import eventloop
+
+from pulsar.utils.pep import identity
 
 get_event_loop = eventloop.get_event_loop
 selectors = None
 ConnectionRefusedError = None
 ConnectionResetError = None
-
+From = identity
 
 class Future(ndb.Future):
 
@@ -21,6 +25,7 @@ class Future(ndb.Future):
 
 
 Task = Future
+_FUTURE_CLASSES = (Future,)
 
 
 class CancelledError(RuntimeError):
@@ -63,3 +68,15 @@ class Queue(object):
 
 def reraise(tp, value, tb=None):
     raise value
+
+
+def async(core_or_future, loop=None):
+    raise TypeError
+
+
+def sleep(interval, result=None, loop=None):
+    time.sleep(interval)
+    return result
+
+def iscoroutine(value):
+    return False

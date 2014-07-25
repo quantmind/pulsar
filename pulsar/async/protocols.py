@@ -3,10 +3,10 @@ import sys
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, in_loop, task, Future, asyncio
+from .futures import multi_async, in_loop, task, Future
 from .events import EventHandler
 from .mixins import FlowControl, Timeout
-from .access import (asyncio, get_event_loop, new_event_loop,
+from .access import (asyncio, get_event_loop, new_event_loop, From,
                      ConnectionResetError)
 
 
@@ -577,21 +577,21 @@ class TcpServer(Producer):
                 if sockets:
                     server = None
                     for sock in sockets:
-                        srv = yield create_server(self.create_protocol,
-                                                  sock=sock,
-                                                  backlog=backlog,
-                                                  ssl=sslcontext)
+                        srv = yield From(create_server(self.create_protocol,
+                                                       sock=sock,
+                                                       backlog=backlog,
+                                                       ssl=sslcontext))
                         if server:
                             server.sockets.extend(srv.sockets)
                         else:
                             server = srv
                 else:
                     if isinstance(address, tuple):
-                        server = yield create_server(self.create_protocol,
-                                                     host=address[0],
-                                                     port=address[1],
-                                                     backlog=backlog,
-                                                     ssl=sslcontext)
+                        server = yield From(create_server(self.create_protocol,
+                                                          host=address[0],
+                                                          port=address[1],
+                                                          backlog=backlog,
+                                                          ssl=sslcontext))
                     else:
                         raise NotImplementedError
                 self._server = server
@@ -620,8 +620,8 @@ class TcpServer(Producer):
             if self._server:
                 server, self._server = self._server, None
                 server.close()
-                yield None
-                yield self._close_connections()
+                yield From(None)
+                yield From(self._close_connections())
             self.fire_event('stop')
 
     def info(self):
@@ -725,8 +725,9 @@ class DatagramServer(Producer):
                         proto = self.create_protocol()
                         transports.append(transport(self._loop, proto))
                 else:
-                    transport, _ = yield self._loop.create_datagram_endpoint(
-                        self.protocol_factory, local_addr=address)
+                    transport, _ = yield From(
+                        self._loop.create_datagram_endpoint(
+                            self.protocol_factory, local_addr=address))
                     transports.append(transport)
                 self._transports = transports
                 self._started = self._loop.time()

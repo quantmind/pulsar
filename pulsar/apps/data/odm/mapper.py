@@ -1,6 +1,6 @@
 from inspect import ismodule
 
-from pulsar import EventHandler, multi_async, wait_complete
+from pulsar import EventHandler, multi_async, task
 from pulsar.utils.pep import native_str
 from pulsar.utils.importer import import_module
 
@@ -254,11 +254,11 @@ class Mapper(EventHandler):
         return list(self._register_applications(applications, models,
                                                 stores))
 
-    @wait_complete
+    @task
     def search(self, *kw):
         raise NotImplementedError
 
-    @wait_complete
+    @task
     def create_tables(self, remove_existing=False):
         '''Loop though :attr:`registered_models` and issue the
         :meth:`.Manager.create_table` method.'''
@@ -267,7 +267,7 @@ class Mapper(EventHandler):
             executed.append(manager.create_table(remove_existing))
         return multi_async(executed, loop=self._loop)
 
-    @wait_complete
+    @task
     def drop_tables(self):
         '''Loop though :attr:`registered_models` and issue the
         :meth:`.Manager.drop_table` method.'''

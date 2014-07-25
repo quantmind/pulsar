@@ -182,6 +182,8 @@ def media_libraries():
                 response = http.get(_libs_url)
                 _media_libraries = response.json()
             except Exception:   # pragma    nocover
+                http.logger.error('Could not import media library',
+                                  exc_info=True)
                 _media_libraries = {'libs': {}, 'deps': {}}
     return _media_libraries
 
