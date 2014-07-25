@@ -148,6 +148,8 @@ class WsgiHandler(object):
 
 
 class AsyncResponse(object):
+    __slots__ = ('environ', 'start_response',
+                 'middleware', 'response_middleware')
 
     def __init__(self, environ, start_response, middleware,
                  response_middleware):
@@ -156,25 +158,22 @@ class AsyncResponse(object):
         self.middleware = middleware
         self.response_middleware = response_middleware
 
-    @property
-    def _loop(self):
-        c = self.environ.get('pulsar.connection')
-        return c._loop if c else get_event_loop()
-
     def __call__(self, resp=None, exc=None):
         try:
-            try:
-                while not exc and resp is None:
+            while not exc and resp is None:
+                try:
                     handler = next(self.middleware)
+                except StopIteration:
+                    break
+                else:
                     resp = handler(self.environ, self.start_response)
-                    if resp:
+                    if resp is not None:
                         try:
-                            resp = async(resp, loop=self._loop)
-                            return self._async(self, resp, True)
+                            resp = async(resp)
                         except TypeError:
                             pass
-            except StopIteration:
-                pass
+                        else:
+                            return self._async(self, resp, True)
             if not exc and resp is None:
                 raise Http404
         except Exception as exc:
@@ -208,7 +207,7 @@ class AsyncResponse(object):
         while isfuture(future):
             kw = {}
             try:
-                resp = yield From(future)
+                resp = yield future
             except Exception as exc:
                 if not safe:
                     raise

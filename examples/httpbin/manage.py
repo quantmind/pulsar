@@ -22,8 +22,7 @@ except ImportError:     # pragma    nocover
     sys.path.append('../../')
     from pulsar.utils.pep import ispy3k, range
 
-from pulsar import (HttpRedirect, HttpException, version, JAPANESE,
-                    CHINESE, coroutine_return)
+from pulsar import HttpRedirect, HttpException, version, JAPANESE, CHINESE
 from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
                                   ENCODE_BODY_METHODS)
 from pulsar.utils.html import escape
@@ -81,7 +80,7 @@ class HttpBin(wsgi.Router):
                     a.addClass(method)
             li = Html('li', a, ' %s' % router.getparam('title', ''))
             ul.append(li)
-        title = 'Pulsar HttpBin'
+        title = 'Pulsar'
         html = request.html_document
         html.head.title = title
         html.head.links.append('httpbin.css')
@@ -90,7 +89,7 @@ class HttpBin(wsgi.Router):
         html.head.scripts.append('httpbin.js')
         ul = ul.render(request)
         templ, _, _ = asset('template.html')
-        body = templ % (title, JAPANESE, CHINESE, version, ul, pyversion)
+        body = templ % (title, JAPANESE, CHINESE, version, pyversion, ul)
         html.body.append(body)
         return html.http_response(request)
 
@@ -127,14 +126,13 @@ class HttpBin(wsgi.Router):
            title='Returns a preset size of data (limit at 8MB)')
     def getsize(self, request):
         size = request.urlargs['size']
-        data = {'size': size,
-                'data': ''.join(('d' for n in range(size)))}
+        data = {'size': size, 'data': 'd' * size}
         return self.info_data_response(request, **data)
 
     @route(title='Returns gzip encoded data')
     def gzip(self, request):
         response = self.info_data_response(request, gzipped=True)
-        coroutine_return(GZipMiddleware(10)(request.environ, response))
+        return GZipMiddleware(10)(request.environ, response)
 
     @route(title='Returns cookie data')
     def cookies(self, request):
@@ -288,7 +286,7 @@ class HttpBin(wsgi.Router):
             data.update((('args', dict(args)),
                          ('files', dict(jfiles))))
         data.update(params)
-        coroutine_return(data)
+        return data
 
     def getheaders(self, request):
         headers = Headers(kind='client')

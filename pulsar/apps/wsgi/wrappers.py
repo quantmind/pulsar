@@ -254,9 +254,6 @@ class WsgiResponse(object):
         else:
             return iter(self.content)
 
-    def __len__(self):
-        return len(self.content)
-
     def close(self):
         '''Close this response, required by WSGI
         '''
