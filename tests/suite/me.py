@@ -98,13 +98,13 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(loop_tid, current_thread().ident)
         yield None
         self.assertEqual(loop_tid, current_thread().ident)
-        d = Future()
+        d = Future(loop=worker._loop)
         # We are calling back the future in the event_loop which is on
         # a separate thread
-
         def _callback():
             d.set_result(current_thread().ident)
-        worker._loop.call_later(0.2, _callback)
+        worker._loop.call_soon_threadsafe(
+            worker._loop.call_later, 0.2, _callback)
         result = yield d
         self.assertEqual(worker.tid, result)
         self.assertNotEqual(worker.tid, current_thread().ident)

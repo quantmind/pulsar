@@ -1,6 +1,6 @@
 from functools import partial
 
-from pulsar import task, in_loop, Protocol, From
+from pulsar import task, Protocol, From
 from pulsar.apps import data
 
 
@@ -57,7 +57,7 @@ class PubSub(data.PubSub):
     def psubscribe(self, pattern, *patterns):
         return self._subscribe('PSUBSCRIBE', pattern, *patterns)
 
-    @in_loop
+    @task
     def punsubscribe(self, *patterns):
         if self._connection:
             self._connection.execute('PUNSUBSCRIBE', *patterns)
@@ -65,14 +65,14 @@ class PubSub(data.PubSub):
     def subscribe(self, channel, *channels):
         return self._subscribe('SUBSCRIBE', channel, *channels)
 
-    @in_loop
+    @task
     def unsubscribe(self, *channels):
         '''Un-subscribe from a list of ``channels``.
         '''
         if self._connection:
             self._connection.execute('UNSUBSCRIBE', *channels)
 
-    @in_loop
+    @task
     def close(self):
         '''Stop listening for messages.
         '''

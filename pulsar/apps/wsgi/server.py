@@ -19,7 +19,7 @@ import socket
 from wsgiref.handlers import format_date_time
 
 import pulsar
-from pulsar import (reraise, HttpException, ProtocolError, Future, in_loop,
+from pulsar import (reraise, HttpException, ProtocolError, Future, task,
                     From, chain_future)
 from pulsar.utils.pep import is_string, native_str
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
@@ -436,7 +436,7 @@ class HttpServerResponse(ProtocolConsumer):
 
     ########################################################################
     #    INTERNALS
-    @in_loop
+    @task
     def _response(self, environ):
         exc_info = None
         response = None

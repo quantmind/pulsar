@@ -23,6 +23,4 @@ assert task3.name == 'foo'
 
 objs = store.table_info(Task)
 
-store.
-
 ok = models.drop_tables()

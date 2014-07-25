@@ -3,11 +3,10 @@ import sys
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, in_loop, task, Future
+from .futures import multi_async, task, Future
 from .events import EventHandler
 from .mixins import FlowControl, Timeout
-from .access import (asyncio, get_event_loop, new_event_loop, From,
-                     ConnectionResetError)
+from .access import asyncio, get_io_loop, From, ConnectionResetError
 
 
 __all__ = ['ProtocolConsumer',
@@ -474,8 +473,7 @@ class Producer(EventHandler):
 
     def __init__(self, loop, protocol_factory=None, name=None,
                  max_requests=None):
-        loop = loop or get_event_loop() or new_event_loop()
-        super(Producer, self).__init__(loop)
+        super(Producer, self).__init__(get_io_loop(loop))
         self.protocol_factory = protocol_factory or self.protocol_factory
         self._name = name or self.__class__.__name__
         self._requests_processed = 0
@@ -741,7 +739,7 @@ class DatagramServer(Producer):
                 self.fire_event('start', exc=exc)
                 self.fire_event('stop')
 
-    @in_loop
+    @task
     def close(self):
         '''Stop serving the :attr:`.Server.sockets` and close all
         concurrent connections.

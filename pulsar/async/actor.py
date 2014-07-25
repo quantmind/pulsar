@@ -8,7 +8,7 @@ from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
 from pulsar.utils.pep import pickle
 
-from .futures import in_loop
+from .futures import task
 from .events import EventHandler
 from .threads import get_executor
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
@@ -235,7 +235,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
             self.state = ACTOR_STATES.STARTING
             self._run()
 
-    @in_loop
+    @task
     def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
         positional ``args`` and key-valued ``kwargs``.

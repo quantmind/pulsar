@@ -20,7 +20,6 @@ __all__ = ['CancelledError',
            'InvalidStateError',
            'coroutine_return',
            'maybe_async',
-           'force_async',
            'run_in_loop',
            'async',
            'add_errback',
@@ -29,7 +28,6 @@ __all__ = ['CancelledError',
            'task_callback',
            'multi_async',
            'async_while',
-           'in_loop',
            'task',
            'chain_future',
            'future_result_exc',
@@ -225,22 +223,6 @@ def maybe_async(value, loop=None):
         return value
 
 
-def force_async(value, loop=None):
-    '''Always return an asynchronous ``value``.
-
-    :parameter value: the value to convert to an asynchronous instance
-        if it needs to
-    :parameter loop: optional event loop
-    :return: a :class:`~asyncio.Future`
-    '''
-    try:
-        return async(value, loop=loop)
-    except TypeError:
-        future = Future(loop=loop)
-        future.set_result(value)
-        return future
-
-
 def task(function):
     '''Thread-safe decorator to run the a ``function``
     in the event loop.
@@ -302,25 +284,6 @@ def run_in_loop(_loop, callable, *args, **kwargs):
 
     _loop.call_soon_threadsafe(_)
     return next
-
-
-def in_loop(method):
-    '''Decorator to run a ``method`` in the :ref:`async object <async-object>`
-    event loop.
-
-    This ``decorator`` should be applied to methods of asynchronous classes.
-    Return a :class:`~asyncio.Future` running on the event loop of the
-    underlying object.
-    '''
-    @wraps(method)
-    def _(self, *args, **kwargs):
-        if self._loop != get_event_loop():
-            # Different event loop!
-            return run_in_loop(self._loop, method, self, *args, **kwargs)
-        else:
-            return force_async(method(self, *args, **kwargs), loop=self._loop)
-
-    return _
 
 
 def async_while(timeout, while_clause, *args):

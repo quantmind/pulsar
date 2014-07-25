@@ -1,5 +1,5 @@
 from pulsar import (EventHandler, InvalidOperation, chain_future, multi_async,
-                    in_loop)
+                    task)
 from pulsar.utils.pep import iteritems
 
 from .model import Model
@@ -156,7 +156,7 @@ class Transaction(EventHandler):
         return chain_future(executed, callback) if callback else executed
 
     # INTERNAL COMMIT METHOD
-    @in_loop
+    @task
     def _commit(self):
         # Run this method in the event loop so that it is thread safe
         executed = dict(((store, store.execute_transaction(commands)) for
