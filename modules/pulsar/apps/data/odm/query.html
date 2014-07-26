@@ -70,7 +70,7 @@
   <h1>Source code for pulsar.apps.data.odm.query</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">wait_complete</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">task</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">iteritems</span>
 
 
@@ -284,7 +284,7 @@
 <span class="sd">        follows the foreign-key relationship ``related``&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
-    <span class="nd">@wait_complete</span>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="Query.count"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.count">[docs]</a>    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Count the number of objects selected by this :class:`Query`.</span>
 
@@ -293,13 +293,13 @@
 <span class="sd">        matched elements.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 </div>
-    <span class="nd">@wait_complete</span>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="Query.all"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.all">[docs]</a>    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;All objects selected by this :class:`Query`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 </div>
-    <span class="nd">@wait_complete</span>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="Query.delete"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.query.Query.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Delete all objects selected by this :class:`.Query`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>

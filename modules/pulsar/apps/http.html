@@ -339,7 +339,7 @@
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">AbstractClient</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">Connection</span><span class="p">,</span>
-                    <span class="n">ProtocolConsumer</span><span class="p">)</span>
+                    <span class="n">ProtocolConsumer</span><span class="p">,</span> <span class="n">From</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">ispy3k</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">mapping_iterator</span>
@@ -1263,10 +1263,10 @@
                 <span class="n">request</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">scheme</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">netloc</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="p">):</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="o">=</span><span class="n">ssl</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="o">=</span><span class="n">ssl</span><span class="p">))</span>
         <span class="c"># Wait for the connection made event</span>
-        <span class="k">yield</span> <span class="n">connection</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">))</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
 
 </div>

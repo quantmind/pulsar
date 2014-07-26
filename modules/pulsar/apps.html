@@ -134,7 +134,7 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span> <span class="n">From</span><span class="p">,</span>
                     <span class="n">multi_async</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
@@ -162,14 +162,14 @@
 
 </div>
 <span class="k">def</span> <span class="nf">_get_remote_app</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">_get_app</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">_get_app</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
     <span class="n">coroutine_return</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">app</span><span class="p">()</span> <span class="k">if</span> <span class="n">cfg</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_get_app</span><span class="p">(</span><span class="n">arbiter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="n">monitor</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">monitor</span><span class="p">:</span>
-        <span class="n">cfg</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">monitor</span><span class="o">.</span><span class="n">start_event</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">start_event</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">safe</span><span class="p">:</span>
             <span class="n">coroutine_return</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -187,14 +187,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">monitor_info</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="n">monitor_stopping</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">when_monitor_start</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">monitor_task</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="n">app</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
         <span class="n">start_event</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">start_event</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
@@ -202,8 +202,8 @@
 
 <span class="k">def</span> <span class="nf">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+    <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
     <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 

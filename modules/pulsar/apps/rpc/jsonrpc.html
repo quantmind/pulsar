@@ -104,6 +104,7 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">request</span><span class="p">))</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>

@@ -77,7 +77,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">WritelnDecorator</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">pickle</span>
 
-<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">in_loop</span>
+<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">task</span>
 <span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">EventHandler</span>
 <span class="kn">from</span> <span class="nn">.threads</span> <span class="kn">import</span> <span class="n">get_executor</span>
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">ActorProxy</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">,</span> <span class="n">ActorIdentity</span>
@@ -304,11 +304,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">STARTING</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">()</span>
 </div>
-    <span class="nd">@in_loop</span>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="Actor.send"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Send a message to ``target`` to perform ``action`` with given</span>
 <span class="sd">        positional ``args`` and key-valued ``kwargs``.</span>
-<span class="sd">        Always return a :class:`asyncio.Future`.&#39;&#39;&#39;</span>
+<span class="sd">        Always return a :class:`~asyncio.Future`.&#39;&#39;&#39;</span>
         <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span> <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="s">&#39;monitor&#39;</span> <span class="k">else</span> <span class="n">target</span>
         <span class="n">mailbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mailbox</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">):</span>
@@ -317,7 +317,7 @@
             <span class="n">actor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">Actor</span><span class="p">):</span>
                 <span class="c"># this occur when sending a message from arbiter to monitors or</span>
-                <span class="c"># viceversa.</span>
+                <span class="c"># vice-versa.</span>
                 <span class="k">return</span> <span class="n">command_in_context</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">):</span>
                 <span class="n">mailbox</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span>

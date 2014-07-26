@@ -72,8 +72,9 @@
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
 
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">_EVENT_LOOP_CLASSES</span>
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Future</span><span class="p">,</span> <span class="n">maybe_async</span><span class="p">,</span> <span class="n">InvalidStateError</span><span class="p">,</span>
-                      <span class="n">future_result_exc</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">asyncio</span><span class="p">)</span>
+                      <span class="n">future_result_exc</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">)</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;EventHandler&#39;</span><span class="p">,</span> <span class="s">&#39;Event&#39;</span><span class="p">,</span> <span class="s">&#39;OneTime&#39;</span><span class="p">]</span>
@@ -216,7 +217,7 @@
     <span class="sd">&#39;&#39;&#39;Event names which occur several times.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">one_time_events</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">many_times_events</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">AbstractEventLoop</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">_EVENT_LOOP_CLASSES</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span>
         <span class="n">one</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span>
         <span class="k">if</span> <span class="n">one_time_events</span><span class="p">:</span>

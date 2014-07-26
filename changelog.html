@@ -74,9 +74,10 @@
             
   <div class="section" id="release-notes">
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-8-5-development">
-<h2>Ver. 0.8.5 - Development<a class="headerlink" href="#ver-0-8-5-development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-9-0-development">
+<h2>Ver. 0.9.0 - Development<a class="headerlink" href="#ver-0-9-0-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>Works with <tt class="docutils literal"><span class="pre">trollius</span></tt> 1.0</li>
 <li>Added <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a> and <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.Timeout" title="pulsar.async.mixins.Timeout"><tt class="xref py py-class docutils literal"><span class="pre">Timeout</span></tt></a> protocol mixins,
 <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a> now inherits from <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a></li>
 <li>Better handling of streaming responses by the wsgi server</li>
@@ -107,7 +108,6 @@ script during installation</li>
 <li>Better <a class="reference internal" href="api/utilities.html#pulsar.utils.slugify.slugify" title="pulsar.utils.slugify.slugify"><tt class="xref py py-func docutils literal"><span class="pre">slugify()</span></tt></a> function</li>
 <li><a class="reference internal" href="api/events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> requires a valid <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a>
 during initialisation</li>
-<li>Works with <tt class="docutils literal"><span class="pre">trollius</span></tt> 1.0</li>
 </ul>
 </div>
 <div class="section" id="ver-0-8-4-2014-jul-07">
@@ -202,13 +202,13 @@ imported first).</li>
 runs a callable in the event loop thread and returns a
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called back once the callable has
 a result/exception.</li>
-<li>Added <a class="reference internal" href="api/async.html#pulsar.async.futures.in_loop" title="pulsar.async.futures.in_loop"><tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt></a> and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators for
+<li>Added <tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt> and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators for
 member functions of <a class="reference internal" href="design.html#async-object"><em>async objects</em></a>.</li>
-<li><a class="reference internal" href="api/async.html#pulsar.async.futures.async" title="pulsar.async.futures.async"><tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt></a> is now a function, not a decorator.</li>
+<li><tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt> is now a function, not a decorator.</li>
 <li>Added the new <a class="reference internal" href="api/protocols.html#pulsar.async.clients.Pool" title="pulsar.async.clients.Pool"><tt class="xref py py-class docutils literal"><span class="pre">Pool</span></tt></a> class for managing a pool of asynchronous
 connection with a server.</li>
 <li>Embedding third-party asynchronous frameworks can be achieved via the
-new <a class="reference internal" href="api/async.html#pulsar.async.futures.add_async_binding" title="pulsar.async.futures.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a> function.</li>
+new <tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt> function.</li>
 <li>Removed <tt class="docutils literal"><span class="pre">Client</span></tt> class and replaced by <a class="reference internal" href="api/protocols.html#pulsar.async.clients.AbstractClient" title="pulsar.async.clients.AbstractClient"><tt class="xref py py-class docutils literal"><span class="pre">AbstractClient</span></tt></a> which
 in turns is a subclass of connections <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a>.</li>
 <li>Removed <tt class="docutils literal"><span class="pre">force_sync</span></tt> parameter when creating synchronous components.
@@ -685,7 +685,7 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Release Notes</a><ul>
-<li><a class="reference internal" href="#ver-0-8-5-development">Ver. 0.8.5 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-9-0-development">Ver. 0.9.0 - Development</a></li>
 <li><a class="reference internal" href="#ver-0-8-4-2014-jul-07">Ver. 0.8.4 - 2014-Jul-07</a></li>
 <li><a class="reference internal" href="#ver-0-8-3-2014-jun-23">Ver. 0.8.3 - 2014-Jun-23</a></li>
 <li><a class="reference internal" href="#ver-0-8-2-2014-may-30">Ver. 0.8.2 - 2014-May-30</a></li>

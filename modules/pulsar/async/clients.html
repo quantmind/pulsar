@@ -71,7 +71,7 @@
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">is_socket_closed</span>
 
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">From</span>
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">future_timeout</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Producer</span>
 
@@ -158,22 +158,23 @@
         <span class="c"># wait for one to be available</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">&gt;=</span> <span class="n">queue</span><span class="o">.</span><span class="n">_maxsize</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">:</span>
-                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">future_timeout</span><span class="p">(</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">)</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">future_timeout</span><span class="p">(</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+                                                       <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>   <span class="c"># must create a new connection</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_creator</span><span class="p">()</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_creator</span><span class="p">())</span>
             <span class="k">finally</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="c"># None signal that a connection was removed form the queue</span>
         <span class="c"># Go again</span>
         <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
+            <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_connection_closed</span><span class="p">(</span><span class="n">connection</span><span class="p">):</span>
-                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">())</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
@@ -257,7 +258,7 @@
 <div class="viewcode-block" id="PoolConnection.checkout"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.PoolConnection.checkout">[docs]</a>    <span class="k">def</span> <span class="nf">checkout</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Checkout a new connection from ``pool``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">pool</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">_get</span><span class="p">())</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">cls</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">connection</span><span class="p">))</span>
 
 </div></div>
@@ -287,8 +288,8 @@
         <span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">protocol_factory</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">address</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">protocol</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span>
-                <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">protocol</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span>
+                <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Could not connect to </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
                                       <span class="nb">str</span><span class="p">(</span><span class="n">address</span><span class="p">))</span>
@@ -319,9 +320,9 @@
         <span class="sd">&#39;&#39;&#39;Helper method for creating a connection to an ``address``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">protocol_factory</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">protocol</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_datagram_endpoint</span><span class="p">(</span>
-            <span class="n">protocol_factory</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="n">protocol</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">protocol</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_datagram_endpoint</span><span class="p">(</span>
+            <span class="n">protocol_factory</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>
+        <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">protocol</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">))</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">protocol</span><span class="p">)</span></div></div>
 </pre></div>
 

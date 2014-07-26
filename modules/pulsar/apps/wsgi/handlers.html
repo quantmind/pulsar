@@ -169,7 +169,8 @@
 <span class="sd">.. _WSGI: http://www.wsgi.org</span>
 <span class="sd">.. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span><span class="p">,</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">appengine</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">From</span><span class="p">,</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">isfuture</span><span class="p">,</span>
+                    <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">async</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_method</span>
 
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">handle_wsgi_error</span>
@@ -211,50 +212,82 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The WSGI callable&#39;&#39;&#39;</span>
         <span class="n">environ</span><span class="p">[</span><span class="s">&#39;error.handlers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_handlers</span>
-        <span class="k">if</span> <span class="n">appengine</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_appengine</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">)</span>
-            <span class="n">loop</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">_loop</span> <span class="k">if</span> <span class="n">c</span> <span class="k">else</span> <span class="bp">None</span>
-            <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">),</span> <span class="n">loop</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="n">resp</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">middleware</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">middleware</span><span class="p">:</span>
-                <span class="n">resp</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">resp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="k">break</span>
-            <span class="k">if</span> <span class="n">resp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">Http404</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">resp</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">WsgiResponse</span><span class="p">):</span>
-            <span class="c"># The response is a WSGIResponse</span>
-            <span class="k">for</span> <span class="n">middleware</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_middleware</span><span class="p">:</span>
-                <span class="n">resp</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">resp</span><span class="p">)</span>
-            <span class="n">start_response</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">resp</span><span class="o">.</span><span class="n">get_headers</span><span class="p">())</span>
-        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_appengine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="n">resp</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">middleware</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">middleware</span><span class="p">:</span>
-                <span class="n">resp</span> <span class="o">=</span> <span class="n">middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">resp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="k">break</span>
-            <span class="k">if</span> <span class="n">resp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">Http404</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">resp</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">WsgiResponse</span><span class="p">):</span>
-            <span class="c"># The response is a WSGIResponse</span>
-            <span class="k">for</span> <span class="n">middleware</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_middleware</span><span class="p">:</span>
-                <span class="n">resp</span> <span class="o">=</span> <span class="n">middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">resp</span><span class="p">)</span>
-            <span class="n">start_response</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">resp</span><span class="o">.</span><span class="n">get_headers</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">resp</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">AsyncResponse</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">,</span>
+                                 <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">middleware</span><span class="p">),</span>
+                                 <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_middleware</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">response</span><span class="p">()</span>
 
 </div>
+<span class="k">class</span> <span class="nc">AsyncResponse</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;environ&#39;</span><span class="p">,</span> <span class="s">&#39;start_response&#39;</span><span class="p">,</span>
+                 <span class="s">&#39;middleware&#39;</span><span class="p">,</span> <span class="s">&#39;response_middleware&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">,</span> <span class="n">middleware</span><span class="p">,</span>
+                 <span class="n">response_middleware</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">environ</span> <span class="o">=</span> <span class="n">environ</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span> <span class="o">=</span> <span class="n">start_response</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">middleware</span> <span class="o">=</span> <span class="n">middleware</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response_middleware</span> <span class="o">=</span> <span class="n">response_middleware</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">exc</span> <span class="ow">and</span> <span class="n">resp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">handler</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">middleware</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">resp</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">resp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">resp</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span> <span class="ow">and</span> <span class="n">resp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">Http404</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">resp</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="c">#</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">WsgiResponse</span><span class="p">):</span>
+            <span class="c"># Response middleware only if response is a pulsar one</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">resp</span>
+
+    <span class="k">def</span> <span class="nf">_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">handler</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_middleware</span><span class="p">)</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">resp</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">resp</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_response</span><span class="p">,</span> <span class="n">resp</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">resp</span><span class="o">.</span><span class="n">get_headers</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+    <span class="nd">@task</span>
+    <span class="k">def</span> <span class="nf">_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">while</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">future</span><span class="p">):</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">resp</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">future</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">safe</span><span class="p">:</span>
+                    <span class="k">raise</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="nb">callable</span><span class="p">(</span><span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="nb">callable</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="LazyWsgi"><a class="viewcode-back" href="../../../../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.LazyWsgi">[docs]</a><span class="k">class</span> <span class="nc">LazyWsgi</span><span class="p">(</span><span class="n">LocalMixin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :ref:`wsgi handler &lt;wsgi-handlers&gt;` which loads the actual</span>
 <span class="sd">    handler the first time it is called.</span>

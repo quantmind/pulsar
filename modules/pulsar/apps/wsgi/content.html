@@ -253,6 +253,8 @@
                 <span class="n">response</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_libs_url</span><span class="p">)</span>
                 <span class="n">_media_libraries</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
+                <span class="n">http</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Could not import media library&#39;</span><span class="p">,</span>
+                                  <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
                 <span class="n">_media_libraries</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;libs&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">{}}</span>
     <span class="k">return</span> <span class="n">_media_libraries</span>
 

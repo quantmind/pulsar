@@ -69,7 +69,7 @@
             
   <h1>Source code for pulsar.apps.rpc.mixins</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">task</span><span class="p">,</span> <span class="n">coroutine_return</span>
 
 <span class="kn">from</span> <span class="nn">.jsonrpc</span> <span class="kn">import</span> <span class="n">JSONRPC</span>
 
@@ -89,6 +89,7 @@
         <span class="sd">&#39;&#39;&#39;Echo the server.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">message</span>
 </div>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="PulsarServerCommands.rpc_server_info"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_server_info">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_server_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a dictionary of information regarding the server and workers.</span>
 

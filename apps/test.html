@@ -228,20 +228,32 @@ In addition, the following options are
 <span id="apps-test-sequential"></span><h3>sequential<a class="headerlink" href="#sequential" title="Permalink to this headline">¶</a></h3>
 <p>By default, test functions within a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a>
 are run in asynchronous fashion. This means that several test functions
-may be executed at once depending on their return values.
-By specifying the <a class="reference internal" href="../settings.html#setting-sequential"><em>&#8211;sequential</em></a> command line option,
-the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a>
-forces tests to be run in a sequential model, one after the other:</p>
+may be executed at once depending on their return values.</p>
+<p>By specifying the <a class="reference internal" href="../settings.html#setting-sequential"><em>&#8211;sequential</em></a> command line option,
+the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> forces test functions from a given
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> to be run in a sequential way,
+one after the other:</p>
 <div class="highlight-python"><div class="highlight"><pre>python runtests.py --sequential
 </pre></div>
 </div>
-<p>Alternatively, if you need to specify a Testcase which always runs its test
-functions in a sequential way, you can use the <a class="reference internal" href="#pulsar.apps.test.utils.sequential" title="pulsar.apps.test.utils.sequential"><tt class="xref py py-func docutils literal"><span class="pre">sequential()</span></tt></a> decorator:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">unittest</span><span class="p">,</span> <span class="n">sequential</span>
+<p>Alternatively, if you need to specify a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> which
+always runs its test functions in a sequential way, you can use
+the <a class="reference internal" href="#pulsar.apps.test.utils.sequential" title="pulsar.apps.test.utils.sequential"><tt class="xref py py-func docutils literal"><span class="pre">sequential()</span></tt></a> decorator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">sequential</span>
 
 <span class="nd">@sequential</span>
 <span class="k">class</span> <span class="nc">MyTestCase</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="o">...</span>
+</pre></div>
+</div>
+<p>Using the <tt class="docutils literal"><span class="pre">sequential</span></tt> option, does not mean only one test function
+is executed by the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> at a given time. Indeed, several
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> are executed at the same time and therefore
+each one of the may have one test function running.</p>
+<p>In order to run only one function at any time, the <tt class="docutils literal"><span class="pre">sequential</span></tt>
+option should be used in conjunction with
+<a class="reference internal" href="../settings.html#setting-concurrent-tasks"><em>&#8211;concurrent-tasks</em></a> option:</p>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py --sequential --concurrent-tasks 1
 </pre></div>
 </div>
 </div>
@@ -885,7 +897,7 @@ method.</p>
 <dl class="method">
 <dt id="pulsar.apps.test.utils.ActorTestMixin.spawn_actor">
 <tt class="descname">spawn_actor</tt><big>(</big><em>concurrency=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#ActorTestMixin.spawn_actor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin.spawn_actor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spawn a new actor and perform some tests.</p>
+<dd><p>Spawn a new actor and perform some tests</p>
 </dd></dl>
 
 </dd></dl>

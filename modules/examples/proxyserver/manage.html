@@ -116,7 +116,8 @@
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">add_errback</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">asyncio</span><span class="p">,</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span>
+                    <span class="n">add_errback</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">http</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_property</span>
@@ -159,12 +160,8 @@
 <span class="sd">        accessing upstream resources&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">(</span><span class="n">decompress</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">store_cookies</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 </div>
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="c"># The WSGI thing</span>
-        <span class="n">loop</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">_loop</span>
-        <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">,</span> <span class="n">loop</span><span class="p">),</span> <span class="n">loop</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
         <span class="n">uri</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;RAW_URI&#39;</span><span class="p">]</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;new request for </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">uri</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">uri</span> <span class="ow">or</span> <span class="n">uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>  <span class="c"># No proper uri, raise 404</span>
@@ -218,7 +215,6 @@
     <span class="n">_done</span> <span class="o">=</span> <span class="bp">False</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">_loop</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">environ</span> <span class="o">=</span> <span class="n">environ</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span> <span class="o">=</span> <span class="n">start_response</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
@@ -231,7 +227,7 @@
                 <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">QueueEmpty</span><span class="p">:</span>
                     <span class="k">break</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
     <span class="k">def</span> <span class="nf">pre_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="bp">True</span>
@@ -258,6 +254,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_done</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">data_processed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Receive data from the requesting HTTP client.&#39;&#39;&#39;</span>
         <span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get_status</span><span class="p">()</span>

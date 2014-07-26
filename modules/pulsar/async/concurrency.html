@@ -67,6 +67,7 @@
           <div class="body">
             
   <h1>Source code for pulsar.async.concurrency</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Process</span><span class="p">,</span> <span class="n">current_process</span>
@@ -246,7 +247,7 @@
 
 <span class="sd">        This is an internal method called periodically by the</span>
 <span class="sd">        :attr:`.Actor._loop` to ping the actor monitor.</span>
-<span class="sd">        If successful return a :class:`asyncio.Future` called</span>
+<span class="sd">        If successful return a :class:`~asyncio.Future` called</span>
 <span class="sd">        back with the acknowledgement from the monitor.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">next_periodic_task</span> <span class="o">=</span> <span class="bp">None</span>
@@ -343,7 +344,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">actor_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;does nothing&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;does nothing,&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -507,7 +508,8 @@
 
 
 <span class="k">class</span> <span class="nc">ActorThread</span><span class="p">(</span><span class="n">Concurrency</span><span class="p">,</span> <span class="n">Thread</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Actor on a thread in the master process.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Actor on a thread of the master process</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">_actor</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -515,10 +517,6 @@
 
     <span class="k">def</span> <span class="nf">stop_coverage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="k">pass</span>
-
-    <span class="k">def</span> <span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_actor</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_actor</span><span class="o">.</span><span class="n">_loop</span>
 
 
 <span class="n">concurrency_models</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;arbiter&#39;</span><span class="p">:</span> <span class="n">ArbiterConcurrency</span><span class="p">,</span>

@@ -450,9 +450,11 @@
 
         <span class="n">deflevel</span> <span class="o">=</span> <span class="n">get_level</span><span class="p">(</span><span class="n">namespaces</span><span class="p">[</span><span class="n">defname</span><span class="p">])</span>
         <span class="n">internal_level</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">deflevel</span><span class="p">,</span> <span class="n">internal_level</span><span class="p">)</span> <span class="k">if</span> <span class="n">deflevel</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="s">&#39;asyncio&#39;</span><span class="p">,</span> <span class="s">&#39;trollius&#39;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="s">&#39;asyncio&#39;</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">namespace</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespaces</span><span class="p">:</span>
                 <span class="n">namespaces</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">internal_level</span>
+        <span class="c"># Trollius same as asyncio</span>
+        <span class="n">namespaces</span><span class="p">[</span><span class="s">&#39;trollius&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">namespaces</span><span class="p">[</span><span class="s">&#39;asyncio&#39;</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespaces</span><span class="p">:</span>
             <span class="n">namespaces</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">namespaces</span><span class="p">[</span><span class="n">basename</span><span class="p">]</span>
@@ -869,7 +871,7 @@
 <span class="s">        Turn on debugging in the server.</span>
 
 <span class="s">        Set the log level to debug, limits the number of worker processes</span>
-<span class="s">        to 1 and changes some error handling that&#39;s sent to clients.</span>
+<span class="s">        to 1, set asyncio debug flag.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
 

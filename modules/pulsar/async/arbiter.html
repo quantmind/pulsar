@@ -160,9 +160,9 @@
     <span class="bp">self</span><span class="o">.</span><span class="n">collect_coverage</span><span class="p">()</span>
     <span class="n">exit_code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exit_code</span> <span class="ow">or</span> <span class="mi">0</span>
     <span class="k">if</span> <span class="n">exit_code</span> <span class="o">==</span> <span class="n">autoreload</span><span class="o">.</span><span class="n">EXIT_CODE</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&quot;Code changed, reloading server&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Code changed, reloading server&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&quot;Bye (exit code = </span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="n">exit_code</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Bye (exit code = </span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="n">exit_code</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">when_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>

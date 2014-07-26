@@ -75,7 +75,7 @@
 <span class="kn">import</span> <span class="nn">greenlet</span>
 <span class="kn">from</span> <span class="nn">greenlet</span> <span class="kn">import</span> <span class="n">getcurrent</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">isfuture</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">From</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">task</span>
 
 
 <span class="n">_DEFAULT_WORKERS</span> <span class="o">=</span> <span class="mi">100</span>
@@ -146,8 +146,8 @@
         <span class="c"># Run in the main greenlet of the evnet-loop thread</span>
         <span class="n">greenlet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_available</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
-        <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">yield</span> <span class="n">result</span><span class="p">))</span>
+        <span class="k">while</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">result</span><span class="p">)))</span>
 
     <span class="k">def</span> <span class="nf">_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c"># Run in the main greenlet of the evnet-loop thread</span>

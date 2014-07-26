@@ -68,7 +68,8 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.data.odm.transaction</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">InvalidOperation</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">multi_async</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">EventHandler</span><span class="p">,</span> <span class="n">InvalidOperation</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span>
+                    <span class="n">task</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
 
 <span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -207,10 +208,7 @@
 <span class="sd">            of  transaction</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">executed</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">store</span><span class="p">,</span> <span class="n">store</span><span class="o">.</span><span class="n">execute_transaction</span><span class="p">(</span><span class="n">commands</span><span class="p">))</span> <span class="k">for</span>
-                             <span class="n">store</span><span class="p">,</span> <span class="n">commands</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">)))</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="o">=</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commit</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InvalidOperation</span><span class="p">(</span><span class="s">&#39;Transaction already executed.&#39;</span><span class="p">)</span>
 </div>
@@ -222,12 +220,18 @@
 <span class="sd">            transaction.</span>
 <span class="sd">        :return: a :class:`~asyncio.Future`</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">callback</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_executed</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span></div></div>
+        <span class="n">executed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span>
+        <span class="k">if</span> <span class="n">executed</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">executed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span> <span class="k">if</span> <span class="n">callback</span> <span class="k">else</span> <span class="n">executed</span>
+
+    <span class="c"># INTERNAL COMMIT METHOD</span></div>
+    <span class="nd">@task</span>
+    <span class="k">def</span> <span class="nf">_commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Run this method in the event loop so that it is thread safe</span>
+        <span class="n">executed</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">store</span><span class="p">,</span> <span class="n">store</span><span class="o">.</span><span class="n">execute_transaction</span><span class="p">(</span><span class="n">commands</span><span class="p">))</span> <span class="k">for</span>
+                          <span class="n">store</span><span class="p">,</span> <span class="n">commands</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">executed</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

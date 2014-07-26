@@ -322,7 +322,7 @@ started. Calling this method more than once does nothing.</p>
 <tt class="descname">send</tt><big>(</big><em>target</em>, <em>action</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.send" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a message to <tt class="docutils literal"><span class="pre">target</span></tt> to perform <tt class="docutils literal"><span class="pre">action</span></tt> with given
 positional <tt class="docutils literal"><span class="pre">args</span></tt> and key-valued <tt class="docutils literal"><span class="pre">kwargs</span></tt>.
-Always return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a>.</p>
+Always return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -649,7 +649,7 @@ parameter <tt class="docutils literal"><span class="pre">&quot;hello</span> <spa
 <h3>ActorProxyFuture<a class="headerlink" href="#actorproxyfuture" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.proxy.ActorProxyFuture">
-<em class="property">class </em><tt class="descclassname">pulsar.async.proxy.</tt><tt class="descname">ActorProxyFuture</tt><big>(</big><em>*</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyFuture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyFuture" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.proxy.</tt><tt class="descname">ActorProxyFuture</tt><big>(</big><em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyFuture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyFuture" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> for an <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>.</p>
 <p>The callback will be an <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> which will be received once
 the remote <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is fully functional.</p>
@@ -859,7 +859,7 @@ results in a running state.</p>
 <dd><p>Implement the <a class="reference internal" href="../design.html#actor-periodic-task"><em>actor period task</em></a>.</p>
 <p>This is an internal method called periodically by the
 <a class="reference internal" href="#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></tt></a> to ping the actor monitor.
-If successful return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a> called
+If successful return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called
 back with the acknowledgement from the monitor.</p>
 </dd></dl>
 
@@ -925,7 +925,7 @@ the <a class="reference internal" href="#pulsar.async.arbiter.Arbiter" title="pu
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'INACTIVE': 1, 'STOPPING': 4, 'RUN': 3, 'CLOSE': 5, 'STARTING': 2, 'TERMINATE': 6, 'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'STOPPING': 4, 'RUN': 3, 'TERMINATE': 6, 'STARTING': 2, 'CLOSE': 5, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'INITIAL': 0, 'INACTIVE': 1}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>

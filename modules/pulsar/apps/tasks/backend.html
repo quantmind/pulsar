@@ -153,7 +153,7 @@
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">PulsarException</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">PulsarException</span><span class="p">,</span> <span class="n">yield_from</span><span class="p">,</span>
                     <span class="n">Future</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">future_timeout</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">itervalues</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
@@ -467,16 +467,17 @@
                 <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>  <span class="c"># task done, simply return it</span>
                     <span class="n">done</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
-                        <span class="n">done</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                        <span class="n">done</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">done</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
                         <span class="c"># No future, create one</span>
                         <span class="n">callbacks</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">done</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-                    <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">done</span>
+                    <span class="k">yield</span> <span class="n">done</span>
+                    <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
                 <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
-        <span class="n">fut</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="n">task_id</span><span class="p">),</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+        <span class="n">fut</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">yield_from</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="n">task_id</span><span class="p">)),</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">future_timeout</span><span class="p">(</span><span class="n">fut</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span> <span class="k">if</span> <span class="n">timeout</span> <span class="k">else</span> <span class="n">fut</span>
 </div>
     <span class="k">def</span> <span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
@@ -490,7 +491,7 @@
         <span class="c"># pubsub channels names from event names</span>
         <span class="n">channels</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">))</span>
         <span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="o">*</span><span class="n">channels</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;task_done&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_done_callback</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;task_done&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_done_callback</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">pubsub</span>
 
     <span class="c"># #######################################################################</span>
@@ -663,7 +664,8 @@
                     <span class="k">if</span> <span class="n">task</span><span class="p">:</span>    <span class="c"># Got a new task</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">processed</span> <span class="o">+=</span> <span class="mi">1</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">concurrent_tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">])</span>
-                        <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_execute_task</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+                        <span class="n">coro</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_task</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+                        <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">yield_from</span><span class="p">,</span> <span class="n">coro</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> concurrent requests. Cannot poll.&#39;</span><span class="p">,</span>
                                   <span class="bp">self</span><span class="o">.</span><span class="n">num_concurrent_tasks</span><span class="p">)</span>
@@ -736,13 +738,15 @@
             <span class="n">entries</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">SchedulerEntry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">every</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">anchor</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">entries</span>
 
-    <span class="k">def</span> <span class="nf">task_done_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_task_done_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c"># Got a task_id from the ``&lt;name&gt;_task_done`` channel.</span>
         <span class="c"># Check if a ``callback`` is available in the :attr:`callbacks`</span>
         <span class="c"># dictionary. If so fire the callback with the ``task`` instance</span>
-        <span class="c"># corresponsding to the input ``task_id``.</span>
+        <span class="c"># corresponding to the input ``task_id``.</span>
         <span class="c"># If a callback is not available, it must have been fired already</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_task</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="n">done</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="c"># PubSub callback</span>
@@ -838,6 +842,7 @@
     <span class="k">def</span> <span class="nf">store_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">client</span><span class="p">()</span>
 
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">maybe_queue_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
         <span class="n">free</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span>
@@ -854,6 +859,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">coroutine_return</span><span class="p">()</span>
 
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">task_id</span><span class="p">:</span>

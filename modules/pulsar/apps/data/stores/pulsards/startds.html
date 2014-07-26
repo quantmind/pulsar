@@ -69,7 +69,7 @@
             
   <h1>Source code for pulsar.apps.data.stores.pulsards.startds</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">asyncio</span>
+<span class="kn">from</span> <span class="nn">pulsar.async</span> <span class="kn">import</span> <span class="n">asyncio</span>
 
 <span class="k">if</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">appengine</span><span class="p">:</span>
     <span class="k">def</span> <span class="nf">start_store</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
@@ -77,10 +77,11 @@
 
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">when_monitor_start</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">get_application</span><span class="p">,</span>
-                        <span class="n">send</span><span class="p">)</span>
+                        <span class="n">task</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
     <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
     <span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="kn">import</span> <span class="n">PulsarDS</span>
 
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">start_pulsar_ds</span><span class="p">(</span><span class="n">arbiter</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="n">lock</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">arbiter</span><span class="p">,</span> <span class="s">&#39;lock&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">lock</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -97,6 +98,7 @@
         <span class="k">finally</span><span class="p">:</span>
             <span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="start_store"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.startds.start_store">[docs]</a>    <span class="k">def</span> <span class="nf">start_store</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Equivalent to :func:`.create_store` for most cases excepts when the</span>
 <span class="sd">        ``url`` is for a pulsar store not yet started.</span>
@@ -125,6 +127,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">host</span>
 
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">_start_store</span><span class="p">(</span><span class="n">monitor</span><span class="p">):</span>
         <span class="n">app</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">app</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">PulsarDS</span><span class="p">):</span>

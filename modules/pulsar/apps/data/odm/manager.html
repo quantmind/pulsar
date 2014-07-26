@@ -68,7 +68,7 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.data.odm.manager</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">wait_complete</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">add_callback</span><span class="p">,</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">add_callback</span><span class="p">,</span> <span class="n">task</span>
 
 <span class="kn">from</span> <span class="nn">.query</span> <span class="kn">import</span> <span class="n">AbstractQuery</span><span class="p">,</span> <span class="n">Query</span><span class="p">,</span> <span class="n">QueryError</span><span class="p">,</span> <span class="n">ModelNotFound</span>
 <span class="kn">from</span> <span class="nn">..store</span> <span class="kn">import</span> <span class="n">Command</span>
@@ -201,7 +201,7 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </div>
-    <span class="nd">@wait_complete</span>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="Manager.get"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.manager.Manager.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get a single model</span>
 <span class="sd">        &#39;&#39;&#39;</span>

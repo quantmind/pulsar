@@ -216,7 +216,7 @@
 
 <span class="kn">import</span> <span class="nn">greenlet</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">isfuture</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">From</span>
 
 <span class="kn">from</span> <span class="nn">.pool</span> <span class="kn">import</span> <span class="n">GreenPool</span><span class="p">,</span> <span class="n">RunInPool</span>
 <span class="kn">from</span> <span class="nn">.local</span> <span class="kn">import</span> <span class="n">local</span>
@@ -237,9 +237,9 @@
         <span class="c"># switch to the new greenlet</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c"># back to the parent</span>
-        <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+        <span class="k">while</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
             <span class="c"># keep on switching back to the greenlet if we get a Future</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">yield</span> <span class="n">result</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">result</span><span class="p">)))</span>
         <span class="c"># For some reason this line does not show in coverage reports</span>
         <span class="c"># but it is covered!</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>    <span class="c"># prgma nocover</span>
