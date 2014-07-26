@@ -224,16 +224,15 @@ def maybe_async(value, loop=None):
 
 
 def task(function):
-    '''Thread-safe decorator to run the a ``function``
-    in the event loop.
+    '''Thread-safe decorator to run a ``function`` in an event loop.
 
-    :param function: cab return coroutines, :class:`.asyncio.Future` or
-        synchronous data. Can be a method of
-        a :ref:`async object <async-object>`, in which case the loop
+    :param function: a callable which can return coroutines,
+        :class:`.asyncio.Future` or synchronous data. Can be a method of
+        an :ref:`async object <async-object>`, in which case the loop
         is given by the object ``_loop`` attribute.
     :return: a :class:`~asyncio.Future`
 
-    The coroutine is wrapped with the ``yield_from`` function.
+    The coroutine is wrapped with the :func:`yield_from` function.
     '''
     if isgeneratorfunction(function):
         wrapper = function
@@ -343,8 +342,8 @@ class Bench:
 
     def __call__(self, func, *args, **kwargs):
         self.start = self._loop.time()
-        self.result = MultiFuture(
-            self._loop, (func(*args, **kwargs) for t in range(self.times)))
+        data = (func(*args, **kwargs) for t in range(self.times))
+        self.result = multi_async(data, loop=self._loop)
         return chain_future(self.result, callback=self._done)
 
     def _done(self, result):

@@ -14,7 +14,7 @@ import sys
 import string
 import mimetypes
 from itertools import repeat, chain
-from random import choice, random
+from random import random
 
 try:
     from pulsar.utils.pep import ispy3k, range
@@ -63,11 +63,51 @@ def asset(name, mode='r', chunk_size=None):
         return data, content_type, encoding
 
 
-class HttpBin(wsgi.Router):
-
+class BaseRouter(wsgi.Router):
+    ########################################################################
+    #    INTERNALS
     def bind_server_event(self, request, event, handler):
         consumer = request.environ['pulsar.connection'].current_consumer()
         consumer.bind_event(event, handler)
+
+    def info_data_response(self, request, **params):
+        data = self.info_data(request, **params)
+        return Json(data).http_response(request)
+
+    def info_data(self, request, **params):
+        headers = self.getheaders(request)
+        data = {'method': request.method,
+                'headers': headers,
+                'pulsar': self.pulsar_info(request)}
+        if request.method in ENCODE_URL_METHODS:
+            data['args'] = dict(request.url_data)
+        else:
+            args, files = request.data_and_files()
+            jfiles = MultiValueDict()
+            for name, parts in files.lists():
+                for part in parts:
+                    try:
+                        part = part.string()
+                    except UnicodeError:
+                        part = part.base64()
+                    jfiles[name] = part
+            data.update((('args', dict(args)),
+                         ('files', dict(jfiles))))
+        data.update(params)
+        return data
+
+    def getheaders(self, request):
+        headers = Headers(kind='client')
+        for k in request.environ:
+            if k.startswith('HTTP_'):
+                headers[k[5:].replace('_', '-')] = request.environ[k]
+        return dict(headers)
+
+    def pulsar_info(self, request):
+        return request.get('pulsar.connection').info()
+
+
+class HttpBin(BaseRouter):
 
     def get(self, request):
         '''The home page of this router'''
@@ -232,12 +272,6 @@ class HttpBin(wsgi.Router):
         # docs.head.scripts
         return doc.http_response(request)
 
-    @route(title='Expectation Failed')
-    def post_expect(self, request):
-        stream = request.get('wsgi.input')
-        stream.fail()
-        return self.info_data_response(request)
-
     @route('clip/<int(min=256,max=16777216):chunk_size>',
            defaults={'chunk_size': 4096},
            title='Show a video clip')
@@ -260,43 +294,15 @@ class HttpBin(wsgi.Router):
     def plaintext(self, request):
         return AsyncString('Hello, World!').http_response(request)
 
-    ########################################################################
-    #    INTERNALS
-    def info_data_response(self, request, **params):
-        data = self.info_data(request, **params)
-        return Json(data).http_response(request)
 
-    def info_data(self, request, **params):
-        headers = self.getheaders(request)
-        data = {'method': request.method,
-                'headers': headers,
-                'pulsar': self.pulsar_info(request)}
-        if request.method in ENCODE_URL_METHODS:
-            data['args'] = dict(request.url_data)
+class ExpectFail(BaseRouter):
+
+    def post(self, request):
+        chunk = request.get('wsgi.input')
+        if not chunk.done():
+            chunk.fail()
         else:
-            args, files = request.data_and_files()
-            jfiles = MultiValueDict()
-            for name, parts in files.lists():
-                for part in parts:
-                    try:
-                        part = part.string()
-                    except UnicodeError:
-                        part = part.base64()
-                    jfiles[name] = part
-            data.update((('args', dict(args)),
-                         ('files', dict(jfiles))))
-        data.update(params)
-        return data
-
-    def getheaders(self, request):
-        headers = Headers(kind='client')
-        for k in request.environ:
-            if k.startswith('HTTP_'):
-                headers[k[5:].replace('_', '-')] = request.environ[k]
-        return dict(headers)
-
-    def pulsar_info(self, request):
-        return request.get('pulsar.connection').info()
+            return self.info_data_response(request)
 
 
 class Graph(ws.WS):
@@ -309,7 +315,8 @@ class Site(wsgi.LazyWsgi):
 
     def setup(self, environ):
         router = HttpBin('/')
-        return wsgi.WsgiHandler([wsgi.wait_for_body_middleware,
+        return wsgi.WsgiHandler([ExpectFail('expect'),
+                                 wsgi.wait_for_body_middleware,
                                  wsgi.clean_path_middleware,
                                  wsgi.authorization_middleware,
                                  wsgi.MediaRouter('media', ASSET_DIR,

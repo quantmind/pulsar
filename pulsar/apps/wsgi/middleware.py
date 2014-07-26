@@ -51,7 +51,7 @@ Middleware in Executor
 import re
 
 import pulsar
-from pulsar import isfuture, async, get_event_loop, From
+from pulsar import isfuture, chain_future, get_event_loop
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -98,16 +98,16 @@ def wait_for_body_middleware(environ, start_response=None):
 
     Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
+    def _wsgi_input(value):
+        environ['wsgi.input'] = BytesIO(value)
+
     if environ['wsgi.input']:
-        return async(_wait_for_body_middleware(environ, start_response))
-
-
-def _wait_for_body_middleware(environ, start_response):
-    stream = environ['wsgi.input']
-    chunk = stream.read()
-    if isfuture(chunk):
-        chunk = yield From(chunk)
-    environ['wsgi.input'] = BytesIO(chunk)
+        stream = environ['wsgi.input']
+        chunk = stream.read()
+        if isfuture(chunk):
+            return chain_future(chunk, callback=_wsgi_input)
+        else:
+            _wsgi_input(chunk)
 
 
 def middleware_in_executor(middleware):

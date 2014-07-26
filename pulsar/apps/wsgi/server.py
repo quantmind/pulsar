@@ -314,6 +314,7 @@ class HttpServerResponse(ProtocolConsumer):
         #
         if parser.is_message_complete():
             #
+            # Stream has the whole body
             if not self._stream.on_message_complete.done():
                 self._stream.on_message_complete.set_result(None)
 

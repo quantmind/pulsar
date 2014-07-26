@@ -1,5 +1,6 @@
 '''Not used yet
 '''
+from pulsar import Future
 
 
 class Throttling(object):

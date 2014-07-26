@@ -47,7 +47,8 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 
-from pulsar import asyncio, HttpException, async, coroutine_return, add_errback
+from pulsar import (asyncio, HttpException, task, async, coroutine_return,
+                    add_errback)
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -90,12 +91,8 @@ class ProxyServerWsgiHandler(LocalMixin):
         accessing upstream resources'''
         return http.HttpClient(decompress=False, store_cookies=False)
 
+    @task
     def __call__(self, environ, start_response):
-        # The WSGI thing
-        loop = environ['pulsar.connection']._loop
-        return async(self._call(environ, start_response, loop), loop)
-
-    def _call(self, environ, start_response, loop):
         uri = environ['RAW_URI']
         logger.debug('new request for %r' % uri)
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
@@ -149,7 +146,6 @@ class ProxyResponse(object):
     _done = False
 
     def __init__(self, environ, start_response):
-        self._loop = environ['pulsar.connection']._loop
         self.environ = environ
         self.start_response = start_response
         self.queue = asyncio.Queue()
@@ -162,7 +158,7 @@ class ProxyResponse(object):
                 except asyncio.QueueEmpty:
                     break
             else:
-                yield async(self.queue.get(), loop=self._loop)
+                yield async(self.queue.get())
 
     def pre_request(self, response, exc=None):
         self._started = True
@@ -189,6 +185,7 @@ class ProxyResponse(object):
             self._done = True
             self.queue.put_nowait(resp.content[0])
 
+    @task
     def data_processed(self, response, exc=None, **kw):
         '''Receive data from the requesting HTTP client.'''
         status = response.get_status()

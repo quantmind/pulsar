@@ -43,10 +43,10 @@ Async Utilities
 A collection of asynchronous utilities which facilitates manipulation and
 interaction with :ref:`asynchronous components <tutorials-coroutine>`.
 
-Async
-~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: async
+task
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: task
 
 
 Maybe Async
@@ -66,16 +66,6 @@ Coroutine return
 .. autofunction:: coroutine_return
 
 
-Add async binding
-~~~~~~~~~~~~~~~~~~~~~~
-.. function:: add_async_binding(binding)
-
-    Add a third-party asynchronous ``binding`` to pulsar asynchronous engine.
-
-    ``binding`` is a function which accept one parameter only and must return
-    ``None`` or a :class:`~asyncio.Future`.
-
-
 Multi Async
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: multi_async
@@ -91,21 +81,9 @@ Run in loop
 .. autofunction:: run_in_loop
 
 
-Async Decorators
-=====================
-
-Both the :func:`task` and :func:`in_loop` decorator can be applied to
-member functions of :ref:`async objects <async-object>`.
-
-
-task
+Yield From
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: task
-
-
-In loop
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: in_loop
+.. autofunction:: yield_from
 
 
 .. module:: pulsar.async.threads
