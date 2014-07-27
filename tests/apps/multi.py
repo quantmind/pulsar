@@ -28,7 +28,29 @@ class TestMultiApp(unittest.TestCase):
         # create the application
         return MultiWsgi(**params)
 
-    def testApp(self):
+    @run_on_arbiter
+    def testInstall(self):
+        arbiter = get_actor()
+        self.assertTrue(arbiter.is_arbiter())
+        app = self.create(name='pluto')
+        self.assertTrue(app)
+        self.assertFalse(arbiter.get_actor('pluto'))
+        self.assertFalse(arbiter.get_actor('rpc_pluto'))
+        # create the application
+        yield app.start()
+        monitor1 = arbiter.get_actor('pluto')
+        self.assertTrue(monitor1)
+        self.assertTrue(monitor1.is_monitor())
+        monitor2 = arbiter.get_actor('rpc_pluto')
+        self.assertTrue(monitor2)
+        self.assertTrue(monitor2.is_monitor())
+        yield monitor1.stop()
+        self.assertFalse(arbiter.get_actor('pluto'))
+        yield monitor2.stop()
+        self.assertFalse(arbiter.get_actor('rpc_pluto'))
+
+class d:
+    def test_app(self):
         app = self.create(version='2.0')
         self.assertEqual(app.version, '2.0')
         self.assertTrue(app)

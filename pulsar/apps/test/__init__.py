@@ -319,7 +319,7 @@ import unittest
 from functools import partial
 
 import pulsar
-from pulsar import multi_async, From
+from pulsar import multi_async, task
 from pulsar.apps import tasks
 from pulsar.apps.data import create_store
 from pulsar.apps.ds import PulsarDS
@@ -534,6 +534,7 @@ class TestSuite(tasks.TaskQueue):
                 sys.exit(code)
             return False
 
+    @task
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
         # Create a datastore for this test suite
@@ -541,7 +542,7 @@ class TestSuite(tasks.TaskQueue):
             server = PulsarDS(bind='127.0.0.1:0', workers=0,
                               key_value_save=[],
                               name='%s_store' % self.name)
-            yield From(server())
+            yield server()
             address = 'pulsar://%s:%s' % server.cfg.addresses[0]
         else:
             address = self.cfg.task_backend
@@ -579,15 +580,15 @@ class TestSuite(tasks.TaskQueue):
                     r = self.backend.queue_task('test', testcls=testcls,
                                                 tag=tag)
                     queued.append(r)
-                queued = yield From(multi_async(queued))
+                queued = yield multi_async(queued)
                 self.logger.debug('loaded %s test classes', len(tests))
                 self._tests_queued = set(queued)
-                yield From(self._test_done(monitor))
+                yield self._test_done(monitor)
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:   # pragma    nocover
             monitor.stream.writeln(str(e))
-            monitor.arbiter.stop()
+            monitor._loop.stop()
         except Exception:   # pragma    nocover
             monitor.logger.critical('Error occurred while starting tests',
                                     exc_info=True)
@@ -607,6 +608,7 @@ class TestSuite(tasks.TaskQueue):
         params['concurrency'] = self.cfg.concurrency
         return params
 
+    @task
     def _test_done(self, monitor, task_id=None, exc=None):
         runner = self.runner
         if task_id:
@@ -614,7 +616,7 @@ class TestSuite(tasks.TaskQueue):
         if self._tests_queued is not None:
             left = self._tests_queued.difference(self._tests_done)
             if not left:
-                tests = yield From(self.backend.get_tasks(self._tests_done))
+                tests = yield self.backend.get_tasks(self._tests_done)
                 self.logger.info('All tests have finished.')
                 time_taken = default_timer() - self._time_start
                 for task in tests:

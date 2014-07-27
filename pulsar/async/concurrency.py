@@ -1,21 +1,24 @@
 import os
 import sys
+from time import time
 from functools import partial
 from multiprocessing import Process, current_process
 
-from pulsar import system, MonitorStarted
-from pulsar.utils.security import gen_unique_id
-from pulsar.utils.pep import itervalues
+import pulsar
+from pulsar import system, MonitorStarted, HaltServer
+from pulsar.utils.pep import itervalues, iteritems, range
 from pulsar.utils.log import logger_fds
 from pulsar.utils import autoreload
+from pulsar.utils.tools import Pidfile
 
-from .proxy import ActorProxyMonitor, get_proxy
+from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, _StopError, SELECTORS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
-from .futures import multi_async, add_errback
+from .futures import multi_async, add_errback, async_while
 from .eventloop import EventLoop
 from .protocols import TcpServer
+from .actor import Actor, create_aid
 from .consts import *
 
 
@@ -25,24 +28,21 @@ else:
     import signal
 
 
-__all__ = ['Concurrency', 'concurrency']
+__all__ = ['arbiter']
 
 
-def concurrency(kind, actor_class, monitor, cfg, **params):
-    '''Function invoked by the :class:`.Arbiter` or a :class:`.Monitor` when
-    spawning a new :class:`.Actor`. It created a :class:`.Concurrency` instance
-    which handle the initialisation and the life of an :class:`.Actor`.
+def arbiter(**params):
+    '''Obtain the ``arbiter``.
 
-    :parameter kind: Type of concurrency.
-    :parameter monitor: The monitor (or arbiter) managing the :class:`.Actor`.
-    :return: a :class:`.Councurrency` instance.
+    It returns the arbiter instance only if we are on the arbiter
+    context domain, otherwise it returns nothing.
     '''
-    maker = concurrency_models.get(kind)
-    if maker:
-        c = maker()
-        return c.make(kind, actor_class, monitor, cfg, **params)
-    else:
-        raise ValueError('Concurrency %s not supported in pulsar' % kind)
+    arbiter = get_actor()
+    if arbiter is None:
+        # Create the arbiter
+        return set_actor(_spawn_actor('arbiter', None, **params))
+    elif arbiter.is_arbiter():
+        return arbiter
 
 
 class Concurrency(object):
@@ -63,18 +63,22 @@ class Concurrency(object):
         constructor.
     '''
     _creation_counter = 0
+    monitors = None
+    managed_actors = None
+    terminated_actors = None
+    registered = None
+    actor_class = Actor
 
-    def make(self, kind, actor_class, monitor, cfg, name=None, aid=None, **kw):
+    def make(self, kind, cfg, name, aid, **kw):
         self.__class__._creation_counter += 1
-        self.aid = aid or gen_unique_id()[:8]
+        self.aid = aid
         self.age = self.__class__._creation_counter
-        self.name = name or actor_class.__name__.lower()
+        self.name = name or self.actor_class.__name__.lower()
         self.kind = kind
         self.cfg = cfg
-        self.actor_class = actor_class
         self.params = kw
-        self.params['monitor'] = monitor
-        return self.get_actor()
+        self.identity = aid
+        return self.create_actor()
 
     @property
     def unique_name(self):
@@ -93,6 +97,9 @@ class Concurrency(object):
     def is_arbiter(self):
         return False
 
+    def is_monitor(self):
+        return False
+
     def selector(self):
         '''Return a selector instance.
 
@@ -101,12 +108,28 @@ class Concurrency(object):
         '''
         return SELECTORS[self.cfg.selector]()
 
+    def get_actor(self, actor, aid, check_monitor=True):
+        if aid == actor.aid:
+            return actor
+        elif aid == 'monitor':
+            return actor.monitor
+
+    def spawn(self, actor, aid=None, **params):
+        '''Spawn a new actor from ``actor``.
+        '''
+        aid = aid or create_aid()
+        future = actor.send('arbiter', 'spawn', aid=aid, **params)
+        return actor_proxy_future(aid, future)
+
     def run_actor(self, actor):
         '''Start running the ``actor``.
         '''
         set_actor(actor)
         actor.mailbox.start_serving()
         actor._loop.run_forever()
+
+    def add_monitor(self, actor, monitor_name, **params):
+        raise RuntimeError('Cannot add monitors to %s' % actor)
 
     def setup_event_loop(self, actor):
         '''Set up the event loop for ``actor``.
@@ -144,7 +167,7 @@ class Concurrency(object):
         except Exception as exc:
             actor.stop(exc)
 
-    def get_actor(self):
+    def create_actor(self):
         self.daemon = False
         self.params['monitor'] = get_proxy(self.params['monitor'])
         # make sure these parameters are picklable
@@ -189,6 +212,7 @@ class Concurrency(object):
             # if an error occurs, shut down the actor
             ack = actor.send('monitor', 'notify', actor.info())
             add_errback(ack, actor.stop)
+            actor.fire_event('periodic_task')
             next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
         else:
             next = 0
@@ -207,7 +231,11 @@ class Concurrency(object):
                 if not exit_code:
                     exit_code = getattr(exc, 'exit_code', 1)
                 if exit_code == 1:
-                    actor.logger.critical('Stopping', exc_info=True)
+                    exc_info = sys.exc_info()
+                    if exc_info[0] is not None:
+                        actor.logger.critical('Stopping', exc_info=exc_info)
+                    else:
+                        actor.logger.critical('Stopping: %s', exc)
                 elif exit_code == 2:
                     actor.logger.error(str(exc))
                 elif exit_code:
@@ -219,7 +247,7 @@ class Concurrency(object):
                     actor.logger.debug('stopping')
             actor.exit_code = exit_code
             stopping = actor.fire_event('stopping')
-            actor.close_executor()
+            self.close_executor(actor)
             if not stopping.done() and actor._loop.is_running():
                 actor.logger.debug('async stopping')
                 stopping.add_done_callback(lambda _: self._stop_actor(actor))
@@ -229,6 +257,14 @@ class Concurrency(object):
             # The actor has finished the stopping process.
             actor.fire_event('stop')
         return actor.event('stop')
+
+    def close_executor(self, actor):
+        '''Close the :meth:`executor`'''
+        executor = actor._loop._default_executor
+        if executor:
+            actor.logger.debug('Waiting for executor shutdown')
+            executor.shutdown()
+            actor._loop._default_executor = None
 
     def _stop_actor(self, actor):
         '''Exit from the :class:`.Actor` domain.'''
@@ -253,6 +289,9 @@ class Concurrency(object):
         else:
             actor.stop(exc)
 
+    def _remove_actor(self, monitor, actor, log=True):
+        raise RuntimeError('Cannot remove actor')
+
 
 class ProcessMixin(object):
 
@@ -271,19 +310,151 @@ class ProcessMixin(object):
 
 class MonitorMixin(object):
 
-    def get_actor(self):
-        return self.actor_class(self)
+    def create_actor(self):
+        self.managed_actors = {}
+        self.terminated_actors = []
+        actor = self.actor_class(self)
+        actor.bind_event('on_info', self._info_monitor)
+        return actor
 
     def start(self):
         '''does nothing,'''
         pass
 
-    def is_active(self):
-        return self.actor.is_alive()
+    def get_actor(self, actor, aid, check_monitor=True):
+        # Delegate get_actor to the arbiter
+        if aid == actor.aid:
+            return actor
+        elif aid == 'monitor':
+            return actor.monitor or actor
+        elif aid in self.managed_actors:
+            return self.managed_actors[aid]
+        elif actor.monitor and check_monitor:
+            return actor.monitor.get_actor(aid)
 
     @property
     def pid(self):
         return current_process().pid
+
+    def spawn(self, monitor, kind=None, **params):
+        '''Spawn a new :class:`Actor` and return its
+        :class:`.ActorProxyMonitor`.
+        '''
+        proxy = _spawn_actor(kind, monitor, **params)
+        # Add to the list of managed actors if this is a remote actor
+        if isinstance(proxy, Actor):
+            self._register(proxy)
+            return proxy
+        else:
+            proxy.monitor = monitor
+            self.managed_actors[proxy.aid] = proxy
+            future = actor_proxy_future(proxy)
+            proxy.start()
+            return future
+
+    def manage_actors(self, monitor, stop=False):
+        '''Remove :class:`Actor` which are not alive from the
+        :class:`PoolMixin.managed_actors` and return the number of actors
+        still alive.
+
+        :parameter stop: if ``True`` stops all alive actor.
+        '''
+        alive = 0
+        if self.managed_actors:
+            for aid, actor in list(iteritems(self.managed_actors)):
+                alive += self.manage_actor(monitor, actor, stop)
+        return alive
+
+    def manage_actor(self, monitor, actor, stop=False):
+        '''If an actor failed to notify itself to the arbiter for more than
+        the timeout, stop the actor.
+
+        :param actor: the :class:`Actor` to manage.
+        :param stop: if ``True``, stop the actor.
+        :return: if the actor is alive 0 if it is not.
+        '''
+        if not monitor.is_running():
+            stop = True
+        if not actor.is_alive():
+            if not actor.should_be_alive() and not stop:
+                return 1
+            actor.join()
+            monitor._remove_actor(actor)
+            return 0
+        timeout = None
+        started_stopping = bool(actor.stopping_start)
+        # if started_stopping is True, set stop to True
+        stop = stop or started_stopping
+        if not stop and actor.notified:
+            gap = time() - actor.notified
+            stop = timeout = gap > actor.cfg.timeout
+        if stop:   # we are stopping the actor
+            dt = actor.should_terminate()
+            if not actor.mailbox or dt:
+                if not actor.mailbox:
+                    monitor.logger.warning('Terminating %s. No mailbox.',
+                                           actor)
+                else:
+                    monitor.logger.warning('Terminating %s. Could not stop '
+                                           'after %.2f seconds.', actor, dt)
+                actor.terminate()
+                self.terminated_actors.append(actor)
+                self._remove_actor(monitor, actor)
+                return 0
+            elif not started_stopping:
+                if timeout:
+                    monitor.logger.warning('Stopping %s. Timeout %.2f',
+                                           actor, timeout)
+                else:
+                    monitor.logger.info('Stopping %s.', actor)
+                monitor.send(actor, 'stop')
+        return 1
+
+    def spawn_actors(self, monitor):
+        '''Spawn new actors if needed.
+        '''
+        to_spawn = monitor.cfg.workers - len(self.managed_actors)
+        if monitor.cfg.workers and to_spawn > 0:
+            for _ in range(to_spawn):
+                monitor.spawn()
+
+    def stop_actors(self, monitor):
+        """Maintain the number of workers by spawning or killing as required
+        """
+        if monitor.cfg.workers:
+            num_to_kill = len(self.managed_actors) - monitor.cfg.workers
+            for i in range(num_to_kill, 0, -1):
+                w, kage = 0, sys.maxsize
+                for worker in itervalues(self.managed_actors):
+                    age = worker.impl.age
+                    if age < kage:
+                        w, kage = w, age
+                self.manage_actor(monitor, w, True)
+
+    def _close_actors(self, monitor):
+        '''Close all managed :class:`Actor`.'''
+        return async_while(2*ACTOR_ACTION_TIMEOUT, self.manage_actors,
+                           monitor, True)
+
+    def _remove_actor(self, monitor, actor, log=True):
+        removed = self.managed_actors.pop(actor.aid, None)
+        if log and removed:
+            log = False
+            monitor.logger.warning('Removing %s', actor)
+        if monitor.monitor:
+            monitor.monitor._remove_actor(actor, log)
+        return removed
+
+    def _info_monitor(self, actor, info=None):
+        if actor.started():
+            info['actor'].update({'concurrency': actor.cfg.concurrency,
+                                  'workers': len(self.managed_actors)})
+            info['workers'] = [a.info for a in itervalues(self.managed_actors)
+                               if a.info]
+        return info
+
+    def _register(self, arbiter):
+        raise HaltServer('Critical error')
 
 
 ############################################################################
@@ -294,6 +465,9 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
     Monitors live in the **main thread** of the master process and
     therefore do not require to be spawned.
     '''
+    def is_monitor(self):
+        return True
+
     def setup_event_loop(self, actor):
         actor._logger = self.cfg.configured_logger(actor.name)
         actor.mailbox = ProxyMailbox(actor)
@@ -308,35 +482,82 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
     def create_mailbox(self, actor, loop):
         raise NotImplementedError
 
-    def periodic_task(self, actor, **kw):
+    def close_executor(self, actor):
+        pass
+
+    def periodic_task(self, monitor, **kw):
         '''Override the :meth:`.Concurrency.periodic_task` to implement
         the :class:`.Monitor` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
-        actor.next_periodic_task = None
-        if actor.is_running():
+        monitor.next_periodic_task = None
+        if monitor.is_running():
             interval = MONITOR_TASK_PERIOD
-            actor.manage_actors()
-            actor.spawn_actors()
-            actor.stop_actors()
-            actor.monitor_task()
-        actor.next_periodic_task = actor._loop.call_later(
-            interval, self.periodic_task, actor)
+            self.manage_actors(monitor)
+            self.spawn_actors(monitor)
+            self.stop_actors(monitor)
+            monitor.fire_event('periodic_task')
+        monitor.next_periodic_task = monitor._loop.call_later(
+            interval, self.periodic_task, monitor)
 
     def _stop_actor(self, actor):
 
         def _cleanup(_):
-            if not actor.terminated_actors:
+            if not self.terminated_actors:
                 actor.monitor._remove_actor(actor)
             actor.fire_event('stop')
 
-        return actor.close_actors().add_done_callback(_cleanup)
+        return self._close_actors(actor).add_done_callback(_cleanup)
 
 
 class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
-    '''Concurrency implementation for the :class:`.Arbiter`
+    '''Concurrency implementation for the ``arbiter``
     '''
+    pidfile = None
+
     def is_arbiter(self):
         return True
+
+    def create_actor(self):
+        self.identity = self.name
+        actor = super(ArbiterConcurrency, self).create_actor()
+        self.monitors = {}
+        self.registered = {'arbiter': actor}
+        actor.bind_event('start', self._start_arbiter)
+        actor.bind_event('stop', self._stop_arbiter)
+        return actor
+
+    def get_actor(self, actor, aid, check_monitor=True):
+        '''Given an actor unique id return the actor proxy.'''
+        a = super(ArbiterConcurrency, self).get_actor(actor, aid)
+        if a is None:
+            if aid in self.monitors:  # Check in monitors aid
+                return self.monitors[aid]
+            elif aid in self.managed_actors:
+                return self.managed_actors[aid]
+            elif aid in self.registered:
+                return self.registered[aid]
+            else:  # Finally check in workers in monitors
+                for m in itervalues(self.monitors):
+                    a = m.get_actor(aid, check_monitor=False)
+                    if a is not None:
+                        return a
+        else:
+            return a
+
+    def add_monitor(self, actor, monitor_name, **params):
+        '''Add a new ``monitor``.
+
+        :param monitor_class: a :class:`.Monitor` class.
+        :param monitor_name: a unique name for the monitor.
+        :param kwargs: dictionary of key-valued parameters for the monitor.
+        :return: the :class:`.Monitor` added.
+        '''
+        if monitor_name in self.registered:
+            raise KeyError('Monitor "%s" already available' % monitor_name)
+        params.update(actor.actorparams())
+        params['name'] = monitor_name
+        params['kind'] = 'monitor'
+        return actor.spawn(**params)
 
     def before_start(self, actor):  # pragma    nocover
         '''Daemonise the system if required.
@@ -373,15 +594,16 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         the :class:`.Arbiter` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
         actor.next_periodic_task = None
+        if actor.cfg.reload and autoreload.check_changes():
+            return actor.stop(exit_code=autoreload.EXIT_CODE)
         if actor.is_running():
             # managed actors job
             interval = MONITOR_TASK_PERIOD
-            actor.manage_actors()
-            for m in list(itervalues(actor.monitors)):
+            self.manage_actors(actor)
+            for m in list(itervalues(self.monitors)):
                 if m.started() and not m.is_running():
                     actor._remove_actor(m)
-            if actor.cfg.reload and autoreload.check_changes():
-                return actor.stop(exit_code=autoreload.EXIT_CODE)
+            actor.fire_event('periodic_task')
         actor.next_periodic_task = actor._loop.call_later(
             interval, self.periodic_task, actor)
 
@@ -402,9 +624,86 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             actor.mailbox.close()
         else:
             actor.logger.debug('Close monitors and actors')
-            active = multi_async((actor.close_monitors(),
-                                  actor.close_actors()))
+            active = multi_async((self._close_monitors(actor),
+                                  self._close_actors(actor)))
             active.add_done_callback(partial(self._exit_arbiter, actor))
+
+    def _close_monitors(self, actor):
+        '''Close all :class:`.Monitor` at once.
+        '''
+        return multi_async((m.stop() for m in list(itervalues(self.monitors))))
+
+    def _remove_actor(self, arbiter, actor, log=True):
+        a = super(ArbiterConcurrency, self)._remove_actor(arbiter, actor,
+                                                          False)
+        b = self.registered.pop(actor.name, None)
+        c = self.monitors.pop(actor.aid, None)
+        removed = a or b or c
+        if removed and log:
+            arbiter.logger.warning('Removed %s', actor)
+        return removed
+
+    def _stop_arbiter(self, actor, exc=None):     # pragma    nocover
+        p = self.pidfile
+        if p is not None:
+            actor.logger.debug('Removing %s' % p.fname)
+            p.unlink()
+            self.pidfile = None
+        if self.managed_actors:
+            actor.state = ACTOR_STATES.TERMINATE
+        actor.collect_coverage()
+        exit_code = actor.exit_code or 0
+        if exit_code == autoreload.EXIT_CODE:
+            actor.stream.writeln("\nCode changed, reloading server")
+        else:
+            actor.stream.writeln("\nBye (exit code = %s)" % exit_code)
+        try:
+            actor.cfg.when_exit(actor)
+        except Exception:
+            pass
+        if exit_code:
+            sys.exit(exit_code)
+
+    def _start_arbiter(self, actor, exc=None):
+        if current_process().daemon:
+            raise HaltServer('Cannot create the arbiter in a daemon process')
+        if not os.environ.get('SERVER_SOFTWARE'):
+            os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
+        pidfile = actor.cfg.pidfile
+        if pidfile is not None:
+            actor.logger.info('Create pid file %s', pidfile)
+            try:
+                p = Pidfile(pidfile)
+                p.create(actor.pid)
+            except RuntimeError as e:
+                raise HaltServer('ERROR. %s' % str(e), exit_code=3)
+            self.pidfile = p
+
+    def _info_monitor(self, actor, info=None):
+        data = info
+        monitors = {}
+        for m in itervalues(self.monitors):
+            info = m.info()
+            if info:
+                actor = info['actor']
+                monitors[actor['name']] = info
+        server = data.pop('actor')
+        server.update({'version': pulsar.__version__,
+                       'name': pulsar.SERVER_NAME,
+                       'number_of_monitors': len(self.monitors),
+                       'number_of_actors': len(self.managed_actors)})
+        server.pop('is_process', None)
+        server.pop('ppid', None)
+        server.pop('actor_id', None)
+        server.pop('age', None)
+        data['server'] = server
+        data['workers'] = [a.info for a in itervalues(self.managed_actors)]
+        data['monitors'] = monitors
+        return data
+
+    def _register(self, actor):
+        self.registered[actor.name] = actor
+        self.monitors[actor.aid] = actor
 
 
 def run_actor(self):
@@ -454,3 +753,51 @@ concurrency_models = {'arbiter': ArbiterConcurrency,
                       'monitor': MonitorConcurrency,
                       'thread': ActorThread,
                       'process': ActorProcess}
+
+
+
+def _spawn_actor(kind, monitor, cfg=None, name=None, aid=None, **kw):
+    # Internal function which spawns a new Actor and return its
+    # ActorProxyMonitor.
+    # *cls* is the Actor class
+    # *monitor* can be either the arbiter or a monitor
+    if monitor:
+        params = monitor.actorparams()
+        name = params.pop('name', name)
+        aid = params.pop('aid', aid)
+        cfg = params.pop('cfg', cfg)
+
+    # get config if not available
+    if cfg is None:
+        if monitor:
+            cfg = monitor.cfg.copy()
+        else:
+            cfg = Config()
+
+    if not aid:
+        aid = create_aid()
+
+    if not monitor:  # monitor not available, this is the arbiter
+        assert kind == 'arbiter'
+        name = kind
+        params = {}
+        if not cfg.exc_id:
+            cfg.set('exc_id', aid)
+    #
+    for key, value in iteritems(kw):
+        if key in cfg.settings:
+            cfg.set(key, value)
+        else:
+            params[key] = value
+    #
+    if monitor:
+        kind = kind or cfg.concurrency
+    if not kind:
+        raise TypeError('Cannot spawn')
+
+    maker = concurrency_models.get(kind)
+    if maker:
+        c = maker()
+        return c.make(kind, cfg, name, aid, monitor=monitor, **params)
+    else:
+        raise ValueError('Concurrency %s not supported in pulsar' % kind)

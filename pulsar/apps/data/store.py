@@ -5,10 +5,7 @@ commands on remote servers.
 A :class:`.Store` can also implement several methods for managing
 the higher level :ref:`object data mapper <odm>`.
 '''
-import logging
-
-from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
-                    Producer)
+from pulsar import ImproperlyConfigured, Pool, Producer
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
@@ -104,7 +101,7 @@ class Store(Producer):
     registered = False
     MANY_TIMES_EVENTS = ('request',)
 
-    def __init__(self, name, host, loop, database=None,
+    def __init__(self, name, host, loop=None, database=None,
                  user=None, password=None, encoding=None, **kw):
         super(Store, self).__init__(loop)
         self._name = name
@@ -501,7 +498,7 @@ def parse_store_url(url):
     return scheme, host, params
 
 
-def create_store(url, loop=None, **kw):
+def create_store(url, **kw):
     '''Create a new :class:`Store` for a valid ``url``.
 
     :param url: a valid ``url`` takes the following forms:
@@ -519,13 +516,6 @@ def create_store(url, loop=None, **kw):
             couchdb://user:password@127.0.0.1:6500/testdb
             https+couchdb://user:password@127.0.0.1:6500/testdb
 
-    :param loop: optional event loop, obtained by
-        :func:`~asyncio.get_event_loop` if not provided.
-        To create a synchronous client pass a new event loop created via
-        the :func:`~asyncio.new_event_loop`.
-        In the latter case the event loop is employed only for synchronous
-        type requests via the :meth:`~asyncio.BaseEventLoop.run_until_complete`
-        method.
     :param kw: additional key-valued parameters to pass to the :class:`.Store`
         initialisation method. It can contains parameters such as
         ``database``, ``user`` and ``password`` to override the
@@ -539,15 +529,12 @@ def create_store(url, loop=None, **kw):
     dotted_path = data_stores.get(scheme)
     if not dotted_path:
         raise ImproperlyConfigured('%s store not available' % scheme)
-    loop = loop or get_event_loop()
-    if not loop:
-        loop = new_event_loop(logger=logging.getLogger(dotted_path))
     store_class = module_attribute(dotted_path)
     if not store_class.registered:
         store_class.registered = True
         store_class.register()
     params.update(kw)
-    return store_class(scheme, address, loop, **params)
+    return store_class(scheme, address, **params)
 
 
 def register_store(name, dotted_path):

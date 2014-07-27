@@ -151,9 +151,13 @@ def handle_101(response, exc=None):
         parser = frame_parser(kind=1)
         if not handler:
             handler = WS()
+        body = response.recv_body()
         connection.upgrade(partial(WebSocketClient, response, handler, parser))
         response.finished()
-        response.request_again = connection.current_consumer()
+        consumer = connection.current_consumer()
+        consumer.data_received(body)
+        response.request_again = consumer
+
 
 
 class Tunneling:

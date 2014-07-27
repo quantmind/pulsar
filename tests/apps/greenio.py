@@ -59,7 +59,7 @@ class TestGreenIO(unittest.TestCase):
     def test_pool(self):
         pool = greenio.GreenPool()
         self.assertTrue(pool._loop)
-        self.assertEqual(pool._loop, get_event_loop())
+        self.assertNotEqual(pool._loop, get_event_loop())
         self.assertFalse(pool._greenlets)
         future = pool.submit(lambda: 'Hi!')
         self.assertIsInstance(future, Future)

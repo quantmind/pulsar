@@ -7,22 +7,28 @@ from threading import current_thread
 from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
 from pulsar.utils.pep import pickle
+from pulsar.utils.security import gen_unique_id
 
 from .futures import task
 from .events import EventHandler
 from .threads import get_executor
-from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
+from .proxy import ActorProxy, ActorProxyMonitor
 from .mailbox import command_in_context
-from .access import get_actor
+from .access import get_actor, set_actor
 from .cov import Coverage
 from .consts import *
 
 
-__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'get_stream']
+__all__ = ['is_actor', 'send', 'spawn',
+           'Actor', 'ACTOR_STATES', 'get_stream']
 
 
 def is_actor(obj):
     return isinstance(obj, Actor)
+
+
+def create_aid():
+    return gen_unique_id()[:8]
 
 
 def get_stream(cfg):
@@ -55,10 +61,49 @@ def send(target, action, *args, **params):
         >>> r.result()
         'pong'
     '''
-    return get_actor().send(target, action, *args, **params)
+    actor = get_actor()
+    if not actor:
+        raise RuntimeError('No actor available, cannot send messages')
+    else:
+        return actor.send(target, action, *args, **params)
 
 
-class Actor(EventHandler, ActorIdentity, Coverage):
+def spawn(**kwargs):
+    '''Spawn a new :class:`.Actor` and return an :class:`.ActorProxyFuture`.
+
+    **Parameter kwargs**
+
+    These optional parameters are:
+
+    * ``aid`` the actor id
+    * ``name`` the actor name
+    * :ref:`actor hooks <actor-hooks>` such as ``start``, ``stopping``
+      and ``stop``
+    * ``actor_class`` a custom :class:`.Actor` subclass (never used)
+
+    :return: an :class:`.ActorProxyFuture`.
+
+    A typical usage::
+
+        >>> def do_something(actor):
+                ...
+        >>> a = spawn(start=do_something, ...)
+        >>> a.aid
+        'ba42b02b'
+        >>> a.called
+        True
+        >>> p = a.result()
+        >>> p.address
+        ('127.0.0.1', 46691)
+    '''
+    actor = get_actor()
+    if not actor:
+        raise RuntimeError('No actor available, cannot spawn')
+    else:
+        return actor.spawn(**kwargs)
+
+
+class Actor(EventHandler, Coverage):
     '''The base class for parallel execution in pulsar.
 
     In computer science, the **Actor model** is a mathematical model
@@ -147,7 +192,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         the :attr:`~.AsyncObject.logger`.
     '''
     ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
-    MANY_TIMES_EVENTS = ('on_info', 'on_params')
+    MANY_TIMES_EVENTS = ('on_info', 'on_params', 'periodic_task')
     exit_code = None
     mailbox = None
     monitor = None
@@ -193,6 +238,10 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         return self.__impl.aid
 
     @property
+    def identity(self):
+        return self.__impl.identity
+
+    @property
     def impl(self):
         return self.__impl
 
@@ -211,6 +260,26 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     @property
     def info_state(self):
         return ACTOR_STATES.DESCRIPTION[self.state]
+
+    @property
+    def monitors(self):
+        '''Dictionary of monitors or None'''
+        return self.__impl.monitors
+
+    @property
+    def managed_actors(self):
+        '''Dictionary of managed actors or None'''
+        return self.__impl.managed_actors
+
+    @property
+    def terminated_actors(self):
+        '''Dictionary of terminated actors or None'''
+        return self.__impl.terminated_actors
+
+    @property
+    def registered(self):
+        '''Dictionary of registered actors or None'''
+        return self.__impl.registered
 
     def executor(self):
         '''An executor for this actor
@@ -260,7 +329,9 @@ class Actor(EventHandler, ActorIdentity, Coverage):
                                % (action, self, target))
 
     def spawn(self, **params):
-        raise RuntimeError('Cannot spawn an actor from an actor.')
+        '''Spawn a new actor
+        '''
+        return self.__impl.spawn(self, **params)
 
     def stop(self, exc=None, exit_code=None):
         '''Gracefully stop the :class:`Actor`.
@@ -269,13 +340,18 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         attribute.'''
         return self.__impl.stop(self, exc, exit_code)
 
-    def close_executor(self):
-        '''Close the :meth:`executor`'''
-        executor = self._loop._default_executor
-        if executor:
-            self.logger.debug('Waiting for executor shutdown')
-            executor.shutdown()
-            self._loop._default_executor = None
+    def add_monitor(self, monitor_name, **params):
+        return self.__impl.add_monitor(self, monitor_name, **params)
+
+    def actorparams(self):
+        '''Returns a dictionary of parameters for spawning actors.
+
+        The disctionary is passed to the spawn method when creating new
+        actors. Fire the :ref:`on_params actor hook <actor-hooks>`.
+        '''
+        data = {}
+        self.fire_event('on_params', params=data)
+        return data
 
     # ##############################################################  STATES
     def is_running(self):
@@ -308,12 +384,12 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         return self.state >= ACTOR_STATES.CLOSE
 
     def is_arbiter(self):
-        '''Return ``True`` if ``self`` is the :class:`.Arbiter`.'''
+        '''``True`` if ``self`` is the ``arbiter``'''
         return self.__impl.is_arbiter()
 
     def is_monitor(self):
-        '''Return ``True`` if ``self`` is a :class:`.Monitor`.'''
-        return False
+        '''``True`` if ``self`` is a ``monitor``'''
+        return self.__impl.is_monitor()
 
     def is_process(self):
         '''boolean indicating if this is an actor on a child process.'''
@@ -326,12 +402,9 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     #######################################################################
     #    INTERNALS
     #######################################################################
-    def get_actor(self, aid):
+    def get_actor(self, aid, check_monitor=True):
         '''Given an actor unique id return the actor proxy.'''
-        if aid == self.aid:
-            return self
-        elif aid == 'monitor':
-            return self.monitor or self
+        return self.__impl.get_actor(self, aid, check_monitor=check_monitor)
 
     def info(self):
         '''Return a nested dictionary of information related to the actor
@@ -384,3 +457,6 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         except BaseException:
             pass
         self.stop()
+
+    def _remove_actor(self, actor, log=True):
+        return self.__impl._remove_actor(self, actor, log=log)

@@ -65,7 +65,7 @@ from functools import partial
 from collections import namedtuple
 
 import pulsar
-from pulsar import (get_actor, coroutine_return, Config, From,
+from pulsar import (get_actor, coroutine_return, Config, task, From,
                     multi_async, Future, ImproperlyConfigured)
 from pulsar.utils.structures import OrderedDict
 
@@ -107,6 +107,7 @@ def _get_app(arbiter, name, safe=True):
             coroutine_return(monitor.app)
 
 
+@task
 def monitor_start(self, exc=None):
     start_event = self.start_event
     if exc:
@@ -118,23 +119,24 @@ def monitor_start(self, exc=None):
         self.bind_event('on_info', monitor_info)
         self.bind_event('stopping', monitor_stopping)
         for callback in when_monitor_start:
-            yield From(callback(self))
-        self.monitor_task = lambda: app.monitor_task(self)
-        yield From(app.monitor_start(self))
+            yield callback(self)
+        self.bind_event('periodic_task', app.monitor_task)
+        yield app.monitor_start(self)
         if not self.cfg.workers:
-            yield From(app.worker_start(self))
+            yield app.worker_start(self)
         result = self.cfg
     except Exception as exc:
-        yield From(self.stop(exc))
+        yield self.stop(exc)
         start_event.set_result(None)
     else:
         start_event.set_result(result)
 
 
+@task
 def monitor_stopping(self, exc=None):
     if not self.cfg.workers:
-        yield From(self.app.worker_stopping(self))
-    yield From(self.app.monitor_stopping(self))
+        yield self.app.worker_stopping(self)
+    yield self.app.monitor_stopping(self)
     coroutine_return(self)
 
 
@@ -346,7 +348,7 @@ class Configurator(object):
 
     def start(self):
         '''Invoked the application callable method and start
-        the :class:`.Arbiter` if it wasn't already started.
+        the ``arbiter`` if it wasn't already started.
 
         It returns a :class:`~asyncio.Future` called back once the
         application/applications are running. It returns ``None`` if
@@ -396,8 +398,8 @@ class Application(Configurator):
       not be overwritten, instead one should overwrites the application
       hooks available.
     * When an :class:`Application` is called for the first time,
-      a new :class:`.Monitor` instance is added to the
-      :class:`.Arbiter`, ready to perform its duties.
+      a new ``monitor`` is added to the ``arbiter``,
+      ready to perform its duties.
 
     :parameter callable: Initialise the :attr:`callable` attribute.
     :parameter load_config: If ``False`` the :meth:`~Configurator.load_config`
@@ -439,10 +441,10 @@ class Application(Configurator):
 
         If an ``actor`` is available (either via the function argument or via
         the :func:`~pulsar.async.actor.get_actor` function) it must be
-        :class:`.Arbiter`, otherwise this call is no-op.
+        ``arbiter``, otherwise this call is no-op.
 
         If no actor is available, it means this application starts
-        pulsar engine by creating the :class:`.Arbiter` with its
+        pulsar engine by creating the ``arbiter`` with its
         :ref:`global settings <setting-section-global-server-settings>`
         copied to the arbiter :class:`.Config` container.
 

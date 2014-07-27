@@ -2,10 +2,12 @@ from pulsar import Future
 from pulsar.utils.system import json
 from pulsar.apps.data import odm
 from pulsar.apps.tasks import Task
+from pulsar.apps.test import run_on_actor
 
 from ..data.testmodels import StoreTest, User, Session
 
 
+@run_on_actor
 class Odm(StoreTest):
 
     @classmethod

@@ -25,8 +25,8 @@ def get_proxy(obj, safe=False):
             raise ValueError('"%s" is not an actor or actor proxy.' % obj)
 
 
-def actorid(actor):
-    return actor.identity() if hasattr(actor, 'identity') else actor
+def actor_identity(actor):
+    return actor.identity if hasattr(actor, 'identity') else actor
 
 
 def get_command(name):
@@ -62,6 +62,7 @@ class command:
 class ActorIdentity(object):
     aid = None
 
+    @property
     def identity(self):
         return self.aid
 

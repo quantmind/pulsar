@@ -1,6 +1,6 @@
 import time
 
-from pulsar import HttpException
+from pulsar import HttpException, task
 from pulsar.apps import ws
 from pulsar.apps.data import PubSubClient, create_store
 from pulsar.utils.system import json
@@ -20,6 +20,7 @@ class ChatClient(PubSubClient):
     def __init__(self, websocket):
         self.joined = time.time()
         self.websocket = websocket
+        self.websocket._chat_client = self
 
     def __call__(self, channel, message):
         # The message is an encoded JSON string
@@ -44,6 +45,7 @@ class Chat(ws.WS):
             self._pubsub.subscribe(webchat, chatuser)
         return self._pubsub
 
+    @task
     def on_open(self, websocket):
         '''A new websocket connection is established.
 
@@ -57,12 +59,14 @@ class Chat(ws.WS):
         if registered == 1:
             self.publish(websocket, 'chatuser', 'joined')
 
+    @task
     def on_close(self, websocket):
         '''Leave the chat room
         '''
         user, _ = self.user(websocket)
         users_key = 'webchatusers:%s' % websocket.cfg.exc_id
         registered = yield self._client.hincrby(users_key, user, -1)
+        self.get_pubsub(websocket).remove_client(websocket._chat_client)
         if not registered:
             self.publish(websocket, 'chatuser', 'gone')
         if registered <= 0:

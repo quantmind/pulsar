@@ -11,7 +11,7 @@ from .manage import server
 
 class Echo(WS):
 
-    def __init__(self, loop=None):
+    def __init__(self, loop):
         self.queue = asyncio.Queue(loop=loop)
 
     def get(self):
@@ -50,15 +50,6 @@ class TestWebSocketThread(unittest.TestCase):
         if cls.app_cfg is not None:
             yield send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    def test_graph(self):
-        c = HttpClient()
-        handler = Echo(loop=self._loop)
-        ws = yield c.get(self.ws_uri, websocket_handler=handler)
-        self.assertEqual(ws.event('post_request').fired(), 0)
-        message = yield handler.get()
-        self.assertTrue(message)
-
-class d:
     def testHyBiKey(self):
         w = WebSocket('/', None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
@@ -83,7 +74,7 @@ class d:
 
     def test_upgrade(self):
         c = HttpClient()
-        handler = Echo()
+        handler = Echo(c._loop)
         ws = yield c.get(self.ws_echo, websocket_handler=handler)
         response = ws.handshake
         self.assertEqual(response.status_code, 101)
@@ -101,7 +92,7 @@ class d:
 
     def test_ping(self):
         c = HttpClient()
-        handler = Echo()
+        handler = Echo(c._loop)
         ws = yield c.get(self.ws_echo, websocket_handler=handler)
         #
         # ASK THE SERVER TO SEND A PING FRAME
@@ -111,7 +102,7 @@ class d:
 
     def test_pong(self):
         c = HttpClient()
-        handler = Echo()
+        handler = Echo(c._loop)
         ws = yield c.get(self.ws_echo, websocket_handler=handler)
         #
         ws.ping('TESTING CLIENT PING')
@@ -120,7 +111,7 @@ class d:
 
     def test_close(self):
         c = HttpClient()
-        handler = Echo()
+        handler = Echo(c._loop)
         ws = yield c.get(self.ws_echo, websocket_handler=handler)
         self.assertEqual(ws.event('post_request').fired(), 0)
         ws.write('send close 1001')
@@ -154,11 +145,10 @@ class d:
 
     def test_graph(self):
         c = HttpClient()
-        handler = Echo(loop=self._loop)
-        fut = handler.get()
+        handler = Echo(c._loop)
         ws = yield c.get(self.ws_uri, websocket_handler=handler)
         self.assertEqual(ws.event('post_request').fired(), 0)
-        message = yield fut
+        message = yield handler.get()
         self.assertTrue(message)
 
 

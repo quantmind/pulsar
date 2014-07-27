@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import coroutine_return, get_application
+from pulsar import coroutine_return, get_application, task
 from pulsar.apps import rpc
 
 from .backend import Task
@@ -38,6 +38,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
 
     ########################################################################
     #    REMOTES
+    @task
     def rpc_job_list(self, request, jobnames=None):
         '''Return the list of Jobs registered with task queue with meta
         information.
@@ -51,6 +52,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
     def rpc_next_scheduled_tasks(self, request, jobnames=None):
         return self._rq(request, 'next_scheduled', jobnames=jobnames)
 
+    @task
     def rpc_queue_task(self, request, jobname=None, **kw):
         '''Queue a new ``jobname`` in the task queue.
 
@@ -63,6 +65,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         result = yield self.queue_task(request, jobname, **kw)
         coroutine_return(task_to_json(result))
 
+    @task
     def rpc_get_task(self, request, id=None):
         '''Retrieve a task from its id'''
         if id:
@@ -70,6 +73,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
             result = yield task_backend.get_task(id)
             coroutine_return(task_to_json(result))
 
+    @task
     def rpc_get_tasks(self, request, **filters):
         '''Retrieve a list of tasks which satisfy key-valued filters'''
         if filters:
@@ -77,6 +81,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
             result = yield task_backend.get_tasks(**filters)
             coroutine_return(task_to_json(result))
 
+    @task
     def rpc_wait_for_task(self, request, id=None, timeout=None):
         '''Wait for a task to have finished.
 
@@ -89,6 +94,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
             result = yield task_backend.wait_for_task(id, timeout=timeout)
             coroutine_return(task_to_json(result))
 
+    @task
     def rpc_num_tasks(self, request):
         '''Return the approximate number of tasks in the task queue.'''
         task_backend = yield self.task_backend()
@@ -96,12 +102,14 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
 
     ########################################################################
     #    INTERNALS
+    @task
     def task_backend(self):
         if not self._task_backend:
             app = yield get_application(self.taskqueue)
             self._task_backend = app.get_backend()
         coroutine_return(self._task_backend)
 
+    @task
     def queue_task(self, request, jobname, meta_data=None, **kw):
         if not jobname:
             raise rpc.InvalidParams('"jobname" is not specified!')

@@ -1,11 +1,11 @@
 import unittest
 
 from pulsar import (Future, maybe_async, coroutine_return, chain_future,
-                    get_event_loop, yield_from)
+                    get_event_loop, yield_from, From)
 
 
 def c_summation(value):
-    result = yield value
+    result = yield From(value)
     coroutine_return(result + 2)
 
 

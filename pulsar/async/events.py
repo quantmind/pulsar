@@ -1,10 +1,11 @@
 from collections import deque
 from functools import partial
+from inspect import isgeneratorfunction
 
 from pulsar.utils.pep import iteritems
 
-from .access import _EVENT_LOOP_CLASSES
-from .futures import (Future, maybe_async, InvalidStateError,
+from .access import _EVENT_LOOP_CLASSES, iscoroutinefunction
+from .futures import (Future, isfuture, InvalidStateError,
                       future_result_exc, AsyncObject)
 
 
@@ -34,6 +35,8 @@ class AbstractEvent(AsyncObject):
     def bind(self, callback):
         '''Bind a ``callback`` to this event.
         '''
+        if iscoroutinefunction(callback) or isgeneratorfunction(callback):
+            raise TypeError("coroutines cannot be used with bind()")
         self.handlers.append(callback)
 
     def fired(self):
@@ -72,7 +75,7 @@ class Event(AbstractEvent):
             if self._handlers:
                 for hnd in self._handlers:
                     try:
-                        maybe_async(hnd(arg, **kwargs), self._loop)
+                        hnd(arg, **kwargs)
                     except Exception:
                         self.logger.exception('Exception while firing event')
         return self
@@ -93,12 +96,13 @@ class OneTime(Future, AbstractEvent):
     def bind(self, callback):
         '''Bind a ``callback`` to this event.
         '''
+        if iscoroutinefunction(callback) or isgeneratorfunction(callback):
+            raise TypeError("coroutines cannot be used with bind()")
         if not self.done():
             self.handlers.append(callback)
         else:
             result, exc = future_result_exc(self)
-            self._loop.call_soon(
-                lambda: maybe_async(callback(result, exc=exc), self._loop))
+            self._loop.call_soon(lambda: callback(result, exc=exc))
 
     def fire(self, arg, exc=None, **kwargs):
         '''The callback handlers registered via the :meth:~AbstractEvent.bind`
@@ -122,11 +126,11 @@ class OneTime(Future, AbstractEvent):
         while self._handlers:
             hnd = self._handlers.popleft()
             try:
-                result = maybe_async(hnd(arg, exc=exc, **kwargs), self._loop)
+                result = hnd(arg, exc=exc, **kwargs)
             except Exception:
                 self.logger.exception('Exception while firing onetime event')
             else:
-                if isinstance(result, Future):
+                if isfuture(result):
                     result.add_done_callback(
                         partial(self._process, arg, exc, kwargs))
                     return

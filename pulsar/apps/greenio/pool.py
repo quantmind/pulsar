@@ -4,7 +4,7 @@ from collections import deque
 import greenlet
 from greenlet import getcurrent
 
-from pulsar import isfuture, Future, From, get_event_loop, AsyncObject, task
+from pulsar import isfuture, Future, From, get_io_loop, AsyncObject, task
 
 
 _DEFAULT_WORKERS = 100
@@ -24,7 +24,7 @@ class GreenPool(AsyncObject):
     worker_name = 'exec'
 
     def __init__(self, max_workers=None, loop=None, maxtasks=None):
-        self._loop = loop or get_event_loop()
+        self._loop = get_io_loop(loop)
         self._max_workers = min(max_workers or _DEFAULT_WORKERS, _MAX_WORKERS)
         self._greenlets = set()
         self._available = set()
@@ -46,13 +46,14 @@ class GreenPool(AsyncObject):
                 raise RuntimeError(
                     'cannot schedule new futures after shutdown')
             future = Future(loop=self._loop)
-            self._loop.call_soon(self._put, (future, func, args, kwargs))
+            self._loop.call_soon_threadsafe(
+                self._put, (future, func, args, kwargs))
             return future
 
     def shutdown(self, wait=True):
         with self._shutdown_lock:
             self._shutdown = True
-            self._loop.call_soon(self._put)
+            self._loop.call_soon_threadsafe(self._put)
 
     # INTERNALS
     def _adjust_greenlet_count(self):

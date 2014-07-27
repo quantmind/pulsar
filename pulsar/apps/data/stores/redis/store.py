@@ -75,19 +75,18 @@ class RedisStore(Store):
 
     @task
     def execute(self, *args, **options):
-        connection = yield From(self._pool.connect())
+        connection = yield self._pool.connect()
         with connection:
-            result = yield From(connection.execute(*args, **options))
+            result = yield connection.execute(*args, **options)
             if isinstance(result, ResponseError):
                 raise result.exception
             coroutine_return(result)
 
     @task
     def execute_pipeline(self, commands, raise_on_error=True):
-        conn = yield From(self._pool.connect())
+        conn = yield self._pool.connect()
         with conn:
-            result = yield From(conn.execute_pipeline(commands,
-                                                      raise_on_error))
+            result = yield conn.execute_pipeline(commands, raise_on_error)
             if isinstance(result, ResponseError):
                 raise result.exception
             coroutine_return(result)

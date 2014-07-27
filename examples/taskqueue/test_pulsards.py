@@ -63,7 +63,7 @@ class TaskQueueBase(object):
 
     @classmethod
     def tearDownClass(cls):
-        yield multi_async((send('arbiter', 'kill_actor', a.name)
+        return multi_async((send('arbiter', 'kill_actor', a.name)
                            for a in (cls.tq, cls.rpc) if a is not None))
 
 
@@ -76,7 +76,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         backend.tick()
 
     def test_rpc_ping(self):
-        yield self.async.assertEqual(self.proxy.ping(), 'pong')
+        return self.async.assertEqual(self.proxy.ping(), 'pong')
 
     def test_rpc_job_list(self):
         jobs = yield self.proxy.job_list()

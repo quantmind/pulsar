@@ -1,7 +1,7 @@
 '''Tests django chat application.'''
 import unittest
 
-from pulsar import asyncio, send, get_application, coroutine_return
+from pulsar import asyncio, send, get_application, coroutine_return, task
 from pulsar.utils.path import Path
 from pulsar.apps import http, ws
 from pulsar.apps.test import dont_run_with_thread
@@ -14,6 +14,7 @@ except ImportError:
     manage = None
 
 
+@task
 def start_server(actor, name, argv):
     manage.execute_from_command_line(argv)
     app = yield get_application(name)
@@ -22,8 +23,8 @@ def start_server(actor, name, argv):
 
 class MessageHandler(ws.WS):
 
-    def __init__(self):
-        self.queue = asyncio.Queue()
+    def __init__(self, loop):
+        self.queue = asyncio.Queue(loop=loop)
 
     def get(self):
         return self.queue.get()
@@ -68,7 +69,8 @@ class TestDjangoChat(unittest.TestCase):
         self.assertEqual(result.status_code, 404)
 
     def test_websocket(self):
-        ws = yield self.http.get(self.ws, websocket_handler=MessageHandler())
+        c = self.http
+        ws = yield c.get(self.ws, websocket_handler=MessageHandler(c._loop))
         response = ws.handshake
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')

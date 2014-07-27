@@ -193,8 +193,7 @@ class AsyncResponse(object):
             handler = next(self.response_middleware)
             resp = handler(self.environ, resp)
             try:
-                resp = async(resp, loop=self._loop)
-                return self._async(self._response, resp)
+                return self._async(self._response, async(resp))
             except TypeError:
                 pass
         except StopIteration:

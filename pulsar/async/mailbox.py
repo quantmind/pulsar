@@ -61,7 +61,7 @@ from pulsar.utils.pep import pickle
 
 from .access import get_actor
 from .futures import Future, coroutine_return, task
-from .proxy import actorid, get_proxy, get_command, ActorProxy
+from .proxy import actor_identity, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
 from .clients import AbstractClient
 
@@ -119,8 +119,8 @@ class Message(object):
     def command(cls, command, sender, target, args, kwargs):
         command = get_command(command)
         data = {'command': command.__name__,
-                'sender': actorid(sender),
-                'target': actorid(target),
+                'sender': actor_identity(sender),
+                'target': actor_identity(target),
                 'args': args if args is not None else (),
                 'kwargs': kwargs if kwargs is not None else {}}
         if command.ack:
@@ -217,10 +217,12 @@ class MailboxProtocol(Protocol):
                                               **message['kwargs'])
                 else:
                     actor = target
-                    command = get_command(command)
+                    cmd = get_command(command)
                     req = CommandRequest(target, caller, self)
-                    result = yield command(req, message['args'],
-                                           message['kwargs'])
+                    if actor.cfg.debug:
+                        actor.logger.debug('Executing command %s from %s',
+                                           command, caller or 'monitor')
+                    result = yield cmd(req, message['args'], message['kwargs'])
             except CommandError as exc:
                 self.logger.warning('Command error: %s' % exc)
                 result = None

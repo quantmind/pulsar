@@ -8,6 +8,7 @@ from pulsar.utils.security import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
 from pulsar.apps.data import create_store
+from pulsar.apps.test import run_on_actor
 
 
 class Listener:
@@ -50,6 +51,7 @@ class StoreMixin(object):
         return random_string(length=length)
 
     @classmethod
+    @task
     def create_pulsar_store(cls):
         server = PulsarDS(name=cls.__name__.lower(),
                           bind='127.0.0.1:0',
@@ -62,14 +64,17 @@ class StoreMixin(object):
     @classmethod
     def tearDownClass(cls):
         if cls.pulsar_app_cfg is not None:
-            yield pulsar.send('arbiter', 'kill_actor', cls.pulsar_app_cfg.name)
+            return pulsar.send('arbiter', 'kill_actor',
+                               cls.pulsar_app_cfg.name)
 
+    @task
     def _remove_and_push(self, key, rem=1):
         c = self.client
         eq = self.async.assertEqual
         yield eq(c.delete(key), rem)
         yield eq(c.rpush(key, 'bla'), 1)
 
+    @task
     def _remove_and_sadd(self, key, rem=1):
         c = self.client
         eq = self.async.assertEqual
@@ -391,7 +396,6 @@ class RedisCommands(StoreMixin):
 
     ###########################################################################
     #    HASHES
-    @task
     def test_hdel(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -1101,6 +1105,7 @@ class Scripting(object):
         self.assertEqual(result[1], [b'first', b'second', b'third'])
 
 
+@run_on_actor
 class TestPulsarStore(RedisCommands, unittest.TestCase):
     app_cfg = None
 

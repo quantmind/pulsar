@@ -26,6 +26,8 @@ class Test(tasks.Job):
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
+            if getattr(testcls, '_actor_execution', False):
+                self._loop = consumer.worker._loop
             return self.run_testcls(consumer, runner, testcls, all_tests)
         else:
             return runner.result

@@ -1,10 +1,11 @@
 import unittest
 
-from pulsar import coroutine_return, multi_async, new_event_loop
+from pulsar import coroutine_return, multi_async, new_event_loop, task
 from pulsar.utils.security import random_string
 from pulsar.apps.data import create_store
 from pulsar.apps.test import check_server
 from pulsar.apps.data.stores import CouchDbError, CouchDbNoDbError
+from pulsar.apps.test import run_on_actor
 
 
 OK = check_server('couchdb')
@@ -30,6 +31,7 @@ class TestStoreWithDb(object):
         return ('test_%s_%s' % (cls.cfg.exc_id, name)).lower()
 
     @classmethod
+    @task
     def createdb(cls, name, store=None):
         '''Create a new database.
 
@@ -57,6 +59,7 @@ class TestStoreWithDb(object):
 
 
 @unittest.skipUnless(OK, 'Requires a running CouchDB server')
+@run_on_actor
 class TestCouchDbStore(TestStoreWithDb, unittest.TestCase):
 
     @classmethod

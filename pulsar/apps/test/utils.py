@@ -62,7 +62,8 @@ __all__ = ['run_on_arbiter',
            'show_leaks',
            'hide_leaks',
            'check_server',
-           'dont_run_with_thread']
+           'dont_run_with_thread',
+           'run_on_actor']
 
 
 LOGGER = logging.getLogger('pulsar.test')
@@ -196,6 +197,15 @@ def run_on_arbiter(f):
     '''
     f.testfunction = TestFunctionOnArbiter(f.__name__)
     return f
+
+
+def run_on_actor(cls):
+    '''Decorator for a :class:`~unittest.TestCase` which cause
+    its test functions to run on the actor evnet loop rather than
+    in the executor
+    '''
+    cls._actor_execution = True
+    return cls
 
 
 def sequential(cls):

@@ -1,6 +1,7 @@
 import unittest
 
-from pulsar import send, multi_async, new_event_loop, get_application
+from pulsar import (send, multi_async, new_event_loop, get_application, From,
+                    run_in_loop)
 from pulsar.utils.pep import range
 from pulsar.apps.test import dont_run_with_thread, run_on_arbiter
 
@@ -53,9 +54,10 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(result, msg)
 
     def test_multi(self):
-        result = yield multi_async((self.client(b'ciao'),
-                                    self.client(b'pippo'),
-                                    self.client(b'foo')))
+        # need From because this is called by test_client method too
+        result = yield From(multi_async((self.client(b'ciao'),
+                                         self.client(b'pippo'),
+                                         self.client(b'foo'))))
         self.assertEqual(len(result), 3)
         self.assertTrue(b'ciao' in result)
         self.assertTrue(b'pippo' in result)
@@ -83,6 +85,8 @@ class TestEchoServerThread(unittest.TestCase):
     def test_connection_pool(self):
         '''Test the connection pool. A very important test!'''
         client = Echo(self.server_cfg.addresses[0], pool_size=2)
+        self.assertNotEqual(client._loop, self._loop)
+        #
         self.assertEqual(client.pool.pool_size, 2)
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)
@@ -116,11 +120,7 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client._requests_processed, 5)
         #
         # drop a connection
-        conn1 = client.pool._queue.get_nowait()
-        conn1.close()
-        conn2 = client.pool._queue.get_nowait()
-        client.pool._queue.put_nowait(conn1)
-        client.pool._queue.put_nowait(conn2)
+        yield run_in_loop(client._loop, self._drop_conection, client)
         #
         result = yield multi_async((client(b'ciao'),
                                     client(b'pippo'),
@@ -131,7 +131,8 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.sessions, 3)
         self.assertEqual(client._requests_processed, 8)
         #
-        client.pool.close()
+        yield run_in_loop(client._loop, client.pool.close)
+        #
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)
         self.assertEqual(client.sessions, 3)
@@ -153,6 +154,12 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo.sessions, 2)
 
+    def _drop_conection(self, client):
+        conn1 = client.pool._queue.get_nowait()
+        conn1.close()
+        conn2 = client.pool._queue.get_nowait()
+        client.pool._queue.put_nowait(conn1)
+        client.pool._queue.put_nowait(conn2)
 
 @dont_run_with_thread
 class TestEchoServerProcess(TestEchoServerThread):

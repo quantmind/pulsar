@@ -82,7 +82,7 @@ When running a :class:`SocketServer` in threading mode::
 
 the number of :class:`.Actor` serving the application is set
 to ``0`` so that the application is actually served by the
-:class:`.Arbiter` event-loop (we refer this to a single process server).
+arbiter event-loop (we refer this to a single process server).
 This configuration is used when debugging, testing, benchmarking or on small
 load servers.
 

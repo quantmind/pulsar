@@ -26,7 +26,6 @@ class Graph(ws.WS):
         self.on_message(websocket, '')
 
     def on_message(self, websocket, msg):
-        websocket.logger.debug('writing random data')
         websocket.write(json.dumps([(i, random()) for i in range(100)]))
 
 

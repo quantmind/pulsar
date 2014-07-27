@@ -31,6 +31,7 @@ Ver. 0.9.0 - Development
 * Better :func:`.slugify` function
 * :class:`.EventHandler` requires a valid :ref:`event loop <asyncio-event-loop>`
   during initialisation
+* Removed ``arbiter`` and ``monitor`` module in ``async``.
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

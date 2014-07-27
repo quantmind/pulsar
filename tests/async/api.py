@@ -1,8 +1,6 @@
-'''API design'''
-import sys
 import unittest
 
-from pulsar import maybe_async
+import pulsar
 
 
 class Context(object):
@@ -23,3 +21,18 @@ class TestApi(unittest.TestCase):
             yield None
             raise ValueError
         self.assertIsInstance(c._result, ValueError)
+
+    def test_get_proxy(self):
+        self.assertRaises(ValueError, pulsar.get_proxy, 'shcbjsbcjcdcd')
+        self.assertEqual(pulsar.get_proxy('shcbjsbcjcdcd', safe=True), None)
+
+    def test_bad_concurrency(self):
+        # bla concurrency does not exists
+        actor = yield pulsar.spawn(kind='bla')
+        self.assertFalse(actor)
+
+    def test_actor_coverage(self):
+        '''test case for coverage'''
+        return self.async.assertRaises(pulsar.CommandNotFound,
+                                       pulsar.send, 'arbiter',
+                                       'sjdcbhjscbhjdbjsj', 'bla')

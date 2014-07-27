@@ -39,37 +39,6 @@ class create_echo_server(object):
         coroutine_return(actor)
 
 
-class TestProxy(unittest.TestCase):
-
-    def test_get_proxy(self):
-        self.assertRaises(ValueError, pulsar.get_proxy, 'shcbjsbcjcdcd')
-        self.assertEqual(pulsar.get_proxy('shcbjsbcjcdcd', safe=True), None)
-
-    def test_bad_concurrency(self):
-        actor = pulsar.get_actor()
-        # bla concurrency does not exists
-        self.assertRaises(ValueError, pulsar.concurrency, 'bla', pulsar.Actor,
-                          actor, pulsar.Config())
-
-    def test_dummy_proxy(self):
-        p = pulsar.concurrency('thread', pulsar.Actor, pulsar.get_actor(),
-                               pulsar.Config())
-        self.assertEqual(p.mailbox, None)
-        self.assertEqual(p.spawning_start, None)
-        self.assertEqual(p.stopping_start, None)
-        self.assertEqual(p.callback, None)
-        self.assertEqual(str(p), 'actor(%s)' % p.aid)
-
-    def test_actor_coverage(self):
-        '''test case for coverage'''
-        actor = pulsar.get_actor()
-        try:
-            yield send(send, 'sjdcbhjscbhjdbjsj', 'bla')
-        except CommandNotFound:
-            pass
-        # self.assertRaises(pickle.PicklingError, pickle.dumps, actor)
-
-
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
 

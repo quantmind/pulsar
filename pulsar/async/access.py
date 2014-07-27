@@ -77,6 +77,7 @@ Return = trollius.Return
 async = trollius.async
 sleep = trollius.sleep
 iscoroutine = trollius.iscoroutine
+iscoroutinefunction = trollius.iscoroutinefunction
 ConnectionRefusedError = trollius.ConnectionRefusedError
 ConnectionResetError = trollius.ConnectionResetError
 

@@ -266,23 +266,23 @@ def run_in_loop(_loop, callable, *args, **kwargs):
     :param _loop: The event loop where ``callable`` is run
     :return: a :class:`~asyncio.Future`
     '''
-    next = Future(loop=_loop)
+    waiter = Future(loop=_loop)
 
     def _():
         try:
             result = callable(*args, **kwargs)
         except Exception as exc:
-            next.set_exception(exc)
+            waiter.set_exception(exc)
         else:
             try:
                 future = async(result, loop=_loop)
             except TypeError:
-                next.set_result(result)
+                waiter.set_result(result)
             else:
-                chain_future(future, next=next)
+                chain_future(future, next=waiter)
 
     _loop.call_soon_threadsafe(_)
-    return next
+    return waiter
 
 
 def async_while(timeout, while_clause, *args):

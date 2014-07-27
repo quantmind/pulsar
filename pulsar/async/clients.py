@@ -2,8 +2,8 @@ from functools import reduce
 
 from pulsar.utils.internet import is_socket_closed
 
-from .access import asyncio, From
-from .futures import coroutine_return, AsyncObject, future_timeout
+from .access import asyncio
+from .futures import coroutine_return, AsyncObject, future_timeout, task
 from .protocols import Producer
 
 
@@ -57,6 +57,7 @@ class Pool(AsyncObject):
             return connection in self._queue._queue
         return True
 
+    @task
     def connect(self):
         '''Get a connection from the pool.
 
@@ -66,7 +67,8 @@ class Pool(AsyncObject):
         :return: a :class:`~asyncio.Future` resulting in the connection.
         '''
         assert not self._closed
-        return PoolConnection.checkout(self)
+        connection = yield self._get()
+        coroutine_return(PoolConnection(self, connection))
 
     def close(self):
         '''Close all :attr:`available` and :attr:`in_use` connections.
@@ -81,6 +83,7 @@ class Pool(AsyncObject):
         for connection in in_use:
             connection.close()
 
+    @task
     def _get(self):
         queue = self._queue
         # grab the connection without waiting, important!
@@ -88,24 +91,20 @@ class Pool(AsyncObject):
             connection = queue.get_nowait()
         # wait for one to be available
         elif self.in_use + self._connecting >= queue._maxsize:
-            if self._timeout:
-                connection = yield From(future_timeout(queue.get(),
-                                                       self._timeout))
-            else:
-                connection = yield From(queue.get())
+            connection = yield future_timeout(queue.get(), self._timeout)
         else:   # must create a new connection
             self._connecting += 1
             try:
-                connection = yield From(self._creator())
+                connection = yield self._creator()
             finally:
                 self._connecting -= 1
         # None signal that a connection was removed form the queue
         # Go again
         if connection is None:
-            connection = yield From(self._get())
+            connection = yield self._get()
         else:
             if self.is_connection_closed(connection):
-                connection = yield From(self._get())
+                connection = yield self._get()
             else:
                 self._in_use_connections.add(connection)
         coroutine_return(connection)
@@ -139,10 +138,6 @@ class Pool(AsyncObject):
 
 class PoolConnection(object):
     '''A wrapper for a :class:`Connection` in a connection :class:`Pool`.
-
-    Objects are never initialised directly, instead they are `checked-out`
-    via the :meth:`checkout` class method from the :meth:`Pool.connect`
-    method.
 
     .. attribute:: pool
 
@@ -185,13 +180,6 @@ class PoolConnection(object):
     def __del__(self):
         self.close()
 
-    @classmethod
-    def checkout(cls, pool):
-        '''Checkout a new connection from ``pool``.
-        '''
-        connection = yield From(pool._get())
-        coroutine_return(cls(pool, connection))
-
 
 class AbstractClient(Producer):
     '''A :class:`.Producer` for a client connections.
@@ -213,14 +201,15 @@ class AbstractClient(Producer):
         return self.fire_event('finish')
     abort = close
 
+    @task
     def create_connection(self, address, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
         '''
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(address, tuple):
             host, port = address
-            _, protocol = yield From(self._loop.create_connection(
-                protocol_factory, host, port, **kw))
+            _, protocol = yield self._loop.create_connection(
+                protocol_factory, host, port, **kw)
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))
@@ -247,11 +236,12 @@ class AbstractUdpClient(Producer):
         return self.fire_event('finish')
     abort = close
 
+    @task
     def create_datagram_endpoint(self, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
         '''
         protocol_factory = protocol_factory or self.create_protocol
-        _, protocol = yield From(self._loop.create_datagram_endpoint(
-            protocol_factory, **kw))
-        yield From(protocol.event('connection_made'))
+        _, protocol = yield self._loop.create_datagram_endpoint(
+            protocol_factory, **kw)
+        yield protocol.event('connection_made')
         coroutine_return(protocol)

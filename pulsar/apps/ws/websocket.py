@@ -190,7 +190,7 @@ class WebSocketProtocol(ProtocolConsumer):
             message = self.parser.encode(message, opcode=opcode, **kw)
         result = super(WebSocketProtocol, self).write(message)
         if opcode == 0x8:
-            self.finish()
+            self.finished()
         return result
 
     def ping(self, message=None):
