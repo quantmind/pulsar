@@ -18,7 +18,7 @@ High Level Functions
 spawn
 ~~~~~~~~~~~~~~
 
-.. autofunction:: pulsar.async.arbiter.spawn
+.. autofunction:: pulsar.async.actor.spawn
 
 .. _send-function:
 
@@ -26,6 +26,7 @@ send
 ~~~~~~~~~~~~~~
 
 .. autofunction:: send
+
 
 get_actor
 ~~~~~~~~~~~~~~
@@ -38,50 +39,26 @@ get_actor
 arbiter
 ~~~~~~~~~~~~~~
 
-.. autofunction:: pulsar.async.arbiter.arbiter
+.. autofunction:: pulsar.async.concurrency.arbiter
 
 
 .. _api-actors:
 
-Actors
+Actor
 =======================
 
 At the core of the library we have the :class:`Actor` class which defines
 the primitive of pulsar concurrent framework. Actor's instances communicate
 with each other via messages in a *share-nothing architecture*.
 
-Actor
-~~~~~~~~~~~~~~
 
 .. autoclass:: Actor
-   :members:
-   :member-order: bysource
-
-Monitor
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.monitor.Monitor
-   :members:
-   :member-order: bysource
-
-
-Arbiter
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.arbiter.Arbiter
    :members:
    :member-order: bysource
 
 
 Actor Internals
 =======================
-
-PoolMixin
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.monitor.PoolMixin
-   :members:
-   :member-order: bysource
 
 
 ActorProxy

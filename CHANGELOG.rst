@@ -1,5 +1,7 @@
 Ver. 0.9.0 - Development
 ===========================
+* Dropped support for python 3.3, the supported versions are now python 2.7,
+  python 3.4 and pypy_.
 * Works with ``trollius`` 1.0
 * Added :class:`.FlowControl` and :class:`.Timeout` protocol mixins,
   :class:`.PulsarProtocol` now inherits from :class:`.FlowControl`

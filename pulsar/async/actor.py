@@ -78,8 +78,7 @@ def spawn(**kwargs):
     * ``aid`` the actor id
     * ``name`` the actor name
     * :ref:`actor hooks <actor-hooks>` such as ``start``, ``stopping``
-      and ``stop``
-    * ``actor_class`` a custom :class:`.Actor` subclass (never used)
+      and ``periodic_task``
 
     :return: an :class:`.ActorProxyFuture`.
 

@@ -8,7 +8,7 @@ activities in different threads and/or processes.
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Mailing list: `google user group`_
-:Platforms: Linux, OSX, Windows. Python 2.7, 3.3, 3.4 and pypy_
+:Platforms: Linux, OSX, Windows. Python 2.7, 3.4 and pypy_
 :Keywords: client, server, asynchronous, concurrency, actor, thread, process,
     socket, task queue, wsgi, websocket, redis, json-rpc
 
@@ -56,12 +56,12 @@ a combination of the two.
 Installing
 ============
 
-Pulsar is a stand-alone library for python 3.4 and up.
+Pulsar requires and install the following packages:
 
-* For python 3.3 it requires asyncio_.
-* For python 2.7 it requires trollius_.
+* trollius_
+* unidecode_
 
-Pulsar can be installed via `pip`::
+Install via ``pip``::
 
     pip install pulsar
 
@@ -223,3 +223,4 @@ file in the top distribution directory for the full license text.
 .. _ujson: https://pypi.python.org/pypi/ujson
 .. _trollius: https://pypi.python.org/pypi/trollius
 .. _rebase: https://help.github.com/articles/about-git-rebase
+.. _unidecode: https://pypi.python.org/pypi/Unidecode

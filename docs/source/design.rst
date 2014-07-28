@@ -41,8 +41,8 @@ Properties:
   and so forth
 * A :class:`~asyncio.Future` is an async object
 * However an async object **is not** necessarily a :class:`~asyncio.Future`
-* They can use the :func:`.in_loop` and :func:`.task` decorators for
-  their methods
+* When they use and :func:`.task` decorators for their methods,
+  :attr:`~.AsyncObject._loop` attribute is used to run the method
 * Pulsar provides the :class:`.AsyncObject` signature class,
   however it is not a requirement to derive from it
 
@@ -302,15 +302,9 @@ The :class:`.EchoServerProtocol` is introduced in the
 
 Fired when the :class:`.Actor` starts stopping.
 
-**stop**
+**periodic_task**
 
-Fired just before the :class:`.Actor` is garbage collected
-
-.. important::
-
-    ``start``, ``stopping`` and ``stop`` hooks are function accepting one
-    parameter only, the actor which invokes them. They are
-    :ref:`one time events <one-time-event>` for actors.
+Fired at every actor periodic task (More docs here)
 
 **on_info**
 
