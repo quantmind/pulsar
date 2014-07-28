@@ -2,7 +2,7 @@ from threading import current_thread
 
 from .access import asyncio, trollius, thread_data, LOGGER
 from .futures import Future, Task, maybe_async
-from .threads import run_in_executor, set_as_loop
+from .threads import run_in_executor, ThreadSafeLoop
 from . import dns
 
 
@@ -10,15 +10,14 @@ __all__ = ['EventLoop', 'set_event_loop_policy',
            'call_repeatedly', 'loop_thread_id']
 
 
-class EventLoop(trollius.SelectorEventLoop):
+class EventLoop(trollius.SelectorEventLoop, ThreadSafeLoop):
 
     def __init__(self, selector=None, iothreadloop=False, logger=None,
                  cfg=None):
         super(EventLoop, self).__init__(selector)
-        self._iothreadloop = iothreadloop
+        ThreadSafeLoop.__init__(self, iothreadloop)
         self.logger = logger or LOGGER
         self._dns = dns.resolver(self, cfg)
-        set_as_loop(self)
 
     def create_task(self, coro):
         return Task(coro, loop=self)

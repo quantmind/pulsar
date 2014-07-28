@@ -37,3 +37,13 @@ class TestFailure(unittest.TestCase):
         self.assertTrue(h.events['finish'].handlers)
         result = yield h.fire_event('start', 2)
         self.assertEqual(result, 2)
+
+    def test_remove_callback(self):
+        h = Handler(one_time_events=('start', 'finish'))
+        cbk = lambda _, **kw : kw
+        h.bind_event('many', cbk)
+        self.assertTrue(h.event('many'))
+        self.assertEqual(h.remove_callback('bla', cbk), None)
+        self.assertEqual(h.remove_callback('many', cbk), 1)
+        self.assertEqual(h.remove_callback('many', cbk), 0)
+        self.assertEqual(h.event('many').handlers, [])

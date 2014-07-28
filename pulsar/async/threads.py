@@ -14,7 +14,7 @@ Full = queue.Full
 
 from .access import (asyncio, selectors, get_actor, set_actor,
                      events, thread_data, _StopError, BaseEventLoop,
-                     logger as get_logger)
+                     get_event_loop, logger as get_logger)
 from .futures import Future, Task, async, AsyncObject
 from .consts import ACTOR_STATES
 
@@ -24,14 +24,6 @@ __all__ = ['Thread', 'IOqueue', 'ThreadPool',
 
 _MAX_WORKERS = 50
 _threads_queues = weakref.WeakKeyDictionary()
-
-
-def set_as_loop(loop):
-    '''Internal method to set the event loop or thread loop in the current
-    thread of execution.
-    '''
-    if loop._iothreadloop:
-        asyncio.set_event_loop(loop)
 
 
 def get_executor(loop):
@@ -57,6 +49,7 @@ def run_in_executor(loop, executor, callback, *args):
 
 
 class Thread(dummy.DummyProcess):
+    _loop = None
     _pool_loop = None
 
     @property
@@ -65,10 +58,12 @@ class Thread(dummy.DummyProcess):
 
     def terminate(self):
         '''Invoke the stop on the event loop method.'''
-        if self.is_alive():
-            loop = asyncio.get_event_loop()
-            if loop:
-                loop.stop()
+        if self.is_alive() and self._loop:
+            self._loop.call_soon_threadsafe(self._loop.stop)
+
+    def set_loop(self, loop):
+        assert self._loop == None
+        self._loop = loop
 
 
 class PoolThread(Thread):
@@ -94,6 +89,7 @@ class PoolThread(Thread):
         # The run method for the threads in this thread pool
         logger = logging.getLogger('pulsar.%s' % self.name)
         loop = QueueEventLoop(self.pool, logger=logger, iothreadloop=True)
+        self.set_loop(loop)
         loop.run_forever()
 
 
@@ -180,16 +176,31 @@ class IOqueue(selectors.BaseSelector):
         pass
 
 
-class QueueEventLoop(BaseEventLoop):
+class ThreadSafeLoop(object):
+
+    def __init__(self, iothreadloop):
+        self._iothreadloop = iothreadloop
+        if self._iothreadloop:
+            self._original_call_soon = self.call_soon
+            self.call_soon = self._threadsafe_call_soon
+            asyncio.set_event_loop(self)
+
+    def _threadsafe_call_soon(self, callback, *args):
+        if self != get_event_loop():
+            return self.call_soon_threadsafe(callback, *args)
+        else:
+            return self._original_call_soon(callback, *args)
+
+
+class QueueEventLoop(BaseEventLoop, ThreadSafeLoop):
     '''An :ref:`asyncio event loop <asyncio-event-loop>` which
     uses :class:`.IOqueue` as its selector.
     '''
     def __init__(self, executor, iothreadloop=False, logger=None):
         super(QueueEventLoop, self).__init__()
+        ThreadSafeLoop.__init__(self, iothreadloop)
         self._default_executor = executor
-        self._iothreadloop = iothreadloop
         self._selector = IOqueue(executor)
-        set_as_loop(self)
         self.logger = get_logger(logger=logger)
 
     def create_task(self, coro):
@@ -222,7 +233,7 @@ class ThreadPool(AsyncObject):
             if not max_workers:
                 max_workers = actor.cfg.thread_workers
             self.worker_name = '%s.%s' % (actor.name, self.worker_name)
-        self._loop = loop or asyncio.get_event_loop()
+        self._loop = loop or get_event_loop()
         self._max_workers = min(max_workers or _MAX_WORKERS, _MAX_WORKERS)
         self._threads = set()
         self._maxtasks = maxtasks

@@ -2,6 +2,7 @@ import os
 import sys
 from time import time
 from functools import partial
+from collections import OrderedDict
 from multiprocessing import Process, current_process
 
 import pulsar
@@ -15,7 +16,7 @@ from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, _StopError, SELECTORS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
-from .futures import multi_async, add_errback, async_while
+from .futures import async, add_errback, chain_future, Future, From
 from .eventloop import EventLoop
 from .protocols import TcpServer
 from .actor import Actor, create_aid
@@ -181,21 +182,6 @@ class Concurrency(object):
         client.bind_event('finish', lambda _, **kw: loop.stop())
         return client
 
-    def _install_signals(self, actor):
-        proc_name = "%s-%s" % (actor.cfg.proc_name, actor.name)
-        if system.set_proctitle(proc_name):
-            actor.logger.debug('Set process title to %s',
-                               system.get_proctitle())
-        system.set_owner_process(actor.cfg.uid, actor.cfg.gid)
-        if signal:
-            actor.logger.debug('Installing signals')
-            for sig in system.EXIT_SIGNALS:
-                try:
-                    actor._loop.add_signal_handler(
-                        sig, self.handle_exit_signal, actor, sig)
-                except ValueError:
-                    pass
-
     def periodic_task(self, actor, **kw):
         '''Implement the :ref:`actor period task <actor-periodic-task>`.
 
@@ -220,7 +206,7 @@ class Concurrency(object):
             min(next, MAX_NOTIFY), self.periodic_task, actor)
         return ack
 
-    def stop(self, actor, exc, exit_code=0):
+    def stop(self, actor, exc=None, exit_code=0):
         '''Gracefully stop the ``actor``.
         '''
         if actor.state <= ACTOR_STATES.RUN:
@@ -240,23 +226,20 @@ class Concurrency(object):
                     actor.logger.error(str(exc))
                 elif exit_code:
                     actor.stream.writeln(str(exc))
-                else:
-                    actor.logger.info('Stopping')
-            else:
-                if actor.logger:
-                    actor.logger.debug('stopping')
+            #
             actor.exit_code = exit_code
             stopping = actor.fire_event('stopping')
             self.close_executor(actor)
             if not stopping.done() and actor._loop.is_running():
-                actor.logger.debug('async stopping')
-                stopping.add_done_callback(lambda _: self._stop_actor(actor))
+                actor.logger.debug('asynchronous stopping')
+                cbk = lambda _: self._stop_actor(actor)
+                return chain_future(stopping, callback=cbk, errback=cbk)
             else:
-                self._stop_actor(actor)
+                if actor.logger:
+                    actor.logger.debug('stopping')
+                return self._stop_actor(actor)
         elif actor.stopped():
-            # The actor has finished the stopping process.
-            actor.fire_event('stop')
-        return actor.event('stop')
+            return self._stop_actor(actor, True)
 
     def close_executor(self, actor):
         '''Close the :meth:`executor`'''
@@ -266,16 +249,38 @@ class Concurrency(object):
             executor.shutdown()
             actor._loop._default_executor = None
 
-    def _stop_actor(self, actor):
+    def _install_signals(self, actor):
+        proc_name = "%s-%s" % (actor.cfg.proc_name, actor.name)
+        if system.set_proctitle(proc_name):
+            actor.logger.debug('Set process title to %s',
+                               system.get_proctitle())
+        system.set_owner_process(actor.cfg.uid, actor.cfg.gid)
+        if signal:
+            actor.logger.debug('Installing signals')
+            for sig in system.EXIT_SIGNALS:
+                try:
+                    actor._loop.add_signal_handler(
+                        sig, self.handle_exit_signal, actor, sig)
+                except ValueError:
+                    pass
+
+    def _stop_actor(self, actor, finished=False):
         '''Exit from the :class:`.Actor` domain.'''
+        if finished:
+            if actor._loop.is_running():
+                actor.logger.critical('Event loop still running when stopping')
+                actor._loop.stop()
+            return True
+        #
         actor.state = ACTOR_STATES.CLOSE
         if actor._loop.is_running():
             actor.logger.debug('Closing mailbox')
             actor.mailbox.close()
         else:
+            actor.logger.debug('Exiting actor with exit code 1')
             actor.exit_code = 1
             actor.mailbox.abort()
-            actor.stop()
+            return actor.stop()
 
     def _switch_to_run(self, actor, exc=None):
         if exc is None and actor.state < ACTOR_STATES.RUN:
@@ -432,15 +437,25 @@ class MonitorMixin(object):
                 self.manage_actor(monitor, w, True)
 
     def _close_actors(self, monitor):
-        '''Close all managed :class:`Actor`.'''
-        return async_while(2*ACTOR_ACTION_TIMEOUT, self.manage_actors,
-                           monitor, True)
+        # Close all managed actors at once and wait for completion
+        waiter = Future(loop=monitor._loop)
+
+        def _finish():
+            monitor.remove_callback('periodic_task', _check)
+            waiter.set_result(None)
+
+        def _check(_, **kw):
+            if not self.managed_actors:
+                monitor._loop.call_soon(_finish)
+
+        monitor.bind_event('periodic_task', _check)
+        return waiter
 
     def _remove_actor(self, monitor, actor, log=True):
         removed = self.managed_actors.pop(actor.aid, None)
         if log and removed:
             log = False
-            monitor.logger.warning('Removing %s', actor)
+            monitor.logger.warning('Removed %s', actor)
         if monitor.monitor:
             monitor.monitor._remove_actor(actor, log)
         return removed
@@ -490,23 +505,36 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
         the :class:`.Monitor` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
         monitor.next_periodic_task = None
-        if monitor.is_running():
-            interval = MONITOR_TASK_PERIOD
+        if monitor.started():
             self.manage_actors(monitor)
-            self.spawn_actors(monitor)
-            self.stop_actors(monitor)
+            #
+            if monitor.is_running():
+                interval = MONITOR_TASK_PERIOD
+                self.spawn_actors(monitor)
+                self.stop_actors(monitor)
+            elif monitor.cfg.debug:
+                monitor.logger.debug('still stopping')
+            #
             monitor.fire_event('periodic_task')
-        monitor.next_periodic_task = monitor._loop.call_later(
-            interval, self.periodic_task, monitor)
+        #
+        if not monitor.closed():
+            monitor.next_periodic_task = monitor._loop.call_later(
+                interval, self.periodic_task, monitor)
 
-    def _stop_actor(self, actor):
+    def _stop_actor(self, actor, finished=False):
+        if finished:
+            return
 
         def _cleanup(_):
-            if not self.terminated_actors:
-                actor.monitor._remove_actor(actor)
-            actor.fire_event('stop')
+            if actor.cfg.debug:
+                actor.logger.debug('monitor is now stopping')
+            actor.state = ACTOR_STATES.CLOSE
+            if actor.next_periodic_task:
+                actor.next_periodic_task.cancel()
+            self.stop(actor)
 
-        return self._close_actors(actor).add_done_callback(_cleanup)
+        return chain_future(self._close_actors(actor), callback=_cleanup,
+                            errback=_cleanup)
 
 
 class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
@@ -520,10 +548,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def create_actor(self):
         self.identity = self.name
         actor = super(ArbiterConcurrency, self).create_actor()
-        self.monitors = {}
+        self.monitors = OrderedDict()
         self.registered = {'arbiter': actor}
         actor.bind_event('start', self._start_arbiter)
-        actor.bind_event('stop', self._stop_arbiter)
         return actor
 
     def get_actor(self, actor, aid, check_monitor=True):
@@ -596,42 +623,60 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         actor.next_periodic_task = None
         if actor.cfg.reload and autoreload.check_changes():
             return actor.stop(exit_code=autoreload.EXIT_CODE)
-        if actor.is_running():
+        #
+        if actor.started():
             # managed actors job
-            interval = MONITOR_TASK_PERIOD
             self.manage_actors(actor)
             for m in list(itervalues(self.monitors)):
-                if m.started() and not m.is_running():
+                if m.closed():
                     actor._remove_actor(m)
-            actor.fire_event('periodic_task')
-        actor.next_periodic_task = actor._loop.call_later(
-            interval, self.periodic_task, actor)
 
-    def _stop_actor(self, actor):
+            interval = MONITOR_TASK_PERIOD
+            if not actor.is_running() and actor.cfg.debug:
+                actor.logger.debug('still stopping')
+            #
+            actor.fire_event('periodic_task')
+
+        if not actor.closed():
+            actor.next_periodic_task = actor._loop.call_later(
+                interval, self.periodic_task, actor)
+
+    def _stop_actor(self, actor, finished=False):
         '''Stop the pools the message queue and remaining actors
         '''
-        if actor._loop.is_running():
+        if finished:
+            self._stop_arbiter(actor)
+        elif actor._loop.is_running():
             self._exit_arbiter(actor)
         else:
             actor.logger.debug('Restarts event loop to stop actors')
             actor._loop.call_soon(self._exit_arbiter, actor)
             actor._run(False)
 
-    def _exit_arbiter(self, actor, fut=None):
-        if fut:
+    def _exit_arbiter(self, actor, done=False):
+        if done:
             actor.logger.debug('Closing mailbox server')
             actor.state = ACTOR_STATES.CLOSE
             actor.mailbox.close()
         else:
-            actor.logger.debug('Close monitors and actors')
-            active = multi_async((self._close_monitors(actor),
-                                  self._close_actors(actor)))
-            active.add_done_callback(partial(self._exit_arbiter, actor))
+            monitors = len(self.monitors)
+            managed = len(self.managed_actors)
+            if monitors or managed:
+                actor.logger.debug('Closing %d monitors and %d actors',
+                                   monitors, managed)
+                async(self._close_all(actor))
+            else:
+                self._exit_arbiter(actor, True)
 
-    def _close_monitors(self, actor):
-        '''Close all :class:`.Monitor` at once.
-        '''
-        return multi_async((m.stop() for m in list(itervalues(self.monitors))))
+    def _close_all(self, actor):
+        # Close al monitors at once
+        try:
+            for m in itervalues(self.monitors):
+                yield From(m.stop())
+            yield From(self._close_actors(actor))
+        except Exception:
+            actor.logger.exception('Exception while closing arbiter')
+        self._exit_arbiter(actor, True)
 
     def _remove_actor(self, arbiter, actor, log=True):
         a = super(ArbiterConcurrency, self)._remove_actor(arbiter, actor,
@@ -643,7 +688,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             arbiter.logger.warning('Removed %s', actor)
         return removed
 
-    def _stop_arbiter(self, actor, exc=None):     # pragma    nocover
+    def _stop_arbiter(self, actor):     # pragma    nocover
         p = self.pidfile
         if p is not None:
             actor.logger.debug('Removing %s' % p.fname)
@@ -733,14 +778,13 @@ class ActorProcess(ProcessMixin, Concurrency, Process):
         actor.stop_coverage()
 
 
-class TerminateActorThread(Exception):
-    pass
-
-
 class ActorThread(Concurrency, Thread):
     '''Actor on a thread of the master process
     '''
     _actor = None
+
+    def before_start(self, actor):
+        self.set_loop(actor._loop)
 
     def run(self):
         run_actor(self)
@@ -753,7 +797,6 @@ concurrency_models = {'arbiter': ArbiterConcurrency,
                       'monitor': MonitorConcurrency,
                       'thread': ActorThread,
                       'process': ActorProcess}
-
 
 
 def _spawn_actor(kind, monitor, cfg=None, name=None, aid=None, **kw):

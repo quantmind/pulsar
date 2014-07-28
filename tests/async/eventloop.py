@@ -16,16 +16,21 @@ def has_callback(loop, handler):
 
 class TestEventLoop(unittest.TestCase):
 
-    def test_thread_loop(self):
-        thread_loop = pulsar.get_thread_loop()
-        event_loop = get_event_loop()
-        self.assertNotEqual(event_loop, thread_loop)
+    def test_call_at(self):
+        loop = get_event_loop()
+        d1 = Future()
+        d2 = Future()
+        c1 = loop.call_at(loop.time()+1, lambda: d1.set_result(loop.time()))
+        c2 = loop.call_later(1, lambda: d2.set_result(loop.time()))
+        t1, t2 = yield pulsar.multi_async((d1, d2))
+        self.assertTrue(t1 <= t2)
 
     def test_io_loop(self):
-        ioloop = get_event_loop()
-        self.assertTrue(ioloop)
-        tid = yield loop_thread_id(ioloop)
-        self.assertNotEqual(tid, current_thread().ident)
+        io_loop = pulsar.get_io_loop()
+        loop = get_event_loop()
+        self.assertTrue(io_loop)
+        self.assertTrue(loop)
+        self.assertNotEqual(loop, io_loop)
 
     def test_call_soon(self):
         ioloop = get_event_loop()
@@ -38,37 +43,6 @@ class TestEventLoop(unittest.TestCase):
         # we should be able to wait less than a second
         result = yield d
         self.assertEqual(result, tid)
-
-    def test_call_later(self):
-        ioloop = get_event_loop()
-        tid = yield loop_thread_id(ioloop)
-        d = Future()
-        timeout1 = ioloop.call_later(
-            20, lambda: d.set_result(current_thread().ident))
-        timeout2 = ioloop.call_later(
-            10, lambda: d.set_result(current_thread().ident))
-        # lets wake the ioloop
-        self.assertTrue(has_callback(ioloop, timeout1))
-        self.assertTrue(has_callback(ioloop, timeout2))
-        timeout1.cancel()
-        timeout2.cancel()
-        self.assertTrue(timeout1._cancelled)
-        self.assertTrue(timeout2._cancelled)
-        timeout1 = ioloop.call_later(
-            0.1, lambda: d.set_result(current_thread().ident))
-        yield d
-        self.assertTrue(d.done())
-        self.assertEqual(d.result(), tid)
-        self.assertFalse(has_callback(ioloop, timeout1))
-
-    def test_call_at(self):
-        loop = get_event_loop()
-        d1 = Future()
-        d2 = Future()
-        c1 = loop.call_at(loop.time()+1, lambda: d1.set_result(loop.time()))
-        c2 = loop.call_later(1, lambda: d2.set_result(loop.time()))
-        t1, t2 = yield pulsar.multi_async((d1, d2))
-        self.assertTrue(t1 <= t2)
 
     def test_periodic(self):
         test = self
@@ -103,14 +77,21 @@ class TestEventLoop(unittest.TestCase):
         self.assertTrue(periodic.cancelled)
         self.assertFalse(has_callback(loop, periodic.handler))
 
-    def test_run_in_thread_loop(self):
-        event_loop = get_event_loop()
+    def test_io_loop_tid(self):
+        loop = pulsar.get_io_loop()
+        self.assertTrue(loop)
+        tid = yield loop_thread_id(loop)
+        self.assertNotEqual(tid, current_thread().ident)
+
+    def test_run_in_io_loop(self):
+        event_loop = pulsar.get_io_loop()
 
         def simple(a, b):
             return a + b
 
         d = run_in_loop(event_loop, simple, 1, 2)
         self.assertIsInstance(d, Future)
+        self.assertEqual(d._loop, event_loop)
         result = yield d
         self.assertEqual(result, 3)
         yield self.async.assertRaises(TypeError, run_in_loop, event_loop,

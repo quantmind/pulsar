@@ -472,13 +472,14 @@ class Producer(EventHandler):
     '''
 
     def __init__(self, loop, protocol_factory=None, name=None,
-                 max_requests=None):
+                 max_requests=None, logger=None):
         super(Producer, self).__init__(get_io_loop(loop))
         self.protocol_factory = protocol_factory or self.protocol_factory
         self._name = name or self.__class__.__name__
         self._requests_processed = 0
         self._sessions = 0
         self._max_requests = max_requests
+        self._logger = logger
 
     @property
     def sessions(self):
@@ -534,9 +535,10 @@ class TcpServer(Producer):
 
     def __init__(self, protocol_factory, loop, address=None,
                  name=None, sockets=None, max_requests=None,
-                 keep_alive=None):
+                 keep_alive=None, logger=None):
         super(TcpServer, self).__init__(loop, protocol_factory, name=name,
-                                        max_requests=max_requests)
+                                        max_requests=max_requests,
+                                        logger=logger)
         self._params = {'address': address, 'sockets': sockets}
         self._keep_alive = max(keep_alive or 0, 0)
         self._concurrent_connections = set()
@@ -700,9 +702,11 @@ class DatagramServer(Producer):
     MANY_TIMES_EVENTS = ('pre_request', 'post_request')
 
     def __init__(self, protocol_factory, loop=None, address=None,
-                 name=None, sockets=None, max_requests=None):
+                 name=None, sockets=None, max_requests=None,
+                 logger=None):
         super(DatagramServer, self).__init__(loop, protocol_factory, name=name,
-                                             max_requests=max_requests)
+                                             max_requests=max_requests,
+                                             logger=logger)
         self._params = {'address': address, 'sockets': sockets}
 
     @task

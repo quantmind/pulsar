@@ -288,4 +288,6 @@ class MailboxClient(AbstractClient):
             self._connection.close()
 
     def _lost(self, _, exc=None):
-        self._loop.stop()
+        # When the connection is lost, stop the event loop
+        if self._loop.is_running():
+            self._loop.stop()

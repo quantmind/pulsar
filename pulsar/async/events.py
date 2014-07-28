@@ -39,6 +39,18 @@ class AbstractEvent(AsyncObject):
             raise TypeError("coroutines cannot be used with bind()")
         self.handlers.append(callback)
 
+    def remove_callback(self, callback):
+        '''Remove a callback from the list
+        '''
+        removed = []
+        handlers = self.handlers
+        filtered_callbacks = [f for f in handlers if f != callback]
+        removed_count = len(handlers) - len(filtered_callbacks)
+        if removed_count:
+            self.clear()
+            self._handlers.extend(filtered_callbacks)
+        return removed_count
+
     def fired(self):
         '''The number of times this event has fired'''
         return self._fired
@@ -62,11 +74,12 @@ class AbstractEvent(AsyncObject):
 class Event(AbstractEvent):
     '''The default implementation of :class:`AbstractEvent`.
     '''
-    def __init__(self, loop=None):
+    def __init__(self, loop=None, name=None):
         self._loop = loop
+        self._name = name or self.__class__.__name__.lower()
 
     def __repr__(self):
-        return repr(self._handlers)
+        return '%s: %s' % (self._name, self._handlers)
     __str__ = __repr__
 
     def fire(self, arg, **kwargs):
@@ -87,6 +100,14 @@ class OneTime(Future, AbstractEvent):
     This event handler is a subclass of :class:`.Future`.
     Implemented mainly for the one time events of the :class:`EventHandler`.
     '''
+    def __init__(self, loop=None, name=None):
+        super(OneTime, self).__init__(loop=loop)
+        self._name = name or self.__class__.__name__.lower()
+
+    def __repr__(self):
+        return '%s: %s' % (self._name, super(OneTime, self).__repr__())
+    __str__ = __repr__
+
     @property
     def handlers(self):
         if self._handlers is None:
@@ -158,12 +179,12 @@ class EventHandler(AsyncObject):
         if one_time_events:
             one = set(one)
             one.update(one_time_events)
-        events = dict(((name, OneTime(loop=loop)) for name in one))
+        events = dict(((name, OneTime(loop=loop, name=name)) for name in one))
         many = self.MANY_TIMES_EVENTS
         if many_times_events:
             many = set(many)
             many.update(many_times_events)
-        events.update(((name, Event(loop=loop)) for name in many))
+        events.update(((name, Event(loop=loop, name=name)) for name in many))
         self._events = events
 
     @property
@@ -207,6 +228,13 @@ class EventHandler(AsyncObject):
             self._events[name] = Event()
         event = self._events[name]
         event.bind(callback)
+
+    def remove_callback(self, name, callback):
+        '''Remove a ``callback`` from event ``name``
+        '''
+        if name in self._events:
+            event = self._events[name]
+            return event.remove_callback(callback)
 
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.

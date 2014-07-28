@@ -12,7 +12,7 @@ from pulsar.utils.security import gen_unique_id
 from .futures import task
 from .events import EventHandler
 from .threads import get_executor
-from .proxy import ActorProxy, ActorProxyMonitor
+from .proxy import ActorProxy, ActorProxyMonitor, actor_identity
 from .mailbox import command_in_context
 from .access import get_actor, set_actor
 from .cov import Coverage
@@ -191,7 +191,7 @@ class Actor(EventHandler, Coverage):
         A ``stream`` handler to write information messages without using
         the :attr:`~.AsyncObject.logger`.
     '''
-    ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
+    ONE_TIME_EVENTS = ('start', 'stopping')
     MANY_TIMES_EVENTS = ('on_info', 'on_params', 'periodic_task')
     exit_code = None
     mailbox = None
@@ -403,7 +403,9 @@ class Actor(EventHandler, Coverage):
     #    INTERNALS
     #######################################################################
     def get_actor(self, aid, check_monitor=True):
-        '''Given an actor unique id return the actor proxy.'''
+        '''Given an actor unique id return the actor proxy.
+        '''
+        aid = actor_identity(aid)
         return self.__impl.get_actor(self, aid, check_monitor=check_monitor)
 
     def info(self):

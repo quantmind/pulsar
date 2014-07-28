@@ -289,7 +289,8 @@ class SocketServer(pulsar.Application):
                                      sockets=sockets,
                                      max_requests=max_requests,
                                      keep_alive=cfg.keep_alive,
-                                     name=self.name)
+                                     name=self.name,
+                                     logger=self.logger)
         for event in ('connection_made', 'pre_request', 'post_request',
                       'connection_lost'):
             callback = getattr(cfg, event)
@@ -362,7 +363,8 @@ class UdpSocketServer(SocketServer):
                                      worker._loop,
                                      sockets=worker.sockets,
                                      max_requests=max_requests,
-                                     name=self.name)
+                                     name=self.name,
+                                     logger=self.logger)
         server.bind_event('stop', lambda _, **kw: worker.stop())
         for event in ('pre_request', 'post_request'):
             callback = getattr(cfg, event)

@@ -83,7 +83,8 @@ from datetime import datetime, timedelta
 from hashlib import sha1
 
 from pulsar import (task, async, EventHandler, PulsarException, yield_from,
-                    Future, coroutine_return, future_timeout)
+                    Future, coroutine_return, future_timeout,
+                    ConnectionRefusedError, CANCELLED_ERRORS)
 from pulsar.utils.pep import itervalues
 from pulsar.utils.security import gen_unique_id
 from pulsar.apps.data import odm
@@ -461,8 +462,7 @@ class TaskBackend(EventHandler):
     def start(self, worker):
         '''Invoked by the task queue ``worker`` when it starts.
         '''
-        assert self.task_poller is None
-        self.task_poller = worker._loop.call_soon(self.may_pool_task, worker)
+        self._may_pool_task(worker)
         self.logger.debug('started polling tasks')
 
     def close(self):
@@ -470,11 +470,12 @@ class TaskBackend(EventHandler):
 
         Invoked by the :class:`.Actor` when stopping.
         '''
-        if self.task_poller:
-            self.task_poller.cancel()
+        task = self.task_poller
+        if task:
+            task.cancel()
             self.task_poller = None
-            self.logger.debug('stopped polling tasks')
         self._pubsub.close()
+        return task
 
     def generate_task_ids(self, job, kwargs):
         '''An internal method to generate task unique identifiers.
@@ -589,7 +590,16 @@ class TaskBackend(EventHandler):
                         worker._loop.stop()
                         coroutine_return()
                 else:
-                    task = yield self.get_task()
+                    try:
+                        task = yield self.get_task()
+                    except ConnectionRefusedError:
+                        if worker.is_running():
+                            raise
+                        else:
+                            coroutine_return()
+                    except CANCELLED_ERRORS:
+                        self.logger.debug('stopped polling tasks')
+                        raise
                     if task:    # Got a new task
                         self.processed += 1
                         self.concurrent_tasks.add(task['id'])
@@ -599,7 +609,15 @@ class TaskBackend(EventHandler):
                 self.logger.debug('%s concurrent requests. Cannot poll.',
                                   self.num_concurrent_tasks)
                 next_time = 1
-        worker._loop.call_later(next_time, self.may_pool_task, worker)
+        self.task_poller = None
+        worker._loop.call_later(next_time, self._may_pool_task, worker)
+
+    def _may_pool_task(self, worker):
+        assert self.task_poller is None
+        if worker.is_running():
+            self.task_poller = self.may_pool_task(worker)
+        else:
+            worker._loop.call_soon(self._may_pool_task, worker)
 
     def _execute_task(self, worker, task):
         # Asynchronous execution of a Task. This method is called

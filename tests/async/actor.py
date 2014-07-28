@@ -60,7 +60,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(ainfo['is_process'], self.concurrency == 'process')
 
     @run_on_arbiter
-    def testSimpleSpawn(self):
+    def test_simple_spawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
         proxy = yield self.spawn_actor(
             name='simple-actor-on-%s' % self.concurrency)

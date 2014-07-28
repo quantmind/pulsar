@@ -30,7 +30,8 @@ __all__ = ['get_event_loop',
            'async',
            'sleep',
            'iscoroutine',
-           'get_io_loop']
+           'get_io_loop',
+           'CANCELLED_ERRORS']
 
 # Dance between different versions. So boring!
 appengine = False
@@ -47,6 +48,7 @@ if platform.is_appengine:   # pragma    nocover
     _StopError = asyncio._StopError
     appengine = True
     reraise = asyncio.reraise
+    CANCELLED_ERRORS = ()
 
 else:
 
@@ -70,6 +72,7 @@ else:
 
     _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,
                            trollius.AbstractEventLoop)
+    CANCELLED_ERRORS = (asyncio.CancelledError, trollius.CancelledError)
 
 Future = trollius.Future
 From = trollius.From

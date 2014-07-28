@@ -25,21 +25,45 @@ def cause_terminate(actor):
     if actor.next_periodic_task:
         actor.next_periodic_task.cancel()
         # hayjack the stop method
-        actor.stop = lambda exc=None: False
+        actor.stop = lambda exc=None, exit_code=None: False
     else:
         actor.event_loop.call_soon(cause_timeout, actor)
+
+
+def wait_for_stop(test, aid, terminating=False):
+    '''Wait for an actor to stop'''
+    arbiter = pulsar.arbiter()
+    waiter = pulsar.Future(loop=arbiter._loop)
+
+    def remove():
+        test.assertEqual(arbiter.remove_callback('periodic_task', check), 1)
+        waiter.set_result(None)
+
+    def check(caller, **kw):
+        test.assertEqual(caller, arbiter)
+        if not terminating:
+            test.assertFalse(aid in arbiter.managed_actors)
+        elif aid in arbiter.managed_actors:
+            return
+        arbiter._loop.call_soon(remove)
+
+    arbiter.bind_event('periodic_task', check)
+    return waiter
 
 
 class TestArbiterThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
 
     @run_on_arbiter
-    def testArbiterObject(self):
+    def test_arbiter_object(self):
         '''Test the arbiter in its process domain'''
         arbiter = pulsar.get_actor()
         self.assertEqual(arbiter, pulsar.arbiter())
         self.assertTrue(arbiter.is_arbiter())
         self.assertEqual(arbiter.impl.kind, 'arbiter')
+        self.assertEqual(arbiter.identity, 'arbiter')
+        self.assertEqual(arbiter.name, 'arbiter')
+        self.assertNotEqual(arbiter.identity, arbiter.aid)
         self.assertTrue(arbiter.monitors)
         self.assertEqual(arbiter.exit_code, None)
         info = arbiter.info()
@@ -89,7 +113,14 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(future.aid, proxy.aid)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
-        yield send(proxy, 'stop')
+        self.assertEqual(proxy, arbiter.get_actor(proxy.aid))
+        #
+        # Stop the actor
+        result = yield send(proxy, 'stop')
+        self.assertEqual(result, None)
+        #
+        result = yield wait_for_stop(self, proxy.aid)
+        self.assertEqual(result, None)
 
     @run_on_arbiter
     def testBadMonitor(self):
@@ -110,13 +141,9 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         proxy = arbiter.managed_actors[proxy.aid]
         yield send(proxy, 'run', cause_timeout)
         # The arbiter should soon start to stop the actor
-        interval = 2*MONITOR_TASK_PERIOD
-        yield pulsar.async_while(interval,
-                                 lambda: not proxy.stopping_start)
-        self.assertTrue(proxy.stopping_start)
+        yield wait_for_stop(self, proxy.aid, True)
         #
-        yield pulsar.async_while(interval,
-                                 lambda: proxy.aid in arbiter.managed_actors)
+        self.assertTrue(proxy.stopping_start)
         self.assertFalse(proxy.aid in arbiter.managed_actors)
 
     @run_on_arbiter
@@ -132,37 +159,10 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         result = yield send(proxy, 'run', cause_terminate)
         #
         # The arbiter should soon start stop the actor
-        interval = 3*MONITOR_TASK_PERIOD
-        yield pulsar.async_while(2*MONITOR_TASK_PERIOD,
-                                 lambda: not proxy.stopping_start)
+        yield wait_for_stop(self, proxy.aid, True)
+        #
         self.assertTrue(proxy.stopping_start)
-        #
-        yield pulsar.async_while(1.5*ACTOR_ACTION_TIMEOUT,
-                                 lambda: proxy.aid in arbiter.managed_actors)
         self.assertTrue(proxy in arbiter.terminated_actors)
-        self.assertFalse(proxy.aid in arbiter.managed_actors)
-
-    @run_on_arbiter
-    def __test_actor_termination(self):
-        '''Terminate the remote actor via the concurreny terminate method.'''
-        arbiter = pulsar.get_actor()
-        self.assertTrue(arbiter.is_arbiter())
-        name = 'actor-term-%s' % self.concurrency
-        proxy = yield self.spawn_actor(name=name)
-        self.assertEqual(proxy.name, name)
-        self.assertTrue(proxy.aid in arbiter.managed_actors)
-        proxy = arbiter.managed_actors[proxy.aid]
-        #
-        # terminate the actor and see what appens
-        proxy.terminate()
-        #
-        # The arbiter should soon start stop the actor
-        interval = 3*MONITOR_TASK_PERIOD
-        #
-        yield pulsar.async_while(interval,
-                                 lambda: proxy.aid in arbiter.managed_actors)
-        self.assertFalse(proxy in arbiter.terminated_actors)
-        self.assertFalse(proxy.aid in arbiter.managed_actors)
 
     def test_no_arbiter_in_worker_domain(self):
         worker = pulsar.get_actor()

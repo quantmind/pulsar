@@ -66,21 +66,6 @@ def yield_from(coro, timeout=None, loop=None):
                 exc = e
 
 
-def callback_threadsafe(future, result=None, exc=None):
-    '''Thread safe callback for a :class:`~asyncio.Future`
-    '''
-    if future._loop != get_event_loop():
-        if exc:
-            future._loop.call_soon_threadsafe(future.set_exception, exc)
-        else:
-            future._loop.call_soon_threadsafe(future.set_result, result)
-    else:
-        if exc:
-            future.set_exception(exc)
-        else:
-            future.set_result(result)
-
-
 def future_timeout(future, timeout=None, exc_class=None):
     '''Add a ``timeout`` to ``future`` in a thread-safe way.
 
@@ -140,12 +125,12 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
                 if callback:
                     result = callback(result)
         except Exception as exc:
-            callback_threadsafe(next, None, exc)
+            next.set_exception(exc)
         else:
             if isfuture(result):
                 chain_future(result, next=next)
             else:
-                callback_threadsafe(next, result)
+                next.set_result(result)
 
     future.add_done_callback(_callback)
     return next
