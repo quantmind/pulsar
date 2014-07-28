@@ -5,7 +5,7 @@ from base64 import b64decode
 import unittest
 
 import examples
-from pulsar import send, SERVER_SOFTWARE, new_event_loop
+from pulsar import send, SERVER_SOFTWARE, new_event_loop, get_event_loop
 from pulsar.utils.path import Path
 from pulsar.utils.httpurl import iri_to_uri, SimpleCookie
 from pulsar.utils.pep import pypy
@@ -135,7 +135,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(body), siz*rep)
 
     def test_HttpResponse(self):
-        r = HttpResponse(loop=self._loop)
+        r = HttpResponse(loop=get_event_loop())
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<None>')
         self.assertEqual(r.headers, None)

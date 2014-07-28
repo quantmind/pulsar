@@ -1,5 +1,6 @@
 import pulsar
-from pulsar import isfuture, coroutine_return, From, multi_async, task
+from pulsar import (isfuture, run_in_loop, coroutine_return, From,
+                    multi_async, task)
 from pulsar.utils.pep import ispy3k
 from pulsar.apps import tasks
 
@@ -27,8 +28,10 @@ class Test(tasks.Job):
         num = all_tests.countTestCases()
         if num:
             if getattr(testcls, '_actor_execution', False):
-                self._loop = consumer.worker._loop
-            return self.run_testcls(consumer, runner, testcls, all_tests)
+                return run_in_loop(consumer.worker._loop, self.run_testcls,
+                                   consumer, runner, testcls, all_tests)
+            else:
+                return self.run_testcls(consumer, runner, testcls, all_tests)
         else:
             return runner.result
 

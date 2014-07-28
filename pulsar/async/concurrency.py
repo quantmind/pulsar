@@ -506,10 +506,10 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
         interval = 0
         monitor.next_periodic_task = None
         if monitor.started():
+            interval = MONITOR_TASK_PERIOD
             self.manage_actors(monitor)
             #
             if monitor.is_running():
-                interval = MONITOR_TASK_PERIOD
                 self.spawn_actors(monitor)
                 self.stop_actors(monitor)
             elif monitor.cfg.debug:

@@ -1,7 +1,7 @@
 import unittest
 
 from pulsar import (send, multi_async, new_event_loop, get_application, From,
-                    run_in_loop)
+                    run_in_loop, get_event_loop)
 from pulsar.utils.pep import range
 from pulsar.apps.test import dont_run_with_thread, run_on_arbiter
 
@@ -85,7 +85,7 @@ class TestEchoServerThread(unittest.TestCase):
     def test_connection_pool(self):
         '''Test the connection pool. A very important test!'''
         client = Echo(self.server_cfg.addresses[0], pool_size=2)
-        self.assertNotEqual(client._loop, self._loop)
+        self.assertNotEqual(client._loop, get_event_loop())
         #
         self.assertEqual(client.pool.pool_size, 2)
         self.assertEqual(client.pool.in_use, 0)

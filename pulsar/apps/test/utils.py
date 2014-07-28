@@ -251,10 +251,12 @@ class AsyncAssert(object):
     '''
     def __init__(self, test):
         self.test = test
-        self._loop = test._loop
 
     def __get__(self, instance, instance_type=None):
-        return AsyncAssert(instance)
+        if instance is not None:
+            return AsyncAssert(instance)
+        else:
+            return self
 
     def __getattr__(self, name):
 
@@ -326,8 +328,7 @@ class ActorTestMixin(object):
 
 def inject_async_assert(obj):
     tcls = obj if isclass(obj) else obj.__class__
-    if not hasattr(tcls, '_loop'):
-        tcls._loop = pulsar.get_event_loop()
+    if not hasattr(tcls, 'async'):
         tcls.async = AsyncAssert(tcls)
 
 

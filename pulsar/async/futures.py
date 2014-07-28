@@ -6,7 +6,8 @@ from pulsar.utils.pep import iteritems, range
 
 from .consts import MAX_ASYNC_WHILE
 from .access import (trollius, get_event_loop, async, Return, Future, sleep,
-                     From, isfuture, LOGGER, _PENDING, _CANCELLED, _FINISHED)
+                     From, isfuture, LOGGER, _PENDING, _CANCELLED, _FINISHED,
+                     _EVENT_LOOP_CLASSES)
 
 coroutine = trollius.coroutine
 iscoroutine = trollius.iscoroutine
@@ -233,7 +234,7 @@ def task(function):
         if args:
             loop = getattr(args[0], '_loop', event_loop)
             # Not in the current event loop
-            if loop != event_loop:
+            if loop != event_loop and isinstance(loop, _EVENT_LOOP_CLASSES):
                 future = run_in_loop(loop, yield_from, coro, loop=loop)
                 if (not getattr(loop, '_iothreadloop', True)
                         and not loop.is_running()):

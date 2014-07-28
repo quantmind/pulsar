@@ -1004,7 +1004,7 @@ class HttpClient(AbstractClient):
                                'ca_certs': ca_certs}
         self.http_parser = parser or http_parser
         # Add hooks
-        self.bind_event('pre_request', Tunneling())
+        self.bind_event('pre_request', Tunneling(self._loop))
         self.bind_event('on_headers', handle_101)
         self.bind_event('on_headers', handle_100)
         self.bind_event('on_headers', handle_cookies)

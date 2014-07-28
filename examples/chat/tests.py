@@ -39,7 +39,7 @@ class TestWebChat(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app_cfg is not None:
-            yield send('arbiter', 'kill_actor', cls.app_cfg.name)
+            return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def test_home(self):
         response = yield self.http.get(self.uri)
