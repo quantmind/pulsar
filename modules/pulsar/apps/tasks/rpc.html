@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.tasks.rpc &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>pulsar.apps.tasks.rpc &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.tasks" href="../tasks.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../tasks.html" accesskey="U">pulsar.apps.tasks</a> &raquo;</li> 
@@ -70,7 +70,7 @@
             
   <h1>Source code for pulsar.apps.tasks.rpc</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">get_application</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">get_application</span><span class="p">,</span> <span class="n">task</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
 
 <span class="kn">from</span> <span class="nn">.backend</span> <span class="kn">import</span> <span class="n">Task</span>
@@ -109,6 +109,7 @@
 
     <span class="c">########################################################################</span>
     <span class="c">#    REMOTES</span>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_job_list"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_job_list">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_job_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return the list of Jobs registered with task queue with meta</span>
 <span class="sd">        information.</span>
@@ -122,6 +123,7 @@
     <span class="k">def</span> <span class="nf">rpc_next_scheduled_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rq</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;next_scheduled&#39;</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="n">jobnames</span><span class="p">)</span>
 
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_queue_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_queue_task">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_queue_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Queue a new ``jobname`` in the task queue.</span>
 
@@ -134,6 +136,7 @@
         <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_task</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task_to_json</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
 </div>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_get_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_task">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Retrieve a task from its id&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="nb">id</span><span class="p">:</span>
@@ -141,6 +144,7 @@
             <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">get_task</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
             <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task_to_json</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
 </div>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_get_tasks"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Retrieve a list of tasks which satisfy key-valued filters&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
@@ -148,6 +152,7 @@
             <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="o">**</span><span class="n">filters</span><span class="p">)</span>
             <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task_to_json</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
 </div>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_wait_for_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_wait_for_task">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_wait_for_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Wait for a task to have finished.</span>
 
@@ -160,6 +165,7 @@
             <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">wait_for_task</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
             <span class="n">coroutine_return</span><span class="p">(</span><span class="n">task_to_json</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
 </div>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_num_tasks"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_num_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_num_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return the approximate number of tasks in the task queue.&#39;&#39;&#39;</span>
         <span class="n">task_backend</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_backend</span><span class="p">()</span>
@@ -167,12 +173,14 @@
 
     <span class="c">########################################################################</span>
     <span class="c">#    INTERNALS</span></div>
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">task_backend</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span><span class="p">:</span>
             <span class="n">app</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">get_application</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">taskqueue</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">get_backend</span><span class="p">()</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span><span class="p">)</span>
 
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">queue_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">meta_data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">jobname</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">rpc</span><span class="o">.</span><span class="n">InvalidParams</span><span class="p">(</span><span class="s">&#39;&quot;jobname&quot; is not specified!&#39;</span><span class="p">)</span>

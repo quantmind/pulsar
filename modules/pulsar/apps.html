@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>pulsar.apps &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -134,7 +134,7 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span> <span class="n">From</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">From</span><span class="p">,</span>
                     <span class="n">multi_async</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
@@ -176,6 +176,7 @@
             <span class="n">coroutine_return</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
 
 
+<span class="nd">@task</span>
 <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">start_event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_event</span>
     <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
@@ -187,23 +188,24 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">monitor_info</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="n">monitor_stopping</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">when_monitor_start</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">monitor_task</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="k">yield</span> <span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;periodic_task&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">monitor_task</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">app</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="k">yield</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="n">start_event</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">start_event</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
 
+<span class="nd">@task</span>
 <span class="k">def</span> <span class="nf">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-    <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 
@@ -415,7 +417,7 @@
 </div>
 <div class="viewcode-block" id="Configurator.start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Invoked the application callable method and start</span>
-<span class="sd">        the :class:`.Arbiter` if it wasn&#39;t already started.</span>
+<span class="sd">        the ``arbiter`` if it wasn&#39;t already started.</span>
 
 <span class="sd">        It returns a :class:`~asyncio.Future` called back once the</span>
 <span class="sd">        application/applications are running. It returns ``None`` if</span>
@@ -465,8 +467,8 @@
 <span class="sd">      not be overwritten, instead one should overwrites the application</span>
 <span class="sd">      hooks available.</span>
 <span class="sd">    * When an :class:`Application` is called for the first time,</span>
-<span class="sd">      a new :class:`.Monitor` instance is added to the</span>
-<span class="sd">      :class:`.Arbiter`, ready to perform its duties.</span>
+<span class="sd">      a new ``monitor`` is added to the ``arbiter``,</span>
+<span class="sd">      ready to perform its duties.</span>
 
 <span class="sd">    :parameter callable: Initialise the :attr:`callable` attribute.</span>
 <span class="sd">    :parameter load_config: If ``False`` the :meth:`~Configurator.load_config`</span>
@@ -508,10 +510,10 @@
 
 <span class="sd">        If an ``actor`` is available (either via the function argument or via</span>
 <span class="sd">        the :func:`~pulsar.async.actor.get_actor` function) it must be</span>
-<span class="sd">        :class:`.Arbiter`, otherwise this call is no-op.</span>
+<span class="sd">        ``arbiter``, otherwise this call is no-op.</span>
 
 <span class="sd">        If no actor is available, it means this application starts</span>
-<span class="sd">        pulsar engine by creating the :class:`.Arbiter` with its</span>
+<span class="sd">        pulsar engine by creating the ``arbiter`` with its</span>
 <span class="sd">        :ref:`global settings &lt;setting-section-global-server-settings&gt;`</span>
 <span class="sd">        copied to the arbiter :class:`.Config` container.</span>
 

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Release Notes &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>Release Notes &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
 </head>
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -77,6 +77,8 @@
 <div class="section" id="ver-0-9-0-development">
 <h2>Ver. 0.9.0 - Development<a class="headerlink" href="#ver-0-9-0-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>Dropped support for python 3.3, the supported versions are now python 2.7,
+python 3.4 and <a class="reference external" href="http://pypy.org/">pypy</a>.</li>
 <li>Works with <tt class="docutils literal"><span class="pre">trollius</span></tt> 1.0</li>
 <li>Added <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a> and <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.Timeout" title="pulsar.async.mixins.Timeout"><tt class="xref py py-class docutils literal"><span class="pre">Timeout</span></tt></a> protocol mixins,
 <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a> now inherits from <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a></li>
@@ -108,6 +110,7 @@ script during installation</li>
 <li>Better <a class="reference internal" href="api/utilities.html#pulsar.utils.slugify.slugify" title="pulsar.utils.slugify.slugify"><tt class="xref py py-func docutils literal"><span class="pre">slugify()</span></tt></a> function</li>
 <li><a class="reference internal" href="api/events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> requires a valid <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a>
 during initialisation</li>
+<li>Removed <tt class="docutils literal"><span class="pre">arbiter</span></tt> and <tt class="docutils literal"><span class="pre">monitor</span></tt> module in <tt class="docutils literal"><span class="pre">async</span></tt>.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-8-4-2014-jul-07">
@@ -458,7 +461,7 @@ further information.</li>
 <li><strong>Actors</strong><ul>
 <li><a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> internal message passing uses the (unmasked)
 websocket protocol in a bidirectional communication between the
-<a class="reference internal" href="api/actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> and actors.</li>
+<tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> and actors.</li>
 <li>Spawning and stopping actors is monitored using a timeout set at 5 seconds.</li>
 <li>Added <a class="reference internal" href="api/actor.html#module-pulsar.async.consts" title="pulsar.async.consts"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.async.consts</span></tt></a> module for low level pulsar constants.</li>
 <li>Removed the requestloop attribute, the actor event loop is now accessed
@@ -595,7 +598,7 @@ in the <a class="reference internal" href="apps/tasks.html#module-pulsar.apps.ta
 crashing the arbiter.</li>
 <li>Added <tt class="xref py py-func docutils literal"><span class="pre">pulsar.system.system_info()</span></tt> function which returns system information
 regarding a running process. It requires <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>.</li>
-<li>Added global <a class="reference internal" href="api/actor.html#pulsar.async.arbiter.spawn" title="pulsar.async.arbiter.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.async.actor.send" title="pulsar.async.actor.send"><tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt></a> functions for
+<li>Added global <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.async.actor.send" title="pulsar.async.actor.send"><tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt></a> functions for
 creating and communicating between <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>.</li>
 <li>Fixed critical bug in <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.net.HttpResponse.default_headers()</span></tt>.</li>
 <li>Added <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.utils.http.Headers.pop()</span></tt> method.</li>

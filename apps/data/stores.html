@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Available Clients &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>Available Clients &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="prev" title="Object Data Mapper" href="odm.html" /> 
 </head>
@@ -49,7 +49,7 @@
         <li class="right" >
           <a href="odm.html" title="Object Data Mapper"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
     </div>
@@ -80,7 +80,7 @@ and <a class="reference internal" href="../ds.html#pulsar-data-store"><em>pulsar
 <h3>Redis Store<a class="headerlink" href="#redis-store" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.stores.redis.store.RedisStore">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.redis.store.</tt><tt class="descname">RedisStore</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.redis.store.</tt><tt class="descname">RedisStore</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop=None</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore" title="Permalink to this definition">¶</a></dt>
 <dd><p>Redis <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> implementation.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.data.stores.redis.store.RedisStore.namespace">
@@ -230,7 +230,7 @@ are stored in exactly the same database.</p>
 <h3>CouchDBStore<a class="headerlink" href="#couchdbstore" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.couchdb.store.</tt><tt class="descname">CouchDBStore</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.couchdb.store.</tt><tt class="descname">CouchDBStore</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop=None</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.info">
 <tt class="descname">info</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.info" title="Permalink to this definition">¶</a></dt>

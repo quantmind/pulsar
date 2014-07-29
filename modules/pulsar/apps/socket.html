@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.socket &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>pulsar.apps.socket &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -152,7 +152,7 @@
 
 <span class="sd">the number of :class:`.Actor` serving the application is set</span>
 <span class="sd">to ``0`` so that the application is actually served by the</span>
-<span class="sd">:class:`.Arbiter` event-loop (we refer this to a single process server).</span>
+<span class="sd">arbiter event-loop (we refer this to a single process server).</span>
 <span class="sd">This configuration is used when debugging, testing, benchmarking or on small</span>
 <span class="sd">load servers.</span>
 
@@ -359,7 +359,8 @@
                                      <span class="n">sockets</span><span class="o">=</span><span class="n">sockets</span><span class="p">,</span>
                                      <span class="n">max_requests</span><span class="o">=</span><span class="n">max_requests</span><span class="p">,</span>
                                      <span class="n">keep_alive</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">,</span>
-                                     <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                                     <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                     <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">,</span> <span class="s">&#39;pre_request&#39;</span><span class="p">,</span> <span class="s">&#39;post_request&#39;</span><span class="p">,</span>
                       <span class="s">&#39;connection_lost&#39;</span><span class="p">):</span>
             <span class="n">callback</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
@@ -432,7 +433,8 @@
                                      <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span>
                                      <span class="n">sockets</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">sockets</span><span class="p">,</span>
                                      <span class="n">max_requests</span><span class="o">=</span><span class="n">max_requests</span><span class="p">,</span>
-                                     <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                                     <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                     <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
         <span class="n">server</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">worker</span><span class="o">.</span><span class="n">stop</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;pre_request&#39;</span><span class="p">,</span> <span class="s">&#39;post_request&#39;</span><span class="p">):</span>
             <span class="n">callback</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>

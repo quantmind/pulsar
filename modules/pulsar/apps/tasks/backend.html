@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.tasks.backend &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>pulsar.apps.tasks.backend &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.tasks" href="../tasks.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../tasks.html" accesskey="U">pulsar.apps.tasks</a> &raquo;</li> 
@@ -154,7 +154,8 @@
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">PulsarException</span><span class="p">,</span> <span class="n">yield_from</span><span class="p">,</span>
-                    <span class="n">Future</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">future_timeout</span><span class="p">)</span>
+                    <span class="n">Future</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">future_timeout</span><span class="p">,</span>
+                    <span class="n">ConnectionRefusedError</span><span class="p">,</span> <span class="n">CANCELLED_ERRORS</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">itervalues</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">odm</span>
@@ -532,8 +533,7 @@
 <div class="viewcode-block" id="TaskBackend.start"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Invoked by the task queue ``worker`` when it starts.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="ow">is</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">may_pool_task</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_may_pool_task</span><span class="p">(</span><span class="n">worker</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;started polling tasks&#39;</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="TaskBackend.close"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -541,11 +541,12 @@
 
 <span class="sd">        Invoked by the :class:`.Actor` when stopping.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span>
+        <span class="k">if</span> <span class="n">task</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;stopped polling tasks&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">task</span>
 </div>
 <div class="viewcode-block" id="TaskBackend.generate_task_ids"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.backend.TaskBackend.generate_task_ids">[docs]</a>    <span class="k">def</span> <span class="nf">generate_task_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;An internal method to generate task unique identifiers.</span>
@@ -660,7 +661,16 @@
                         <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
                         <span class="n">coroutine_return</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task</span><span class="p">()</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">task</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="n">ConnectionRefusedError</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">worker</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+                            <span class="k">raise</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">coroutine_return</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="n">CANCELLED_ERRORS</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;stopped polling tasks&#39;</span><span class="p">)</span>
+                        <span class="k">raise</span>
                     <span class="k">if</span> <span class="n">task</span><span class="p">:</span>    <span class="c"># Got a new task</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">processed</span> <span class="o">+=</span> <span class="mi">1</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">concurrent_tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">])</span>
@@ -670,7 +680,15 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> concurrent requests. Cannot poll.&#39;</span><span class="p">,</span>
                                   <span class="bp">self</span><span class="o">.</span><span class="n">num_concurrent_tasks</span><span class="p">)</span>
                 <span class="n">next_time</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="n">next_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">may_pool_task</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="n">next_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_may_pool_task</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_may_pool_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="ow">is</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">worker</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">may_pool_task</span><span class="p">(</span><span class="n">worker</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_may_pool_task</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_execute_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
         <span class="c"># Asynchronous execution of a Task. This method is called</span>

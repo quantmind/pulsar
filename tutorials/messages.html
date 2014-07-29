@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Actor messages &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>Actor messages &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Events" href="events.html" />
     <link rel="prev" title="Asynchronous Components" href="coroutine.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="coroutine.html" title="Asynchronous Components"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -78,7 +78,7 @@
 <span id="actor-messages"></span><span id="tutorials-messages"></span><h1>Actor messages<a class="headerlink" href="#module-pulsar.async.mailbox" title="Permalink to this headline">¶</a></h1>
 <p>Actors communicate with each other by sending and receiving messages.
 The <a class="reference internal" href="#module-pulsar.async.mailbox" title="pulsar.async.mailbox"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.async.mailbox</span></tt></a> module implements the message passing layer
-via a bidirectional socket connections between the <a class="reference internal" href="../api/actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>
+via a bidirectional socket connections between the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt>
 and any <a class="reference internal" href="../api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>.</p>
 <p>Message sending is asynchronous and safe, the message is guaranteed to
 eventually reach the recipient, provided that the recipient exists.</p>
@@ -94,7 +94,7 @@ Here is how you ping actor <tt class="docutils literal"><span class="pre">abc</s
 </pre></div>
 </div>
 </li>
-<li><p class="first">The <a class="reference internal" href="../api/actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> <tt class="xref py py-attr docutils literal"><span class="pre">mailbox</span></tt> is a <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.TcpServer" title="pulsar.async.protocols.TcpServer"><tt class="xref py py-class docutils literal"><span class="pre">TcpServer</span></tt></a>
+<li><p class="first">The <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> <tt class="xref py py-attr docutils literal"><span class="pre">mailbox</span></tt> is a <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.TcpServer" title="pulsar.async.protocols.TcpServer"><tt class="xref py py-class docutils literal"><span class="pre">TcpServer</span></tt></a>
 accepting connections from remote actors.</p>
 </li>
 <li><p class="first">The <a class="reference internal" href="../api/actor.html#pulsar.async.actor.Actor.mailbox" title="pulsar.async.actor.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.mailbox</span></tt></a> is a <a class="reference internal" href="#pulsar.async.mailbox.MailboxClient" title="pulsar.async.mailbox.MailboxClient"><tt class="xref py py-class docutils literal"><span class="pre">MailboxClient</span></tt></a> of the arbiter

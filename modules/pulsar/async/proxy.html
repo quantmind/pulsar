@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.proxy &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>pulsar.async.proxy &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -94,8 +94,8 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;&quot;</span><span class="si">%s</span><span class="s">&quot; is not an actor or actor proxy.&#39;</span> <span class="o">%</span> <span class="n">obj</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">actorid</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">identity</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="s">&#39;identity&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">actor</span>
+<span class="k">def</span> <span class="nf">actor_identity</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">identity</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="s">&#39;identity&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">actor</span>
 
 
 <span class="k">def</span> <span class="nf">get_command</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
@@ -131,6 +131,7 @@
 <span class="k">class</span> <span class="nc">ActorIdentity</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="n">aid</span> <span class="o">=</span> <span class="bp">None</span>
 
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">identity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span>
 

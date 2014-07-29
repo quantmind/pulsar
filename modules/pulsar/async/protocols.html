@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.protocols &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>pulsar.async.protocols &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -541,13 +541,14 @@
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">max_requests</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">max_requests</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Producer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">get_io_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">protocol_factory</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_requests_processed</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sessions</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_requests</span> <span class="o">=</span> <span class="n">max_requests</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span>
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Producer.sessions"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Producer.sessions">[docs]</a>    <span class="k">def</span> <span class="nf">sessions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -603,9 +604,10 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sockets</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_requests</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">keep_alive</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">keep_alive</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">TcpServer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-                                        <span class="n">max_requests</span><span class="o">=</span><span class="n">max_requests</span><span class="p">)</span>
+                                        <span class="n">max_requests</span><span class="o">=</span><span class="n">max_requests</span><span class="p">,</span>
+                                        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="n">address</span><span class="p">,</span> <span class="s">&#39;sockets&#39;</span><span class="p">:</span> <span class="n">sockets</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_keep_alive</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">keep_alive</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_connections</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -769,9 +771,11 @@
     <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;pre_request&#39;</span><span class="p">,</span> <span class="s">&#39;post_request&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sockets</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_requests</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sockets</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_requests</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">DatagramServer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-                                             <span class="n">max_requests</span><span class="o">=</span><span class="n">max_requests</span><span class="p">)</span>
+                                             <span class="n">max_requests</span><span class="o">=</span><span class="n">max_requests</span><span class="p">,</span>
+                                             <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="n">address</span><span class="p">,</span> <span class="s">&#39;sockets&#39;</span><span class="p">:</span> <span class="n">sockets</span><span class="p">}</span>
 
     <span class="nd">@task</span>

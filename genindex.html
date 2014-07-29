@@ -10,7 +10,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Index &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>Index &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -20,7 +20,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -30,7 +30,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="index.html" /> 
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="index.html" /> 
 </head>
  <body>
 
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -125,6 +125,10 @@
 
       
   <dt><a href="apps/data/clients.html#pulsar.apps.data.store.Store._host">_host (pulsar.apps.data.store.Store attribute)</a>
+  </dt>
+
+      
+  <dt><a href="api/async.html#pulsar.async.futures.AsyncObject._logger">_logger (pulsar.async.futures.AsyncObject attribute)</a>
   </dt>
 
       
@@ -292,7 +296,7 @@
   </dt>
 
       
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin.actor_class">actor_class (pulsar.async.monitor.PoolMixin attribute)</a>
+  <dt><a href="api/actor.html#pulsar.async.concurrency.Concurrency.actor_class">actor_class (pulsar.async.concurrency.Concurrency attribute)</a>
   </dt>
 
       
@@ -305,7 +309,7 @@
 
       <dd><dl>
         
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin.actorparams">(pulsar.async.monitor.PoolMixin method)</a>
+  <dt><a href="api/actor.html#pulsar.async.actor.Actor.actorparams">(pulsar.async.actor.Actor method)</a>
   </dt>
 
       </dl></dd>
@@ -372,7 +376,7 @@
   </dt>
 
       
-  <dt><a href="api/actor.html#pulsar.async.arbiter.Arbiter.add_monitor">add_monitor() (pulsar.async.arbiter.Arbiter method)</a>
+  <dt><a href="api/actor.html#pulsar.async.concurrency.ArbiterConcurrency.add_monitor">add_monitor() (pulsar.async.concurrency.ArbiterConcurrency method)</a>
   </dt>
 
       
@@ -383,12 +387,12 @@
   <dt><a href="api/utilities.html#pulsar.utils.config.Config.add_to_parser">add_to_parser() (pulsar.utils.config.Config method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.addClass">addClass() (pulsar.apps.wsgi.content.Html method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/test.html#pulsar.apps.test.result.Plugin.addError">addError() (pulsar.apps.test.result.Plugin method)</a>
   </dt>
@@ -558,11 +562,7 @@
   </dt>
 
       
-  <dt><a href="api/actor.html#pulsar.async.arbiter.Arbiter">Arbiter (class in pulsar.async.arbiter)</a>
-  </dt>
-
-      
-  <dt><a href="api/actor.html#pulsar.async.arbiter.arbiter">arbiter() (in module pulsar.async.arbiter)</a>
+  <dt><a href="api/actor.html#pulsar.async.concurrency.arbiter">arbiter() (in module pulsar.async.concurrency)</a>
   </dt>
 
       
@@ -814,10 +814,6 @@
   </dt>
 
       
-  <dt><a href="api/protocols.html#pulsar.async.clients.PoolConnection.checkout">checkout() (pulsar.async.clients.PoolConnection class method)</a>
-  </dt>
-
-      
   <dt><a href="apps/test.html#pulsar.apps.test.loader.TestLoader.checktag">checktag() (pulsar.apps.test.loader.TestLoader method)</a>
   </dt>
 
@@ -924,15 +920,7 @@
 
       </dl></dd>
       
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin.close_actors">close_actors() (pulsar.async.monitor.PoolMixin method)</a>
-  </dt>
-
-      
-  <dt><a href="api/actor.html#pulsar.async.actor.Actor.close_executor">close_executor() (pulsar.async.actor.Actor method)</a>
-  </dt>
-
-      
-  <dt><a href="api/actor.html#pulsar.async.arbiter.Arbiter.close_monitors">close_monitors() (pulsar.async.arbiter.Arbiter method)</a>
+  <dt><a href="api/actor.html#pulsar.async.concurrency.Concurrency.close_executor">close_executor() (pulsar.async.concurrency.Concurrency method)</a>
   </dt>
 
       
@@ -993,8 +981,6 @@
   <dt><a href="apps/test.html#pulsar.apps.test.loader.TestPlugin.config">config (pulsar.apps.test.loader.TestPlugin attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="api/application.html#pulsar.apps.Configurator">Configurator (class in pulsar.apps)</a>
   </dt>
@@ -1003,6 +989,8 @@
   <dt><a href="apps/test.html#pulsar.apps.test.result.Plugin.configure">configure() (pulsar.apps.test.result.Plugin method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="api/utilities.html#pulsar.utils.log.configured_logger">configured_logger() (in module pulsar.utils.log)</a>
   </dt>
@@ -1871,7 +1859,7 @@
   </dt>
 
         
-  <dt><a href="api/actor.html#pulsar.async.arbiter.Arbiter.get_actor">(pulsar.async.arbiter.Arbiter method)</a>
+  <dt><a href="api/actor.html#pulsar.async.concurrency.ArbiterConcurrency.get_actor">(pulsar.async.concurrency.ArbiterConcurrency method)</a>
   </dt>
 
       </dl></dd>
@@ -2584,15 +2572,7 @@
   </dt>
 
       
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin.manage_actor">manage_actor() (pulsar.async.monitor.PoolMixin method)</a>
-  </dt>
-
-      
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin.manage_actors">manage_actors() (pulsar.async.monitor.PoolMixin method)</a>
-  </dt>
-
-      
-  <dt><a href="api/actor.html#pulsar.async.actor.PoolMixin.managed_actors">managed_actors (pulsar.async.actor.PoolMixin attribute)</a>
+  <dt><a href="api/actor.html#pulsar.async.actor.Actor.managed_actors">managed_actors (pulsar.async.actor.Actor attribute)</a>
   </dt>
 
       
@@ -2665,12 +2645,12 @@
   </dt>
 
       </dl></dd>
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/data/stores.html#pulsar.apps.data.stores.redis.store.RedisStore.meta">meta() (pulsar.apps.data.stores.redis.store.RedisStore method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/http.html#pulsar.apps.http.HttpRequest.method">method (pulsar.apps.http.HttpRequest attribute)</a>
   </dt>
@@ -2738,10 +2718,6 @@
   </dt>
 
       
-  <dt><a href="api/actor.html#pulsar.async.monitor.Monitor">Monitor (class in pulsar.async.monitor)</a>
-  </dt>
-
-      
   <dt><a href="api/application.html#pulsar.apps.Application.monitor_info">monitor_info() (pulsar.apps.Application method)</a>
   </dt>
 
@@ -2784,10 +2760,6 @@
   <dt><a href="apps/tasks.html#pulsar.apps.tasks.TaskQueue.monitor_task">(pulsar.apps.tasks.TaskQueue method)</a>
   </dt>
 
-        
-  <dt><a href="api/actor.html#pulsar.async.monitor.Monitor.monitor_task">(pulsar.async.monitor.Monitor method)</a>
-  </dt>
-
       </dl></dd>
       
   <dt><a href="api/actor.html#pulsar.async.consts.MONITOR_TASK_PERIOD">MONITOR_TASK_PERIOD (in module pulsar.async.consts)</a>
@@ -2795,6 +2767,10 @@
 
       
   <dt><a href="api/actor.html#pulsar.async.concurrency.MonitorConcurrency">MonitorConcurrency (class in pulsar.async.concurrency)</a>
+  </dt>
+
+      
+  <dt><a href="api/actor.html#pulsar.async.actor.Actor.monitors">monitors (pulsar.async.actor.Actor attribute)</a>
   </dt>
 
       
@@ -3266,10 +3242,6 @@
   </dt>
 
       
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin">PoolMixin (class in pulsar.async.monitor)</a>
-  </dt>
-
-      
   <dt><a href="apps/test.html#pulsar.apps.test.populate.populate">populate() (in module pulsar.apps.test.populate)</a>
   </dt>
 
@@ -3398,7 +3370,7 @@
   </dt>
 
       
-  <dt><a href="tutorials/coroutine.html#module-pulsar">pulsar (module)</a>, <a href="apps/shell.html#module-pulsar">[1]</a>, <a href="tutorials/wsgi.html#module-pulsar">[2]</a>, <a href="faq.html#module-pulsar">[3]</a>, <a href="design.html#module-pulsar">[4]</a>
+  <dt><a href="tutorials/coroutine.html#module-pulsar">pulsar (module)</a>, <a href="apps/shell.html#module-pulsar">[1]</a>, <a href="faq.html#module-pulsar">[2]</a>, <a href="design.html#module-pulsar">[3]</a>, <a href="tutorials/wsgi.html#module-pulsar">[4]</a>
   </dt>
 
       
@@ -3449,12 +3421,12 @@
   <dt><a href="apps/data/stores.html#module-pulsar.apps.data.stores.couchdb.store">pulsar.apps.data.stores.couchdb.store (module)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/data/stores.html#module-pulsar.apps.data.stores.redis">pulsar.apps.data.stores.redis (module)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/ds.html#module-pulsar.apps.ds">pulsar.apps.ds (module)</a>
   </dt>
@@ -3858,6 +3830,10 @@
   </dt>
 
       
+  <dt><a href="api/actor.html#pulsar.async.actor.Actor.registered">registered (pulsar.async.actor.Actor attribute)</a>
+  </dt>
+
+      
   <dt><a href="apps/data/odm.html#pulsar.apps.data.odm.mapper.Mapper.registered_models">registered_models (pulsar.apps.data.odm.mapper.Mapper attribute)</a>
   </dt>
 
@@ -3899,6 +3875,16 @@
   <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.remove_all">remove_all() (pulsar.apps.wsgi.content.AsyncString method)</a>
   </dt>
 
+      
+  <dt><a href="api/events.html#pulsar.async.events.AbstractEvent.remove_callback">remove_callback() (pulsar.async.events.AbstractEvent method)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="api/events.html#pulsar.async.events.EventHandler.remove_callback">(pulsar.async.events.EventHandler method)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.remove_child">remove_child() (pulsar.apps.wsgi.routers.Router method)</a>
   </dt>
@@ -4031,6 +4017,8 @@
   <dt><a href="apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler.response_middleware">response_middleware (pulsar.apps.wsgi.handlers.WsgiHandler attribute)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.response_wrapper">response_wrapper (pulsar.apps.wsgi.routers.Router attribute)</a>
   </dt>
@@ -4039,8 +4027,6 @@
   <dt><a href="apps/wsgi/response.html#pulsar.apps.wsgi.response.ResponseMiddleware">ResponseMiddleware (class in pulsar.apps.wsgi.response)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/tasks.html#pulsar.apps.tasks.backend.Task.result">result (pulsar.apps.tasks.backend.Task attribute)</a>
   </dt>
@@ -4078,17 +4064,19 @@
   </dt>
 
       
-  <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.route.route">route (class in pulsar.apps.wsgi.route)</a>
-  </dt>
-
-      
   <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route">Route (class in pulsar.apps.wsgi.route)</a>
   </dt>
 
       
-  <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.route">route (pulsar.apps.wsgi.routers.Router attribute)</a>
+  <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.route.route">route (class in pulsar.apps.wsgi.route)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.route">(pulsar.apps.wsgi.routers.Router attribute)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router">Router (class in pulsar.apps.wsgi.routers)</a>
   </dt>
@@ -4465,12 +4453,12 @@
   <dt><a href="api/utilities.html#pulsar.utils.structures.skiplist.Skiplist">Skiplist (class in pulsar.utils.structures.skiplist)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="api/utilities.html#pulsar.utils.slugify.slugify">slugify() (in module pulsar.utils.slugify)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="api/protocols.html#pulsar.async.protocols.PulsarProtocol.sock">sock (pulsar.async.protocols.PulsarProtocol attribute)</a>
   </dt>
@@ -4484,21 +4472,21 @@
   </dt>
 
       
-  <dt><a href="api/actor.html#pulsar.async.arbiter.spawn">spawn() (in module pulsar.async.arbiter)</a>
+  <dt><a href="api/actor.html#pulsar.async.actor.spawn">spawn() (in module pulsar.async.actor)</a>
   </dt>
 
       <dd><dl>
         
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin.spawn">(pulsar.async.monitor.PoolMixin method)</a>
+  <dt><a href="api/actor.html#pulsar.async.actor.Actor.spawn">(pulsar.async.actor.Actor method)</a>
+  </dt>
+
+        
+  <dt><a href="api/actor.html#pulsar.async.concurrency.Concurrency.spawn">(pulsar.async.concurrency.Concurrency method)</a>
   </dt>
 
       </dl></dd>
       
   <dt><a href="apps/test.html#pulsar.apps.test.utils.ActorTestMixin.spawn_actor">spawn_actor() (pulsar.apps.test.utils.ActorTestMixin method)</a>
-  </dt>
-
-      
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin.spawn_actors">spawn_actors() (pulsar.async.monitor.PoolMixin method)</a>
   </dt>
 
       
@@ -4633,10 +4621,6 @@
   </dt>
 
       </dl></dd>
-      
-  <dt><a href="api/actor.html#pulsar.async.monitor.PoolMixin.stop_actors">stop_actors() (pulsar.async.monitor.PoolMixin method)</a>
-  </dt>
-
       
   <dt><a href="api/protocols.html#pulsar.async.protocols.TcpServer.stop_serving">stop_serving() (pulsar.async.protocols.TcpServer method)</a>
   </dt>
@@ -4780,7 +4764,7 @@
   </dt>
 
       
-  <dt><a href="api/actor.html#pulsar.async.actor.PoolMixin.terminated_actors">terminated_actors (pulsar.async.actor.PoolMixin attribute)</a>
+  <dt><a href="api/actor.html#pulsar.async.actor.Actor.terminated_actors">terminated_actors (pulsar.async.actor.Actor attribute)</a>
   </dt>
 
       

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Asynchonous API &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>Asynchonous API &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -98,13 +98,20 @@ documentation purposes.</p>
 <dl class="attribute">
 <dt id="pulsar.async.futures.AsyncObject._loop">
 <tt class="descname">_loop</tt><a class="headerlink" href="#pulsar.async.futures.AsyncObject._loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>The event loop associated with this object</p>
+<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> associated with this object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.async.futures.AsyncObject._logger">
+<tt class="descname">_logger</tt><a class="headerlink" href="#pulsar.async.futures.AsyncObject._logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional logger instance, used by the <a class="reference internal" href="#pulsar.async.futures.AsyncObject.logger" title="pulsar.async.futures.AsyncObject.logger"><tt class="xref py py-attr docutils literal"><span class="pre">logger</span></tt></a> attribute</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.async.futures.AsyncObject.logger">
 <tt class="descname">logger</tt><a class="reference internal" href="../modules/pulsar/async/futures.html#AsyncObject.logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.AsyncObject.logger" title="Permalink to this definition">¶</a></dt>
-<dd><p>The logger for this object</p>
+<dd><p>The logger for this object.</p>
+<p>It is either the <a class="reference internal" href="#pulsar.async.futures.AsyncObject._logger" title="pulsar.async.futures.AsyncObject._logger"><tt class="xref py py-attr docutils literal"><span class="pre">_logger</span></tt></a> or the logger of the <a class="reference internal" href="#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><tt class="xref py py-attr docutils literal"><span class="pre">_loop</span></tt></a></p>
 </dd></dl>
 
 <dl class="method">

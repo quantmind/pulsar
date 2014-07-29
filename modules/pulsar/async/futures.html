@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.futures &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>pulsar.async.futures &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -75,7 +75,8 @@
 
 <span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">MAX_ASYNC_WHILE</span>
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="p">(</span><span class="n">trollius</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">Return</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">sleep</span><span class="p">,</span>
-                     <span class="n">From</span><span class="p">,</span> <span class="n">isfuture</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">,</span> <span class="n">_PENDING</span><span class="p">,</span> <span class="n">_CANCELLED</span><span class="p">,</span> <span class="n">_FINISHED</span><span class="p">)</span>
+                     <span class="n">From</span><span class="p">,</span> <span class="n">isfuture</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">,</span> <span class="n">_PENDING</span><span class="p">,</span> <span class="n">_CANCELLED</span><span class="p">,</span> <span class="n">_FINISHED</span><span class="p">,</span>
+                     <span class="n">_EVENT_LOOP_CLASSES</span><span class="p">)</span>
 
 <span class="n">coroutine</span> <span class="o">=</span> <span class="n">trollius</span><span class="o">.</span><span class="n">coroutine</span>
 <span class="n">iscoroutine</span> <span class="o">=</span> <span class="n">trollius</span><span class="o">.</span><span class="n">iscoroutine</span>
@@ -135,21 +136,6 @@
                 <span class="n">exc</span> <span class="o">=</span> <span class="n">e</span>
 
 </div>
-<span class="k">def</span> <span class="nf">callback_threadsafe</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Thread safe callback for a :class:`~asyncio.Future`</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">future</span><span class="o">.</span><span class="n">_loop</span> <span class="o">!=</span> <span class="n">get_event_loop</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-
-
 <span class="k">def</span> <span class="nf">future_timeout</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exc_class</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Add a ``timeout`` to ``future`` in a thread-safe way.</span>
 
@@ -209,12 +195,12 @@
                 <span class="k">if</span> <span class="n">callback</span><span class="p">:</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="n">callback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">callback_threadsafe</span><span class="p">(</span><span class="nb">next</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="nb">next</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
                 <span class="n">chain_future</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">next</span><span class="o">=</span><span class="nb">next</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">callback_threadsafe</span><span class="p">(</span><span class="nb">next</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+                <span class="nb">next</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
     <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">_callback</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">next</span>
@@ -317,7 +303,7 @@
         <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
             <span class="n">loop</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;_loop&#39;</span><span class="p">,</span> <span class="n">event_loop</span><span class="p">)</span>
             <span class="c"># Not in the current event loop</span>
-            <span class="k">if</span> <span class="n">loop</span> <span class="o">!=</span> <span class="n">event_loop</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">loop</span> <span class="o">!=</span> <span class="n">event_loop</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">_EVENT_LOOP_CLASSES</span><span class="p">):</span>
                 <span class="n">future</span> <span class="o">=</span> <span class="n">run_in_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">yield_from</span><span class="p">,</span> <span class="n">coro</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
                 <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="s">&#39;_iothreadloop&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
                         <span class="ow">and</span> <span class="ow">not</span> <span class="n">loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">()):</span>
@@ -335,23 +321,23 @@
 <span class="sd">    :param _loop: The event loop where ``callable`` is run</span>
 <span class="sd">    :return: a :class:`~asyncio.Future`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="nb">next</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">_loop</span><span class="p">)</span>
+    <span class="n">waiter</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">_loop</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_</span><span class="p">():</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="nb">next</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+            <span class="n">waiter</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">future</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">_loop</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                <span class="nb">next</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                <span class="n">waiter</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">chain_future</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="nb">next</span><span class="o">=</span><span class="nb">next</span><span class="p">)</span>
+                <span class="n">chain_future</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="nb">next</span><span class="o">=</span><span class="n">waiter</span><span class="p">)</span>
 
     <span class="n">_loop</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">next</span>
+    <span class="k">return</span> <span class="n">waiter</span>
 
 </div>
 <div class="viewcode-block" id="async_while"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.async_while">[docs]</a><span class="k">def</span> <span class="nf">async_while</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">while_clause</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
@@ -427,14 +413,20 @@
 
 <span class="sd">    .. attribute:: _loop</span>
 
-<span class="sd">        The event loop associated with this object</span>
+<span class="sd">        The :ref:`event loop &lt;asyncio-event-loop&gt;` associated with this object</span>
+
+<span class="sd">    .. attribute:: _logger</span>
+
+<span class="sd">        Optional logger instance, used by the :attr:`logger` attribute</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">_logger</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_loop</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="AsyncObject.logger"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.AsyncObject.logger">[docs]</a>    <span class="k">def</span> <span class="nf">logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The logger for this object</span>
+        <span class="sd">&#39;&#39;&#39;The logger for this object.</span>
+
+<span class="sd">        It is either the :attr:`_logger` or the logger of the :attr:`_loop`</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="s">&#39;logger&#39;</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">)</span>
 </div>

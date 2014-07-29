@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Event API &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>Event API &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Protocols/Transports API" href="protocols.html" />
     <link rel="prev" title="Actors API" href="actor.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="actor.html" title="Actors API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -101,6 +101,12 @@ or can occur several times. Check the
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.async.events.AbstractEvent.remove_callback">
+<tt class="descname">remove_callback</tt><big>(</big><em>callback</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#AbstractEvent.remove_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.AbstractEvent.remove_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a callback from the list</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.async.events.AbstractEvent.fired">
 <tt class="descname">fired</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#AbstractEvent.fired"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.AbstractEvent.fired" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of times this event has fired</p>
@@ -126,7 +132,7 @@ or can occur several times. Check the
 <h2>Event<a class="headerlink" href="#event" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.async.events.Event">
-<em class="property">class </em><tt class="descclassname">pulsar.async.events.</tt><tt class="descname">Event</tt><big>(</big><em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#Event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.Event" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.events.</tt><tt class="descname">Event</tt><big>(</big><em>loop=None</em>, <em>name=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#Event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.Event" title="Permalink to this definition">¶</a></dt>
 <dd><p>The default implementation of <a class="reference internal" href="#pulsar.async.events.AbstractEvent" title="pulsar.async.events.AbstractEvent"><tt class="xref py py-class docutils literal"><span class="pre">AbstractEvent</span></tt></a>.</p>
 </dd></dl>
 
@@ -135,7 +141,7 @@ or can occur several times. Check the
 <h2>One time<a class="headerlink" href="#one-time" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.async.events.OneTime">
-<em class="property">class </em><tt class="descclassname">pulsar.async.events.</tt><tt class="descname">OneTime</tt><big>(</big><em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#OneTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.OneTime" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.events.</tt><tt class="descname">OneTime</tt><big>(</big><em>loop=None</em>, <em>name=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#OneTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.OneTime" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference internal" href="#pulsar.async.events.AbstractEvent" title="pulsar.async.events.AbstractEvent"><tt class="xref py py-class docutils literal"><span class="pre">AbstractEvent</span></tt></a> which can be fired once only.</p>
 <p>This event handler is a subclass of <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>.
 Implemented mainly for the one time events of the <a class="reference internal" href="#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a>.</p>
@@ -231,6 +237,12 @@ can also be a list/tuple of callables.</li>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.events.EventHandler.remove_callback">
+<tt class="descname">remove_callback</tt><big>(</big><em>name</em>, <em>callback</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler.remove_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler.remove_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a <tt class="docutils literal"><span class="pre">callback</span></tt> from event <tt class="docutils literal"><span class="pre">name</span></tt></p>
 </dd></dl>
 
 <dl class="method">

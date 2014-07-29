@@ -42,6 +42,19 @@ by asyncio rather than the iterator and therefore it is much more efficient.
 In other words the bigger the chunks the faster the transfer rate and
 the more responsive (in term of concurrent connections) the server will be.
 
+
+Benchmark with JMeter
+--------------------------
+
+Install jmeter_, on a mac simply use ``homebrew``
+
+  brew install jmeter
+
+launch it, open the ``httpbin.jmx`` benchmark file and run it.
+
+
+.. _jmeter: http://jmeter.apache.org/
+
 Test slow clients
 ======================
 

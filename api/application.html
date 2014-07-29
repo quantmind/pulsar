@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Application API &mdash; pulsar 0.8.5-beta.1 documentation</title>
+    <title>Application API &mdash; pulsar 0.9.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.5-beta.1',
+        VERSION:     '0.9.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.5-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Tools" href="utilities.html" />
     <link rel="prev" title="Protocols/Transports API" href="protocols.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="protocols.html" title="Protocols/Transports API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.5-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -205,7 +205,7 @@ overriding order is the following:</p>
 <dt id="pulsar.apps.Configurator.start">
 <tt class="descname">start</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked the application callable method and start
-the <a class="reference internal" href="actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> if it wasn&#8217;t already started.</p>
+the <tt class="docutils literal"><span class="pre">arbiter</span></tt> if it wasn&#8217;t already started.</p>
 <p>It returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called back once the
 application/applications are running. It returns <tt class="docutils literal"><span class="pre">None</span></tt> if
 called more than once.</p>
@@ -241,8 +241,8 @@ the calling actor as only argument. The callable method should
 not be overwritten, instead one should overwrites the application
 hooks available.</li>
 <li>When an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> is called for the first time,
-a new <a class="reference internal" href="actor.html#pulsar.async.monitor.Monitor" title="pulsar.async.monitor.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a> instance is added to the
-<a class="reference internal" href="actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>, ready to perform its duties.</li>
+a new <tt class="docutils literal"><span class="pre">monitor</span></tt> is added to the <tt class="docutils literal"><span class="pre">arbiter</span></tt>,
+ready to perform its duties.</li>
 </ul>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -275,9 +275,9 @@ a function or a picklable object.</p>
 <dd><p>Register this application with the (optional) calling <tt class="docutils literal"><span class="pre">actor</span></tt>.</p>
 <p>If an <tt class="docutils literal"><span class="pre">actor</span></tt> is available (either via the function argument or via
 the <a class="reference internal" href="actor.html#pulsar.async.actor.get_actor" title="pulsar.async.actor.get_actor"><tt class="xref py py-func docutils literal"><span class="pre">get_actor()</span></tt></a> function) it must be
-<a class="reference internal" href="actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>, otherwise this call is no-op.</p>
+<tt class="docutils literal"><span class="pre">arbiter</span></tt>, otherwise this call is no-op.</p>
 <p>If no actor is available, it means this application starts
-pulsar engine by creating the <a class="reference internal" href="actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> with its
+pulsar engine by creating the <tt class="docutils literal"><span class="pre">arbiter</span></tt> with its
 <a class="reference internal" href="../settings.html#setting-section-global-server-settings"><em>global settings</em></a>
 copied to the arbiter <a class="reference internal" href="utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -342,7 +342,7 @@ has fired it.</td>
 <dl class="method">
 <dt id="pulsar.apps.Application.monitor_task">
 <tt class="descname">monitor_task</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Executed by the <a class="reference internal" href="actor.html#pulsar.async.monitor.Monitor" title="pulsar.async.monitor.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a> serving this application
+<dd><p>Executed by the <tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt> serving this application
 at each event loop.</p>
 </dd></dl>
 
