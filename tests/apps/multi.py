@@ -49,7 +49,6 @@ class TestMultiApp(unittest.TestCase):
         yield monitor2.stop()
         self.assertFalse(arbiter.get_actor('rpc_pluto'))
 
-class d:
     def test_app(self):
         app = self.create(version='2.0')
         self.assertEqual(app.version, '2.0')

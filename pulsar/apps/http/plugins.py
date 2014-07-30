@@ -159,7 +159,6 @@ def handle_101(response, exc=None):
         response.request_again = consumer
 
 
-
 class Tunneling:
     '''A pre request callback for handling proxy tunneling.
 

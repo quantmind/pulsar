@@ -14,6 +14,7 @@ ConnectionRefusedError = None
 ConnectionResetError = None
 From = identity
 
+
 class Future(ndb.Future):
 
     def __init__(self, loop=None):
@@ -77,6 +78,7 @@ def async(core_or_future, loop=None):
 def sleep(interval, result=None, loop=None):
     time.sleep(interval)
     return result
+
 
 def iscoroutine(value):
     return False

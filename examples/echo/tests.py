@@ -161,6 +161,7 @@ class TestEchoServerThread(unittest.TestCase):
         client.pool._queue.put_nowait(conn1)
         client.pool._queue.put_nowait(conn2)
 
+
 @dont_run_with_thread
 class TestEchoServerProcess(TestEchoServerThread):
     concurrency = 'process'

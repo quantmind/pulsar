@@ -160,5 +160,5 @@ class Transaction(EventHandler):
     def _commit(self):
         # Run this method in the event loop so that it is thread safe
         executed = dict(((store, store.execute_transaction(commands)) for
-                          store, commands in iteritems(self._commands)))
+                         store, commands in iteritems(self._commands)))
         return multi_async(executed, loop=self._loop)

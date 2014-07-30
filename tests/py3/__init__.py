@@ -1,2 +1,2 @@
 import sys
-__test__ = sys.version_info > (3,3)
+__test__ = sys.version_info > (3, 3)

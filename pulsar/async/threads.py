@@ -62,7 +62,7 @@ class Thread(dummy.DummyProcess):
             self._loop.call_soon_threadsafe(self._loop.stop)
 
     def set_loop(self, loop):
-        assert self._loop == None
+        assert self._loop is None
         self._loop = loop
 
 
