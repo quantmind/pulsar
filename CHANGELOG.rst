@@ -28,12 +28,14 @@ Ver. 0.9.0 - Development
   internal exception
 * Critical bug fix in :class:`.Router` when children are added via a decorated
   method
-* ``trollius`` and ``asyncio`` added as dependencies in the ``setup.py``
+* ``trollius`` and ``unidecode`` added as dependencies in the ``setup.py``
   script during installation
 * Better :func:`.slugify` function
 * :class:`.EventHandler` requires a valid :ref:`event loop <asyncio-event-loop>`
   during initialisation
-* Removed ``arbiter`` and ``monitor`` module in ``async``.
+* Removed ``arbiter`` and ``monitor`` modules from ``async``, one :class:`.Actor`
+  class only, implementation differences handled by the different underlying
+  :class:`.Concurrency` classes.
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================

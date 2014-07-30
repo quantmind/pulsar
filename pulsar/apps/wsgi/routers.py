@@ -489,7 +489,8 @@ class MediaMixin(object):
         response = request.response
         if content_type:
             response.content_type = content_type
-        response.encoding = encoding
+        if encoding:
+            response.encoding = encoding
         if not (status_code or self.was_modified_since(
                 request.environ.get('HTTP_IF_MODIFIED_SINCE'),
                 statobj[stat.ST_MTIME],
@@ -576,13 +577,10 @@ class MediaRouter(Router, MediaMixin):
                                           'text/html'))
     cache_control = CacheControl(maxage=86400)
 
-    def __init__(self, rute, path, show_indexes=False, mapping=None,
+    def __init__(self, rule, path, show_indexes=False, mapping=None,
                  default_suffix=None, default_file='index.html',
                  raise_404=True):
-        rute = '%s/<path:path>' % rute
-        if rute.startswith('/'):
-            rute = rute[1:]
-        super(MediaRouter, self).__init__(rute)
+        super(MediaRouter, self).__init__('%s/<path:path>' % rule)
         self._mapping = mapping or {}
         self._default_suffix = default_suffix
         self._default_file = default_file

@@ -2,7 +2,7 @@
 
 .. note::
 
-    The :mod:`pulsar.apps.wsgi.route` module was originally from the routing
+    The :mod:`~pulsar.apps.wsgi.route` module was originally from the routing
     module in werkzeug_. Original License:
 
     copyright (c) 2011 by the Werkzeug Team. License BSD

@@ -156,11 +156,9 @@ pep8_ check (requires pep8 package)::
 Kudos
 ============
 Pulsar project started as a fork of gunicorn_ (from where the arbiter idea)
-and has been developed using ideas from nodejs_ (api design), twisted_
-(the deferred implementation), tornado_ web server (the initial event-loop
-implementation), celery_ (the task queue application) and,
-since version 0.5, tulip_ and PEP-3156_.
-In addition, pulsar uses several snippet of code from around the open-source
+and since version 0.5 has been implemented on top of asyncio
+(tulip_ and PEP-3156_).
+Pulsar uses several snippet of code from around the open-source
 community, in particular:
 
 * A python HTTP Parser originally written by benoitc_.
@@ -200,8 +198,6 @@ file in the top distribution directory for the full license text.
 .. _gunicorn: http://gunicorn.org/
 .. _nodejs: http://nodejs.org/
 .. _twisted: http://twistedmatrix.com/trac/
-.. _tornado: http://www.tornadoweb.org/
-.. _celery: http://celeryproject.org/
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
 .. _`actors primitive`: http://en.wikipedia.org/wiki/Actor_model
 .. _mock: http://pypi.python.org/pypi/mock

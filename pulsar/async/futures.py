@@ -344,14 +344,20 @@ class AsyncObject(object):
 
     .. attribute:: _loop
 
-        The event loop associated with this object
+        The :ref:`event loop <asyncio-event-loop>` associated with this object
+
+    .. attribute:: _logger
+
+        Optional logger instance, used by the :attr:`logger` attribute
     '''
     _logger = None
     _loop = None
 
     @property
     def logger(self):
-        '''The logger for this object
+        '''The logger for this object.
+
+        It is either the :attr:`_logger` or the logger of the :attr:`_loop`
         '''
         return self._logger or getattr(self._loop, 'logger', LOGGER)
 

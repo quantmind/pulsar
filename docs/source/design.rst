@@ -102,15 +102,16 @@ Python has very few implementation and all of them seem quite limited in scope.
 The Arbiter
 ~~~~~~~~~~~~~~~~~
 When using pulsar actor layer, you need to use pulsar in **server state**,
-that is to say, there will be a centralised :class:`.Arbiter` controlling the main
+that is to say, there will be a centralised **Arbiter** controlling the main
 :ref:`event loop <asyncio-event-loop>` in the **main thread** of the
 **master process**.
 The arbiter is a specialised :class:`.Actor`
-which control the life of all :class:`.Actor` and :class:`.Monitor`.
+which control the life of all :class:`.Actor` and
+:ref:`monitors <design-monitor>`
 
 .. _design-arbiter:
 
-To access the :class:`.Arbiter`, from the main process, one can use the
+To access the arbiter, from the main process, one can use the
 :func:`.arbiter` high level function::
 
     >>> arbiter = pulsar.arbiter()
@@ -214,19 +215,14 @@ Spawning a new actor is achieved via the :func:`.spawn` function::
 
     from pulsar import spawn
 
-    class PeriodicTask:
+    def task(actor, exc=None):
+        # do something useful here
+        ...
 
-        def __call__(self, actor):
-            actor.event_loop.call_repeatedly(2, self.task)
+    ap = spawn(periodic_task=task)
 
-        def task(self):
-            # do something useful here
-            ...
-
-    ap = spawn(start=PeriodicTask())
-
-The valued returned by :func:`.spawn` is an :class:`.ActorProxyFuture` instance,
-a specialised :class:`~asyncio.Future`, which has the spawned actor id ``aid``
+The value returned by :func:`.spawn` is an :class:`.ActorProxyFuture`,
+a specialised :class:`~asyncio.Future` with the :attr:`., which has the actor id ``aid``
 and it is called back once the remote actor has started.
 The callback will be an :class:`.ActorProxy`, a lightweight proxy
 for the remote actor.
@@ -236,8 +232,9 @@ the workflow of the :func:`.spawn` function is as follow:
 
 * :func:`.send` a message to the :ref:`arbiter <design-arbiter>` to spawn
   a new actor.
-* The arbiter spawn the actor and wait for the actor's **hand shake**. Once the
-  hand shake is done, it sends the response (the :class:`.ActorProxy` of the
+* The arbiter spawn the actor and wait for the actor's
+  :ref:`handshake <handshake>`. Once the hand shake is done, it sends the
+  response (the :class:`.ActorProxy` of the
   spawned actor) to the original actor.
 
 .. _handshake:
@@ -247,8 +244,8 @@ Handshake
 
 The actor **hand-shake** is the mechanism with which an :class:`.Actor`
 register its :ref:`mailbox address <tutorials-messages>` with its manager.
-The actor manager is either a :class:`.Monitor` or the :class:`.Arbiter`
-depending on which spawned the actor.
+The actor manager is either a :class:`.Monitor` or the
+:ref:`arbiter <design-arbiter>` depending on which spawned the actor.
 
 The handshake occurs when the monitor receives, for the first time,
 the actor :ref:`notify message <actor_notify_command>`.
@@ -399,11 +396,16 @@ Tell the remote actor ``abc`` to gracefully shutdown::
 
     send('abc', 'stop')
 
-.. _monitor:
+.. _design-monitor:
 
 Monitors
 ==============
 
+Monitors are specialised actors which share the :ref:`arbiter <design-arbiter>`
+event loop and therefore they live in the main thread of the master process
+of your application.
+
+TODO: more docs
 
 .. _exception-design:
 

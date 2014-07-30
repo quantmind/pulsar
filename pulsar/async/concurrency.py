@@ -621,8 +621,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         the :class:`.Arbiter` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
         actor.next_periodic_task = None
-        if actor.cfg.reload and autoreload.check_changes():
-            return actor.stop(exit_code=autoreload.EXIT_CODE)
         #
         if actor.started():
             # managed actors job
@@ -640,6 +638,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         if not actor.closed():
             actor.next_periodic_task = actor._loop.call_later(
                 interval, self.periodic_task, actor)
+
+        if actor.cfg.reload and autoreload.check_changes():
+            actor.stop(exit_code=autoreload.EXIT_CODE)
 
     def _stop_actor(self, actor, finished=False):
         '''Stop the pools the message queue and remaining actors
