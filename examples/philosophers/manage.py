@@ -60,7 +60,7 @@ except ImportError:
     import sys
     sys.path.append('../../')
     import pulsar
-from pulsar import command, async
+from pulsar import command, task
 from pulsar.apps import wsgi, ws, data, ds
 
 # WEB INTERFACE
@@ -184,8 +184,9 @@ class DiningPhilosophers(pulsar.Application):
             if not self.thinking:
                 philosopher.logger.warning('%s thinking...', philosopher.name)
             self.thinking += 1
-        async(self.pickup_fork(philosopher), loop=loop)
+        self.pickup_fork(philosopher)
 
+    @task
     def pickup_fork(self, philosopher):
         '''The philosopher has less than two forks.
 

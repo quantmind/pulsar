@@ -1,5 +1,6 @@
 from pulsar.utils.config import Global
 
+
 class PostgreSqlOption(Global):
     name = 'postgresql_server'
     flags = ['--postgresql-server']
@@ -13,5 +14,3 @@ except ImportError:     # pragma    nocover
     pass
 else:
     from .postgresql import PostgreSqlStore
-
-
