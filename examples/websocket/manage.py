@@ -1,4 +1,4 @@
-'''\
+'''
 A very Simple Web-Socket example.
 To run the server type::
 
@@ -18,6 +18,9 @@ except ImportError:  # pragma nocover
 from pulsar.apps import ws, wsgi
 from pulsar.utils.pep import range
 from pulsar.utils.system import json
+
+
+DIR = os.path.dirname(__file__)
 
 
 class Graph(ws.WS):
@@ -48,12 +51,12 @@ class Site(wsgi.LazyWsgi):
                                  ws.WebSocket('/echo', Echo())])
 
     def home(self, request):
-        data = open(os.path.join(os.path.dirname(__file__),
-                                 'websocket.html')).read()
-        data = data % request.environ
-        request.response.content_type = 'text/html'
-        request.response.content = data
-        return request.response
+        response = request.response
+        response.content_type = 'text/html'
+        response.encoding = 'utf-8'
+        with open(os.path.join(DIR, 'websocket.html')) as f:
+            response.content = f.read() % request.environ
+        return response
 
 
 def server(**kwargs):

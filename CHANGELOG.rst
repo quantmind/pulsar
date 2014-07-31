@@ -1,8 +1,9 @@
 Ver. 0.9.0 - Development
 ===========================
 * Dropped support for python 3.3, the supported versions are now python 2.7,
-  python 3.4 and pypy_.
-* Works with ``trollius`` 1.0
+  python 3.4 and pypy_
+* Works with trollius_ 1.0.1 which is now a dependency for all supported
+  python versions
 * Added :class:`.FlowControl` and :class:`.Timeout` protocol mixins,
   :class:`.PulsarProtocol` now inherits from :class:`.FlowControl`
 * Better handling of streaming responses by the wsgi server
@@ -28,7 +29,7 @@ Ver. 0.9.0 - Development
   internal exception
 * Critical bug fix in :class:`.Router` when children are added via a decorated
   method
-* ``trollius`` and ``unidecode`` added as dependencies in the ``setup.py``
+* trollius_ and ``unidecode`` added as dependencies in the ``setup.py``
   script during installation
 * Better :func:`.slugify` function
 * :class:`.EventHandler` requires a valid :ref:`event loop <asyncio-event-loop>`
@@ -553,3 +554,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _cauchdb: http://couchdb.apache.org/
 .. _greenlet: http://greenlet.readthedocs.org/
 .. _psycopg2: http://pythonhosted.org/psycopg2/
+.. _trollius: http://trollius.readthedocs.org/

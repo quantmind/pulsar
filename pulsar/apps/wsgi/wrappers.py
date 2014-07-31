@@ -173,10 +173,12 @@ class WsgiResponse(object):
         if self.environ:
             return self.environ.get('pulsar.cache')
 
-    def _get_content(self):
+    @property
+    def content(self):
         return self._content
 
-    def _set_content(self, content):
+    @content.setter
+    def content(self, content):
         if not self._started:
             if content is None:
                 content = ()
@@ -190,12 +192,12 @@ class WsgiResponse(object):
                     if not self.encoding:  # use utf-8 if not set
                         self.encoding = 'utf-8'
                     content = content.encode(self.encoding)
+
             if isinstance(content, bytes):
                 content = (content,)
             self._content = content
         else:
             raise RuntimeError('Cannot set content. Already iterated')
-    content = property(_get_content, _set_content)
 
     def _get_content_type(self):
         return self.headers.get('content-type')

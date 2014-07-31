@@ -1,15 +1,6 @@
-from pulsar.utils.config import Global
 from pulsar.apps.data import register_store, create_store
 
 from .base import SqlStore, green_task
-
-
-class PostgreSqlOption(Global):
-    name = 'postgresql_server'
-    flags = ['--postgresql-server']
-    meta = "CONNECTION_STRING"
-    default = 'postgresql://postgres@127.0.0.1:5432'
-    desc = 'Default connection string for the PostgreSql server'
 
 
 class PostgreSqlStore(SqlStore):

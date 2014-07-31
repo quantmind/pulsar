@@ -1,7 +1,7 @@
 '''
 Pulsar-ds is a python implementation of the popular redis_
 data store. It uses pulsar asynchronous framework to create a
-single-threaded workers responding to TCP-requests in the same way
+single-threaded worker responding to TCP-requests in the same way
 as redis does.
 
 To run a stand alone server create a script with the following code::

@@ -138,7 +138,7 @@ uses them to add additional functionalities or improve performance:
 Running Tests
 ==================
 Pulsar test suite uses the pulsar test application.
-If not running on python 3.3 or above the mock_ is needed. To run tests::
+If not running on python 3.4 or above the mock_ is needed. To run tests::
 
     python runtests.py
 

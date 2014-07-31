@@ -108,7 +108,8 @@ class BaseRouter(wsgi.Router):
 
 
 class HttpBin(BaseRouter):
-
+    '''The main :class:`.Router` for the HttpBin application
+    '''
     def get(self, request):
         '''The home page of this router'''
         ul = Html('ul')
