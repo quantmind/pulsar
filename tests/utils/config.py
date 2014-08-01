@@ -40,11 +40,16 @@ class TestConfig(unittest.TestCase):
 
     def testBadConfig(self):
         cfg = Config()
+        self.assertEqual(cfg.config, 'config.py')
         self.assertEqual(cfg.import_from_module('foo/bla/cnkjnckjcn.py'), [])
         cfg.set('config', None)
         self.assertEqual(cfg.config, None)
+
+    def test_exclude(self):
         cfg = Config(exclude=['config'])
-        self.assertEqual(cfg.config, None)
+        self.assertEqual(cfg.config, 'config.py')
+        self.assertEqual(cfg.params['config'], 'config.py')
+        self.assertFalse('config' in cfg.settings)
 
     def testDefaults(self):
         from pulsar.utils import config
