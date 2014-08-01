@@ -93,7 +93,7 @@ activities in different threads and/or processes.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Mailing list:</th><td class="field-body"><a class="reference external" href="https://groups.google.com/forum/?fromgroups#!forum/python-pulsar">google user group</a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 2.7, 3.4 and <a class="reference external" href="http://pypy.org/">pypy</a></td>
+<tr class="field-odd field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 2.7, 3.3, 3.4 and <a class="reference external" href="http://pypy.org/">pypy</a></td>
 </tr>
 <tr class="field-even field"><th class="field-name">Keywords:</th><td class="field-body">client, server, asynchronous, concurrency, actor, thread, process,
 socket, task queue, wsgi, websocket, redis, json-rpc</td>
@@ -132,6 +132,7 @@ a combination of the two.</p>
 <ul class="simple">
 <li><a class="reference external" href="https://pypi.python.org/pypi/trollius">trollius</a></li>
 <li><a class="reference external" href="https://pypi.python.org/pypi/Unidecode">unidecode</a></li>
+<li><a class="reference external" href="https://pypi.python.org/pypi/asyncio">asyncio</a> (python 3.3 only)</li>
 </ul>
 <p>Install via <tt class="docutils literal"><span class="pre">pip</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre>pip install pulsar
@@ -204,7 +205,7 @@ returned by Actor info method.</li>
 <div class="section" id="running-tests">
 <h2>Running Tests<a class="headerlink" href="#running-tests" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar test suite uses the pulsar test application.
-If not running on python 3.3 or above the <a class="reference external" href="http://pypi.python.org/pypi/mock">mock</a> is needed. To run tests:</p>
+If not running on python 3.4 or above the <a class="reference external" href="http://pypi.python.org/pypi/mock">mock</a> is needed. To run tests:</p>
 <div class="highlight-python"><div class="highlight"><pre>python runtests.py
 </pre></div>
 </div>
@@ -220,11 +221,9 @@ If not running on python 3.3 or above the <a class="reference external" href="ht
 <div class="section" id="kudos">
 <span id="kudo"></span><h2>Kudos<a class="headerlink" href="#kudos" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar project started as a fork of <a class="reference external" href="http://gunicorn.org/">gunicorn</a> (from where the arbiter idea)
-and has been developed using ideas from <a class="reference external" href="http://nodejs.org/">nodejs</a> (api design), <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a>
-(the deferred implementation), <a class="reference external" href="http://www.tornadoweb.org/">tornado</a> web server (the initial event-loop
-implementation), <a class="reference external" href="http://celeryproject.org/">celery</a> (the task queue application) and,
-since version 0.5, <a class="reference external" href="https://code.google.com/p/tulip/">tulip</a> and <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">PEP-3156</a>.
-In addition, pulsar uses several snippet of code from around the open-source
+and since version 0.5 has been implemented on top of asyncio
+(<a class="reference external" href="https://code.google.com/p/tulip/">tulip</a> and <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">PEP-3156</a>).
+Pulsar uses several snippet of code from around the open-source
 community, in particular:</p>
 <ul class="simple">
 <li>A python HTTP Parser originally written by <a class="reference external" href="https://github.com/benoitc">benoitc</a>.</li>

@@ -149,18 +149,18 @@
 <div class="viewcode-block" id="HttpException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpException">[docs]</a><span class="k">class</span> <span class="nc">HttpException</span><span class="p">(</span><span class="n">HTTPError</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The base class of all ``HTTP`` server exceptions</span>
 
-<span class="sd">Introduces the following attributes:</span>
+<span class="sd">    Introduces the following attributes:</span>
 
-<span class="sd">.. attribute:: status</span>
+<span class="sd">    .. attribute:: status</span>
 
-<span class="sd">    The numeric status code for the exception (ex 500 for server error).</span>
+<span class="sd">        The numeric status code for the exception (ex 500 for server error).</span>
 
-<span class="sd">    Default: ``500``.</span>
+<span class="sd">        Default: ``500``.</span>
 
-<span class="sd">.. attribute:: headers</span>
+<span class="sd">    .. attribute:: headers</span>
 
-<span class="sd">    Additional headers to add to the client response.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Additional headers to add to the client response.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">500</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>

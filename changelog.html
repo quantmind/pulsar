@@ -77,9 +77,8 @@
 <div class="section" id="ver-0-9-0-development">
 <h2>Ver. 0.9.0 - Development<a class="headerlink" href="#ver-0-9-0-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Dropped support for python 3.3, the supported versions are now python 2.7,
-python 3.4 and <a class="reference external" href="http://pypy.org/">pypy</a>.</li>
-<li>Works with <tt class="docutils literal"><span class="pre">trollius</span></tt> 1.0</li>
+<li>Works with <a class="reference external" href="http://trollius.readthedocs.org/">trollius</a> 1.0.1 which is now a dependency for all supported
+python versions</li>
 <li>Added <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a> and <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.Timeout" title="pulsar.async.mixins.Timeout"><tt class="xref py py-class docutils literal"><span class="pre">Timeout</span></tt></a> protocol mixins,
 <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.PulsarProtocol" title="pulsar.async.protocols.PulsarProtocol"><tt class="xref py py-class docutils literal"><span class="pre">PulsarProtocol</span></tt></a> now inherits from <a class="reference internal" href="api/protocols.html#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><tt class="xref py py-class docutils literal"><span class="pre">FlowControl</span></tt></a></li>
 <li>Better handling of streaming responses by the wsgi server</li>
@@ -105,12 +104,17 @@ Useful when stopping execution because of a wrong input rather than an
 internal exception</li>
 <li>Critical bug fix in <a class="reference internal" href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> when children are added via a decorated
 method</li>
-<li><tt class="docutils literal"><span class="pre">trollius</span></tt> and <tt class="docutils literal"><span class="pre">asyncio</span></tt> added as dependencies in the <tt class="docutils literal"><span class="pre">setup.py</span></tt>
+<li><a class="reference external" href="http://trollius.readthedocs.org/">trollius</a> and <tt class="docutils literal"><span class="pre">unidecode</span></tt> added as dependencies in the <tt class="docutils literal"><span class="pre">setup.py</span></tt>
 script during installation</li>
 <li>Better <a class="reference internal" href="api/utilities.html#pulsar.utils.slugify.slugify" title="pulsar.utils.slugify.slugify"><tt class="xref py py-func docutils literal"><span class="pre">slugify()</span></tt></a> function</li>
 <li><a class="reference internal" href="api/events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> requires a valid <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a>
 during initialisation</li>
-<li>Removed <tt class="docutils literal"><span class="pre">arbiter</span></tt> and <tt class="docutils literal"><span class="pre">monitor</span></tt> module in <tt class="docutils literal"><span class="pre">async</span></tt>.</li>
+<li>Removed <tt class="docutils literal"><span class="pre">arbiter</span></tt> and <tt class="docutils literal"><span class="pre">monitor</span></tt> modules from <tt class="docutils literal"><span class="pre">async</span></tt>, one <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
+class only, implementation differences handled by the different underlying
+<a class="reference internal" href="api/actor.html#pulsar.async.concurrency.Concurrency" title="pulsar.async.concurrency.Concurrency"><tt class="xref py py-class docutils literal"><span class="pre">Concurrency</span></tt></a> classes.</li>
+<li>The <a class="reference internal" href="api/utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> adds the default values of excluded settings to the
+<a class="reference internal" href="api/utilities.html#pulsar.utils.config.Config.params" title="pulsar.utils.config.Config.params"><tt class="xref py py-attr docutils literal"><span class="pre">Config.params</span></tt></a> dictionary. In this way the parameters cannot be set
+on the command line but still be available.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-8-4-2014-jul-07">

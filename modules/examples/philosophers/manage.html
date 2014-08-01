@@ -129,7 +129,7 @@
     <span class="kn">import</span> <span class="nn">sys</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">async</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">task</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ds</span>
 
 <span class="c"># WEB INTERFACE</span>
@@ -253,8 +253,9 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking</span><span class="p">:</span>
                 <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> thinking...&#39;</span><span class="p">,</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">thinking</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pickup_fork</span><span class="p">(</span><span class="n">philosopher</span><span class="p">),</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pickup_fork</span><span class="p">(</span><span class="n">philosopher</span><span class="p">)</span>
 </div>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="DiningPhilosophers.pickup_fork"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers.pickup_fork">[docs]</a>    <span class="k">def</span> <span class="nf">pickup_fork</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">philosopher</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The philosopher has less than two forks.</span>
 
