@@ -21,6 +21,10 @@ except ImportError:
 install_requires = ['unidecode', 'trollius']
 
 
+if sys.version_info[:2] == (3, 3):
+    install_requires.append('asyncio')
+
+
 class osx_install_data(install_data):
 
     def finalize_options(self):

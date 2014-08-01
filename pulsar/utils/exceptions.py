@@ -80,18 +80,18 @@ class SSLError(HTTPError):
 class HttpException(HTTPError):
     '''The base class of all ``HTTP`` server exceptions
 
-Introduces the following attributes:
+    Introduces the following attributes:
 
-.. attribute:: status
+    .. attribute:: status
 
-    The numeric status code for the exception (ex 500 for server error).
+        The numeric status code for the exception (ex 500 for server error).
 
-    Default: ``500``.
+        Default: ``500``.
 
-.. attribute:: headers
+    .. attribute:: headers
 
-    Additional headers to add to the client response.
-'''
+        Additional headers to add to the client response.
+    '''
     status = 500
 
     def __init__(self, msg='', status=None, handler=None, strict=False,

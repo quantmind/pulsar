@@ -598,6 +598,8 @@ class MediaRouter(Router, MediaMixin):
         if os.path.isdir(fullpath) and self._default_file:
             file = os.path.join(fullpath, self._default_file)
             if os.path.isfile(file):
+                if not request.path.endswith('/'):
+                    return request.redirect('%s/' % request.path)
                 fullpath = file
         #
         if os.path.isdir(fullpath):

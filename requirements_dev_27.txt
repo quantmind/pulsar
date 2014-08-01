@@ -1,9 +1,0 @@
-coverage
-cython
-django
-pep8
-setproctitle
-psutil
-greenlet
-sqlalchemy
-psycopg2

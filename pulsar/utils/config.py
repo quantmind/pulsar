@@ -117,8 +117,8 @@ class Config(object):
 
     .. attribute:: params
 
-        Dictionary of additional parameters which cannot be parsed in the
-        command line.
+        Dictionary of additional parameters which cannot be parsed on the
+        command line
     '''
     script = None
     application = None
@@ -129,6 +129,7 @@ class Config(object):
                  exclude=None, settings=None, prefix=None,
                  name=None, log_name=None, **params):
         self.settings = {} if settings is None else settings
+        self.params = {}
         self.name = name
         self.log_name = log_name
         self.prefix = prefix
@@ -137,7 +138,6 @@ class Config(object):
         self.apps = set(apps or ())
         if settings is None:
             self.update_settings()
-        self.params = {}
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
@@ -422,12 +422,13 @@ class Config(object):
             setting = s().copy(name=self.name, prefix=self.prefix)
             if setting.name in self.settings:
                 continue
-            if setting.name not in self.include:
-                if setting.name in self.exclude:
-                    continue    # setting name in exclude set
-                if setting.app and setting.app not in self.apps:
-                    continue    # the setting is for an app not in the apps set
-            self.settings[setting.name] = setting
+            if setting.app and setting.app not in self.apps:
+                continue    # the setting is for an app not in the apps set
+            if ((self.include and setting.name not in self.include) or
+                    setting.name in self.exclude):
+                self.params[setting.name] = setting.get()
+            else:
+                self.settings[setting.name] = setting
 
     def _get(self, name, default=None):
         if name not in self.settings:

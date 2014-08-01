@@ -8,7 +8,7 @@ activities in different threads and/or processes.
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Mailing list: `google user group`_
-:Platforms: Linux, OSX, Windows. Python 2.7, 3.4 and pypy_
+:Platforms: Linux, OSX, Windows. Python 2.7, 3.3, 3.4 and pypy_
 :Keywords: client, server, asynchronous, concurrency, actor, thread, process,
     socket, task queue, wsgi, websocket, redis, json-rpc
 
@@ -60,6 +60,7 @@ Pulsar requires and install the following packages:
 
 * trollius_
 * unidecode_
+* asyncio_ (python 3.3 only)
 
 Install via ``pip``::
 

@@ -1,7 +1,5 @@
 Ver. 0.9.0 - Development
 ===========================
-* Dropped support for python 3.3, the supported versions are now python 2.7,
-  python 3.4 and pypy_
 * Works with trollius_ 1.0.1 which is now a dependency for all supported
   python versions
 * Added :class:`.FlowControl` and :class:`.Timeout` protocol mixins,
@@ -37,6 +35,10 @@ Ver. 0.9.0 - Development
 * Removed ``arbiter`` and ``monitor`` modules from ``async``, one :class:`.Actor`
   class only, implementation differences handled by the different underlying
   :class:`.Concurrency` classes.
+* The :class:`.Config` adds the default values of excluded settings to the
+  :attr:`.Config.params` dictionary. In this way the parameters cannot be set
+  on the command line but still be available.
+
 
 Ver. 0.8.4 - 2014-Jul-07
 ===========================
