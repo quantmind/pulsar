@@ -156,7 +156,7 @@ pep8_ check (requires pep8 package)::
 
 Kudos
 ============
-Pulsar project started as a fork of gunicorn_ (from where the arbiter idea)
+Pulsar project started as a fork of gunicorn_
 and since version 0.5 has been implemented on top of asyncio
 (tulip_ and PEP-3156_).
 Pulsar uses several snippet of code from around the open-source
