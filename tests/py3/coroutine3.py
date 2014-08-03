@@ -1,3 +1,5 @@
+__benchmark__ = True
+
 import sys
 import unittest
 
