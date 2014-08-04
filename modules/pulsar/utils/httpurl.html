@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.utils.httpurl &mdash; pulsar 0.9.0-beta.1 documentation</title>
+    <title>pulsar.utils.httpurl &mdash; pulsar 0.9.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.9.0-beta.1',
+        VERSION:     '0.9.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.9.1-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.9.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.9.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -1350,20 +1350,24 @@
     <span class="k">return</span> <span class="n">Cookie</span><span class="p">(</span><span class="o">**</span><span class="n">result</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">cookiejar_from_dict</span><span class="p">(</span><span class="n">cookie_dict</span><span class="p">,</span> <span class="n">cookiejar</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">cookiejar_from_dict</span><span class="p">(</span><span class="o">*</span><span class="n">cookie_dicts</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns a CookieJar from a key/value dictionary.</span>
 
 <span class="sd">    :param cookie_dict: Dict of key/values to insert into CookieJar.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cookie_dict</span><span class="p">,</span> <span class="n">CookieJar</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">cookiejar</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">cookiejar</span> <span class="o">=</span> <span class="n">CookieJar</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">cookie_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">jars</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cookie_dicts</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">cookie_dicts</span> <span class="k">if</span> <span class="n">d</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cookie_dicts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cookie_dicts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CookieJar</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cookie_dicts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">cookiejar</span> <span class="o">=</span> <span class="n">CookieJar</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">cookie_dict</span> <span class="ow">in</span> <span class="n">cookie_dicts</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cookie_dict</span><span class="p">,</span> <span class="n">CookieJar</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">cookie</span> <span class="ow">in</span> <span class="n">cookie_dict</span><span class="p">:</span>
+                <span class="n">cookiejar</span><span class="o">.</span><span class="n">set_cookie</span><span class="p">(</span><span class="n">cookie</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">cookie_dict</span><span class="p">:</span>
                 <span class="n">cookiejar</span><span class="o">.</span><span class="n">set_cookie</span><span class="p">(</span><span class="n">create_cookie</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">cookie_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span>
-        <span class="k">return</span> <span class="n">cookiejar</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">cookie_dict</span>
+    <span class="k">return</span> <span class="n">cookiejar</span>
 
 
 <span class="n">cc_delim_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\s*,\s*&#39;</span><span class="p">)</span>
