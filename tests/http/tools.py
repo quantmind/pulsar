@@ -130,6 +130,8 @@ class TestTools(unittest.TestCase):
         self.assertEqual(fmt[3:5], ', ')
 
     def test_cookiejar_from_dict(self):
-        j = cookiejar_from_dict({'bla': 'foo'})
-        j2 = cookiejar_from_dict({'pippo': 'pluto'}, j)
-        self.assertEqual(j, j2)
+        j = cookiejar_from_dict({'bla': 'foo'}, None)
+        self.assertEqual(len(j), 1)
+        self.assertEqual(j, cookiejar_from_dict(None, j))
+        j2 = cookiejar_from_dict({'pippo': 'pluto'}, None, j)
+        self.assertEqual(len(j2), 2)
