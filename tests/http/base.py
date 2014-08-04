@@ -430,7 +430,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('cookies'), cookies=cookies)
         self.assertEqual(response.status_code, 200)
         data = response.decode_content()
-        self.assertEqual(data['cookies'], cookies)
+        self.assertEqual(data['cookies']['sessionid'], 't1')
+        self.assertEqual(data['cookies']['cookies_are'], 'working')
 
     def test_cookie(self):
         http = self._client

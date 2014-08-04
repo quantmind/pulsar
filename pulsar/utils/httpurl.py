@@ -1281,20 +1281,24 @@ def create_cookie(name, value, **kwargs):
     return Cookie(**result)
 
 
-def cookiejar_from_dict(cookie_dict, cookiejar=None):
+def cookiejar_from_dict(*cookie_dicts):
     """Returns a CookieJar from a key/value dictionary.
 
     :param cookie_dict: Dict of key/values to insert into CookieJar.
     """
-    if not isinstance(cookie_dict, CookieJar):
-        if cookiejar is None:
-            cookiejar = CookieJar()
-        if cookie_dict is not None:
+    jars = []
+    cookie_dicts = tuple((d for d in cookie_dicts if d))
+    if len(cookie_dicts) == 1 and isinstance(cookie_dicts[0], CookieJar):
+        return cookie_dicts[0]
+    cookiejar = CookieJar()
+    for cookie_dict in cookie_dicts:
+        if isinstance(cookie_dict, CookieJar):
+            for cookie in cookie_dict:
+                cookiejar.set_cookie(cookie)
+        else:
             for name in cookie_dict:
                 cookiejar.set_cookie(create_cookie(name, cookie_dict[name]))
-        return cookiejar
-    else:
-        return cookie_dict
+    return cookiejar
 
 
 cc_delim_re = re.compile(r'\s*,\s*')

@@ -461,10 +461,9 @@ class HttpRequest(RequestBase):
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
         self.headers = client.get_headers(self, headers)
-        if client.cookies:
-            client.cookies.add_cookie_header(self)
+        cookies = cookiejar_from_dict(client.cookies, cookies)
         if cookies:
-            cookiejar_from_dict(cookies).add_cookie_header(self)
+            cookies.add_cookie_header(self)
         self.unredirected_headers['host'] = host_no_default_port(self._scheme,
                                                                  self._netloc)
         client.set_proxy(self)
