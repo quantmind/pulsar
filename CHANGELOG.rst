@@ -1,4 +1,4 @@
-Ver. 0.9.0 - Development
+Ver. 0.9.0 - 2014-Aug-04
 ===========================
 * Works with trollius_ 1.0.1 which is now a dependency for all supported
   python versions
