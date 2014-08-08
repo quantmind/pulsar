@@ -45,7 +45,7 @@ class FakeConnection(object):
         self._loop = loop
 
 
-def test_wsgi_environ(path='/', method=None, headers=None, extra=None,
+def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
                       secure=False, loop=None):
     '''An function to create a WSGI environment dictionary for testing.
 
@@ -58,7 +58,7 @@ def test_wsgi_environ(path='/', method=None, headers=None, extra=None,
     '''
     parser = http_parser(kind=0)
     method = (method or 'GET').upper()
-    path = iri_to_uri(path)
+    path = iri_to_uri(path or '/')
     data = '%s %s HTTP/1.1\r\n\r\n' % (method, path)
     data = data.encode('latin1')
     parser.execute(data, len(data))

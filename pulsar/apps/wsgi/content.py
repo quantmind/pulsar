@@ -142,6 +142,7 @@ Html Factory
 .. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp
 '''
 import os
+import re
 import json as pyjson
 
 from collections import Mapping, OrderedDict
@@ -165,6 +166,7 @@ __all__ = ['AsyncString', 'Html',
 
 _libs_url = 'http://quantmind.github.io/jslibs/libs.json'
 _media_libraries = None
+DATARE = re.compile('data[-_]')
 
 
 def media_libraries():
@@ -599,7 +601,7 @@ class Html(AsyncString):
 
     def _setup(self, cn=None, attr=None, css=None, data=None,
                content_type=None, **params):
-        self.charset = params.get('charset') or 'utf-8'
+        self.charset = params.pop('charset', None) or 'utf-8'
         self._content_type = content_type or self._default_content_type
         self._visitor = html_visitor(self._tag)
         self.addClass(cn)
@@ -616,9 +618,13 @@ class Html(AsyncString):
             return attr or {}
         result, adding = self._attrdata('attr', *args)
         if adding:
-            if attr is None:
-                self._extra['attr'] = attr = {}
-            attr.update(result)
+            for key, value in result.items():
+                if DATARE.match(key):
+                    self.data(key[5:], value)
+                else:
+                    if attr is None:
+                        self._extra['attr'] = attr = {}
+                    attr[key] = value
             result = self
         return result
 
@@ -856,10 +862,28 @@ class Media(AsyncString):
             path = path[:-len(ending)]
         if urlparams:
             path = '%s?%s' % (path, urlparams)
-        if self.is_relative(path):
+        if self.is_relative(path) and self.media_path:
             return remove_double_slash('%s/%s' % (self.media_path, path))
         else:
             return path
+
+    def extend(self, iterable):
+        '''Add a list (iterable) of media to this container
+        '''
+        for media in iterable:
+            self.append(media)
+
+    def set_default_scheme(self, scheme='http'):
+        '''Set a default scheme for the known libraries
+        container
+        '''
+        for name, path in tuple(self.known_libraries.items()):
+            if isinstance(path, dict):
+                url = path.get('url')
+                if url and url.startswith('//'):
+                    path['url'] = '%s:%s' % (scheme, url)
+            elif path.startswith('//'):
+                self.known_libraries[name] = '%s:%s' % (scheme, path)
 
     def _minify(self, path, postfix):
         new_postfix = 'min%s' % postfix
@@ -933,11 +957,12 @@ class Scripts(Media):
 
         The script will be loaded using the ``require`` javascript package.
         '''
-        if scripts:
-            self.append('require')
         required = self.required
         for script in scripts:
-            if script == 'require':
+            if not script:
+                continue
+            elif script == 'require':
+                self.append('require')
                 continue
             name = script
             if isinstance(script, dict):
@@ -946,6 +971,8 @@ class Scripts(Media):
                 script = self.absolute_path(script)
             if script not in required:
                 required.append(script)
+        if required:
+            self.append('require')
 
     def append(self, src=None, type=None, **kwargs):
         '''add a new script to the container.
@@ -1118,8 +1145,8 @@ class Head(Html):
 
     def add_meta(self, **kwargs):
         '''Add a new :class:`Html` meta tag to the :attr:`meta` collection.'''
-        meta = Html('meta', **kwargs)
-        self.meta.append(meta)
+        meta = Html('meta')
+        self.meta.append(meta.attr(kwargs))
 
     def get_meta(self, name):
         '''Get the ``content`` attribute of meta tag ``name``.
@@ -1135,17 +1162,25 @@ class Head(Html):
             if child.attr('name') == name:
                 return child.attr('content')
 
-    def replace_meta(self, name, content):
+    def replace_meta(self, name, content=None):
         '''Replace the ``content`` attribute of meta tag ``name``
 
         If the meta with ``name`` is not available, it is added, otherwise
-        its content is replaced.
+        its content is replaced. If ``content`` is not given or it is empty
+        the meta tag with ``name`` is removed.
         '''
-        for child in self.meta._children:
+        children = self.meta._children
+        if not content:     # small optimazation
+            children = tuple(children)
+        for child in children:
             if child.attr('name') == name:
-                child.attr('content', content)
+                if content:
+                    child.attr('content', content)
+                else:
+                    self.meta._children.remove(child)
                 return
-        self.add_meta(name=name, content=content)
+        if content:
+            self.add_meta(name=name, content=content)
 
     def __add__(self, other):
         if isinstance(other, Media):

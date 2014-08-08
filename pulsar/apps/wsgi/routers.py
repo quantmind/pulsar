@@ -115,7 +115,7 @@ class RouterParam(object):
         stored in the :class:`Router.parameters` dictionary at key given by
         the class attribute specified in the class definition.
     '''
-    def __init__(self, value):
+    def __init__(self, value=None):
         self.value = value
 
 
@@ -341,13 +341,15 @@ class Router(RouterType('RouterBase', (object,), {})):
         accepted content types and the content types accepted by the client
         ``request`` and figures out the best match.
         '''
-        content_types = self.response_content_types
-        ct = request.content_types.best_match(content_types)
-        if ct and '*' in ct:
-            ct = None
-        if not ct and content_types:
-            raise HttpException(status=415, msg=request.content_types)
-        return ct
+        response_content_types = self.response_content_types
+        request_content_types = request.content_types
+        if request_content_types:
+            ct = request_content_types.best_match(response_content_types)
+            if ct and '*' in ct:
+                ct = None
+            if not ct and response_content_types:
+                raise HttpException(status=415, msg=request_content_types)
+            return ct
 
     def __repr__(self):
         return self.route.__repr__()
@@ -571,10 +573,6 @@ class MediaRouter(Router, MediaMixin):
 
         The default file to serve when a directory is requested.
     '''
-    response_content_types = RouterParam(('application/octet-stream',
-                                          'text/css',
-                                          'application/javascript',
-                                          'text/html'))
     cache_control = CacheControl(maxage=86400)
 
     def __init__(self, rule, path, show_indexes=False, mapping=None,
