@@ -149,7 +149,8 @@ class WsgiHandler(object):
 
 class AsyncResponse(object):
     __slots__ = ('environ', 'start_response',
-                 'middleware', 'response_middleware')
+                 'middleware', 'response_middleware',
+                 '_response_done')
 
     def __init__(self, environ, start_response, middleware,
                  response_middleware):
@@ -157,6 +158,7 @@ class AsyncResponse(object):
         self.start_response = start_response
         self.middleware = middleware
         self.response_middleware = response_middleware
+        self._response_done = False
 
     def __call__(self, resp=None, exc=None):
         try:
@@ -182,23 +184,24 @@ class AsyncResponse(object):
             if exc:
                 resp = handle_wsgi_error(self.environ, exc)
         #
-        if isinstance(resp, WsgiResponse):
-            # Response middleware only if response is a pulsar one
+        if not self._response_done:
+            self._response_done = True
             return self._response(resp)
-        else:
-            return resp
+        return resp
 
-    def _response(self, resp=None):
-        try:
-            handler = next(self.response_middleware)
-            resp = handler(self.environ, resp)
+    def _response(self, resp=None, exc=None):
+        while not exc:
             try:
-                return self._async(self._response, async(resp))
-            except TypeError:
-                pass
-        except StopIteration:
-            pass
-        self.start_response(resp.status, resp.get_headers())
+                handler = next(self.response_middleware)
+                resp = handler(self.environ, resp)
+                try:
+                    return self._async(self._response, async(resp))
+                except TypeError:
+                    pass
+            except StopIteration:
+                break
+        if isinstance(resp, WsgiResponse):
+            self.start_response(resp.status, resp.get_headers())
         return resp
 
     @task

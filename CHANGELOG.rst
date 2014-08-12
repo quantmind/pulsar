@@ -2,6 +2,7 @@ Ver. 0.9.1 - Development
 ===========================
 * Several fixes on :class:`.Html` initialisation and the :meth'.Html.attr`
   method.
+* Critical bug fix in :class:`.WsgiHandler` when passing response middleware
 
 Ver. 0.9.0 - 2014-Aug-04
 ===========================

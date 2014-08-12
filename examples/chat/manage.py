@@ -45,8 +45,9 @@ try:
 except ImportError:  # pragma nocover
     sys.path.append('../../')
 
-from pulsar import get_actor
-from pulsar.apps.wsgi import Router, WsgiHandler, LazyWsgi, WSGIServer
+from pulsar import get_actor, Future
+from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,
+                              GZipMiddleware)
 from pulsar.apps.ws import WS, WebSocket
 from pulsar.apps.rpc import PulsarServerCommands
 from pulsar.apps.data import create_store, PubSubClient
@@ -150,13 +151,23 @@ class WebChat(LazyWsgi):
         return WsgiHandler([Router('/', get=self.home_page),
                             WebSocket('/message', Chat(pubsub, channel)),
                             Router('/rpc', post=Rpc(pubsub, channel),
-                                   response_content_types=JSON_CONTENT_TYPES)])
+                                   response_content_types=JSON_CONTENT_TYPES)],
+                           [AsyncResponseMiddleware,
+                            GZipMiddleware(min_length=20)])
 
     def home_page(self, request):
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()
         request.response.content_type = 'text/html'
         request.response.content = to_string(data % request.environ)
         return request.response
+
+
+def AsyncResponseMiddleware(environ, resp):
+    '''This is just for testing the asynchronous response middleware
+    '''
+    future = Future()
+    future._loop.call_soon(future.set_result, resp)
+    return future
 
 
 def server(callable=None, name=None, data_store=None, **params):
