@@ -59,14 +59,15 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     parser = http_parser(kind=0)
     method = (method or 'GET').upper()
     path = iri_to_uri(path or '/')
-    data = '%s %s HTTP/1.1\r\n\r\n' % (method, path)
-    data = data.encode('latin1')
-    parser.execute(data, len(data))
     request_headers = Headers(headers, kind='client')
     # Add Host if not available
     parsed = urlparse(path)
-    if parsed.netloc and 'host' not in request_headers:
-        request_headers['host'] = parsed.netloc
+    if 'host' not in request_headers and not parsed.netloc:
+        path = '%s%s' % ('https://:443' if secure else 'http://:80', path)
+    #
+    data = '%s %s HTTP/1.1\r\n\r\n' % (method, path)
+    data = data.encode('latin1')
+    parser.execute(data, len(data))
     #
     headers = Headers()
     stream = StreamReader(request_headers, parser)

@@ -959,15 +959,18 @@ class Scripts(Media):
         '''
         required = self.required
         for script in scripts:
-            if not script:
-                continue
-            elif script == 'require':
-                self.append('require')
-                continue
-            name = script
             if isinstance(script, dict):
                 name = script['url']
-            if name.strip() not in self.known_libraries:
+                name = name.strip()
+            else:
+                script = script.strip()
+                name = script
+            if not name:
+                continue
+            elif name == 'require':
+                self.append('require')
+                continue
+            if name not in self.known_libraries:
                 script = self.absolute_path(script)
             if script not in required:
                 required.append(script)
