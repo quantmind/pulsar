@@ -62,8 +62,11 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     request_headers = Headers(headers, kind='client')
     # Add Host if not available
     parsed = urlparse(path)
-    if 'host' not in request_headers and not parsed.netloc:
-        path = '%s%s' % ('https://:443' if secure else 'http://:80', path)
+    if 'host' not in request_headers:
+        if not parsed.netloc:
+            path = '%s%s' % ('https://:443' if secure else 'http://:80', path)
+        else:
+            request_headers['host'] = parsed.netloc
     #
     data = '%s %s HTTP/1.1\r\n\r\n' % (method, path)
     data = data.encode('latin1')
