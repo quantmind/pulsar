@@ -213,6 +213,7 @@
 <span class="sd">.. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">json</span> <span class="kn">as</span> <span class="nn">pyjson</span>
 
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">OrderedDict</span>
@@ -236,6 +237,7 @@
 
 <span class="n">_libs_url</span> <span class="o">=</span> <span class="s">&#39;http://quantmind.github.io/jslibs/libs.json&#39;</span>
 <span class="n">_media_libraries</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">DATARE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;data[-_]&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">media_libraries</span><span class="p">():</span>
@@ -670,7 +672,7 @@
 
     <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">css</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">charset</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;charset&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;utf-8&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">charset</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;charset&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;utf-8&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_content_type</span> <span class="o">=</span> <span class="n">content_type</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_content_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_visitor</span> <span class="o">=</span> <span class="n">html_visitor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addClass</span><span class="p">(</span><span class="n">cn</span><span class="p">)</span>
@@ -687,9 +689,13 @@
             <span class="k">return</span> <span class="n">attr</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">result</span><span class="p">,</span> <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrdata</span><span class="p">(</span><span class="s">&#39;attr&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">attr</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;attr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="n">attr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">DATARE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">5</span><span class="p">:],</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">attr</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;attr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="n">attr</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="k">return</span> <span class="n">result</span>
 </div>
@@ -927,10 +933,28 @@
             <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">ending</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">urlparams</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">?</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">urlparams</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_relative</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_relative</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">media_path</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">remove_double_slash</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">media_path</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">path</span>
+</div>
+<div class="viewcode-block" id="Media.extend"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.extend">[docs]</a>    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Add a list (iterable) of media to this container</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">media</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">media</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Media.set_default_scheme"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.set_default_scheme">[docs]</a>    <span class="k">def</span> <span class="nf">set_default_scheme</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="s">&#39;http&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Set a default scheme for the known libraries</span>
+<span class="sd">        container</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;url&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">url</span> <span class="ow">and</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;//&#39;</span><span class="p">):</span>
+                    <span class="n">path</span><span class="p">[</span><span class="s">&#39;url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;//&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">_minify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">postfix</span><span class="p">):</span>
         <span class="n">new_postfix</span> <span class="o">=</span> <span class="s">&#39;min</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">postfix</span>
@@ -1004,19 +1028,25 @@
 
 <span class="sd">        The script will be loaded using the ``require`` javascript package.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">scripts</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;require&#39;</span><span class="p">)</span>
         <span class="n">required</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span>
         <span class="k">for</span> <span class="n">script</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">script</span> <span class="o">==</span> <span class="s">&#39;require&#39;</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">script</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
                 <span class="n">name</span> <span class="o">=</span> <span class="n">script</span><span class="p">[</span><span class="s">&#39;url&#39;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">script</span> <span class="o">=</span> <span class="n">script</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">script</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;require&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;require&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">:</span>
                 <span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">script</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
                 <span class="n">required</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">required</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;require&#39;</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Scripts.append"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Scripts.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;add a new script to the container.</span>
@@ -1189,8 +1219,8 @@
 
 <div class="viewcode-block" id="Head.add_meta"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Head.add_meta">[docs]</a>    <span class="k">def</span> <span class="nf">add_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add a new :class:`Html` meta tag to the :attr:`meta` collection.&#39;&#39;&#39;</span>
-        <span class="n">meta</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;meta&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;meta&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="n">kwargs</span><span class="p">))</span>
 </div>
 <div class="viewcode-block" id="Head.get_meta"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Head.get_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get the ``content`` attribute of meta tag ``name``.</span>
@@ -1206,17 +1236,25 @@
             <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">child</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s">&#39;content&#39;</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Head.replace_meta"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Head.replace_meta">[docs]</a>    <span class="k">def</span> <span class="nf">replace_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+<div class="viewcode-block" id="Head.replace_meta"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Head.replace_meta">[docs]</a>    <span class="k">def</span> <span class="nf">replace_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Replace the ``content`` attribute of meta tag ``name``</span>
 
 <span class="sd">        If the meta with ``name`` is not available, it is added, otherwise</span>
-<span class="sd">        its content is replaced.</span>
+<span class="sd">        its content is replaced. If ``content`` is not given or it is empty</span>
+<span class="sd">        the meta tag with ``name`` is removed.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">_children</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">content</span><span class="p">:</span>     <span class="c"># small optimazation</span>
+            <span class="n">children</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">children</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
-                <span class="n">child</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s">&#39;content&#39;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">content</span><span class="p">:</span>
+                    <span class="n">child</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s">&#39;content&#39;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
                 <span class="k">return</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_meta</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">content</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_meta</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Media</span><span class="p">):</span>

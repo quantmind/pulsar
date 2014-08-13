@@ -189,7 +189,7 @@ as the arbiter) and control threads other than the main thread.</p>
 <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor.executor" title="pulsar.async.actor.Actor.executor"><tt class="xref py py-meth docutils literal"><span class="pre">executor()</span></tt></a> as explained in the <a class="reference internal" href="#cpubound"><em>CPU bound</em></a>
 paragraph.
 The actor <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> is installed in all threads
-controlled by the actor so that when the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>
+controlled by the actor so that when the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloops.html#asyncio.get_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>
 function is invoked on these threads it returns the event loop of
 the controlling actor.</p>
 <div class="admonition note" id="actor-io-thread">

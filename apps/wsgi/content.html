@@ -562,10 +562,11 @@ method on this attribute. You can add relative paths:</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Head.replace_meta">
-<tt class="descname">replace_meta</tt><big>(</big><em>name</em>, <em>content</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.replace_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.replace_meta" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">replace_meta</tt><big>(</big><em>name</em>, <em>content=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.replace_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.replace_meta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace the <tt class="docutils literal"><span class="pre">content</span></tt> attribute of meta tag <tt class="docutils literal"><span class="pre">name</span></tt></p>
 <p>If the meta with <tt class="docutils literal"><span class="pre">name</span></tt> is not available, it is added, otherwise
-its content is replaced.</p>
+its content is replaced. If <tt class="docutils literal"><span class="pre">content</span></tt> is not given or it is empty
+the meta tag with <tt class="docutils literal"><span class="pre">name</span></tt> is removed.</p>
 </dd></dl>
 
 </dd></dl>
@@ -633,6 +634,19 @@ the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_pa
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.content.Media.extend">
+<tt class="descname">extend</tt><big>(</big><em>iterable</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media.extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a list (iterable) of media to this container</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.content.Media.set_default_scheme">
+<tt class="descname">set_default_scheme</tt><big>(</big><em>scheme='http'</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media.set_default_scheme"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.set_default_scheme" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a default scheme for the known libraries
+container</p>
 </dd></dl>
 
 </dd></dl>

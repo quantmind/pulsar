@@ -114,8 +114,9 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma nocover</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_actor</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">Router</span><span class="p">,</span> <span class="n">WsgiHandler</span><span class="p">,</span> <span class="n">LazyWsgi</span><span class="p">,</span> <span class="n">WSGIServer</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">Future</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Router</span><span class="p">,</span> <span class="n">WsgiHandler</span><span class="p">,</span> <span class="n">LazyWsgi</span><span class="p">,</span> <span class="n">WSGIServer</span><span class="p">,</span>
+                              <span class="n">GZipMiddleware</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.ws</span> <span class="kn">import</span> <span class="n">WS</span><span class="p">,</span> <span class="n">WebSocket</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.rpc</span> <span class="kn">import</span> <span class="n">PulsarServerCommands</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span><span class="p">,</span> <span class="n">PubSubClient</span>
@@ -219,7 +220,9 @@
         <span class="k">return</span> <span class="n">WsgiHandler</span><span class="p">([</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">home_page</span><span class="p">),</span>
                             <span class="n">WebSocket</span><span class="p">(</span><span class="s">&#39;/message&#39;</span><span class="p">,</span> <span class="n">Chat</span><span class="p">(</span><span class="n">pubsub</span><span class="p">,</span> <span class="n">channel</span><span class="p">)),</span>
                             <span class="n">Router</span><span class="p">(</span><span class="s">&#39;/rpc&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="n">Rpc</span><span class="p">(</span><span class="n">pubsub</span><span class="p">,</span> <span class="n">channel</span><span class="p">),</span>
-                                   <span class="n">response_content_types</span><span class="o">=</span><span class="n">JSON_CONTENT_TYPES</span><span class="p">)])</span>
+                                   <span class="n">response_content_types</span><span class="o">=</span><span class="n">JSON_CONTENT_TYPES</span><span class="p">)],</span>
+                           <span class="p">[</span><span class="n">AsyncResponseMiddleware</span><span class="p">,</span>
+                            <span class="n">GZipMiddleware</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">20</span><span class="p">)])</span>
 </div>
     <span class="k">def</span> <span class="nf">home_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CHAT_DIR</span><span class="p">,</span> <span class="s">&#39;chat.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -228,6 +231,14 @@
         <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
 
 </div>
+<span class="k">def</span> <span class="nf">AsyncResponseMiddleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">resp</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;This is just for testing the asynchronous response middleware</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
+    <span class="n">future</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">,</span> <span class="n">resp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">future</span>
+
+
 <span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">data_store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="s">&#39;wsgi&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">data_store</span><span class="p">:</span>

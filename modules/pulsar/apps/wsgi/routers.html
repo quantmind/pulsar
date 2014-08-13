@@ -186,7 +186,7 @@
 <span class="sd">        stored in the :class:`Router.parameters` dictionary at key given by</span>
 <span class="sd">        the class attribute specified in the class definition.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
 
 </div>
@@ -412,13 +412,15 @@
 <span class="sd">        accepted content types and the content types accepted by the client</span>
 <span class="sd">        ``request`` and figures out the best match.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">content_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_content_types</span>
-        <span class="n">ct</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">content_types</span><span class="o">.</span><span class="n">best_match</span><span class="p">(</span><span class="n">content_types</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ct</span> <span class="ow">and</span> <span class="s">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">ct</span><span class="p">:</span>
-            <span class="n">ct</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ct</span> <span class="ow">and</span> <span class="n">content_types</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">415</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">content_types</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">ct</span>
+        <span class="n">response_content_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_content_types</span>
+        <span class="n">request_content_types</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">content_types</span>
+        <span class="k">if</span> <span class="n">request_content_types</span><span class="p">:</span>
+            <span class="n">ct</span> <span class="o">=</span> <span class="n">request_content_types</span><span class="o">.</span><span class="n">best_match</span><span class="p">(</span><span class="n">response_content_types</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ct</span> <span class="ow">and</span> <span class="s">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">ct</span><span class="p">:</span>
+                <span class="n">ct</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ct</span> <span class="ow">and</span> <span class="n">response_content_types</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">415</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">request_content_types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ct</span>
 </div>
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
@@ -642,10 +644,6 @@
 
 <span class="sd">        The default file to serve when a directory is requested.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">((</span><span class="s">&#39;application/octet-stream&#39;</span><span class="p">,</span>
-                                          <span class="s">&#39;text/css&#39;</span><span class="p">,</span>
-                                          <span class="s">&#39;application/javascript&#39;</span><span class="p">,</span>
-                                          <span class="s">&#39;text/html&#39;</span><span class="p">))</span>
     <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">show_indexes</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>

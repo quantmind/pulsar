@@ -125,8 +125,9 @@
 <div class="viewcode-block" id="pass_through"><a class="viewcode-back" href="../../../settings.html#pulsar.utils.config.pass_through">[docs]</a><span class="k">def</span> <span class="nf">pass_through</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A dummy function accepting one parameter only.</span>
 
-<span class="sd">It does nothing and it is used as default by</span>
-<span class="sd">:ref:`Application Hooks &lt;setting-section-application-hooks&gt;`.&#39;&#39;&#39;</span>
+<span class="sd">    It does nothing and it is used as default by</span>
+<span class="sd">    :ref:`Application Hooks &lt;setting-section-application-hooks&gt;`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">pass</span>
 
 </div>
@@ -1190,8 +1191,7 @@
 <span class="s">These tasks can be scheduled when events occurs or at every event loop of</span>
 <span class="s">the various components of a pulsar application.</span>
 
-<span class="s">All application hooks are functions which accept one parameter only, the actor</span>
-<span class="s">invoking the function.</span>
+<span class="s">All application hooks are functions which accept one parameter only.</span>
 
 <span class="s">Like worker process settings, each application can specify their own.</span>
 <span class="s">&#39;&#39;&#39;</span>
@@ -1203,11 +1203,7 @@
     <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_callable</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="nb">type</span> <span class="o">=</span> <span class="s">&quot;callable&quot;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">pass_through</span><span class="p">)</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s">        Called just after a worker has been forked.</span>
-
-<span class="s">        The event loop is not yet available.</span>
-<span class="s">        &quot;&quot;&quot;</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;Called just after a worker has been forked&#39;</span>
 
 
 <span class="k">class</span> <span class="nc">WhenReady</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
@@ -1216,12 +1212,7 @@
     <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_callable</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="nb">type</span> <span class="o">=</span> <span class="s">&quot;callable&quot;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">pass_through</span><span class="p">)</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s">        Called just before a worker starts its event loop.</span>
-
-<span class="s">        This is a chance to setup :class:`pulsar.EventLoop` callbacks which</span>
-<span class="s">        can run periodically, at every loop or when some defined events occur.</span>
-<span class="s">        &quot;&quot;&quot;</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;Called just before a worker starts running its event loop&#39;</span>
 
 
 <span class="k">class</span> <span class="nc">WhenExit</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>

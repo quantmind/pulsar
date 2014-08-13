@@ -76,6 +76,11 @@
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="ver-0-9-1-development">
 <h2>Ver. 0.9.1 - Development<a class="headerlink" href="#ver-0-9-1-development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Several fixes on <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> initialisation and the :meth&#8217;.Html.attr`
+method.</li>
+<li>Critical bug fix in <a class="reference internal" href="apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a> when passing response middleware</li>
+</ul>
 </div>
 <div class="section" id="ver-0-9-0-2014-aug-04">
 <h2>Ver. 0.9.0 - 2014-Aug-04<a class="headerlink" href="#ver-0-9-0-2014-aug-04" title="Permalink to this headline">¶</a></h2>
@@ -193,8 +198,8 @@ path contain a <tt class="docutils literal"><span class="pre">default_file</span
 <li><strong>Asyncio Integration</strong><ul>
 <li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">asyncio</a> integration with several changes in internals. The integration
 works with all supported python versions: 2.7, 3.3 and 3.4</li>
-<li>Asyncio event loop functions <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>,
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.new_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt></a>,
+<li>Asyncio event loop functions <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloops.html#asyncio.get_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>,
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloops.html#asyncio.new_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt></a>,
 are available from pulsar top level module as well as asyncio.
 In other words <tt class="docutils literal"><span class="pre">from</span> <span class="pre">pulsar</span> <span class="pre">import</span> <span class="pre">get_event_loop</span></tt> and
 <tt class="docutils literal"><span class="pre">from</span> <span class="pre">asyncio</span> <span class="pre">import</span> <span class="pre">get_event_loop</span></tt> are equivalent (provided pulsar is

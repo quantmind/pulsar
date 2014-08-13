@@ -370,23 +370,19 @@ to events on file descriptors and process them as quick as possible.</p>
 <a class="reference internal" href="#setting-config"><em>config</em></a> file to perform custom tasks in a pulsar server.
 These tasks can be scheduled when events occurs or at every event loop of
 the various components of a pulsar application.</p>
-<p>All application hooks are functions which accept one parameter only, the actor
-invoking the function.</p>
+<p>All application hooks are functions which accept one parameter only.</p>
 <p>Like worker process settings, each application can specify their own.</p>
 <div class="section" id="post-fork">
 <span id="setting-post-fork"></span><h3>post_fork<a class="headerlink" href="#post-fork" title="Permalink to this headline">¶</a></h3>
 <p><em>Config name</em>: <tt class="docutils literal"><span class="pre">post_fork</span></tt></p>
 <p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
-<p>Called just after a worker has been forked.</p>
-<p>The event loop is not yet available.</p>
+<p>Called just after a worker has been forked</p>
 </div>
 <div class="section" id="when-ready">
 <span id="setting-when-ready"></span><h3>when_ready<a class="headerlink" href="#when-ready" title="Permalink to this headline">¶</a></h3>
 <p><em>Config name</em>: <tt class="docutils literal"><span class="pre">when_ready</span></tt></p>
 <p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
-<p>Called just before a worker starts its event loop.</p>
-<p>This is a chance to setup <tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt> callbacks which
-can run periodically, at every loop or when some defined events occur.</p>
+<p>Called just before a worker starts running its event loop</p>
 </div>
 <div class="section" id="when-exit">
 <span id="setting-when-exit"></span><h3>when_exit<a class="headerlink" href="#when-exit" title="Permalink to this headline">¶</a></h3>
