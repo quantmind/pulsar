@@ -12,7 +12,8 @@ Implementation
 Server Hooks
 ===================
 
-This example shows how to use server hooks to log each request
+This example shows how to use
+:ref:`server hooks <setting-section-application-hooks>` to log each request
 
 .. automodule:: examples.httpbin.config
    :members:
