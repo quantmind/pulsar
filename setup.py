@@ -18,7 +18,7 @@ try:
 except ImportError:
     libparams = None
 
-install_requires = ['unidecode', 'trollius']
+install_requires = ['trollius']
 
 
 if sys.version_info[:2] == (3, 3):

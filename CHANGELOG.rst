@@ -1,8 +1,9 @@
 Ver. 0.9.1 - Development
 ===========================
 * Several fixes on :class:`.Html` initialisation and the :meth:'.Html.attr`
-  method.
+  method
 * Critical bug fix in :class:`.WsgiHandler` when passing response middleware
+* unidecode_ removed as hard dependency, wrong license
 
 Ver. 0.9.0 - 2014-Aug-04
 ===========================
@@ -33,7 +34,7 @@ Ver. 0.9.0 - 2014-Aug-04
   internal exception
 * Critical bug fix in :class:`.Router` when children are added via a decorated
   method
-* trollius_ and ``unidecode`` added as dependencies in the ``setup.py``
+* trollius_ and unidecode_ added as dependencies in the ``setup.py``
   script during installation
 * Better :func:`.slugify` function
 * :class:`.EventHandler` requires a valid :ref:`event loop <asyncio-event-loop>`
@@ -563,3 +564,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _greenlet: http://greenlet.readthedocs.org/
 .. _psycopg2: http://pythonhosted.org/psycopg2/
 .. _trollius: http://trollius.readthedocs.org/
+.. _unidecode: https://pypi.python.org/pypi/Unidecode
