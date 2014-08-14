@@ -78,8 +78,11 @@
 <h2>Ver. 0.9.1 - Development<a class="headerlink" href="#ver-0-9-1-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Several fixes on <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> initialisation and the :meth:&#8217;.Html.attr`
-method.</li>
+method</li>
 <li>Critical bug fix in <a class="reference internal" href="apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a> when passing response middleware</li>
+<li><a class="reference external" href="https://pypi.python.org/pypi/Unidecode">unidecode</a> removed as hard dependency, wrong license</li>
+<li>The <a class="reference internal" href="tutorials/httpbin.html#tutorials-httpbin"><em>Httpbin</em></a> example shows how to
+use <a class="reference internal" href="settings.html#setting-section-application-hooks"><em>application hooks</em></a></li>
 </ul>
 </div>
 <div class="section" id="ver-0-9-0-2014-aug-04">
@@ -112,7 +115,7 @@ Useful when stopping execution because of a wrong input rather than an
 internal exception</li>
 <li>Critical bug fix in <a class="reference internal" href="apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> when children are added via a decorated
 method</li>
-<li><a class="reference external" href="http://trollius.readthedocs.org/">trollius</a> and <tt class="docutils literal"><span class="pre">unidecode</span></tt> added as dependencies in the <tt class="docutils literal"><span class="pre">setup.py</span></tt>
+<li><a class="reference external" href="http://trollius.readthedocs.org/">trollius</a> and <a class="reference external" href="https://pypi.python.org/pypi/Unidecode">unidecode</a> added as dependencies in the <tt class="docutils literal"><span class="pre">setup.py</span></tt>
 script during installation</li>
 <li>Better <a class="reference internal" href="api/utilities.html#pulsar.utils.slugify.slugify" title="pulsar.utils.slugify.slugify"><tt class="xref py py-func docutils literal"><span class="pre">slugify()</span></tt></a> function</li>
 <li><a class="reference internal" href="api/events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> requires a valid <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a>

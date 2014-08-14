@@ -1191,7 +1191,11 @@
 <span class="s">These tasks can be scheduled when events occurs or at every event loop of</span>
 <span class="s">the various components of a pulsar application.</span>
 
-<span class="s">All application hooks are functions which accept one parameter only.</span>
+<span class="s">All application hooks are functions which accept one positional</span>
+<span class="s">parameter and one key-valued parameter ``exc`` when an exception occurs::</span>
+
+<span class="s">    def hook(arg, exc=None):</span>
+<span class="s">        ...</span>
 
 <span class="s">Like worker process settings, each application can specify their own.</span>
 <span class="s">&#39;&#39;&#39;</span>
