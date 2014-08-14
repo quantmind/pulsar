@@ -56,8 +56,9 @@ KNOWN_SETTINGS_ORDER = []
 def pass_through(arg):
     '''A dummy function accepting one parameter only.
 
-It does nothing and it is used as default by
-:ref:`Application Hooks <setting-section-application-hooks>`.'''
+    It does nothing and it is used as default by
+    :ref:`Application Hooks <setting-section-application-hooks>`.
+    '''
     pass
 
 
@@ -1121,8 +1122,7 @@ Application hooks are functions which can be specified in a
 These tasks can be scheduled when events occurs or at every event loop of
 the various components of a pulsar application.
 
-All application hooks are functions which accept one parameter only, the actor
-invoking the function.
+All application hooks are functions which accept one parameter only.
 
 Like worker process settings, each application can specify their own.
 '''
@@ -1134,11 +1134,7 @@ class Postfork(Setting):
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(pass_through)
-    desc = """\
-        Called just after a worker has been forked.
-
-        The event loop is not yet available.
-        """
+    desc = 'Called just after a worker has been forked'
 
 
 class WhenReady(Setting):
@@ -1147,12 +1143,7 @@ class WhenReady(Setting):
     validator = validate_callable(1)
     type = "callable"
     default = staticmethod(pass_through)
-    desc = """\
-        Called just before a worker starts its event loop.
-
-        This is a chance to setup :class:`pulsar.EventLoop` callbacks which
-        can run periodically, at every loop or when some defined events occur.
-        """
+    desc = 'Called just before a worker starts running its event loop'
 
 
 class WhenExit(Setting):

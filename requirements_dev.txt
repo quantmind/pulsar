@@ -6,4 +6,5 @@ setproctitle
 psutil
 greenlet
 sqlalchemy
+unidecode
 psycopg2

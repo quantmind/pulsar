@@ -6,7 +6,10 @@
 import re
 from unicodedata import normalize
 
-from unidecode import unidecode
+try:
+    from unidecode import unidecode
+except ImportError:
+    unidecode = None
 
 from .pep import to_string, ispy3k
 
@@ -40,7 +43,8 @@ def slugify(value, separator='-', max_length=0, word_boundary=False,
     and converts spaces to ``separator`` character
     '''
     value = normalize('NFKD', to_string(value, 'utf-8', 'ignore'))
-    value = unidecode(value)
+    if unidecode:
+        value = unidecode(value)
 
     if not ispy3k:  # pragma    nocover
         value = value.encode('ascii', 'ignore').decode()

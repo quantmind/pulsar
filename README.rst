@@ -59,7 +59,6 @@ Installing
 Pulsar requires and install the following packages:
 
 * trollius_
-* unidecode_
 * asyncio_ (python 3.3 only)
 
 Install via ``pip``::
@@ -134,6 +133,7 @@ uses them to add additional functionalities or improve performance:
   returned by Actor info method.
 * ujson_: if installed it is used instead of the native ``json`` module.
 * django_: required by the ``pulsar.apps.pulse`` application.
+* unidecode_: to enhance the ``slugify`` function
 
 
 Running Tests
