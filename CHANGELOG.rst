@@ -4,6 +4,8 @@ Ver. 0.9.1 - Development
   method
 * Critical bug fix in :class:`.WsgiHandler` when passing response middleware
 * unidecode_ removed as hard dependency, wrong license
+* The :ref:`Httpbin <tutorials-httpbin>` example shows how to
+  use :ref:`application hooks <setting-section-application-hooks>`
 
 Ver. 0.9.0 - 2014-Aug-04
 ===========================

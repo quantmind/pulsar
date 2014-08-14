@@ -8,6 +8,15 @@ Implementation
 .. autoclass:: HttpBin
    :members:
    :member-order: bysource
+
+Server Hooks
+===================
+
+This example shows how to use server hooks to log each request
+
+.. automodule:: examples.httpbin.config
+   :members:
+
 '''
 import os
 import sys

@@ -1122,7 +1122,11 @@ Application hooks are functions which can be specified in a
 These tasks can be scheduled when events occurs or at every event loop of
 the various components of a pulsar application.
 
-All application hooks are functions which accept one parameter only.
+All application hooks are functions which accept one positional
+parameter and one key-valued parameter ``exc`` when an exception occurs::
+
+    def hook(arg, exc=None):
+        ...
 
 Like worker process settings, each application can specify their own.
 '''

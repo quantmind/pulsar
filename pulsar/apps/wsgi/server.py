@@ -303,6 +303,15 @@ class HttpServerResponse(ProtocolConsumer):
         self.keep_alive = False
         self.SERVER_SOFTWARE = server_software or self.SERVER_SOFTWARE
 
+    @property
+    def headers_sent(self):
+        '''Available once the headers have been sent to the client.
+
+        These are the bytes representing the first response line and
+        the headers
+        '''
+        return self._headers_sent
+
     def data_received(self, data):
         '''Implements :meth:`~.ProtocolConsumer.data_received` method.
 
