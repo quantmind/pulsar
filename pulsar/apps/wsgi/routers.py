@@ -575,11 +575,10 @@ class MediaRouter(Router, MediaMixin):
     '''
     cache_control = CacheControl(maxage=86400)
 
-    def __init__(self, rule, path, show_indexes=False, mapping=None,
+    def __init__(self, rule, path, show_indexes=False,
                  default_suffix=None, default_file='index.html',
-                 raise_404=True):
-        super(MediaRouter, self).__init__('%s/<path:path>' % rule)
-        self._mapping = mapping or {}
+                 raise_404=True, **params):
+        super(MediaRouter, self).__init__('%s/<path:path>' % rule, **params)
         self._default_suffix = default_suffix
         self._default_file = default_file
         self._show_indexes = show_indexes

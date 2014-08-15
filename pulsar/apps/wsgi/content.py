@@ -813,9 +813,9 @@ class Media(AsyncString):
         self.media_path = media_path
         self.minified = minified
         if known_libraries is None:
-            known_libraries = media_libraries()['libs']
+            known_libraries = media_libraries().get('libs') or {}
         if dependencies is None:
-            dependencies = media_libraries()['deps']
+            dependencies = media_libraries().get('deps') or {}
         self.known_libraries = known_libraries
         self.dependencies = dependencies
 
