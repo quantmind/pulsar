@@ -85,7 +85,7 @@ Lazy Wsgi Handler
 
 Pulsar Variables
 ======================
-Pulsar inject two server-defined variables into the WSGI environ:
+Pulsar injects two server-defined variables into the WSGI environ:
 
 * ``pulsar.connection``, the :class:`.Connection` serving the request
 * ``pulsar.cfg``, the :class:`.Config` dictionary of the server
