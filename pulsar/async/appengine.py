@@ -13,6 +13,9 @@ selectors = None
 ConnectionRefusedError = None
 ConnectionResetError = None
 From = identity
+Return = identity
+coroutine = identity
+iscoroutinefunction = lambda c: False
 
 
 class Future(ndb.Future):

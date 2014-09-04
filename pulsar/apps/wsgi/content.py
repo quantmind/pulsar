@@ -240,6 +240,7 @@ class AsyncString(object):
     _streamed = False
     _children = None
     _parent = None
+    _before_stream = None
     charset = None
 
     def __init__(self, *children, **params):
@@ -378,6 +379,9 @@ class AsyncString(object):
         if self._streamed:
             raise RuntimeError('%s already streamed' % self)
         self._streamed = True
+        if self._before_stream:
+            for cbk in self._before_stream:
+                cbk(request, self)
         return self.do_stream(request)
 
     def do_stream(self, request):
@@ -432,6 +436,16 @@ class AsyncString(object):
         :return: a string or bytes
         '''
         return to_string(''.join(stream_to_string(streams)))
+
+    def before_render(self, callback):
+        '''Add a callback to be executed before this content is rendered
+
+        The callback accept ``request`` and this content as the only
+        two arguments
+        '''
+        if not self._before_stream:
+            self._before_stream = []
+        self._before_stream.append(callback)
 
     def render(self, request=None):
         '''Render this string.
@@ -1086,8 +1100,10 @@ class Head(Html):
     '''
     def __init__(self, media_path=None, title=None, meta=None, minified=False,
                  known_libraries=None, scripts_dependencies=None,
-                 require_callback=None, **params):
+                 require_callback=None, fields=None, **params):
         super(Head, self).__init__('head', **params)
+        self.fields = fields if fields is not None else {}
+        self._title = ''
         self.title = title
         self.append(Html(None, meta))
         self.append(Links(media_path, minified=minified,
@@ -1104,6 +1120,17 @@ class Head(Html):
     @property
     def meta(self):
         return self._children[0]
+
+    @property
+    def title(self):
+        '''Head title'''
+        return self._title
+
+    @title.setter
+    def title(self, value):
+        if value and value != self._title:
+            self._title = value
+            self.fields['title'] = value
 
     def __get_media_path(self):
         return self.links.media_path
@@ -1148,8 +1175,11 @@ class Head(Html):
 
     def add_meta(self, **kwargs):
         '''Add a new :class:`Html` meta tag to the :attr:`meta` collection.'''
-        meta = Html('meta')
-        self.meta.append(meta.attr(kwargs))
+        name = kwargs.get('name')
+        content = kwargs.get('content')
+        if name and content:
+            self.fields[name] = content
+        self.meta.append(Html('meta').attr(kwargs))
 
     def get_meta(self, name):
         '''Get the ``content`` attribute of meta tag ``name``.
@@ -1162,7 +1192,7 @@ class Head(Html):
         ``name`` equal to ``description`` or ``None``.
         '''
         for child in self.meta._children:
-            if child.attr('name') == name:
+            if isinstance(child, Html) and child.attr('name') == name:
                 return child.attr('content')
 
     def replace_meta(self, name, content=None):
@@ -1206,7 +1236,13 @@ class HtmlDocument(Html):
 
         The body part of this :class:`HtmlDocument`, an :class:`.Html` element
 
+    .. attribute:: fields
+
+        Fields for representing a Html5 document as an object in an open
+        graph protocol (OGP_).
+
     .. _HTML5: http://www.w3schools.com/html/html5_intro.asp
+    .. _OGP: http://ogp.me/
     '''
     _template = ('<!DOCTYPE html>\n'
                  '<html%s>\n'
@@ -1215,13 +1251,14 @@ class HtmlDocument(Html):
 
     def __init__(self, title=None, media_path='/media/', charset=None,
                  minified=False, known_libraries=None, require_callback=None,
-                 scripts_dependencies=None, **params):
+                 scripts_dependencies=None, loop=None, **params):
         super(HtmlDocument, self).__init__(None, **params)
+        self.fields = {}
         self.head = Head(title=title, media_path=media_path, minified=minified,
                          known_libraries=known_libraries,
                          require_callback=require_callback,
                          scripts_dependencies=scripts_dependencies,
-                         charset=charset)
+                         charset=charset, fields=self.fields)
         self.body = Html('body')
         self.end = Html(None)
 

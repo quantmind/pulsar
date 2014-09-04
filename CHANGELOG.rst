@@ -6,6 +6,8 @@ Ver. 0.9.1 - Development
 * unidecode_ removed as hard dependency, wrong license
 * The :ref:`Httpbin <tutorials-httpbin>` example shows how to
   use :ref:`application hooks <setting-section-application-hooks>`
+* Added :meth:`.AsyncString.before_render` method to add callbacks executed
+  just before an asynchronous string is rendered
 
 Ver. 0.9.0 - 2014-Aug-04
 ===========================
