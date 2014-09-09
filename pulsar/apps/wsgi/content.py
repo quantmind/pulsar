@@ -924,16 +924,19 @@ class Links(Media):
         :param rel: Specifies the relationship between the document
             and the linked document. If not given ``stylesheet`` is used.
         :param type: Specifies the content type of the linked document.
-            If not given ``text/css`` is used.
+            If not given ``text/css`` is used. It an empty string is given,
+            it won't be added.
         :param media: Specifies on what device the linked document will be
             displayed. If not given or ``all``, the media is for all devices.
         :param kwargs: additional attributes
         '''
         if href:
-            type = type or 'text/css'
+            type = type if type is not None else 'text/css'
             rel = rel or 'stylesheet'
             path = self.absolute_path(href)
-            value = Html('link', href=path, type=type, rel=rel, **kwargs)
+            value = Html('link', href=path, rel=rel, **kwargs)
+            if type:
+                value.attr('type', type)
             if media not in (None, 'all'):
                 value.attr('media', media)
             if condition:
