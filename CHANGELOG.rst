@@ -1,6 +1,6 @@
 Ver. 0.9.1 - Development
 ===========================
-* Several fixes on :class:`.Html` initialisation and the :meth:'.Html.attr`
+* Several fixes on :class:`.Html` initialisation and the :meth:`.Html.attr`
   method
 * Critical bug fix in :class:`.WsgiHandler` when passing response middleware
 * unidecode_ removed as hard dependency, wrong license

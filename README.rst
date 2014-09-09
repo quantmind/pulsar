@@ -8,6 +8,7 @@ activities in different threads and/or processes.
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Mailing list: `google user group`_
+:Design by: `Quantmind`_ and `Luca Sbardella`_
 :Platforms: Linux, OSX, Windows. Python 2.7, 3.3, 3.4 and pypy_
 :Keywords: client, server, asynchronous, concurrency, actor, thread, process,
     socket, task queue, wsgi, websocket, redis, json-rpc
@@ -221,3 +222,5 @@ file in the top distribution directory for the full license text.
 .. _trollius: https://pypi.python.org/pypi/trollius
 .. _rebase: https://help.github.com/articles/about-git-rebase
 .. _unidecode: https://pypi.python.org/pypi/Unidecode
+.. _`Luca Sbardella`: http://lucasbardella.com
+.. _`Quantmind`: http://quantmind.com

@@ -1181,8 +1181,8 @@ class Head(Html):
             self.fields[name] = content
         self.meta.append(Html('meta').attr(kwargs))
 
-    def get_meta(self, name):
-        '''Get the ``content`` attribute of meta tag ``name``.
+    def get_meta(self, name, meta_key=None):
+        '''Get the ``content`` attribute of a meta tag ``name``.
 
         For example::
 
@@ -1190,9 +1190,14 @@ class Head(Html):
 
         returns the ``content`` attribute of the meta tag with attribute
         ``name`` equal to ``description`` or ``None``.
+        If a different meta key needs to be matched, it can be specified via
+        the ``meta_key`` parameter::
+
+            head.get_meta('og:title', meta_key='property')
         '''
+        meta_key = meta_key or 'name'
         for child in self.meta._children:
-            if isinstance(child, Html) and child.attr('name') == name:
+            if isinstance(child, Html) and child.attr(meta_key) == name:
                 return child.attr('content')
 
     def replace_meta(self, name, content=None):
