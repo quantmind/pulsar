@@ -77,12 +77,14 @@
 <div class="section" id="ver-0-9-1-development">
 <h2>Ver. 0.9.1 - Development<a class="headerlink" href="#ver-0-9-1-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Several fixes on <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> initialisation and the :meth:&#8217;.Html.attr`
+<li>Several fixes on <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> initialisation and the <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.attr" title="pulsar.apps.wsgi.content.Html.attr"><tt class="xref py py-meth docutils literal"><span class="pre">Html.attr()</span></tt></a>
 method</li>
 <li>Critical bug fix in <a class="reference internal" href="apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a> when passing response middleware</li>
 <li><a class="reference external" href="https://pypi.python.org/pypi/Unidecode">unidecode</a> removed as hard dependency, wrong license</li>
 <li>The <a class="reference internal" href="tutorials/httpbin.html#tutorials-httpbin"><em>Httpbin</em></a> example shows how to
 use <a class="reference internal" href="settings.html#setting-section-application-hooks"><em>application hooks</em></a></li>
+<li>Added <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.before_render" title="pulsar.apps.wsgi.content.AsyncString.before_render"><tt class="xref py py-meth docutils literal"><span class="pre">AsyncString.before_render()</span></tt></a> method to add callbacks executed
+just before an asynchronous string is rendered</li>
 </ul>
 </div>
 <div class="section" id="ver-0-9-0-2014-aug-04">
