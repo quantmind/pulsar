@@ -1,7 +1,6 @@
 import os
 import sys
 from time import time
-from functools import partial
 from collections import OrderedDict
 from multiprocessing import Process, current_process
 
