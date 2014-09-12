@@ -5,7 +5,7 @@ from collections import OrderedDict
 from multiprocessing import Process, current_process
 
 import pulsar
-from pulsar import system, MonitorStarted, HaltServer
+from pulsar import system, MonitorStarted, HaltServer, Config
 from pulsar.utils.pep import itervalues, iteritems, range
 from pulsar.utils.log import logger_fds
 from pulsar.utils import autoreload
