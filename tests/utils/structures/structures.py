@@ -1,6 +1,7 @@
 '''Tests the tools and utilities in pulsar.utils.'''
 import unittest
 
+from pulsar.utils.pep import pickle
 from pulsar.utils.structures import (MultiValueDict, merge_prefix, deque,
                                      AttributeDictionary)
 
@@ -109,6 +110,13 @@ class TestAttributeDictionary(unittest.TestCase):
         self.assertEqual(a['ciao'], 5)
         self.assertEqual(list(a.values()), [5])
         self.assertEqual(list(a.items()), [('ciao', 5)])
+
+    def test_pickle(self):
+        a = AttributeDictionary()
+        a['ciao'] = 5
+        b = pickle.dumps(a)
+        c = pickle.loads(b)
+        self.assertEqual(a, c)
 
 
 class TestFunctions(unittest.TestCase):

@@ -167,7 +167,7 @@ class AttributeDictionary(collections.Mapping):
         return self.__dict__.copy()
 
     def __setstate__(self, state):
-        self.__dict__ = state
+        self.__dict__.update(state)
 
     def update(self, iterable):
         for name, value in mapping_iterator(iterable):
