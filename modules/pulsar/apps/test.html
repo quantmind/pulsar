@@ -441,11 +441,11 @@
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;labels&quot;</span>
     <span class="n">nargs</span> <span class="o">=</span> <span class="s">&#39;*&#39;</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_list</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Optional test labels to run.</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">        Optional test labels to run.</span>
 
-<span class="s">    If not provided all tests are run.</span>
-<span class="s">    To see available labels use the -l option.</span>
-<span class="s">    &quot;&quot;&quot;</span>
+<span class="s">        If not provided all tests are run.</span>
+<span class="s">        To see available labels use the ``-l`` option.&quot;&quot;&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">TestExcludeLabels</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
@@ -479,10 +479,7 @@
     <span class="n">action</span> <span class="o">=</span> <span class="s">&#39;store_true&#39;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Run test functions sequentially.</span>
-
-<span class="s">    Don&#39;t run them asynchronously.</span>
-<span class="s">    &quot;&quot;&quot;</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Run test functions sequentially.&quot;&quot;&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">TestShowLeaks</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>

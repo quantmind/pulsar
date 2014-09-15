@@ -572,13 +572,18 @@ method on this attribute. You can add relative paths:</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Head.get_meta">
 <tt class="descname">get_meta</tt><big>(</big><em>name</em>, <em>meta_key=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.get_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.get_meta" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the <tt class="docutils literal"><span class="pre">content</span></tt> attribute of meta tag <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
+<dd><p>Get the <tt class="docutils literal"><span class="pre">content</span></tt> attribute of a meta tag <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
 <p>For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">head</span><span class="o">.</span><span class="n">get_meta</span><span class="p">(</span><span class="s">&#39;decription&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>returns the <tt class="docutils literal"><span class="pre">content</span></tt> attribute of the meta tag with attribute
-<tt class="docutils literal"><span class="pre">name</span></tt> equal to <tt class="docutils literal"><span class="pre">description</span></tt> or <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+<tt class="docutils literal"><span class="pre">name</span></tt> equal to <tt class="docutils literal"><span class="pre">description</span></tt> or <tt class="docutils literal"><span class="pre">None</span></tt>.
+If a different meta key needs to be matched, it can be specified via
+the <tt class="docutils literal"><span class="pre">meta_key</span></tt> parameter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">head</span><span class="o">.</span><span class="n">get_meta</span><span class="p">(</span><span class="s">&#39;og:title&#39;</span><span class="p">,</span> <span class="n">meta_key</span><span class="o">=</span><span class="s">&#39;property&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -737,7 +742,8 @@ document</li>
 <li><strong>rel</strong> &#8211; Specifies the relationship between the document
 and the linked document. If not given <tt class="docutils literal"><span class="pre">stylesheet</span></tt> is used.</li>
 <li><strong>type</strong> &#8211; Specifies the content type of the linked document.
-If not given <tt class="docutils literal"><span class="pre">text/css</span></tt> is used.</li>
+If not given <tt class="docutils literal"><span class="pre">text/css</span></tt> is used. It an empty string is given,
+it won&#8217;t be added.</li>
 <li><strong>media</strong> &#8211; Specifies on what device the linked document will be
 displayed. If not given or <tt class="docutils literal"><span class="pre">all</span></tt>, the media is for all devices.</li>
 <li><strong>kwargs</strong> &#8211; additional attributes</li>

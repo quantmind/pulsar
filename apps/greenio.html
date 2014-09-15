@@ -185,7 +185,7 @@ for write event.</li>
 </table>
 <p>This function must be invoked from a coroutine with parent, therefore
 invoking it from the main greenlet will raise an exception.
-Check how this function is used in the <a class="reference internal" href="#pulsar.apps.greenio.pg.psycopg2_wait_callback" title="pulsar.apps.greenio.pg.psycopg2_wait_callback"><tt class="xref py py-func docutils literal"><span class="pre">psycopg2_wait_callback()</span></tt></a>
+Check how this function is used in the <tt class="xref py py-func docutils literal"><span class="pre">psycopg2_wait_callback()</span></tt>
 function.</p>
 </dd></dl>
 
@@ -267,41 +267,6 @@ has finished.</p>
 </div>
 <div class="section" id="psycopg2">
 <span id="id3"></span><h2>Psycopg2<a class="headerlink" href="#psycopg2" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-pulsar.apps.greenio.pg"></span><p>Pulsar <a class="reference internal" href="#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><tt class="xref py py-mod docutils literal"><span class="pre">greenio</span></tt></a> application can be used in conjunction
-with <a class="reference external" href="http://pythonhosted.org/psycopg2/advanced.html#support-for-coroutine-libraries">psycopg2 coroutine support</a> to
-query the <a class="reference external" href="http://www.postgresql.org/">PostgreSql</a> database in an implicit
-asynchronous fashion.
-Such feature can be extremely useful since it allows to write
-asynchronous code without the need to explicitly yield
-control appropriately when necessary.</p>
-<p>For example, one could use ORMs (Object Relational Mappers) such as
-<a class="reference external" href="http://www.sqlalchemy.org/">SqlAlchemy</a> and <a class="reference external" href="https://www.djangoproject.com/">django</a> in asynchronous mode
-by invoking <a class="reference internal" href="#pulsar.apps.greenio.pg.make_asynchronous" title="pulsar.apps.greenio.pg.make_asynchronous"><tt class="xref py py-func docutils literal"><span class="pre">make_asynchronous()</span></tt></a> somehere convinient in the code:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.greenio</span> <span class="kn">import</span> <span class="n">pg</span>
-
-<span class="n">pg</span><span class="o">.</span><span class="n">make_asynchronous</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>The <a class="reference internal" href="#pulsar.apps.greenio.pg.make_asynchronous" title="pulsar.apps.greenio.pg.make_asynchronous"><tt class="xref py py-func docutils literal"><span class="pre">make_asynchronous()</span></tt></a> set the <a class="reference internal" href="#pulsar.apps.greenio.pg.psycopg2_wait_callback" title="pulsar.apps.greenio.pg.psycopg2_wait_callback"><tt class="xref py py-func docutils literal"><span class="pre">psycopg2_wait_callback()</span></tt></a> function
-as the waiting callback in psycopg2.</p>
-<div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last">Check out how the <a class="reference internal" href="pulse.html#module-pulsar.apps.pulse" title="pulsar.apps.pulse"><tt class="xref py py-mod docutils literal"><span class="pre">pulse</span></tt></a> application uses greenlet
-support to asynchrnously execute <a class="reference external" href="https://www.djangoproject.com/">django</a> middleware when using
-<a class="reference external" href="http://www.postgresql.org/">PostgreSql</a> as backend database.</p>
-</div>
-<dl class="function">
-<dt id="pulsar.apps.greenio.pg.psycopg2_wait_callback">
-<tt class="descclassname">pulsar.apps.greenio.pg.</tt><tt class="descname">psycopg2_wait_callback</tt><big>(</big><em>conn</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/greenio/pg.html#psycopg2_wait_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.pg.psycopg2_wait_callback" title="Permalink to this definition">¶</a></dt>
-<dd><p>A wait callback to allow greenlet to work with Psycopg.
-The caller must be from a greenlet other than the main one.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pulsar.apps.greenio.pg.make_asynchronous">
-<tt class="descclassname">pulsar.apps.greenio.pg.</tt><tt class="descname">make_asynchronous</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/greenio/pg.html#make_asynchronous"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.pg.make_asynchronous" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </div>
 </div>
 

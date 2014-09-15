@@ -995,16 +995,19 @@
 <span class="sd">        :param rel: Specifies the relationship between the document</span>
 <span class="sd">            and the linked document. If not given ``stylesheet`` is used.</span>
 <span class="sd">        :param type: Specifies the content type of the linked document.</span>
-<span class="sd">            If not given ``text/css`` is used.</span>
+<span class="sd">            If not given ``text/css`` is used. It an empty string is given,</span>
+<span class="sd">            it won&#39;t be added.</span>
 <span class="sd">        :param media: Specifies on what device the linked document will be</span>
 <span class="sd">            displayed. If not given or ``all``, the media is for all devices.</span>
 <span class="sd">        :param kwargs: additional attributes</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">href</span><span class="p">:</span>
-            <span class="nb">type</span> <span class="o">=</span> <span class="nb">type</span> <span class="ow">or</span> <span class="s">&#39;text/css&#39;</span>
+            <span class="nb">type</span> <span class="o">=</span> <span class="nb">type</span> <span class="k">if</span> <span class="nb">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="s">&#39;text/css&#39;</span>
             <span class="n">rel</span> <span class="o">=</span> <span class="n">rel</span> <span class="ow">or</span> <span class="s">&#39;stylesheet&#39;</span>
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">href</span><span class="p">)</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;link&#39;</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;link&#39;</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">:</span>
+                <span class="n">value</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">media</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;all&#39;</span><span class="p">):</span>
                 <span class="n">value</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s">&#39;media&#39;</span><span class="p">,</span> <span class="n">media</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">condition</span><span class="p">:</span>
@@ -1253,7 +1256,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Html</span><span class="p">(</span><span class="s">&#39;meta&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="n">kwargs</span><span class="p">))</span>
 </div>
 <div class="viewcode-block" id="Head.get_meta"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Head.get_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta_key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Get the ``content`` attribute of meta tag ``name``.</span>
+        <span class="sd">&#39;&#39;&#39;Get the ``content`` attribute of a meta tag ``name``.</span>
 
 <span class="sd">        For example::</span>
 
@@ -1261,6 +1264,10 @@
 
 <span class="sd">        returns the ``content`` attribute of the meta tag with attribute</span>
 <span class="sd">        ``name`` equal to ``description`` or ``None``.</span>
+<span class="sd">        If a different meta key needs to be matched, it can be specified via</span>
+<span class="sd">        the ``meta_key`` parameter::</span>
+
+<span class="sd">            head.get_meta(&#39;og:title&#39;, meta_key=&#39;property&#39;)</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">meta_key</span> <span class="o">=</span> <span class="n">meta_key</span> <span class="ow">or</span> <span class="s">&#39;name&#39;</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
