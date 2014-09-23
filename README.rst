@@ -1,3 +1,7 @@
+.. image:: http://quantmind.github.io/pulsar/images/pulsar-banner.svg
+   :alt: pulsar
+   :width: 100%
+
 Event driven concurrent framework for python.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
