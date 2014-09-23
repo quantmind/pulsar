@@ -1,4 +1,4 @@
-#! /usr/bin/env python 
+#! /usr/bin/env python
 from optparse import OptionParser
 import os
 import sys
@@ -75,8 +75,8 @@ class ForceRename(object):
     def __call__(self, from_, to):
         self.remove(to)
         self.renamer(from_, to)
-        
-        
+
+
 class VerboseRename(object):
 
     def __init__(self, renamer, stream):
@@ -183,10 +183,10 @@ class LayoutFactory(object):
 
         if self.force:
             remove = self.operations_factory.create_remover(self.file_helper.exists, self.dir_helper.rmtree)
-            renamer = self.operations_factory.create_force_rename(renamer, remove) 
+            renamer = self.operations_factory.create_force_rename(renamer, remove)
 
         if self.verbose:
-            renamer = self.operations_factory.create_verbose_rename(renamer, self.output_stream) 
+            renamer = self.operations_factory.create_verbose_rename(renamer, self.output_stream)
 
         # Build list of directories to process
         directories = [d for d in contents if self.is_underscore_dir(path, d)]
@@ -267,7 +267,7 @@ def sphinx_extension(app, exception):
             shutil.move,
             os.path.exists
             )
-    
+
     operations_factory = OperationsFactory()
     handler_factory = HandlerFactory()
 
@@ -290,5 +290,3 @@ def setup(app):
     app.add_config_value("sphinx_to_github", True, '')
     app.add_config_value("sphinx_to_github_verbose", True, '')
     app.connect("build-finished", sphinx_extension)
-
-

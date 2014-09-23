@@ -154,7 +154,6 @@ from pulsar import multi_async, async, coroutine_return, chain_future
 from pulsar.utils.pep import iteritems, to_string, ispy3k
 from pulsar.utils.slugify import slugify
 from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
-from pulsar.utils.httpurl import remove_double_slash
 from pulsar.utils.system import json
 
 from .html import html_visitor, newline
@@ -825,6 +824,8 @@ class Media(AsyncString):
                  dependencies=None):
         super(Media, self).__init__()
         self.media_path = media_path
+        if self.media_path and not self.media_path.endswith('/'):
+            self.media_path = '%s/' % self.media_path
         self.minified = minified
         if known_libraries is None:
             known_libraries = media_libraries().get('libs') or {}
@@ -877,7 +878,7 @@ class Media(AsyncString):
         if urlparams:
             path = '%s?%s' % (path, urlparams)
         if self.is_relative(path) and self.media_path:
-            return remove_double_slash('%s/%s' % (self.media_path, path))
+            return '%s%s' % (self.media_path, path)
         else:
             return path
 
@@ -931,9 +932,10 @@ class Links(Media):
         :param kwargs: additional attributes
         '''
         if href:
-            type = type if type is not None else 'text/css'
-            rel = rel or 'stylesheet'
             path = self.absolute_path(href)
+            if path.endswith('.css'):
+                type = type or 'text/css'
+                rel = rel or 'stylesheet'
             value = Html('link', href=path, rel=rel, **kwargs)
             if type:
                 value.attr('type', type)

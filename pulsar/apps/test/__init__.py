@@ -371,11 +371,11 @@ class TestLabels(TestOption):
     name = "labels"
     nargs = '*'
     validator = pulsar.validate_list
-    desc = """Optional test labels to run.
+    desc = """\
+        Optional test labels to run.
 
-    If not provided all tests are run.
-    To see available labels use the -l option.
-    """
+        If not provided all tests are run.
+        To see available labels use the ``-l`` option."""
 
 
 class TestExcludeLabels(TestOption):
@@ -409,10 +409,7 @@ class TestSequential(TestOption):
     action = 'store_true'
     default = False
     validator = pulsar.validate_bool
-    desc = """Run test functions sequentially.
-
-    Don't run them asynchronously.
-    """
+    desc = """Run test functions sequentially."""
 
 
 class TestShowLeaks(TestOption):

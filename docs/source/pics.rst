@@ -37,13 +37,21 @@ Logo 1
 Logo 2
 ~~~~~~~~~~
 
-.. image:: _static/pulsar2.png
-   :width: 300 px
-
-Logo 3
-~~~~~~~~~~
-
 Inspired from one of the pulsar oscillator images
 
 .. image:: _static/pulsar3.png
    :width: 300 px
+
+
+Logo 3
+~~~~~~~~~~
+
+.. image:: _static/pulsar-logo.svg
+   :width: 300 px
+
+
+Banner
+~~~~~~~~~~
+
+.. image:: _static/pulsar-banner.svg
+   :width: 500 px
