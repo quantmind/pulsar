@@ -10,6 +10,7 @@ from pulsar import system, MonitorStarted, HaltServer
 from pulsar.utils.pep import itervalues, iteritems, range
 from pulsar.utils.log import logger_fds
 from pulsar.utils import autoreload
+from pulsar.utils.config import Config
 from pulsar.utils.tools import Pidfile
 
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
