@@ -426,7 +426,6 @@ class Route(object):
 class BaseConverter(object):
     """Base class for all converters."""
     regex = '[^/]+'
-    weight = 100
 
     def to_python(self, value):
         return value
@@ -488,9 +487,7 @@ class PathConverter(BaseConverter):
         Rule('/<path:wikipage>')
         Rule('/<path:wikipage>/edit')
     """
-    regex = '[^/].*?'
     regex = '.*'
-    weight = 200
 
 
 class NumberConverter(BaseConverter):
@@ -498,8 +495,6 @@ class NumberConverter(BaseConverter):
 
     :internal:
     """
-    weight = 1
-
     def __init__(self, fixed_digits=0, min=None, max=None):
         self.fixed_digits = fixed_digits
         self.min = min

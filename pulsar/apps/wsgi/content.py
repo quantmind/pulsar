@@ -439,7 +439,7 @@ class AsyncString(object):
     def before_render(self, callback):
         '''Add a callback to be executed before this content is rendered
 
-        The callback accept ``request`` and this content as the only
+        The callback accept ``request`` and ``self`` as the only
         two arguments
         '''
         if not self._before_stream:
@@ -1024,8 +1024,7 @@ class Scripts(Media):
             require = self.require_script()
             callback = self.require_callback or ''
             if callback:
-                callback = ('\nrequire.callback = function () {%s();}'
-                            % callback)
+                callback = '\nrequire.callback = %s;' % callback
             yield ('<script type="text/javascript">\n'
                    'var require = %s,\n'
                    '    media_path = "%s";%s\n'
@@ -1105,10 +1104,8 @@ class Head(Html):
     '''
     def __init__(self, media_path=None, title=None, meta=None, minified=False,
                  known_libraries=None, scripts_dependencies=None,
-                 require_callback=None, fields=None, **params):
+                 require_callback=None, **params):
         super(Head, self).__init__('head', **params)
-        self.fields = fields if fields is not None else {}
-        self._title = ''
         self.title = title
         self.append(Html(None, meta))
         self.append(Links(media_path, minified=minified,
@@ -1125,17 +1122,6 @@ class Head(Html):
     @property
     def meta(self):
         return self._children[0]
-
-    @property
-    def title(self):
-        '''Head title'''
-        return self._title
-
-    @title.setter
-    def title(self, value):
-        if value and value != self._title:
-            self._title = value
-            self.fields['title'] = value
 
     def __get_media_path(self):
         return self.links.media_path
@@ -1180,10 +1166,6 @@ class Head(Html):
 
     def add_meta(self, **kwargs):
         '''Add a new :class:`Html` meta tag to the :attr:`meta` collection.'''
-        name = kwargs.get('name')
-        content = kwargs.get('content')
-        if name and content:
-            self.fields[name] = content
         self.meta.append(Html('meta').attr(kwargs))
 
     def get_meta(self, name, meta_key=None):
@@ -1205,7 +1187,7 @@ class Head(Html):
             if isinstance(child, Html) and child.attr(meta_key) == name:
                 return child.attr('content')
 
-    def replace_meta(self, name, content=None):
+    def replace_meta(self, name, content=None, meta_key=None):
         '''Replace the ``content`` attribute of meta tag ``name``
 
         If the meta with ``name`` is not available, it is added, otherwise
@@ -1215,21 +1197,40 @@ class Head(Html):
         children = self.meta._children
         if not content:     # small optimazation
             children = tuple(children)
+        meta_key = meta_key or 'name'
         for child in children:
-            if child.attr('name') == name:
+            if child.attr(meta_key) == name:
                 if content:
                     child.attr('content', content)
                 else:
                     self.meta._children.remove(child)
                 return
         if content:
-            self.add_meta(name=name, content=content)
+            self.add_meta(**{meta_key:name, 'content': content})
 
     def __add__(self, other):
         if isinstance(other, Media):
             return Media(media=self).add(other)
         else:
             return self
+
+
+class Body(Html):
+
+    def __init__(self, media_path=None, title=None, meta=None, minified=False,
+                 known_libraries=None, scripts_dependencies=None,
+                 require_callback=None, **params):
+        super(Body, self).__init__('body')
+        self.embedded_js = Embedded('script', type='text/javascript')
+        self.scripts = Scripts(media_path, minified=minified,
+                               known_libraries=known_libraries,
+                               dependencies=scripts_dependencies,
+                               require_callback=require_callback)
+        self.before_render(self._add_scripts)
+
+    def _add_scripts(self, request, _):
+        self.append(self.embedded_js)
+        self.append(self.scripts)
 
 
 class HtmlDocument(Html):
@@ -1246,13 +1247,7 @@ class HtmlDocument(Html):
 
         The body part of this :class:`HtmlDocument`, an :class:`.Html` element
 
-    .. attribute:: fields
-
-        Fields for representing a Html5 document as an object in an open
-        graph protocol (OGP_).
-
     .. _HTML5: http://www.w3schools.com/html/html5_intro.asp
-    .. _OGP: http://ogp.me/
     '''
     _template = ('<!DOCTYPE html>\n'
                  '<html%s>\n'
@@ -1263,18 +1258,18 @@ class HtmlDocument(Html):
                  minified=False, known_libraries=None, require_callback=None,
                  scripts_dependencies=None, loop=None, **params):
         super(HtmlDocument, self).__init__(None, **params)
-        self.fields = {}
         self.head = Head(title=title, media_path=media_path, minified=minified,
                          known_libraries=known_libraries,
                          require_callback=require_callback,
                          scripts_dependencies=scripts_dependencies,
-                         charset=charset, fields=self.fields)
-        self.body = Html('body')
-        self.end = Html(None)
+                         charset=charset)
+        self.body = Body(media_path=media_path, minified=minified,
+                         known_libraries=known_libraries,
+                         require_callback=require_callback,
+                         scripts_dependencies=scripts_dependencies)
 
     def do_stream(self, request):
         # stream the body
-        self.body.append(self.end)
         body = multi_async(self.body.stream(request))
         # the body has asynchronous components
         # delay the header untl later
