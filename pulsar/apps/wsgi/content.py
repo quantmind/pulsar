@@ -160,33 +160,10 @@ from .html import html_visitor, newline
 
 __all__ = ['AsyncString', 'Html',
            'Json', 'HtmlDocument', 'Links', 'Scripts', 'Media',
-           'html_factory', 'media_libraries']
+           'html_factory']
 
 
-_libs_url = 'http://quantmind.github.io/jslibs/libs.json'
-_media_libraries = None
 DATARE = re.compile('data[-_]')
-
-
-def media_libraries():
-    global _media_libraries
-    if _media_libraries is None:
-        if os.path.isfile('libs.json'):     # pragma    nocover
-            with open('libs.json') as f:
-                data = f.read()
-            _media_libraries = json.loads(data)
-        else:
-            from pulsar import new_event_loop
-            from pulsar.apps.http import HttpClient
-            http = HttpClient(loop=new_event_loop())
-            try:
-                response = http.get(_libs_url)
-                _media_libraries = response.json()
-            except Exception:   # pragma    nocover
-                http.logger.error('Could not import media library',
-                                  exc_info=True)
-                _media_libraries = {'libs': {}, 'deps': {}}
-    return _media_libraries
 
 
 if ispy3k:
@@ -807,32 +784,16 @@ class Media(AsyncString):
         rispectively.
 
         Default: ``False``
-
-    .. attribute:: known_libraries
-
-        Optional dictionary of known media libraries, mapping a name to a
-        valid absolute or local url. For example::
-
-            known_libraries = {'jquery':
-                               '//code.jquery.com/jquery-1.9.1.min.js'}
-
-        Default: ``None``
     '''
     mediatype = None
 
-    def __init__(self, media_path, minified=False, known_libraries=None,
-                 dependencies=None):
+    def __init__(self, media_path, minified=False, asset_protocol=None):
         super(Media, self).__init__()
         self.media_path = media_path
+        self.asset_protocol = asset_protocol
         if self.media_path and not self.media_path.endswith('/'):
             self.media_path = '%s/' % self.media_path
         self.minified = minified
-        if known_libraries is None:
-            known_libraries = media_libraries().get('libs') or {}
-        if dependencies is None:
-            dependencies = media_libraries().get('deps') or {}
-        self.known_libraries = known_libraries
-        self.dependencies = dependencies
 
     def is_relative(self, path):
         '''Check if ``path`` is a local relative path.
@@ -843,42 +804,24 @@ class Media(AsyncString):
         return not (path.startswith('http://') or path.startswith('https://')
                     or path.startswith('/'))
 
-    def absolute_path(self, path, with_media_ending=True):
+    def absolute_path(self, path):
         '''Return a suitable absolute url for ``path``.
 
-        The url is calculated in the following way:
-
-        * Check if ``path`` is an entry in the :attr:`known_libraries`
-          dictionary. In this case replace ``path`` with
-          ``known_libraries[path]``.
-        * If ``path`` :meth:`is_relative` build a sutable url by prepending
-          the :attr:`media_path` attribute.
+        If ``path`` :meth:`is_relative` build a sutable url by prepending
+        the :attr:`media_path` attribute.
 
         :return: A url path to insert in a HTML ``link`` or ``script``.
         '''
         ending = '.%s' % self.mediatype
-        minify = True
-        urlparams = ''
-        if isinstance(path, dict):
-            urlparams = path.get('urlparams', urlparams)
-            minify = path.get('minify', minify)
-            path = path['url']
-        if path in self.known_libraries:
-            lib = self.known_libraries[path]
-            if isinstance(lib, dict):
-                urlparams = lib.get('urlparams', '')
-                minify = lib.get('minify', minify)
-                lib = lib['url']
-            path = '%s%s' % (lib, ending)
-        if self.minified and minify:
-            if path.endswith(ending):
-                path = self._minify(path, ending)
-        if not with_media_ending:
-            path = path[:-len(ending)]
-        if urlparams:
-            path = '%s?%s' % (path, urlparams)
+        if not path.endswith(ending):
+            if self.minified:
+                path = '%s.min' % path
+            path = '%s%s' % (path, ending)
+        #
         if self.is_relative(path) and self.media_path:
             return '%s%s' % (self.media_path, path)
+        elif self.asset_protocol and path.startswith('//'):
+            return '%s%s' % (self.asset_protocol, path)
         else:
             return path
 
@@ -887,24 +830,6 @@ class Media(AsyncString):
         '''
         for media in iterable:
             self.append(media)
-
-    def set_default_scheme(self, scheme='http'):
-        '''Set a default scheme for the known libraries
-        container
-        '''
-        for name, path in tuple(self.known_libraries.items()):
-            if isinstance(path, dict):
-                url = path.get('url')
-                if url and url.startswith('//'):
-                    path['url'] = '%s:%s' % (scheme, url)
-            elif path.startswith('//'):
-                self.known_libraries[name] = '%s:%s' % (scheme, path)
-
-    def _minify(self, path, postfix):
-        new_postfix = 'min%s' % postfix
-        if not path.endswith(new_postfix):
-            path = '%s.%s' % (path[:-len(postfix)], new_postfix)
-        return path
 
 
 class Links(Media):
@@ -948,6 +873,7 @@ class Links(Media):
             if value not in self.children:
                 self.children.append(value)
 
+requires = ['require', 'requirejs']
 
 class Scripts(Media):
     '''A :class:`.Media` container for ``script`` tags.
@@ -957,44 +883,15 @@ class Scripts(Media):
     mediatype = 'js'
 
     def __init__(self, *args, **kwargs):
-        self.require_callback = kwargs.pop('require_callback', None)
         self.wait = kwargs.pop('wait', 200)
-        self.required = []
-        self._requirejs = False
+        self.require = []
+        self.paths = {}
         super(Scripts, self).__init__(*args, **kwargs)
 
     def script(self, src, type=None, **kwargs):
         type = type or 'application/javascript'
         path = self.absolute_path(src)
         return Html('script', src=path, type=type, **kwargs).render()
-
-    def require(self, *scripts):
-        '''Add a ``script`` to the list of :attr:`required` scripts.
-
-        The ``script`` can be a name in the :attr:`~Media.known_libraries`,
-        an absolute uri or a relative url.
-
-        The script will be loaded using the ``require`` javascript package.
-        '''
-        required = self.required
-        for script in scripts:
-            if isinstance(script, dict):
-                name = script['url']
-                name = name.strip()
-            else:
-                script = script.strip()
-                name = script
-            if not name:
-                continue
-            elif name == 'require':
-                self.append('require')
-                continue
-            if name not in self.known_libraries:
-                script = self.absolute_path(script)
-            if script not in required:
-                required.append(script)
-        if required:
-            self.append('require')
 
     def append(self, src=None, type=None, **kwargs):
         '''add a new script to the container.
@@ -1004,32 +901,23 @@ class Scripts(Media):
             case the :attr:`Media.media_path` attribute is prepended.
         '''
         if src:
-            if src == 'require':
-                self._requirejs = True
             script = self.script(src, type=type, **kwargs)
             if script not in self.children:
                 self.children.append(script)
 
     def require_script(self):
         '''Can be used for requirejs'''
-        libs = dict(((key, self.absolute_path(key, False))
-                     for key in self.known_libraries))
-        return OrderedDict((('deps', self.required),
-                            ('paths', libs),
-                            ('shim', self.dependencies),
-                            ('waitSeconds', self.wait)))
+        return {'deps': [r for r in self.require if r not in requires],
+                'paths': self.paths,
+                'baseUrl': self.media_path,
+                'minify': self.minified,
+                'waitSeconds': self.wait}
 
     def do_stream(self, request):
-        if self._requirejs or self.required:
-            require = self.require_script()
-            callback = self.require_callback or ''
-            if callback:
-                callback = '\nrequire.callback = %s;' % callback
+        if self.require:
             yield ('<script type="text/javascript">\n'
-                   'var require = %s,\n'
-                   '    media_path = "%s";%s\n'
-                   '</script>\n') % (pyjson.dumps(require),
-                                     self.media_path, callback)
+                   'var require = %s;\n'
+                   '</script>\n') % json.dumps(self.require_script())
         for child in self.children:
             yield child
 
@@ -1103,20 +991,16 @@ class Head(Html):
 
     '''
     def __init__(self, media_path=None, title=None, meta=None, minified=False,
-                 known_libraries=None, scripts_dependencies=None,
-                 require_callback=None, **params):
+                 asset_protocol=None, **params):
         super(Head, self).__init__('head', **params)
         self.title = title
         self.append(Html(None, meta))
         self.append(Links(media_path, minified=minified,
-                          known_libraries=known_libraries,
-                          dependencies=scripts_dependencies))
+                          asset_protocol=asset_protocol))
         self.append(Embedded('style', type='text/css'))
         self.append(Embedded('script', type='text/javascript'))
         self.append(Scripts(media_path, minified=minified,
-                            known_libraries=known_libraries,
-                            dependencies=scripts_dependencies,
-                            require_callback=require_callback))
+                            asset_protocol=asset_protocol))
         self.add_meta(charset=self.charset)
 
     @property
@@ -1215,24 +1099,6 @@ class Head(Html):
             return self
 
 
-class Body(Html):
-
-    def __init__(self, media_path=None, title=None, meta=None, minified=False,
-                 known_libraries=None, scripts_dependencies=None,
-                 require_callback=None, **params):
-        super(Body, self).__init__('body')
-        self.embedded_js = Embedded('script', type='text/javascript')
-        self.scripts = Scripts(media_path, minified=minified,
-                               known_libraries=known_libraries,
-                               dependencies=scripts_dependencies,
-                               require_callback=require_callback)
-        self.before_render(self._add_scripts)
-
-    def _add_scripts(self, request, _):
-        self.append(self.embedded_js)
-        self.append(self.scripts)
-
-
 class HtmlDocument(Html):
     '''An :class:`.Html` component rendered as an HTML5_ document.
 
@@ -1255,18 +1121,11 @@ class HtmlDocument(Html):
                  '</html>')
 
     def __init__(self, title=None, media_path='/media/', charset=None,
-                 minified=False, known_libraries=None, require_callback=None,
-                 scripts_dependencies=None, loop=None, **params):
+                 minified=False, loop=None, asset_protocol=None, **params):
         super(HtmlDocument, self).__init__(None, **params)
         self.head = Head(title=title, media_path=media_path, minified=minified,
-                         known_libraries=known_libraries,
-                         require_callback=require_callback,
-                         scripts_dependencies=scripts_dependencies,
-                         charset=charset)
-        self.body = Body(media_path=media_path, minified=minified,
-                         known_libraries=known_libraries,
-                         require_callback=require_callback,
-                         scripts_dependencies=scripts_dependencies)
+                         charset=charset, asset_protocol=asset_protocol)
+        self.body = Html('body')
 
     def do_stream(self, request):
         # stream the body

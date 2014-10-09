@@ -139,12 +139,23 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(media.absolute_path('jquery'),
                          'http://bla.foo/jquery.js')
 
-    def test_media_minified(self):
+    def test_links_minified(self):
         media = wsgi.Links('/media/', minified=True)
-        self.assertEqual(media.absolute_path('bla/foo.css'),
+        self.assertEqual(media.absolute_path('bla/foo'),
                          '/media/bla/foo.min.css')
         self.assertEqual(media.absolute_path('bla/foo.min.css'),
                          '/media/bla/foo.min.css')
+        self.assertEqual(media.absolute_path('bla/foo.css'),
+                         '/media/bla/foo.css')
+
+    def test_scripts_minified(self):
+        media = wsgi.Scripts('/media/', minified=True)
+        self.assertEqual(media.absolute_path('bla/foo'),
+                         '/media/bla/foo.min.js')
+        self.assertEqual(media.absolute_path('bla/foo.min.js'),
+                         '/media/bla/foo.min.js')
+        self.assertEqual(media.absolute_path('bla/foo.js'),
+                         '/media/bla/foo.js')
 
     def test_html_doc_media(self):
         doc = wsgi.HtmlDocument(media_path='/foo/')
