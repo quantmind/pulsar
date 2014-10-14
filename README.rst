@@ -1,4 +1,4 @@
-.. image:: https://raw.githubusercontent.com/quantmind/pulsar/master/docs/source/_static/pulsar-banner.svg
+.. image:: http://quantmind.github.io/pulsar/images/pulsar-banner.svg
    :alt: pulsar
    :width: 90%
 
