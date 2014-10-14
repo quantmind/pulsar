@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 9, 2, 'alpha', 1)
+VERSION = (0, 9, 2, 'beta', 1)
 
 import os
 
