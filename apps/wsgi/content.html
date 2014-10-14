@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Asynchronous Content &mdash; pulsar 0.9.1-beta.1 documentation</title>
+    <title>Asynchronous Content &mdash; pulsar 0.9.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.9.1-beta.1',
+        VERSION:     '0.9.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.1-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Utilities" href="tools.html" />
     <link rel="prev" title="Response Middleware" href="response.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="response.html" title="Response Middleware"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.9.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -286,7 +286,7 @@ This method can be overwritten by derived classes.</p>
 <dt id="pulsar.apps.wsgi.content.AsyncString.before_render">
 <tt class="descname">before_render</tt><big>(</big><em>callback</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#AsyncString.before_render"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.before_render" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a callback to be executed before this content is rendered</p>
-<p>The callback accept <tt class="docutils literal"><span class="pre">request</span></tt> and this content as the only
+<p>The callback accept <tt class="docutils literal"><span class="pre">request</span></tt> and <tt class="docutils literal"><span class="pre">self</span></tt> as the only
 two arguments</p>
 </dd></dl>
 
@@ -469,7 +469,7 @@ using template languages:</p>
 <h3>Document<a class="headerlink" href="#document" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.HtmlDocument">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">HtmlDocument</tt><big>(</big><em>title=None</em>, <em>media_path='/media/'</em>, <em>charset=None</em>, <em>minified=False</em>, <em>known_libraries=None</em>, <em>require_callback=None</em>, <em>scripts_dependencies=None</em>, <em>loop=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#HtmlDocument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.HtmlDocument" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">HtmlDocument</tt><big>(</big><em>title=None</em>, <em>media_path='/media/'</em>, <em>charset=None</em>, <em>minified=False</em>, <em>loop=None</em>, <em>asset_protocol=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#HtmlDocument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.HtmlDocument" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> component rendered as an <a class="reference external" href="http://www.w3schools.com/html/html5_intro.asp">HTML5</a> document.</p>
 <p>An instance of this class can be obtained via the
 <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document" title="pulsar.apps.wsgi.wrappers.WsgiRequest.html_document"><tt class="xref py py-attr docutils literal"><span class="pre">WsgiRequest.html_document</span></tt></a> attribute.</p>
@@ -485,13 +485,6 @@ using template languages:</p>
 <dd><p>The body part of this <a class="reference internal" href="#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a>, an <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> element</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.content.HtmlDocument.fields">
-<tt class="descname">fields</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.HtmlDocument.fields" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fields for representing a Html5 document as an object in an open
-graph protocol (<a class="reference external" href="http://ogp.me/">OGP</a>).</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -499,14 +492,14 @@ graph protocol (<a class="reference external" href="http://ogp.me/">OGP</a>).</p
 <span id="wsgi-html-head"></span><h3>Head<a class="headerlink" href="#head" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.Head">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Head</tt><big>(</big><em>media_path=None</em>, <em>title=None</em>, <em>meta=None</em>, <em>minified=False</em>, <em>known_libraries=None</em>, <em>scripts_dependencies=None</em>, <em>require_callback=None</em>, <em>fields=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Head</tt><big>(</big><em>media_path=None</em>, <em>title=None</em>, <em>meta=None</em>, <em>minified=False</em>, <em>asset_protocol=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference internal" href="#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a> <tt class="docutils literal"><span class="pre">head</span></tt> tag element.</p>
 <p>Contains <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> attributes for the various part of an HTML
 Head element. The head element is accessed via the
 <a class="reference internal" href="#pulsar.apps.wsgi.content.HtmlDocument.head" title="pulsar.apps.wsgi.content.HtmlDocument.head"><tt class="xref py py-attr docutils literal"><span class="pre">HtmlDocument.head</span></tt></a> attribute.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.Head.title">
-<tt class="descname">title</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.title"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.title" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">title</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.title" title="Permalink to this definition">¶</a></dt>
 <dd><p>Text in the <tt class="docutils literal"><span class="pre">title</span></tt> tag.</p>
 </dd></dl>
 
@@ -557,12 +550,6 @@ method on this attribute. You can add relative paths:</p>
 </div>
 </dd></dl>
 
-<dl class="attribute">
-<dt>
-<tt class="descname">title</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.title"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>Head title</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Head.add_meta">
 <tt class="descname">add_meta</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.add_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.add_meta" title="Permalink to this definition">¶</a></dt>
@@ -588,7 +575,7 @@ the <tt class="docutils literal"><span class="pre">meta_key</span></tt> paramete
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Head.replace_meta">
-<tt class="descname">replace_meta</tt><big>(</big><em>name</em>, <em>content=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.replace_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.replace_meta" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">replace_meta</tt><big>(</big><em>name</em>, <em>content=None</em>, <em>meta_key=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.replace_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.replace_meta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace the <tt class="docutils literal"><span class="pre">content</span></tt> attribute of meta tag <tt class="docutils literal"><span class="pre">name</span></tt></p>
 <p>If the meta with <tt class="docutils literal"><span class="pre">name</span></tt> is not available, it is added, otherwise
 its content is replaced. If <tt class="docutils literal"><span class="pre">content</span></tt> is not given or it is empty
@@ -602,7 +589,7 @@ the meta tag with <tt class="docutils literal"><span class="pre">name</span></tt
 <h3>Media<a class="headerlink" href="#media" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.Media">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Media</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>known_libraries=None</em>, <em>dependencies=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Media</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>asset_protocol=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media" title="Permalink to this definition">¶</a></dt>
 <dd><p>A container for both <a class="reference internal" href="#pulsar.apps.wsgi.content.Links" title="pulsar.apps.wsgi.content.Links"><tt class="xref py py-class docutils literal"><span class="pre">Links</span></tt></a> and <a class="reference internal" href="#pulsar.apps.wsgi.content.Scripts" title="pulsar.apps.wsgi.content.Scripts"><tt class="xref py py-class docutils literal"><span class="pre">Scripts</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.Media.media_path">
@@ -620,18 +607,6 @@ rispectively.</p>
 <p>Default: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.content.Media.known_libraries">
-<tt class="descname">known_libraries</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.known_libraries" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optional dictionary of known media libraries, mapping a name to a
-valid absolute or local url. For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">known_libraries</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;jquery&#39;</span><span class="p">:</span>
-                   <span class="s">&#39;//code.jquery.com/jquery-1.9.1.min.js&#39;</span><span class="p">}</span>
-</pre></div>
-</div>
-<p>Default: <tt class="docutils literal"><span class="pre">None</span></tt></p>
-</dd></dl>
-
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Media.is_relative">
 <tt class="descname">is_relative</tt><big>(</big><em>path</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media.is_relative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.is_relative" title="Permalink to this definition">¶</a></dt>
@@ -642,16 +617,10 @@ valid absolute or local url. For example:</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Media.absolute_path">
-<tt class="descname">absolute_path</tt><big>(</big><em>path</em>, <em>with_media_ending=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media.absolute_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.absolute_path" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">absolute_path</tt><big>(</big><em>path</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media.absolute_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.absolute_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a suitable absolute url for <tt class="docutils literal"><span class="pre">path</span></tt>.</p>
-<p>The url is calculated in the following way:</p>
-<ul class="simple">
-<li>Check if <tt class="docutils literal"><span class="pre">path</span></tt> is an entry in the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.known_libraries" title="pulsar.apps.wsgi.content.Media.known_libraries"><tt class="xref py py-attr docutils literal"><span class="pre">known_libraries</span></tt></a>
-dictionary. In this case replace <tt class="docutils literal"><span class="pre">path</span></tt> with
-<tt class="docutils literal"><span class="pre">known_libraries[path]</span></tt>.</li>
-<li>If <tt class="docutils literal"><span class="pre">path</span></tt> <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.is_relative" title="pulsar.apps.wsgi.content.Media.is_relative"><tt class="xref py py-meth docutils literal"><span class="pre">is_relative()</span></tt></a> build a sutable url by prepending
-the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_path" title="pulsar.apps.wsgi.content.Media.media_path"><tt class="xref py py-attr docutils literal"><span class="pre">media_path</span></tt></a> attribute.</li>
-</ul>
+<p>If <tt class="docutils literal"><span class="pre">path</span></tt> <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.is_relative" title="pulsar.apps.wsgi.content.Media.is_relative"><tt class="xref py py-meth docutils literal"><span class="pre">is_relative()</span></tt></a> build a sutable url by prepending
+the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_path" title="pulsar.apps.wsgi.content.Media.media_path"><tt class="xref py py-attr docutils literal"><span class="pre">media_path</span></tt></a> attribute.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -668,13 +637,6 @@ the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_pa
 <dd><p>Add a list (iterable) of media to this container</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pulsar.apps.wsgi.content.Media.set_default_scheme">
-<tt class="descname">set_default_scheme</tt><big>(</big><em>scheme='http'</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media.set_default_scheme"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.set_default_scheme" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set a default scheme for the known libraries
-container</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -685,15 +647,6 @@ container</p>
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Scripts</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Scripts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Scripts" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.content.Media" title="pulsar.apps.wsgi.content.Media"><tt class="xref py py-class docutils literal"><span class="pre">Media</span></tt></a> container for <tt class="docutils literal"><span class="pre">script</span></tt> tags.</p>
 <p>Supports javascript Asynchronous Module Definition</p>
-<dl class="method">
-<dt id="pulsar.apps.wsgi.content.Scripts.require">
-<tt class="descname">require</tt><big>(</big><em>*scripts</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Scripts.require"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Scripts.require" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a <tt class="docutils literal"><span class="pre">script</span></tt> to the list of <tt class="xref py py-attr docutils literal"><span class="pre">required</span></tt> scripts.</p>
-<p>The <tt class="docutils literal"><span class="pre">script</span></tt> can be a name in the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.known_libraries" title="pulsar.apps.wsgi.content.Media.known_libraries"><tt class="xref py py-attr docutils literal"><span class="pre">known_libraries</span></tt></a>,
-an absolute uri or a relative url.</p>
-<p>The script will be loaded using the <tt class="docutils literal"><span class="pre">require</span></tt> javascript package.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Scripts.append">
 <tt class="descname">append</tt><big>(</big><em>src=None</em>, <em>type=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Scripts.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Scripts.append" title="Permalink to this definition">¶</a></dt>
@@ -723,7 +676,7 @@ case the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.med
 <h3>Links<a class="headerlink" href="#links" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.Links">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Links</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>known_libraries=None</em>, <em>dependencies=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Links" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Links</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>asset_protocol=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Links" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.content.Media" title="pulsar.apps.wsgi.content.Media"><tt class="xref py py-class docutils literal"><span class="pre">Media</span></tt></a> container for <tt class="docutils literal"><span class="pre">link</span></tt> tags.</p>
 <p>The <tt class="docutils literal"><span class="pre">&lt;link&gt;</span></tt> tag defines the relationship between a
 <a class="reference internal" href="#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a> and an external resource.
@@ -781,7 +734,7 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../../index.html">
-  <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -849,7 +802,7 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
  </div>
 
 

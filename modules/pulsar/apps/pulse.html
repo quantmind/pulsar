@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.pulse &mdash; pulsar 0.9.1-beta.1 documentation</title>
+    <title>pulsar.apps.pulse &mdash; pulsar 0.9.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.9.1-beta.1',
+        VERSION:     '0.9.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.9.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -129,6 +129,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="p">(</span><span class="n">LazyWsgi</span><span class="p">,</span> <span class="n">WsgiHandler</span><span class="p">,</span>
                               <span class="n">wait_for_body_middleware</span><span class="p">,</span>
                               <span class="n">middleware_in_executor</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">module_attribute</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">greenio</span>
     <span class="kn">from</span> <span class="nn">pulsar.apps.greenio</span> <span class="kn">import</span> <span class="n">pg</span><span class="p">,</span> <span class="n">local</span>
@@ -149,7 +150,14 @@
         <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
         <span class="kn">from</span> <span class="nn">django.core.wsgi</span> <span class="kn">import</span> <span class="n">get_wsgi_application</span>
         <span class="c">#</span>
-        <span class="n">app</span> <span class="o">=</span> <span class="n">get_wsgi_application</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dotted</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">WSGI_APPLICATION</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>  <span class="c"># pragma nocover</span>
+            <span class="n">dotted</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">dotted</span><span class="p">:</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="n">module_attribute</span><span class="p">(</span><span class="n">dotted</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="n">get_wsgi_application</span><span class="p">()</span>
         <span class="n">green_workers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">greenlet</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="n">greenio</span> <span class="ow">and</span> <span class="n">green_workers</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pg</span><span class="p">:</span>
@@ -171,7 +179,7 @@
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../../../index.html">
-  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -208,7 +216,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
  </div>
 
 

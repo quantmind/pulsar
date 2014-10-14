@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Tools &mdash; pulsar 0.9.1-beta.1 documentation</title>
+    <title>Tools &mdash; pulsar 0.9.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.1-beta.1',
+        VERSION:     '0.9.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Exceptions" href="exceptions.html" />
     <link rel="prev" title="Application API" href="application.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="application.html" title="Application API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.9.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -570,7 +570,7 @@ with it. Used when multiple applications are loaded.</p>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Config.configured_logger">
-<tt class="descname">configured_logger</tt><big>(</big><em>name=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.configured_logger" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">configured_logger</tt><big>(</big><em>name=None</em>, <em>replace=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.configured_logger" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configured logger.</p>
 </dd></dl>
 
@@ -737,7 +737,7 @@ the name for the argument in usage message.</p>
 <span id="socket-and-addresses"></span><span id="socket-address"></span><h2>Socket and addresses<a class="headerlink" href="#module-pulsar.utils.internet" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.utils.internet.SSLContext">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.internet.</tt><tt class="descname">SSLContext</tt><big>(</big><em>keyfile=None</em>, <em>certfile=None</em>, <em>cert_reqs=0</em>, <em>ca_certs=None</em>, <em>server_hostname=None</em>, <em>protocol=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/internet.html#SSLContext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.internet.SSLContext" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.utils.internet.</tt><tt class="descname">SSLContext</tt><big>(</big><em>keyfile=None</em>, <em>certfile=None</em>, <em>cert_reqs=0</em>, <em>ca_certs=None</em>, <em>server_hostname=None</em>, <em>protocol=2</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/internet.html#SSLContext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.internet.SSLContext" title="Permalink to this definition">¶</a></dt>
 <dd><p>A picklable SSLContext class</p>
 </dd></dl>
 
@@ -1157,7 +1157,7 @@ taken from python.</p>
 
 <dl class="function">
 <dt id="pulsar.utils.log.configured_logger">
-<tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">configured_logger</tt><big>(</big><em>name</em>, <em>config=None</em>, <em>level=None</em>, <em>handlers=None</em>, <em>rootlevel=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.configured_logger" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">configured_logger</tt><big>(</big><em>name</em>, <em>config=None</em>, <em>level=None</em>, <em>handlers=None</em>, <em>rootlevel=None</em>, <em>replace=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.configured_logger" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configured logger.</p>
 </dd></dl>
 
@@ -1236,7 +1236,7 @@ front of <tt class="docutils literal"><span class="pre">sys.path</span></tt> usi
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -1326,7 +1326,7 @@ front of <tt class="docutils literal"><span class="pre">sys.path</span></tt> usi
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
  </div>
 
 

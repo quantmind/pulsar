@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Django with Pulsar &mdash; pulsar 0.9.1-beta.1 documentation</title>
+    <title>Django with Pulsar &mdash; pulsar 0.9.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.1-beta.1',
+        VERSION:     '0.9.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Twitter Streaming" href="tweets.html" />
     <link rel="prev" title="A Task Queue with a JSON-RPC Api" href="taskqueue.html" /> 
@@ -53,7 +53,7 @@
         <li class="right" >
           <a href="taskqueue.html" title="A Task Queue with a JSON-RPC Api"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.9.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -105,42 +105,42 @@ simply by issuing the following start up command:</p>
 </div>
 <div class="section" id="views-and-middleware">
 <h2>Views and Middleware<a class="headerlink" href="#views-and-middleware" title="Permalink to this headline">¶</a></h2>
-<p>Check the <tt class="xref py py-mod docutils literal"><span class="pre">examples.djangoapp.chat.settings</span></tt> module to see how this
+<p>Check the <tt class="xref py py-mod docutils literal"><span class="pre">examples.djangoapp.djchat.settings</span></tt> module to see how this
 classes are used.</p>
-<span class="target" id="module-examples.djangoapp.chat.views"></span><dl class="class">
-<dt id="examples.djangoapp.chat.views.Chat">
-<em class="property">class </em><tt class="descclassname">examples.djangoapp.chat.views.</tt><tt class="descname">Chat</tt><a class="reference internal" href="../modules/examples/djangoapp/chat/views.html#Chat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.chat.views.Chat" title="Permalink to this definition">¶</a></dt>
+<span class="target" id="module-examples.djangoapp.djchat.views"></span><dl class="class">
+<dt id="examples.djangoapp.djchat.views.Chat">
+<em class="property">class </em><tt class="descclassname">examples.djangoapp.djchat.views.</tt><tt class="descname">Chat</tt><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a> handler managing the chat application.</p>
 <dl class="method">
-<dt id="examples.djangoapp.chat.views.Chat.get_pubsub">
-<tt class="descname">get_pubsub</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/chat/views.html#Chat.get_pubsub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.chat.views.Chat.get_pubsub" title="Permalink to this definition">¶</a></dt>
+<dt id="examples.djangoapp.djchat.views.Chat.get_pubsub">
+<tt class="descname">get_pubsub</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat.get_pubsub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat.get_pubsub" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the pubsub handler if not already available</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="examples.djangoapp.chat.views.Chat.on_open">
-<tt class="descname">on_open</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/chat/views.html#Chat.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.chat.views.Chat.on_open" title="Permalink to this definition">¶</a></dt>
+<dt id="examples.djangoapp.djchat.views.Chat.on_open">
+<tt class="descname">on_open</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat.on_open" title="Permalink to this definition">¶</a></dt>
 <dd><p>A new websocket connection is established.</p>
 <p>Add it to the set of clients listening for messages.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="examples.djangoapp.chat.views.Chat.on_close">
-<tt class="descname">on_close</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/chat/views.html#Chat.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.chat.views.Chat.on_close" title="Permalink to this definition">¶</a></dt>
+<dt id="examples.djangoapp.djchat.views.Chat.on_close">
+<tt class="descname">on_close</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat.on_close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Leave the chat room</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="examples.djangoapp.chat.views.Chat.on_message">
-<tt class="descname">on_message</tt><big>(</big><em>websocket</em>, <em>msg</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/chat/views.html#Chat.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.chat.views.Chat.on_message" title="Permalink to this definition">¶</a></dt>
+<dt id="examples.djangoapp.djchat.views.Chat.on_message">
+<tt class="descname">on_message</tt><big>(</big><em>websocket</em>, <em>msg</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat.on_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>When a new message arrives, it publishes to all listening clients.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="examples.djangoapp.chat.views.middleware">
-<em class="property">class </em><tt class="descclassname">examples.djangoapp.chat.views.</tt><tt class="descname">middleware</tt><a class="reference internal" href="../modules/examples/djangoapp/chat/views.html#middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.chat.views.middleware" title="Permalink to this definition">¶</a></dt>
+<dt id="examples.djangoapp.djchat.views.middleware">
+<em class="property">class </em><tt class="descclassname">examples.djangoapp.djchat.views.</tt><tt class="descname">middleware</tt><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Django middleware for serving the Chat websocket.</p>
 </dd></dl>
 
@@ -154,7 +154,7 @@ classes are used.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -211,7 +211,7 @@ classes are used.</p>
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
  </div>
 
 

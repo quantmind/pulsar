@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.concurrency &mdash; pulsar 0.9.1-beta.1 documentation</title>
+    <title>pulsar.async.concurrency &mdash; pulsar 0.9.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.9.1-beta.1',
+        VERSION:     '0.9.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.9.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -614,6 +614,10 @@
         <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">create_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">daemon</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">pidfile</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;pidfile&#39;</span><span class="p">,</span> <span class="s">&#39;pulsar.pid&#39;</span><span class="p">)</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">daemonize</span><span class="p">(</span><span class="n">keep_fds</span><span class="o">=</span><span class="n">logger_fds</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">identity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ArbiterConcurrency</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">create_actor</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">monitors</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
@@ -659,15 +663,9 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span>
         <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">reload</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">daemon</span><span class="p">,</span> <span class="s">&quot;Autoreload not compatible with daemon mode&quot;</span>
             <span class="k">if</span> <span class="n">autoreload</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
                 <span class="k">return</span>
-        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">daemon</span><span class="p">:</span>
-            <span class="n">system</span><span class="o">.</span><span class="n">daemonize</span><span class="p">(</span><span class="n">keep_fds</span><span class="o">=</span><span class="n">logger_fds</span><span class="p">())</span>
-            <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Successfully daemonized process&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">pidfile</span><span class="p">:</span>
-                <span class="n">pidfile</span> <span class="o">=</span> <span class="s">&#39;pulsar.pid&#39;</span>
-                <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Setting pid file to </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">pidfile</span><span class="p">)</span>
-                <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;pidfile&#39;</span><span class="p">,</span> <span class="n">pidfile</span><span class="p">)</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">start_coverage</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_install_signals</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
 </div>
@@ -790,7 +788,7 @@
                 <span class="n">p</span> <span class="o">=</span> <span class="n">Pidfile</span><span class="p">(</span><span class="n">pidfile</span><span class="p">)</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">pid</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">HaltServer</span><span class="p">(</span><span class="s">&#39;ERROR. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">HaltServer</span><span class="p">(</span><span class="s">&#39;ERROR. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pidfile</span> <span class="o">=</span> <span class="n">p</span>
 
     <span class="k">def</span> <span class="nf">_info_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -921,7 +919,7 @@
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../../../index.html">
-  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -958,7 +956,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
  </div>
 
 

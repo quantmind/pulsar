@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>examples.djangoapp.chat.views &mdash; pulsar 0.9.1-beta.1 documentation</title>
+    <title>examples.djangoapp.djchat.views &mdash; pulsar 0.9.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.9.1-beta.1',
+        VERSION:     '0.9.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="Module code" href="../../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.9.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -54,7 +54,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/modules/examples/djangoapp/chat/views.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/modules/examples/djangoapp/djchat/views.html">release docs here</a>.
         </p>
     
 </div>
@@ -66,7 +66,7 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <h1>Source code for examples.djangoapp.chat.views</h1><div class="highlight"><pre>
+  <h1>Source code for examples.djangoapp.djchat.views</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">time</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">task</span>
@@ -96,13 +96,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Chat"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat">[docs]</a><span class="k">class</span> <span class="nc">Chat</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
+<div class="viewcode-block" id="Chat"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.djchat.views.Chat">[docs]</a><span class="k">class</span> <span class="nc">Chat</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;:class:`.WS` handler managing the chat application.&#39;&#39;&#39;</span>
     <span class="n">_store</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_pubsub</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_client</span> <span class="o">=</span> <span class="bp">None</span>
 
-<div class="viewcode-block" id="Chat.get_pubsub"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat.get_pubsub">[docs]</a>    <span class="k">def</span> <span class="nf">get_pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
+<div class="viewcode-block" id="Chat.get_pubsub"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.djchat.views.Chat.get_pubsub">[docs]</a>    <span class="k">def</span> <span class="nf">get_pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create the pubsub handler if not already available&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">:</span>
             <span class="n">cfg</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span>
@@ -115,7 +115,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span>
 </div>
     <span class="nd">@task</span>
-<div class="viewcode-block" id="Chat.on_open"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat.on_open">[docs]</a>    <span class="k">def</span> <span class="nf">on_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
+<div class="viewcode-block" id="Chat.on_open"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.djchat.views.Chat.on_open">[docs]</a>    <span class="k">def</span> <span class="nf">on_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;A new websocket connection is established.</span>
 
 <span class="sd">        Add it to the set of clients listening for messages.</span>
@@ -129,7 +129,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s">&#39;chatuser&#39;</span><span class="p">,</span> <span class="s">&#39;joined&#39;</span><span class="p">)</span>
 </div>
     <span class="nd">@task</span>
-<div class="viewcode-block" id="Chat.on_close"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat.on_close">[docs]</a>    <span class="k">def</span> <span class="nf">on_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
+<div class="viewcode-block" id="Chat.on_close"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.djchat.views.Chat.on_close">[docs]</a>    <span class="k">def</span> <span class="nf">on_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Leave the chat room</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">user</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
@@ -141,7 +141,7 @@
         <span class="k">if</span> <span class="n">registered</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">hdel</span><span class="p">(</span><span class="n">users_key</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Chat.on_message"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat.on_message">[docs]</a>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="viewcode-block" id="Chat.on_message"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.djchat.views.Chat.on_message">[docs]</a>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When a new message arrives, it publishes to all listening clients.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
@@ -176,7 +176,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
 
 </div>
-<div class="viewcode-block" id="middleware"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.middleware">[docs]</a><span class="k">class</span> <span class="nc">middleware</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="middleware"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.djchat.views.middleware">[docs]</a><span class="k">class</span> <span class="nc">middleware</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Django middleware for serving the Chat websocket.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_web_socket</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s">&#39;/message&#39;</span><span class="p">,</span> <span class="n">Chat</span><span class="p">())</span>
@@ -209,7 +209,7 @@
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../../../../index.html">
-  <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../../../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -246,7 +246,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
  </div>
 
 

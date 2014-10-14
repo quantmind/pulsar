@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.utils.log &mdash; pulsar 0.9.1-beta.1 documentation</title>
+    <title>pulsar.utils.log &mdash; pulsar 0.9.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.9.1-beta.1',
+        VERSION:     '0.9.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.9.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -294,13 +294,13 @@
 
 
 <div class="viewcode-block" id="configured_logger"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.log.configured_logger">[docs]</a><span class="k">def</span> <span class="nf">configured_logger</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                      <span class="n">rootlevel</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                      <span class="n">rootlevel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Configured logger.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">with</span> <span class="n">process_global</span><span class="p">(</span><span class="s">&#39;lock&#39;</span><span class="p">):</span>
         <span class="n">logconfig</span> <span class="o">=</span> <span class="n">original</span> <span class="o">=</span> <span class="n">process_global</span><span class="p">(</span><span class="s">&#39;_config_logging&#39;</span><span class="p">)</span>
         <span class="c"># if the logger was not configured, do so.</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">logconfig</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">logconfig</span> <span class="ow">or</span> <span class="n">replace</span><span class="p">:</span>
             <span class="n">logconfig</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">LOGGING_CONFIG</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">config</span><span class="p">:</span>
                 <span class="n">update_config</span><span class="p">(</span><span class="n">logconfig</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
@@ -491,7 +491,7 @@
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
 <a href="../../../index.html">
-  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+  <img class="logo" width="200" src="../../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -528,7 +528,7 @@
 
 <div class="footer">
      &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
  </div>
 
 
