@@ -50,7 +50,6 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
 
 
-
 if __name__ == "__main__":  # pragma    nocover
     os.environ["DJANGO_SETTINGS_MODULE"] = "djchat.settings"
     from django.core.management import execute_from_command_line

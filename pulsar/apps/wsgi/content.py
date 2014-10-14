@@ -875,6 +875,7 @@ class Links(Media):
 
 requires = ['require', 'requirejs']
 
+
 class Scripts(Media):
     '''A :class:`.Media` container for ``script`` tags.
 
@@ -1090,7 +1091,7 @@ class Head(Html):
                     self.meta._children.remove(child)
                 return
         if content:
-            self.add_meta(**{meta_key:name, 'content': content})
+            self.add_meta(**{meta_key: name, 'content': content})
 
     def __add__(self, other):
         if isinstance(other, Media):

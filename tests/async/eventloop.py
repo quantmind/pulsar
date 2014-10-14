@@ -45,7 +45,7 @@ class TestEventLoop(unittest.TestCase):
         self.assertEqual(result, tid)
 
     def __test_periodic(self):
-        #TODO: this test timeout at times
+        # TODO: this test timeout at times
         test = self
         loop = get_event_loop()
         waiter = Future()

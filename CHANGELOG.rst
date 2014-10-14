@@ -1,4 +1,4 @@
-Ver. 0.9.1 - Development
+Ver. 0.9.1 - 2014-Oct-14
 ===========================
 * Several fixes on :class:`.Html` initialisation and the :meth:`.Html.attr`
   method
@@ -8,6 +8,7 @@ Ver. 0.9.1 - Development
   use :ref:`application hooks <setting-section-application-hooks>`
 * Added :meth:`.AsyncString.before_render` method to add callbacks executed
   just before an asynchronous string is rendered
+* Fixed :ref:`--daemon <setting-daemon>` mode
 
 Ver. 0.9.0 - 2014-Aug-04
 ===========================
