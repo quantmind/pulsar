@@ -1,3 +1,6 @@
+Ver. 0.9.2 - Development
+===========================
+
 Ver. 0.9.1 - 2014-Oct-14
 ===========================
 * Several fixes on :class:`.Html` initialisation and the :meth:`.Html.attr`
