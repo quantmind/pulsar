@@ -129,15 +129,11 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(len(root.children), 0)
 
     def test_media_path(self):
-        media = wsgi.Scripts('/media/',
-                             known_libraries={'jquery':
-                                              'http://bla.foo/jquery'})
+        media = wsgi.Scripts('/media/')
         self.assertTrue(media.is_relative('bla/test.js'))
         path = media.absolute_path('bla/foo.js')
         self.assertEqual(path, '/media/bla/foo.js')
         self.assertEqual(media.absolute_path('/bla/foo.js'), '/bla/foo.js')
-        self.assertEqual(media.absolute_path('jquery'),
-                         'http://bla.foo/jquery.js')
 
     def test_links_minified(self):
         media = wsgi.Links('/media/', minified=True)
@@ -181,15 +177,7 @@ class TestAsyncContent(unittest.TestCase):
 
     def test_script(self):
         links = wsgi.Scripts('/static/')
-        self.assertTrue(links.known_libraries)
-        links.append('require')
-        self.assertTrue(links._requirejs)
+        links.require.append('require')
         html = links.render()
         lines = html.split('\n')
-        self.assertEqual(len(lines), 6)
-        require = links.known_libraries.get('require')
-        self.assertEqual(
-            lines[4],
-            "<script src='%s.js' type='application/javascript'></script>"
-            % require)
-        self.assertEqual(lines[5], '')
+        self.assertEqual(len(lines), 4)
