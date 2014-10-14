@@ -8,7 +8,7 @@ admin.autodiscover()
 
 urlpatterns = patterns(
     '',
-    url(r'^$', 'chat.views.home'),
+    url(r'^$', 'djchat.views.home'),
     url(r'^admin/', include(admin.site.urls))
 )
 

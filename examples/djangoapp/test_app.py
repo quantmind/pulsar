@@ -1,22 +1,24 @@
 '''Tests django chat application.'''
+import os
+import sys
 import unittest
 
 from pulsar import asyncio, send, get_application, coroutine_return, task
-from pulsar.utils.path import Path
 from pulsar.apps import http, ws
 from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.system import json
 
 try:
-    manage = Path(__file__).add2python('manage', up=1)
+    from django.core.management import execute_from_command_line
 except ImportError:
-    manage = None
+    execute_from_command_line = None
 
 
 @task
 def start_server(actor, name, argv):
-    manage.execute_from_command_line(argv)
+    os.environ["DJANGO_SETTINGS_MODULE"] = "djchat.settings"
+    execute_from_command_line(argv)
     app = yield get_application(name)
     coroutine_return(app.cfg)
 
@@ -33,7 +35,7 @@ class MessageHandler(ws.WS):
         return self.queue.put(message)
 
 
-@unittest.skipUnless(manage, 'Requires django')
+@unittest.skipUnless(execute_from_command_line, 'Requires django')
 class TestDjangoChat(unittest.TestCase):
     concurrency = 'thread'
     app_cfg = None

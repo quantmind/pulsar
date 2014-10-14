@@ -35,6 +35,10 @@ def runtests(**params):
     from pulsar.apps.test import TestSuite
     from pulsar.apps.test.plugins import bench, profile
     import pulsar.utils.settings.backend
+    djangopath = os.path.join(os.path.dirname(__file__),
+                              'examples', 'djangoapp')
+    if djangopath not in sys.path:
+        sys.path.append(djangopath)
     #
     TestSuite(description='Pulsar Asynchronous test suite',
               modules=('tests',

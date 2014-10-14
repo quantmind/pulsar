@@ -59,6 +59,7 @@ Wsgi middleware
 from pulsar.apps.wsgi import (LazyWsgi, WsgiHandler,
                               wait_for_body_middleware,
                               middleware_in_executor)
+from pulsar.utils.importer import module_attribute
 try:
     from pulsar.apps import greenio
     from pulsar.apps.greenio import pg, local
@@ -79,7 +80,14 @@ class Wsgi(LazyWsgi):
         from django.conf import settings
         from django.core.wsgi import get_wsgi_application
         #
-        app = get_wsgi_application()
+        try:
+            dotted = settings.WSGI_APPLICATION
+        except AttributeError:  # pragma nocover
+            dotted = None
+        if dotted:
+            app = module_attribute(dotted)
+        else:
+            app = get_wsgi_application()
         green_workers = self.cfg.greenlet if self.cfg else 0
         if greenio and green_workers:
             if pg:

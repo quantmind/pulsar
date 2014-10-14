@@ -31,10 +31,10 @@ simply by issuing the following start up command::
 Views and Middleware
 ==========================
 
-Check the :mod:`examples.djangoapp.chat.settings` module to see how this
+Check the :mod:`examples.djangoapp.djchat.settings` module to see how this
 classes are used.
 
-.. automodule:: examples.djangoapp.chat.views
+.. automodule:: examples.djangoapp.djchat.views
    :members:
    :member-order: bysource
 
@@ -42,15 +42,16 @@ classes are used.
 .. _redis: http://redis.io/
 '''
 import os
+import sys
 try:
     import pulsar
 except ImportError:     # pragma nocover
     import sys
     sys.path.append('../../')
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "chat.settings"
-from django.core.management import execute_from_command_line
 
 
 if __name__ == "__main__":  # pragma    nocover
-    execute_from_command_line()
+    os.environ["DJANGO_SETTINGS_MODULE"] = "djchat.settings"
+    from django.core.management import execute_from_command_line
+    execute_from_command_line(sys.argv)
