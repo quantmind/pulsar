@@ -7,6 +7,7 @@ import pwd
 import signal
 import socket
 import ctypes
+import errno
 from multiprocessing import Pipe, current_process
 
 from .base import *
@@ -123,11 +124,15 @@ def daemonize(auto_close_fds=True, keep_fds=None):    # pragma    nocover
                     pass
 
     devnull_fd = os.open(REDIRECT_TO, os.O_RDWR)
-    os.dup2(devnull_fd, 0)
-    os.dup2(devnull_fd, 1)
-    os.dup2(devnull_fd, 2)
+    for i in range(3):
+        try:
+            os.dup2(devnull_fd, i)
+        except OSError as e:
+            if e.errno != errno.EBADF:
+                raise
 
     # Set umask to default to safe file permissions when running as a  daemon.
     # 027 is an octal number which we are typing as 0o27
     # for Python3 compatibility
     os.umask(0o27)
+    os.close(devnull_fd)

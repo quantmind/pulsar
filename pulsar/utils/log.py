@@ -225,13 +225,13 @@ class Silence(logging.Handler):
 
 
 def configured_logger(name, config=None, level=None, handlers=None,
-                      rootlevel=None):
+                      rootlevel=None, replace=False):
     '''Configured logger.
     '''
     with process_global('lock'):
         logconfig = original = process_global('_config_logging')
         # if the logger was not configured, do so.
-        if not logconfig:
+        if not logconfig or replace:
             logconfig = deepcopy(LOGGING_CONFIG)
             if config:
                 update_config(logconfig, config)

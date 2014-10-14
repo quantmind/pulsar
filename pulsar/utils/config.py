@@ -355,7 +355,7 @@ class Config(object):
     def clone(self):
         return pickle.loads(pickle.dumps(self))
 
-    def configured_logger(self, name=None):
+    def configured_logger(self, name=None, replace=False):
         '''Configured logger.
         '''
         loggers = {}
@@ -406,7 +406,8 @@ class Config(object):
                                        config=self.logconfig,
                                        level=namespaces[namespace],
                                        handlers=loghandlers,
-                                       rootlevel=internal_level)
+                                       rootlevel=internal_level,
+                                       replace=replace)
             loggers[namespace] = logger
         return loggers.get(name)
 

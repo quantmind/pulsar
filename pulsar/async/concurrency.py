@@ -545,6 +545,10 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return True
 
     def create_actor(self):
+        if self.cfg.daemon:
+            if not self.cfg.pidfile:
+                self.cfg.set('pidfile', 'pulsar.pid')
+            system.daemonize(keep_fds=logger_fds())
         self.identity = self.name
         actor = super(ArbiterConcurrency, self).create_actor()
         self.monitors = OrderedDict()
@@ -590,15 +594,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         '''
         cfg = actor.cfg
         if cfg.reload:
+            assert not cfg.daemon, "Autoreload not compatible with daemon mode"
             if autoreload.start():
                 return
-        if cfg.daemon:
-            system.daemonize(keep_fds=logger_fds())
-            actor.logger.info('Successfully daemonized process')
-            if not cfg.pidfile:
-                pidfile = 'pulsar.pid'
-                actor.logger.info('Setting pid file to %s', pidfile)
-                cfg.set('pidfile', pidfile)
         actor.start_coverage()
         self._install_signals(actor)
 
@@ -721,7 +719,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                 p = Pidfile(pidfile)
                 p.create(actor.pid)
             except RuntimeError as e:
-                raise HaltServer('ERROR. %s' % str(e), exit_code=3)
+                raise HaltServer('ERROR. %s' % str(e), exit_code=2)
             self.pidfile = p
 
     def _info_monitor(self, actor, info=None):
