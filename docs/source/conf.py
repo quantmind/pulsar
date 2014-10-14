@@ -61,6 +61,8 @@ exclude_trees = ['_build']
 html_sidebars = {
     'index': ['sidebarlogo.html', 'sidebarintro.html',
               'sourcelink.html', 'searchbox.html'],
+    'overview': ['sidebarintro.html',
+              'sourcelink.html', 'searchbox.html'],
     '**': ['sidebarlogo.html', 'localtoc.html', 'relations.html',
            'sourcelink.html', 'searchbox.html'],
 }
