@@ -804,7 +804,7 @@ class Media(AsyncString):
         return not (path.startswith('http://') or path.startswith('https://')
                     or path.startswith('/'))
 
-    def absolute_path(self, path):
+    def absolute_path(self, path, minify=True):
         '''Return a suitable absolute url for ``path``.
 
         If ``path`` :meth:`is_relative` build a sutable url by prepending
@@ -812,11 +812,12 @@ class Media(AsyncString):
 
         :return: A url path to insert in a HTML ``link`` or ``script``.
         '''
-        ending = '.%s' % self.mediatype
-        if not path.endswith(ending):
-            if self.minified:
-                path = '%s.min' % path
-            path = '%s%s' % (path, ending)
+        if minify:
+            ending = '.%s' % self.mediatype
+            if not path.endswith(ending):
+                if self.minified:
+                    path = '%s.min' % path
+                path = '%s%s' % (path, ending)
         #
         if self.is_relative(path) and self.media_path:
             return '%s%s' % (self.media_path, path)
@@ -857,10 +858,13 @@ class Links(Media):
         :param kwargs: additional attributes
         '''
         if href:
-            path = self.absolute_path(href)
+            srel = 'stylesheet'
+            stype = 'text/css'
+            minify = rel in (None, srel) and type in (None, stype)
+            path = self.absolute_path(href, minify=minify)
             if path.endswith('.css'):
-                type = type or 'text/css'
-                rel = rel or 'stylesheet'
+                rel = rel or srel
+                type = type or stype
             value = Html('link', href=path, rel=rel, **kwargs)
             if type:
                 value.attr('type', type)

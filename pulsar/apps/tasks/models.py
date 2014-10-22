@@ -197,7 +197,8 @@ class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
         if meta_params is None:
             meta_params = {}
         meta_params['from_task'] = consumer.task_id
-        return consumer.backend.queue_task(jobname, meta_params, **kwargs)
+        return consumer.backend.queue_task(jobname, meta_params=meta_params,
+                                           **kwargs)
 
 
 class PeriodicJob(Job):

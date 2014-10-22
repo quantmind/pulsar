@@ -14,7 +14,11 @@ class Coverage(object):
         return getattr(current_process(), '_coverage', None)
 
     def start_coverage(self):
-        if coverage and self.cfg.coverage:
+        if self.cfg.coverage:
+            if not coverage:
+                self.logger.error('Coverage module not installed. '
+                                  'Cannot start coverage.')
+                return
             cov = self.coverage
             if not cov:
                 self.logger.info('Start coverage')

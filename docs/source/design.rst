@@ -92,7 +92,8 @@ Python has very few implementation and all of them seem quite limited in scope.
 
 * No shared memory and therefore locking is not required.
 * Race conditions greatly reduced.
-* It greatly simplify the control flow of a program, each actor has its own process (flow of control).
+* It greatly simplifies the control flow of a program, each actor has its own
+  process (flow of control).
 * Easy to distribute, across cores, across program boundaries, across machines.
 * It simplifies error handling code.
 * It makes it easier to build fault-tolerant systems.
