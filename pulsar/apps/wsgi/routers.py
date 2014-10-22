@@ -69,7 +69,7 @@ import mimetypes
 from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl
-from pulsar.utils.structures import AttributeDictionary, OrderedDict
+from pulsar.utils.structures import OrderedDict
 from pulsar.utils.slugify import slugify
 from pulsar import Http404, HttpException
 
@@ -103,7 +103,7 @@ def update_args(urlargs, args):
 
 class RouterParam(object):
     '''A :class:`RouterParam` is a way to flag a :class:`Router` parameter
-    so that children can retrieve the value if they don't define their own.
+    so that children can inherit the value if they don't define their own.
 
     A :class:`RouterParam` is always defined as a class attribute and it
     is processed by the :class:`Router` metaclass and stored in a dictionary
@@ -207,13 +207,6 @@ class Router(RouterType('RouterBase', (object,), {})):
                 ...
                 return handler(request)
 
-    .. attribute:: parameters
-
-        A :class:`.AttributeDictionary` of parameters for
-        this :class:`Router`. Parameters are created at initialisation from
-        the ``parameters`` class attribute and the key-valued parameters
-        passed to the ``__init__`` method which are available in the
-        class ``parameters`` attribute.
     '''
     _creation_count = 0
     _parent = None
@@ -230,21 +223,21 @@ class Router(RouterType('RouterBase', (object,), {})):
         self._route = rule
         self._name = parameters.pop('name', rule.name)
         self.routes = []
+        # copy parameters
+        self.parameters = dict(((k, (value, False)) for k, value
+                                in self.parameters.items()))
+        self._set_params(parameters)
+
         # add routes specified via the initialiser first
         for router in routes:
             self.add_child(router)
-        # copy parameters
-        self.parameters = AttributeDictionary(self.parameters)
+
         for name, rule_method in self.rule_methods.items():
             rule, method, params, _, _ = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
-            self.add_child(self.make_router(rule, method=method, handler=handler, **rparameters))
-        for name, value in parameters.items():
-            if name in self.parameters:
-                self.parameters[name] = value
-            else:
-                setattr(self, slugify(name, separator='_'), value)
+            self.add_child(self.make_router(rule, method=method,
+                                            handler=handler, **rparameters))
 
     @property
     def route(self):
@@ -329,9 +322,8 @@ class Router(RouterType('RouterBase', (object,), {})):
         If the parameter is not available, retrieve the parameter from the
         :attr:`parent` :class:`Router` if it exists.
         '''
-        if not name.startswith('_'):
-            return self._get_router_parameter(name, False)
-        self._no_param(name)
+        value, _ = self._get_router_parameter(name)
+        return value
 
     def content_type(self, request):
         '''Evaluate the content type for the response to a client ``request``.
@@ -402,17 +394,18 @@ class Router(RouterType('RouterBase', (object,), {})):
         '''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
+
+        for r in self.routes:
+            if r == router:
+                return r
+            elif r._route == router._route:
+                raise ValueError('Cannot add route %s. Already avalable' %
+                                 r._route)
         #
         # Remove from previous parent
         if router.parent:
             router.parent.remove_child(router)
         router._parent = self
-        # Loop over available routers to check it the router
-        # is already available
-        for r in self.routes:
-            if r.route == router.route:
-                r.parameters.update(router.parameters)
-                return r
         self.routes.append(router)
         return router
 
@@ -455,33 +448,56 @@ class Router(RouterType('RouterBase', (object,), {})):
             parent = parent._parent
         return parent is not None
 
-    def make_router(self, rule, method=None, handler=None, cls=None, **params):
+    def make_router(self, rule, method=None, handler=None, cls=None,
+                    name=None, **params):
         '''Create a new :class:`.Router` from a ``rule`` and parameters.
 
         This method is used during initialisation when building child
         Routers from the :attr:`rule_methods`.
         '''
         cls = cls or Router
-        router = cls(rule, **params)
+        router = cls(rule, name=name, **params)
+        for r in self.routes:
+            if r._route == router._route:
+                if isinstance(r, cls):
+                    router = r
+                    router._set_params(params)
+                    break
         if method and handler:
             setattr(router, method, handler)
         return router
 
-    def _no_param(self, name):
+    # INTERNALS
+    def _get_router_parameter(self, name):
+        default = None
+        #
+        if name in self.parameters:
+            value, modified = self.parameters.get(name)
+            if modified or not self._parent:
+                return value, modified
+            default = (value,)
+        #
+        if self._parent:
+            try:
+                value, modified = self._parent._get_router_parameter(name)
+            except AttributeError:
+                if default:
+                    return default[0], False
+            else:
+                if default and not modified:
+                    value = default[0]
+                return value, modified
+
         raise AttributeError("'%s' object has no attribute '%s'" %
                              (self.__class__.__name__, name))
 
-    def _get_router_parameter(self, name, safe=True):
-        value = self.parameters.get(name)
-        if value is None:
-            if self._parent:
-                return self._parent._get_router_parameter(name, safe)
-            elif name in self.parameters:
-                return value
-            elif not safe:
-                self._no_param(name)
-        else:
-            return value
+    def _set_params(self, parameters):
+        for name, value in parameters.items():
+            if name in self.parameters:
+                self.parameters[name] = (value, True)
+            else:
+                name = slugify(name, separator='_')
+                setattr(self, name, value)
 
 
 class MediaMixin(object):
