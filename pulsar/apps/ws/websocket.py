@@ -36,16 +36,11 @@ class WebSocket(wsgi.Router):
         A factory of websocket frame parsers
     """
     parser_factory = frame_parser
-    _name = 'websocket'
 
     def __init__(self, route, handle, parser_factory=None, **kwargs):
         super(WebSocket, self).__init__(route, **kwargs)
         self.handle = handle
         self.parser_factory = parser_factory or frame_parser
-
-    @property
-    def name(self):
-        return self._name
 
     def get(self, request):
         headers_parser = self.handle_handshake(request.environ)

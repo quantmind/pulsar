@@ -123,17 +123,17 @@ class RouterType(type):
     ''':class:`Router` metaclass.'''
     def __new__(cls, name, bases, attrs):
         rule_methods = get_roule_methods(attrs.items())
-        parameters = {}
+        defaults = {}
         for key, value in list(attrs.items()):
             if isinstance(value, RouterParam):
-                parameters[key] = attrs.pop(key).value
+                defaults[key] = attrs.pop(key).value
         no_rule = set(attrs) - set((x[0] for x in rule_methods))
         base_rules = []
         for base in reversed(bases):
-            if hasattr(base, 'parameters'):
-                params = base.parameters.copy()
-                params.update(parameters)
-                parameters = params
+            if hasattr(base, 'defaults'):
+                params = base.defaults.copy()
+                params.update(defaults)
+                defaults = params
             if hasattr(base, 'rule_methods'):
                 items = base.rule_methods.items()
             else:
@@ -152,7 +152,7 @@ class RouterType(type):
             rule_methods = sorted(rule_methods.items(),
                                   key=lambda x: x[1].order)
         attrs['rule_methods'] = OrderedDict(rule_methods)
-        attrs['parameters'] = parameters
+        attrs['defaults'] = defaults
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
 
 
@@ -170,9 +170,6 @@ class Router(RouterType('RouterBase', (object,), {})):
     :param routes: Optional :class:`Router` instances which are added to the
         children :attr:`routes` of this router.
     :param parameters: Optional parameters for this router.
-        They are stored in the :attr:`parameters` attribute with the
-        exception of :attr:`response_content_types` and
-        :attr:`response_wrapper`
 
     .. attribute:: rule_methods
 
@@ -210,7 +207,7 @@ class Router(RouterType('RouterBase', (object,), {})):
     '''
     _creation_count = 0
     _parent = None
-    _name = None
+    name = None
 
     response_content_types = RouterParam(None)
     response_wrapper = RouterParam(None)
@@ -221,13 +218,9 @@ class Router(RouterType('RouterBase', (object,), {})):
         if not isinstance(rule, Route):
             rule = Route(rule)
         self._route = rule
-        self._name = parameters.pop('name', rule.name)
-        self.routes = []
-        # copy parameters
-        self.parameters = dict(((k, (value, False)) for k, value
-                                in self.parameters.items()))
+        parameters.setdefault('name', rule.name)
         self._set_params(parameters)
-
+        self.routes = []
         # add routes specified via the initialiser first
         for router in routes:
             self.add_child(router)
@@ -261,16 +254,6 @@ class Router(RouterType('RouterBase', (object,), {})):
             return self._parent.full_route + self._route
         else:
             return self._route
-
-    @property
-    def name(self):
-        '''The name of this :class:`Router`.
-
-        This attribute can be specified during initialisation.
-        If available, it can be used to retrieve a child router
-        by name via the :meth:`get_route` method.
-        '''
-        return self._name
 
     @property
     def root(self):
@@ -322,8 +305,19 @@ class Router(RouterType('RouterBase', (object,), {})):
         If the parameter is not available, retrieve the parameter from the
         :attr:`parent` :class:`Router` if it exists.
         '''
-        value, _ = self._get_router_parameter(name)
-        return value
+        if name in self.defaults:
+            if self._parent:
+                try:
+                    return getattr(self._parent, name)
+                except AtributeError:
+                    pass
+            return self.defaults[name]
+
+        if self._parent:
+            return getattr(self._parent, name)
+        else:
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (self.__class__.__name__, name))
 
     def content_type(self, request):
         '''Evaluate the content type for the response to a client ``request``.
@@ -468,36 +462,11 @@ class Router(RouterType('RouterBase', (object,), {})):
         return router
 
     # INTERNALS
-    def _get_router_parameter(self, name):
-        default = None
-        #
-        if name in self.parameters:
-            value, modified = self.parameters.get(name)
-            if modified or not self._parent:
-                return value, modified
-            default = (value,)
-        #
-        if self._parent:
-            try:
-                value, modified = self._parent._get_router_parameter(name)
-            except AttributeError:
-                if default:
-                    return default[0], False
-            else:
-                if default and not modified:
-                    value = default[0]
-                return value, modified
-
-        raise AttributeError("'%s' object has no attribute '%s'" %
-                             (self.__class__.__name__, name))
-
     def _set_params(self, parameters):
         for name, value in parameters.items():
-            if name in self.parameters:
-                self.parameters[name] = (value, True)
-            else:
+            if name not in self.defaults:
                 name = slugify(name, separator='_')
-                setattr(self, name, value)
+            setattr(self, name, value)
 
 
 class MediaMixin(object):
