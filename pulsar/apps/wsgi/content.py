@@ -935,12 +935,15 @@ class Embedded(Html):
         self._child_kwargs = kwargs
 
     def append(self, child, media=None):
+        self.insert(None, child, media=media)
+
+    def insert(self, index, child, media=None):
         if not isinstance(child, Html):
             kwargs = self._child_kwargs
             if media:
                 kwargs['media'] = media
             child = Html(self._child_tag, child, **kwargs)
-        super(Embedded, self).append(child)
+        super(Embedded, self).insert(index, child)
 
 
 class Head(Html):
