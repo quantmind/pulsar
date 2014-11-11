@@ -309,7 +309,7 @@ class Router(RouterType('RouterBase', (object,), {})):
             if self._parent:
                 try:
                     return getattr(self._parent, name)
-                except AtributeError:
+                except AttributeError:
                     pass
             return self.defaults[name]
 
