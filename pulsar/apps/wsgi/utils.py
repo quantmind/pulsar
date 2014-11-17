@@ -236,7 +236,7 @@ def handle_wsgi_error(environ, exc):
         response.content = None
     else:
         request.cache.pop('html_document', None)
-        renderer = environ.get('error.handlers', {}).get(status, render_error)
+        renderer = environ.get('error.handler', render_error)
         try:
             content = renderer(request, exc)
         except Exception:

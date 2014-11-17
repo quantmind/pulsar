@@ -2,7 +2,8 @@ Ver. 0.9.2 - Development
 ===========================
 * Bug fix in :class:`.Links`
 * A more flexible implementation of the :meth:`~.Router.make_router` method
-  for the wsgi router
+* Added the :meth:`~Router.copy` method for cloning a router class without
+  its routes.
 
 Ver. 0.9.1 - 2014-Oct-14
 ===========================

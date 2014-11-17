@@ -461,6 +461,13 @@ class Router(RouterType('RouterBase', (object,), {})):
             setattr(router, method, handler)
         return router
 
+    @classmethod
+    def copy(cls):
+        '''Create a copy of this router without routes'''
+        newcls = RouterType(cls.__name__ + 'Copy', (cls,), {})
+        newcls.rule_methods.clear()
+        return newcls
+
     # INTERNALS
     def _set_params(self, parameters):
         for name, value in parameters.items():

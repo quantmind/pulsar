@@ -135,15 +135,17 @@ class WsgiHandler(object):
         if middleware:
             middleware = list(middleware)
         self.middleware = middleware or []
+        self._response_done = False
+        if response_middleware is False:
+            self._response_done = True
         self.response_middleware = response_middleware or []
-        self.error_handlers = {}
 
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
-        environ['error.handlers'] = self.error_handlers
         response = AsyncResponse(environ, start_response,
                                  iter(self.middleware),
-                                 iter(self.response_middleware))
+                                 iter(self.response_middleware),
+                                 self._response_done)
         return response()
 
 
@@ -153,12 +155,12 @@ class AsyncResponse(object):
                  '_response_done')
 
     def __init__(self, environ, start_response, middleware,
-                 response_middleware):
+                 response_middleware, response_done):
         self.environ = environ
         self.start_response = start_response
         self.middleware = middleware
         self.response_middleware = response_middleware
-        self._response_done = False
+        self._response_done = response_done
 
     def __call__(self, resp=None, exc=None):
         try:
@@ -177,8 +179,11 @@ class AsyncResponse(object):
                         else:
                             return self._async(self, resp, True)
             if not exc and resp is None:
-                raise Http404
+                if not self._response_done:
+                    raise Http404
         except Exception as exc:
+            if self._response_done:
+                raise
             resp = handle_wsgi_error(self.environ, exc)
         else:
             if exc:
