@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.content &mdash; pulsar 0.9.2-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.content &mdash; pulsar 0.9.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.9.2-beta.1',
+        VERSION:     '0.9.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -875,7 +875,7 @@
         <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;http://&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;https://&#39;</span><span class="p">)</span>
                     <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
 </div>
-<div class="viewcode-block" id="Media.absolute_path"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.absolute_path">[docs]</a>    <span class="k">def</span> <span class="nf">absolute_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<div class="viewcode-block" id="Media.absolute_path"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.absolute_path">[docs]</a>    <span class="k">def</span> <span class="nf">absolute_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">minify</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a suitable absolute url for ``path``.</span>
 
 <span class="sd">        If ``path`` :meth:`is_relative` build a sutable url by prepending</span>
@@ -883,11 +883,12 @@
 
 <span class="sd">        :return: A url path to insert in a HTML ``link`` or ``script``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">ending</span> <span class="o">=</span> <span class="s">&#39;.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ending</span><span class="p">):</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minified</span><span class="p">:</span>
-                <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.min&#39;</span> <span class="o">%</span> <span class="n">path</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ending</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">minify</span><span class="p">:</span>
+            <span class="n">ending</span> <span class="o">=</span> <span class="s">&#39;.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ending</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minified</span><span class="p">:</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.min&#39;</span> <span class="o">%</span> <span class="n">path</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ending</span><span class="p">)</span>
         <span class="c">#</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_relative</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">media_path</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">media_path</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
@@ -928,10 +929,13 @@
 <span class="sd">        :param kwargs: additional attributes</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">href</span><span class="p">:</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">href</span><span class="p">)</span>
+            <span class="n">srel</span> <span class="o">=</span> <span class="s">&#39;stylesheet&#39;</span>
+            <span class="n">stype</span> <span class="o">=</span> <span class="s">&#39;text/css&#39;</span>
+            <span class="n">minify</span> <span class="o">=</span> <span class="n">rel</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">srel</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">stype</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">href</span><span class="p">,</span> <span class="n">minify</span><span class="o">=</span><span class="n">minify</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.css&#39;</span><span class="p">):</span>
-                <span class="nb">type</span> <span class="o">=</span> <span class="nb">type</span> <span class="ow">or</span> <span class="s">&#39;text/css&#39;</span>
-                <span class="n">rel</span> <span class="o">=</span> <span class="n">rel</span> <span class="ow">or</span> <span class="s">&#39;stylesheet&#39;</span>
+                <span class="n">rel</span> <span class="o">=</span> <span class="n">rel</span> <span class="ow">or</span> <span class="n">srel</span>
+                <span class="nb">type</span> <span class="o">=</span> <span class="nb">type</span> <span class="ow">or</span> <span class="n">stype</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;link&#39;</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">type</span><span class="p">:</span>
                 <span class="n">value</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
@@ -1002,12 +1006,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_child_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
 
     <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">media</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">media</span><span class="o">=</span><span class="n">media</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">media</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Html</span><span class="p">):</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_kwargs</span>
             <span class="k">if</span> <span class="n">media</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;media&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">media</span>
             <span class="n">child</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_child_tag</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Embedded</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Embedded</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Head"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Head">[docs]</a><span class="k">class</span> <span class="nc">Head</span><span class="p">(</span><span class="n">Html</span><span class="p">):</span>

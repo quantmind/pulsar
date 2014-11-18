@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.server &mdash; pulsar 0.9.2-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar 0.9.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.9.2-beta.1',
+        VERSION:     '0.9.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -91,7 +91,7 @@
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">reraise</span><span class="p">,</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span>
-                    <span class="n">From</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">)</span>
+                    <span class="n">From</span><span class="p">,</span> <span class="n">isfuture</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">native_str</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">has_empty_content</span><span class="p">,</span>
                                   <span class="n">host_and_port_default</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">,</span>
@@ -536,7 +536,7 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc_info</span><span class="p">)</span>
                 <span class="c">#</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
                 <span class="c">#</span>
                 <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
@@ -547,11 +547,11 @@
                 <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
                 <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
                         <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
                         <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
                         <span class="k">yield</span> <span class="n">From</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
                         <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                     <span class="k">else</span><span class="p">:</span>

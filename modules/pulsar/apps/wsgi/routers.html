@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.routers &mdash; pulsar 0.9.2-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.routers &mdash; pulsar 0.9.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.9.2-beta.1',
+        VERSION:     '0.9.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -140,7 +140,7 @@
 <span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">parsedate_tz</span><span class="p">,</span> <span class="n">mktime_tz</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">http_date</span><span class="p">,</span> <span class="n">CacheControl</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span><span class="p">,</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.slugify</span> <span class="kn">import</span> <span class="n">slugify</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">HttpException</span>
 
@@ -174,7 +174,7 @@
 
 <div class="viewcode-block" id="RouterParam"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.RouterParam">[docs]</a><span class="k">class</span> <span class="nc">RouterParam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`RouterParam` is a way to flag a :class:`Router` parameter</span>
-<span class="sd">    so that children can retrieve the value if they don&#39;t define their own.</span>
+<span class="sd">    so that children can inherit the value if they don&#39;t define their own.</span>
 
 <span class="sd">    A :class:`RouterParam` is always defined as a class attribute and it</span>
 <span class="sd">    is processed by the :class:`Router` metaclass and stored in a dictionary</span>
@@ -194,17 +194,17 @@
     <span class="sd">&#39;&#39;&#39;:class:`Router` metaclass.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
         <span class="n">rule_methods</span> <span class="o">=</span> <span class="n">get_roule_methods</span><span class="p">(</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">defaults</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">RouterParam</span><span class="p">):</span>
-                <span class="n">parameters</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+                <span class="n">defaults</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
         <span class="n">no_rule</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">((</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rule_methods</span><span class="p">))</span>
         <span class="n">base_rules</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">bases</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s">&#39;parameters&#39;</span><span class="p">):</span>
-                <span class="n">params</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
-                <span class="n">parameters</span> <span class="o">=</span> <span class="n">params</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s">&#39;defaults&#39;</span><span class="p">):</span>
+                <span class="n">params</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
+                <span class="n">defaults</span> <span class="o">=</span> <span class="n">params</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s">&#39;rule_methods&#39;</span><span class="p">):</span>
                 <span class="n">items</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">rule_methods</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
@@ -223,7 +223,7 @@
             <span class="n">rule_methods</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rule_methods</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
                                   <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
         <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;rule_methods&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">rule_methods</span><span class="p">)</span>
-        <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;parameters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parameters</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;defaults&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaults</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">RouterType</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
 
 
@@ -241,9 +241,6 @@
 <span class="sd">    :param routes: Optional :class:`Router` instances which are added to the</span>
 <span class="sd">        children :attr:`routes` of this router.</span>
 <span class="sd">    :param parameters: Optional parameters for this router.</span>
-<span class="sd">        They are stored in the :attr:`parameters` attribute with the</span>
-<span class="sd">        exception of :attr:`response_content_types` and</span>
-<span class="sd">        :attr:`response_wrapper`</span>
 
 <span class="sd">    .. attribute:: rule_methods</span>
 
@@ -278,17 +275,10 @@
 <span class="sd">                ...</span>
 <span class="sd">                return handler(request)</span>
 
-<span class="sd">    .. attribute:: parameters</span>
-
-<span class="sd">        A :class:`.AttributeDictionary` of parameters for</span>
-<span class="sd">        this :class:`Router`. Parameters are created at initialisation from</span>
-<span class="sd">        the ``parameters`` class attribute and the key-valued parameters</span>
-<span class="sd">        passed to the ``__init__`` method which are available in the</span>
-<span class="sd">        class ``parameters`` attribute.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">_creation_count</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
     <span class="n">response_wrapper</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
@@ -299,24 +289,19 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">Route</span><span class="p">):</span>
             <span class="n">rule</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_route</span> <span class="o">=</span> <span class="n">rule</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_params</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c"># add routes specified via the initialiser first</span>
         <span class="k">for</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
-        <span class="c"># copy parameters</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">AttributeDictionary</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">rule_method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule_methods</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">rule_method</span>
             <span class="n">rparameters</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
             <span class="n">handler</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-            <span class="n">router</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">make_router</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="o">**</span><span class="n">rparameters</span><span class="p">))</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">handler</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s">&#39;_&#39;</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">make_router</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                                            <span class="n">handler</span><span class="o">=</span><span class="n">handler</span><span class="p">,</span> <span class="o">**</span><span class="n">rparameters</span><span class="p">))</span>
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Router.route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.route">[docs]</a>    <span class="k">def</span> <span class="nf">route</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -340,16 +325,6 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">full_route</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_route</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_route</span>
-</div>
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="Router.name"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.name">[docs]</a>    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The name of this :class:`Router`.</span>
-
-<span class="sd">        This attribute can be specified during initialisation.</span>
-<span class="sd">        If available, it can be used to retrieve a child router</span>
-<span class="sd">        by name via the :meth:`get_route` method.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
 </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Router.root"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.root">[docs]</a>    <span class="k">def</span> <span class="nf">root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -401,9 +376,19 @@
 <span class="sd">        If the parameter is not available, retrieve the parameter from the</span>
 <span class="sd">        :attr:`parent` :class:`Router` if it exists.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_router_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_no_param</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39; object has no attribute &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
+                                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Router.content_type"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.content_type">[docs]</a>    <span class="k">def</span> <span class="nf">content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Evaluate the content type for the response to a client ``request``.</span>
@@ -474,17 +459,18 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="n">Router</span><span class="p">),</span> <span class="s">&#39;Not a valid Router&#39;</span>
         <span class="k">assert</span> <span class="n">router</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">,</span> <span class="s">&#39;cannot add self to children&#39;</span>
+
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="o">==</span> <span class="n">router</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">r</span>
+            <span class="k">elif</span> <span class="n">r</span><span class="o">.</span><span class="n">_route</span> <span class="o">==</span> <span class="n">router</span><span class="o">.</span><span class="n">_route</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot add route </span><span class="si">%s</span><span class="s">. Already avalable&#39;</span> <span class="o">%</span>
+                                 <span class="n">r</span><span class="o">.</span><span class="n">_route</span><span class="p">)</span>
         <span class="c">#</span>
         <span class="c"># Remove from previous parent</span>
         <span class="k">if</span> <span class="n">router</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
             <span class="n">router</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">remove_child</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
         <span class="n">router</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">self</span>
-        <span class="c"># Loop over available routers to check it the router</span>
-        <span class="c"># is already available</span>
-        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="n">router</span><span class="o">.</span><span class="n">route</span><span class="p">:</span>
-                <span class="n">r</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">router</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">r</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">router</span>
 </div>
@@ -527,30 +513,38 @@
             <span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_parent</span>
         <span class="k">return</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
 </div>
-<div class="viewcode-block" id="Router.make_router"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.make_router">[docs]</a>    <span class="k">def</span> <span class="nf">make_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+<div class="viewcode-block" id="Router.make_router"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.make_router">[docs]</a>    <span class="k">def</span> <span class="nf">make_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create a new :class:`.Router` from a ``rule`` and parameters.</span>
 
 <span class="sd">        This method is used during initialisation when building child</span>
 <span class="sd">        Routers from the :attr:`rule_methods`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">cls</span> <span class="o">=</span> <span class="n">cls</span> <span class="ow">or</span> <span class="n">Router</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">router</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">_route</span> <span class="o">==</span> <span class="n">router</span><span class="o">.</span><span class="n">_route</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
+                    <span class="n">router</span> <span class="o">=</span> <span class="n">r</span>
+                    <span class="n">router</span><span class="o">.</span><span class="n">_set_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+                    <span class="k">break</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="ow">and</span> <span class="n">handler</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">handler</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">router</span>
 </div>
-    <span class="k">def</span> <span class="nf">_no_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39; object has no attribute &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
-                             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Router.copy"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a copy of this router without routes&#39;&#39;&#39;</span>
+        <span class="n">newcls</span> <span class="o">=</span> <span class="n">RouterType</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">__name__</span> <span class="o">+</span> <span class="s">&#39;Copy&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">cls</span><span class="p">,),</span> <span class="p">{})</span>
+        <span class="n">newcls</span><span class="o">.</span><span class="n">rule_methods</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">newcls</span>
 
-    <span class="k">def</span> <span class="nf">_get_router_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">_get_router_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">safe</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">value</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">safe</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_no_param</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">value</span>
+    <span class="c"># INTERNALS</span></div>
+    <span class="k">def</span> <span class="nf">_set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s">&#39;_&#39;</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
 </div>
 <span class="k">class</span> <span class="nc">MediaMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>

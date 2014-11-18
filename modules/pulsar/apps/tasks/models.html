@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.tasks.models &mdash; pulsar 0.9.2-beta.1 documentation</title>
+    <title>pulsar.apps.tasks.models &mdash; pulsar 0.9.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.9.2-beta.1',
+        VERSION:     '0.9.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.2-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.tasks" href="../tasks.html" /> 
 </head>
  <body>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.9.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../tasks.html" accesskey="U">pulsar.apps.tasks</a> &raquo;</li> 
@@ -268,7 +268,8 @@
         <span class="k">if</span> <span class="n">meta_params</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">meta_params</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">meta_params</span><span class="p">[</span><span class="s">&#39;from_task&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">task_id</span>
-        <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">queue_task</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span> <span class="n">meta_params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">queue_task</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span> <span class="n">meta_params</span><span class="o">=</span><span class="n">meta_params</span><span class="p">,</span>
+                                           <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 </div></div>
 <div class="viewcode-block" id="PeriodicJob"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.PeriodicJob">[docs]</a><span class="k">class</span> <span class="nc">PeriodicJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>
