@@ -188,9 +188,9 @@ class WsgiRequestTests(unittest.TestCase):
             self.assertEqual(url, '/bla/foo?page=1')
 
     def test_handle_wsgi_error(self):
-        handle500 = lambda request, exc: 'exception: %s' % exc
+        handler = lambda request, exc: 'exception: %s' % exc
         environ = wsgi.test_wsgi_environ(
-            extra={'error.handlers': {500: handle500}})
+            extra={'error.handler': handler})
         try:
             raise ValueError('just a test')
         except ValueError as exc:
