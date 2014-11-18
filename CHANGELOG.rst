@@ -1,4 +1,4 @@
-Ver. 0.9.2 - Development
+Ver. 0.9.2 - 2014-Nov-18
 ===========================
 * Bug fix in :class:`.Links`
 * A more flexible implementation of the :meth:`~.Router.make_router` method
