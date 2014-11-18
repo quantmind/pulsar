@@ -1,5 +1,9 @@
+Ver. 0.9.3 - Development
+===========================
+
 Ver. 0.9.2 - 2014-Nov-18
 ===========================
+* A minor release with several bug fixes.
 * Bug fix in :class:`.Links`
 * A more flexible implementation of the :meth:`~.Router.make_router` method
 * Added the :meth:`~Router.copy` method for cloning a router class without
