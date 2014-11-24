@@ -7,6 +7,7 @@ omit =
     *pulsar/utils/system/appengine.py
     *pulsar/utils/autoreload.py
     *pulsar/async/cov.py
+    *pulsar/async/dns.py
     *pulsar/async/appengine.py
     *pulsar/apps/test/plugins/bench.py
     *pulsar/apps/test/cov.py

@@ -39,6 +39,17 @@ information about the request and the result:
 The :attr:`~.ProtocolConsumer.request` attribute of :class:`HttpResponse`
 is an instance of :class:`.HttpRequest`.
 
+Posting data and Parameters
+=============================
+
+You can attach parameters to the ``url`` by passing the
+``urlparams`` dictionary:
+
+    request = http.get('http://bla.com',
+                       urlparams={'page': 2, 'key': 'foo'})
+    request.full_url == 'http://bla.com?page=2&key=foo'
+
+
 .. _http-cookie:
 
 Cookie support
@@ -416,6 +427,12 @@ class HttpRequest(RequestBase):
 
         HTTP version for this request, usually ``HTTP/1.1``
 
+    .. attribute:: encode_multipart
+
+        If ``True`` (default), defaults POST data as ``multipart/form-data``.
+        Pass ``encode_multipart=False`` to default to
+        ``application/x-www-form-urlencoded``.
+
     .. attribute:: history
 
         List of past :class:`.HttpResponse` (collected during redirects).
@@ -431,20 +448,24 @@ class HttpRequest(RequestBase):
     _ssl = None
     _tunnel = None
 
-    def __init__(self, client, url, method, inp_params, headers=None,
+    def __init__(self, client, url, method, inp_params=None, headers=None,
                  data=None, files=None, timeout=None, history=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
-                 websocket_handler=None, cookies=None, **ignored):
+                 websocket_handler=None, cookies=None, urlparams=None,
+                 **ignored):
         self.client = client
         self._data = None
         self.files = files
-        self.inp_params = inp_params
+        self.urlparams = urlparams
+        self.inp_params = inp_params or {}
         self.unredirected_headers = Headers(kind='client')
         self.timeout = timeout
         self.method = method.upper()
         self.full_url = url
+        if urlparams:
+            self._encode_url(urlparams)
         self.set_proxy(None)
         self.history = history
         self.wait_continue = wait_continue

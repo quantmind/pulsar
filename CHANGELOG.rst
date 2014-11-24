@@ -1,5 +1,6 @@
 Ver. 0.9.3 - Development
 ===========================
+* The :class:'.HttpClient' can pass url parameters during requests
 
 Ver. 0.9.2 - 2014-Nov-18
 ===========================

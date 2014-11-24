@@ -169,11 +169,6 @@ class WsgiResponse(object):
             return self.environ.get('pulsar.connection')
 
     @property
-    def environ_cache(self):
-        if self.environ:
-            return self.environ.get('pulsar.cache')
-
-    @property
     def content(self):
         return self._content
 

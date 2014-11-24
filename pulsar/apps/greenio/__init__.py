@@ -172,7 +172,7 @@ def run_in_greenlet(callable):
             result = gr.switch((yield From(result)))
         # For some reason this line does not show in coverage reports
         # but it is covered!
-        coroutine_return(result)    # prgma nocover
+        coroutine_return(result)    # pragma nocover
 
     return _
 

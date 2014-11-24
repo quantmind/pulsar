@@ -1,9 +1,9 @@
 import unittest
 
-from pulsar.apps.http import HttpClient
+from pulsar.apps.http import HttpClient, HttpRequest, parse_qsl
 
 
-class TestClientDefaults(unittest.TestCase):
+class TestClientCornerCases(unittest.TestCase):
 
     def test_headers(self):
         headers = HttpClient.DEFAULT_HTTP_HEADERS
@@ -19,3 +19,11 @@ class TestClientDefaults(unittest.TestCase):
         self.assertEqual(client.headers['accept'],
                          'application/json, text/plain; q=0.8')
         self.assertEqual(client.headers['content-type'], 'application/json')
+
+    def test_urlparams(self):
+        http = HttpClient()
+        urlparams={'page': 2, 'key': 'foo'}
+        request = HttpRequest(http, 'http://bla.com?k=6', 'post',
+                              urlparams=urlparams)
+        params = parse_qsl(request.query)
+        self.assertEqual(len(params), 3)

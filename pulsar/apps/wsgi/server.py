@@ -46,7 +46,7 @@ class FakeConnection(object):
 
 
 def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
-                      secure=False, loop=None):
+                      secure=False, loop=None, body=None):
     '''An function to create a WSGI environment dictionary for testing.
 
     :param url: the resource in the ``PATH_INFO``.
@@ -74,6 +74,8 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     #
     headers = Headers()
     stream = StreamReader(request_headers, parser)
+    stream.buffer = body or b''
+    stream.on_message_complete.set_result(None)
     extra = extra or {}
     extra['pulsar.connection'] = FakeConnection(loop=loop)
     return wsgi_environ(stream, ('127.0.0.1', 8060), '777.777.777.777:8080',
