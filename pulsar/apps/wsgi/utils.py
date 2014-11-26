@@ -275,7 +275,6 @@ def render_error(request, exc):
     #
     if content_type == 'text/html':
         doc = HtmlDocument(title=response.status)
-        doc.head.links.append('bootstrap_css')
         doc.head.embedded_css.append(error_css)
         doc.body.append(Html('div', msg, cn='pulsar-error'))
         return doc.render(request)

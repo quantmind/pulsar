@@ -1,6 +1,8 @@
 Ver. 0.9.3 - Development
 ===========================
 * The :class:'.HttpClient' can pass url parameters during requests
+* The :class:`.route` decorator accept more than one HTTP method by
+  passing a tuple of strings.
 
 Ver. 0.9.2 - 2014-Nov-18
 ===========================

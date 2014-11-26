@@ -217,7 +217,11 @@ class route(object):
                 bits = bits[1:]
         name = self.parameters.get('name', '_'.join(bits))
         self.parameters['name'] = name
-        method = (self.method or method or 'get').lower()
+        method = self.method or method or 'get'
+        if isinstance(method, (list, tuple)):
+            method = tuple((m.lower() for m in method))
+        else:
+            method = method.lower()
         rule = Route(self.rule or name, defaults=self.defaults)
         callable.rule_method = rule_info(rule, method, self.parameters,
                                          self.position, self.order)

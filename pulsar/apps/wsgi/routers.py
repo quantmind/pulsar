@@ -11,12 +11,19 @@ sub-routers for handling additional urls::
                                               'application/json'))
 
         def get(self, request):
-            "This method handle request with get-method"
+            "This method handle requests with get-method"
             ...
 
         def post(self, request):
-            "This method handle request with post-method"
+            "This method handle requests with post-method"
             ...
+
+        def delete(self, request):
+            "This method handle requests with delete-method"
+            ...
+
+        ...
+
 
     middleware = Page('/bla')
 
@@ -458,7 +465,11 @@ class Router(RouterType('RouterBase', (object,), {})):
                     router._set_params(params)
                     break
         if method and handler:
-            setattr(router, method, handler)
+            if isinstance(method, tuple):
+                for m in method:
+                    setattr(router, m, handler)
+            else:
+                setattr(router, method, handler)
         return router
 
     @classmethod
