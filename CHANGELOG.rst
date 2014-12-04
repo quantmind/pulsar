@@ -3,6 +3,8 @@ Ver. 0.9.3 - Development
 * The :class:'.HttpClient' can pass url parameters during requests
 * The :class:`.route` decorator accept more than one HTTP method by
   passing a tuple of strings.
+* Don't bother to evaluate ``SERVER_NAME`` in wsgi environ when testing on
+  localhost.
 
 Ver. 0.9.2 - 2014-Nov-18
 ===========================

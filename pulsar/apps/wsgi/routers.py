@@ -344,7 +344,7 @@ class Router(RouterType('RouterBase', (object,), {})):
             return ct
 
     def __repr__(self):
-        return self.route.__repr__()
+        return self.full_route.__repr__()
 
     def __call__(self, environ, start_response=None):
         path = environ.get('PATH_INFO') or '/'

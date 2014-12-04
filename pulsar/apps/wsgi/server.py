@@ -232,9 +232,9 @@ def wsgi_environ(stream, address, client_address, headers,
     if not host and protocol == 'HTTP/1.0':
         host = format_address(address)
     if host:
-        host = host_and_port_default(url_scheme, host)
-        environ['SERVER_NAME'] = socket.getfqdn(host[0])
-        environ['SERVER_PORT'] = host[1]
+        h = host_and_port_default(url_scheme, host)
+        environ['SERVER_NAME'] = socket.getfqdn(h[0]) if h[0] else '0.0.0.0'
+        environ['SERVER_PORT'] = h[1]
     path_info = request_uri.path
     if path_info is not None:
         if script_name:
