@@ -18,13 +18,13 @@ activities in different threads and/or processes.
     socket, task queue, wsgi, websocket, redis, json-rpc
 
 
-.. |master-build| image:: https://api.travis-ci.org/quantmind/pulsar.png?branch=master
+.. |master-build| image:: https://img.shields.io/travis/quantmind/pulsar/master.svg
 .. _master-build: http://travis-ci.org/quantmind/pulsar
-.. |dev-build| image:: https://api.travis-ci.org/quantmind/pulsar.png?branch=dev
+.. |dev-build| image:: https://img.shields.io/travis/quantmind/pulsar/dev.svg
 .. _dev-build: http://travis-ci.org/quantmind/pulsar
-.. |coverage-master| image:: https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=master
+.. |coverage-master| image:: https://img.shields.io/coveralls/quantmind/pulsar/master.svg
   :target: https://coveralls.io/r/quantmind/pulsar?branch=master
-.. |coverage-dev| image:: https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=dev
+.. |coverage-dev| image:: https://img.shields.io/coveralls/quantmind/pulsar/dev.svg
   :target: https://coveralls.io/r/quantmind/pulsar?branch=dev
 
 
