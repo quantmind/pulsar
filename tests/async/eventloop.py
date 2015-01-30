@@ -2,8 +2,7 @@ import unittest
 from threading import current_thread
 
 import pulsar
-from pulsar.async.eventloop import LoopingCall
-from pulsar import (asyncio, run_in_loop, Future, call_repeatedly,
+from pulsar import (asyncio, run_in_loop, Future,
                     get_event_loop, new_event_loop, loop_thread_id)
 
 
@@ -43,40 +42,6 @@ class TestEventLoop(unittest.TestCase):
         # we should be able to wait less than a second
         result = yield d
         self.assertEqual(result, tid)
-
-    def __test_periodic(self):
-        # TODO: this test timeout at times
-        test = self
-        loop = get_event_loop()
-        waiter = Future()
-
-        class p:
-            def __init__(self, loops):
-                self.loops = loops
-                self.c = 0
-
-            def __call__(self):
-                self.c += 1
-                if self.c == self.loops:
-                    try:
-                        raise ValueError('test periodic')
-                    except Exception:
-                        waiter.set_result(self.c)
-                        raise
-
-        every = 2
-        loops = 2
-        track = p(loops)
-        start = loop.time()
-        periodic = call_repeatedly(loop, every, track)
-        self.assertIsInstance(periodic, LoopingCall)
-        done = yield waiter
-        taken = loop.time() - start
-        self.assertEqual(done, loops)
-        self.assertTrue(taken > every*loops)
-        self.assertTrue(taken < every*loops + 2)
-        self.assertTrue(periodic.cancelled)
-        self.assertFalse(has_callback(loop, periodic.handler))
 
     def test_io_loop_tid(self):
         loop = pulsar.get_io_loop()

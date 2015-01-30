@@ -204,7 +204,7 @@ class Server(pulsar.MultiApp):
         # the pubsub channel
         channel = '%s_tweets' % self.name
         yield self.new_app(WSGIServer, callable=Site(channel))
-        yield self.new_app(Twitter, callable=ProcessTweets(channel))
+        #yield self.new_app(Twitter, callable=ProcessTweets(channel))
 
 
 if __name__ == '__main__':  # pragma nocover

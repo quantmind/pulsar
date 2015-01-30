@@ -302,7 +302,7 @@ class Storage(object):
             self.lua = None
             self.version = '2.4.10'
         self._loaddb()
-        pulsar.call_repeatedly(self._loop, 1, self._cron)
+        self._cron()
 
     # #########################################################################
     # #    KEYS COMMANDS
@@ -2168,6 +2168,7 @@ class Storage(object):
                 if gap >= interval and dirty >= changes:
                     self._save()
                     break
+        self._loop.call_later(1, self._cron)
 
     def _set(self, client, key, value, seconds=0, milliseconds=0,
              nx=False, xx=False):

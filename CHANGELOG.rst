@@ -5,6 +5,8 @@ Ver. 0.9.3 - Development
   passing a tuple of strings.
 * Don't bother to evaluate ``SERVER_NAME`` in wsgi environ when testing on
   localhost.
+* Removed ``call_repeatdly`` utility function. Not used anymore and not
+  working with new version of trollius.
 
 Ver. 0.9.2 - 2014-Nov-18
 ===========================
