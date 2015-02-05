@@ -13,13 +13,7 @@ To see all options available type::
 
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''
-try:
-    from pulsar import MethodNotAllowed
-except ImportError:  # pragma nocover
-    import sys
-    sys.path.append('../../')
-    from pulsar import MethodNotAllowed
-
+from pulsar import MethodNotAllowed
 from pulsar.apps import wsgi
 
 

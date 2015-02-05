@@ -93,7 +93,8 @@ class ProtocolConsumer(EventHandler):
 
     @property
     def on_finished(self):
-        '''The ``post_request`` one time event.
+        '''Event fired once a full response to a request is received. It is
+        the ``post_request`` one time event.
         '''
         return self.event('post_request')
 
@@ -379,22 +380,22 @@ class Connection(Protocol, Timeout):
         self._consumer_factory = consumer_factory
         self.timeout = timeout
 
+    @property
+    def requests_processed(self):
+        return self._processed
+
     def current_consumer(self):
         '''The :class:`ProtocolConsumer` currently handling incoming data.
 
         This instance will receive data when this connection get data
-        from the :attr:`~Protocol.transport` via the :meth:`data_received`
-        method.
+        from the :attr:`~PulsarProtocol.transport` via the
+        :meth:`data_received` method.
+
+        If no consumer is available, build a new one and return it.
         '''
         if self._current_consumer is None:
             self._build_consumer(None)
         return self._current_consumer
-
-    def set_consumer(self, consumer):
-        assert self._current_consumer is None, 'Consumer is not None'
-        self._current_consumer = consumer
-        consumer._connection = self
-        consumer.connection_made(self)
 
     def data_received(self, data):
         '''Delegates handling of data to the :meth:`current_consumer`.
@@ -444,7 +445,10 @@ class Connection(Protocol, Timeout):
     def _build_consumer(self, _, exc=None):
         if not exc:
             consumer = self._producer.build_consumer(self._consumer_factory)
-            self.set_consumer(consumer)
+            assert self._current_consumer is None, 'Consumer is not None'
+            self._current_consumer = consumer
+            consumer._connection = self
+            consumer.connection_made(self)
 
     def _connection_lost(self, _, exc=None):
         '''It performs these actions in the following order:

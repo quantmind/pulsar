@@ -24,7 +24,7 @@ Writing the Client
 =========================
 The first step is to write a small class handling a connection
 pool with the remote server. The :class:`Echo` class does just that,
-it subclass the handy :class:`.AbstractClient` and uses
+it subclasses the handy :class:`.AbstractClient` and uses
 the asynchronous :class:`.Pool` of connections as backbone.
 
 The second step is the implementation of the :class:`.EchoProtocol`,
@@ -35,6 +35,9 @@ The :class:`EchoProtocol` is needed for two reasons:
   :meth:`~EchoProtocol.start_request` method.
 * It listens for incoming data from the remote server via the
   :meth:`~EchoProtocol.data_received` method.
+
+To wait for the response message one casn yield from the
+:attr:`.ProtocolConsumer.on_finished` event.
 
 
 
