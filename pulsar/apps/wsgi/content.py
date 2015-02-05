@@ -153,6 +153,7 @@ from pulsar import HttpException
 from pulsar import multi_async, async, chain_future
 from pulsar.utils.slugify import slugify
 from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
+from pulsar.utils.pep import to_string
 from pulsar.utils.system import json
 
 from .html import html_visitor, newline
@@ -179,7 +180,7 @@ def stream_to_string(stream):
 
 def stream_mapping(value, request=None):
     result = {}
-    for key, value in iteritems(value):
+    for key, value in value.items():
         if isinstance(value, AsyncString):
             value = value.render(request)
         result[key] = value
@@ -614,7 +615,7 @@ class Html(AsyncString):
             if data is None:
                 self._extra['data'] = {}
             add = self._visitor.add_data
-            for key, value in iteritems(result):
+            for key, value in result.items():
                 add(self, key, value)
             return self
         else:
@@ -1141,10 +1142,10 @@ class HtmlDocument(Html):
 
     def _html(self, request, body, head=None):
         if head is None:
-            body = yield body
+            body = yield from body
             head = multi_async(self.head.stream(request))
-        head = yield head
+        head = yield from head
         result = self._template % (self.flatatt(),
                                    self.head.to_string(head),
                                    self.body.to_string(body))
-        coroutine_return(result)
+        return result

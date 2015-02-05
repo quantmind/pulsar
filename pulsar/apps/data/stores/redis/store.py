@@ -75,12 +75,12 @@ class RedisStore(RemoteStore):
 
     @task
     def execute(self, *args, **options):
-        connection = yield self._pool.connect()
+        connection = yield from self._pool.connect()
         with connection:
-            result = yield connection.execute(*args, **options)
+            result = yield from connection.execute(*args, **options)
             if isinstance(result, ResponseError):
                 raise result.exception
-            coroutine_return(result)
+            return result
 
     @task
     def execute_pipeline(self, commands, raise_on_error=True):
@@ -89,7 +89,7 @@ class RedisStore(RemoteStore):
             result = yield conn.execute_pipeline(commands, raise_on_error)
             if isinstance(result, ResponseError):
                 raise result.exception
-            coroutine_return(result)
+            return result
 
     def connect(self, protocol_factory=None):
         protocol_factory = protocol_factory or self.create_protocol
@@ -104,7 +104,7 @@ class RedisStore(RemoteStore):
             yield From(connection.execute('AUTH', self._password))
         if self._database:
             yield From(connection.execute('SELECT', self._database))
-        coroutine_return(connection)
+        return connection
 
     def execute_transaction(self, transaction):
         '''Execute a :class:`.Transaction`
@@ -126,7 +126,7 @@ class RedisStore(RemoteStore):
             else:
                 raise NotImplementedError
         yield From(pipe.commit())
-        coroutine_return(models)
+        return models
 
     def get_model(self, manager, pk):
         key = '%s%s:%s' % (self.namespace, manager._meta.table_name,

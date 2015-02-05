@@ -4,7 +4,7 @@ from functools import wraps, partial
 
 from asyncio import Future, CancelledError, TimeoutError, async
 from .consts import MAX_ASYNC_WHILE
-from .access import get_event_loop, LOGGER, Future
+from .access import get_event_loop, LOGGER, Future, isfuture
 
 
 __all__ = ['maybe_async',
@@ -90,10 +90,10 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
     return next
 
 
-def as_exception(fut):
-    if fut._exception:
-        return fut.exception()
-    elif getattr(fut, '_state', None) == _CANCELLED:
+def as_exception(future):
+    if future._exception:
+        return future.exception()
+    elif future.cancelled():
         return CancelledError()
 
 
@@ -128,7 +128,7 @@ def future_result_exc(future):
 
     The :class:`.Future` must be ``done``
     '''
-    if future._state == _CANCELLED:
+    if future.cancelled():
         return None, CancelledError()
     elif future._exception:
         return None, future.exception()
@@ -344,7 +344,7 @@ class MultiFuture(Future):
         if data is not None:
             type = type or data.__class__
             if issubclass(type, Mapping):
-                data = iteritems(data)
+                data = data.items()
             else:
                 type = list
                 data = enumerate(data)

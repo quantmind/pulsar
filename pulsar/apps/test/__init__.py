@@ -358,7 +358,7 @@ class TestTimeout(TestOption):
     flags = ['--test-timeout']
     validator = pulsar.validate_pos_int
     type = int
-    default = 30
+    default = 5
     desc = '''\
         Tests which take longer than this many seconds are timed-out
         and failed.'''

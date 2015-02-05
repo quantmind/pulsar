@@ -59,7 +59,7 @@ Raises KeyError if key is not found."""
 
     def update(self, items):
         if isinstance(items, dict):
-            items = iteritems(items)
+            items = items.items()
         for k, v in items:
             self[k] = v
 
@@ -229,7 +229,7 @@ class Dict(dict):
 
     def flat(self):
         result = []
-        [result.extend(pair) for pair in iteritems(self)]
+        [result.extend(pair) for pair in self.items()]
         return result
 
 
@@ -307,7 +307,7 @@ string of up to *size* bytes."""
 
 
 def recursive_update(target, mapping):
-    for key, value in iteritems(mapping):
+    for key, value in mapping.items():
         if value is not None:
             if key in target:
                 cont = target[key]

@@ -390,7 +390,7 @@ class Route(object):
             remaining = path[match.end():]
             groups = match.groupdict()
             result = {}
-            for name, value in iteritems(groups):
+            for name, value in groups.items():
                 try:
                     value = self._converters[name].to_python(value)
                 except Http404:

@@ -1,14 +1,14 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 import time
 import sys
+import pickle
 import unittest
+from unittest import mock
 from datetime import datetime, timedelta
 
 import pulsar
-from pulsar.utils.pep import pickle
 from pulsar.apps import wsgi
 from pulsar.apps import http
-from pulsar.apps.test import mock
 from pulsar.utils.multipart import parse_form_data, MultipartError
 from pulsar.utils.httpurl import urlparse, unquote
 from pulsar.apps.wsgi.utils import cookie_date

@@ -44,7 +44,7 @@ class TestAsyncContent(unittest.TestCase):
         result = response.render()
         self.assertIsInstance(result, Future)
         d.set_result('ciao')
-        result = yield result
+        result = yield from result
         self.assertEqual(result, json.dumps({'bla': 'ciao'}))
 
     def test_append_self(self):

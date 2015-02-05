@@ -1,7 +1,7 @@
+import asyncio
+
 import pulsar
-from pulsar.async import asyncio
-from pulsar import (when_monitor_start, get_application,
-                    task, send)
+from pulsar import when_monitor_start, get_application, task, send
 from pulsar.apps.data import create_store
 from pulsar.apps.ds import PulsarDS
 
@@ -18,7 +18,7 @@ def start_pulsar_ds(arbiter, host, workers=0):
             cfg = yield app(arbiter)
         else:
             cfg = app.cfg
-        coroutine_return(cfg)
+        return cfg
     finally:
         lock.release()
 
@@ -42,7 +42,7 @@ def start_store(url, workers=0, **kw):
             store._host = cfg.addresses[0]
             dns = store._buildurl()
             store = create_store(dns, **kw)
-    coroutine_return(store)
+    return store
 
 def localhost(host):
     if isinstance(host, tuple):

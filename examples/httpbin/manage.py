@@ -26,12 +26,6 @@ import mimetypes
 from itertools import repeat, chain
 from random import random
 
-try:
-    from pulsar.utils.pep import ispy3k, range
-except ImportError:     # pragma    nocover
-    sys.path.append('../../')
-    from pulsar.utils.pep import ispy3k, range
-
 from pulsar import HttpRedirect, HttpException, version, JAPANESE, CHINESE
 from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
                                   ENCODE_BODY_METHODS)
@@ -47,11 +41,7 @@ METHODS = frozenset(chain((m.lower() for m in ENCODE_URL_METHODS),
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
 FAVICON = os.path.join(ASSET_DIR, 'favicon.ico')
-
-if ispy3k:  # pragma nocover
-    characters = string.ascii_letters + string.digits
-else:   # pragma nocover
-    characters = string.letters + string.digits
+characters = string.ascii_letters + string.digits
 
 
 def asset(name, mode='r', chunk_size=None):
