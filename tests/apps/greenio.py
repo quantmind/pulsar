@@ -63,7 +63,7 @@ class TestGreenIO(unittest.TestCase):
         self.assertFalse(pool._greenlets)
         future = pool.submit(lambda: 'Hi!')
         self.assertIsInstance(future, Future)
-        result = yield future
+        result = yield from future
         self.assertEqual(result, 'Hi!')
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)

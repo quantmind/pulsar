@@ -7,7 +7,6 @@ from collections import OrderedDict
 from threading import current_thread
 
 from pulsar.utils.config import Global
-from pulsar.utils.pep import ispy3k
 from pulsar.utils.system import platform, current_process
 
 __all__ = ['get_event_loop',
@@ -33,46 +32,24 @@ __all__ = ['get_event_loop',
            'get_io_loop',
            'CANCELLED_ERRORS']
 
-# Dance between different versions. So boring!
-appengine = False
 
-if platform.is_appengine:   # pragma    nocover
-    from . import appengine as asyncio
-    trollius = asyncio
-    _PENDING = 'PENDING'
-    _CANCELLED = 'CANCELLED'
-    _FINISHED = 'FINISHED'
-    _FUTURE_CLASSES = asyncio._FUTURE_CLASSES
-    _EVENT_LOOP_CLASSES = ()
-    BaseEventLoop = asyncio.BaseEventLoop
-    _StopError = asyncio._StopError
-    appengine = True
-    reraise = asyncio.reraise
-    CANCELLED_ERRORS = ()
+if '--debug' in sys.argv:   # pragma    nocover
+    os.environ['PYTHONASYNCIODEBUG'] = 'debug'
 
-else:
+import asyncio
 
-    # Set the debug flags before importing asyncio
-    if '--debug' in sys.argv:   # pragma    nocover
-        os.environ['PYTHONASYNCIODEBUG'] = 'debug'
-        os.environ['TROLLIUSDEBUG'] = 'debug'
+from asyncio.futures import (_PENDING, _CANCELLED, _FINISHED)
+from asyncio.base_events import BaseEventLoop, _StopError
+from asyncio import selectors, events
 
-    import trollius
+_EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,
+                       trollius.AbstractEventLoop)
+CANCELLED_ERRORS = (asyncio.CancelledError, trollius.CancelledError)
 
-    try:
-        import asyncio
-    except ImportError:     # pragma    nocover
-        asyncio = trollius
-
-    from trollius.futures import (_PENDING, _CANCELLED, _FINISHED,
-                                  _FUTURE_CLASSES)
-    from trollius.base_events import BaseEventLoop, _StopError
-    from trollius import selectors, events
-    from trollius.py33_exceptions import reraise
-
-    _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,
-                           trollius.AbstractEventLoop)
-    CANCELLED_ERRORS = (asyncio.CancelledError, trollius.CancelledError)
+def reraise(tp, value, tb=None):
+    if value.__traceback__ is not tb:
+        raise value.with_traceback(tb)
+    raise value
 
 Future = trollius.Future
 From = trollius.From

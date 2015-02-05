@@ -320,9 +320,6 @@ from functools import partial
 
 import pulsar
 from pulsar import multi_async, task
-from pulsar.apps import tasks
-from pulsar.apps.data import create_store
-from pulsar.apps.ds import PulsarDS
 from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs, TestOption
 from pulsar.utils.pep import default_timer, to_string
@@ -435,7 +432,7 @@ class TestPep8(TestOption):
     desc = """Run pep8"""
 
 
-class TestSuite(tasks.TaskQueue):
+class TestSuite(pulsar.Application):
     '''An asynchronous test suite which works like a task queue.
 
     Each task is a group of test methods in a python TestCase class.
@@ -462,9 +459,8 @@ class TestSuite(tasks.TaskQueue):
     :parameter plugins: Optional list of :class:`.TestPlugin` instances.
     '''
     name = 'test'
-    cfg = pulsar.Config(apps=('tasks', 'test'),
+    cfg = pulsar.Config(apps=['test'],
                         loglevel=['none'],
-                        task_paths=['pulsar.apps.test.case'],
                         plugins=())
 
     def new_runner(self):
@@ -534,16 +530,6 @@ class TestSuite(tasks.TaskQueue):
     @task
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
-        # Create a datastore for this test suite
-        if not self.cfg.task_backend:
-            server = PulsarDS(bind='127.0.0.1:0', workers=0,
-                              key_value_save=[],
-                              name='%s_store' % self.name)
-            yield server()
-            address = 'pulsar://%s:%s' % server.cfg.addresses[0]
-        else:
-            address = self.cfg.task_backend
-
         store = create_store(address, pool_size=2, loop=monitor._loop)
         self.get_backend(store)
         loader = self.loader

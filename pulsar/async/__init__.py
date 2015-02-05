@@ -6,9 +6,8 @@ from .proxy import *
 from .protocols import *
 from .clients import *
 from .tracelogger import format_traceback
-if not appengine:
-    from .threads import *
-    from .eventloop import *
-    from .actor import *
-    from .concurrency import *
-    from . import commands
+from .threads import *
+from .eventloop import *
+from .actor import *
+from .concurrency import *
+from . import commands

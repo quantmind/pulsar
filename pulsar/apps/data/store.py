@@ -5,6 +5,8 @@ commands on remote servers.
 A :class:`.Store` can also implement several methods for managing
 the higher level :ref:`object data mapper <odm>`.
 '''
+from abc import ABCMeta, abstractmethod
+
 from pulsar import ImproperlyConfigured, Pool, Producer
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
@@ -12,6 +14,7 @@ from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 __all__ = ['Command',
            'Store',
+           'RemoteStore',
            'PubSub',
            'PubSubClient',
            'parse_store_url',
@@ -75,35 +78,12 @@ class Compiler(object):
         raise NotImplementedError
 
 
-class Store(Producer):
-    '''Base class for an asynchronous :ref:`data stores <data-stores>`.
-
-    It is an :class:`.Producer` for accessing and retrieving
-    data from remote data servers such as redis, couchdb and so forth.
-    A :class:`Store` should not be created directly, the high level
-    :func:`.create_store` function should be used instead.
-
-    .. attribute:: _host
-
-        The remote host, tuple or string
-
-    .. attribute:: _user
-
-        The user name
-
-    .. attribute:: _password
-
-        The user password
-    '''
+class Store(metaclass=ABCMeta):
     _scheme = None
-    compiler_class = None
-    default_manager = None
     registered = False
-    MANY_TIMES_EVENTS = ('request',)
 
-    def __init__(self, name, host, loop=None, database=None,
+    def __init__(self, name, host, database=None,
                  user=None, password=None, encoding=None, **kw):
-        super(Store, self).__init__(loop)
         self._name = name
         self._host = host
         self._encoding = encoding or 'utf-8'
@@ -135,6 +115,63 @@ class Store(Producer):
         '''Domain name server'''
         return self._dns
 
+    #    INTERNALS
+    #######################
+    def _init(self, **kw):  # pragma    nocover
+        '''Internal initialisation'''
+        pass
+
+    def _buildurl(self, **kw):
+        pre = ''
+        if self._user:
+            if self._password:
+                pre = '%s:%s@' % (self._user, self._password)
+            else:
+                pre = '%s@' % self._user
+        elif self._password:
+            raise ImproperlyConfigured('password but not user')
+            assert self._password
+        host = self._host
+        if isinstance(host, tuple):
+            host = '%s:%s' % host
+        host = '%s%s' % (pre, host)
+        path = '/%s' % self._database if self._database else ''
+        kw.update(self._urlparams)
+        query = urlencode(kw)
+        scheme = self._name
+        if self._scheme:
+            scheme = '%s+%s' % (self._scheme, scheme)
+        return urlunparse((scheme, host, path, '', query, ''))
+
+
+class RemoteStore(Producer, Store):
+    '''Base class for an asynchronous :ref:`data stores <data-stores>`.
+
+    It is an :class:`.Producer` for accessing and retrieving
+    data from remote data servers such as redis, couchdb and so forth.
+    A :class:`Store` should not be created directly, the high level
+    :func:`.create_store` function should be used instead.
+
+    .. attribute:: _host
+
+        The remote host, tuple or string
+
+    .. attribute:: _user
+
+        The user name
+
+    .. attribute:: _password
+
+        The user password
+    '''
+    compiler_class = None
+    default_manager = None
+    MANY_TIMES_EVENTS = ('request',)
+
+    def __init__(self, name, host, loop=None, **kw):
+        super().__init__(loop)
+        Store.__init__(self, name, host, **kw)
+
     @classmethod
     def register(cls):
         pass
@@ -143,10 +180,10 @@ class Store(Producer):
         return 'Store(dns="%s")' % self._dns
     __str__ = __repr__
 
+    @abstractmethod
     def connect(self):
         '''Connect with store server
         '''
-        raise NotImplementedError
 
     def execute(self, *args, **options):
         '''Execute a command

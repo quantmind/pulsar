@@ -2,7 +2,7 @@ from functools import partial
 
 from pulsar import coroutine_return, task, Connection, Pool, get_actor, From
 from pulsar.utils.pep import to_string
-from pulsar.apps.data import Store, Command
+from pulsar.apps.data import RemoteStore, Command
 from pulsar.apps.ds import redis_parser
 
 from .client import RedisClient, Pipeline, Consumer, ResponseError
@@ -26,7 +26,7 @@ class RedisStoreConnection(Connection):
         return consumer.on_finished
 
 
-class RedisStore(Store):
+class RedisStore(RemoteStore):
     '''Redis :class:`.Store` implementation.
     '''
     protocol_factory = partial(RedisStoreConnection, Consumer)

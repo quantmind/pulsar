@@ -1131,13 +1131,13 @@ class HttpClient(AbstractClient):
                 partial(self._connect, host, port, request.ssl),
                 pool_size=self.pool_size, loop=self._loop)
             self.connection_pools[request.key] = pool
-        conn = yield pool.connect()
+        conn = yield from pool.connect()
         with conn:
             consumer = conn.current_consumer()
             # bind request-specific events
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
-            response = yield consumer.on_finished
+            response = yield from consumer.on_finished
             if response is not None:
                 consumer = response
             if consumer.request_again:
@@ -1152,8 +1152,8 @@ class HttpClient(AbstractClient):
                 conn.detach()
         if isinstance(consumer.request_again, tuple):
             method, url, params = consumer.request_again
-            consumer = yield self.request(method, url, **params)
-        coroutine_return(consumer)
+            consumer = yield from self.request(method, url, **params)
+        return consumer
 
     def close(self, async=True, timeout=5):
         '''Close all connections.
