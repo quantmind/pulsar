@@ -3,7 +3,7 @@ import os
 import sys
 import unittest
 
-from pulsar import asyncio, send, get_application, coroutine_return, task
+from pulsar import asyncio, send, get_application, task
 from pulsar.apps import http, ws
 from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.security import gen_unique_id
@@ -20,8 +20,8 @@ except ImportError:
 def start_server(actor, name, argv):
     os.environ["DJANGO_SETTINGS_MODULE"] = "djchat.settings"
     execute_from_command_line(argv)
-    app = yield get_application(name)
-    coroutine_return(app.cfg)
+    app = yield from get_application(name)
+    return app.cfg
 
 
 class MessageHandler(ws.WS):

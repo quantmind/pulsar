@@ -68,7 +68,7 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import coroutine_return, Pool, Future, DatagramProtocol, task
+from pulsar import Pool, Future, DatagramProtocol, task
 from pulsar.utils.pep import to_bytes
 from pulsar.apps.socket import UdpSocketServer
 
@@ -177,8 +177,8 @@ class Echo(pulsar.AbstractUdpClient):
         '''
         protocol = yield self.pool.connect()
         with protocol:
-            result = yield protocol.send(message)
-            coroutine_return(result)
+            result = yield from protocol.send(message)
+            return result
 
 
 def server(name=None, description=None, **kwargs):

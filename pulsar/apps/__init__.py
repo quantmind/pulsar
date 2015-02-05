@@ -92,18 +92,18 @@ def get_application(name):
 
 
 def _get_remote_app(actor, name):
-    cfg = yield From(actor.send('arbiter', 'run', _get_app, name))
-    coroutine_return(cfg.app() if cfg else None)
+    cfg = yield from actor.send('arbiter', 'run', _get_app, name)
+    return cfg.app() if cfg else None
 
 
 def _get_app(arbiter, name, safe=True):
     monitor = arbiter.get_actor(name)
     if monitor:
-        cfg = yield From(monitor.start_event)
+        cfg = yield from monitor.start_event
         if safe:
-            coroutine_return(cfg)
+            return cfg
         else:
-            coroutine_return(monitor.app)
+            return monitor.app
 
 
 @task
@@ -118,7 +118,9 @@ def monitor_start(self, exc=None):
         self.bind_event('on_info', monitor_info)
         self.bind_event('stopping', monitor_stopping)
         for callback in when_monitor_start:
-            yield from callback(self)
+            coro = callback(self)
+            if coro:
+                yield from coro
         self.bind_event('periodic_task', app.monitor_task)
         coro = app.monitor_start(self)
         if coro:

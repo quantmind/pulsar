@@ -95,15 +95,15 @@ class RedisStore(RemoteStore):
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(self._host, tuple):
             host, port = self._host
-            transport, connection = yield From(self._loop.create_connection(
-                protocol_factory, host, port))
+            transport, connection = yield from self._loop.create_connection(
+                protocol_factory, host, port)
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(self._host))
         if self._password:
-            yield From(connection.execute('AUTH', self._password))
+            yield from connection.execute('AUTH', self._password)
         if self._database:
-            yield From(connection.execute('SELECT', self._database))
+            yield from connection.execute('SELECT', self._database)
         return connection
 
     def execute_transaction(self, transaction):
@@ -125,7 +125,7 @@ class RedisStore(RemoteStore):
                 pipe.hmset(key, self.model_data(model, action))
             else:
                 raise NotImplementedError
-        yield From(pipe.commit())
+        yield from pipe.commit()
         return models
 
     def get_model(self, manager, pk):

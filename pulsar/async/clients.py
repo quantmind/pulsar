@@ -68,8 +68,8 @@ class Pool(AsyncObject):
         :return: a :class:`~asyncio.Future` resulting in the connection.
         '''
         assert not self._closed
-        connection = yield self._get()
-        coroutine_return(PoolConnection(self, connection))
+        connection = yield from self._get()
+        return PoolConnection(self, connection)
 
     def close(self):
         '''Close all :attr:`available` and :attr:`in_use` connections.
@@ -84,7 +84,6 @@ class Pool(AsyncObject):
         for connection in in_use:
             connection.close()
 
-    @task
     def _get(self):
         queue = self._queue
         # grab the connection without waiting, important!
@@ -92,23 +91,24 @@ class Pool(AsyncObject):
             connection = queue.get_nowait()
         # wait for one to be available
         elif self.in_use + self._connecting >= queue._maxsize:
-            connection = yield future_timeout(queue.get(), self._timeout)
+            connection = yield asyncio.wait_for(queue.get(), self._timeout,
+                                                loop=self._loop)
         else:   # must create a new connection
             self._connecting += 1
             try:
-                connection = yield self._creator()
+                connection = yield from self._creator()
             finally:
                 self._connecting -= 1
         # None signal that a connection was removed form the queue
         # Go again
         if connection is None:
-            connection = yield self._get()
+            connection = yield from self._get()
         else:
             if self.is_connection_closed(connection):
-                connection = yield self._get()
+                connection = yield from self._get()
             else:
                 self._in_use_connections.add(connection)
-        coroutine_return(connection)
+        return connection
 
     def _put(self, conn, discard=False):
         if not self._closed:
@@ -244,5 +244,5 @@ class AbstractUdpClient(Producer):
         protocol_factory = protocol_factory or self.create_protocol
         _, protocol = yield self._loop.create_datagram_endpoint(
             protocol_factory, **kw)
-        yield protocol.event('connection_made')
-        coroutine_return(protocol)
+        yield from protocol.event('connection_made')
+        return protocol

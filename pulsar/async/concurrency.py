@@ -568,7 +568,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             elif aid in self.registered:
                 return self.registered[aid]
             else:  # Finally check in workers in monitors
-                for m in itervalues(self.monitors):
+                for m in self.monitors.values():
                     a = m.get_actor(aid, check_monitor=False)
                     if a is not None:
                         return a

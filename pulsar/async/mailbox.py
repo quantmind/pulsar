@@ -280,7 +280,7 @@ class MailboxClient(AbstractClient):
         req = Message.command(command, sender, target, args, kwargs)
         self._connection._start(req)
         response = yield from req.future
-        coroutine_return(response)
+        return response
 
     def start_serving(self):
         pass

@@ -2,7 +2,7 @@ import sys
 import json
 import logging
 
-from pulsar import AsyncObject, task, coroutine_return
+from pulsar import AsyncObject, task, is_async
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
@@ -42,7 +42,7 @@ class JSONRPC(RpcHandler):
         callable = None
         try:
             try:
-                data = yield request.body_data()
+                data = yield from request.body_data()
             except ValueError:
                 raise InvalidRequest(
                     status=415, msg='Content-Type must be application/json')
@@ -57,7 +57,9 @@ class JSONRPC(RpcHandler):
                 args, kwargs = tuple(params or ()), {}
             #
             callable = self.get_handler(data.get('method'))
-            result = yield callable(request, *args, **kwargs)
+            result = callable(request, *args, **kwargs)
+            if is_async(result):
+                result = yield from result
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
@@ -89,7 +91,7 @@ class JSONRPC(RpcHandler):
             res['error'] = error
         else:
             res['result'] = result
-        coroutine_return(res)
+        return res
 
 
 class JsonCall:

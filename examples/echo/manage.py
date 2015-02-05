@@ -79,7 +79,7 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import coroutine_return, Pool, task, Connection, AbstractClient
+from pulsar import Pool, task, Connection, AbstractClient
 from pulsar.apps.socket import SocketServer
 
 
@@ -192,9 +192,9 @@ class Echo(AbstractClient):
         with connection:
             consumer = connection.current_consumer()
             consumer.start(message)
-            result = yield consumer.on_finished
+            result = yield from consumer.on_finished
             result = consumer if self.full_response else consumer.buffer
-            coroutine_return(result)
+            return result
 
 
 def server(name=None, description=None, **kwargs):

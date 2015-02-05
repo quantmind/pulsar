@@ -142,7 +142,7 @@ class WsgiHandler(object):
         response = None
         try:
             for middleware in self.middleware:
-                response = handler(self.environ, self.start_response)
+                response = middleware(environ, start_response)
                 if is_async(response):
                     response = yield from response
                 if response is not None:
@@ -151,14 +151,14 @@ class WsgiHandler(object):
                 raise Http404
 
         except Exception as exc:
-            resp = handle_wsgi_error(environ, exc)
+            response = handle_wsgi_error(environ, exc)
 
         if isinstance(response, WsgiResponse):
             for middleware in self.response_middleware:
                 response = yield middleware(environ, response)
                 if is_async(response):
                     response = yield from response
-            self.start_response(response.status, response.get_headers())
+            start_response(response.status, response.get_headers())
         return response
 
 

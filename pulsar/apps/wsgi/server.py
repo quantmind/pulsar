@@ -468,7 +468,7 @@ class HttpServerResponse(ProtocolConsumer):
                     response = handle_wsgi_error(environ, exc_info)
                 #
                 if isfuture(response):
-                    response = yield From(response)
+                    response = yield from response
                 #
                 if exc_info:
                     self.start_response(response.status,
@@ -479,11 +479,11 @@ class HttpServerResponse(ProtocolConsumer):
                 start = loop.time()
                 for chunk in response:
                     if isfuture(chunk):
-                        chunk = yield From(chunk)
+                        chunk = yield from chunk
                         start = loop.time()
                     result = self.write(chunk)
                     if isfuture(result):
-                        yield From(result)
+                        yield from result
                         start = loop.time()
                     else:
                         time_in_loop = loop.time() - start
@@ -491,7 +491,7 @@ class HttpServerResponse(ProtocolConsumer):
                             self.logger.debug(
                                 'Released the event loop after %.3f seconds',
                                 time_in_loop)
-                            yield From(None)
+                            yield None
                             start = loop.time()
                 #
                 # make sure we write headers and last chunk if needed

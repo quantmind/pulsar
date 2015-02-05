@@ -2,7 +2,7 @@ from collections import Mapping
 from inspect import isgeneratorfunction, isgenerator
 from functools import wraps, partial
 
-from asyncio import Future, CancelledError, TimeoutError, async
+from asyncio import Future, CancelledError, TimeoutError, async, sleep
 from .consts import MAX_ASYNC_WHILE
 from .access import get_event_loop, LOGGER, Future, isfuture
 
@@ -177,7 +177,7 @@ def task(function):
         def wrapper(*args, **kw):
             res = function(*args, **kw)
             if res:
-                yield from res
+                res = yield from res
             return res
 
     @wraps(function)
@@ -246,13 +246,13 @@ def async_while(timeout, while_clause, *args):
         while result:
             interval = min(interval+di, MAX_ASYNC_WHILE)
             try:
-                yield From(sleep(interval, loop=loop))
+                yield from sleep(interval, loop=loop)
             except TimeoutError:
                 pass
             if timeout and loop.time() - start >= timeout:
                 break
             result = while_clause(*args)
-        coroutine_return(result)
+        return result
 
     return async(_(), loop)
 

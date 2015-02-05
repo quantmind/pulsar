@@ -100,8 +100,8 @@ Return 'killed abc` if successful, otherwise it returns ``None``.
     arb = request.actor
     if arb.is_arbiter():
         arb.send(aid, 'stop')
-        proxy = yield From(async_while(timeout, arb.get_actor, aid))
+        proxy = yield from async_while(timeout, arb.get_actor, aid)
         if proxy:
             arb.logger.warning('Could not kill actor %s', aid)
         else:
-            coroutine_return('killed %s' % aid)
+            return 'killed %s' % aid

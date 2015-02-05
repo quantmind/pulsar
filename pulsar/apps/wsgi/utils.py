@@ -193,7 +193,7 @@ class dump_environ(object):
 
     def __str__(self):
         def _():
-            for k, v in iteritems(self.environ):
+            for k, v in self.environ.items():
                 try:
                     v = str(v)
                 except Exception as e:

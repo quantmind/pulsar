@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import task, coroutine_return
+from pulsar import task
 
 from .jsonrpc import JSONRPC
 
@@ -26,9 +26,9 @@ class PulsarServerCommands(JSONRPC):
         It invokes the :meth:`extra_server_info` for adding custom
         information.
         '''
-        info = yield pulsar.send('arbiter', 'info')
-        info = yield self.extra_server_info(request, info)
-        coroutine_return(info)
+        info = yield from pulsar.send('arbiter', 'info')
+        info = yield from self.extra_server_info(request, info)
+        return info
 
     def rpc_functions_list(self, request):
         '''List of (method name, method document) pair of all method exposed

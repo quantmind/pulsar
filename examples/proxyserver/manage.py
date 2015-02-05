@@ -47,8 +47,7 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 
-from pulsar import (asyncio, HttpException, task, async, coroutine_return,
-                    add_errback)
+from pulsar import asyncio, HttpException, task, async, add_errback
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -99,7 +98,7 @@ class ProxyServerWsgiHandler(LocalMixin):
             raise HttpException(status=404)
         if environ.get('HTTP_EXPECT') != '100-continue':
             stream = environ.get('wsgi.input') or io.BytesIO()
-            data = yield stream.read()
+            data = yield from stream.read()
         else:
             data = None
         request_headers = self.request_headers(environ)
@@ -114,7 +113,7 @@ class ProxyServerWsgiHandler(LocalMixin):
                                            version=environ['SERVER_PROTOCOL'],
                                            pre_request=response.pre_request)
         add_errback(request, response.error)
-        coroutine_return(response)
+        return response
 
     def request_headers(self, environ):
         '''Fill request headers from the environ dictionary and

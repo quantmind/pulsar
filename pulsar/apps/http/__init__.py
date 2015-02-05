@@ -1200,8 +1200,8 @@ class HttpClient(AbstractClient):
         _, connection = yield From(self._loop.create_connection(
             self.create_protocol, host, port, ssl=ssl))
         # Wait for the connection made event
-        yield From(connection.event('connection_made'))
-        coroutine_return(connection)
+        yield from connection.event('connection_made')
+        return connection
 
 
 def green_request(request, method, url, **params):

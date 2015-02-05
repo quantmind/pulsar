@@ -86,5 +86,5 @@ class PubSub(data.PubSub):
         if not self._connection:
             protocol_factory = partial(PubsubProtocol, self,
                                        producer=self.store)
-            self._connection = yield From(self.store.connect(protocol_factory))
+            self._connection = yield from self.store.connect(protocol_factory)
             self._connection.execute(*args)
