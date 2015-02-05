@@ -44,17 +44,18 @@ import os
 import re
 import time
 import math
+import pickle
 from random import choice
 from hashlib import sha1
 from itertools import islice, chain
 from functools import partial, reduce
 from collections import namedtuple
+from itertools import zip_longest
 
 import pulsar
 from pulsar.apps.socket import SocketServer
 from pulsar.utils.config import Global
 from pulsar.utils.structures import Dict, Zset, Deque
-from pulsar.utils.pep import map, range, zip, ispy3k, pickle
 try:
     from pulsar.utils.lua import Lua
 except ImportError:     # pragma    nocover
@@ -79,13 +80,6 @@ def pulsards_url(address=None, db=3):
 STRING_LIMIT = 2**32
 
 nan = float('nan')
-
-if ispy3k:
-    from itertools import zip_longest
-    _ord = lambda x: x
-else:   # pragma    nocover
-    from itertools import izip_longest as zip_longest
-    _ord = lambda x: ord(x)
 
 
 class RedisParserSetting(Global):
@@ -1569,10 +1563,10 @@ class Storage(object):
         else:
             min_value, max_value = request[2], request[3]
             include_min = include_max = True
-            if min_value and _ord(min_value[0]) == 40:
+            if min_value and min_value[0] == 40:
                 include_min = False
                 min_value = min_value[1:]
-            if max_value and _ord(max_value[0]) == 40:
+            if max_value and max_value[0] == 40:
                 include_max = False
                 max_value = max_value[1:]
             try:
@@ -2409,10 +2403,10 @@ class Storage(object):
 
     def _score_values(self, min_value, max_value):
         include_min = include_max = True
-        if min_value and _ord(min_value[0]) == 40:
+        if min_value and min_value[0] == 40:
             include_min = False
             min_value = min_value[1:]
-        if max_value and _ord(max_value[0]) == 40:
+        if max_value and max_value[0] == 40:
             include_max = False
             max_value = max_value[1:]
         return float(min_value), include_min, float(max_value), include_max

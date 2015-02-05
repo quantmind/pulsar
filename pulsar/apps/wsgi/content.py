@@ -150,8 +150,7 @@ from functools import partial
 from inspect import isgenerator
 
 from pulsar import HttpException
-from pulsar import multi_async, async, coroutine_return, chain_future
-from pulsar.utils.pep import iteritems, to_string, ispy3k
+from pulsar import multi_async, async, chain_future
 from pulsar.utils.slugify import slugify
 from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
 from pulsar.utils.system import json
@@ -166,29 +165,16 @@ __all__ = ['AsyncString', 'Html',
 DATARE = re.compile('data[-_]')
 
 
-if ispy3k:
-
-    def stream_to_string(stream):
-        for value in stream:
-            if value is None:
-                continue
-            elif isinstance(value, bytes):
-                yield value.decode('utf-8')
-            elif isinstance(value, str):
-                yield value
-            else:
-                yield str(value)
-
-else:  # pragma nocover
-
-    def stream_to_string(stream):
-        for value in stream:
-            if value is None:
-                continue
-            elif isinstance(value, unicode):
-                yield value
-            else:
-                yield str(value)
+def stream_to_string(stream):
+    for value in stream:
+        if value is None:
+            continue
+        elif isinstance(value, bytes):
+            yield value.decode('utf-8')
+        elif isinstance(value, str):
+            yield value
+        else:
+            yield str(value)
 
 
 def stream_mapping(value, request=None):

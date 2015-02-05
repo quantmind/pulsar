@@ -1,8 +1,7 @@
 '''Utilities for HTML and text manipulation.
 '''
 from .system import json
-from .pep import (ispy3k, native_str, to_string, iteritems, is_string,
-                  string_type)
+from .pep import to_string, is_string
 
 
 NOTHING = ('', b'', None)
@@ -96,7 +95,7 @@ def plural(n, text, plural=None):
     return '%d %s' % (n, text)
 
 
-class SafeString(string_type):
+class SafeString(str):
     __html__ = True
 
 
@@ -110,33 +109,6 @@ class _lazy:
 
     def __str__(self):
         if self._value is None:
-            self._value = native_str(self._f(*self.args, **self.kwargs) or '')
+            self._value = str(self._f(*self.args, **self.kwargs) or '')
         return self._value
     __repr__ = __str__
-
-
-if ispy3k:
-
-    class UnicodeMixin(object):
-
-        def __unicode__(self):
-            return '%s object' % self.__class__.__name__
-
-        def __str__(self):
-            return self.__unicode__()
-
-        def __repr__(self):
-            return '%s: %s' % (self.__class__.__name__, self)
-
-else:  # pragma nocover
-
-    class UnicodeMixin(object):
-
-        def __unicode__(self):
-            return unicode('%s object' % self.__class__.__name__)
-
-        def __str__(self):
-            return self.__unicode__().encode()
-
-        def __repr__(self):
-            return '%s: %s' % (self.__class__.__name__, self)

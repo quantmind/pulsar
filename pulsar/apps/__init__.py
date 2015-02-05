@@ -62,12 +62,11 @@ import os
 import sys
 from inspect import getfile
 from functools import partial
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 import pulsar
-from pulsar import (get_actor, coroutine_return, Config, task, From,
+from pulsar import (get_actor, Config, task,
                     multi_async, Future, ImproperlyConfigured)
-from pulsar.utils.structures import OrderedDict
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
@@ -119,14 +118,20 @@ def monitor_start(self, exc=None):
         self.bind_event('on_info', monitor_info)
         self.bind_event('stopping', monitor_stopping)
         for callback in when_monitor_start:
-            yield callback(self)
+            yield from callback(self)
         self.bind_event('periodic_task', app.monitor_task)
-        yield app.monitor_start(self)
+        coro = app.monitor_start(self)
+        if coro:
+            yield from coro
         if not self.cfg.workers:
-            yield app.worker_start(self)
+            coro = app.worker_start(self)
+            if coro:
+                yield from coro
         result = self.cfg
     except Exception as exc:
-        yield self.stop(exc)
+        coro = self.stop(exc)
+        if coro:
+            yield from coro
         start_event.set_result(None)
     else:
         start_event.set_result(result)
@@ -135,9 +140,13 @@ def monitor_start(self, exc=None):
 @task
 def monitor_stopping(self, exc=None):
     if not self.cfg.workers:
-        yield self.app.worker_stopping(self)
-    yield self.app.monitor_stopping(self)
-    coroutine_return(self)
+        coro = self.app.worker_stopping(self)
+        if coro:
+            yield from coro
+    coro = self.app.monitor_stopping(self)
+    if coro:
+        yield from coro
+    return self
 
 
 def monitor_info(self, info=None):

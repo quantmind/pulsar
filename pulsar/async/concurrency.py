@@ -4,9 +4,10 @@ from time import time
 from collections import OrderedDict
 from multiprocessing import Process, current_process
 
+import asyncio
+
 import pulsar
 from pulsar import system, MonitorStarted, HaltServer, Config
-from pulsar.utils.pep import itervalues, iteritems, range
 from pulsar.utils.log import logger_fds
 from pulsar.utils import autoreload
 from pulsar.utils.tools import Pidfile
@@ -15,8 +16,7 @@ from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, _StopError, SELECTORS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
-from .futures import async, add_errback, chain_future, Future, From
-from .eventloop import EventLoop
+from .futures import async, add_errback, chain_future, Future
 from .protocols import TcpServer
 from .actor import Actor, create_aid
 from .consts import *
@@ -135,8 +135,9 @@ class Concurrency(object):
         '''Set up the event loop for ``actor``.
         '''
         actor._logger = self.cfg.configured_logger(actor.name)
-        loop = EventLoop(self.selector(), logger=actor._logger,
-                         iothreadloop=True, cfg=actor.cfg)
+        loop = asyncio.SelectorEventLoop(self.selector())
+        loop.logger = actor._logger
+        asyncio.set_event_loop(loop)
         actor.mailbox = self.create_mailbox(actor, loop)
         return loop
 
@@ -622,7 +623,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         if actor.started():
             # managed actors job
             self.manage_actors(actor)
-            for m in list(itervalues(self.monitors)):
+            for m in list(self.monitors.values()):
                 if m.closed():
                     actor._remove_actor(m)
 
@@ -825,7 +826,7 @@ def _spawn_actor(kind, monitor, cfg=None, name=None, aid=None, **kw):
         if not cfg.exc_id:
             cfg.set('exc_id', aid)
     #
-    for key, value in iteritems(kw):
+    for key, value in kw.items():
         if key in cfg.settings:
             cfg.set(key, value)
         else:

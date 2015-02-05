@@ -6,7 +6,7 @@ from pulsar.utils.internet import nice_address, format_address
 from .futures import multi_async, task, Future
 from .events import EventHandler
 from .mixins import FlowControl, Timeout
-from .access import asyncio, get_io_loop, From, ConnectionResetError
+from .access import asyncio, get_io_loop
 
 
 __all__ = ['ProtocolConsumer',
@@ -577,21 +577,21 @@ class TcpServer(Producer):
                 if sockets:
                     server = None
                     for sock in sockets:
-                        srv = yield From(create_server(self.create_protocol,
+                        srv = yield from create_server(self.create_protocol,
                                                        sock=sock,
                                                        backlog=backlog,
-                                                       ssl=sslcontext))
+                                                       ssl=sslcontext)
                         if server:
                             server.sockets.extend(srv.sockets)
                         else:
                             server = srv
                 else:
                     if isinstance(address, tuple):
-                        server = yield From(create_server(self.create_protocol,
+                        server = yield from create_server(self.create_protocol,
                                                           host=address[0],
                                                           port=address[1],
                                                           backlog=backlog,
-                                                          ssl=sslcontext))
+                                                          ssl=sslcontext)
                     else:
                         raise NotImplementedError
                 self._server = server

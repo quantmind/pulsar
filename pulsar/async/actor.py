@@ -1,17 +1,16 @@
 import sys
 import os
+import pickle
 from time import time
 from itertools import chain
 from threading import current_thread
 
 from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
-from pulsar.utils.pep import pickle
 from pulsar.utils.security import gen_unique_id
 
 from .futures import task
 from .events import EventHandler
-from .threads import get_executor
 from .proxy import ActorProxy, ActorProxyMonitor, actor_identity
 from .mailbox import command_in_context
 from .access import get_actor, set_actor

@@ -15,7 +15,7 @@ from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
 from pulsar.utils.pep import to_string
-from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES, iteritems,
+from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES,
                                   parse_qsl, HTTPError, parse_dict_header,
                                   JSON_CONTENT_TYPES)
 

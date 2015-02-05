@@ -2,11 +2,10 @@ from collections import deque
 from functools import partial
 from inspect import isgeneratorfunction
 
-from pulsar.utils.pep import iteritems
+from asyncio import Future, iscoroutinefunction, InvalidStateError
 
-from .access import _EVENT_LOOP_CLASSES, iscoroutinefunction
-from .futures import (Future, isfuture, InvalidStateError,
-                      future_result_exc, AsyncObject)
+from .access import _EVENT_LOOP_CLASSES
+from .futures import future_result_exc, AsyncObject
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']
@@ -151,7 +150,7 @@ class OneTime(Future, AbstractEvent):
             except Exception:
                 self.logger.exception('Exception while firing onetime event')
             else:
-                if isfuture(result):
+                if isinstance(result, Future):
                     result.add_done_callback(
                         partial(self._process, arg, exc, kwargs))
                     return
@@ -294,7 +293,7 @@ class EventHandler(AsyncObject):
         '''
         if isinstance(other, EventHandler):
             events = self._events
-            for name, event in iteritems(other._events):
+            for name, event in other._events.items():
                 if isinstance(event, Event) and event._handlers:
                     ev = events.get(name)
                     # If the event is available add it

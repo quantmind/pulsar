@@ -2,8 +2,9 @@ from functools import reduce
 
 from pulsar.utils.internet import is_socket_closed
 
-from .access import asyncio
-from .futures import coroutine_return, AsyncObject, future_timeout, task
+import asyncio
+
+from .futures import AsyncObject, future_timeout, task
 from .protocols import Producer
 
 

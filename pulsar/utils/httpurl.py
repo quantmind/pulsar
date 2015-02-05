@@ -51,10 +51,10 @@ from uuid import uuid4
 from email.utils import formatdate
 from io import BytesIO
 import zlib
-from collections import deque
+from collections import deque, OrderedDict
 
-from .structures import mapping_iterator, OrderedDict
-from .pep import ispy3k, iteritems, itervalues, to_bytes, native_str
+from .structures import mapping_iterator
+from .pep import to_bytes, native_str
 from .html import capfirst
 
 # try:
@@ -99,80 +99,28 @@ try:    # Compiled with SSL?
 except (ImportError, AttributeError):   # pragma : no cover
     pass
 
-if ispy3k:  # Python 3
-    from urllib import request as urllibr
-    from http import client as httpclient
-    from urllib.parse import (quote, unquote, urlencode, urlparse, urlsplit,
-                              parse_qs, parse_qsl, splitport, urlunparse,
-                              urljoin)
-    from http.client import responses
-    from http.cookiejar import CookieJar, Cookie
-    from http.cookies import SimpleCookie
+from urllib import request as urllibr
+from http import client as httpclient
+from urllib.parse import (quote, unquote, urlencode, urlparse, urlsplit,
+                          parse_qs, parse_qsl, splitport, urlunparse,
+                          urljoin)
+from http.client import responses
+from http.cookiejar import CookieJar, Cookie
+from http.cookies import SimpleCookie
 
-    string_type = str
-    getproxies_environment = urllibr.getproxies_environment
-    ascii_letters = string.ascii_letters
-    chr = chr
-    is_string = lambda s: isinstance(s, str)
+string_type = str
+getproxies_environment = urllibr.getproxies_environment
+ascii_letters = string.ascii_letters
+chr = chr
+is_string = lambda s: isinstance(s, str)
 
-    def force_native_str(s, encoding=None):
-        if isinstance(s, bytes):
-            return s.decode(encoding or 'utf-8')
-        elif not isinstance(s, str):
-            return str(s)
-        else:
-            return s
-
-else:   # pragma : no cover
-    import urllib2 as urllibr
-    import httplib as httpclient
-    from urllib import (quote, unquote, urlencode, getproxies_environment,
-                        splitport)
-    from urlparse import (urlparse, urlsplit, parse_qs, urlunparse, urljoin,
-                          parse_qsl)
-    from httplib import responses
-    from cookielib import CookieJar, Cookie
-    from Cookie import SimpleCookie
-
-    string_type = unicode
-    ascii_letters = string.letters
-    chr = unichr
-    is_string = lambda s: isinstance(s, unicode)
-
-    if sys.version_info < (2, 7):
-        #
-        def create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-                              source_address=None):
-            """Form Python 2.7"""
-            host, port = address
-            err = None
-            for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
-                af, socktype, proto, canonname, sa = res
-                sock = None
-                try:
-                    sock = socket.socket(af, socktype, proto)
-                    if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
-                        sock.settimeout(timeout)
-                    if source_address:
-                        sock.bind(source_address)
-                    sock.connect(sa)
-                    return sock
-                except Exception as _:
-                    err = _
-                    if sock is not None:
-                        sock.close()
-            if err is not None:
-                raise err
-            else:
-                raise Exception("getaddrinfo returns an empty list")
-
-    def force_native_str(s, encoding=None):
-        if isinstance(s, unicode):
-            return s.encode(encoding or 'utf-8')
-        elif not isinstance(s, str):
-            return str(s)
-        else:
-            return s
+def force_native_str(s, encoding=None):
+    if isinstance(s, bytes):
+        return s.decode(encoding or 'utf-8')
+    elif not isinstance(s, str):
+        return str(s)
+    else:
+        return s
 
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
@@ -744,7 +692,7 @@ class Headers(object):
 
     def __iter__(self):
         dj = ', '
-        for k, values in iteritems(self._headers):
+        for k, values in self._headers.items():
             joiner = HEADER_FIELDS_JOINER.get(k, dj)
             if joiner:
                 yield k, joiner.join(values)

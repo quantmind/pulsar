@@ -37,7 +37,7 @@ import os
 from struct import pack, unpack
 from array import array
 
-from .pep import ispy3k, range, to_bytes
+from .pep import to_bytes
 from .exceptions import ProtocolError
 
 try:
@@ -66,12 +66,6 @@ DEFAULT_VERSION = 13
 SUPPORTED_VERSIONS = (DEFAULT_VERSION,)
 WS_EXTENSIONS = {}
 WS_PROTOCOLS = {}
-
-if ispy3k:
-    string_type = str
-
-else:  # pragma    nocover
-    string_type = basestring
 
 
 def get_version(version):
@@ -371,7 +365,7 @@ class FrameParser(object):
         else:
             masking_key = b''
         if opcode is None:
-            opcode = 1 if isinstance(message, string_type) else 2
+            opcode = 1 if isinstance(message, str) else 2
         data = to_bytes(message or b'', 'utf-8')
         if opcode not in self._opcodes:
             raise ProtocolError('WEBSOCKET opcode a reserved value')

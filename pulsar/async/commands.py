@@ -2,8 +2,6 @@ from time import time
 
 from pulsar import CommandError
 
-from .access import From
-from .futures import async_while, coroutine_return
 from .proxy import command, ActorProxyMonitor
 
 

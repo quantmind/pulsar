@@ -20,7 +20,7 @@ from wsgiref.handlers import format_date_time
 
 import pulsar
 from pulsar import (reraise, HttpException, ProtocolError, Future, task,
-                    From, isfuture, chain_future)
+                    isfuture, chain_future)
 from pulsar.utils.pep import is_string, native_str
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,

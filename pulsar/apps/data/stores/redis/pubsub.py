@@ -1,6 +1,6 @@
 from functools import partial
 
-from pulsar import task, Protocol, From
+from pulsar import task, Protocol
 from pulsar.apps import data
 
 

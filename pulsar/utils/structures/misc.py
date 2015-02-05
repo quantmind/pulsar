@@ -2,20 +2,18 @@ from copy import copy
 from itertools import islice
 import collections
 
-from ..pep import ispy3k, iteritems
-
 Mapping = collections.Mapping
 
 
 def mapping_iterator(iterable):
     if isinstance(iterable, Mapping):
-        iterable = iteritems(iterable)
+        iterable = iterable.items()
     return iterable
 
 
 def inverse_mapping(iterable):
     if isinstance(iterable, Mapping):
-        iterable = iteritems(iterable)
+        iterable = iterable.items()
     return ((value, key) for key, value in iterable)
 
 
@@ -184,13 +182,6 @@ class AttributeDictionary(collections.Mapping):
 
     def items(self):
         return self.__dict__.items()
-
-    if not ispy3k:   # pragma    nocover
-        def itervalues(self):
-            return self.__dict__.itervalues()
-
-        def iteritems(self):
-            return self.__dict__.iteritems()
 
 
 class FrozenDict(dict):

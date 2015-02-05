@@ -98,7 +98,7 @@ via the ``_loop`` attribute::
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
-from pulsar import (From, Http404, coroutine_return, isfuture,
+from pulsar import (Http404, isfuture,
                     get_event_loop, task, async)
 from pulsar.utils.log import LocalMixin, local_method
 

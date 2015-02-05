@@ -6,8 +6,6 @@ from .proxy import *
 from .protocols import *
 from .clients import *
 from .tracelogger import format_traceback
-from .threads import *
-from .eventloop import *
 from .actor import *
 from .concurrency import *
 from . import commands

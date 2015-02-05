@@ -1,6 +1,5 @@
 import shutil
-
-from pulsar.utils.pep import pickle
+import pickle
 
 
 def save_data(cfg, filename, data):

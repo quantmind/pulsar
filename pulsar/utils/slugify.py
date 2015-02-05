@@ -5,22 +5,14 @@
 '''
 import re
 from unicodedata import normalize
+from html.entities import name2codepoint
 
 try:
     from unidecode import unidecode
 except ImportError:
     unidecode = None
 
-from .pep import to_string, ispy3k
-
-if ispy3k:
-    from html.entities import name2codepoint
-    u = chr
-
-else:   # pragma    nocover
-
-    from htmlentitydefs import name2codepoint
-    u = unichr
+from .pep import to_string
 
 
 # character entity reference
@@ -52,19 +44,19 @@ def slugify(value, separator='-', max_length=0, word_boundary=False,
     # character entity reference
     if entities:
         value = CHAR_ENTITY_REXP.sub(
-            lambda m: u(name2codepoint[m.group(1)]), value)
+            lambda m: chr(name2codepoint[m.group(1)]), value)
 
     # decimal character reference
     if decimal:
         try:
-            value = DECIMAL_REXP.sub(lambda m: u(int(m.group(1))), value)
+            value = DECIMAL_REXP.sub(lambda m: chr(int(m.group(1))), value)
         except:
             pass
 
     # hexadecimal character reference
     if hexadecimal:
         try:
-            value = HEX_REXP.sub(lambda m: u(int(m.group(1), 16)), value)
+            value = HEX_REXP.sub(lambda m: chr(int(m.group(1), 16)), value)
         except:
             pass
 

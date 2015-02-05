@@ -20,15 +20,8 @@ __all__ = ['get_event_loop',
            'logger',
            'NOTHING',
            'SELECTORS',
-           'appengine',
            'Future',
-           'ConnectionRefusedError',
-           'ConnectionResetError',
            'reraise',
-           'From',
-           'async',
-           'sleep',
-           'iscoroutine',
            'get_io_loop',
            'CANCELLED_ERRORS']
 
@@ -42,26 +35,16 @@ from asyncio.futures import (_PENDING, _CANCELLED, _FINISHED)
 from asyncio.base_events import BaseEventLoop, _StopError
 from asyncio import selectors, events
 
-_EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,
-                       trollius.AbstractEventLoop)
-CANCELLED_ERRORS = (asyncio.CancelledError, trollius.CancelledError)
+_EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,)
+CANCELLED_ERRORS = (asyncio.CancelledError,)
 
 def reraise(tp, value, tb=None):
     if value.__traceback__ is not tb:
         raise value.with_traceback(tb)
     raise value
 
-Future = trollius.Future
-From = trollius.From
-Return = trollius.Return
-async = trollius.async
-sleep = trollius.sleep
-iscoroutine = trollius.iscoroutine
-iscoroutinefunction = trollius.iscoroutinefunction
-ConnectionRefusedError = trollius.ConnectionRefusedError
-ConnectionResetError = trollius.ConnectionResetError
-
-isfuture = lambda x: isinstance(x, _FUTURE_CLASSES)
+Future = asyncio.Future
+isfuture = lambda x: isinstance(x, Future)
 
 
 LOGGER = logging.getLogger('pulsar')

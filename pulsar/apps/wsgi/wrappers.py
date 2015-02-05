@@ -49,7 +49,7 @@ from pulsar.utils.system import json
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
-                                  has_empty_content, ispy3k, REDIRECT_CODES,
+                                  has_empty_content, REDIRECT_CODES,
                                   ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
                                   remove_double_slash, iri_to_uri)
 
@@ -177,14 +177,9 @@ class WsgiResponse(object):
         if not self._started:
             if content is None:
                 content = ()
-            elif ispy3k:
+            else:
                 if isinstance(content, str):
                     if not self.encoding:   # use utf-8 if not set
-                        self.encoding = 'utf-8'
-                    content = content.encode(self.encoding)
-            else:   # pragma    nocover
-                if isinstance(content, unicode):
-                    if not self.encoding:  # use utf-8 if not set
                         self.encoding = 'utf-8'
                     content = content.encode(self.encoding)
 

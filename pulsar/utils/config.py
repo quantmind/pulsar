@@ -24,6 +24,7 @@ import argparse
 import os
 import textwrap
 import logging
+import pickle
 
 from pulsar import __version__, SERVER_NAME
 from . import system
@@ -31,7 +32,7 @@ from .internet import parse_address
 from .importer import import_system_file
 from .httpurl import HttpParser as PyHttpParser
 from .log import configured_logger, get_level
-from .pep import to_bytes, iteritems, native_str, pickle
+from .pep import to_bytes
 
 
 __all__ = ['Config',
@@ -678,12 +679,11 @@ def validate_pos_float(val):
 
 
 def validate_string(val):
-    va = native_str(val)
-    if va is None:
+    if val is None:
         return None
-    if not isinstance(va, str):
+    if not isinstance(val, str):
         raise TypeError("Not a string: %s" % val)
-    return va.strip()
+    return val.strip()
 
 
 def validate_list(val):

@@ -3,16 +3,11 @@ from hashlib import sha1
 
 import pulsar
 from pulsar.utils.structures import mapping_iterator, Zset
-from pulsar.utils.pep import native_str, zip, ispy3k, iteritems
 from pulsar.apps.ds import COMMANDS_INFO
 
 from .pubsub import PubSub
 
-
-if ispy3k:
-    str_or_bytes = (bytes, str)
-else:   # pragma    nocover
-    str_or_bytes = basestring
+str_or_bytes = (bytes, str)
 
 INVERSE_COMMANDS_INFO = dict(((i.method_name, i.name)
                               for i in COMMANDS_INFO.values()))

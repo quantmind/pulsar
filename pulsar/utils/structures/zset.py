@@ -1,5 +1,4 @@
 from .skiplist import Skiplist
-from ..pep import iteritems, zip
 
 
 class Zset(object):
@@ -28,7 +27,7 @@ class Zset(object):
     def __setstate__(self, state):
         self._dict = state
         self._sl = Skiplist(((score, member) for member, score
-                             in iteritems(state)))
+                             in state.items()))
 
     def __eq__(self, other):
         if isinstance(other, Zset):

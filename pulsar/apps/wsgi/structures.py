@@ -1,10 +1,9 @@
 import re
 import codecs
 
-from pulsar.utils.pep import ispy3k
 from pulsar.utils.structures import FrozenDict
 
-string_type = str if ispy3k else basestring
+
 _locale_delim_re = re.compile(r'[_-]')
 
 
@@ -85,7 +84,7 @@ class Accept(tuple):
            This used to raise :exc:`IndexError`, which was inconsistent
            with the list API.
         """
-        if isinstance(key, string_type):
+        if isinstance(key, str):
             for idx, (item, quality) in enumerate(self):
                 if self._value_matches(key, item):
                     return idx

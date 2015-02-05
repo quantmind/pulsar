@@ -2,69 +2,22 @@ from collections import Mapping
 from inspect import isgeneratorfunction, isgenerator
 from functools import wraps, partial
 
-from pulsar.utils.pep import iteritems, range
-
+from asyncio import Future, CancelledError, TimeoutError, async
 from .consts import MAX_ASYNC_WHILE
-from .access import (trollius, get_event_loop, async, Return, Future, sleep,
-                     From, isfuture, LOGGER, _PENDING, _CANCELLED, _FINISHED,
-                     _EVENT_LOOP_CLASSES)
-
-coroutine = trollius.coroutine
-iscoroutine = trollius.iscoroutine
-CancelledError = trollius.CancelledError
-TimeoutError = trollius.TimeoutError
-InvalidStateError = trollius.InvalidStateError
+from .access import get_event_loop, LOGGER, Future
 
 
-__all__ = ['CancelledError',
-           'TimeoutError',
-           'InvalidStateError',
-           'coroutine_return',
-           'maybe_async',
+__all__ = ['maybe_async',
            'run_in_loop',
-           'async',
            'add_errback',
            'add_callback',
            'future_timeout',
            'task_callback',
            'multi_async',
-           'async_while',
            'task',
            'chain_future',
            'future_result_exc',
-           'AsyncObject',
-           'yield_from']
-
-
-def coroutine_return(*value):
-    raise Return(*value)
-
-
-def yield_from(coro, timeout=None, loop=None):
-    '''Wraps a ``coroutine`` by yielding values wrapped with
-    the ``From`` function.
-    '''
-    value = None
-    exc = None
-    while True:
-        if exc is not None:
-            result = coro.throw(exc)
-        elif value is not None:
-            result = coro.send(value)
-        else:
-            result = next(coro)
-        exc = None
-        try:
-            if result is not None:
-                result = async(result, loop=loop)
-                future_timeout(result, timeout)
-        except TypeError:
-            value = result
-        else:
-            try:
-                value = yield From(result)
-            except Exception as e:
-                exc = e
+           'AsyncObject']
 
 
 def future_timeout(future, timeout=None, exc_class=None):
@@ -128,7 +81,7 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
         except Exception as exc:
             next.set_exception(exc)
         else:
-            if isfuture(result):
+            if isinstance(result, Future):
                 chain_future(result, next=next)
             else:
                 next.set_result(result)
@@ -217,15 +170,13 @@ def task(function):
         an :ref:`async object <async-object>`, in which case the loop
         is given by the object ``_loop`` attribute.
     :return: a :class:`~asyncio.Future`
-
-    The coroutine is wrapped with the :func:`yield_from` function.
     '''
     if isgeneratorfunction(function):
         wrapper = function
     else:
         def wrapper(*args, **kw):
-            res = yield function(*args, **kw)
-            raise Return(res)
+            res = yield from function(*args, **kw)
+            return res
 
     @wraps(function)
     def _(*args, **kwargs):
@@ -241,7 +192,7 @@ def task(function):
                     return loop.run_until_complete(future)
                 else:
                     return future
-        return async(yield_from(coro))
+        return async(coro)
 
     return _
 
@@ -377,23 +328,6 @@ class AsyncObject(object):
         '''
         bench = Bench(times, loop=self._loop)
         return bench(getattr(self, method), *args, **kwargs)
-
-
-# ############################################################## Task
-class Task(trollius.Task):
-
-    def _wakeup(self, future, inthread=False):
-        if inthread or future._loop is self._loop:
-            try:
-                value = future.result()
-            except Exception as exc:
-                # This may also be a cancellation.
-                self._step(None, exc)
-            else:
-                self._step(value, None)
-        else:
-            self._loop.call_soon_threadsafe(self._wakeup, future, True)
-        self = None
 
 
 # ############################################################## MultiFuture
