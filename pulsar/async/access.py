@@ -23,6 +23,7 @@ __all__ = ['get_event_loop',
            'Future',
            'reraise',
            'get_io_loop',
+           'is_async',
            'CANCELLED_ERRORS']
 
 
@@ -33,7 +34,7 @@ import asyncio
 
 from asyncio.futures import (_PENDING, _CANCELLED, _FINISHED)
 from asyncio.base_events import BaseEventLoop, _StopError
-from asyncio import selectors, events
+from asyncio import selectors, events, iscoroutine
 
 _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,)
 CANCELLED_ERRORS = (asyncio.CancelledError,)
@@ -45,6 +46,9 @@ def reraise(tp, value, tb=None):
 
 Future = asyncio.Future
 isfuture = lambda x: isinstance(x, Future)
+
+def is_async(c):
+    return isfuture(c) or iscoroutine(c)
 
 
 LOGGER = logging.getLogger('pulsar')

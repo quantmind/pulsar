@@ -322,9 +322,8 @@ import pulsar
 from pulsar import multi_async, task
 from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs, TestOption
-from pulsar.utils.pep import default_timer, to_string
+from pulsar.utils.pep import to_string
 
-from .case import mock
 from .populate import populate
 from .result import *
 from .plugins.base import *
@@ -332,6 +331,7 @@ from .loader import *
 from .utils import *
 from .wsgi import *
 from .pep import pep8_run
+from .runner import Runner
 
 
 pyver = '%s.%s' % (sys.version_info[:2])
@@ -466,9 +466,6 @@ class TestSuite(pulsar.Application):
     def new_runner(self):
         '''The :class:`.TestRunner` driving test cases.
         '''
-        if mock is None:    # pragma    nocover
-            raise ExitTest('python %s requires mock library for pulsar '
-                           'test suite application' % pyver)
         result_class = getattr(self, 'result_class', None)
         stream = pulsar.get_stream(self.cfg)
         runner = TestRunner(self.cfg.plugins, stream, result_class)
@@ -530,9 +527,11 @@ class TestSuite(pulsar.Application):
     @task
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
-        store = create_store(address, pool_size=2, loop=monitor._loop)
-        self.get_backend(store)
+        cfg = self.cfg
+        workers = min(0, cfg.workers)
+        cfg.set('workers', workers)
         loader = self.loader
+
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
         if self.cfg.show_leaks:
@@ -550,23 +549,7 @@ class TestSuite(pulsar.Application):
             self._time_start = None
             if tests:
                 self.logger.info('loading %s test classes', len(tests))
-                monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
-                self._time_start = default_timer()
-                queued = []
-                self._tests_done = set()
-                self._tests_queued = None
-                #
-                # Bind to the task_done event
-                self.backend.bind_event('task_done',
-                                        partial(self._test_done, monitor))
-                for tag, testcls in tests:
-                    r = self.backend.queue_task('test', testcls=testcls,
-                                                tag=tag)
-                    queued.append(r)
-                queued = yield multi_async(queued)
-                self.logger.debug('loaded %s test classes', len(tests))
-                self._tests_queued = set(queued)
-                yield self._test_done(monitor)
+                monitor._loop.call_soon(Runner, monitor, loader.runner, tests)
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:   # pragma    nocover
@@ -590,28 +573,3 @@ class TestSuite(pulsar.Application):
         params = super(TestSuite, self).arbiter_params()
         params['concurrency'] = self.cfg.concurrency
         return params
-
-    @task
-    def _test_done(self, monitor, task_id=None, exc=None):
-        runner = self.runner
-        if task_id:
-            self._tests_done.add(to_string(task_id))
-        if self._tests_queued is not None:
-            left = self._tests_queued.difference(self._tests_done)
-            if not left:
-                tests = yield self.backend.get_tasks(self._tests_done)
-                self.logger.info('All tests have finished.')
-                time_taken = default_timer() - self._time_start
-                for task in tests:
-                    runner.add(task.get('result'))
-                runner.on_end()
-                runner.printSummary(time_taken)
-                # Shut down the arbiter
-                if runner.result.errors or runner.result.failures:
-                    exit_code = 2
-                else:
-                    exit_code = 0
-                monitor._loop.call_soon(self._exit, exit_code)
-
-    def _exit(self, exit_code):
-        raise pulsar.HaltServer(exit_code=exit_code)

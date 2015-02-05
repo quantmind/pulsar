@@ -1,7 +1,7 @@
 '''Tests the tools and utilities in pulsar.utils.'''
 import unittest
+import pickle
 
-from pulsar.utils.pep import pickle
 from pulsar.utils.structures import (MultiValueDict, merge_prefix, deque,
                                      AttributeDictionary)
 

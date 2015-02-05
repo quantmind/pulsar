@@ -10,8 +10,8 @@ class TestPidfile(ActorTestMixin, unittest.TestCase):
     concurrency = 'process'
 
     def test_create_pid(self):
-        proxy = yield self.spawn_actor(name='pippo')
-        info = yield send(proxy, 'info')
+        proxy = yield from self.spawn_actor(name='pippo')
+        info = yield from send(proxy, 'info')
         result = info['actor']
         self.assertTrue(result['is_process'])
         pid = result['process_id']

@@ -155,7 +155,7 @@ class Config(object):
         return name in self.settings
 
     def items(self):
-        for k, setting in iteritems(self.settings):
+        for k, setting in self.settings.items():
             yield k, setting.value
 
     def __getstate__(self):

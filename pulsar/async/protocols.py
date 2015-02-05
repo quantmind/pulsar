@@ -620,8 +620,9 @@ class TcpServer(Producer):
             if self._server:
                 server, self._server = self._server, None
                 server.close()
-                yield From(None)
-                yield From(self._close_connections())
+                coro = self._close_connections()
+                if coro:
+                    yield from coro
             self.fire_event('stop')
 
     def info(self):

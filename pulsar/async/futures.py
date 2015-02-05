@@ -175,7 +175,9 @@ def task(function):
         wrapper = function
     else:
         def wrapper(*args, **kw):
-            res = yield from function(*args, **kw)
+            res = function(*args, **kw)
+            if res:
+                yield from res
             return res
 
     @wraps(function)

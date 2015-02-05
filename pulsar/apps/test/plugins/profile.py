@@ -28,15 +28,10 @@ import tempfile
 import cProfile as profiler
 import pstats
 from datetime import datetime
+from io import StringIO as Stream
 
 import pulsar
-from pulsar.utils.httpurl import ispy3k
 from pulsar.apps import test
-
-if ispy3k:
-    from io import StringIO as Stream
-else:   # pragma    nocover
-    from io import BytesIO as Stream
 
 other_filename = 'unknown'
 line_func = re.compile(r'(?P<line>\d+)\((?P<func>\w+)\)')

@@ -279,10 +279,9 @@ from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
-from pulsar import (AbstractClient, Pool, coroutine_return, task, Connection,
-                    ProtocolConsumer, From)
+from pulsar import AbstractClient, Pool, task, Connection, ProtocolConsumer
 from pulsar.utils.system import json
-from pulsar.utils.pep import native_str, is_string, to_bytes, ispy3k
+from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.utils.internet import CERT_NONE, SSLContext
@@ -348,21 +347,6 @@ class RequestBase(object):
 
     def get_full_url(self):
         return self.full_url
-
-
-if not ispy3k:  # pragma     nocover
-    _RequestBase = RequestBase
-
-    class RequestBase(_RequestBase):
-
-        def is_unverifiable(self):
-            return self.unverifiable
-
-        def get_origin_req_host(self):
-            return self.origin_req_host
-
-        def get_type(self):
-            return self.scheme
 
 
 class HttpTunnel(RequestBase):

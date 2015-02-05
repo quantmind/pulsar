@@ -15,7 +15,7 @@ The implementation details are outlined below:
       from pulsar import send
 
       def example():
-          result = yield send('abc', 'ping')
+          result = yield from send('abc', 'ping')
 
 * The :class:`.Arbiter` :attr:`~pulsar.Actor.mailbox` is a :class:`.TcpServer`
   accepting connections from remote actors.
@@ -59,7 +59,7 @@ from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id
 
-from .access import get_actor
+from .access import get_actor, is_async
 from .futures import Future, task
 from .proxy import actor_identity, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
@@ -212,9 +212,9 @@ class MailboxProtocol(Protocol):
                         raise CommandError(
                             "'%s' got message from unknown '%s'"
                             % (actor, message['sender']))
-                    result = yield actor.send(target, command,
-                                              *message['args'],
-                                              **message['kwargs'])
+                    result = yield from actor.send(target, command,
+                                                   *message['args'],
+                                                   **message['kwargs'])
                 else:
                     actor = target
                     cmd = get_command(command)
@@ -222,7 +222,9 @@ class MailboxProtocol(Protocol):
                     if actor.cfg.debug:
                         actor.logger.debug('Executing command %s from %s',
                                            command, caller or 'monitor')
-                    result = yield cmd(req, message['args'], message['kwargs'])
+                    result = cmd(req, message['args'], message['kwargs'])
+                    if is_async(result):
+                        result = yield from result
             except CommandError as exc:
                 self.logger.warning('Command error: %s' % exc)
                 result = None
@@ -273,11 +275,11 @@ class MailboxClient(AbstractClient):
     def request(self, command, sender, target, args, kwargs):
         # the request method
         if self._connection is None:
-            self._connection = yield self.connect()
+            self._connection = yield from self.connect()
             self._connection.bind_event('connection_lost', self._lost)
         req = Message.command(command, sender, target, args, kwargs)
         self._connection._start(req)
-        response = yield req.future
+        response = yield from req.future
         coroutine_return(response)
 
     def start_serving(self):

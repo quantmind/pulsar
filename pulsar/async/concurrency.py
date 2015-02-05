@@ -366,7 +366,7 @@ class MonitorMixin(object):
         '''
         alive = 0
         if self.managed_actors:
-            for aid, actor in list(iteritems(self.managed_actors)):
+            for aid, actor in list(self.managed_actors.items()):
                 alive += self.manage_actor(monitor, actor, stop)
         return alive
 
@@ -670,9 +670,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def _close_all(self, actor):
         # Close al monitors at once
         try:
-            for m in itervalues(self.monitors):
-                yield From(m.stop())
-            yield From(self._close_actors(actor))
+            for m in self.monitors.values():
+                yield from m.stop()
+            yield from self._close_actors(actor)
         except Exception:
             actor.logger.exception('Exception while closing arbiter')
         self._exit_arbiter(actor, True)

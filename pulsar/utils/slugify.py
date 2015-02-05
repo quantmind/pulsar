@@ -38,9 +38,6 @@ def slugify(value, separator='-', max_length=0, word_boundary=False,
     if unidecode:
         value = unidecode(value)
 
-    if not ispy3k:  # pragma    nocover
-        value = value.encode('ascii', 'ignore').decode()
-
     # character entity reference
     if entities:
         value = CHAR_ENTITY_REXP.sub(

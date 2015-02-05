@@ -209,12 +209,12 @@ class AbstractClient(Producer):
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(address, tuple):
             host, port = address
-            _, protocol = yield self._loop.create_connection(
+            _, protocol = yield from self._loop.create_connection(
                 protocol_factory, host, port, **kw)
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))
-        coroutine_return(protocol)
+        return protocol
 
 
 class AbstractUdpClient(Producer):

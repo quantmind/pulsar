@@ -1,15 +1,13 @@
 '''Stand alone compact module for managing python paths.'''
 import os
 import sys
-
-from .importer import import_module
-from .pep import range, string_type
+from importlib import import_module
 
 
 __all__ = ['Path']
 
 
-class Path(string_type):
+class Path(str):
     '''A lightweight utility for the filesystem and python modules.'''
     def __new__(cls, path=None):
         path = path or ''
@@ -24,7 +22,7 @@ class Path(string_type):
     isfile = lambda self: os.path.isfile(self)
     isdir = lambda self: os.path.isdir(self)
     exists = lambda self: os.path.exists(self)
-    realpath = lambda self: self.__class__(os.path.realpath(string_type(self)))
+    realpath = lambda self: self.__class__(os.path.realpath(str(self)))
 
     def join(self, *path):
         return self.__class__(os.path.join(self, *path))

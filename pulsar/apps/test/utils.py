@@ -45,30 +45,40 @@ except ImportError:
     ExpectedFailure = None
 
 import pulsar
-from pulsar import (get_actor, send, multi_async, async, future_timeout,
-                    TcpServer, coroutine_return, new_event_loop, task,
+from pulsar import (get_actor, send, multi_async, future_timeout,
+                    TcpServer, new_event_loop, task,
                     format_traceback, ImproperlyConfigured, Future,
-                    yield_from, iscoroutine, chain_future)
+                    chain_future)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.data import create_store
 
 
-__all__ = ['run_on_arbiter',
-           'sequential',
+__all__ = ['sequential',
            'NOT_TEST_METHODS',
            'ActorTestMixin',
            'AsyncAssert',
            'show_leaks',
            'hide_leaks',
            'check_server',
-           'dont_run_with_thread',
-           'run_on_actor']
+           'dont_run_with_thread']
 
 
 LOGGER = logging.getLogger('pulsar.test')
 NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
                     'setUpClass', 'tearDownClass')
+
+
+def skip_test(o):
+    return getattr(o, '__unittest_skip__', False)
+
+
+def skip_reason(o):
+    return getattr(o, '__unittest_skip_why__', '')
+
+
+def expecting_failure(o):
+    return getattr(o, '__unittest_expecting_failure__', False)
 
 
 class TestFailure:
@@ -79,133 +89,6 @@ class TestFailure:
 
     def __str__(self):
         return '\n'.join(self.trace)
-
-
-class TestCallable(object):
-    '''Responsible for actually running a test function.
-    '''
-    def __init__(self, test, method_name, istest, timeout):
-        self.test = test
-        self.method_name = method_name
-        self.istest = istest
-        self.timeout = timeout
-
-    def __repr__(self):
-        if isclass(self.test):
-            return '%s.%s' % (self.test.__name__, self.method_name)
-        else:
-            return '%s.%s' % (self.test.__class__.__name__, self.method_name)
-    __str__ = __repr__
-
-    def __call__(self, actor):
-        __skip_traceback__ = True
-        test = self.test
-        if self.istest:
-            test = actor.app.runner.before_test_function_run(test)
-        inject_async_assert(self.test)
-        test_function = getattr(test, self.method_name)
-        try:
-            result = test_function()
-        except Exception as exc:
-            result = TestFailure(exc)
-        else:
-            # Wraps a generator with yield_form
-            timeout = self.timeout
-            if iscoroutine(result):
-                result = yield_from(result, timeout)
-                timeout = None
-            try:
-                result = future_timeout(async(result), timeout)
-                result.add_done_callback(partial(self._finish, actor))
-                return chain_future(result, callback=self._none)
-            except TypeError:
-                result = None
-        self._finish(actor)
-        return result
-
-    def _finish(self, actor, fut=None):
-        # Callback
-        if self.istest:
-            actor.app.runner.after_test_function_run(self.test)
-
-    def _none(self, _):
-        pass
-
-
-class SafeTest(object):
-    '''Make sure the test object or class is picklable
-    '''
-    def __init__(self, test):
-        self.test = test
-
-    def __getattr__(self, name):
-        return getattr(self.test, name)
-
-    def __getstate__(self):
-        if isclass(self.test):
-            cls = self.test
-            data = None
-        else:
-            cls = self.test.__class__
-            data = self.test.__dict__.copy()
-            data.pop('_loop', None)
-        return ('%s.%s' % (cls.__module__, cls.__name__), data)
-
-    def __setstate__(self, state):
-        mod, data = state
-        test = module_attribute(mod)
-        inject_async_assert(test)
-        if data is not None:
-            test = test.__new__(test)
-            test.__dict__.update(data)
-        self.test = test
-
-
-class TestFunction(object):
-
-    def __init__(self, method_name):
-        self.method_name = method_name
-        self.istest = self.method_name not in NOT_TEST_METHODS
-
-    def __repr__(self):
-        return self.method_name
-    __str__ = __repr__
-
-    def __call__(self, test, timeout):
-        callable = TestCallable(test, self.method_name, self.istest, timeout)
-        return callable(get_actor())
-
-
-class TestFunctionOnArbiter(TestFunction):
-
-    def __call__(self, test, timeout):
-        test = SafeTest(test)
-        callable = TestCallable(test, self.method_name, self.istest, timeout)
-        actor = get_actor()
-        if actor.is_monitor():
-            return callable(actor)
-        else:
-            # send the callable to the actor monitor
-            return actor.send(actor.monitor, 'run', callable)
-
-
-def run_on_arbiter(f):
-    '''Decorator for running a test function in the :class:`.Arbiter`
-    context domain.
-
-    This can be useful to test Arbiter mechanics.
-    '''
-    f.testfunction = TestFunctionOnArbiter(f.__name__)
-    return f
-
-
-def run_on_actor(cls):
-    '''Decorator for a :class:`~unittest.TestCase` which cause
-    its test functions to run on the actor evnet loop rather than
-    in the executor
-    '''
-    cls._actor_execution = True
-    return cls
 
 
 def sequential(cls):
@@ -303,7 +186,6 @@ class ActorTestMixin(object):
             self._spawned = []
         return self._spawned
 
-    @task
     def spawn_actor(self, concurrency=None, **kwargs):
         '''Spawn a new actor and perform some tests
         '''
@@ -311,16 +193,16 @@ class ActorTestMixin(object):
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, ActorProxyFuture))
-        proxy = yield ad
+        proxy = yield from ad
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)
         self.assertEqual(proxy.proxy, proxy)
         self.assertTrue(proxy.cfg)
-        coroutine_return(proxy)
+        return proxy
 
     def stop_actors(self, *args):
         all = args or self.all_spawned
-        return multi_async((send(a, 'stop') for a in all))
+        return asyncio.wait([send(a, 'stop') for a in all])
 
     def tearDown(self):
         return self.stop_actors()

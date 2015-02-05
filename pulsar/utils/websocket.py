@@ -112,7 +112,7 @@ def websocket_mask(data, masking_key):
     data = array('B', data)
     for i in range(len(data)):
         data[i] ^= key[i % mask_size]
-    return data.tobytes() if ispy3k else data.tostring()
+    return data.tobytes()
 
 
 class Frame:

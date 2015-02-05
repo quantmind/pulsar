@@ -2,13 +2,7 @@ from datetime import date, timedelta
 from random import uniform, randint, choice
 import string
 
-from pulsar.utils.pep import ispy3k
-
-if ispy3k:
-    characters = string.ascii_letters + string.digits
-else:   # pragma nocover
-    characters = string.letters + string.digits
-    range = xrange
+characters = string.ascii_letters + string.digits
 
 def_converter = lambda x: x
 

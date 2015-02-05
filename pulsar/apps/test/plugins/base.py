@@ -1,5 +1,4 @@
 import pulsar
-from pulsar.utils.httpurl import iteritems
 from pulsar.apps.test.result import Plugin
 
 
@@ -48,7 +47,7 @@ class TestPluginMeta(type):
         for base in bases:
             if isinstance(base, TestPluginMeta):
                 settings.update(base.config.settings)
-        for key, setting in list(iteritems(attrs)):
+        for key, setting in list(attrs.items()):
             if isinstance(setting, pulsar.Setting):
                 attrs.pop(key)
                 setting.name = setting.name or key.lower()
