@@ -197,7 +197,7 @@ def iri_to_uri(iri, kwargs=None):
         return iri
     if kwargs:
         iri = '%s?%s' % (force_native_str(iri, 'latin1'),
-                         '&'.join(('%s=%s' % kv for kv in iteritems(kwargs))))
+                         '&'.join(('%s=%s' % kv for kv in kwargs.items())))
     return urlquote(unquote_unreserved(iri))
 
 

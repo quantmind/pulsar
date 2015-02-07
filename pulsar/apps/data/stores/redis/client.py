@@ -288,7 +288,7 @@ class RedisClient(object):
                 raise ValueError("ZADD requires an equal number of "
                                  "values and scores")
             pieces.extend(args)
-        for pair in iteritems(kwargs):
+        for pair in kwargs.items():
             pieces.append(pair[1])
             pieces.append(pair[0])
         return self.execute_command('ZADD', name, *pieces)

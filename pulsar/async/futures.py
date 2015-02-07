@@ -375,7 +375,7 @@ class MultiFuture(Future):
         # thread safe
         if inthread or future._loop is self._loop:
             self._futures.pop(key, None)
-            if self._state == _PENDING:
+            if not self.done():
                 self._get_set_item(key, future)
                 self._check()
         else:

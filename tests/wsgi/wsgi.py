@@ -230,7 +230,7 @@ class WsgiRequestTests(unittest.TestCase):
         start = mock.MagicMock()
         handler = wsgi.WsgiHandler()
         environ = self.request().environ
-        response = handler(environ, start)
+        response = yield from handler(environ, start)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(start.call_count, 1)
 
