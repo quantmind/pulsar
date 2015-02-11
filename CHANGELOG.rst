@@ -1,3 +1,11 @@
+Ver. 3.4.1
+==================
+* Python 3.4 and above
+* New test runner
+* Dropped task application
+* Dropped twisted integration
+* Dropped data mapper application
+
 Ver. 0.9.3 - Development
 ===========================
 * The :class:'.HttpClient' can pass url parameters during requests

@@ -1,15 +1,14 @@
 '''Tests actor and actor proxies.'''
 import unittest
+import pickle
 
 from multiprocessing.queues import Queue
 from functools import partial
 
 import pulsar
 from pulsar import (send, get_actor, CommandNotFound, async_while, TcpServer,
-                    coroutine_return, Connection)
-from pulsar.utils.pep import pickle, default_timer
-from pulsar.apps.test import (ActorTestMixin, run_on_arbiter,
-                              dont_run_with_thread)
+                    Connection)
+from pulsar.apps.test import ActorTestMixin, dont_run_with_thread
 
 from examples.echo.manage import Echo, EchoServerProtocol
 
@@ -28,72 +27,53 @@ class create_echo_server(object):
         address = self.address
         server = TcpServer(partial(Connection, EchoServerProtocol),
                            actor._loop, self.address)
-        yield server.start_serving()
+        yield from server.start_serving()
         actor.servers['echo'] = server
         actor.extra['echo-address'] = server.address
         actor.bind_event('stopping', self._stop_server)
-        coroutine_return(actor)
+        return actor
 
     def _stop_server(self, actor):
-        yield actor.servers['echo'].close()
-        coroutine_return(actor)
+        yield from actor.servers['echo'].close()
+        return actor
 
 
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
 
     def test_spawn_and_interact(self):
-        proxy = yield self.spawn_actor(name='pluto')
+        proxy = yield from self.spawn_actor(name='pluto')
         self.assertEqual(proxy.name, 'pluto')
-        yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
-        name, result = yield send(proxy, 'run', add, 1, 3)
+        yield from self.async.assertEqual(send(proxy, 'ping'), 'pong')
+        yield from self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
+        name, result = yield from send(proxy, 'run', add, 1, 3)
         self.assertEqual(name, 'pluto')
         self.assertEqual(result, 4)
 
     def test_info(self):
-        proxy = yield self.spawn_actor(name='pippo')
+        proxy = yield from self.spawn_actor(name='pippo')
         self.assertEqual(proxy.name, 'pippo')
-        info = yield send(proxy, 'info')
+        info = yield from send(proxy, 'info')
         self.assertTrue('actor' in info)
         ainfo = info['actor']
         self.assertEqual(ainfo['is_process'], self.concurrency == 'process')
 
-    @run_on_arbiter
     def test_simple_spawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
-        proxy = yield self.spawn_actor(
+        proxy = yield from self.spawn_actor(
             name='simple-actor-on-%s' % self.concurrency)
         arbiter = pulsar.get_actor()
         proxy_monitor = arbiter.get_actor(proxy.aid)
         self.assertEqual(proxy_monitor, proxy)
-        yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield self.async.assertEqual(send(proxy.proxy, 'echo', 'Hello!'),
-                                     'Hello!')
+        yield from self.async.assertEqual(send(proxy, 'ping'), 'pong')
+        yield from self.async.assertEqual(send(proxy.proxy, 'echo', 'Hello!'),
+                                          'Hello!')
         # We call the ActorTestMixin.stop_actors method here, since the
         # ActorTestMixin.tearDown method is invoked on the test-worker domain
         # (here we are in the arbiter domain)
-        yield self.stop_actors(proxy)
-        is_alive = yield async_while(3, proxy_monitor.is_alive)
+        yield from self.stop_actors(proxy)
+        is_alive = yield from async_while(3, proxy_monitor.is_alive)
         self.assertFalse(is_alive)
-
-
-class d:
-    def test_start_hook(self):
-        proxy = yield self.spawn_actor(
-            start=create_echo_server(('127.0.0.1', 0)))
-        address = None
-        start = default_timer()
-        while not address:
-            info = yield send(proxy, 'info')
-            address = info['extra'].get('echo-address')
-            if default_timer() - start > 3:
-                break
-        self.assertTrue(address)
-        echo = Echo(address)
-        result = yield echo(b'Hello')
-        self.assertEqual(result, b'Hello')
-        yield self.stop_actors(proxy)
 
 
 @dont_run_with_thread

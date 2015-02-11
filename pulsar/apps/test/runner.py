@@ -3,7 +3,7 @@ import asyncio
 from pulsar import task, HaltServer
 
 from .utils import (TestFailure, is_expected_failure, skip_test, skip_reason,
-                    expecting_failure)
+                    expecting_failure, AsyncAssert)
 
 class Runner(object):
 
@@ -45,6 +45,7 @@ class Runner(object):
             tag, testcls = self.tests.pop()
             testcls.tag = tag
             testcls.cfg = cfg
+            testcls.async = AsyncAssert(testcls)
             try:
                 all_tests = runner.loadTestsFromTestCase(testcls)
             except Exception:
@@ -82,21 +83,21 @@ class Runner(object):
             # setUpClass failed, fails all tests
             for test in all_tests:
                 self.add_failure(test, exc)
-            return
-
-        if seq:
-            for test in all_tests:
-                yield from self._run_test(test)
         else:
-            yield from asyncio.wait([self._run_test(test)
-                                     for test in all_tests],
-                                    loop=self._loop)
+            if seq:
+                for test in all_tests:
+                    yield from self._run_test(test)
+            else:
+                yield from asyncio.wait([self._run_test(test)
+                                         for test in all_tests],
+                                        loop=self._loop)
 
-        try:
-            yield from self._run(testcls.tearDownClass)
-        except Exception as exc:
-            self.logger.exception('Failure in tearDownClass',
-                                  exc_info=True)
+            try:
+                yield from self._run(testcls.tearDownClass)
+            except Exception as exc:
+                self.logger.exception('Failure in tearDownClass',
+                                      exc_info=True)
+
         self.concurrent.remove(testcls)
 
     def _run(self, method):

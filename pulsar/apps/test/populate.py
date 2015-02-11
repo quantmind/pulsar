@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from random import uniform, randint, choice
 import string
 
-characters = string.ascii_letters + string.digits
+_characters = string.ascii_letters + string.digits
 
 def_converter = lambda x: x
 
@@ -82,7 +82,8 @@ def populate(datatype='string', size=10, start=None, end=None,
     return data
 
 
-def random_string(min_len=3, max_len=20, **kwargs):
+def random_string(min_len=3, max_len=20, characters=None, **kwargs):
+    characters = characters or _characters
     len = randint(min_len, max_len) if max_len > min_len else min_len
     return ''.join((choice(characters) for s in range(len)))
 

@@ -319,12 +319,11 @@ import unittest
 from functools import partial
 
 import pulsar
-from pulsar import multi_async, task
 from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs, TestOption
 from pulsar.utils.pep import to_string
 
-from .populate import populate
+from .populate import populate, random_string
 from .result import *
 from .plugins.base import *
 from .loader import *
@@ -524,7 +523,6 @@ class TestSuite(pulsar.Application):
                 sys.exit(code)
             return False
 
-    @task
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
         cfg = self.cfg

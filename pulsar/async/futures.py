@@ -15,6 +15,8 @@ __all__ = ['maybe_async',
            'task_callback',
            'multi_async',
            'task',
+           'async',
+           'async_while',
            'chain_future',
            'future_result_exc',
            'AsyncObject']
@@ -254,7 +256,7 @@ def async_while(timeout, while_clause, *args):
             result = while_clause(*args)
         return result
 
-    return async(_(), loop)
+    return async(_(), loop=loop)
 
 
 # ############################################################## Bench

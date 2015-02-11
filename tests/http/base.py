@@ -45,14 +45,14 @@ class TestHttpClientBase:
                        name='httpbin-%s' % cls.__name__.lower(),
                        keep_alive=30, key_file=key_file, cert_file=cert_file,
                        workers=1)
-            cfg = yield send('arbiter', 'run', s)
+            cfg = yield from send('arbiter', 'run', s)
             cls.app = cfg.app()
             bits = ('https' if cls.with_tls else 'http',) + cfg.addresses[0]
             cls.uri = '%s://%s:%s/' % bits
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
                         name='proxyserver-%s' % cls.__name__.lower())
-            cfg = yield send('arbiter', 'run', s)
+            cfg = yield from send('arbiter', 'run', s)
             cls.proxy_app = cfg.app()
             cls.proxy_uri = 'http://{0}:{1}'.format(*cfg.addresses[0])
         cls._client = cls.client()
@@ -60,9 +60,9 @@ class TestHttpClientBase:
     @classmethod
     def tearDownClass(cls):
         if cls.app is not None:
-            yield send('arbiter', 'kill_actor', cls.app.name)
+            yield from send('arbiter', 'kill_actor', cls.app.name)
         if cls.proxy_app is not None:
-            yield send('arbiter', 'kill_actor', cls.proxy_app.name)
+            yield from send('arbiter', 'kill_actor', cls.proxy_app.name)
 
     @classmethod
     def client(cls, loop=None, parser=None, pool_size=2, **kwargs):
@@ -128,7 +128,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def _test_stream_response(self, siz=3000, rep=10):
         http = self._client
-        response = yield http.get(self.httpbin('stream/%d/%d' % (siz, rep)))
+        response = yield from http.get(self.httpbin('stream/%d/%d' % (siz, rep)))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.parser.is_chunked())
         body = response.recv_body()
@@ -154,7 +154,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_home_page(self):
         http = self.client()
-        response = yield http.get(self.httpbin())
+        response = yield from http.get(self.httpbin())
         self.assertEqual(str(response), '200')
         self.assertTrue('content-length' in response.headers)
         content = response.get_content()
@@ -164,14 +164,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_server(response)
         self.after_test_home_page(response)
         # Try again
-        response = yield http.get(self.httpbin())
+        response = yield from http.get(self.httpbin())
         self.assertEqual(str(response), '200')
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
     def test_200_get(self):
         http = self.client()
-        response = yield http.get(self.httpbin())
+        response = yield from http.get(self.httpbin())
         self.assertEqual(str(response), '200')
         self.assertEqual(repr(response), 'HttpResponse(200)')
         self.assertEqual(response.status_code, 200)
@@ -179,13 +179,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(response.get_content())
         self.assertEqual(response.url, self.httpbin())
         self._check_pool(http, response)
-        response = yield http.get(self.httpbin('get'))
+        response = yield from http.get(self.httpbin('get'))
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
 
     def test_request_object(self):
         http = self._client
-        response = yield http.get(self.httpbin())
+        response = yield from http.get(self.httpbin())
         request = response.request
         self.assertTrue(request.headers)
         self.assertTrue(request.has_header('Connection'))
@@ -202,7 +202,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client(version='HTTP/1.0')
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.0')
-        response = yield http.get(self.httpbin())
+        response = yield from http.get(self.httpbin())
         self.assertEqual(response.headers['connection'], 'close')
         self.assertEqual(str(response), '200')
         self._check_pool(http, response, available=0)
@@ -214,21 +214,21 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.1')
-        response = yield http.get(self.httpbin())
+        response = yield from http.get(self.httpbin())
         self.assertEqual(response.headers['connection'], 'keep-alive')
         self._check_pool(http, response)
 
     def test_http11_close(self):
         http = self.client()
         self.assertEqual(http.version, 'HTTP/1.1')
-        response = yield http.get(
+        response = yield from http.get(
             self.httpbin(), headers=[('connection', 'close')])
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
 
     def test_200_get_data(self):
         http = self.client()
-        response = yield http.get(self.httpbin('get'),
+        response = yield from http.get(self.httpbin('get'),
                                   data={'bla': 'foo'})
         result = response.json()
         self.assertEqual(response.status_code, 200)
@@ -241,7 +241,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_200_gzip(self):
         http = self._client
-        response = yield http.get(self.httpbin('gzip'))
+        response = yield from http.get(self.httpbin('gzip'))
         self.assertEqual(response.status_code, 200)
         content = response.json()
         self.assertTrue(content['gzipped'])
@@ -252,7 +252,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield http.post(self.httpbin('post'),
+        response = yield from http.post(self.httpbin('post'),
                                    encode_multipart=False,
                                    data=data)
         self.assertEqual(response.status_code, 200)
@@ -263,14 +263,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_400_and_get(self):
         '''Bad request 400'''
         http = self.client()
-        response = yield http.get(self.httpbin('status', '400'))
+        response = yield from http.get(self.httpbin('status', '400'))
         self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_status(), '400 Bad Request')
         self.assertTrue(response.get_content())
         self.assertRaises(HTTPError, response.raise_for_status)
         # Make sure we only have one connection after a valid request
-        response = yield http.get(self.httpbin('get'))
+        response = yield from http.get(self.httpbin('get'))
         self.assertEqual(response.status_code, 200)
         # for tunneling this fails sometimes
         self._check_pool(http, response, sessions=2, processed=2)
@@ -278,7 +278,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_404_get(self):
         '''Not Found 404'''
         http = self._client
-        response = yield http.get(self.httpbin('status', '404'))
+        response = yield from http.get(self.httpbin('status', '404'))
         self.assertEqual(response.status_code, 404)
         self.assertTrue(response.headers.has('connection', 'close'))
         self.assertTrue('content-type' in response.headers)
@@ -287,13 +287,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_dodgy_on_header_event(self):
         client = self._client
-        response = yield client.get(self.httpbin(), on_headers=dodgyhook)
+        response = yield from client.get(self.httpbin(), on_headers=dodgyhook)
         self.assertTrue(response.headers)
         self.assertEqual(response.status_code, 200)
 
     def test_redirect_1(self):
         http = self.client()
-        response = yield http.get(self.httpbin('redirect', '1'))
+        response = yield from http.get(self.httpbin('redirect', '1'))
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 1)
@@ -307,7 +307,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_redirect_6(self):
         http = self.client()
-        response = yield http.get(self.httpbin('redirect', '6'))
+        response = yield from http.get(self.httpbin('redirect', '6'))
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 6)
@@ -324,7 +324,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             # TODO: this fails in pypy randomnly
             return
         http = self._client
-        response = yield http.get(self.httpbin('getsize/600000'))
+        response = yield from http.get(self.httpbin('getsize/600000'))
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['size'], 600000)
@@ -334,8 +334,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_too_many_redirects(self):
         http = self._client
         try:
-            response = yield http.get(self.httpbin('redirect', '5'),
-                                      max_redirects=2)
+            response = yield from http.get(self.httpbin('redirect', '5'),
+                                           max_redirects=2)
         except TooManyRedirects as e:
             response = e.response
         else:
@@ -349,7 +349,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield http.post(self.httpbin('post'), data=data)
+        response = yield from http.post(self.httpbin('post'), data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -359,7 +359,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield http.put(self.httpbin('put'), data=data)
+        response = yield from http.put(self.httpbin('put'), data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -369,8 +369,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield http.patch(self.httpbin('patch'),
-                                    data=data)
+        response = yield from http.patch(self.httpbin('patch'),
+                                         data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -380,8 +380,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield http.delete(self.httpbin('delete'),
-                                     data=data)
+        response = yield from http.delete(self.httpbin('delete'), data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -389,7 +388,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_response_headers(self):
         http = self._client
-        response = yield http.get(self.httpbin('response_headers'))
+        response = yield from http.get(self.httpbin('response_headers'))
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertEqual(result['Transfer-Encoding'], 'chunked')
@@ -408,8 +407,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self._client
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield http.post(self.httpbin('post'), data=data,
-                                   wait_continue=True)
+        response = yield from http.post(self.httpbin('post'), data=data,
+                                        wait_continue=True)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -418,7 +417,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_send_cookie(self):
         http = self._client
         cookies = {'sessionid': 't1', 'cookies_are': 'working'}
-        response = yield http.get(self.httpbin('cookies'), cookies=cookies)
+        response = yield from http.get(self.httpbin('cookies'),
+                                       cookies=cookies)
         self.assertEqual(response.status_code, 200)
         data = response.decode_content()
         self.assertEqual(data['cookies']['sessionid'], 't1')
@@ -427,14 +427,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_cookie(self):
         http = self._client
         # First set the cookies
-        r = yield http.get(self.httpbin(
-            'cookies', 'set', 'bla', 'foo'))
+        r = yield from http.get(self.httpbin('cookies', 'set', 'bla', 'foo'))
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
         self.assertTrue(http.cookies)
         # Now check if I get them
-        r = yield http.get(self.httpbin('cookies'))
+        r = yield from http.get(self.httpbin('cookies'))
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.request.unredirected_headers)
         result = r.json()
@@ -442,34 +441,33 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(result['cookies']['bla'], 'foo')
         # Try without saving cookies
         http = self.client(store_cookies=False)
-        r = yield http.get(self.httpbin(
-            'cookies', 'set', 'bla', 'foo'))
+        r = yield from http.get(self.httpbin('cookies', 'set', 'bla', 'foo'))
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
-        r = yield http.get(self.httpbin('cookies'))
+        r = yield from http.get(self.httpbin('cookies'))
         self.assertEqual(r.status_code, 200)
         result = r.json()
         self.assertFalse(result['cookies'])
 
     def test_basic_authentication(self):
         http = self._client
-        r = yield http.get(self.httpbin('basic-auth/bla/foo'))
+        r = yield from http.get(self.httpbin('basic-auth/bla/foo'))
         # The response MUST include a WWW-Authenticate header field
         self.assertEqual(r.status_code, 401)
         http.add_basic_authentication('bla', 'foo')
-        r = yield http.get(self.httpbin('basic-auth/bla/foo'))
+        r = yield from http.get(self.httpbin('basic-auth/bla/foo'))
         self.assertEqual(r.status_code, 200)
 
     def test_digest_authentication(self):
         # TODO fix this test. Issue #94
         if not self.tunneling:
             http = self.client()
-            r = yield http.get(self.httpbin(
+            r = yield from http.get(self.httpbin(
                 'digest-auth/luca/bla/auth'))
             self.assertEqual(r.status_code, 401)
             http.add_digest_authentication('luca', 'bla')
-            r = yield http.get(self.httpbin(
+            r = yield from http.get(self.httpbin(
                 'digest-auth/luca/bla/auth'))
             self.assertEqual(r.status_code, 200)
 
@@ -482,8 +480,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             response.request.remove_header('host')
             self.assertFalse(r.has_header('host'))
 
-        response = yield http.get(self.httpbin(),
-                                  pre_request=remove_host)
+        response = yield from http.get(self.httpbin(),
+                                       pre_request=remove_host)
         if self.with_proxy and not self.tunneling:
             # When using a proxy, The proxy server obtains the host from
             # the absolute URI which part of the request.
@@ -502,8 +500,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             self.assertFalse(r.has_header('host'))
             return response
 
-        response = yield http.get(self.httpbin(),
-                                  pre_request=remove_host)
+        response = yield from http.get(self.httpbin(),
+                                       pre_request=remove_host)
         self.assertEqual(response.status_code, 200)
 
     def test_expect_fail(self):
@@ -513,16 +511,15 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self._client
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield http.post(self.httpbin('expect'), data=data,
-                                   wait_continue=True)
+        response = yield from http.post(self.httpbin('expect'), data=data,
+                                        wait_continue=True)
         self.assertEqual(response.status_code, 417)
 
     def test_expect_fail_no_waiting(self):
         http = self._client
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield http.post(self.httpbin('expect'), data=data
-                                   )
+        response = yield from http.post(self.httpbin('expect'), data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -530,14 +527,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_media_root(self):
         http = self._client
-        response = yield http.get(self.httpbin('media/'))
+        response = yield from http.get(self.httpbin('media/'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
 
     def test_media_file(self):
         http = self._client
-        response = yield http.get(self.httpbin('media/httpbin.js'))
+        response = yield from http.get(self.httpbin('media/httpbin.js'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.headers['content-type'] in
                         ('application/javascript',
@@ -547,17 +544,17 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(modified)
         #
         # Test if modified since
-        response = yield http.get(self.httpbin('media/httpbin.js'),
-                                  headers=[('If-modified-since', modified)]
-                                  )
+        response = yield from http.get(
+            self.httpbin('media/httpbin.js'),
+            headers=[('If-modified-since', modified)])
         self.assertEqual(response.status_code, 304)
         self.assertFalse('Content-length' in response.headers)
 
     def test_http_get_timeit(self):
         N = 10
         client = self._client
-        bench = yield client.timeit('get', N, self.httpbin('get'),
-                                    data={'bla': 'foo'})
+        bench = yield from client.timeit('get', N, self.httpbin('get'),
+                                         data={'bla': 'foo'})
         self.assertTrue(bench.taken)
         self.assertEqual(len(bench.result), N)
         for r in bench.result:
@@ -568,8 +565,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         files = {'test': 'simple file'}
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield client.post(self.httpbin('post'), data=data,
-                                     files=files)
+        response = yield from client.post(self.httpbin('post'), data=data,
+                                          files=files)
         self.assertEqual(response.status_code, 200)
         ct = response.request.headers['content-type']
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
@@ -588,7 +585,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             sent.append(image)
             files.append(('images', (name, image)))
         client = self._client
-        response = yield client.post(self.httpbin('post'), files=files)
+        response = yield from client.post(self.httpbin('post'), files=files)
         self.assertEqual(response.status_code, 200)
         ct = response.request.headers['content-type']
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
@@ -601,7 +598,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_bench_json(self):
         http = self._client
-        response = yield http.get(self.httpbin('json'))
+        response = yield from http.get(self.httpbin('json'))
         self.assertEqual(response.headers['content-type'],
                          'application/json; charset=utf-8')
         result = response.decode_content()
@@ -609,7 +606,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_bench_text(self):
         http = self._client
-        response = yield http.get(self.httpbin('plaintext'))
+        response = yield from http.get(self.httpbin('plaintext'))
         self.assertEqual(response.headers['content-type'],
                          'text/plain; charset=utf-8')
         result = response.decode_content()
@@ -618,7 +615,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_pool_200(self):
         N = 6
         http = self.client(pool_size=2)
-        bench = yield http.timeit('get', N, self.httpbin())
+        bench = yield from http.timeit('get', N, self.httpbin())
         self.assertEqual(len(bench.result), N)
         for response in bench.result:
             self.assertEqual(str(response), '200')
@@ -632,7 +629,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_pool_400(self):
         N = 6
         http = self.client(pool_size=2)
-        bench = yield http.timeit('get', N, self.httpbin('status', '400'))
+        bench = yield from http.timeit('get', N, self.httpbin('status', '400'))
         self.assertEqual(len(bench.result), N)
         for response in bench.result:
             self.assertEqual(str(response), '400')
@@ -645,6 +642,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_415(self):
         http = self._client
-        response = yield http.get(self.httpbin(''),
-                                  headers=[('accept', 'application/json')])
+        response = yield from http.get(
+            self.httpbin(''), headers=[('accept', 'application/json')])
         self.assertEqual(response.status_code, 415)

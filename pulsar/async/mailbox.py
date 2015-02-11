@@ -69,12 +69,15 @@ from .clients import AbstractClient
 CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
 
 
-def command_in_context(command, caller, actor, args, kwargs):
+def command_in_context(command, caller, target, args, kwargs, connection=None):
     cmnd = get_command(command)
     if not cmnd:
         raise CommandError('unknown %s' % command)
-    request = CommandRequest(actor, caller, None)
-    return cmnd(request, args, kwargs)
+    request = CommandRequest(target, caller, connection)
+    result = cmnd(request, args, kwargs)
+    if is_async(result):
+        result = yield from result
+    return result
 
 
 class ProxyMailbox(object):
@@ -216,15 +219,11 @@ class MailboxProtocol(Protocol):
                                                    *message['args'],
                                                    **message['kwargs'])
                 else:
-                    actor = target
-                    cmd = get_command(command)
-                    req = CommandRequest(target, caller, self)
-                    if actor.cfg.debug:
-                        actor.logger.debug('Executing command %s from %s',
-                                           command, caller or 'monitor')
-                    result = cmd(req, message['args'], message['kwargs'])
-                    if is_async(result):
-                        result = yield from result
+                    result = yield from command_in_context(command, caller,
+                                                           target,
+                                                           message['args'],
+                                                           message['kwargs'],
+                                                           self)
             except CommandError as exc:
                 self.logger.warning('Command error: %s' % exc)
                 result = None

@@ -1197,8 +1197,8 @@ class HttpClient(AbstractClient):
                 request.set_proxy(p.scheme, p.netloc)
 
     def _connect(self, host, port, ssl):
-        _, connection = yield From(self._loop.create_connection(
-            self.create_protocol, host, port, ssl=ssl))
+        _, connection = yield from self._loop.create_connection(
+            self.create_protocol, host, port, ssl=ssl)
         # Wait for the connection made event
         yield from connection.event('connection_made')
         return connection

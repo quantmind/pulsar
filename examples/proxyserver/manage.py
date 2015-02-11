@@ -190,7 +190,7 @@ class ProxyResponse(object):
         status = response.get_status()
         if status == '100 Continue':
             stream = self.environ.get('wsgi.input') or io.BytesIO()
-            body = yield stream.read()
+            body = yield from stream.read()
             response.transport.write(body)
         if response.parser.is_headers_complete():
             if self._headers is None:

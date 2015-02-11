@@ -77,7 +77,6 @@ class Concurrency(object):
         self.kind = kind
         self.cfg = cfg
         self.params = kw
-        self.identity = aid
         return self.create_actor()
 
     @property
@@ -430,7 +429,7 @@ class MonitorMixin(object):
             num_to_kill = len(self.managed_actors) - monitor.cfg.workers
             for i in range(num_to_kill, 0, -1):
                 w, kage = 0, sys.maxsize
-                for worker in itervalues(self.managed_actors):
+                for worker in self.managed_actors.values():
                     age = worker.impl.age
                     if age < kage:
                         w, kage = w, age
@@ -464,7 +463,7 @@ class MonitorMixin(object):
         if actor.started():
             info['actor'].update({'concurrency': actor.cfg.concurrency,
                                   'workers': len(self.managed_actors)})
-            info['workers'] = [a.info for a in itervalues(self.managed_actors)
+            info['workers'] = [a.info for a in self.managed_actors.values()
                                if a.info]
         return info
 
@@ -550,7 +549,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             if not self.cfg.pidfile:
                 self.cfg.set('pidfile', 'pulsar.pid')
             system.daemonize(keep_fds=logger_fds())
-        self.identity = self.name
+        self.aid = self.name
         actor = super(ArbiterConcurrency, self).create_actor()
         self.monitors = OrderedDict()
         self.registered = {'arbiter': actor}
@@ -671,7 +670,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         # Close al monitors at once
         try:
             for m in self.monitors.values():
-                yield from m.stop()
+                stop = m.stop()
+                if stop:
+                    yield from stop
             yield from self._close_actors(actor)
         except Exception:
             actor.logger.exception('Exception while closing arbiter')
@@ -726,7 +727,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def _info_monitor(self, actor, info=None):
         data = info
         monitors = {}
-        for m in itervalues(self.monitors):
+        for m in self.monitors.values():
             info = m.info()
             if info:
                 actor = info['actor']
@@ -741,7 +742,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         server.pop('actor_id', None)
         server.pop('age', None)
         data['server'] = server
-        data['workers'] = [a.info for a in itervalues(self.managed_actors)]
+        data['workers'] = [a.info for a in self.managed_actors.values()]
         data['monitors'] = monitors
         return data
 

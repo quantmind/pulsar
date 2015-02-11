@@ -36,6 +36,7 @@ check server
 import gc
 import logging
 import unittest
+import asyncio
 from inspect import isclass
 from functools import partial
 
@@ -46,10 +47,9 @@ except ImportError:
 
 import pulsar
 from pulsar import (get_actor, send, multi_async, future_timeout,
-                    TcpServer, new_event_loop, task,
+                    TcpServer, new_event_loop, is_async,
                     format_traceback, ImproperlyConfigured, Future,
                     chain_future)
-from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.data import create_store
 
@@ -143,21 +143,20 @@ class AsyncAssert(object):
 
     def __getattr__(self, name):
 
-        @task
         def _(*args, **kwargs):
-            __skip_traceback__ = True
-            args = yield multi_async(args)
-            result = yield getattr(self.test, name)(*args, **kwargs)
-            coroutine_return(result)
+            args = yield from multi_async(args)
+            result = getattr(self.test, name)(*args, **kwargs)
+            if is_async(result):
+                result = yield from result
+            return result
 
         return _
 
-    @task
     def assertRaises(self, error, callable, *args, **kwargs):
         try:
-            yield callable(*args, **kwargs)
+            yield from callable(*args, **kwargs)
         except error:
-            coroutine_return()
+            return
         except Exception:
             raise self.test.failureException('%s not raised by %s'
                                              % (error, callable))
@@ -192,7 +191,7 @@ class ActorTestMixin(object):
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
-        self.assertTrue(isinstance(ad, ActorProxyFuture))
+        self.assertIsInstance(ad, Future)
         proxy = yield from ad
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)
@@ -202,7 +201,7 @@ class ActorTestMixin(object):
 
     def stop_actors(self, *args):
         all = args or self.all_spawned
-        return asyncio.wait([send(a, 'stop') for a in all])
+        return multi_async([send(a, 'stop') for a in all])
 
     def tearDown(self):
         return self.stop_actors()

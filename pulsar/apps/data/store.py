@@ -13,6 +13,7 @@ from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 __all__ = ['Command',
+           'REV_KEY',
            'Store',
            'RemoteStore',
            'PubSub',
@@ -104,6 +105,11 @@ class Store(metaclass=ABCMeta):
         '''Database name/number associated with this store.'''
         return self._database
 
+    @database.setter
+    def database(self, value):
+        self._database = value
+        self._dns = self._buildurl()
+
     @property
     def encoding(self):
         '''Store encoding (usually ``utf-8``)
@@ -114,6 +120,50 @@ class Store(metaclass=ABCMeta):
     def dns(self):
         '''Domain name server'''
         return self._dns
+
+    def database_create(self, dbname=None, **kw):
+        '''Create a new database in this store.
+
+        By default it does nothing, stores must implement this method
+        only if they support database creation.
+
+        :param dbname: optional database name. If not supplied a
+            database with :attr:`database` is created.
+        '''
+        pass
+
+    def database_all(self, dbname=None):
+        pass
+
+    def database_drop(self, dbname=None):
+        '''Drop a database ``dbname``
+
+        By default it does nothing, stores must implement this method
+        only if they support database deletion.
+
+        :param dbname: optional database name. If not supplied a
+            database named :attr:`database` is deleted.
+        '''
+        pass
+
+    def table_create(self, table_name, **kw):
+        '''Create the table for ``model``.
+
+        This method is used by the :ref:`object data mapper <odm>`.
+        By default it does nothing.
+        '''
+
+    def table_delete(self, table_name, **kw):
+        '''Drop the table for ``model``.
+
+        This method is used by the :ref:`object data mapper <odm>`.
+        By default it does nothing.
+        '''
+
+    def table_all(self, **kw):
+        '''Information about the table/collection mapping ``model``
+        '''
+        pass
 
     #    INTERNALS
     #######################
@@ -205,28 +255,6 @@ class RemoteStore(Producer, Store):
         '''
         raise NotImplementedError
 
-    def create_database(self, dbname=None, **kw):
-        '''Create a new database in this store.
-
-        By default it does nothing, stores must implement this method
-        only if they support database creation.
-
-        :param dbname: optional database name. If not supplied a
-            database with :attr:`database` is created.
-        '''
-        pass
-
-    def delete_database(self, dbname=None):
-        '''Delete a database ``dbname``
-
-        By default it does nothing, stores must implement this method
-        only if they support database deletion.
-
-        :param dbname: optional database name. If not supplied a
-            database named :attr:`database` is deleted.
-        '''
-        pass
-
     def close(self):
         '''Close all open connections
         '''
@@ -265,25 +293,6 @@ class RemoteStore(Producer, Store):
         '''Create a transaction for this store.
         '''
         return StoreTransaction(self)
-
-    def create_table(self, model, remove_existing=False):
-        '''Create the table for ``model``.
-
-        This method is used by the :ref:`object data mapper <odm>`.
-        By default it does nothing.
-        '''
-
-    def drop_table(self, model, remove_existing=False):
-        '''Drop the table for ``model``.
-
-        This method is used by the :ref:`object data mapper <odm>`.
-        By default it does nothing.
-        '''
-
-    def table_info(self, model):
-        '''Information about the table/collection mapping ``model``
-        '''
-        pass
 
     def create_model(self, manager, *args, **kwargs):
         '''Create a new model from a ``manager``

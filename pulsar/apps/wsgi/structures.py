@@ -102,10 +102,6 @@ class Accept(tuple):
             return -1
 
     def values(self):
-        """Return a list of the values, not the qualities."""
-        return list(self.itervalues())
-
-    def itervalues(self):
         """Iterate over all values."""
         for item in self:
             yield item[0]

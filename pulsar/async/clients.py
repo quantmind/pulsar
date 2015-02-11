@@ -91,8 +91,9 @@ class Pool(AsyncObject):
             connection = queue.get_nowait()
         # wait for one to be available
         elif self.in_use + self._connecting >= queue._maxsize:
-            connection = yield asyncio.wait_for(queue.get(), self._timeout,
-                                                loop=self._loop)
+            connection = yield from asyncio.wait_for(queue.get(),
+                                                     self._timeout,
+                                                     loop=self._loop)
         else:   # must create a new connection
             self._connecting += 1
             try:
@@ -242,7 +243,7 @@ class AbstractUdpClient(Producer):
         '''Helper method for creating a connection to an ``address``.
         '''
         protocol_factory = protocol_factory or self.create_protocol
-        _, protocol = yield self._loop.create_datagram_endpoint(
+        _, protocol = yield from self._loop.create_datagram_endpoint(
             protocol_factory, **kw)
         yield from protocol.event('connection_made')
         return protocol

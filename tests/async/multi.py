@@ -2,8 +2,7 @@
 import sys
 import unittest
 
-from pulsar import (get_event_loop, multi_async, InvalidStateError, Future,
-                    maybe_async)
+from pulsar import get_event_loop, multi_async, Future, maybe_async
 
 
 class TestMulti(unittest.TestCase):
@@ -26,5 +25,5 @@ class TestMulti(unittest.TestCase):
         d2.set_result('first')
         self.assertFalse(d.done())
         d1.set_result('second')
-        result = yield d
+        result = yield from d
         self.assertEqual(result, ['second', 'first', 'bla'])

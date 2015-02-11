@@ -9,7 +9,6 @@ from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
 from pulsar.utils.security import gen_unique_id
 
-from .futures import task
 from .events import EventHandler
 from .proxy import ActorProxy, ActorProxyMonitor, actor_identity
 from .mailbox import command_in_context
@@ -236,10 +235,6 @@ class Actor(EventHandler, Coverage):
         return self.__impl.aid
 
     @property
-    def identity(self):
-        return self.__impl.identity
-
-    @property
     def impl(self):
         return self.__impl
 
@@ -302,11 +297,11 @@ class Actor(EventHandler, Coverage):
             self.state = ACTOR_STATES.STARTING
             self._run()
 
-    @task
     def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
         positional ``args`` and key-valued ``kwargs``.
-        Always return a :class:`~asyncio.Future`.'''
+        Returns a coroutine or a Future.
+        '''
         target = self.monitor if target == 'monitor' else target
         mailbox = self.mailbox
         if isinstance(target, ActorProxyMonitor):

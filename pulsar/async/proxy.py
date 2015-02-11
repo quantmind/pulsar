@@ -26,7 +26,7 @@ def get_proxy(obj, safe=False):
 
 
 def actor_identity(actor):
-    return actor.identity if hasattr(actor, 'identity') else actor
+    return actor.aid if hasattr(actor, 'aid') else actor
 
 
 def get_command(name):
@@ -59,16 +59,8 @@ class command:
         return command_function
 
 
-class ActorIdentity(object):
-    aid = None
-
-    @property
-    def identity(self):
-        return self.aid
-
-
 def actor_proxy_future(aid, future=None):
-    self = ActorProxyFuture()
+    self = Future()
     if isinstance(aid, ActorProxyMonitor):
         assert future is None
         aid.callback = self
@@ -79,26 +71,7 @@ def actor_proxy_future(aid, future=None):
     return self
 
 
-class ActorProxyFuture(Future, ActorIdentity):
-    '''A :class:`.Future` for an :class:`.ActorProxy`.
-
-    The callback will be an :class:`.ActorProxy` which will be received once
-    the remote :class:`.Actor` is fully functional.
-
-    .. attribute:: aid
-
-        The the remote :attr:`.Actor` id
-
-    '''
-    def __repr__(self):
-        if self.done():
-            return '%s(%s)' % (self.__class__.__name__, self.aid)
-        else:
-            return '%s(%s) PENDING' % (self.__class__.__name__, self.aid)
-    __str__ = __repr__
-
-
-class ActorProxy(ActorIdentity):
+class ActorProxy(object):
     '''A proxy for a remote :class:`.Actor`.
 
     This is a lightweight class which delegates function calls to the

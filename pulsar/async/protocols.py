@@ -732,9 +732,9 @@ class DatagramServer(Producer):
                         proto = self.create_protocol()
                         transports.append(transport(self._loop, proto))
                 else:
-                    transport, _ = yield From(
-                        self._loop.create_datagram_endpoint(
-                            self.protocol_factory, local_addr=address))
+                    loop = self._loop
+                    transport, _ = yield from loop.create_datagram_endpoint(
+                        self.protocol_factory, local_addr=address)
                     transports.append(transport)
                 self._transports = transports
                 self._started = self._loop.time()
