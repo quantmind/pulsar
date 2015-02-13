@@ -549,9 +549,11 @@ class WsgiRequest(EnvironMixin):
             charset = options.get('charset', 'utf-8')
             if content_type in JSON_CONTENT_TYPES:
                 result = json.loads(chunk.decode(charset)), None
-            else:
+            elif content_type:
                 self.environ['wsgi.input'] = BytesIO(chunk)
                 result = parse_form_data(self.environ, charset)
+            else:
+                result = chunk, None
             self.environ['wsgi.input'] = BytesIO(chunk)
         self.cache.data_and_files = result
         return self.data_and_files(data, files)

@@ -29,6 +29,11 @@ data_stores = {}
 REV_KEY = '_rev'
 
 
+def noop():
+    if False:
+        yield None
+
+
 class Command(object):
     '''A command executed during a in a :meth:`~.Store.execute_transaction`
 
@@ -130,10 +135,10 @@ class Store(metaclass=ABCMeta):
         :param dbname: optional database name. If not supplied a
             database with :attr:`database` is created.
         '''
-        pass
+        return noop()
 
     def database_all(self, dbname=None):
-        pass
+        return noop()
 
     def database_drop(self, dbname=None):
         '''Drop a database ``dbname``
@@ -144,7 +149,7 @@ class Store(metaclass=ABCMeta):
         :param dbname: optional database name. If not supplied a
             database named :attr:`database` is deleted.
         '''
-        pass
+        return noop()
 
     def table_create(self, table_name, **kw):
         '''Create the table for ``model``.
@@ -152,18 +157,20 @@ class Store(metaclass=ABCMeta):
         This method is used by the :ref:`object data mapper <odm>`.
         By default it does nothing.
         '''
+        return noop()
 
-    def table_delete(self, table_name, **kw):
+    def table_drop(self, table_name, **kw):
         '''Drop the table for ``model``.
 
         This method is used by the :ref:`object data mapper <odm>`.
         By default it does nothing.
         '''
+        return noop()
 
     def table_all(self, **kw):
         '''Information about the table/collection mapping ``model``
         '''
-        pass
+        return noop()
 
     #    INTERNALS
     #######################

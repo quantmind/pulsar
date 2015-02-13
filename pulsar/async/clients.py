@@ -4,7 +4,7 @@ from pulsar.utils.internet import is_socket_closed
 
 import asyncio
 
-from .futures import AsyncObject, future_timeout, task
+from .futures import AsyncObject, future_timeout
 from .protocols import Producer
 
 
@@ -58,7 +58,6 @@ class Pool(AsyncObject):
             return connection in self._queue._queue
         return True
 
-    @task
     def connect(self):
         '''Get a connection from the pool.
 
@@ -203,7 +202,6 @@ class AbstractClient(Producer):
         return self.fire_event('finish')
     abort = close
 
-    @task
     def create_connection(self, address, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
         '''
@@ -238,7 +236,6 @@ class AbstractUdpClient(Producer):
         return self.fire_event('finish')
     abort = close
 
-    @task
     def create_datagram_endpoint(self, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
         '''
