@@ -295,6 +295,7 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, DEFAULT_CHARSET,
                                   JSON_CONTENT_TYPES)
+from asyncio.events import new_event_loop
 
 try:
     from pulsar.apps import greenio
@@ -1103,6 +1104,13 @@ class HttpClient(AbstractClient):
 
         :rtype: a :class:`.Future`
         '''
+        response = self._request(method, url, **params)
+        if not self._loop.is_running():
+            return self._loop.run_until_complete(response)
+        else:
+            return response
+
+    def _request(self, method, url, **params):
         nparams = params.copy()
         nparams.update(((name, getattr(self, name)) for name in
                         self.request_parameters if name not in params))
@@ -1135,7 +1143,7 @@ class HttpClient(AbstractClient):
                 conn.detach()
         if isinstance(consumer.request_again, tuple):
             method, url, params = consumer.request_again
-            consumer = yield from self.request(method, url, **params)
+            consumer = yield from self._request(method, url, **params)
         return consumer
 
     def close(self, async=True, timeout=5):
