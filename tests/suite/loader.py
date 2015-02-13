@@ -6,12 +6,11 @@ import unittest
 from threading import current_thread
 
 from pulsar import get_actor, get_application
-from pulsar.apps.test import TestLoader, run_on_arbiter
+from pulsar.apps.test import TestLoader
 
 
 class TestTestLoader(unittest.TestCase):
 
-    @run_on_arbiter
     def test_testsuite(self):
         app = yield get_application('test')
         self.assertTrue(app.cfg.script)

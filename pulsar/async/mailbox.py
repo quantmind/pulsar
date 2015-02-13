@@ -110,9 +110,9 @@ class ProxyMailbox(object):
 class Message(object):
     '''A message which travels from actor to actor.
     '''
-    def __init__(self, data, future=None):
+    def __init__(self, data, waiter=None):
         self.data = data
-        self.future = future
+        self.waiter = waiter
 
     def __repr__(self):
         return self.data.get('command', 'unknown')
@@ -126,12 +126,12 @@ class Message(object):
                 'target': actor_identity(target),
                 'args': args if args is not None else (),
                 'kwargs': kwargs if kwargs is not None else {}}
+        waiter = Future()
         if command.ack:
-            future = Future()
             data['ack'] = gen_unique_id()[:8]
         else:
-            future = None
-        return cls(data, future)
+            waiter.set_result(None)
+        return cls(data, waiter)
 
     @classmethod
     def callback(cls, result, ack):
@@ -156,7 +156,7 @@ class MailboxProtocol(Protocol):
         '''Used by the server to send messages to the client.'''
         req = Message.command(command, sender, target, args, kwargs)
         self._start(req)
-        return req.future
+        return req.waiter
 
     def data_received(self, data):
         # Feed data into the parser
@@ -172,12 +172,12 @@ class MailboxProtocol(Protocol):
     ########################################################################
     #    INTERNALS
     def _start(self, req):
-        if req.future and 'ack' in req.data:
-            self._pending_responses[req.data['ack']] = req.future
+        if req.waiter and 'ack' in req.data:
+            self._pending_responses[req.data['ack']] = req.waiter
             try:
                 self._write(req)
             except Exception as exc:
-                req.future.set_exception(exc)
+                req.waiter.set_exception(exc)
         else:
             self._write(req)
 
@@ -278,7 +278,7 @@ class MailboxClient(AbstractClient):
             self._connection.bind_event('connection_lost', self._lost)
         req = Message.command(command, sender, target, args, kwargs)
         self._connection._start(req)
-        response = yield from req.future
+        response = yield from req.waiter
         return response
 
     def start_serving(self):

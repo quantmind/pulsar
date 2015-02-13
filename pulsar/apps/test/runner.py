@@ -54,6 +54,8 @@ class Runner(object):
             if not all_tests.countTestCases():
                 continue
 
+            self.logger.info('Running Tests from %s', testcls)
+
             runner.startTestClass(testcls)
 
             if skip_test(testcls):
@@ -63,13 +65,10 @@ class Runner(object):
 
             else:
                 self.concurrent.add(testcls)
-                coro = self._run_testcls(testcls, all_tests)
-                if seq:
-                    # wait for the coroutine to finish
-                    yield from coro
-                else:
-                    # make it into a task
-                    asyncio.async(coro, loop=self._loop)
+                yield from self._run_testcls(testcls, all_tests)
+
+            self.logger.info('Finished Tests from %s', testcls)
+
 
     def _run_testcls(self, testcls, all_tests):
         cfg = testcls.cfg
@@ -136,7 +135,8 @@ class Runner(object):
             coro = method()
             # a coroutine
             if coro:
-                timeout = self.monitor.cfg.test_timeout
+                timeout = getattr(method, 'timeout',
+                                  self.monitor.cfg.test_timeout)
                 yield from asyncio.wait_for(coro, timeout, loop=self._loop)
         except Exception as exc:
             if not error:

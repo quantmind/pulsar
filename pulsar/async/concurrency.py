@@ -79,6 +79,9 @@ class Concurrency(object):
         self.params = kw
         return self.create_actor()
 
+    def identity(self, actor):
+        return actor.aid
+
     @property
     def unique_name(self):
         return '%s(%s)' % (self.name, self.aid)
@@ -170,8 +173,6 @@ class Concurrency(object):
     def create_actor(self):
         self.daemon = False
         self.params['monitor'] = get_proxy(self.params['monitor'])
-        # make sure these parameters are picklable
-        # pickle.dumps(self.params)
         return ActorProxyMonitor(self)
 
     def create_mailbox(self, actor, loop):
@@ -313,6 +314,9 @@ class ProcessMixin(object):
 
 
 class MonitorMixin(object):
+
+    def identity(self, actor):
+        return actor.name
 
     def create_actor(self):
         self.managed_actors = {}
@@ -552,7 +556,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         self.aid = self.name
         actor = super(ArbiterConcurrency, self).create_actor()
         self.monitors = OrderedDict()
-        self.registered = {'arbiter': actor}
+        self.registered = {self.identity(actor): actor}
         actor.bind_event('start', self._start_arbiter)
         return actor
 
@@ -681,8 +685,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def _remove_actor(self, arbiter, actor, log=True):
         a = super(ArbiterConcurrency, self)._remove_actor(arbiter, actor,
                                                           False)
-        b = self.registered.pop(actor.name, None)
-        c = self.monitors.pop(actor.aid, None)
+        b = self.registered.pop(self.identity(actor), None)
+        c = self.monitors.pop(self.identity(actor), None)
         removed = a or b or c
         if removed and log:
             arbiter.logger.warning('Removed %s', actor)
@@ -747,8 +751,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return data
 
     def _register(self, actor):
-        self.registered[actor.name] = actor
-        self.monitors[actor.aid] = actor
+        aid = self.identity(actor)
+        self.registered[aid] = actor
+        self.monitors[aid] = actor
 
 
 def run_actor(self):

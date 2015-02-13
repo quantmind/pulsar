@@ -2,8 +2,7 @@ import unittest
 import time
 
 from pulsar import async_while, send, get_actor
-from pulsar.apps.test import run_on_arbiter
-from pulsar.apps.shell import InteractiveConsole, decode_line, PulsarShell
+from pulsar.apps.shell import InteractiveConsole, PulsarShell
 
 
 class DummyConsole(InteractiveConsole):
@@ -25,7 +24,7 @@ class TestShell(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app_cfg = yield send('arbiter', 'run', start)
+        cls.app_cfg = yield from send('arbiter', 'run', start)
 
     @classmethod
     def tearDownClass(cls):
@@ -40,9 +39,7 @@ class TestShell(unittest.TestCase):
         self.assertEqual(cfg.workers, 0)
         self.assertEqual(cfg.thread_workers, 1)
         self.assertEqual(cfg.concurrency, 'thread')
-        self.assertEqual(decode_line('bla'), 'bla')
 
-    @run_on_arbiter
     def test_test_worker(self):
         arbiter = get_actor()
         monitor = arbiter.get_actor('shell')

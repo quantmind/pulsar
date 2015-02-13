@@ -46,7 +46,6 @@ from random import normalvariate
 from pulsar import task
 from pulsar.apps import rpc, wsgi
 from pulsar.utils.httpurl import JSON_CONTENT_TYPES
-from pulsar.utils.pep import range
 
 
 def divide(request, a, b):

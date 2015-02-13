@@ -1,16 +1,14 @@
 '''Tests for arbiter and monitors.'''
 import os
 import unittest
+import asyncio
 
 import pulsar
 from pulsar import (send, spawn, system, platform, ACTOR_ACTION_TIMEOUT,
                     MONITOR_TASK_PERIOD, multi_async)
 from pulsar.utils.pep import default_timer
-from pulsar.apps.test import ActorTestMixin, dont_run_with_thread
-
-
-def timeout(start):
-    return default_timer() - start > 1.5*ACTOR_ACTION_TIMEOUT
+from pulsar.apps.test import (ActorTestMixin, dont_run_with_thread,
+                              test_timeout)
 
 
 def cause_timeout(actor):
@@ -26,7 +24,7 @@ def cause_terminate(actor):
         # hayjack the stop method
         actor.stop = lambda exc=None, exit_code=None: False
     else:
-        actor.event_loop.call_soon(cause_timeout, actor)
+        actor._loop.call_soon(cause_timeout, actor)
 
 
 def wait_for_stop(test, aid, terminating=False):
@@ -61,7 +59,6 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(arbiter.impl.kind, 'arbiter')
         self.assertEqual(arbiter.aid, 'arbiter')
         self.assertEqual(arbiter.name, 'arbiter')
-        self.assertNotEqual(arbiter.aid, arbiter.aid)
         self.assertTrue(arbiter.monitors)
         self.assertEqual(arbiter.exit_code, None)
         info = arbiter.info()
@@ -86,17 +83,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue('arbiter' in arbiter.registered)
         self.assertTrue('test' in arbiter.registered)
 
-    def test_ping_test_worker(self):
-        arbiter = pulsar.get_actor()
-        info = arbiter.info()
-        test = info['monitors']['test']
-        workers = [w['actor']['actor_id'] for w in test['workers']]
-        self.assertTrue(workers)
-        result = yield from multi_async(
-            (arbiter.send(w, 'ping') for w in workers))
-        self.assertEqual(len(result), len(workers))
-        self.assertEqual(result, len(result)*['pong'])
-
+    @test_timeout(2*ACTOR_ACTION_TIMEOUT)
     def test_spawning_in_arbiter(self):
         arbiter = pulsar.get_actor()
         self.assertEqual(arbiter.name, 'arbiter')
@@ -110,6 +97,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         self.assertEqual(proxy, arbiter.get_actor(proxy.aid))
         #
+        yield from asyncio.sleep(1)
         # Stop the actor
         result = yield from send(proxy, 'stop')
         self.assertEqual(result, None)
@@ -139,6 +127,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue(proxy.stopping_start)
         self.assertFalse(proxy.aid in arbiter.managed_actors)
 
+    @test_timeout(2*ACTOR_ACTION_TIMEOUT)
     def test_terminate(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
@@ -150,18 +139,11 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         #
         result = yield from send(proxy, 'run', cause_terminate)
         #
-        # The arbiter should soon start stop the actor
+        # The arbiter should now terminate the actor
         yield from wait_for_stop(self, proxy.aid, True)
         #
         self.assertTrue(proxy.stopping_start)
         self.assertTrue(proxy in arbiter.terminated_actors)
-
-    def test_no_arbiter_in_worker_domain(self):
-        worker = pulsar.get_actor()
-        self.assertFalse(worker.is_arbiter())
-        self.assertEqual(pulsar.arbiter(), None)
-        self.assertTrue(worker.monitor)
-        self.assertNotEqual(worker.monitor.name, 'arbiter')
 
 
 @dont_run_with_thread

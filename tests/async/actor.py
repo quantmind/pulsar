@@ -42,17 +42,20 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
 
     def test_spawn_and_interact(self):
-        proxy = yield from self.spawn_actor(name='pluto')
-        self.assertEqual(proxy.name, 'pluto')
+        name = 'pluto-%s' % self.concurrency
+        proxy = yield from self.spawn_actor(name=name)
+        self.assertEqual(proxy.name, name)
         yield from self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield from self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
-        name, result = yield from send(proxy, 'run', add, 1, 3)
-        self.assertEqual(name, 'pluto')
+        yield from self.async.assertEqual(send(proxy, 'echo', 'Hello!'),
+                                          'Hello!')
+        n, result = yield from send(proxy, 'run', add, 1, 3)
+        self.assertEqual(n, name)
         self.assertEqual(result, 4)
 
     def test_info(self):
-        proxy = yield from self.spawn_actor(name='pippo')
-        self.assertEqual(proxy.name, 'pippo')
+        name = 'pippo-%s' % self.concurrency
+        proxy = yield from self.spawn_actor(name=name)
+        self.assertEqual(proxy.name, name)
         info = yield from send(proxy, 'info')
         self.assertTrue('actor' in info)
         ainfo = info['actor']

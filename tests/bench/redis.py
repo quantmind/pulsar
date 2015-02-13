@@ -4,13 +4,8 @@ import unittest
 
 from pulsar import HAS_C_EXTENSIONS
 from pulsar.apps.ds import redis_parser
-from pulsar.utils.pep import ispy3k
 
-if ispy3k:
-    characters = string.ascii_letters + string.digits
-else:   # pragma nocover
-    characters = string.letters + string.digits
-    range = xrange
+characters = string.ascii_letters + string.digits
 
 
 class RedisPyParser(unittest.TestCase):

@@ -5,8 +5,6 @@ import pulsar
 from pulsar import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
-from pulsar.apps.tasks import TaskQueue
-from pulsar.apps.test import run_on_arbiter
 
 
 def dummy(environ, start_response):
@@ -28,7 +26,6 @@ class TestMultiApp(unittest.TestCase):
         # create the application
         return MultiWsgi(**params)
 
-    @run_on_arbiter
     def testInstall(self):
         arbiter = get_actor()
         self.assertTrue(arbiter.is_arbiter())
@@ -37,16 +34,16 @@ class TestMultiApp(unittest.TestCase):
         self.assertFalse(arbiter.get_actor('pluto'))
         self.assertFalse(arbiter.get_actor('rpc_pluto'))
         # create the application
-        yield app.start()
+        yield from app.start()
         monitor1 = arbiter.get_actor('pluto')
         self.assertTrue(monitor1)
         self.assertTrue(monitor1.is_monitor())
         monitor2 = arbiter.get_actor('rpc_pluto')
         self.assertTrue(monitor2)
         self.assertTrue(monitor2.is_monitor())
-        yield monitor1.stop()
+        yield from monitor1.stop()
         self.assertFalse(arbiter.get_actor('pluto'))
-        yield monitor2.stop()
+        yield from monitor2.stop()
         self.assertFalse(arbiter.get_actor('rpc_pluto'))
 
     def test_app(self):
@@ -93,7 +90,6 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(apps[0].name, 'bla')
         self.assertEqual(apps[1].name, 'rpc_bla')
 
-    @run_on_arbiter
     def testInstall(self):
         arbiter = get_actor()
         app = self.create(name='pluto')
@@ -101,16 +97,15 @@ class TestMultiApp(unittest.TestCase):
         self.assertFalse(arbiter.get_actor('pluto'))
         self.assertFalse(arbiter.get_actor('rpc_pluto'))
         # create the application
-        yield app.start()
+        yield from app.start()
         monitor1 = arbiter.get_actor('pluto')
         self.assertTrue(monitor1)
         self.assertTrue(monitor1.is_monitor())
         monitor2 = arbiter.get_actor('rpc_pluto')
         self.assertTrue(monitor2)
         self.assertTrue(monitor2.is_monitor())
-        yield monitor1.stop()
-        yield monitor2.stop()
-        yield None
+        yield from monitor1.stop()
+        yield from monitor2.stop()
 
     def test_config_copy(self):
         app = self.create()

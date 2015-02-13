@@ -61,6 +61,7 @@ __all__ = ['sequential',
            'show_leaks',
            'hide_leaks',
            'check_server',
+           'test_timeout',
            'dont_run_with_thread']
 
 
@@ -111,6 +112,16 @@ def sequential(cls):
     '''
     cls._sequential_execution = True
     return cls
+
+
+class test_timeout:
+
+    def __init__(self, timeout):
+        self.timeout = timeout
+
+    def __call__(self, f):
+        f.timeout = self.timeout
+        return f
 
 
 class AsyncAssert(object):

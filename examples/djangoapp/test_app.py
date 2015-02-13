@@ -8,7 +8,6 @@ from pulsar.apps import http, ws
 from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.system import json
-from pulsar.utils.pep import ispy3k
 
 try:
     from django.core.management import execute_from_command_line

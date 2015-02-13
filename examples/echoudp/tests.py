@@ -1,8 +1,7 @@
 import unittest
 
 from pulsar import send, multi_async, new_event_loop, get_application
-from pulsar.utils.pep import range
-from pulsar.apps.test import dont_run_with_thread, run_on_arbiter
+from pulsar.apps.test import dont_run_with_thread
 
 from .manage import server, Echo, EchoUdpServerProtocol
 
@@ -27,7 +26,6 @@ class TestEchoUdpServerThread(unittest.TestCase):
         return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
 
     #    TEST THE SERVER APPLICATION
-    @run_on_arbiter
     def test_server_on_arbiter(self):
         app = yield get_application(self.__class__.__name__.lower())
         cfg = app.cfg

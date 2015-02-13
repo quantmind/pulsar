@@ -39,20 +39,6 @@ import code
 from time import time
 
 import pulsar
-from pulsar.utils.pep import ispy3k
-
-
-if ispy3k:
-
-    def decode_line(line):
-        return line
-else:   # pragma    nocover
-
-    def decode_line(line):
-        encoding = getattr(sys.stdin, "encoding", None)
-        if encoding and not isinstance(line, unicode):
-            line = line.decode(encoding)
-        return line
 
 
 _pshell_help = '''
@@ -96,7 +82,7 @@ class InteractiveConsole(code.InteractiveConsole):  # pragma    nocover
             else:
                 prompt = sys.ps1
             try:
-                line = decode_line(self.raw_input(prompt))
+                line = self.raw_input(prompt)
             except EOFError:
                 self.write("\n")
             else:

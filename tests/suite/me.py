@@ -4,10 +4,8 @@ import unittest
 from threading import current_thread
 
 import pulsar
-from pulsar import (asyncio, send, multi_async, get_event_loop,
-                    coroutine_return, Future, From)
-from pulsar.async.threads import QueueEventLoop
-from pulsar.apps.test import run_on_arbiter, TestSuite, sequential
+from pulsar import asyncio, send, multi_async, get_event_loop, Future
+from pulsar.apps.test import TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
 from pulsar.utils.version import get_version
 
@@ -18,8 +16,8 @@ def simple_function(actor):
 
 def wait(actor, period=0.5):
     start = actor._loop.time()
-    yield From(asyncio.sleep(period))
-    coroutine_return(actor._loop.time() - start)
+    yield from asyncio.sleep(period)
+    return actor._loop.time() - start
 
 
 class TestTestWorker(unittest.TestCase):
@@ -50,19 +48,12 @@ class TestTestWorker(unittest.TestCase):
         self.assertFalse(worker.is_monitor())
         self.assertEqual(str(worker.impl), worker.impl.unique_name)
 
-    def testCPUbound(self):
-        worker = pulsar.get_actor()
-        loop = get_event_loop()
-        self.assertIsInstance(loop, QueueEventLoop)
-        self.assertNotIsInstance(worker._loop, QueueEventLoop)
-
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()
         mailbox = worker.mailbox
         monitor = worker.monitor
         self.assertEqual(mailbox.address, monitor.address)
 
-    @run_on_arbiter
     def test_TestSuiteMonitor(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(len(arbiter.monitors) >= 1)
@@ -93,7 +84,7 @@ class TestTestWorker(unittest.TestCase):
         '''Yielding a future calling back on separate thread'''
         worker = pulsar.get_actor()
         loop = get_event_loop()
-        loop_tid = yield pulsar.loop_thread_id(loop)
+        loop_tid = yield from pulsar.loop_thread_id(loop)
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop_tid, current_thread().ident)
         yield None
@@ -106,31 +97,22 @@ class TestTestWorker(unittest.TestCase):
             d.set_result(current_thread().ident)
         worker._loop.call_soon_threadsafe(
             worker._loop.call_later, 0.2, _callback)
-        result = yield d
+        result = yield from d
         self.assertEqual(worker.tid, result)
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop_tid, current_thread().ident)
 
-    def test_ping_pong_monitor(self):
-        pong = yield send('monitor', 'ping')
-        self.assertEqual(pong, 'pong')
-
-    def test_run_on_arbiter(self):
-        actor = pulsar.get_actor()
-        response = yield actor.send('arbiter', 'run', simple_function)
-        self.assertEqual(response, 'arbiter')
-
     def test_unknown_send_target(self):
         # The target does not exists
-        result = yield pulsar.send('vcghdvchdgcvshcd', 'ping')
+        result = yield from pulsar.send('vcghdvchdgcvshcd', 'ping')
         self.assertEqual(result, None)
 
     def test_multiple_execute(self):
-        m = yield multi_async((send('arbiter', 'run', wait, 1.2),
-                               send('arbiter', 'ping'),
-                               send('arbiter', 'echo', 'ciao!'),
-                               send('arbiter', 'run', wait, 2.1),
-                               send('arbiter', 'echo', 'ciao again!')))
+        m = yield from multi_async((send('arbiter', 'run', wait, 1.2),
+                                    send('arbiter', 'ping'),
+                                    send('arbiter', 'echo', 'ciao!'),
+                                    send('arbiter', 'run', wait, 2.1),
+                                    send('arbiter', 'echo', 'ciao again!')))
         self.assertTrue(m[0] >= 1.1)
         self.assertEqual(m[1], 'pong')
         self.assertEqual(m[2], 'ciao!')

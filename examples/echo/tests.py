@@ -1,9 +1,8 @@
 import unittest
 
-from pulsar import (send, multi_async, new_event_loop, get_application, From,
+from pulsar import (send, multi_async, new_event_loop, get_application,
                     run_in_loop, get_event_loop)
-from pulsar.utils.pep import range
-from pulsar.apps.test import dont_run_with_thread, run_on_arbiter
+from pulsar.apps.test import dont_run_with_thread
 
 from .manage import server, Echo, EchoServerProtocol
 
@@ -28,7 +27,6 @@ class TestEchoServerThread(unittest.TestCase):
         return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
 
     #    TEST THE SERVER APPLICATION
-    @run_on_arbiter
     def test_server_on_arbiter(self):
         app = yield get_application(self.__class__.__name__.lower())
         cfg = app.cfg
@@ -50,14 +48,13 @@ class TestEchoServerThread(unittest.TestCase):
     def test_large(self):
         '''Echo a 3MB message'''
         msg = b''.join((b'a' for x in range(2**13)))
-        result = yield self.client(msg)
+        result = yield from self.client(msg)
         self.assertEqual(result, msg)
 
     def test_multi(self):
-        # need From because this is called by test_client method too
-        result = yield From(multi_async((self.client(b'ciao'),
+        result = yield from multi_async((self.client(b'ciao'),
                                          self.client(b'pippo'),
-                                         self.client(b'foo'))))
+                                         self.client(b'foo')))
         self.assertEqual(len(result), 3)
         self.assertTrue(b'ciao' in result)
         self.assertTrue(b'pippo' in result)
@@ -65,12 +62,12 @@ class TestEchoServerThread(unittest.TestCase):
 
     # TESTS FOR PROTOCOLS AND CONNECTIONS
     def test_client(self):
-        yield self.test_multi()
+        yield from self.test_multi()
         c = self.client
         self.assertTrue(c.pool.available)
 
     def test_info(self):
-        info = yield send(self.server_cfg.name, 'info')
+        info = yield from send(self.server_cfg.name, 'info')
         self.assertIsInstance(info, dict)
         self.assertEqual(info['actor']['name'], self.server_cfg.name)
         self.assertEqual(info['actor']['concurrency'], self.concurrency)

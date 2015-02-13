@@ -73,15 +73,17 @@ class Path(str):
                    must_exist=True):
         '''Add a directory to the python path.
 
-:parameter module: Optional module name to try to import once we have found
-    the directory
-:parameter up: number of level to go up the directory three from
-    :attr:`local_path`.
-:parameter down: Optional tuple of directory names to travel down once we have
-    gone *up* levels.
-:parameter front: Boolean indicating if we want to insert the new path at the
-    front of ``sys.path`` using ``sys.path.insert(0,path)``.
-:parameter must_exist: Boolean indicating if the module must exists.'''
+        :parameter module: Optional module name to try to import once we
+            have found the directory
+        :parameter up: number of level to go up the directory three from
+            :attr:`local_path`.
+        :parameter down: Optional tuple of directory names to travel down
+            once we have gone *up* levels.
+        :parameter front: Boolean indicating if we want to insert the new
+            path at the front of ``sys.path`` using
+            ``sys.path.insert(0,path)``.
+        :parameter must_exist: Boolean indicating if the module must exists.
+        '''
         if module:
             try:
                 return import_module(module)

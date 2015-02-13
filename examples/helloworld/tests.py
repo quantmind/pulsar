@@ -3,7 +3,7 @@ import unittest
 
 from pulsar import send, SERVER_SOFTWARE, get_application, get_actor
 from pulsar.apps.http import HttpClient
-from pulsar.apps.test import run_on_arbiter, dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread
 
 from .manage import server
 
@@ -29,7 +29,6 @@ class TestHelloWorldThread(unittest.TestCase):
         if cls.app_cfg is not None:
             yield send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    @run_on_arbiter
     def testMeta(self):
         app = yield get_application(self.name())
         self.assertEqual(app.name, self.name())
