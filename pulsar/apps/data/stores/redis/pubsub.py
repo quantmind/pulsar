@@ -1,6 +1,6 @@
 from functools import partial
 
-from pulsar import task, Protocol
+from pulsar import Protocol
 from pulsar.apps import data
 
 
@@ -14,6 +14,8 @@ class PubsubProtocol(Protocol):
     def execute(self, *args):
         chunk = self.parser.multi_bulk(args)
         self._transport.write(chunk)
+        # must be an asynchronous object like the base class method
+        yield None
 
     def data_received(self, data):
         parser = self.parser
@@ -57,34 +59,30 @@ class PubSub(data.PubSub):
     def psubscribe(self, pattern, *patterns):
         return self._subscribe('PSUBSCRIBE', pattern, *patterns)
 
-    @task
     def punsubscribe(self, *patterns):
         if self._connection:
-            self._connection.execute('PUNSUBSCRIBE', *patterns)
+            return self._connection.execute('PUNSUBSCRIBE', *patterns)
 
     def subscribe(self, channel, *channels):
         return self._subscribe('SUBSCRIBE', channel, *channels)
 
-    @task
     def unsubscribe(self, *channels):
         '''Un-subscribe from a list of ``channels``.
         '''
         if self._connection:
-            self._connection.execute('UNSUBSCRIBE', *channels)
+            return self._connection.execute('UNSUBSCRIBE', *channels)
 
-    @task
     def close(self):
         '''Stop listening for messages.
         '''
         if self._connection:
-            self._connection.execute('PUNSUBSCRIBE')
-            self._connection.execute('UNSUBSCRIBE')
+            yield from self._connection.execute('PUNSUBSCRIBE')
+            yield from self._connection.execute('UNSUBSCRIBE')
 
     #    INTERNALS
-    @task
     def _subscribe(self, *args):
         if not self._connection:
             protocol_factory = partial(PubsubProtocol, self,
                                        producer=self.store)
             self._connection = yield from self.store.connect(protocol_factory)
-            self._connection.execute(*args)
+            yield from self._connection.execute(*args)

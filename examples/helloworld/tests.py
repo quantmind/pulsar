@@ -20,17 +20,17 @@ class TestHelloWorldThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(name=cls.name(), concurrency=cls.concurrency,
                    bind='127.0.0.1:0')
-        cls.app_cfg = yield send('arbiter', 'run', s)
+        cls.app_cfg = yield from send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.client = HttpClient()
 
     @classmethod
     def tearDownClass(cls):
         if cls.app_cfg is not None:
-            yield send('arbiter', 'kill_actor', cls.app_cfg.name)
+            return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def testMeta(self):
-        app = yield get_application(self.name())
+        app = yield from get_application(self.name())
         self.assertEqual(app.name, self.name())
         monitor = get_actor().get_actor(app.name)
         self.assertTrue(monitor.is_running())
@@ -40,7 +40,7 @@ class TestHelloWorldThread(unittest.TestCase):
 
     def testResponse(self):
         c = self.client
-        response = yield c.get(self.uri)
+        response = yield from c.get(self.uri)
         self.assertEqual(response.status_code, 200)
         content = response.get_content()
         self.assertEqual(content, b'Hello World!\n')
@@ -51,12 +51,12 @@ class TestHelloWorldThread(unittest.TestCase):
 
     def testTimeIt(self):
         c = self.client
-        b = yield c.timeit('get', 5, self.uri)
+        b = yield from c.timeit('get', 5, self.uri)
         self.assertTrue(b.taken >= 0)
 
     def test405(self):
         c = self.client
-        response = yield c.post(self.uri, data={'bla': 'foo'})
+        response = yield from c.post(self.uri, data={'bla': 'foo'})
         self.assertEqual(response.status_code, 405)
 
 

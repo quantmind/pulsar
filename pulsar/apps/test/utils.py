@@ -265,7 +265,7 @@ def check_server(name):
         except ImproperlyConfigured:
             return False
         try:
-            sync_store.ping()
+            sync_store._loop.run_until_complete(sync_store.ping())
             return True
         except Exception:
             return False

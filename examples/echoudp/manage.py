@@ -68,7 +68,7 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import Pool, Future, DatagramProtocol, task
+from pulsar import Pool, Future, DatagramProtocol
 from pulsar.utils.pep import to_bytes
 from pulsar.apps.socket import UdpSocketServer
 
@@ -169,13 +169,19 @@ class Echo(pulsar.AbstractUdpClient):
     def create_endpoint(self):
         return self.create_datagram_endpoint(remote_addr=self.address)
 
-    @task
     def __call__(self, message):
         '''Send a ``message`` to the server and wait for a response.
 
         :return: a :class:`.Future`
         '''
-        protocol = yield self.pool.connect()
+        result = self._call(message)
+        if not self._loop.is_running():
+            return self._loop.run_until_complete(result)
+        else:
+            return result
+
+    def _call(self, message):
+        protocol = yield from self.pool.connect()
         with protocol:
             result = yield from protocol.send(message)
             return result

@@ -71,9 +71,11 @@ from .client import (command, PulsarStoreClient, LuaClient, Blocked,
 DEFAULT_PULSAR_STORE_ADDRESS = '127.0.0.1:6410'
 
 
-def pulsards_url(address=None, db=3):
+def pulsards_url(address=None):
     address = address or DEFAULT_PULSAR_STORE_ADDRESS
-    return 'pulsar://%s/%s' % (address, db)
+    if not address.startswith('pulsar://'):
+        address = 'pulsar://%s' % address
+    return address
 
 
 # Keyspace changes notification classes

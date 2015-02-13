@@ -2,6 +2,7 @@ from itertools import chain
 from hashlib import sha1
 
 import pulsar
+from pulsar.utils.pep import to_string
 from pulsar.utils.structures import mapping_iterator, Zset
 from pulsar.apps.ds import COMMANDS_INFO
 
@@ -59,7 +60,7 @@ def string_keys_to_dict(key_string, callback):
 
 def parse_info(response):
     info = {}
-    response = native_str(response)
+    response = to_string(response)
 
     def get_value(value):
         if ',' not in value or '=' not in value:
@@ -162,34 +163,37 @@ class Consumer(pulsar.ProtocolConsumer):
         parser.feed(data)
         response = parser.get()
         request = self._request
-        if len(request) == 2:
-            if response is not False:
-                if not isinstance(response, Exception):
-                    cmnd = request[0][0]
-                    response = self.parse_response(response, cmnd, request[1])
-                else:
-                    response = ResponseError(response)
-                self.finished(response)
-        else:   # pipeline
-            commands, raise_on_error, responses = request
-            error = None
-            while response is not False:
-                if (isinstance(response, Exception) and raise_on_error
-                        and not error):
-                    error = response
-                responses.append(response)
-                response = parser.get()
-            if len(responses) == len(commands):
-                response = []
-                for cmds, resp in zip(commands[1:-1], responses[-1]):
-                    args, options = cmds
-                    if isinstance(resp, Exception) and not error:
-                        error = resp
-                    resp = self.parse_response(resp, args[0], options)
-                    response.append(resp)
-                if error and raise_on_error:
-                    response = ResponseError(error)
-                self.finished(response)
+        try:
+            if len(request) == 2:
+                if response is not False:
+                    if not isinstance(response, Exception):
+                        cmnd = request[0][0]
+                        response = self.parse_response(response, cmnd, request[1])
+                    else:
+                        response = ResponseError(response)
+                    self.finished(response)
+            else:   # pipeline
+                commands, raise_on_error, responses = request
+                error = None
+                while response is not False:
+                    if (isinstance(response, Exception) and raise_on_error
+                            and not error):
+                        error = response
+                    responses.append(response)
+                    response = parser.get()
+                if len(responses) == len(commands):
+                    response = []
+                    for cmds, resp in zip(commands[1:-1], responses[-1]):
+                        args, options = cmds
+                        if isinstance(resp, Exception) and not error:
+                            error = resp
+                        resp = self.parse_response(resp, args[0], options)
+                        response.append(resp)
+                    if error and raise_on_error:
+                        response = ResponseError(error)
+                    self.finished(response)
+        except Exception as exc:
+            self.finished(exc=exc)
 
 
 class RedisClient(object):

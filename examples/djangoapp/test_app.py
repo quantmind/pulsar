@@ -3,7 +3,7 @@ import os
 import sys
 import unittest
 
-from pulsar import asyncio, send, get_application, task
+from pulsar import asyncio, send, get_application
 from pulsar.apps import http, ws
 from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.security import gen_unique_id
@@ -15,7 +15,6 @@ except ImportError:
     execute_from_command_line = None
 
 
-@task
 def start_server(actor, name, argv):
     os.environ["DJANGO_SETTINGS_MODULE"] = "djchat.settings"
     execute_from_command_line(argv)
@@ -50,7 +49,8 @@ class TestDjangoChat(unittest.TestCase):
                 '--exc-id', cls.exc_id,
                 '--pulse-app-name', name,
                 '--data-store', 'pulsar://127.0.0.1:6410/1']
-        cls.app_cfg = yield send('arbiter', 'run', start_server, name, argv)
+        cls.app_cfg = yield from send('arbiter', 'run', start_server,
+                                      name, argv)
         assert cls.app_cfg.exc_id == cls.exc_id, "Bad execution id"
         addr = cls.app_cfg.addresses[0]
         cls.uri = 'http://{0}:{1}'.format(*addr)
@@ -63,17 +63,18 @@ class TestDjangoChat(unittest.TestCase):
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def test_home(self):
-        result = yield self.http.get(self.uri)
+        result = yield from self.http.get(self.uri)
         self.assertEqual(result.status_code, 200)
 
     def test_404(self):
-        result = yield self.http.get('%s/bsjdhcbjsdh' % self.uri)
+        result = yield from self.http.get('%s/bsjdhcbjsdh' % self.uri)
         self.assertEqual(result.status_code, 404)
 
     def __test_websocket(self):
         # TODO: fix this test. Someties it timesout
         c = self.http
-        ws = yield c.get(self.ws, websocket_handler=MessageHandler(c._loop))
+        ws = yield from c.get(self.ws,
+                              websocket_handler=MessageHandler(c._loop))
         response = ws.handshake
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
@@ -81,12 +82,12 @@ class TestDjangoChat(unittest.TestCase):
         self.assertTrue(ws.connection)
         self.assertIsInstance(ws.handler, MessageHandler)
         #
-        data = yield ws.handler.get()
+        data = yield from ws.handler.get()
         data = json.loads(data)
         self.assertEqual(data['message'], 'joined')
         #
         ws.write('Hello there!')
-        data = yield ws.handler.get()
+        data = yield from ws.handler.get()
         data = json.loads(data)
         self.assertEqual(data['message'], 'Hello there!')
 

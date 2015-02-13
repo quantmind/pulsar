@@ -74,6 +74,7 @@ Echo Server
 
 '''
 from functools import partial
+from asyncio.events import get_event_loop
 
 try:
     import pulsar
@@ -185,13 +186,19 @@ class Echo(AbstractClient):
     def connect(self):
         return self.create_connection(self.address)
 
-    @task
     def __call__(self, message):
         '''Send a ``message`` to the server and wait for a response.
 
         :return: a :class:`.Future`
         '''
-        connection = yield self.pool.connect()
+        result = self._call(message)
+        if not self._loop.is_running():
+            return self._loop.run_until_complete(result)
+        else:
+            return result
+
+    def _call(self, message):
+        connection = yield from self.pool.connect()
         with connection:
             consumer = connection.current_consumer()
             consumer.start(message)

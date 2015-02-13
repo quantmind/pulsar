@@ -146,7 +146,7 @@ from functools import wraps, partial
 
 import greenlet
 
-from pulsar import isfuture, async, From
+from pulsar import isfuture, async
 
 from .pool import GreenPool, RunInPool
 from .local import local

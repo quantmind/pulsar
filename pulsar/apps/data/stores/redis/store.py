@@ -1,6 +1,6 @@
 from functools import partial
 
-from pulsar import task, Connection, Pool, get_actor
+from pulsar import Connection, Pool, get_actor
 from pulsar.utils.pep import to_string
 from pulsar.apps.data import RemoteStore, Command
 from pulsar.apps.ds import redis_parser
@@ -73,7 +73,6 @@ class RedisStore(RemoteStore):
     def ping(self):
         return self.client().ping()
 
-    @task
     def execute(self, *args, **options):
         connection = yield from self._pool.connect()
         with connection:
@@ -82,11 +81,10 @@ class RedisStore(RemoteStore):
                 raise result.exception
             return result
 
-    @task
     def execute_pipeline(self, commands, raise_on_error=True):
-        conn = yield self._pool.connect()
+        conn = yield from self._pool.connect()
         with conn:
-            result = yield conn.execute_pipeline(commands, raise_on_error)
+            result = yield from conn.execute_pipeline(commands, raise_on_error)
             if isinstance(result, ResponseError):
                 raise result.exception
             return result

@@ -98,7 +98,7 @@ via the ``_loop`` attribute::
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
-from pulsar import Http404, is_async, task
+from pulsar import Http404, is_async, isfuture, task, as_coroutine
 from pulsar.utils.log import LocalMixin, local_method
 
 from .utils import handle_wsgi_error
@@ -143,7 +143,7 @@ class WsgiHandler(object):
         try:
             for middleware in self.middleware:
                 response = middleware(environ, start_response)
-                if is_async(response):
+                if isfuture(response):
                     response = yield from response
                 if response is not None:
                     break
@@ -155,7 +155,7 @@ class WsgiHandler(object):
 
         if isinstance(response, WsgiResponse):
             for middleware in self.response_middleware:
-                response = yield middleware(environ, response)
+                response = middleware(environ, response)
                 if is_async(response):
                     response = yield from response
             start_response(response.status, response.get_headers())
@@ -173,15 +173,22 @@ class LazyWsgi(LocalMixin):
     causing serialisation issues.
     '''
     def __call__(self, environ, start_response):
-        return self.handler(environ)(environ, start_response)
+        if not self.handler:
+            return self.build(environ, start_response)
+        else:
+            return self.handler(environ, start_response)
 
-    @local_method
-    def handler(self, environ=None):
-        '''The :ref:`wsgi application handler <wsgi-handlers>` which
-        is loaded via the :meth:`setup` method, once only,
-        when first accessed.
-        '''
-        return self.setup(environ)
+    @property
+    def handler(self):
+        return self.local.handler
+
+    @task
+    def build(self, environ, start_response):
+        self.local.handler = yield from as_coroutine(self.setup(environ))
+        result = self.handler(environ, start_response)
+        if isfuture(result):
+            result = yield from result
+        return result
 
     def setup(self, environ=None):
         '''The setup function for this :class:`LazyWsgi`.

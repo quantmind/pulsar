@@ -334,8 +334,8 @@ class UdpSocketServer(SocketServer):
                                               'No address to bind to')
         address = parse_address(self.cfg.address)
         # First create the sockets
-        t, _ = yield From(loop.create_datagram_endpoint(
-            asyncio.DatagramProtocol, address))
+        t, _ = yield from loop.create_datagram_endpoint(
+            asyncio.DatagramProtocol, address)
         sock = t.get_extra_info('socket')
         assert loop.remove_reader(sock.fileno())
         monitor.sockets = [WrapTransport(t)]

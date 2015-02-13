@@ -113,7 +113,7 @@ class Chat(WS):
                     lines.append(l)
             msg = ' '.join(lines)
             if msg:
-                self.pubsub.publish(self.channel, msg)
+                return self.pubsub.publish(self.channel, msg)
 
 
 #    RPC MIDDLEWARE To publish messages
@@ -126,7 +126,7 @@ class Rpc(PulsarServerCommands):
 
     def rpc_message(self, request, message):
         '''Publish a message via JSON-RPC'''
-        self.pubsub.publish(self.channel, message)
+        yield from self.pubsub.publish(self.channel, message)
         return 'OK'
 
 
@@ -147,7 +147,7 @@ class WebChat(LazyWsgi):
         self.store = create_store(cfg.data_store, loop=loop)
         pubsub = self.store.pubsub(protocol=Protocol())
         channel = '%s_webchat' % self.name
-        pubsub.subscribe(channel)
+        yield from pubsub.subscribe(channel)
         return WsgiHandler([Router('/', get=self.home_page),
                             WebSocket('/message', Chat(pubsub, channel)),
                             Router('/rpc', post=Rpc(pubsub, channel),

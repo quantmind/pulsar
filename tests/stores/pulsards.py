@@ -1,9 +1,9 @@
 import binascii
 import time
 import unittest
+import asyncio
 
 import pulsar
-from pulsar import asyncio, new_event_loop, task
 from pulsar.utils.security import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
@@ -32,8 +32,6 @@ class StringProtocol:
 
 
 class StoreMixin(object):
-    client = None
-    pulsar_app_cfg = None
     redis_py_parser = False
 
     @classmethod
@@ -49,31 +47,12 @@ class StoreMixin(object):
     def randomkey(cls, length=None):
         return random_string(length=length)
 
-    @classmethod
-    @task
-    def create_pulsar_store(cls):
-        server = PulsarDS(name=cls.__name__.lower(),
-                          bind='127.0.0.1:0',
-                          concurrency=cls.cfg.concurrency,
-                          redis_py_parser=cls.redis_py_parser)
-        cls.pulsar_app_cfg = yield from pulsar.send('arbiter', 'run', server)
-        cls.pulsards_uri = 'pulsar://%s:%s' % cls.pulsar_app_cfg.addresses[0]
-        cls.store = cls.create_store('%s/9' % cls.pulsards_uri)
-
-    @classmethod
-    def tearDownClass(cls):
-        if cls.pulsar_app_cfg is not None:
-            return pulsar.send('arbiter', 'kill_actor',
-                               cls.pulsar_app_cfg.name)
-
-    @task
     def _remove_and_push(self, key, rem=1):
         c = self.client
         eq = self.async.assertEqual
         yield from eq(c.delete(key), rem)
         yield from eq(c.rpush(key, 'bla'), 1)
 
-    @task
     def _remove_and_sadd(self, key, rem=1):
         c = self.client
         eq = self.async.assertEqual
@@ -1079,40 +1058,25 @@ class RedisCommands(StoreMixin):
         result = yield from self.client.watch(key1)
         self.assertEqual(result, 1)
 
-    ###########################################################################
-    #    SYNCHRONOUS CLIENT
-    def test_sync(self):
-        client = self.sync_store.client()
-        self.assertFalse(client.store._loop.is_running())
-        self.assertEqual(client.echo('Hello'), b'Hello')
-
-
-class Scripting(object):
-
-    def test_eval(self):
-        result = yield from self.client.eval('return "Hello"')
-        self.assertEqual(result, b'Hello')
-        result = yield from self.client.eval("return {ok='OK'}")
-        self.assertEqual(result, b'OK')
-
-    def test_eval_with_keys(self):
-        result = yield from self.client.eval("return {KEYS, ARGV}",
-                                        ('a', 'b'),
-                                        ('first', 'second', 'third'))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], [b'a', b'b'])
-        self.assertEqual(result[1], [b'first', b'second', b'third'])
-
 
 class TestPulsarStore(RedisCommands, unittest.TestCase):
     app_cfg = None
 
     @classmethod
     def setUpClass(cls):
-        yield from cls.create_pulsar_store()
-        cls.sync_store = cls.create_store('%s/10' % cls.pulsards_uri,
-                                          loop=new_event_loop())
+        server = PulsarDS(name=cls.__name__.lower(),
+                          bind='127.0.0.1:0',
+                          concurrency=cls.cfg.concurrency,
+                          redis_py_parser=cls.redis_py_parser)
+        cls.app_cfg = yield from pulsar.send('arbiter', 'run', server)
+        cls.pulsards_uri = 'pulsar://%s:%s' % cls.app_cfg.addresses[0]
+        cls.store = cls.create_store('%s/9' % cls.pulsards_uri)
         cls.client = cls.store.client()
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.app_cfg is not None:
+            return pulsar.send('arbiter', 'kill_actor', cls.app_cfg.name)
 
 
 @unittest.skipUnless(pulsar.HAS_C_EXTENSIONS, 'Requires cython extensions')

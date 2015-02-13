@@ -35,7 +35,7 @@ class TestGreenIO(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0')
-        cls.server_cfg = yield send('arbiter', 'run', s)
+        cls.server_cfg = yield from send('arbiter', 'run', s)
         cls.client = EchoGreen(cls.server_cfg.addresses[0])
 
     @classmethod
@@ -59,7 +59,7 @@ class TestGreenIO(unittest.TestCase):
     def test_pool(self):
         pool = greenio.GreenPool()
         self.assertTrue(pool._loop)
-        self.assertNotEqual(pool._loop, get_event_loop())
+        self.assertEqual(pool._loop, get_event_loop())
         self.assertFalse(pool._greenlets)
         future = pool.submit(lambda: 'Hi!')
         self.assertIsInstance(future, Future)
@@ -71,24 +71,25 @@ class TestGreenIO(unittest.TestCase):
     def test_error_in_pool(self):
         # Test an error
         pool = greenio.GreenPool()
-        yield self.async.assertRaises(RuntimeError, pool.submit, raise_error)
+        yield from self.async.assertRaises(RuntimeError, pool.submit,
+                                           raise_error)
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
     def test_echo(self):
-        result = yield self.client(b'ciao luca')
+        result = yield from self.client(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
 
     def test_large(self):
         '''Echo a 3MB message'''
         msg = b''.join((b'a' for x in range(2**13)))
-        result = yield self.client(msg)
+        result = yield from self.client(msg)
         self.assertEqual(result, msg)
 
     def test_multi(self):
-        result = yield multi_async((self.client(b'ciao'),
-                                    self.client(b'pippo'),
-                                    self.client(b'foo')))
+        result = yield from multi_async((self.client(b'ciao'),
+                                         self.client(b'pippo'),
+                                         self.client(b'foo')))
         self.assertEqual(len(result), 3)
         self.assertTrue(b'ciao' in result)
         self.assertTrue(b'pippo' in result)

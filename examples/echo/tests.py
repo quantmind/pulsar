@@ -15,7 +15,7 @@ class TestEchoServerThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
-        cls.server_cfg = yield send('arbiter', 'run', s)
+        cls.server_cfg = yield from send('arbiter', 'run', s)
         cls.client = Echo(cls.server_cfg.addresses[0])
 
     @classmethod
@@ -23,12 +23,9 @@ class TestEchoServerThread(unittest.TestCase):
         if cls.server_cfg:
             return send('arbiter', 'kill_actor', cls.server_cfg.name)
 
-    def sync_client(self):
-        return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
-
     #    TEST THE SERVER APPLICATION
     def test_server_on_arbiter(self):
-        app = yield get_application(self.__class__.__name__.lower())
+        app = yield from get_application(self.__class__.__name__.lower())
         cfg = app.cfg
         self.assertTrue(cfg.addresses)
         self.assertTrue(cfg.address)
@@ -42,7 +39,7 @@ class TestEchoServerThread(unittest.TestCase):
 
     #    TEST CLIENT INTERACTION
     def test_ping(self):
-        result = yield self.client(b'ciao luca')
+        result = yield from self.client(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
 
     def test_large(self):
@@ -74,7 +71,7 @@ class TestEchoServerThread(unittest.TestCase):
 
     def test_connection(self):
         client = Echo(self.server_cfg.addresses[0], full_response=True)
-        response = yield client(b'test connection')
+        response = yield from client(b'test connection')
         self.assertEqual(response.buffer, b'test connection')
         connection = response.connection
         self.assertTrue(str(connection))
@@ -82,7 +79,7 @@ class TestEchoServerThread(unittest.TestCase):
     def test_connection_pool(self):
         '''Test the connection pool. A very important test!'''
         client = Echo(self.server_cfg.addresses[0], pool_size=2)
-        self.assertNotEqual(client._loop, get_event_loop())
+        self.assertEqual(client._loop, get_event_loop())
         #
         self.assertEqual(client.pool.pool_size, 2)
         self.assertEqual(client.pool.in_use, 0)
@@ -90,23 +87,23 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.sessions, 0)
         self.assertEqual(client._requests_processed, 0)
         #
-        response = yield client(b'test connection')
+        response = yield from client(b'test connection')
         self.assertEqual(response, b'test connection')
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 1)
         self.assertEqual(client.sessions, 1)
         self.assertEqual(client._requests_processed, 1)
         #
-        response = yield client(b'test connection 2')
+        response = yield from client(b'test connection 2')
         self.assertEqual(response, b'test connection 2')
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 1)
         self.assertEqual(client.sessions, 1)
         self.assertEqual(client._requests_processed, 2)
         #
-        result = yield multi_async((client(b'ciao'),
-                                    client(b'pippo'),
-                                    client(b'foo')))
+        result = yield from multi_async((client(b'ciao'),
+                                         client(b'pippo'),
+                                         client(b'foo')))
         self.assertEqual(len(result), 3)
         self.assertTrue(b'ciao' in result)
         self.assertTrue(b'pippo' in result)
@@ -117,23 +114,38 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client._requests_processed, 5)
         #
         # drop a connection
-        yield run_in_loop(client._loop, self._drop_conection, client)
+        yield from run_in_loop(client._loop, self._drop_conection, client)
         #
-        result = yield multi_async((client(b'ciao'),
-                                    client(b'pippo'),
-                                    client(b'foo')))
+        result = yield from multi_async((client(b'ciao'),
+                                         client(b'pippo'),
+                                         client(b'foo')))
         self.assertEqual(len(result), 3)
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 2)
         self.assertEqual(client.sessions, 3)
         self.assertEqual(client._requests_processed, 8)
         #
-        yield run_in_loop(client._loop, client.pool.close)
+        yield from run_in_loop(client._loop, client.pool.close)
         #
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)
         self.assertEqual(client.sessions, 3)
         self.assertEqual(client._requests_processed, 8)
+
+    def _drop_conection(self, client):
+        conn1 = client.pool._queue.get_nowait()
+        conn1.close()
+        conn2 = client.pool._queue.get_nowait()
+        client.pool._queue.put_nowait(conn1)
+        client.pool._queue.put_nowait(conn2)
+
+
+@dont_run_with_thread
+class TestEchoServerProcess(TestEchoServerThread):
+    concurrency = 'process'
+
+    def sync_client(self):
+        return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
 
     #    TEST SYNCHRONOUS CLIENT
     def test_sync_echo(self):
@@ -150,15 +162,3 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(echo.sessions, 1)
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo.sessions, 2)
-
-    def _drop_conection(self, client):
-        conn1 = client.pool._queue.get_nowait()
-        conn1.close()
-        conn2 = client.pool._queue.get_nowait()
-        client.pool._queue.put_nowait(conn1)
-        client.pool._queue.put_nowait(conn2)
-
-
-@dont_run_with_thread
-class TestEchoServerProcess(TestEchoServerThread):
-    concurrency = 'process'

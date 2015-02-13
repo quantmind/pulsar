@@ -1,7 +1,7 @@
 '''Tests the RPC "calculator" example.'''
 import unittest
 
-from pulsar import send, new_event_loop
+from pulsar import send
 from pulsar.apps import rpc
 from pulsar.apps.test import dont_run_with_thread
 
@@ -19,10 +19,9 @@ class TestRpcOnThread(unittest.TestCase):
     def setUpClass(cls):
         name = 'calc_' + cls.concurrency
         s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
-        cls.app_cfg = yield send('arbiter', 'run', s)
+        cls.app_cfg = yield from send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.p = rpc.JsonProxy(cls.uri, timeout=cls.rpc_timeout)
-        cls.sync = rpc.JsonProxy(cls.uri, loop=new_event_loop())
 
     @classmethod
     def tearDownClass(cls):
@@ -41,7 +40,7 @@ class TestRpcOnThread(unittest.TestCase):
     def test_wsgi_handler(self):
         cfg = self.app_cfg
         self.assertTrue(cfg.callable)
-        wsgi_handler = cfg.callable.handler({})
+        wsgi_handler = cfg.callable.setup({})
         self.assertEqual(len(wsgi_handler.middleware), 1)
         router = wsgi_handler.middleware[0]
         self.assertEqual(router.route.path, '/')
@@ -53,11 +52,11 @@ class TestRpcOnThread(unittest.TestCase):
 
     # Pulsar server commands
     def test_ping(self):
-        response = yield self.p.ping()
+        response = yield from self.p.ping()
         self.assertEqual(response, 'pong')
 
     def test_functions_list(self):
-        result = yield self.p.functions_list()
+        result = yield from self.p.functions_list()
         self.assertTrue(result)
         d = dict(result)
         self.assertTrue('ping' in d)
@@ -68,33 +67,33 @@ class TestRpcOnThread(unittest.TestCase):
 
     def test_time_it(self):
         '''Ping server 5 times'''
-        bench = yield self.p.timeit('ping', 5)
+        bench = yield from self.p.timeit('ping', 5)
         self.assertTrue(len(bench.result), 5)
         self.assertTrue(bench.taken)
 
     # Test Object method
     def test_check_request(self):
-        result = yield self.p.check_request('check_request')
+        result = yield from self.p.check_request('check_request')
         self.assertTrue(result)
 
     def test_add(self):
-        response = yield self.p.calc.add(3, 7)
+        response = yield from self.p.calc.add(3, 7)
         self.assertEqual(response, 10)
 
     def test_subtract(self):
-        response = yield self.p.calc.subtract(546, 46)
+        response = yield from self.p.calc.subtract(546, 46)
         self.assertEqual(response, 500)
 
     def test_multiply(self):
-        response = yield self.p.calc.multiply(3, 9)
+        response = yield from self.p.calc.multiply(3, 9)
         self.assertEqual(response, 27)
 
     def test_divide(self):
-        response = yield self.p.calc.divide(50, 25)
+        response = yield from self.p.calc.divide(50, 25)
         self.assertEqual(response, 2)
 
     def test_info(self):
-        response = yield self.p.server_info()
+        response = yield from self.p.server_info()
         self.assertTrue('server' in response)
         server = response['server']
         self.assertTrue('version' in server)
@@ -128,13 +127,13 @@ class TestRpcOnThread(unittest.TestCase):
 
     def test_invalid_function(self):
         p = self.p
-        yield self.async.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
-        yield self.async.assertRaises(rpc.NoSuchFunction,
-                                      p.blabla)
-        yield self.async.assertRaises(rpc.NoSuchFunction,
-                                      p.blabla.foofoo)
-        yield self.async.assertRaises(rpc.NoSuchFunction,
-                                      p.blabla.foofoo.sjdcbjcb)
+        yield from self.async.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
+        yield from self.async.assertRaises(rpc.NoSuchFunction,
+                                           p.blabla)
+        yield from self.async.assertRaises(rpc.NoSuchFunction,
+                                           p.blabla.foofoo)
+        yield from self.async.assertRaises(rpc.NoSuchFunction,
+                                           p.blabla.foofoo.sjdcbjcb)
 
     def testInternalError(self):
         return self.async.assertRaises(rpc.InternalError, self.p.calc.divide,
@@ -145,18 +144,13 @@ class TestRpcOnThread(unittest.TestCase):
 
     def testpaths(self):
         '''Fetch a sizable ammount of data'''
-        response = yield self.p.calc.randompaths(num_paths=20, size=100,
-                                                 mu=1, sigma=2)
+        response = yield from self.p.calc.randompaths(num_paths=20, size=100,
+                                                      mu=1, sigma=2)
         self.assertTrue(response)
 
     def test_echo(self):
-        response = yield self.p.echo('testing echo')
+        response = yield from self.p.echo('testing echo')
         self.assertEqual(response, 'testing echo')
-
-    # Synchronous client
-    def test_sync_ping(self):
-        self.assertEqual(self.sync.ping(), 'pong')
-        self.assertEqual(self.sync.ping(), 'pong')
 
     def test_docs(self):
         handler = Root({'calc': Calculator})
@@ -169,10 +163,16 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertEqual(calc.root, handler)
         docs = handler.docs()
         self.assertTrue(docs)
-        response = yield self.p.documentation()
+        response = yield from self.p.documentation()
         self.assertEqual(response, docs)
 
 
 @dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):
     concurrency = 'process'
+
+    # Synchronous client
+    def test_sync_ping(self):
+        sync = rpc.JsonProxy(self.uri, sync=True)
+        self.assertEqual(sync.ping(), 'pong')
+        self.assertEqual(sync.ping(), 'pong')

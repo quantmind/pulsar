@@ -4,7 +4,7 @@ from functools import wraps, partial
 
 from asyncio import Future, CancelledError, TimeoutError, async, sleep
 from .consts import MAX_ASYNC_WHILE
-from .access import get_event_loop, LOGGER, Future, isfuture
+from .access import get_event_loop, LOGGER, Future, isfuture, is_async
 
 
 __all__ = ['maybe_async',
@@ -14,6 +14,7 @@ __all__ = ['maybe_async',
            'future_timeout',
            'task_callback',
            'multi_async',
+           'as_coroutine',
            'task',
            'async',
            'async_while',
@@ -164,6 +165,12 @@ def maybe_async(value, loop=None):
         return value
 
 
+def as_coroutine(value):
+    if is_async(value):
+        value = yield from value
+    return value
+
+
 def task(function):
     '''Thread-safe decorator to run a ``function`` in an event loop.
 
@@ -184,19 +191,9 @@ def task(function):
 
     @wraps(function)
     def _(*args, **kwargs):
-        event_loop = get_event_loop()
+        loop = getattr(args[0], '_loop', None) if args else None
         coro = wrapper(*args, **kwargs)
-        if args:
-            loop = getattr(args[0], '_loop', event_loop)
-            # Not in the current event loop
-            if loop != event_loop and isinstance(loop, _EVENT_LOOP_CLASSES):
-                future = run_in_loop(loop, yield_from, coro, loop=loop)
-                if (not getattr(loop, '_iothreadloop', True)
-                        and not loop.is_running()):
-                    return loop.run_until_complete(future)
-                else:
-                    return future
-        return async(coro)
+        return async(coro, loop=loop)
 
     return _
 

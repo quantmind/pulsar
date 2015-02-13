@@ -30,7 +30,7 @@ class TestWebChat(unittest.TestCase):
     def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__.lower(),
                    concurrency=cls.concurrency)
-        cls.app_cfg = yield send('arbiter', 'run', s)
+        cls.app_cfg = yield from send('arbiter', 'run', s)
         cls.uri = 'http://%s:%s' % cls.app_cfg.addresses[0]
         cls.ws = 'ws://%s:%s/message' % cls.app_cfg.addresses[0]
         cls.rpc = rpc.JsonProxy('%s/rpc' % cls.uri)
@@ -42,13 +42,13 @@ class TestWebChat(unittest.TestCase):
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def test_home(self):
-        response = yield self.http.get(self.uri)
+        response = yield from self.http.get(self.uri)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
 
     def test_handshake(self):
-        ws = yield self.http.get(self.ws)
+        ws = yield from self.http.get(self.ws)
         response = ws.handshake
         self.assertEqual(ws.status_code, 101)
         self.assertEqual(ws.headers['upgrade'], 'websocket')
@@ -63,22 +63,22 @@ class TestWebChat(unittest.TestCase):
     def test_rpc(self):
         '''Send a message to the rpc'''
         loop = self.http._loop
-        ws = yield self.http.get(self.ws, websocket_handler=Message(loop))
+        ws = yield from self.http.get(self.ws, websocket_handler=Message(loop))
         self.assertEqual(ws.status_code, 101)
         ws.write('Hello there!')
-        data = yield ws.handler.get()
+        data = yield from ws.handler.get()
         data = json.loads(data)
         self.assertEqual(data['message'], 'Hello there!')
-        result = yield self.rpc.message('Hi!')
+        result = yield from self.rpc.message('Hi!')
         self.assertEqual(result, 'OK')
-        data = yield ws.handler.get()
+        data = yield from ws.handler.get()
         data = json.loads(data)
         self.assertEqual(data['message'], 'Hi!')
 
     def test_invalid_method(self):
         p = rpc.JsonProxy(self.uri)
         try:
-            yield p.message('ciao')
+            yield from p.message('ciao')
         except HTTPError as e:
             self.assertEqual(e.code, 405)
         else:

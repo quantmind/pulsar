@@ -279,7 +279,7 @@ from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
-from pulsar import AbstractClient, Pool, task, Connection, ProtocolConsumer
+from pulsar import AbstractClient, Pool, Connection, ProtocolConsumer
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
@@ -1087,7 +1087,6 @@ class HttpClient(AbstractClient):
         '''
         return self.request('DELETE', url, **kwargs)
 
-    @task
     def request(self, method, url, **params):
         '''Constructs and sends a request to a remote server.
 

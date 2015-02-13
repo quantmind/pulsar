@@ -2,7 +2,7 @@ import sys
 import json
 import logging
 
-from pulsar import AsyncObject, task, is_async
+from pulsar import AsyncObject, task, as_coroutine, new_event_loop
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
@@ -42,7 +42,7 @@ class JSONRPC(RpcHandler):
         callable = None
         try:
             try:
-                data = yield from request.body_data()
+                data = yield from as_coroutine(request.body_data())
             except ValueError:
                 raise InvalidRequest(
                     status=415, msg='Content-Type must be application/json')
@@ -57,9 +57,8 @@ class JSONRPC(RpcHandler):
                 args, kwargs = tuple(params or ()), {}
             #
             callable = self.get_handler(data.get('method'))
-            result = callable(request, *args, **kwargs)
-            if is_async(result):
-                result = yield from result
+            result = yield from as_coroutine(
+                callable(request, *args, **kwargs))
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
@@ -118,7 +117,11 @@ class JsonCall:
         return self.__class__(self._client, name)
 
     def __call__(self, *args, **kwargs):
-        return self._client._call(self._name, *args, **kwargs)
+        result = self._client._call(self._name, *args, **kwargs)
+        if self._client.sync:
+            return self._client._loop.run_until_complete(result)
+        else:
+            return result
 
 
 class JsonProxy(AsyncObject):
@@ -152,14 +155,18 @@ class JsonProxy(AsyncObject):
     default_timeout = 30
 
     def __init__(self, url, version=None, data=None,
-                 full_response=False, http=None, timeout=None, **kw):
+                 full_response=False, http=None, timeout=None, sync=False,
+                 loop=None, **kw):
+        self.sync = sync
         self._url = url
         self._version = version or self.__class__.default_version
         self._full_response = full_response
         self._data = data if data is not None else {}
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
-            http = HttpClient(timeout=timeout, **kw)
+            if sync and not loop:
+                loop = new_event_loop()
+            http = HttpClient(timeout=timeout, loop=loop, **kw)
         http.headers['accept'] = 'application/json, text/*; q=0.5'
         http.headers['content-type'] = 'application/json'
         self._http = http
@@ -189,19 +196,18 @@ class JsonProxy(AsyncObject):
     def __getattr__(self, name):
         return JsonCall(self, name)
 
-    @task
     def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
         body = json.dumps(data).encode('utf-8')
-        resp = yield self._http.post(self._url, data=body)
+        resp = yield from self._http.post(self._url, data=body)
         if self._full_response:
-            coroutine_return(resp)
+            return resp
         else:
             content = resp.decode_content()
             if resp.is_error:
                 if 'error' not in content:
                     resp.raise_for_status()
-            coroutine_return(self.loads(content))
+            return self.loads(content)
 
     def _get_data(self, func_name, *args, **kwargs):
         id = self.makeid()

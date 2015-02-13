@@ -216,10 +216,10 @@ class Tunneling:
         loop._make_ssl_transport(sock, connection, request._ssl,
                                  waiter, server_side=False,
                                  server_hostname=request._netloc)
-        yield waiter
+        yield from waiter
         response = connection.current_consumer()
         response.start(request)
-        yield response.on_finished
+        yield from response.on_finished
         if response.request_again:
             response = response.request_again
         prev_response.request_again = response

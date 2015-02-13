@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import task
+from pulsar import task, is_async
 
 from .jsonrpc import JSONRPC
 
@@ -27,7 +27,9 @@ class PulsarServerCommands(JSONRPC):
         information.
         '''
         info = yield from pulsar.send('arbiter', 'info')
-        info = yield from self.extra_server_info(request, info)
+        info = self.extra_server_info(request, info)
+        if is_async(info):
+            info = yield from info
         return info
 
     def rpc_functions_list(self, request):
