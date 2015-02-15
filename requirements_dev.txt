@@ -6,4 +6,3 @@ setproctitle
 psutil
 greenlet
 unidecode
-psycopg2

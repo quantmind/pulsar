@@ -5,5 +5,4 @@ pep8
 setproctitle
 psutil
 greenlet
-sqlalchemy
 unidecode
