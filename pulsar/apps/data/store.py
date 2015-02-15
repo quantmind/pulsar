@@ -354,12 +354,6 @@ class RemoteStore(Producer, Store):
         instance['_store'] = self
         return instance
 
-    def model_data(self, model, action):
-        '''Generator of ``field, value`` pair for the data store.
-
-        By default invokes the :class:`.ModelMeta.store_data` method.'''
-        return model._meta.store_data(model, self, action)
-
     #    INTERNALS
     #######################
     def _init(self, **kw):  # pragma    nocover

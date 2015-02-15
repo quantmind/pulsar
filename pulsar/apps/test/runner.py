@@ -91,11 +91,11 @@ class Runner(object):
                                          for test in all_tests],
                                         loop=self._loop)
 
-            try:
-                yield from self._run(testcls.tearDownClass)
-            except Exception as exc:
-                self.logger.exception('Failure in tearDownClass',
-                                      exc_info=True)
+        try:
+            yield from self._run(testcls.tearDownClass)
+        except Exception as exc:
+            self.logger.exception('Failure in tearDownClass',
+                                  exc_info=True)
 
         self.concurrent.remove(testcls)
 

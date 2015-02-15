@@ -148,12 +148,7 @@ import greenlet
 
 from pulsar import isfuture, async
 
-from .pool import GreenPool, RunInPool
-from .local import local
-
-
-class PulsarGreenlet(greenlet.greenlet):
-    pass
+from .pool import GreenPool, RunInPool, GreenletWorker, wait
 
 
 def run_in_greenlet(callable):
@@ -194,21 +189,6 @@ def green_task(method):
         return future
 
     return _
-
-
-def wait(coro_or_future, loop=None):
-    '''Wait for a coroutine or a :class:`~asyncio.Future` to complete.
-
-    **This function must be called from a greenlet other than the main one**.
-    It can be used in conjunction with the :func:`run_in_greenlet`
-    decorator or the :class:`.GreenPool`.
-    '''
-    current = greenlet.getcurrent()
-    parent = current.parent
-    assert parent, 'Waiter cannot be initialised in main greenlet'
-    future = async(coro_or_future, loop=loop)
-    parent.switch(future)
-    return future.result()
 
 
 def wait_fd(fd, read=True):

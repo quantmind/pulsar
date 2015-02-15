@@ -4,7 +4,7 @@ from collections import deque
 import greenlet
 from greenlet import getcurrent
 
-from pulsar import isfuture, Future, get_io_loop, AsyncObject, task
+from pulsar import Future, get_io_loop, AsyncObject, async, is_async
 
 
 _DEFAULT_WORKERS = 100
@@ -13,6 +13,14 @@ _MAX_WORKERS = 1000
 
 class GreenletWorker(greenlet.greenlet):
     pass
+
+
+def wait(value):
+    '''Wait for a possible asynchronous value to complete.
+    '''
+    current = greenlet.getcurrent()
+    parent = current.parent
+    return parent.switch(value) if parent else value
 
 
 class GreenPool(AsyncObject):
@@ -31,6 +39,7 @@ class GreenPool(AsyncObject):
         self._maxtasks = maxtasks
         self._queue = deque()
         self._shutdown = False
+        self._waiter = None
         self._shutdown_lock = threading.Lock()
 
     def submit(self, func, *args, **kwargs):
@@ -46,14 +55,16 @@ class GreenPool(AsyncObject):
                 raise RuntimeError(
                     'cannot schedule new futures after shutdown')
             future = Future(loop=self._loop)
-            self._loop.call_soon_threadsafe(
-                self._put, (future, func, args, kwargs))
+            self._put((future, func, args, kwargs))
             return future
 
     def shutdown(self, wait=True):
         with self._shutdown_lock:
             self._shutdown = True
-            self._loop.call_soon_threadsafe(self._put)
+            self._put()
+            if wait:
+                self._waiter = Future(loop=self._loop)
+                return self._waiter
 
     # INTERNALS
     def _adjust_greenlet_count(self):
@@ -62,23 +73,6 @@ class GreenPool(AsyncObject):
             self._greenlets.add(greenlet)
             greenlet.switch()
 
-    def _check_queue(self):
-        # Run in the main greenlet of the evnet-loop thread
-        try:
-            task = self._queue.pop()
-        except IndexError:
-            return
-        if self._available:
-            self._green_task(task)
-
-    @task
-    def _green_task(self, task):
-        # Run in the main greenlet of the evnet-loop thread
-        greenlet = self._available.pop()
-        result = greenlet.switch(task)
-        while isfuture(result):
-            result = greenlet.switch((yield from result))
-
     def _put(self, task=None):
         # Run in the main greenlet of the evnet-loop thread
         if task:
@@ -86,17 +80,35 @@ class GreenPool(AsyncObject):
         self._queue.appendleft(task)
         self._check_queue()
 
+    def _check_queue(self):
+        # Run in the main greenlet of the evnet-loop thread
+        try:
+            task = self._queue.pop()
+        except IndexError:
+            return
+        if self._available:
+            greenlet = self._available.pop()
+            async(self._green_task(greenlet, task), loop=self._loop)
+
+    def _green_task(self, greenlet, task):
+        # Run in the main greenlet of the evnet-loop thread
+        result = greenlet.switch(task)
+        while is_async(result):
+            result = greenlet.switch((yield from result))
+
     def _green_run(self):
         # The run method of a worker greenlet
-        current = getcurrent()
-        parent = current.parent
-        assert parent
         task = True
         while task:
-            self._available.add(current)
+            greenlet = getcurrent()
+            parent = greenlet.parent
+            assert parent
+            self._available.add(greenlet)
             self._loop.call_soon(self._check_queue)
             task = parent.switch()  # switch back to the main execution
             if task:
+                # If a new task is available execute it
+                # Here we are in the child greenlet
                 future, func, args, kwargs = task
                 try:
                     result = func(*args, **kwargs)
@@ -105,8 +117,12 @@ class GreenPool(AsyncObject):
                 else:
                     future.set_result(result)
             else:
-                self._greenlets.pop(current)
-                self._put(None)
+                self._greenlets.remove(greenlet)
+                if self._greenlets:
+                    self._put(None)
+                elif self._waiter:
+                    self._waiter.set_result(None)
+                    self._waiter = None
 
 
 class RunInPool:
