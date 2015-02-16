@@ -88,3 +88,8 @@ def import_system_file(mod, add_to_path=True):
         else:
             mod_name = '.'.join(names)
         return import_module(mod_name)
+    else:
+        try:
+            return import_module(mod)
+        except ImportError:
+            pass
