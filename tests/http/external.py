@@ -17,7 +17,7 @@ class ExternalBase(TestHttpClientBase):
     def ___test_http_get_timeit(self):
         client = self.client()
         N = 20
-        responses = yield client.timeit(N, 'get', 'http://www.bbc.co.uk/')
+        responses = yield from client.timeit(N, 'get', 'http://www.bbc.co.uk/')
         self.assertEqual(len(responses), N)
         for n in range(N):
             all = []
@@ -25,8 +25,8 @@ class ExternalBase(TestHttpClientBase):
             def save_data(r, data=None):
                 all.append(data)
             try:
-                response = yield client.get('http://www.theguardian.com/',
-                                            data_received=save_data)
+                response = yield from client.get('http://www.theguardian.com/',
+                                                 data_received=save_data)
             except Exception:
                 for n, d in enumerate(all):
                     with open('data%s.dat' % n, 'wb') as f:
@@ -36,19 +36,19 @@ class ExternalBase(TestHttpClientBase):
 
     def __test_http_get(self):
         client = self.client()
-        response = yield client.get('http://www.bbc.co.uk/')
+        response = yield from client.get('http://www.bbc.co.uk/')
         self.assertEqual(response.status_code, 200)
         self.after_response(response)
 
     def test_get_https(self):
         client = self.client()
-        response = yield client.get('https://github.com/trending')
+        response = yield from client.get('https://github.com/trending')
         self.assertEqual(response.status_code, 200)
 
     def __test_bad_host(self):
         client = self.client()
         try:
-            response = yield client.get('http://xxxyyyxxxxyyy/blafoo')
+            response = yield from client.get('http://xxxyyyxxxxyyy/blafoo')
         except socket.error:
             pass
         else:
@@ -63,7 +63,7 @@ class ProxyExternal(ExternalBase):
 
     def test_get_https(self):
         client = self.client()
-        response = yield client.get('https://github.com/trending')
+        response = yield from client.get('https://github.com/trending')
         self.assertEqual(response.status_code, 200)
 
 

@@ -297,11 +297,6 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   JSON_CONTENT_TYPES)
 from asyncio.events import new_event_loop
 
-try:
-    from pulsar.apps import greenio
-except ImportError:
-    greenio = None
-
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
 
@@ -923,13 +918,6 @@ class HttpClient(AbstractClient):
 
         Dictionary of connection pools for different hosts
 
-    .. attribute:: green
-
-        If ``True`` the requests are processed using the
-        :mod:`~pulsar.apps.greenio` application. When operating in this mode,
-        the :class:`.HttpClient` must be used from a greenlet ather than the
-        main one.
-
     .. attribute:: DEFAULT_HTTP_HEADERS
 
         Default headers for this :class:`HttpClient`
@@ -976,7 +964,7 @@ class HttpClient(AbstractClient):
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None,
-                 pool_size=10, green=False):
+                 pool_size=10):
         super(HttpClient, self).__init__(loop)
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
@@ -988,7 +976,6 @@ class HttpClient(AbstractClient):
         self.cookies = cookiejar_from_dict(cookies)
         self.decompress = decompress
         self.version = version or self.version
-        self.green = green and greenio
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
@@ -1014,9 +1001,6 @@ class HttpClient(AbstractClient):
         self.bind_event('on_headers', handle_100)
         self.bind_event('on_headers', handle_cookies)
         self.bind_event('post_request', handle_redirect)
-        # greenlet
-        if self.green:
-            self.request = partial(green_request, self.request)
 
     @property
     def websocket_key(self):
@@ -1210,6 +1194,3 @@ class HttpClient(AbstractClient):
         yield from connection.event('connection_made')
         return connection
 
-
-def green_request(request, method, url, **params):
-    return greenio.wait(request(method, url, **params))

@@ -389,7 +389,7 @@ class Configurator(object):
                 cfg[prefix] = prefix
             cfg = Config(**cfg)
         cfg.update_settings()
-        cfg.update(params)
+        cfg.update(params, True)
         return cfg
 
 

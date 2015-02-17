@@ -85,7 +85,7 @@ class TestConfig(unittest.TestCase):
     def testValidation(self):
         self.assertEqual(pulsar.validate_list((1, 2)), [1, 2])
         self.assertRaises(TypeError, pulsar.validate_list, 'bla')
-        self.assertEqual(pulsar.validate_string(b' bla  '), 'bla')
+        self.assertEqual(pulsar.validate_string(' bla  '), 'bla')
         self.assertEqual(pulsar.validate_string(None), None)
         self.assertRaises(TypeError, pulsar.validate_string, [])
         self.assertEqual(pulsar.validate_bool(True), True)

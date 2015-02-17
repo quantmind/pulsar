@@ -19,7 +19,7 @@ def raise_error():
 class EchoGreen(Echo):
     '''An echo client which uses greenlets to provide implicit
     asynchronous code'''
-    @run_in_greenlet
+
     def __call__(self, message):
         connection = greenio.wait(self.pool.connect())
         with connection:
@@ -43,19 +43,6 @@ class TestGreenIO(unittest.TestCase):
         if cls.server_cfg:
             return send('arbiter', 'kill_actor', cls.server_cfg.name)
 
-    def test_local(self):
-        data = greenio.local()
-        data.bla = 56
-        self.assertEqual(data.bla, 56)
-
-        def _test_bla():
-            self.assertFalse(hasattr(data, 'bla'))
-            data.bla = 89
-            self.assertEqual(data.bla, 89)
-        gr = greenio.PulsarGreenlet(_test_bla)
-        gr.switch()
-        self.assertEqual(data.bla, 56)
-
     def test_pool(self):
         pool = greenio.GreenPool()
         self.assertTrue(pool._loop)
@@ -76,21 +63,14 @@ class TestGreenIO(unittest.TestCase):
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
+    @run_in_greenlet
     def test_echo(self):
-        result = yield from self.client(b'ciao luca')
+        result = self.client(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
 
+    @run_in_greenlet
     def test_large(self):
         '''Echo a 3MB message'''
         msg = b''.join((b'a' for x in range(2**13)))
-        result = yield from self.client(msg)
+        result = self.client(msg)
         self.assertEqual(result, msg)
-
-    def test_multi(self):
-        result = yield from multi_async((self.client(b'ciao'),
-                                         self.client(b'pippo'),
-                                         self.client(b'foo')))
-        self.assertEqual(len(result), 3)
-        self.assertTrue(b'ciao' in result)
-        self.assertTrue(b'pippo' in result)
-        self.assertTrue(b'foo' in result)

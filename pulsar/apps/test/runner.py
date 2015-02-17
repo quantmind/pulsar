@@ -1,6 +1,6 @@
 import asyncio
 
-from pulsar import task, HaltServer
+from pulsar import async, is_async, HaltServer
 
 from .utils import (TestFailure, is_expected_failure, skip_test, skip_reason,
                     expecting_failure, AsyncAssert)
@@ -15,7 +15,7 @@ class Runner(object):
         self.runner = runner
         self.concurrent = set()
         self.tests = list(reversed(tests))
-        self._run_all_tests(tests)
+        async(self._run_all_tests(tests), loop=self._loop)
         self._loop.call_soon(self._check_done)
 
     def _check_done(self):
@@ -35,7 +35,6 @@ class Runner(object):
     def _exit(self, exit_code):
         raise HaltServer(exit_code=exit_code)
 
-    @task
     def _run_all_tests(self, tests):
         runner = self.runner
         cfg = self.monitor.cfg
@@ -134,7 +133,7 @@ class Runner(object):
         try:
             coro = method()
             # a coroutine
-            if coro:
+            if is_async(coro):
                 timeout = getattr(method, 'timeout',
                                   self.monitor.cfg.test_timeout)
                 yield from asyncio.wait_for(coro, timeout, loop=self._loop)

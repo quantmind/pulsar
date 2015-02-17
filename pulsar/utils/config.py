@@ -649,7 +649,6 @@ class TestOption(Setting):
 def validate_bool(val):
     if isinstance(val, bool):
         return val
-    val = native_str(val)
     if not isinstance(val, str):
         raise TypeError("Invalid type for casting: %s" % val)
     if val.lower().strip() == "true":
