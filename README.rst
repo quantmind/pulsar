@@ -1,6 +1,10 @@
 .. image:: http://quantmind.github.io/pulsar/images/pulsar-banner.svg
    :alt: pulsar
-   :width: 90%
+   :width: 70%
+
+PULSAR SURVEY
+===============
+Can you spare 10 seconds to fill out `pulsar user survey`_? Many thanks.
 
 Event driven concurrent framework for python.
 With pulsar you can write asynchronous servers performing one or several
@@ -228,3 +232,4 @@ file in the top distribution directory for the full license text.
 .. _unidecode: https://pypi.python.org/pypi/Unidecode
 .. _`Luca Sbardella`: http://lucasbardella.com
 .. _`Quantmind`: http://quantmind.com
+.. _`pulsar user survey`: http://goo.gl/forms/3EQKkVbHQc
