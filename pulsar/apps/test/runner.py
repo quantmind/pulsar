@@ -1,4 +1,5 @@
 import asyncio
+from unittest import SkipTest
 
 from pulsar import async, is_async, HaltServer
 
@@ -54,18 +55,9 @@ class Runner(object):
                 continue
 
             self.logger.info('Running Tests from %s', testcls)
-
             runner.startTestClass(testcls)
-
-            if skip_test(testcls):
-                reason = skip_reason(testcls)
-                for test in all_tests:
-                    runner.addSkip(test, reason)
-
-            else:
-                self.concurrent.add(testcls)
-                yield from self._run_testcls(testcls, all_tests)
-
+            self.concurrent.add(testcls)
+            yield from self._run_testcls(testcls, all_tests)
             self.logger.info('Finished Tests from %s', testcls)
 
 
@@ -73,8 +65,14 @@ class Runner(object):
         cfg = testcls.cfg
         seq = getattr(testcls, '_sequential_execution', cfg.sequential)
         try:
+            if skip_test(testcls):
+                raise SkipTest(skip_reason(testcls))
             yield from self._run(testcls.setUpClass)
             yield None # release the loop
+        except SkipTest as exc:
+            reason = str(exc)
+            for test in all_tests:
+                self.runner.addSkip(test, reason)
         except Exception as exc:
             self.logger.exception('Failure in setUpClass', exc_info=True)
             exc = TestFailure(exc)

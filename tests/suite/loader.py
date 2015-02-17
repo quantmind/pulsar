@@ -12,7 +12,7 @@ from pulsar.apps.test import TestLoader
 class TestTestLoader(unittest.TestCase):
 
     def test_testsuite(self):
-        app = yield get_application('test')
+        app = yield from get_application('test')
         self.assertTrue(app.cfg.script)
         # self.assertEqual(app.script, sys.argv[0])
         self.assertEqual(os.path.dirname(app.cfg.script), app.root_dir)
@@ -21,7 +21,7 @@ class TestTestLoader(unittest.TestCase):
                                            ('examples', 'test_*')))
 
     def test_load_pulsar_tests(self):
-        app = get_actor().app
+        app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         self.assertEqual(loader.modules, [('tests', None, None),
                                           ('examples', 'tests', None),
@@ -37,7 +37,7 @@ class TestTestLoader(unittest.TestCase):
         self.assertTrue('suite.single' in modules)
 
     def test_sorted_tags(self):
-        app = get_actor().app
+        app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = list(loader.testmodules())
         self.assertTrue(modules)
@@ -45,13 +45,13 @@ class TestTestLoader(unittest.TestCase):
         self.assertEqual(tags, sorted(tags))
 
     def test_load_tags1(self):
-        app = get_actor().app
+        app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('suite',)))
         self.assertEqual(len(modules), 6)
 
     def test_load_exclude(self):
-        app = get_actor().app
+        app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(
             exclude_tags=('taskqueue', 'apps.pubsub')))
@@ -62,7 +62,7 @@ class TestTestLoader(unittest.TestCase):
 
     def __test_djangoapp_tags(self):
         # TODO Fix this
-        app = get_actor().app
+        app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('djangoapp',)))
         self.assertEqual(len(modules), 3)

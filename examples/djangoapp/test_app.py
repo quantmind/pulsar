@@ -18,6 +18,7 @@ except ImportError:
 def start_server(actor, name, argv):
     os.environ["DJANGO_SETTINGS_MODULE"] = "djchat.settings"
     execute_from_command_line(argv)
+    yield None
     app = yield from get_application(name)
     return app.cfg
 

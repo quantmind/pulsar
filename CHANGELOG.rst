@@ -5,6 +5,7 @@ Ver. 3.4.1
 * Dropped task application
 * Dropped twisted integration
 * Dropped data mapper application
+* Dropped pulsar shell
 
 Ver. 0.9.3 - Development
 ===========================

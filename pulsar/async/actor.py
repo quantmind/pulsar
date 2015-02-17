@@ -274,13 +274,6 @@ class Actor(EventHandler, Coverage):
         '''Dictionary of registered actors or None'''
         return self.__impl.registered
 
-    def executor(self):
-        '''An executor for this actor
-
-        Obtained from the :attr:`_loop` attribute
-        '''
-        return get_executor(self._loop)
-
     #######################################################################
     #    HIGH LEVEL API METHODS
     #######################################################################

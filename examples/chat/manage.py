@@ -45,7 +45,7 @@ try:
 except ImportError:  # pragma nocover
     sys.path.append('../../')
 
-from pulsar import get_actor, Future
+from pulsar import get_actor, Future, async
 from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,
                               GZipMiddleware)
 from pulsar.apps.ws import WS, WebSocket
@@ -147,7 +147,7 @@ class WebChat(LazyWsgi):
         self.store = create_store(cfg.data_store, loop=loop)
         pubsub = self.store.pubsub(protocol=Protocol())
         channel = '%s_webchat' % self.name
-        yield from pubsub.subscribe(channel)
+        async(pubsub.subscribe(channel), loop=loop)
         return WsgiHandler([Router('/', get=self.home_page),
                             WebSocket('/message', Chat(pubsub, channel)),
                             Router('/rpc', post=Rpc(pubsub, channel),

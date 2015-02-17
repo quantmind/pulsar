@@ -229,7 +229,6 @@ class Concurrency(object):
             #
             actor.exit_code = exit_code
             stopping = actor.fire_event('stopping')
-            self.close_executor(actor)
             if not stopping.done() and actor._loop.is_running():
                 actor.logger.debug('asynchronous stopping')
                 cbk = lambda _: self._stop_actor(actor)
@@ -240,14 +239,6 @@ class Concurrency(object):
                 return self._stop_actor(actor)
         elif actor.stopped():
             return self._stop_actor(actor, True)
-
-    def close_executor(self, actor):
-        '''Close the :meth:`executor`'''
-        executor = actor._loop._default_executor
-        if executor:
-            actor.logger.debug('Waiting for executor shutdown')
-            executor.shutdown()
-            actor._loop._default_executor = None
 
     def _install_signals(self, actor):
         proc_name = "%s-%s" % (actor.cfg.proc_name, actor.name)
@@ -267,9 +258,11 @@ class Concurrency(object):
     def _stop_actor(self, actor, finished=False):
         '''Exit from the :class:`.Actor` domain.'''
         if finished:
-            if actor._loop.is_running():
+            if actor._loop.is_running():  # pragma nocover
                 actor.logger.critical('Event loop still running when stopping')
                 actor._loop.stop()
+            else:
+                actor._loop.close()
             return True
         #
         actor.state = ACTOR_STATES.CLOSE
@@ -499,9 +492,6 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
 
     def create_mailbox(self, actor, loop):
         raise NotImplementedError
-
-    def close_executor(self, actor):
-        pass
 
     def periodic_task(self, monitor, **kw):
         '''Override the :meth:`.Concurrency.periodic_task` to implement

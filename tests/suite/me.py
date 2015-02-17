@@ -22,38 +22,6 @@ def wait(actor, period=0.5):
 
 class TestTestWorker(unittest.TestCase):
 
-    def test_ping_pong_monitor(self):
-        value = yield 3
-        self.assertEqual(value, 3)
-        try:
-            future = Future()
-            future.set_exception(ValueError('test'))
-            yield future
-        except ValueError:
-            pass
-        pong = yield send('monitor', 'ping')
-        self.assertEqual(pong, 'pong')
-
-    def test_worker(self):
-        '''Test the test worker'''
-        worker = pulsar.get_actor()
-        self.assertTrue(pulsar.is_actor(worker))
-        self.assertTrue(worker.is_running())
-        self.assertFalse(worker.closed())
-        self.assertFalse(worker.stopped())
-        self.assertEqual(worker.info_state, 'running')
-        self.assertNotEqual(worker.tid, current_thread().ident)
-        self.assertEqual(worker.pid, os.getpid())
-        self.assertFalse(worker.impl.daemon)
-        self.assertFalse(worker.is_monitor())
-        self.assertEqual(str(worker.impl), worker.impl.unique_name)
-
-    def testWorkerMonitor(self):
-        worker = pulsar.get_actor()
-        mailbox = worker.mailbox
-        monitor = worker.monitor
-        self.assertEqual(mailbox.address, monitor.address)
-
     def test_TestSuiteMonitor(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(len(arbiter.monitors) >= 1)
@@ -61,51 +29,10 @@ class TestTestWorker(unittest.TestCase):
         app = monitor.app
         self.assertTrue(isinstance(app, TestSuite))
 
-    def test_mailbox(self):
-        worker = pulsar.get_actor()
-        mailbox = worker.mailbox
-        self.assertTrue(mailbox)
-        self.assertTrue(hasattr(mailbox, 'request'))
-        self.assertTrue(mailbox._loop)
-        self.assertTrue(mailbox._loop.is_running())
-        self.assertEqual(worker._loop, mailbox._loop)
-        self.assertTrue(mailbox.address)
-        self.assertTrue(mailbox.name)
-
-    def test_suite_event_loop(self):
-        '''Test event loop in test worker'''
-        worker = pulsar.get_actor()
-        loop = get_event_loop()
-        self.assertTrue(loop.is_running())
-        self.assertTrue(worker._loop.is_running())
-        self.assertNotEqual(worker._loop, loop)
-
-    def test_yield(self):
-        '''Yielding a future calling back on separate thread'''
-        worker = pulsar.get_actor()
-        loop = get_event_loop()
-        loop_tid = yield from pulsar.loop_thread_id(loop)
-        self.assertNotEqual(worker.tid, current_thread().ident)
-        self.assertEqual(loop_tid, current_thread().ident)
-        yield None
-        self.assertEqual(loop_tid, current_thread().ident)
-        d = Future(loop=worker._loop)
-
-        # We are calling back the future in the event_loop which is on
-        # a separate thread
-        def _callback():
-            d.set_result(current_thread().ident)
-        worker._loop.call_soon_threadsafe(
-            worker._loop.call_later, 0.2, _callback)
-        result = yield from d
-        self.assertEqual(worker.tid, result)
-        self.assertNotEqual(worker.tid, current_thread().ident)
-        self.assertEqual(loop_tid, current_thread().ident)
-
     def test_unknown_send_target(self):
         # The target does not exists
-        result = yield from pulsar.send('vcghdvchdgcvshcd', 'ping')
-        self.assertEqual(result, None)
+        yield from self.async.assertRaises(pulsar.CommandError, send,
+                                           'vcghdvchdgcvshcd', 'ping')
 
     def test_multiple_execute(self):
         m = yield from multi_async((send('arbiter', 'run', wait, 1.2),
@@ -118,14 +45,6 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(m[2], 'ciao!')
         self.assertTrue(m[3] >= 2.0)
         self.assertEqual(m[4], 'ciao again!')
-
-    def test_tasks(self):
-        worker = pulsar.get_actor()
-        backend = worker.app.backend
-        self.assertTrue(worker.app.backend)
-        self.assertEqual(backend.name, worker.app.name)
-        self.assertEqual(len(backend.registry), 1)
-        self.assertTrue('test' in backend.registry)
 
     def test_no_plugins(self):
         suite = TestSuite()

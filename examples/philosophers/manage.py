@@ -192,8 +192,8 @@ class DiningPhilosophers(pulsar.Application):
 
         Check if forks are available.
         '''
-        fork = yield philosopher.send(philosopher.monitor, 'pickup_fork',
-                                      philosopher.number)
+        fork = yield from philosopher.send(philosopher.monitor, 'pickup_fork',
+                                           philosopher.number)
         if fork:
             forks = self.forks
             if fork in forks:
@@ -233,80 +233,5 @@ class DiningPhilosophers(pulsar.Application):
         params.update({'name': 'Philosopher %s' % number, 'number': number})
 
 
-class PhilosophersWsgi(wsgi.LazyWsgi):
-    '''This is the :ref:`wsgi application <wsgi-handlers>` for this
-    web-chat example.'''
-    def __init__(self, server_name):
-        self.name = server_name
-
-    def setup(self, environ):
-        '''Called once only to setup the WSGI application handler.
-
-        Check :ref:`lazy wsgi handler <wsgi-lazy-handler>`
-        section for further information.
-        '''
-        cfg = environ['pulsar.cfg']
-        loop = environ['pulsar.connection']._loop
-        self.store = data.create_store(cfg.data_store, loop=loop)
-        pubsub = self.store.pubsub(protocol=WsProtocol())
-        channel = '%s_messages' % self.name
-        pubsub.subscribe(channel)
-        middleware = [wsgi.Router('/', get=self.home_page),
-                      ws.WebSocket('/message', PhilosopherWs(pubsub, channel)),
-                      wsgi.FileRouter('/favicon.ico', FAVICON),
-                      wsgi.MediaRouter('media', ASSET_DIR)]
-        return wsgi.WsgiHandler(middleware)
-
-    def home_page(self, request):
-        doc = wsgi.HtmlDocument(media_path='/media/',
-                                known_libraries=media_libraries)
-        doc.head.scripts.append('require')
-        doc.head.scripts.require('jquery', 'd3', 'philosophers.js')
-        doc.head.links.append('bootstrap')
-        doc.body.append(wsgi.Html('div', cn='philosophers'))
-        return doc.http_response(request)
-
-
-class PhilosopherWs(ws.WS):
-
-    def __init__(self, pubsub, channel):
-        self.pubsub = pubsub
-        self.channel = channel
-
-    def on_open(self, websocket):
-        '''When a new websocket connection is established it creates a
-        new :class:`ChatClient` and adds it to the set of clients of the
-        :attr:`pubsub` handler.'''
-        self.pubsub.add_client(WsClient(websocket, self.channel))
-
-
-class WsClient(data.PubSubClient):
-
-    def __init__(self, connection, channel):
-        self.connection = connection
-        self.channel = channel
-
-    def __call__(self, channel, message):
-        self.connection.write(message)
-
-
-class server(pulsar.MultiApp):
-    '''Build a multi-app consisting of
-
-    * The :class:`.DiningPhilosophers` application
-    * A wsgi server for displaying actions on the browser
-    '''
-    cfg = pulsar.Config('Dining philosophers sit at a table around a bowl of '
-                        'spaghetti and waits for available forks.',
-                        data_store=ds.pulsards_url())
-
-    def build(self):
-        yield self.new_app(DiningPhilosophers)
-        # yield self.new_app(wsgi.WSGIServer, prefix='wsgi',
-        #                    callable=PhilosophersWsgi(self.name))
-        # yield self.new_app(wsgi.WSGIServer,
-        #                    callable=PhilosophersWsgi(self.name))
-
-
 if __name__ == '__main__':
-    server('philosophers').start()
+    DiningPhilosophers().start()

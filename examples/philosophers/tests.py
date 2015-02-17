@@ -1,6 +1,8 @@
 import unittest
+import asyncio
 
 from pulsar import send
+from pulsar.apps.test import test_timeout
 
 from .manage import DiningPhilosophers
 
@@ -13,16 +15,15 @@ class TestPhylosophers(unittest.TestCase):
     def setUpClass(cls):
         app = DiningPhilosophers(name='plato',
                                  concurrency=cls.concurrency)
-        cls.app_cfg = yield send('arbiter', 'run', app)
+        cls.app_cfg = yield from send('arbiter', 'run', app)
 
+    @test_timeout(30)
     def test_info(self):
         while True:
-            philo = []
-            while len(philo) < 5:
-                info = yield send('plato', 'info')
-                philo = info.get('workers', [])
+            yield from asyncio.sleep(0.5)
+            info = yield from send('plato', 'info')
             all = []
-            for data in philo:
+            for data in info.get('workers', []):
                 p = data.get('philosopher')
                 if p:
                     all.append(p)

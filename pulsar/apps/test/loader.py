@@ -138,7 +138,7 @@ class TestLoader(object):
                     tag = ntag or tag or name
                     mod = self.import_module(name)
                     if mod:
-                        yield tag, mod
+                        yield tag[0] if isinstance(tag, tuple) else tag, mod
             else:
                 raise ValueError('%s cannot be found in %s directory.'
                                  % (name, self.root))

@@ -1,6 +1,6 @@
 import time
 
-from pulsar import HttpException, task
+from pulsar import HttpException
 from pulsar.apps import ws
 from pulsar.apps.data import PubSubClient, create_store
 from pulsar.utils.system import json
@@ -42,35 +42,35 @@ class Chat(ws.WS):
             self._pubsub = self._store.pubsub()
             webchat = '%s:webchat' % cfg.exc_id
             chatuser = '%s:chatuser' % cfg.exc_id
-            self._pubsub.subscribe(webchat, chatuser)
+            yield from self._pubsub.subscribe(webchat, chatuser)
         return self._pubsub
 
-    @task
     def on_open(self, websocket):
         '''A new websocket connection is established.
 
         Add it to the set of clients listening for messages.
         '''
-        self.get_pubsub(websocket).add_client(ChatClient(websocket))
+        pubsub = yield from self.get_pubsub(websocket)
+        pubsub.add_client(ChatClient(websocket))
         user, _ = self.user(websocket)
         users_key = 'webchatusers:%s' % websocket.cfg.exc_id
         # add counter to users
-        registered = yield self._client.hincrby(users_key, user, 1)
+        registered = yield from self._client.hincrby(users_key, user, 1)
         if registered == 1:
-            self.publish(websocket, 'chatuser', 'joined')
+            yield from self.publish(websocket, 'chatuser', 'joined')
 
-    @task
     def on_close(self, websocket):
         '''Leave the chat room
         '''
         user, _ = self.user(websocket)
         users_key = 'webchatusers:%s' % websocket.cfg.exc_id
-        registered = yield self._client.hincrby(users_key, user, -1)
-        self.get_pubsub(websocket).remove_client(websocket._chat_client)
+        registered = yield from self._client.hincrby(users_key, user, -1)
+        pubsub = yield from self.get_pubsub(websocket)
+        pubsub.remove_client(websocket._chat_client)
         if not registered:
-            self.publish(websocket, 'chatuser', 'gone')
+            yield from self.publish(websocket, 'chatuser', 'gone')
         if registered <= 0:
-            self._client.hdel(users_key, user)
+            yield from self._client.hdel(users_key, user)
 
     def on_message(self, websocket, msg):
         '''When a new message arrives, it publishes to all listening clients.
@@ -83,7 +83,7 @@ class Chat(ws.WS):
                     lines.append(l)
             msg = ' '.join(lines)
             if msg:
-                self.publish(websocket, 'webchat', msg)
+                return self.publish(websocket, 'webchat', msg)
 
     def user(self, websocket):
         user = websocket.handshake.get('django.user')

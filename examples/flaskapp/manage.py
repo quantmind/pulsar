@@ -29,12 +29,7 @@ class Site(wsgi.LazyWsgi):
 
 
 def run():
-    wsgi.WSGIServer(
-        config='manage.py',
-        callable=Site(),
-        workers=4,
-        thread_workers=20,
-        bind=("0.0.0.0" + ":" + "8080")).start()
+    wsgi.WSGIServer(Site(), config='manage.py').start()
 
 
 if __name__ == '__main__':
