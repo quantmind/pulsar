@@ -28,7 +28,8 @@ HANDLE_FLAG_INHERIT = 0x00000001
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGBREAK)
 
 
-set_owner_process = lambda gid, uid: None
+def set_owner_process(gid, uid):
+    return None
 
 
 def get_parent_id():

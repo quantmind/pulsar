@@ -19,10 +19,17 @@ class Path(str):
         '''Return the current working directory as a path object.'''
         return cls(os.getcwd())
 
-    isfile = lambda self: os.path.isfile(self)
-    isdir = lambda self: os.path.isdir(self)
-    exists = lambda self: os.path.exists(self)
-    realpath = lambda self: self.__class__(os.path.realpath(str(self)))
+    def isfile(self):
+        return os.path.isfile(self)
+
+    def isdir(self):
+        return os.path.isdir(self)
+
+    def exists(self):
+        return os.path.exists(self)
+
+    def realpath(self):
+        return self.__class__(os.path.realpath(str(self)))
 
     def join(self, *path):
         return self.__class__(os.path.join(self, *path))

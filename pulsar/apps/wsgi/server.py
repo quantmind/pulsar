@@ -21,7 +21,7 @@ from wsgiref.handlers import format_date_time
 import pulsar
 from pulsar import (reraise, HttpException, ProtocolError, Future, task,
                     isfuture, chain_future)
-from pulsar.utils.pep import is_string, native_str
+from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
                                   urlparse, iri_to_uri, DEFAULT_CHARSET)
@@ -217,7 +217,7 @@ def wsgi_environ(stream, address, client_address, headers,
     environ['wsgi.url_scheme'] = url_scheme
     if url_scheme == 'https':
         environ['HTTPS'] = 'on'
-    if is_string(forward):
+    if isinstance(forward, str):
         # we only took the last one
         # http://en.wikipedia.org/wiki/X-Forwarded-For
         if forward.find(",") >= 0:

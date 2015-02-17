@@ -1,7 +1,7 @@
 '''Utilities for HTML and text manipulation.
 '''
 from .system import json
-from .pep import to_string, is_string
+from .pep import to_string
 
 
 NOTHING = ('', b'', None)
@@ -56,7 +56,7 @@ quotes and angle brackets encoded."""
 
 
 def dump_data_value(v):
-    if not is_string(v):
+    if not isinstance(v, str):
         if isinstance(v, bytes):
             v = v.decode('utf-8')
         else:

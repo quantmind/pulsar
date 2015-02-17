@@ -9,9 +9,8 @@ from threading import Lock
 from functools import wraps
 
 from .system import current_process, platform
-
-
 from .pep import force_native_str
+from .structures import AttributeDictionary
 
 win32 = sys.platform == "win32"
 
@@ -24,8 +23,6 @@ if sys.version_info < (2, 7):    # pragma    nocover
 else:
     from logging.config import dictConfig
     from logging import NullHandler
-
-from .structures import AttributeDictionary
 
 
 LOGGING_CONFIG = {

@@ -231,7 +231,10 @@ class Concurrency(object):
             stopping = actor.fire_event('stopping')
             if not stopping.done() and actor._loop.is_running():
                 actor.logger.debug('asynchronous stopping')
-                cbk = lambda _: self._stop_actor(actor)
+
+                def cbk(_):
+                    return self._stop_actor(actor)
+
                 return chain_future(stopping, callback=cbk, errback=cbk)
             else:
                 if actor.logger:

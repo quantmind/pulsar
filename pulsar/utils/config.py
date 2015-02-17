@@ -256,7 +256,10 @@ class Config(object):
         '''Add this container :attr:`settings` to an existing ``parser``.
         '''
         setts = self.settings
-        sorter = lambda x: (setts[x].section, setts[x].order)
+
+        def sorter(x):
+            return (setts[x].section, setts[x].order)
+
         for k in sorted(setts, key=sorter):
             setts[k].add_argument(parser)
         return parser

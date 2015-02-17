@@ -122,8 +122,9 @@ class Parser(object):
 
     def pack_pipeline(self, commands):
         '''Packs pipeline commands into bytes.'''
-        pack = lambda *args: b''.join(self._pack_command(args))
-        return b''.join(starmap(pack, (args for args, _ in commands)))
+        return b''.join(
+            starmap(lambda *args: b''.join(self._pack_command(args)),
+                    (a for a, _ in commands)))
 
     #    INTERNALS
     def _pack_command(self, args):

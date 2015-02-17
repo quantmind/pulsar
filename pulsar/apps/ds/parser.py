@@ -31,12 +31,16 @@ def response_error(response):
     return EXCEPTION_CLASSES[error_code](response)
 
 
-PyRedisParser = lambda: Parser(InvalidResponse, response_error)
+def PyRedisParser():
+    return Parser(InvalidResponse, response_error)
 
 
 if pulsar.HAS_C_EXTENSIONS:
     from pulsar.utils.lib import RedisParser as _RedisParser
-    RedisParser = lambda: _RedisParser(InvalidResponse, response_error)
+
+    def RedisParser():
+        return _RedisParser(InvalidResponse, response_error)
+
 else:    # pragma nocover
     RedisParser = PyRedisParser
 

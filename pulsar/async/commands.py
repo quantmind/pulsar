@@ -102,8 +102,8 @@ def kill_actor(request, aid, timeout=5):
     if arb.is_arbiter():
         arb.send(aid, 'stop')
         return 'killed %s' % aid
-        #proxy = yield from async_while(timeout, arb.get_actor, aid)
-        #if proxy:
-        #    arb.logger.warning('Could not kill actor %s', aid)
-        #else:
-        #    return 'killed %s' % aid
+        # proxy = yield from async_while(timeout, arb.get_actor, aid)
+        # if proxy:
+        #     arb.logger.warning('Could not kill actor %s', aid)
+        # else:
+        #     return 'killed %s' % aid

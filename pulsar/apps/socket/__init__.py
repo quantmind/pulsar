@@ -214,8 +214,8 @@ class SocketServer(pulsar.Application):
         '''
         cfg = self.cfg
         loop = monitor._loop
-        if (not pulsar.platform.has_multiProcessSocket
-                or cfg.concurrency == 'thread'):
+        if (not pulsar.platform.has_multiProcessSocket or
+                cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
         if not cfg.address:
             raise ImproperlyConfigured('Could not open a socket. '
@@ -326,8 +326,8 @@ class UdpSocketServer(SocketServer):
         '''
         cfg = self.cfg
         loop = monitor._loop
-        if (not pulsar.platform.has_multiProcessSocket
-                or cfg.concurrency == 'thread'):
+        if (not pulsar.platform.has_multiProcessSocket or
+                cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
         if not cfg.address:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '

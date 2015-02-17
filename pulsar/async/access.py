@@ -5,9 +5,15 @@ import logging
 from functools import wraps
 from collections import OrderedDict
 from threading import current_thread
+import asyncio
+
+from asyncio.futures import (_PENDING, _CANCELLED, _FINISHED)
+from asyncio.base_events import BaseEventLoop, _StopError
+from asyncio import selectors, events, iscoroutine
 
 from pulsar.utils.config import Global
 from pulsar.utils.system import platform, current_process
+
 
 __all__ = ['get_event_loop',
            'new_event_loop',
@@ -30,14 +36,9 @@ __all__ = ['get_event_loop',
 if '--debug' in sys.argv:   # pragma    nocover
     os.environ['PYTHONASYNCIODEBUG'] = 'debug'
 
-import asyncio
-
-from asyncio.futures import (_PENDING, _CANCELLED, _FINISHED)
-from asyncio.base_events import BaseEventLoop, _StopError
-from asyncio import selectors, events, iscoroutine
-
 _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,)
 CANCELLED_ERRORS = (asyncio.CancelledError,)
+
 
 def reraise(tp, value, tb=None):
     if value.__traceback__ is not tb:
@@ -45,7 +46,11 @@ def reraise(tp, value, tb=None):
     raise value
 
 Future = asyncio.Future
-isfuture = lambda x: isinstance(x, Future)
+
+
+def isfuture(x):
+    return isinstance(x, Future)
+
 
 def is_async(c):
     return isfuture(c) or iscoroutine(c)
@@ -150,5 +155,9 @@ def thread_data(name, value=NOTHING, ct=None):
     return loc.get(name)
 
 
-get_actor = lambda: thread_data('actor')
-set_actor = lambda actor: thread_data('actor', actor)
+def get_actor():
+    return thread_data('actor')
+
+
+def set_actor(actor):
+    return thread_data('actor', actor)

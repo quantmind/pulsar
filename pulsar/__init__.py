@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -
 '''Event driven concurrent framework for Python'''
-VERSION = (3, 4, 0, 'beta', 1)
-
 import os
 
 from .utils.version import get_version
+
+VERSION = (3, 4, 0, 'beta', 1)
 
 __version__ = version = get_version(VERSION)
 __license__ = "BSD"

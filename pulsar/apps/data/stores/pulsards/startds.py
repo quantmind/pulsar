@@ -22,6 +22,7 @@ def start_pulsar_ds(arbiter, host, workers=0):
     finally:
         lock.release()
 
+
 @task
 def start_store(app, url, workers=0, **kw):
     '''Equivalent to :func:`.create_store` for most cases excepts when the
@@ -44,12 +45,14 @@ def start_store(app, url, workers=0, **kw):
             store = create_store(dns, **kw)
     app.cfg.set('data_store', store.dns)
 
+
 def localhost(host):
     if isinstance(host, tuple):
         if host[0] in ('127.0.0.1', ''):
             return ':'.join((str(b) for b in host))
     else:
         return host
+
 
 def _start_store(monitor):
     app = monitor.app

@@ -1,32 +1,24 @@
 language: python
 
 python:
-  - "2.7"
-  - "pypy"
-  - "3.3"
   - "3.4"
 
 services:
   - redis-server
 
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -r requirements_dev.txt; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install -r requirements_dev_pypy.txt; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -r requirements_dev.txt; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then pip install -r requirements_dev.txt; fi
+  - then pip install -r requirements_dev.txt
   - python setup.py install
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 
 services:
   - redis-server
-  - postgresql
-  - couchdb
 
 script:
   - python -m covrun --pep8 pulsar examples tests
   - sudo rm -rf pulsar
-  - python -m covrun -w 2 --log-level none trollius.error -e taskqueue pshell webmail stores.redis stores.query stores.odm.couchdb stores.odm.postgresql stores.odm.redis
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then python -m runtests --coveralls; fi
+  - python -m covrun
+  - python -m runtests --coveralls
 
 notifications:
   email: false

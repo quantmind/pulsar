@@ -62,8 +62,8 @@ class TestPluginMeta(type):
                 default = attrs.pop('default', None)
                 validator = attrs.pop('validator', None)
                 nargs = attrs.pop('nargs', None)
-                if (validator is None and default is None and type is None
-                        and nargs is None):
+                if (validator is None and default is None and type is None and
+                        nargs is None):
                     if action is None or action == 'store_true':
                         action = 'store_true'
                         default = False

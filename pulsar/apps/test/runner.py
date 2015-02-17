@@ -6,6 +6,7 @@ from pulsar import async, is_async, HaltServer
 from .utils import (TestFailure, is_expected_failure, skip_test, skip_reason,
                     expecting_failure, AsyncAssert)
 
+
 class Runner(object):
 
     def __init__(self, monitor, runner, tests):
@@ -60,7 +61,6 @@ class Runner(object):
             yield from self._run_testcls(testcls, all_tests)
             self.logger.info('Finished Tests from %s', testcls)
 
-
     def _run_testcls(self, testcls, all_tests):
         cfg = testcls.cfg
         seq = getattr(testcls, '_sequential_execution', cfg.sequential)
@@ -68,7 +68,7 @@ class Runner(object):
             if skip_test(testcls):
                 raise SkipTest(skip_reason(testcls))
             yield from self._run(testcls.setUpClass)
-            yield None # release the loop
+            yield None  # release the loop
         except SkipTest as exc:
             reason = str(exc)
             for test in all_tests:
@@ -125,7 +125,7 @@ class Runner(object):
             if not error:
                 runner.addSuccess(test)
         runner.stopTest(test)
-        yield None # release the loop
+        yield None  # release the loop
 
     def _run_safe(self, test, method, error=None):
         try:
@@ -140,7 +140,6 @@ class Runner(object):
                 error = TestFailure(exc)
                 self.add_failure(test, error, expecting_failure(method))
             return error
-
 
     def add_failure(self, test, failure, expecting_failure=False):
         '''Add ``error`` to the list of errors.

@@ -788,8 +788,8 @@ class Media(AsyncString):
         A path is local relative when it does not start with a slash
         ``/`` nor ``http://`` nor ``https://``.
         '''
-        return not (path.startswith('http://') or path.startswith('https://')
-                    or path.startswith('/'))
+        return not (path.startswith('http://') or
+                    path.startswith('https://') or path.startswith('/'))
 
     def absolute_path(self, path, minify=True):
         '''Return a suitable absolute url for ``path``.

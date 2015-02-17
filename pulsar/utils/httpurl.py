@@ -52,9 +52,17 @@ from email.utils import formatdate
 from io import BytesIO
 import zlib
 from collections import deque, OrderedDict
+from urllib import request as urllibr
+from http import client as httpclient
+from urllib.parse import (quote, unquote, urlencode, urlparse, urlsplit,
+                          parse_qs, parse_qsl, splitport, urlunparse,
+                          urljoin)
+from http.client import responses
+from http.cookiejar import CookieJar, Cookie
+from http.cookies import SimpleCookie
 
 from .structures import mapping_iterator
-from .pep import to_bytes, native_str
+from .pep import to_bytes, native_str, force_native_str
 from .html import capfirst
 
 # try:
@@ -89,8 +97,6 @@ def http_parser(**kwargs):
     return _Http_Parser(**kwargs)
 
 
-create_connection = socket.create_connection
-
 try:    # Compiled with SSL?
     BaseSSLError = None
     ssl = None
@@ -99,29 +105,9 @@ try:    # Compiled with SSL?
 except (ImportError, AttributeError):   # pragma : no cover
     pass
 
-from urllib import request as urllibr
-from http import client as httpclient
-from urllib.parse import (quote, unquote, urlencode, urlparse, urlsplit,
-                          parse_qs, parse_qsl, splitport, urlunparse,
-                          urljoin)
-from http.client import responses
-from http.cookiejar import CookieJar, Cookie
-from http.cookies import SimpleCookie
 
-string_type = str
 getproxies_environment = urllibr.getproxies_environment
 ascii_letters = string.ascii_letters
-chr = chr
-is_string = lambda s: isinstance(s, str)
-
-def force_native_str(s, encoding=None):
-    if isinstance(s, bytes):
-        return s.decode(encoding or 'utf-8')
-    elif not isinstance(s, str):
-        return str(s)
-    else:
-        return s
-
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
 request_host = urllibr.request_host
@@ -148,8 +134,13 @@ URI_SAFE_CHARS = URI_RESERVED_CHARS + '%~'
 HEADER_TOKEN_CHARS = frozenset("!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                '^_`abcdefghijklmnopqrstuvwxyz|~')
 
-escape = lambda s: quote(s, safe='~')
-urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
+
+def escape(s):
+    return quote(s, safe='~')
+
+
+def urlquote(iri):
+    return quote(iri, safe=URI_RESERVED_CHARS)
 
 
 def _gen_unquote(uri):
@@ -1113,7 +1104,9 @@ def get_environ_proxies():
         'no'
     ]
 
-    get_proxy = lambda k: os.environ.get(k) or os.environ.get(k.upper())
+    def get_proxy(k):
+        return os.environ.get(k) or os.environ.get(k.upper())
+
     proxies = [(key, get_proxy(key + '_proxy')) for key in proxy_keys]
     return dict([(key, val) for (key, val) in proxies if val])
 

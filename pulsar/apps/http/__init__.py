@@ -281,7 +281,7 @@ from io import StringIO, BytesIO
 import pulsar
 from pulsar import AbstractClient, Pool, Connection, ProtocolConsumer
 from pulsar.utils.system import json
-from pulsar.utils.pep import native_str, is_string, to_bytes
+from pulsar.utils.pep import native_str, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.utils.internet import CERT_NONE, SSLContext
@@ -622,7 +622,7 @@ class HttpRequest(RequestBase):
             assert self.files is None, ('data cannot be bytes when files are '
                                         'present')
             body = data
-        elif is_string(data):
+        elif isinstance(data, str):
             assert self.files is None, ('data cannot be string when files are '
                                         'present')
             body = to_bytes(data, self.charset)
@@ -657,7 +657,7 @@ class HttpRequest(RequestBase):
     def _encode_files(self, data):
         fields = []
         for field, val in mapping_iterator(data or ()):
-            if (is_string(val) or isinstance(val, bytes) or
+            if (isinstance(val, str) or isinstance(val, bytes) or
                     not hasattr(val, '__iter__')):
                 val = [val]
             for v in val:
@@ -681,7 +681,7 @@ class HttpRequest(RequestBase):
                 fp = v
             if isinstance(fp, bytes):
                 fp = BytesIO(fp)
-            elif is_string(fp):
+            elif isinstance(fp, str):
                 fp = StringIO(fp)
             if ft:
                 new_v = (fn, fp.read(), ft)
@@ -1193,4 +1193,3 @@ class HttpClient(AbstractClient):
         # Wait for the connection made event
         yield from connection.event('connection_made')
         return connection
-

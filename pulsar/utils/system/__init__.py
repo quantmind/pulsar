@@ -3,11 +3,10 @@
 import os
 
 from .runtime import Platform
+from .base import *
 
 platform = Platform()
 seconds = platform.seconds
-
-from .base import *
 
 if platform.type == 'win':    # pragma nocover
     from .windowssystem import *

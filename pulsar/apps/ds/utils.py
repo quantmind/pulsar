@@ -185,6 +185,13 @@ def count_bytes(array):
     return count
 
 
-and_op = lambda x, y: x & y
-or_op = lambda x, y: x | y
-xor_op = lambda x, y: x ^ y
+def and_op(x, y):
+    return x & y
+
+
+def or_op(x, y):
+    return x | y
+
+
+def xor_op(x, y):
+    return x ^ y

@@ -17,6 +17,10 @@ STDOUT_LINE = '\nStdout:\n%s'
 STDERR_LINE = '\nStderr:\n%s'
 
 
+def def_return_val(c):
+    return None
+
+
 class Plugin(object):
     '''Interface for all classes which are part of the :class:`.TestRunner`.
 
@@ -359,7 +363,7 @@ class TestResult(Plugin):
 
 def testsafe(name, return_val=None):
     if not return_val:
-        return_val = lambda c: None
+        return_val = def_return_val
 
     def _(self, *args):
         for p in self.plugins:

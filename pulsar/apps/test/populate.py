@@ -4,7 +4,9 @@ import string
 
 _characters = string.ascii_letters + string.digits
 
-def_converter = lambda x: x
+
+def def_converter(x):
+    return x
 
 
 def populate(datatype='string', size=10, start=None, end=None,

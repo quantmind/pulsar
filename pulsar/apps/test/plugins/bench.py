@@ -41,20 +41,23 @@ benchmark plugin evaluate the perfomance and display results:
 import sys
 import time
 import math
+from unittest import TestSuite
+
+import pulsar
+from pulsar.apps import test
 
 if sys.platform == "win32":  # pragma    nocover
     default_timer = time.clock
 else:
     default_timer = time.time
 
-from unittest import TestSuite
-
-import pulsar
-from pulsar.apps import test
-
 
 BENCHMARK_TEMPLATE = ('{0[name]}: repeated {0[number]} times, '
                       'average {0[mean]} secs, stdev {0[std]}')
+
+
+def simple(info, *args):
+    return info
 
 
 class BenchTest(test.WrapTest):
@@ -72,7 +75,6 @@ class BenchTest(test.WrapTest):
                      'std': '{0} %'.format(std)})
 
     def _call(self):
-        simple = lambda info, *args: info
         testMethod = self.testMethod
         testStartUp = getattr(self.test, 'startUp', lambda: None)
         testGetTime = getattr(self.test, 'getTime', lambda dt: dt)

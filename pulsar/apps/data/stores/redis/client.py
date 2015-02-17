@@ -168,7 +168,8 @@ class Consumer(pulsar.ProtocolConsumer):
                 if response is not False:
                     if not isinstance(response, Exception):
                         cmnd = request[0][0]
-                        response = self.parse_response(response, cmnd, request[1])
+                        response = self.parse_response(response, cmnd,
+                                                       request[1])
                     else:
                         response = ResponseError(response)
                     self.finished(response)
@@ -176,8 +177,8 @@ class Consumer(pulsar.ProtocolConsumer):
                 commands, raise_on_error, responses = request
                 error = None
                 while response is not False:
-                    if (isinstance(response, Exception) and raise_on_error
-                            and not error):
+                    if (isinstance(response, Exception) and
+                            raise_on_error and not error):
                         error = response
                     responses.append(response)
                     response = parser.get()

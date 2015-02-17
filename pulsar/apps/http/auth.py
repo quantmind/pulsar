@@ -92,7 +92,6 @@ class HTTPDigestAuth(Auth):
         path = p_parsed.path
         if p_parsed.query:
             path += '?' + p_parsed.query
-        KD = lambda s, d: self.hex("%s:%s" % (s, d))
         ha1 = self.ha1(realm, self.password)
         ha2 = self.ha2(qop, method, path)
         if qop == 'auth':
@@ -107,9 +106,9 @@ class HTTPDigestAuth(Auth):
             s += os.urandom(8)
             cnonce = sha1(s).hexdigest()[:16]
             noncebit = "%s:%s:%s:%s:%s" % (nonce, ncvalue, cnonce, qop, ha2)
-            respdig = KD(ha1, noncebit)
+            respdig = self.KD(ha1, noncebit)
         elif qop is None:
-            respdig = KD(ha1, "%s:%s" % (nonce, ha2))
+            respdig = self.KD(ha1, "%s:%s" % (nonce, ha2))
         else:
             # XXX handle auth-int.
             return
@@ -141,6 +140,9 @@ class HTTPDigestAuth(Auth):
                 response.request_again = request_again(request.method,
                                                        request.full_url,
                                                        params)
+
+    def KD(self, s, d):
+        return self.hex("%s:%s" % (s, d))
 
     def hex(self, x):
         if self.algorithm == 'MD5':
