@@ -98,10 +98,10 @@ via the ``_loop`` attribute::
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
-from pulsar import Http404, is_async, isfuture, task
+from pulsar import Http404, is_async, coroutine
 from pulsar.utils.log import LocalMixin, local_method
 
-from .utils import handle_wsgi_error
+from .utils import handle_wsgi_error, wsgi_yield_from
 from .wrappers import WsgiResponse
 
 
@@ -136,14 +136,14 @@ class WsgiHandler(object):
         self.middleware = middleware or []
         self.response_middleware = response_middleware or []
 
-    @task
+    @coroutine
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
         response = None
         try:
             for middleware in self.middleware:
                 response = middleware(environ, start_response)
-                if isfuture(response):
+                if wsgi_yield_from(response, middleware):
                     response = yield from response
                 if response is not None:
                     break
@@ -172,8 +172,13 @@ class LazyWsgi(LocalMixin):
     its wsgi :attr:`handler` every time is pickled and un-pickled without
     causing serialisation issues.
     '''
+    @coroutine
     def __call__(self, environ, start_response):
-        return self.handler(environ)(environ, start_response)
+        handler = self.handler(environ)
+        result = handler(environ, start_response)
+        if wsgi_yield_from(result, handler):
+            result = yield from result
+        return result
 
     @local_method
     def handler(self, environ=None):

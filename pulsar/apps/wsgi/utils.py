@@ -8,9 +8,9 @@ import textwrap
 import logging
 from datetime import datetime, timedelta
 from email.utils import formatdate
+from asyncio import iscoroutinefunction, iscoroutine
 
-
-from pulsar import format_traceback
+from pulsar import format_traceback, isfuture
 from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
@@ -27,6 +27,7 @@ __all__ = ['handle_wsgi_error',
            'wsgi_request',
            'set_wsgi_request_class',
            'dump_environ',
+           'wsgi_yield_from',
            'HOP_HEADERS']
 
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
@@ -52,6 +53,13 @@ error_css = '''
 _RequestClass = None
 
 
+def wsgi_yield_from(result, handler=None):
+    if iscoroutine(result):
+        return handler and (iscoroutinefunction(handler) or
+                            iscoroutinefunction(handler.__call__))
+    return isfuture(result)
+
+
 def wsgi_request(environ, app_handler=None, urlargs=None):
     global _RequestClass
     return _RequestClass(environ, app_handler=app_handler, urlargs=urlargs)
@@ -61,6 +69,13 @@ def set_wsgi_request_class(RequestClass):
     global _RequestClass
     _RequestClass = RequestClass
 
+
+def wsgi_info(environ, status, exc=None):
+    msg = '' if not exc else ' - %s' % exc
+    return '%s %s %s - %s%s' % (environ.get('REQUEST_METHOD'),
+                                environ.get('RAW_URI'),
+                                environ.get('SERVER_PROTOCOL'),
+                                status, msg)
 
 def cookie_date(epoch_seconds=None):
     """Formats the time to ensure compatibility with Netscape's cookie
@@ -224,13 +239,11 @@ def handle_wsgi_error(environ, exc):
         response.headers.update(getattr(exc, 'headers', None) or ())
     path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
-    if status == 500:
+    if status >= 500:
         logger.critical('Unhandled exception during HTTP response %s.%s',
                         path, dump_environ(environ), exc_info=exc_info)
     else:
-        msg = str(exc)
-        msg = '' if not msg else ' - %s' % msg
-        logger.warning('HTTP %s %s%s', response.status, path, msg)
+        logger.warning(wsgi_info(environ, response.status, exc))
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         response.content_type = None
         response.content = None

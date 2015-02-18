@@ -315,14 +315,14 @@ class TestResult(Plugin):
         '''
         self._testsRun += 1
 
-    def addError(self, test, err):
+    def addError(self, test, err):    # pragma    nocover
         '''Called when an unexpected error has occurred.
 
         ``err`` is a tuple of values as returned by ``sys.exc_info()``
         '''
         self._add_error(test, err, self.errors)
 
-    def addFailure(self, test, err):
+    def addFailure(self, test, err):    # pragma    nocover
         '''Called when an test failure has occurred.
 
         ``err`` is a tuple of values as returned by ``sys.exc_info()``
@@ -347,15 +347,6 @@ class TestResult(Plugin):
         test = self.getDescription(test)
         container.append((test, str(exc)))
 
-    def add(self, result):
-        self._count += 1
-        self._testsRun += result.testsRun
-        self.failures.extend(result.failures)
-        self.errors.extend(result.errors)
-        self.skipped.extend(result.skipped)
-        self.expectedFailures.extend(result.expectedFailures)
-        self.unexpectedSuccesses.extend(result.unexpectedSuccesses)
-
     def wasSuccessful(self):
         "Tells whether or not this result was a success"
         return len(self.failures) == len(self.errors) == 0
@@ -371,7 +362,7 @@ def testsafe(name, return_val=None):
                 c = getattr(p, name)(*args)
                 if c is not None:
                     return return_val(c)
-            except Exception:
+            except Exception:       # pragma    nocover
                 LOGGER.exception('Unhadled error in %s.%s' % (p, name))
     return _
 
@@ -421,11 +412,6 @@ class TestRunner(Plugin):
             return self.loader.loadTestsFromTestCase(test_cls)
         else:
             return c
-
-    def add(self, result):
-        '''Add a new result to the :attr:`~.Plugin.result` container
-        '''
-        self.result.add(result)
 
     def import_module(self, mod, parent=None):
         for p in self.plugins:

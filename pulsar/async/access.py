@@ -7,9 +7,9 @@ from collections import OrderedDict
 from threading import current_thread
 import asyncio
 
-from asyncio.futures import (_PENDING, _CANCELLED, _FINISHED)
 from asyncio.base_events import BaseEventLoop, _StopError
-from asyncio import selectors, events, iscoroutine
+from asyncio import (selectors, events, iscoroutine, iscoroutinefunction,
+                     coroutine)
 
 from pulsar.utils.config import Global
 from pulsar.utils.system import platform, current_process
@@ -29,6 +29,7 @@ __all__ = ['get_event_loop',
            'Future',
            'reraise',
            'get_io_loop',
+           'coroutine',
            'is_async',
            'CANCELLED_ERRORS']
 

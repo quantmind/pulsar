@@ -11,7 +11,6 @@ __all__ = ['maybe_async',
            'run_in_loop',
            'add_errback',
            'add_callback',
-           'future_timeout',
            'task_callback',
            'multi_async',
            'as_coroutine',
@@ -23,28 +22,7 @@ __all__ = ['maybe_async',
            'AsyncObject']
 
 
-def future_timeout(future, timeout=None, exc_class=None):
-    '''Add a ``timeout`` to ``future`` in a thread-safe way.
-
-    :return: the ``future``
-    '''
-    exc_class = exc_class or TimeoutError
-
-    def _check_timeout():
-        if not future.done():
-            future.set_exception(exc_class())
-
-    if timeout and timeout > 0 and not future.done():
-        if future._loop == get_event_loop():
-            future._loop.call_later(timeout, _check_timeout)
-        else:
-            future._loop.call_soon_threadsafe(future._loop.call_later,
-                                              timeout, _check_timeout)
-
-    return future
-
-
-def chain_future(future, callback=None, errback=None, next=None, timeout=None):
+def chain_future(future, callback=None, errback=None, next=None):
     '''Chain a :class:`~asyncio.Future` to an existing ``future``.
 
     This function `chain` the ``next`` future to an existing ``future``.
@@ -57,16 +35,11 @@ def chain_future(future, callback=None, errback=None, next=None, timeout=None):
     :param errback: optional callback to execute on the exception of ``future``
     :param next: optional :class:`~asyncio.Future` to chain.
         If not provided a new future is created
-    :param timeout: optional timeout to set on ``next``
     :return: the future ``next``
     '''
     future = async(future)
     if next is None:
         next = Future(loop=future._loop)
-        if timeout and timeout > 0:
-            future_timeout(next, timeout)
-    else:
-        assert timeout is None, 'cannot set timeout'
 
     def _callback(fut):
         try:

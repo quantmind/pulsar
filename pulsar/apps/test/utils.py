@@ -46,9 +46,8 @@ except ImportError:
     ExpectedFailure = None
 
 import pulsar
-from pulsar import (get_actor, send, multi_async, future_timeout,
-                    TcpServer, new_event_loop, is_async,
-                    format_traceback, ImproperlyConfigured, Future,
+from pulsar import (get_actor, send, multi_async, TcpServer, new_event_loop,
+                    is_async, format_traceback, ImproperlyConfigured, Future,
                     chain_future)
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.data import create_store

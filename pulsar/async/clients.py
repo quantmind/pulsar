@@ -4,7 +4,7 @@ from pulsar.utils.internet import is_socket_closed
 
 import asyncio
 
-from .futures import AsyncObject, future_timeout
+from .futures import AsyncObject
 from .protocols import Producer
 
 

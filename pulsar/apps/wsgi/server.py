@@ -29,7 +29,8 @@ from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
-from .utils import handle_wsgi_error, wsgi_request, HOP_HEADERS
+from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
+                    wsgi_yield_from, wsgi_info)
 
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
@@ -464,11 +465,12 @@ class HttpServerResponse(ProtocolConsumer):
                     if 'SERVER_NAME' not in environ:
                         raise HttpException(status=400)
                     response = self.wsgi_callable(environ, self.start_response)
+                    if wsgi_yield_from(response, self.wsgi_callable):
+                        response = yield from response
                 else:
                     response = handle_wsgi_error(environ, exc_info)
-                #
-                if isfuture(response):
-                    response = yield from response
+                    if wsgi_yield_from(response, handle_wsgi_error):
+                        response = yield from response
                 #
                 if exc_info:
                     self.start_response(response.status,
@@ -511,6 +513,8 @@ class HttpServerResponse(ProtocolConsumer):
                 if not self.keep_alive:
                     self.connection.close()
                 self.finished()
+                parser = self.parser
+                self.logger.info(wsgi_info(environ, self.status))
             finally:
                 if hasattr(response, 'close'):
                     try:
