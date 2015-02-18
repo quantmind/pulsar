@@ -3,7 +3,7 @@ from unittest import SkipTest
 
 from pulsar import async, is_async, HaltServer
 
-from .utils import (TestFailure, is_expected_failure, skip_test, skip_reason,
+from .utils import (TestFailure, skip_test, skip_reason,
                     expecting_failure, AsyncAssert)
 
 
@@ -150,7 +150,7 @@ class Runner(object):
         :return: a tuple containing the ``error`` and the ``exc_info``
         '''
         runner = self.runner
-        if is_expected_failure(failure.exc, expecting_failure):
+        if expecting_failure:
             runner.addExpectedFailure(test, failure)
         elif isinstance(failure.exc, test.failureException):
             runner.addFailure(test, failure)

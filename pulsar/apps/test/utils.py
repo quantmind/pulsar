@@ -38,11 +38,6 @@ import logging
 import unittest
 from inspect import isclass
 
-try:
-    from unittest.case import _ExpectedFailure as ExpectedFailure
-except ImportError:
-    ExpectedFailure = None
-
 import pulsar
 from pulsar import (get_actor, send, multi_async, new_event_loop,
                     is_async, format_traceback, ImproperlyConfigured, Future)
@@ -53,8 +48,6 @@ __all__ = ['sequential',
            'NOT_TEST_METHODS',
            'ActorTestMixin',
            'AsyncAssert',
-           'show_leaks',
-           'hide_leaks',
            'check_server',
            'test_timeout',
            'dont_run_with_thread']
@@ -163,10 +156,10 @@ class AsyncAssert(object):
             yield from callable(*args, **kwargs)
         except error:
             return
-        except Exception:
+        except Exception:   # pragma    nocover
             raise self.test.failureException('%s not raised by %s'
                                              % (error, callable))
-        else:
+        else:   # pragma    nocover
             raise self.test.failureException('%s not raised by %s'
                                              % (error, callable))
 
@@ -213,37 +206,6 @@ class ActorTestMixin(object):
         return self.stop_actors()
 
 
-def inject_async_assert(obj):
-    tcls = obj if isclass(obj) else obj.__class__
-    if not hasattr(tcls, 'async'):
-        tcls.async = AsyncAssert(tcls)
-
-
-def show_leaks(actor, show=True):
-    '''Function to show memory leaks on a processed-based actor.'''
-    if not actor.is_process():
-        return
-    gc.collect()
-    if gc.garbage:
-        MAX_SHOW = 100
-        write = actor.stream.writeln if show else lambda msg: None
-        write('MEMORY LEAKS REPORT IN %s' % actor)
-        write('Created %s uncollectable objects' % len(gc.garbage))
-        for obj in gc.garbage[:MAX_SHOW]:
-            write('Type: %s' % type(obj))
-            write('=================================================')
-            write('%s' % obj)
-            write('-------------------------------------------------')
-            write('')
-            write('')
-        if len(gc.garbage) > MAX_SHOW:
-            write('And %d more' % (len(gc.garbage) - MAX_SHOW))
-
-
-def hide_leaks(actor):
-    show_leaks(actor, False)
-
-
 def check_server(name):
     '''Check if server ``name`` is available at the address specified
     ``<name>_server`` config value.
@@ -279,10 +241,3 @@ def dont_run_with_thread(obj):
         return d(obj)
     else:
         return obj
-
-
-def is_expected_failure(exc, default=False):
-    if ExpectedFailure:
-        return isinstance(exc, ExpectedFailure)
-    else:
-        return default
