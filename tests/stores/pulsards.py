@@ -64,7 +64,7 @@ class RedisCommands(StoreMixin):
 
     def test_store(self):
         store = self.store
-        self.assertEqual(len(store.namespace), 7)
+        self.assertTrue(store.namespace)
 
     ###########################################################################
     #    KEYS

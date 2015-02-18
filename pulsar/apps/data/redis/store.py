@@ -6,7 +6,7 @@ from pulsar.apps.data import RemoteStore, Command
 from pulsar.apps.ds import redis_parser
 
 from .client import RedisClient, Pipeline, Consumer, ResponseError
-from .pubsub import PubSub
+from .pubsub import RedisPubSub
 
 
 class RedisStoreConnection(Connection):
@@ -43,6 +43,8 @@ class RedisStore(RemoteStore):
         if namespace:
             self._urlparams['namespace'] = namespace
         self._pool = Pool(self.connect, pool_size=pool_size, loop=self._loop)
+        if self._database is None:
+            self._database = 7
         self.loaded_scripts = {}
 
     @property
@@ -68,7 +70,7 @@ class RedisStore(RemoteStore):
         return Pipeline(self)
 
     def pubsub(self, protocol=None):
-        return PubSub(self, protocol=protocol)
+        return RedisPubSub(self, protocol=protocol)
 
     def ping(self):
         return self.client().ping()
@@ -103,38 +105,6 @@ class RedisStore(RemoteStore):
         if self._database:
             yield from connection.execute('SELECT', self._database)
         return connection
-
-    def execute_transaction(self, transaction):
-        '''Execute a :class:`.Transaction`
-        '''
-        models = []
-        pipe = self.pipeline()
-        update_insert = set((Command.INSERT, Command.UPDATE))
-        #
-        for command in transaction.commands:
-            action = command.action
-            if not action:
-                pipe.execute(*command.args)
-            elif action in update_insert:
-                model = command.args
-                model['_rev'] = model.get('_rev', 0) + 1
-                models.append(model)
-                key = self.basekey(model._meta, model.id)
-                pipe.hmset(key, self.model_data(model, action))
-            else:
-                raise NotImplementedError
-        yield from pipe.commit()
-        return models
-
-    def get_model(self, manager, pk):
-        key = '%s%s:%s' % (self.namespace, manager._meta.table_name,
-                           to_string(pk))
-        return self.execute('hgetall', key,
-                            factory=partial(self.build_model, manager))
-
-    def compile_query(self, query):
-        compiled = CompiledQuery(self.pipeline())
-        return compiled
 
     def flush(self):
         return self.execute('flushdb')

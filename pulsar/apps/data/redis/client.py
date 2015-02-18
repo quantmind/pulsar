@@ -6,7 +6,7 @@ from pulsar.utils.pep import to_string
 from pulsar.utils.structures import mapping_iterator, Zset
 from pulsar.apps.ds import COMMANDS_INFO
 
-from .pubsub import PubSub
+from .pubsub import RedisPubSub
 
 str_or_bytes = (bytes, str)
 
@@ -212,7 +212,7 @@ class RedisClient(object):
     __str__ = __repr__
 
     def pubsub(self, **kw):
-        return PubSub(self.store, **kw)
+        return RedisPubSub(self.store, **kw)
 
     def pipeline(self):
         '''Create a :class:`.Pipeline` for pipelining commands

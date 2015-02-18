@@ -44,4 +44,4 @@ class RedisServer(Global):
     desc = 'Default connection string for the redis server'
 
 
-register_store('redis', 'pulsar.apps.data.stores.RedisStore')
+register_store('redis', 'pulsar.apps.data.RedisStore')

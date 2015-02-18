@@ -294,66 +294,6 @@ class RemoteStore(Producer, Store):
     def encode_json(self, data):
         return data
 
-    #    ODM SUPPORT
-    #######################
-    def transaction(self):
-        '''Create a transaction for this store.
-        '''
-        return StoreTransaction(self)
-
-    def create_model(self, manager, *args, **kwargs):
-        '''Create a new model from a ``manager``
-
-        Method used by the :class:`.Manager` callable method.
-        '''
-        instance = manager._model(*args, **kwargs)
-        instance['_mapper'] = manager._mapper
-        return instance
-
-    def execute_transaction(self, transaction):
-        '''Execute a  :meth:`transaction` in a multi-store
-        :class:`.Transaction`.
-
-        THis methid is used by the :ref:`object data mapper <odm>` and
-        should not be invoked directly.
-        It returns a list of models committed to the backend server.
-        '''
-        raise NotImplementedError
-
-    def compile_query(self, query):
-        '''Compile the :class:`.Query` ``query``.
-
-        Method required by the :class:`Object data mapper <odm>`.
-
-        :return: an instance of :class:`.CompiledQuery` if implemented
-        '''
-        raise NotImplementedError
-
-    def get_model(self, manager, pkvalue):
-        '''Fetch an instance of a ``model`` with primary key ``pkvalue``.
-
-        This method required by the :ref:`object data mapper <odm>`.
-
-        :param manager: the :class:`.Manager` calling this method
-        :param pkvalue: the primary key of the model to retrieve
-        '''
-        raise NotImplementedError
-
-    def has_query(self, query_type):
-        '''Check if this :class:`.Store` supports ``query_type``.
-
-        :param query_type: a string indicating the query type to check
-            (``filter``, ``exclude``, ``search``).
-
-        This method is used by the :ref:`object data mapper <odm>`.
-        '''
-        return True
-
-    def build_model(self, manager, *args, **kwargs):
-        instance = manager(*args, **kwargs)
-        instance['_store'] = self
-        return instance
-
     #    INTERNALS
     #######################
     def _init(self, **kw):  # pragma    nocover

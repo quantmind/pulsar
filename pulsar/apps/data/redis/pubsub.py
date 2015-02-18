@@ -1,7 +1,7 @@
 from functools import partial
 
 from pulsar import Protocol
-from pulsar.apps import data
+from pulsar.apps.data import PubSub
 
 
 class PubsubProtocol(Protocol):
@@ -36,7 +36,7 @@ class PubsubProtocol(Protocol):
             response = parser.get()
 
 
-class PubSub(data.PubSub):
+class RedisPubSub(PubSub):
     '''Asynchronous Publish/Subscriber handler for pulsar and redis stores.
     '''
     def publish(self, channel, message):
