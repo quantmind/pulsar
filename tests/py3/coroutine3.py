@@ -1,10 +1,9 @@
-__benchmark__ = True
-
 import sys
 import unittest
 
 from pulsar import async, Future, new_event_loop
 
+__benchmark__ = True
 DELAY = 0
 
 

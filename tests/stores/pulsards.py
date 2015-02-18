@@ -76,7 +76,8 @@ class RedisCommands(StoreMixin):
         yield from eq(c.set(key, 'hello'), True)
         value = yield from c.dump(key)
         self.assertTrue(value)
-        yield from self.async.assertRaises(ResponseError, c.restore, key, 0, 'bla')
+        yield from self.async.assertRaises(
+            ResponseError, c.restore, key, 0, 'bla')
         yield from eq(c.restore(key+'2', 0, value), True)
         yield from eq(c.get(key+'2'), b'hello')
 
@@ -107,7 +108,8 @@ class RedisCommands(StoreMixin):
         key = self.randomkey()
         c = self.client
         eq = self.async.assertEqual
-        yield from self.async.assertRaises(ResponseError, c.expireat, key, 'bla')
+        yield from self.async.assertRaises(
+            ResponseError, c.expireat, key, 'bla')
         t = int(time.time() + 3)
         yield from eq(c.expireat(key, t), False)
         yield from eq(c.set(key, 1), True)
@@ -328,9 +330,11 @@ class RedisCommands(StoreMixin):
         yield from eq(c.getrange(key, 5, 5), b' ')
         yield from eq(c.getrange(key, 20, 25), b'')
         yield from eq(c.getrange(key, -5, -1), b'there')
-        yield from self.async.assertRaises(ResponseError, c.getrange, key, 1, 'b')
+        yield from self.async.assertRaises(
+            ResponseError, c.getrange, key, 1, 'b')
         yield from self._remove_and_push(key)
-        yield from self.async.assertRaises(ResponseError, c.getrange, key, 1, 2)
+        yield from self.async.assertRaises(
+            ResponseError, c.getrange, key, 1, 2)
 
     def test_decr(self):
         key = self.randomkey()
@@ -379,7 +383,8 @@ class RedisCommands(StoreMixin):
         eq = self.async.assertEqual
         c = self.client
         yield from eq(c.hdel(key, 'f1', 'f2', 'gh'), 0)
-        yield from eq(c.hmset(key, {'f1': 1, 'f2': 'hello', 'f3': 'foo'}), True)
+        yield from eq(c.hmset(key, {'f1': 1, 'f2': 'hello', 'f3': 'foo'}),
+                      True)
         yield from eq(c.hdel(key, 'f1', 'f2', 'gh'), 2)
         yield from eq(c.hdel(key, 'fgf'), 0)
         yield from eq(c.type(key), 'hash')
@@ -393,11 +398,13 @@ class RedisCommands(StoreMixin):
         eq = self.async.assertEqual
         c = self.client
         yield from eq(c.hexists(key, 'foo'), False)
-        yield from eq(c.hmset(key, {'f1': 1, 'f2': 'hello', 'f3': 'foo'}), True)
+        yield from eq(c.hmset(key, {'f1': 1, 'f2': 'hello', 'f3': 'foo'}),
+                      True)
         yield from eq(c.hexists(key, 'f3'), True)
         yield from eq(c.hexists(key, 'f5'), False)
         yield from self._remove_and_push(key)
-        yield from self.async.assertRaises(ResponseError, c.hexists, key, 'foo')
+        yield from self.async.assertRaises(ResponseError, c.hexists, key,
+                                           'foo')
 
     def test_hset_hget(self):
         key = self.randomkey()
@@ -409,7 +416,8 @@ class RedisCommands(StoreMixin):
         yield from eq(c.hset(key, 'foo', 6), 0)
         yield from eq(c.hget(key, 'foo'), b'6')
         yield from self._remove_and_push(key)
-        yield from self.async.assertRaises(ResponseError, c.hset, key, 'foo', 7)
+        yield from self.async.assertRaises(
+            ResponseError, c.hset, key, 'foo', 7)
         yield from self.async.assertRaises(ResponseError, c.hget, key, 'foo')
         yield from self.async.assertRaises(ResponseError, c.hmset, key, 'foo')
 
@@ -432,7 +440,8 @@ class RedisCommands(StoreMixin):
         yield from eq(c.hincrby(key, 'foo', 2), 3)
         yield from eq(c.hincrby(key, 'foo', -1), 2)
         yield from self._remove_and_push(key)
-        yield from self.async.assertRaises(ResponseError, c.hincrby, key, 'foo', 3)
+        yield from self.async.assertRaises(
+            ResponseError, c.hincrby, key, 'foo', 3)
 
     def test_hincrbyfloat(self):
         key = self.randomkey()
@@ -458,12 +467,13 @@ class RedisCommands(StoreMixin):
         self.assertEqual(sorted(vals), sorted(h.values()))
         yield from eq(c.hlen(key), 3)
         yield from eq(c.hmget(key, 'f1', 'f3', 'hj'),
-                 {'f1': b'1', 'f3': b'foo', 'hj': None})
+                      {'f1': b'1', 'f3': b'foo', 'hj': None})
         yield from self._remove_and_push(key)
         yield from self.async.assertRaises(ResponseError, c.hkeys, key)
         yield from self.async.assertRaises(ResponseError, c.hvals, key)
         yield from self.async.assertRaises(ResponseError, c.hlen, key)
-        yield from self.async.assertRaises(ResponseError, c.hmget, key, 'f1', 'f2')
+        yield from self.async.assertRaises(ResponseError, c.hmget, key,
+                                           'f1', 'f2')
 
     def test_hsetnx(self):
         key = self.randomkey()
@@ -474,7 +484,8 @@ class RedisCommands(StoreMixin):
         yield from eq(c.hsetnx(key, 'a', 'bla'), 0)
         yield from eq(c.hget(key, 'a'), b'foo')
         yield from self._remove_and_push(key)
-        yield from self.async.assertRaises(ResponseError, c.hsetnx, key, 'a', 'jk')
+        yield from self.async.assertRaises(ResponseError, c.hsetnx, key,
+                                           'a', 'jk')
 
     ###########################################################################
     #    LISTS
@@ -541,10 +552,10 @@ class RedisCommands(StoreMixin):
         yield from eq(c.lrange(key, 0, -1), [b'1', b'1.5', b'2', b'2.5', b'3'])
         yield from eq(c.linsert(key, 'before', '100', '1.5'), -1)
         yield from self.async.assertRaises(ResponseError, c.linsert, key,
-                                      'banana', '2', '2.5')
+                                           'banana', '2', '2.5')
         yield from self._remove_and_sadd(key)
         yield from self.async.assertRaises(ResponseError, c.linsert, key,
-                                      'after', '2', '2.5')
+                                           'after', '2', '2.5')
 
     def test_lpop(self):
         key = self.randomkey()
@@ -596,7 +607,8 @@ class RedisCommands(StoreMixin):
         yield from eq(c.lrem(key, -1, 'a'), 1)
         yield from eq(c.lrange(key, 0, -1), [b'a', b'a', b'b', b'a'])
         yield from eq(c.lrem(key, 0, 'a'), 3)
-        yield from self.async.assertRaises(ResponseError, c.lrem, key, 'g', 'foo')
+        yield from self.async.assertRaises(ResponseError, c.lrem, key,
+                                           'g', 'foo')
         yield from eq(c.lrange(key, 0, -1), [b'b'])
         yield from eq(c.lrem(key, 0, 'b'), 1)
         yield from self._remove_and_sadd(key, 0)
@@ -609,14 +621,16 @@ class RedisCommands(StoreMixin):
         c = self.client
         eq = self.async.assertEqual
         yield from c.rpush(key, '3', '2', '1', '4')
-        yield from self.async.assertEqual(c.sort(key), [b'1', b'2', b'3', b'4'])
+        yield from self.async.assertEqual(c.sort(key),
+                                          [b'1', b'2', b'3', b'4'])
 
     def test_sort_limited(self):
         key = self.randomkey()
         c = self.client
         eq = self.async.assertEqual
         yield from c.rpush(key, '3', '2', '1', '4')
-        yield from self.async.assertEqual(c.sort(key, start=1, num=2), [b'2', b'3'])
+        yield from self.async.assertEqual(c.sort(key, start=1, num=2),
+                                          [b'2', b'3'])
 
     def test_sort_by(self):
         key = self.randomkey()
@@ -659,9 +673,9 @@ class RedisCommands(StoreMixin):
         res = yield from pipe.commit()
         self.assertEqual(len(res), 2)
         yield from eq(c.sort(key2, get=('%s:*' % key, '#')),
-                 [b'u1', b'1', b'u2', b'2', b'u3', b'3'])
+                      [b'u1', b'1', b'u2', b'2', b'u3', b'3'])
         yield from eq(c.sort(key2, get=('%s:*' % key, '#'), groups=True),
-                 [(b'u1', b'1'), (b'u2', b'2'), (b'u3', b'3')])
+                      [(b'u1', b'1'), (b'u2', b'2'), (b'u3', b'3')])
 
     ###########################################################################
     #    SETS
@@ -847,7 +861,7 @@ class RedisCommands(StoreMixin):
         yield from eq(c.zadd(key3, a1=6, a3=5, a4=4), 3)
         yield from eq(c.zinterstore(des, (key1, key2, key3)), 2)
         yield from eq(c.zrange(des, 0, -1, withscores=True),
-                 Zset(((8.0, b'a3'), (9.0, b'a1'))))
+                      Zset(((8.0, b'a3'), (9.0, b'a1'))))
 
     def test_zinterstore_max(self):
         des = self.randomkey()
@@ -859,9 +873,10 @@ class RedisCommands(StoreMixin):
         yield from eq(c.zadd(key1, a1=1, a2=2, a3=1), 3)
         yield from eq(c.zadd(key2, a1=2, a2=2, a3=2), 3)
         yield from eq(c.zadd(key3, a1=6, a3=5, a4=4), 3)
-        yield from eq(c.zinterstore(des, (key1, key2, key3), aggregate='max'), 2)
+        yield from eq(c.zinterstore(des, (key1, key2, key3),
+                                    aggregate='max'), 2)
         yield from eq(c.zrange(des, 0, -1, withscores=True),
-                 Zset(((5.0, b'a3'), (6.0, b'a1'))))
+                      Zset(((5.0, b'a3'), (6.0, b'a1'))))
 
     def test_zinterstore_min(self):
         des = self.randomkey()
@@ -873,9 +888,10 @@ class RedisCommands(StoreMixin):
         yield from eq(c.zadd(key1, a1=1, a2=2, a3=1), 3)
         yield from eq(c.zadd(key2, a1=2, a2=2, a3=2), 3)
         yield from eq(c.zadd(key3, a1=6, a3=5, a4=4), 3)
-        yield from eq(c.zinterstore(des, (key1, key2, key3), aggregate='min'), 2)
+        yield from eq(c.zinterstore(des, (key1, key2, key3),
+                                    aggregate='min'), 2)
         yield from eq(c.zrange(des, 0, -1, withscores=True),
-                 Zset(((1.0, b'a3'), (1.0, b'a1'))))
+                      Zset(((1.0, b'a3'), (1.0, b'a1'))))
 
     def test_zinterstore_with_weights(self):
         des = self.randomkey()
@@ -887,9 +903,10 @@ class RedisCommands(StoreMixin):
         yield from eq(c.zadd(key1, a1=1, a2=2, a3=1), 3)
         yield from eq(c.zadd(key2, a1=2, a2=2, a3=2), 3)
         yield from eq(c.zadd(key3, a1=6, a3=5, a4=4), 3)
-        yield from eq(c.zinterstore(des, (key1, key2, key3), weights=(1, 2, 3)), 2)
+        yield from eq(c.zinterstore(des, (key1, key2, key3),
+                                    weights=(1, 2, 3)), 2)
         yield from eq(c.zrange(des, 0, -1, withscores=True),
-                 Zset(((20.0, b'a3'), (23.0, b'a1'))))
+                      Zset(((20.0, b'a3'), (23.0, b'a1'))))
 
     def test_zrange(self):
         key = self.randomkey()
@@ -899,9 +916,9 @@ class RedisCommands(StoreMixin):
         yield from eq(c.zrange(key, 0, 1), [b'a1', b'a2'])
         yield from eq(c.zrange(key, 1, 2), [b'a2', b'a3'])
         yield from eq(c.zrange(key, 0, 1, withscores=True),
-                 Zset([(1, b'a1'), (2, b'a2')]))
+                      Zset([(1, b'a1'), (2, b'a2')]))
         yield from eq(c.zrange(key, 1, 2, withscores=True),
-                 Zset([(2, b'a2'), (3, b'a3')]))
+                      Zset([(2, b'a2'), (3, b'a3')]))
 
     def test_zrangebyscore(self):
         key = self.randomkey()
@@ -911,10 +928,10 @@ class RedisCommands(StoreMixin):
         yield from eq(c.zrangebyscore(key, 2, 4), [b'a2', b'a3', b'a4'])
         # slicing with start/num
         yield from eq(c.zrangebyscore(key, 2, 4, offset=1, count=2),
-                 [b'a3', b'a4'])
+                      [b'a3', b'a4'])
         # withscores
         yield from eq(c.zrangebyscore(key, 2, 4, withscores=True),
-                 Zset([(2.0, b'a2'), (3.0, b'a3'), (4.0, b'a4')]))
+                      Zset([(2.0, b'a2'), (3.0, b'a3'), (4.0, b'a4')]))
 
     def test_zrank(self):
         key = self.randomkey()

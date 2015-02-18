@@ -9,7 +9,9 @@ try:
     run_in_greenlet = greenio.run_in_greenlet
 except ImportError:
     greenio = None
-    run_in_greenlet = lambda x: x
+
+    def run_in_greenlet(x):
+        return x
 
 
 def raise_error():

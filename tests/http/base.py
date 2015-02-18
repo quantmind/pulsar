@@ -1,16 +1,18 @@
-__test__ = False
 import os
 import sys
 from base64 import b64decode
 import unittest
 
 import examples
+
 from pulsar import send, SERVER_SOFTWARE, new_event_loop, get_event_loop
 from pulsar.utils.path import Path
 from pulsar.utils.httpurl import iri_to_uri, SimpleCookie
 from pulsar.utils.pep import pypy
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
+
+__test__ = False
 
 
 def dodgyhook(response, exc=None):
@@ -128,7 +130,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def _test_stream_response(self, siz=3000, rep=10):
         http = self._client
-        response = yield from http.get(self.httpbin('stream/%d/%d' % (siz, rep)))
+        response = yield from http.get(
+            self.httpbin('stream/%d/%d' % (siz, rep)))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.parser.is_chunked())
         body = response.recv_body()
@@ -229,7 +232,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_200_get_data(self):
         http = self.client()
         response = yield from http.get(self.httpbin('get'),
-                                  data={'bla': 'foo'})
+                                       data={'bla': 'foo'})
         result = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'],
@@ -253,8 +256,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                 ('numero', '1'), ('numero', '2'))
         http = self._client
         response = yield from http.post(self.httpbin('post'),
-                                   encode_multipart=False,
-                                   data=data)
+                                        encode_multipart=False,
+                                        data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])

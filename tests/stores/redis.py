@@ -33,8 +33,8 @@ class TestRedisStore(RedisDbTest, unittest.TestCase):
 
     def test_eval_with_keys(self):
         result = yield from self.client.eval("return {KEYS, ARGV}",
-                                        ('a', 'b'),
-                                        ('first', 'second', 'third'))
+                                             ('a', 'b'),
+                                             ('first', 'second', 'third'))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], [b'a', b'b'])
         self.assertEqual(result[1], [b'first', b'second', b'third'])

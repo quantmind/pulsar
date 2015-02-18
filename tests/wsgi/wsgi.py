@@ -188,7 +188,10 @@ class WsgiRequestTests(unittest.TestCase):
             self.assertEqual(url, '/bla/foo?page=1')
 
     def test_handle_wsgi_error(self):
-        handler = lambda request, exc: 'exception: %s' % exc
+
+        def handler(request, exc):
+            return 'exception: %s' % exc
+
         environ = wsgi.test_wsgi_environ(
             extra={'error.handler': handler})
         try:

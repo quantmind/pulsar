@@ -3,8 +3,6 @@ import unittest
 
 from pulsar.utils.websocket import frame_parser
 
-i2b = lambda args: bytes(bytearray(args))
-
 
 class TestCParser(unittest.TestCase):
     __benchmark__ = True

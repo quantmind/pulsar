@@ -7,7 +7,7 @@ services:
   - redis-server
 
 install:
-  - then pip install -r requirements_dev.txt
+  - pip install -r requirements_dev.txt
   - python setup.py install
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 

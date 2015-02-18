@@ -6,7 +6,9 @@ from pulsar import ProtocolError, HAS_C_EXTENSIONS
 from pulsar.utils.websocket import frame_parser, parse_close
 import pulsar.apps.ws
 
-i2b = lambda args: bytes(bytearray(args))
+
+def i2b(args):
+    return bytes(bytearray(args))
 
 
 class FrameTest(unittest.TestCase):
