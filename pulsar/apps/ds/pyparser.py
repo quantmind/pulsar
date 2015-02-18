@@ -1,18 +1,9 @@
 '''A parser for redis messages
 '''
-import sys
 from itertools import starmap
-
-ispy3k = sys.version_info >= (3, 0)
-if ispy3k:
-    long = int
-    string_type = str
-else:   # pragma    nocover
-    string_type = unicode
 
 nil = b'$-1\r\n'
 null_array = b'*-1\r\n'
-
 REPLAY_TYPE = frozenset((b'$',   # REDIS_REPLY_STRING,
                          b'*',   # REDIS_REPLY_ARRAY,
                          b':',   # REDIS_REPLY_INTEGER,
@@ -131,7 +122,7 @@ class Parser(object):
         crlf = b'\r\n'
         yield ('*%d\r\n' % len(args)).encode('utf-8')
         for value in args:
-            if isinstance(value, string_type):
+            if isinstance(value, str):
                 value = value.encode('utf-8')
             elif not isinstance(value, bytes):
                 value = str(value).encode('utf-8')
@@ -149,7 +140,7 @@ class Parser(object):
                 yield ('$%d\r\n' % len(value)).encode('utf-8')
                 yield value
                 yield crlf
-            elif isinstance(value, string_type):
+            elif isinstance(value, str):
                 value = value.encode('utf-8')
                 yield ('$%d\r\n' % len(value)).encode('utf-8')
                 yield value
@@ -184,14 +175,14 @@ class Parser(object):
             if rtype == b'-':
                 return self.responseError(response.decode('utf-8'))
             elif rtype == b':':
-                return long(response)
+                return int(response)
             elif rtype == b'+':
                 return response
             elif rtype == b'$':
-                task = String(long(response), next)
+                task = String(int(response), next)
                 return task.decode(self, False)
             elif rtype == b'*':
-                task = ArrayTask(long(response), next)
+                task = ArrayTask(int(response), next)
                 return task.decode(self, False)
             else:
                 # Clear the buffer and raise

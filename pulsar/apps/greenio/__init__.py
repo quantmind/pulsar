@@ -144,14 +144,13 @@ Psycopg2
 '''
 import threading
 from collections import deque
-from functools import wraps, partial
+from functools import wraps
 
 import greenlet
 from greenlet import getcurrent
 
 from pulsar import isfuture, async
-
-from pulsar import Future, get_event_loop, AsyncObject, async, is_async
+from pulsar import Future, get_event_loop, AsyncObject, is_async
 
 
 _DEFAULT_WORKERS = 100

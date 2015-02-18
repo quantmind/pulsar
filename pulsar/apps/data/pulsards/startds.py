@@ -1,6 +1,5 @@
 import asyncio
 
-import pulsar
 from pulsar import when_monitor_start, get_application, task, send
 from pulsar.apps.data import create_store
 from pulsar.apps.ds import PulsarDS

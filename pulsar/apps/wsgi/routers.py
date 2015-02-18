@@ -83,7 +83,6 @@ from pulsar import Http404, HttpException
 from .route import Route
 from .utils import wsgi_request
 from .content import Html
-from .structures import ContentAccept
 
 
 __all__ = ['Router', 'MediaRouter', 'FileRouter', 'MediaMixin',

@@ -40,7 +40,6 @@ class Runner(object):
     def _run_all_tests(self, tests):
         runner = self.runner
         cfg = self.monitor.cfg
-        seq = cfg.sequential
 
         while self.tests:
             tag, testcls = self.tests.pop()

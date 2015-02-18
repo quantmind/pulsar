@@ -77,6 +77,7 @@ def wsgi_info(environ, status, exc=None):
                                 environ.get('SERVER_PROTOCOL'),
                                 status, msg)
 
+
 def cookie_date(epoch_seconds=None):
     """Formats the time to ensure compatibility with Netscape's cookie
     standard.

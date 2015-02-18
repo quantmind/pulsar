@@ -141,11 +141,9 @@ Html Factory
 
 .. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp
 '''
-import os
 import re
-import json as pyjson
 
-from collections import Mapping, OrderedDict
+from collections import Mapping
 from functools import partial
 from inspect import isgenerator
 

@@ -36,9 +36,7 @@ check server
 import gc
 import logging
 import unittest
-import asyncio
 from inspect import isclass
-from functools import partial
 
 try:
     from unittest.case import _ExpectedFailure as ExpectedFailure
@@ -46,10 +44,8 @@ except ImportError:
     ExpectedFailure = None
 
 import pulsar
-from pulsar import (get_actor, send, multi_async, TcpServer, new_event_loop,
-                    is_async, format_traceback, ImproperlyConfigured, Future,
-                    chain_future)
-from pulsar.utils.importer import module_attribute
+from pulsar import (get_actor, send, multi_async, new_event_loop,
+                    is_async, format_traceback, ImproperlyConfigured, Future)
 from pulsar.apps.data import create_store
 
 

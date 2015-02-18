@@ -513,7 +513,6 @@ class HttpServerResponse(ProtocolConsumer):
                 if not self.keep_alive:
                     self.connection.close()
                 self.finished()
-                parser = self.parser
                 self.logger.info(wsgi_info(environ, self.status))
             finally:
                 if hasattr(response, 'close'):
