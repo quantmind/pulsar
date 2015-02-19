@@ -261,7 +261,10 @@ class GreenPool(AsyncObject):
         # Run in the main greenlet of the evnet-loop thread
         result = greenlet.switch(task)
         while is_async(result):
-            result = greenlet.switch((yield from result))
+            try:
+                result = greenlet.switch((yield from result))
+            except Exception as exc:
+                result = greenlet.throw(exc)
 
     def _green_run(self):
         # The run method of a worker greenlet

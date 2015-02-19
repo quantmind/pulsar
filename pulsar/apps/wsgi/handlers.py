@@ -153,12 +153,12 @@ class WsgiHandler(object):
         except Exception as exc:
             response = handle_wsgi_error(environ, exc)
 
-        if isinstance(response, WsgiResponse):
+        if isinstance(response, WsgiResponse) and not response.started:
             for middleware in self.response_middleware:
                 response = middleware(environ, response)
                 if is_async(response):
                     response = yield from response
-            start_response(response.status, response.get_headers())
+            response.start(start_response)
         return response
 
 

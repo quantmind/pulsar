@@ -133,6 +133,7 @@ class WsgiResponse(object):
         A python :class:`SimpleCookie` container of cookies included in the
         request as well as cookies set during the response.
     '''
+    _iterated = False
     _started = False
     DEFAULT_STATUS_CODE = 200
 
@@ -152,6 +153,10 @@ class WsgiResponse(object):
     @property
     def started(self):
         return self._started
+
+    @property
+    def iterated(self):
+        return self._iterated
 
     @property
     def path(self):
@@ -174,7 +179,7 @@ class WsgiResponse(object):
 
     @content.setter
     def content(self, content):
-        if not self._started:
+        if not self._iterated:
             if content is None:
                 content = ()
             else:
@@ -237,10 +242,16 @@ class WsgiResponse(object):
         if not self.is_streamed:
             return reduce(lambda x, y: x+len(y), self.content, 0)
 
+    def start(self, start_response):
+        assert not self._started
+        self._started = True
+        return start_response(self.status, self.get_headers())
+
     def __iter__(self):
-        if self._started:
+        if self._iterated:
             raise RuntimeError('WsgiResponse can be iterated once only')
         self._started = True
+        self._iterated = True
         if self.is_streamed:
             return wsgi_encoder(self.content, self.encoding or 'utf-8')
         else:

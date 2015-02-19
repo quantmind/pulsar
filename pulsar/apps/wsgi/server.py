@@ -430,7 +430,7 @@ class HttpServerResponse(ProtocolConsumer):
         :param force: Optional flag used internally
         :return: a :class:`~asyncio.Future` or the number of bytes written
         '''
-        write = super(HttpServerResponse, self).write
+        write = super().write
         chunks = []
         if not self._headers_sent:
             tosend = self.get_headers()
@@ -504,6 +504,7 @@ class HttpServerResponse(ProtocolConsumer):
             except Exception:
                 if wsgi_request(environ).cache.handle_wsgi_error:
                     self.keep_alive = False
+                    self._write_headers()
                     self.connection.close()
                     self.finished()
                 else:
@@ -577,3 +578,11 @@ class HttpServerResponse(ProtocolConsumer):
     def _new_request(self, _, exc=None):
         connection = self._connection
         connection.data_received(self._buffer)
+
+    def _write_headers(self):
+        if not self._headers_sent:
+            if self.content_length:
+                self.headers['Content-Length'] = '0'
+            self.write(b'')
+
+
