@@ -84,8 +84,7 @@ class TestPluginMeta(type):
         return super(TestPluginMeta, cls).__new__(cls, name, bases, attrs)
 
 
-class TestPlugin(TestPluginMeta('TestPluginBase',
-                                (Plugin,), {'virtual': True})):
+class TestPlugin(Plugin, metaclass=TestPluginMeta):
     '''Base class for :class:`.Plugin` which can be added to a
     :class:`.TestSuite` to extend its functionalities.
 

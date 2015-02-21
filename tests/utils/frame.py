@@ -196,3 +196,7 @@ class PyFrameTest(FrameTest):
 
     def parser(self, pyparser=True, **kw):
         return frame_parser(pyparser=True, **kw)
+
+    def test_parsers(self):
+        import pulsar.utils.websocket as ws
+        self.assertNotEqual(ws.CFrameParser, ws.FrameParser)

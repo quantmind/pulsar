@@ -584,5 +584,3 @@ class HttpServerResponse(ProtocolConsumer):
             if self.content_length:
                 self.headers['Content-Length'] = '0'
             self.write(b'')
-
-

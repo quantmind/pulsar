@@ -52,9 +52,10 @@ cdef class FrameParser:
     cdef tuple _opcodes
     cdef object _extensions
     cdef object _protocols
+    cdef object _close_codes
 
     def __cinit__(self, int version, int kind, object ProtocolError,
-                  extensions=None, protocols=None):
+                  extensions=None, protocols=None, close_codes=None):
         self._version = version
         self.kind = kind
         self.frame = None
@@ -72,6 +73,7 @@ cdef class FrameParser:
             self._encode_mask_length = 4
         self._extensions = extensions
         self._protocols = protocols
+        self._close_codes = close_codes
 
     @property
     def version(self):
@@ -97,9 +99,13 @@ cdef class FrameParser:
         '''return a `pong` :class:`Frame`.'''
         return self.encode(body, opcode=10)
 
-    def close(self, body=None):
+    def close(self, code=None):
         '''return a `close` :class:`Frame`.'''
-        return self.encode(body, opcode=8)
+        code = code or 1000
+        body = pack('!H', code)
+        if self._close_codes is not None:
+            body += self._close_codes.get(code, '').encode('utf-8')
+        return self.encode(body, opcode=0x8)
 
     def continuation(self, body, final=True):
         '''return a `continuation` :class:`Frame`.'''

@@ -41,25 +41,26 @@ from .pep import to_bytes
 from .exceptions import ProtocolError
 
 try:
-    from .lib import FrameParser as CFrameParser, CLOSE_CODES
+    from .lib import FrameParser as CFrameParser
 except:     # pragma    nocover
     CFrameParser = None
 
-    CLOSE_CODES = {
-        1000: "OK",
-        1001: "going away",
-        1002: "protocol error",
-        1003: "unsupported type",
-        # 1004: - (reserved)
-        # 1005: no status code (internal)
-        # 1006: connection closed abnormally (internal)
-        1007: "invalid data",
-        1008: "policy violation",
-        1009: "message too big",
-        1010: "extension required",
-        1011: "unexpected error",
-        # 1015: TLS failure (internal)
-    }
+
+CLOSE_CODES = {
+    1000: "OK",
+    1001: "going away",
+    1002: "protocol error",
+    1003: "unsupported type",
+    # 1004: - (reserved)
+    # 1005: no status code (internal)
+    # 1006: connection closed abnormally (internal)
+    1007: "invalid data",
+    1008: "policy violation",
+    1009: "message too big",
+    1010: "extension required",
+    1011: "unexpected error",
+    # 1015: TLS failure (internal)
+}
 
 
 DEFAULT_VERSION = 13
@@ -103,7 +104,7 @@ def frame_parser(version=None, kind=0, extensions=None, protocols=None,
     version = get_version(version)
     Parser = FrameParser if pyparser else CFrameParser
     # extensions, protocols
-    return Parser(version, kind, ProtocolError, None, None)
+    return Parser(version, kind, ProtocolError, close_codes=CLOSE_CODES)
 
 
 def websocket_mask(data, masking_key):
@@ -176,7 +177,8 @@ class FrameParser(object):
           by the client)
         * 2 Assumes always unmasked data
     '''
-    def __init__(self, version, kind, ProtocolError, extensions, protocols):
+    def __init__(self, version, kind, ProtocolError, extensions=None,
+                 protocols=None, close_codes=None):
         self.version = version
         self.kind = kind
         self.frame = None
@@ -194,6 +196,7 @@ class FrameParser(object):
         self._max_payload = 1 << 63
         self._extensions = extensions
         self._protocols = protocols
+        self._close_codes = close_codes or CLOSE_CODES
 
     @property
     def max_payload(self):
@@ -227,7 +230,8 @@ class FrameParser(object):
         '''return a `close` :class:`Frame`.
         '''
         code = code or 1000
-        body = pack('!H', code) + CLOSE_CODES.get(code, '').encode('utf-8')
+        body = pack('!H', code)
+        body += self._close_codes.get(code, '').encode('utf-8')
         return self.encode(body, opcode=0x8)
 
     def continuation(self, body=None, final=True):

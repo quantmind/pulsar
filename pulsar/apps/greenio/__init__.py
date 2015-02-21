@@ -143,6 +143,7 @@ Psycopg2
 .. _gevent: http://www.gevent.org/
 '''
 import threading
+import asyncio
 from collections import deque
 from functools import wraps
 
@@ -248,18 +249,19 @@ class GreenPool(AsyncObject):
         self._check_queue()
 
     def _check_queue(self):
-        # Run in the main greenlet of the evnet-loop thread
+        # Run in the main greenlet of the event-loop thread
         try:
             task = self._queue.pop()
         except IndexError:
             return
-        if self._available:
-            greenlet = self._available.pop()
-            async(self._green_task(greenlet, task), loop=self._loop)
+        if not self._available:
+            return
+        async(self._green_task(self._available.pop(), task), loop=self._loop)
 
     def _green_task(self, greenlet, task):
-        # Run in the main greenlet of the evnet-loop thread
+        # Run in the main greenlet of the event-loop thread
         result = greenlet.switch(task)
+
         while is_async(result):
             try:
                 result = greenlet.switch((yield from result))
@@ -287,26 +289,29 @@ class GreenPool(AsyncObject):
                 else:
                     future.set_result(result)
             else:
-                self._greenlets.remove(greenlet)
-                if self._greenlets:
-                    self._put(None)
-                elif self._waiter:
-                    self._waiter.set_result(None)
-                    self._waiter = None
+                self._shutdown(greenlet)
+
+    def _shutdown(self, greenlet):
+        self._greenlets.remove(greenlet)
+        if self._greenlets:
+            self._put(None)
+        elif self._waiter:
+            self._waiter.set_result(None)
+            self._waiter = None
 
 
-class RunInPool:
-    '''Utility for running a callable in a :class:`.GreenPool`.
+class GreenTask(asyncio.Task):
 
-    :param app: the callable to run on greenlet workers
-    :param max_workers=100: maximum number of workers
-    :param loop: optional event loop
+    def __init__(self, greenlet, value, loop):
+        self._greenlet = greenlet
+        super().__init__(value, loop=loop)
 
-    THis utility is used by the :mod:`~pulsar.apps.pulse` application.
-    '''
-    def __init__(self, app, max_workers=None, loop=None):
-        self.pool = GreenPool(max_workers=max_workers, loop=loop)
-        self.app = app
-
-    def __call__(self, *args, **kwargs):
-        return self.pool.submit(self.app, *args, **kwargs)
+    def _wakeup(self, future):
+        try:
+            value = future.result()
+        except Exception as exc:
+            # This may also be a cancellation.
+            self._greenlet.throw(exc)
+        else:
+            self._greenlet.switch(value)
+        self = None  # Needed to break cycles when an exception occurs.

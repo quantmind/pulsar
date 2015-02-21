@@ -52,7 +52,7 @@ else:
     default_timer = time.time
 
 
-BENCHMARK_TEMPLATE = ('{0[name]}: repeated {0[number]} times, '
+BENCHMARK_TEMPLATE = ('{0[name]}: repeated {0[repeat]}(x{0[times]}) times, '
                       'average {0[mean]} secs, stdev {0[std]}')
 
 
@@ -62,15 +62,17 @@ def simple(info, *args):
 
 class BenchTest(test.WrapTest):
 
-    def __init__(self, test, number):
+    def __init__(self, test, number, repeat):
         super(BenchTest, self).__init__(test)
         self.number = number
+        self.repeat = repeat
 
-    def updateSummary(self, info, number, total_time, total_time2):
-        mean = total_time/number
-        std = math.sqrt((total_time2 - total_time*mean)/number)
+    def updateSummary(self, info, repeat, total_time, total_time2):
+        mean = total_time/repeat
+        std = math.sqrt((total_time2 - total_time*mean)/repeat)
         std = round(100*std/mean, 2)
-        info.update({'number': number,
+        info.update({'repeat': repeat,
+                     'times': self.number,
                      'mean': '%.5f' % mean,
                      'std': '{0} %'.format(std)})
 
@@ -84,18 +86,21 @@ class BenchTest(test.WrapTest):
         t2 = 0
         info = {'name': '%s.%s' % (self.test.__class__.__name__,
                                    testMethod.__name__)}
-        for r in range(self.number):
-            testStartUp()
-            start = default_timer()
-            testMethod()
-            delta = default_timer() - start
-            dt = testGetTime(delta)
-            testGetInfo(info, delta, dt)
-            t += dt
-            t2 += dt*dt
-        self.updateSummary(info, self.number, t, t2)
+        for r in range(self.repeat):
+            DT = 0
+            for r in range(self.number):
+                testStartUp()
+                start = default_timer()
+                testMethod()
+                delta = default_timer() - start
+                dt = testGetTime(delta)
+                testGetInfo(info, delta, dt)
+                DT += dt
+            t += DT
+            t2 += DT*DT
+        self.updateSummary(info, self.repeat, t, t2)
         self.set_test_attribute('bench_info',
-                                testGetSummary(info, self.number, t, t2))
+                                testGetSummary(info, self.repeat, t, t2))
 
 
 class BenchMark(test.TestPlugin):
@@ -104,7 +109,7 @@ class BenchMark(test.TestPlugin):
 
     repeat = pulsar.Setting(flags=['--repeat'],
                             type=int,
-                            default=1,
+                            default=10,
                             validator=pulsar.validate_pos_int,
                             desc=('Default number of repetition '
                                   'when benchmarking.'))
@@ -123,8 +128,8 @@ class BenchMark(test.TestPlugin):
                 if not bench and method:
                     bench = getattr(method, '__benchmark__', False)
                 if bench:
-                    number = getattr(test, '__number__', self.config.repeat)
-                    return BenchTest(test, number)
+                    number = getattr(test, '__number__', 1)
+                    return BenchTest(test, number, self.config.repeat)
 
     def addSuccess(self, test):
         if self.config.benchmark and self.stream:

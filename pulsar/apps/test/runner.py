@@ -112,22 +112,25 @@ class Runner(object):
         error = None
         runner = self.runner
         runner.startTest(test)
-        method = getattr(test, test._testMethodName)
+        test_name = test._testMethodName
+        method = getattr(test, test_name)
         if skip_test(method):
             reason = skip_reason(method)
             runner.addSkip(test, reason)
         else:
-            error = yield from self._run_safe(test, test.setUp)
+            error = yield from self._run_safe(test, 'setUp')
             if not error:
-                error = yield from self._run_safe(test, method)
-            error = yield from self._run_safe(test, test.tearDown, error)
+                test = runner.before_test_function_run(test)
+                error = yield from self._run_safe(test, test_name)
+            error = yield from self._run_safe(test, 'tearDown', error)
             if not error:
                 runner.addSuccess(test)
         runner.stopTest(test)
         yield None  # release the loop
 
-    def _run_safe(self, test, method, error=None):
+    def _run_safe(self, test, method_name, error=None):
         try:
+            method = getattr(test, method_name)
             coro = method()
             # a coroutine
             if is_async(coro):

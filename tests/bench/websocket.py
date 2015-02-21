@@ -4,6 +4,10 @@ import unittest
 from pulsar.utils.websocket import frame_parser
 
 
+def i2b(args):
+    return bytes(bytearray(args))
+
+
 class TestCParser(unittest.TestCase):
     __benchmark__ = True
     __number__ = 10000

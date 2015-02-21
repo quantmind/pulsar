@@ -76,13 +76,7 @@ Echo Server
 from functools import partial
 from asyncio.events import get_event_loop
 
-try:
-    import pulsar
-except ImportError:     # pragma nocover
-    import sys
-    sys.path.append('../../')
-    import pulsar
-
+import pulsar
 from pulsar import Pool, task, Connection, AbstractClient
 from pulsar.apps.socket import SocketServer
 

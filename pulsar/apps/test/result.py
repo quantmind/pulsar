@@ -421,8 +421,7 @@ class TestRunner(Plugin):
         return mod
 
     def before_test_function_run(self, test):
-        '''Called just before the test is run,
-        in the test process domain.'''
+        '''Called just before the test is run'''
         test.plugins = plugins = {}
         for p in self.plugins:
             local = AttributeDictionary()
