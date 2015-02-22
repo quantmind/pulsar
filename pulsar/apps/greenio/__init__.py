@@ -158,6 +158,10 @@ _DEFAULT_WORKERS = 100
 _MAX_WORKERS = 1000
 
 
+class _WAIT:
+    pass
+
+
 class GreenletWorker(greenlet.greenlet):
     pass
 
@@ -236,7 +240,7 @@ class GreenPool(AsyncObject):
 
     # INTERNALS
     def _adjust_greenlet_count(self):
-        if len(self._greenlets) < self._max_workers:
+        if not self._available and len(self._greenlets) < self._max_workers:
             greenlet = GreenletWorker(self._green_run)
             self._greenlets.add(greenlet)
             greenlet.switch()
@@ -260,13 +264,21 @@ class GreenPool(AsyncObject):
 
     def _green_task(self, greenlet, task):
         # Run in the main greenlet of the event-loop thread
+
+        # switch to the greenlet to start the task
         result = greenlet.switch(task)
 
+        # if an asynchronous result is returned, yield from and switch back
+        # to the greenlet once the result is ready
         while is_async(result):
             try:
                 result = greenlet.switch((yield from result))
             except Exception as exc:
                 result = greenlet.throw(exc)
+
+        # all done, switch back to greenlet
+        if result is not _WAIT:
+            greenlet.switch(result)
 
     def _green_run(self):
         # The run method of a worker greenlet
@@ -277,7 +289,7 @@ class GreenPool(AsyncObject):
             assert parent
             self._available.add(greenlet)
             self._loop.call_soon(self._check_queue)
-            task = parent.switch()  # switch back to the main execution
+            task = parent.switch(_WAIT)  # switch back to the main execution
             if task:
                 # If a new task is available execute it
                 # Here we are in the child greenlet
@@ -289,9 +301,9 @@ class GreenPool(AsyncObject):
                 else:
                     future.set_result(result)
             else:
-                self._shutdown(greenlet)
+                self._shutdown_greenlet(greenlet)
 
-    def _shutdown(self, greenlet):
+    def _shutdown_greenlet(self, greenlet):
         self._greenlets.remove(greenlet)
         if self._greenlets:
             self._put(None)
@@ -300,18 +312,20 @@ class GreenPool(AsyncObject):
             self._waiter = None
 
 
-class GreenTask(asyncio.Task):
+class WsgiGreen:
+    '''Wraps a Wsgi application to be executed on a pool of greenlet
+    '''
+    def __init__(self, wsgi, max_workers=None):
+        self.wsgi = wsgi
+        self.max_workers = max_workers
+        self.pool = None
 
-    def __init__(self, greenlet, value, loop):
-        self._greenlet = greenlet
-        super().__init__(value, loop=loop)
+    def __call__(self, environ, start_response):
+        if self.pool is None:
+            self.pool = GreenPool(max_workers=self.max_workers)
 
-    def _wakeup(self, future):
-        try:
-            value = future.result()
-        except Exception as exc:
-            # This may also be a cancellation.
-            self._greenlet.throw(exc)
-        else:
-            self._greenlet.switch(value)
-        self = None  # Needed to break cycles when an exception occurs.
+        return self.pool.submit(self._green_handler, environ, start_response)
+
+    def _green_handler(self, environ, start_response):
+        # Running on a greenlet worker
+        return wait(self.wsgi(environ, start_response))

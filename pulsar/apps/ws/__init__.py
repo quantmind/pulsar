@@ -80,6 +80,8 @@ class WS(object):
     These methods accept as first parameter the
     :class:`.WebSocketProtocol` created during the handshake.
     '''
+    frame_parser = None
+
     def on_open(self, websocket):
         '''Invoked when a new ``websocket`` is opened.
 

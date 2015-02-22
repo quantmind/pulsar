@@ -148,9 +148,9 @@ def handle_101(response, exc=None):
         connection = response.connection
         request = response._request
         handler = request.websocket_handler
-        parser = frame_parser(kind=1)
         if not handler:
             handler = WS()
+        parser = request.client.frame_parser(kind=1)
         body = response.recv_body()
         connection.upgrade(partial(WebSocketClient, response, handler, parser))
         response.finished()

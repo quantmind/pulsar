@@ -250,7 +250,7 @@ class FrameParser(object):
         return self._encode(data, opcode, masking_key, fin,
                             rsv1, rsv2, rsv3)
 
-    def multi_encode(self, message, masking_key=None, opcode=-1,
+    def multi_encode(self, message, masking_key=None, opcode=None,
                      rsv1=0, rsv2=0, rsv3=0, max_payload=0):
         '''Encode a ``message`` into several frames depending on size.
 

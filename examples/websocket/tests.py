@@ -1,12 +1,13 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
 import unittest
+import asyncio
 
-from pulsar import asyncio, send, new_event_loop
+from pulsar import send, new_event_loop, HAS_C_EXTENSIONS
 from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import dont_run_with_thread
 
-from .manage import server
+from .manage import server, frame_parser
 
 
 class Echo(WS):
@@ -32,13 +33,14 @@ class Echo(WS):
 
 
 class TestWebSocketThread(unittest.TestCase):
+    pyparser = False
     app_cfg = None
     concurrency = 'thread'
 
     @classmethod
     def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__,
-                   concurrency=cls.concurrency)
+                   concurrency=cls.concurrency, pyparser=cls.pyparser)
         cls.app_cfg = yield from send('arbiter', 'run', s)
         addr = cls.app_cfg.addresses[0]
         cls.uri = 'http://{0}:{1}'.format(*addr)
@@ -50,13 +52,21 @@ class TestWebSocketThread(unittest.TestCase):
         if cls.app_cfg is not None:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
+    def _frame_parser(self, **params):
+        params['pyparser'] = self.pyparser
+        return frame_parser(**params)
+
+    def http(self, **params):
+        params['frame_parser'] = self._frame_parser
+        return HttpClient(**params)
+
     def testHyBiKey(self):
         w = WebSocket('/', None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
         self.assertEqual(v, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
 
     def testBadRequests(self):
-        c = HttpClient()
+        c = self.http()
         response = yield from c.post(self.ws_uri)
         self.assertEqual(response.status_code, 405)
         #
@@ -73,7 +83,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_upgrade(self):
-        c = HttpClient()
+        c = self.http()
         handler = Echo(c._loop)
         ws = yield from c.get(self.ws_echo, websocket_handler=handler)
         response = ws.handshake
@@ -91,7 +101,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(message, 'Hi there!')
 
     def test_ping(self):
-        c = HttpClient()
+        c = self.http()
         handler = Echo(c._loop)
         ws = yield from c.get(self.ws_echo, websocket_handler=handler)
         #
@@ -101,7 +111,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(message, 'PING: TESTING PING')
 
     def test_pong(self):
-        c = HttpClient()
+        c = self.http()
         handler = Echo(c._loop)
         ws = yield from c.get(self.ws_echo, websocket_handler=handler)
         #
@@ -110,7 +120,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(message, 'PONG: TESTING CLIENT PING')
 
     def test_close(self):
-        c = HttpClient()
+        c = self.http()
         handler = Echo(c._loop)
         ws = yield from c.get(self.ws_echo, websocket_handler=handler)
         self.assertEqual(ws.event('post_request').fired(), 0)
@@ -122,19 +132,25 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertTrue(ws._connection.closed)
 
     def test_home(self):
-        c = HttpClient()
+        c = self.http()
         response = yield from c.get(self.uri)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
 
     def test_graph(self):
-        c = HttpClient()
+        c = self.http()
         handler = Echo(c._loop)
         ws = yield from c.get(self.ws_uri, websocket_handler=handler)
         self.assertEqual(ws.event('post_request').fired(), 0)
         message = yield from handler.get()
         self.assertTrue(message)
+
+
+@unittest.skipUnless(HAS_C_EXTENSIONS, "Requires C extensions")
+class TestWebSocketPyParser(TestWebSocketThread):
+    pyparser = True
+    concurrency = 'process'
 
 
 @dont_run_with_thread
@@ -143,7 +159,7 @@ class TestWebSocketProcess(TestWebSocketThread):
 
     def __test_close_sync(self):
         loop = new_event_loop()
-        c = HttpClient(loop=loop)
+        c = self.http(loop=loop)
         handler = Echo(loop)
         ws = c.get(self.ws_echo, websocket_handler=handler)
         self.assertEqual(ws.event('post_request').fired(), 0)

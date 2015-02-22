@@ -280,6 +280,7 @@ from io import StringIO, BytesIO
 
 import pulsar
 from pulsar import AbstractClient, Pool, Connection, ProtocolConsumer
+from pulsar.utils import websocket
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
 from pulsar.utils.structures import mapping_iterator
@@ -964,7 +965,7 @@ class HttpClient(AbstractClient):
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None,
-                 pool_size=10):
+                 pool_size=10, frame_parser=None):
         super(HttpClient, self).__init__(loop)
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
@@ -995,6 +996,7 @@ class HttpClient(AbstractClient):
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
         self.http_parser = parser or http_parser
+        self.frame_parser = frame_parser or websocket.frame_parser
         # Add hooks
         self.bind_event('pre_request', Tunneling(self._loop))
         self.bind_event('on_headers', handle_101)

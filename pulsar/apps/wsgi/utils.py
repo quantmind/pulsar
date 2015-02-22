@@ -27,7 +27,6 @@ __all__ = ['handle_wsgi_error',
            'wsgi_request',
            'set_wsgi_request_class',
            'dump_environ',
-           'wsgi_yield_from',
            'HOP_HEADERS']
 
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
@@ -51,13 +50,6 @@ error_css = '''
 '''
 
 _RequestClass = None
-
-
-def wsgi_yield_from(result, handler=None):
-    if iscoroutine(result):
-        return handler and (iscoroutinefunction(handler) or
-                            iscoroutinefunction(handler.__call__))
-    return isfuture(result)
 
 
 def wsgi_request(environ, app_handler=None, urlargs=None):

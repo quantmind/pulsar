@@ -153,7 +153,8 @@ class WebChat(LazyWsgi):
                             Router('/rpc', post=Rpc(pubsub, channel),
                                    response_content_types=JSON_CONTENT_TYPES)],
                            [AsyncResponseMiddleware,
-                            GZipMiddleware(min_length=20)])
+                            GZipMiddleware(min_length=20)],
+                           async=True)
 
     def home_page(self, request):
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()

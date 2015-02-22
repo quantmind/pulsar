@@ -323,7 +323,8 @@ class Site(wsgi.LazyWsgi):
                                  wsgi.MediaRouter('media', ASSET_DIR,
                                                   show_indexes=True),
                                  ws.WebSocket('/graph-data', Graph()),
-                                 router])
+                                 router],
+                                async=True)
 
 
 def server(description=None, **kwargs):

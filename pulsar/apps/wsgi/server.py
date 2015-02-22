@@ -16,6 +16,7 @@ import sys
 import time
 import os
 import socket
+from asyncio import wait_for
 from wsgiref.handlers import format_date_time
 
 import pulsar
@@ -29,8 +30,7 @@ from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
-from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
-                    wsgi_yield_from, wsgi_info)
+from .utils import handle_wsgi_error, wsgi_request, HOP_HEADERS, wsgi_info
 
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
@@ -458,6 +458,7 @@ class HttpServerResponse(ProtocolConsumer):
         exc_info = None
         response = None
         done = False
+        alive = self.cfg.keep_alive or 15
         while not done:
             done = True
             try:
@@ -465,12 +466,12 @@ class HttpServerResponse(ProtocolConsumer):
                     if 'SERVER_NAME' not in environ:
                         raise HttpException(status=400)
                     response = self.wsgi_callable(environ, self.start_response)
-                    if wsgi_yield_from(response, self.wsgi_callable):
-                        response = yield from response
+                    if isfuture(response):
+                        response = yield from wait_for(response, alive)
                 else:
                     response = handle_wsgi_error(environ, exc_info)
-                    if wsgi_yield_from(response, handle_wsgi_error):
-                        response = yield from response
+                    if isfuture(response):
+                        response = yield from wait_for(response, alive)
                 #
                 if exc_info:
                     self.start_response(response.status,
@@ -481,11 +482,11 @@ class HttpServerResponse(ProtocolConsumer):
                 start = loop.time()
                 for chunk in response:
                     if isfuture(chunk):
-                        chunk = yield from chunk
+                        chunk = yield from wait_for(chunk, alive)
                         start = loop.time()
                     result = self.write(chunk)
                     if isfuture(result):
-                        yield from result
+                        yield from wait_for(result, alive)
                         start = loop.time()
                     else:
                         time_in_loop = loop.time() - start

@@ -33,6 +33,26 @@ cdef class Frame:
     def masking_key(self):
         return self._masking_key
 
+    @property
+    def is_message(self):
+        return self._opcode == 1
+
+    @property
+    def is_bytes(self):
+        return self._opcode == 2
+
+    @property
+    def is_close(self):
+        return self._opcode == 8
+
+    @property
+    def is_ping(self):
+        return self._opcode == 9
+
+    @property
+    def is_pong(self):
+        return self._opcode == 10
+
 
 cdef class FrameParser:
     '''Encoder and decoder of WebSocket frames.
@@ -91,13 +111,21 @@ cdef class FrameParser:
     def encode_mask_length(self):
         return self._encode_mask_length
 
+    @property
+    def extensions(self):
+        return self._extensions
+
+    @property
+    def protocols(self):
+        return self._protocols
+
     def ping(self, body=None):
         '''return a `ping` :class:`Frame`.'''
-        return self.encode(body, opcode=9)
+        return self.encode(body, opcode=0x9)
 
     def pong(self, body=None):
         '''return a `pong` :class:`Frame`.'''
-        return self.encode(body, opcode=10)
+        return self.encode(body, opcode=0xA)
 
     def close(self, code=None):
         '''return a `close` :class:`Frame`.'''
@@ -107,12 +135,12 @@ cdef class FrameParser:
             body += self._close_codes.get(code, '').encode('utf-8')
         return self.encode(body, opcode=0x8)
 
-    def continuation(self, body, final=True):
+    def continuation(self, body=None, final=True):
         '''return a `continuation` :class:`Frame`.'''
         return self.encode(body, opcode=0, final=final)
 
     def encode(self, message, final=True, bytes masking_key=None,
-               int opcode=-1, int rsv1=0, int rsv2=0, int rsv3=0):
+               opcode=None, int rsv1=0, int rsv2=0, int rsv3=0):
         '''Encode a ``message`` for writing into the wire.
 
         The message length cannot exceed :attr:`max_payload`
@@ -125,7 +153,7 @@ cdef class FrameParser:
         return self._encode(data, opcode, masking_key, fin,
                             rsv1, rsv2, rsv3)
 
-    def multi_encode(self, message, bytes masking_key=None, int opcode=-1,
+    def multi_encode(self, message, bytes masking_key=None, opcode=None,
                      int rsv1=0, int rsv2=0, int rsv3=0,
                      cython.ulonglong max_payload=0):
         '''Encode a ``message`` into several frames depending on size.
@@ -244,7 +272,7 @@ cdef class FrameParser:
             buffer.extend(data)
         return bytes(buffer)
 
-    cdef tuple _info(self, message, int opcode, bytes masking_key):
+    cdef tuple _info(self, message, opcode, bytes masking_key):
         cdef int mask_length = self._encode_mask_length
         #
         if mask_length:
@@ -252,7 +280,7 @@ cdef class FrameParser:
             assert len(masking_key) == mask_length, "bad masking key"
         else:
             masking_key = b''
-        if opcode == -1:
+        if opcode is None:
             opcode = 1 if isinstance(message, string_type) else 2
         data = to_bytes(message or b'', 'utf-8')
         if opcode not in self._opcodes:

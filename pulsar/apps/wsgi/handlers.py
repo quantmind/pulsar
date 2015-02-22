@@ -98,10 +98,10 @@ via the ``_loop`` attribute::
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
-from pulsar import Http404, is_async, coroutine
+from pulsar import Http404, async, isfuture
 from pulsar.utils.log import LocalMixin, local_method
 
-from .utils import handle_wsgi_error, wsgi_yield_from
+from .utils import handle_wsgi_error
 from .wrappers import WsgiResponse
 
 
@@ -109,7 +109,7 @@ __all__ = ['WsgiHandler', 'LazyWsgi']
 
 
 class WsgiHandler(object):
-    '''An handler for application conforming to python WSGI_.
+    '''An handler for applications conforming to python WSGI_.
 
     .. attribute:: middleware
 
@@ -130,20 +130,42 @@ class WsgiHandler(object):
         :ref:`response middlewares <wsgi-response-middleware>`.
 
     '''
-    def __init__(self, middleware=None, response_middleware=None, **kwargs):
+    def __init__(self, middleware=None, response_middleware=None,
+                 async=False, **kwargs):
         if middleware:
             middleware = list(middleware)
         self.middleware = middleware or []
         self.response_middleware = response_middleware or []
+        self.async = async
 
-    @coroutine
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
+        if self.async:
+            return async(self._async(environ, start_response))
         response = None
         try:
             for middleware in self.middleware:
                 response = middleware(environ, start_response)
-                if wsgi_yield_from(response, middleware):
+                if response is not None:
+                    break
+            if response is None:
+                raise Http404
+
+        except Exception as exc:
+            response = handle_wsgi_error(environ, exc)
+
+        if isinstance(response, WsgiResponse) and not response.started:
+            for middleware in self.response_middleware:
+                response = middleware(environ, response)
+            response.start(start_response)
+        return response
+
+    def _async(self, environ, start_response):
+        response = None
+        try:
+            for middleware in self.middleware:
+                response = middleware(environ, start_response)
+                if isfuture(response):
                     response = yield from response
                 if response is not None:
                     break
@@ -156,7 +178,7 @@ class WsgiHandler(object):
         if isinstance(response, WsgiResponse) and not response.started:
             for middleware in self.response_middleware:
                 response = middleware(environ, response)
-                if is_async(response):
+                if isfuture(response):
                     response = yield from response
             response.start(start_response)
         return response
@@ -172,13 +194,8 @@ class LazyWsgi(LocalMixin):
     its wsgi :attr:`handler` every time is pickled and un-pickled without
     causing serialisation issues.
     '''
-    @coroutine
     def __call__(self, environ, start_response):
-        handler = self.handler(environ)
-        result = handler(environ, start_response)
-        if wsgi_yield_from(result, handler):
-            result = yield from result
-        return result
+        return self.handler(environ)(environ, start_response)
 
     @local_method
     def handler(self, environ=None):

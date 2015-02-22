@@ -9,14 +9,10 @@ and open a web browser at http://localhost:8060
 import os
 import sys
 from random import random
-try:
-    import pulsar
-except ImportError:  # pragma nocover
-    sys.path.append('../../')
-    import pulsar
 
 from pulsar.apps import ws, wsgi
 from pulsar.utils.system import json
+from pulsar.utils.websocket import frame_parser
 
 
 DIR = os.path.dirname(__file__)
@@ -44,10 +40,14 @@ class Echo(ws.WS):
 
 class Site(wsgi.LazyWsgi):
 
+    def __init__(self, pyparser=False):
+        self.pyparser = pyparser
+
     def setup(self, environ):
-        return wsgi.WsgiHandler([wsgi.Router('/', get=self.home),
-                                 ws.WebSocket('/data', Graph()),
-                                 ws.WebSocket('/echo', Echo())])
+        return wsgi.WsgiHandler(
+            [wsgi.Router('/', get=self.home),
+             ws.WebSocket('/data', Graph(), parser_factory=self._factory),
+             ws.WebSocket('/echo', Echo(), parser_factory=self._factory)])
 
     def home(self, request):
         response = request.response
@@ -57,9 +57,13 @@ class Site(wsgi.LazyWsgi):
             response.content = f.read() % request.environ
         return response
 
+    def _factory(self, **params):
+        params['pyparser'] = self.pyparser
+        return frame_parser(**params)
 
-def server(**kwargs):
-    return wsgi.WSGIServer(callable=Site(), **kwargs)
+
+def server(pyparser=False, **kwargs):
+    return wsgi.WSGIServer(callable=Site(pyparser), **kwargs)
 
 
 if __name__ == '__main__':  # pragma nocover

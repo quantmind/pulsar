@@ -41,8 +41,8 @@ class TestRpcOnThread(unittest.TestCase):
         cfg = self.app_cfg
         self.assertTrue(cfg.callable)
         wsgi_handler = cfg.callable.setup({})
-        self.assertEqual(len(wsgi_handler.middleware), 1)
-        router = wsgi_handler.middleware[0]
+        self.assertEqual(len(wsgi_handler.middleware), 2)
+        router = wsgi_handler.middleware[1]
         self.assertEqual(router.route.path, '/')
         root = router.post
         self.assertEqual(len(root.subHandlers), 1)
