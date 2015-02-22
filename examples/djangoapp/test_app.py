@@ -84,14 +84,14 @@ class TestDjangoChat(unittest.TestCase):
         self.assertIsInstance(ws.handler, MessageHandler)
         #
         return
-        #data = yield from ws.handler.get()
-        #data = json.loads(data)
-        #self.assertEqual(data['message'], 'joined')
+        # data = yield from ws.handler.get()
+        # data = json.loads(data)
+        # self.assertEqual(data['message'], 'joined')
         #
-        #ws.write('Hello there!')
-        #data = yield from ws.handler.get()
-        #data = json.loads(data)
-        #self.assertEqual(data['message'], 'Hello there!')
+        # ws.write('Hello there!')
+        # data = yield from ws.handler.get()
+        # data = json.loads(data)
+        # self.assertEqual(data['message'], 'Hello there!')
 
 
 @dont_run_with_thread
