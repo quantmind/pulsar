@@ -92,7 +92,9 @@ def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
     cookies[key] = value
     if expires is not None:
         if isinstance(expires, datetime):
-            delta = expires - expires.utcnow()
+            now = (expires.now(expires.tzinfo) if expires.tzinfo else
+                   expires.utcnow())
+            delta = expires - now
             # Add one second so the date matches exactly (a fraction of
             # time gets lost between converting to a timedelta and
             # then the date string).

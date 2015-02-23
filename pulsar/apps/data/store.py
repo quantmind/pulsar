@@ -7,13 +7,12 @@ the higher level :ref:`object data mapper <odm>`.
 '''
 from abc import ABCMeta, abstractmethod
 
-from pulsar import ImproperlyConfigured, Pool, Producer
+from pulsar import ImproperlyConfigured, Producer
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 __all__ = ['Command',
-           'REV_KEY',
            'Store',
            'RemoteStore',
            'PubSub',
@@ -23,10 +22,8 @@ __all__ = ['Command',
            'register_store',
            'data_stores']
 
+
 data_stores = {}
-
-
-REV_KEY = '_rev'
 
 
 def noop():
@@ -56,19 +53,6 @@ class Command(object):
     @classmethod
     def insert(cls, args):
         return cls(args, cls.INSERT)
-
-
-class StoreTransaction(object):
-    '''Transaction for a given :class:`.Store`
-    '''
-    def __init__(self, store):
-        self.store = store
-        self.commands = []
-
-    def add(self, model):
-        action = Command.UPDATE if REV_KEY in model else Command.INSERT
-        self.commands.append(Command(model, action))
-        return model
 
 
 class Compiler(object):
@@ -125,6 +109,14 @@ class Store(metaclass=ABCMeta):
     def dns(self):
         '''Domain name server'''
         return self._dns
+
+    @classmethod
+    def register(cls):
+        pass
+
+    def __repr__(self):
+        return 'Store(dns="%s")' % self.dns
+    __str__ = __repr__
 
     def database_create(self, dbname=None, **kw):
         '''Create a new database in this store.
@@ -229,14 +221,6 @@ class RemoteStore(Producer, Store):
         super().__init__(loop)
         Store.__init__(self, name, host, **kw)
 
-    @classmethod
-    def register(cls):
-        pass
-
-    def __repr__(self):
-        return 'Store(dns="%s")' % self._dns
-    __str__ = __repr__
-
     @abstractmethod
     def connect(self):
         '''Connect with store server
@@ -293,37 +277,6 @@ class RemoteStore(Producer, Store):
 
     def encode_json(self, data):
         return data
-
-    #    INTERNALS
-    #######################
-    def _init(self, **kw):  # pragma    nocover
-        '''Internal initialisation'''
-        pass
-
-    def _buildurl(self, **kw):
-        pre = ''
-        if self._user:
-            if self._password:
-                pre = '%s:%s@' % (self._user, self._password)
-            else:
-                pre = '%s@' % self._user
-        elif self._password:
-            raise ImproperlyConfigured('password but not user')
-            assert self._password
-        host = self._host
-        if isinstance(host, tuple):
-            host = '%s:%s' % host
-        host = '%s%s' % (pre, host)
-        path = '/%s' % self._database if self._database else ''
-        kw.update(self._urlparams)
-        query = urlencode(kw)
-        scheme = self._name
-        if self._scheme:
-            scheme = '%s+%s' % (self._scheme, scheme)
-        return urlunparse((scheme, host, path, '', query, ''))
-
-    def _build_pool(self):
-        return Pool
 
 
 class PubSubClient(object):
