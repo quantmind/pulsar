@@ -62,7 +62,7 @@ from http.cookiejar import CookieJar, Cookie
 from http.cookies import SimpleCookie
 
 from .structures import mapping_iterator
-from .pep import to_bytes, native_str, force_native_str
+from .string import to_bytes, to_string
 from .html import capfirst
 
 # try:
@@ -145,7 +145,7 @@ def urlquote(iri):
 
 def _gen_unquote(uri):
     unreserved_set = URI_UNRESERVED_SET
-    for n, part in enumerate(force_native_str(uri, 'latin1').split('%')):
+    for n, part in enumerate(to_string(uri, 'latin1').split('%')):
         if not n:
             yield part
         else:
@@ -187,7 +187,7 @@ def iri_to_uri(iri, kwargs=None):
     if iri is None:
         return iri
     if kwargs:
-        iri = '%s?%s' % (force_native_str(iri, 'latin1'),
+        iri = '%s?%s' % (to_string(iri, 'latin1'),
                          '&'.join(('%s=%s' % kv for kv in kwargs.items())))
     return urlquote(unquote_unreserved(iri))
 
@@ -383,7 +383,6 @@ header_parsers = {'Connection': split_comma,
 
 
 def header_values(header, value):
-    value = native_str(value)
     assert isinstance(value, str)
     if header in header_parsers:
         return header_parsers[header](value)
@@ -399,7 +398,7 @@ def quote_header_value(value, extra_chars='', allow_token=True):
     :param allow_token: if this is enabled token values are returned
         unchanged.
     """
-    value = force_native_str(value)
+    value = to_string(value)
     if allow_token:
         token_chars = HEADER_TOKEN_CHARS | set(extra_chars)
         if set(value).issubset(token_chars):
@@ -854,8 +853,8 @@ class HttpParser(object):
                 else:
                     self.__on_firstline = True
                     self._buf.append(data[:idx])
-                    first_line = native_str(b''.join(self._buf),
-                                            DEFAULT_CHARSET)
+                    first_line = to_string(b''.join(self._buf),
+                                           DEFAULT_CHARSET)
                     rest = data[idx+2:]
                     data = b''
                     if self._parse_firstline(first_line):
@@ -960,7 +959,7 @@ class HttpParser(object):
         idx = data.find(b'\r\n\r\n')
         if idx < 0:  # we don't have all headers
             return False
-        chunk = native_str(data[:idx], DEFAULT_CHARSET)
+        chunk = to_string(data[:idx], DEFAULT_CHARSET)
         # Split lines on \r\n keeping the \r\n on each line
         lines = deque(('%s\r\n' % line for line in chunk.split('\r\n')))
         # Parse headers into key/value pairs paying attention

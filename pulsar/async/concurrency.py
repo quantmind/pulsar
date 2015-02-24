@@ -15,10 +15,10 @@ from pulsar.utils.tools import Pidfile
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, _StopError, SELECTORS
 from .threads import Thread
-from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
+from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
 from .futures import async, add_errback, chain_future, Future
 from .protocols import TcpServer
-from .actor import Actor, create_aid
+from .actor import Actor
 from .consts import *
 
 

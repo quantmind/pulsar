@@ -4,7 +4,7 @@ import unittest
 import asyncio
 
 import pulsar
-from pulsar.utils.security import random_string
+from pulsar.utils.string import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
 from pulsar.apps.data import create_store
@@ -45,7 +45,7 @@ class StoreMixin(object):
 
     @classmethod
     def randomkey(cls, length=None):
-        return random_string(length=length)
+        return random_string(min_length=length, max_length=length)
 
     def _remove_and_push(self, key, rem=1):
         c = self.client

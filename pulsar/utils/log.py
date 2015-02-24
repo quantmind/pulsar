@@ -9,7 +9,7 @@ from threading import Lock
 from functools import wraps
 
 from .system import current_process, platform
-from .pep import force_native_str
+from .string import to_string
 from .structures import AttributeDictionary
 
 win32 = sys.platform == "win32"
@@ -130,7 +130,7 @@ class LazyString:
 
     def __str__(self):
         if self.value is None:
-            self.value = force_native_str(self.f(*self.args, **self.kwargs))
+            self.value = to_string(self.f(*self.args, **self.kwargs))
         return self.value
     __repr__ = __str__
 

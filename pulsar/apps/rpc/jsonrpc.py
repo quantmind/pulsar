@@ -3,7 +3,7 @@ import json
 import logging
 
 from pulsar import AsyncObject, task, as_coroutine, new_event_loop
-from pulsar.utils.security import gen_unique_id
+from pulsar.utils.string import gen_unique_id
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
 from pulsar.apps.http import HttpClient

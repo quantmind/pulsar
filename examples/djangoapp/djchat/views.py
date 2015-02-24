@@ -4,7 +4,7 @@ from pulsar import HttpException
 from pulsar.apps import ws
 from pulsar.apps.data import PubSubClient, create_store
 from pulsar.utils.system import json
-from pulsar.utils.security import random_string
+from pulsar.utils.string import random_string
 
 
 def home(request):

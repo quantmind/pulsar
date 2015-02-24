@@ -1,8 +1,7 @@
 from datetime import date, timedelta
 from random import uniform, randint, choice
-import string
 
-_characters = string.ascii_letters + string.digits
+from pulsar.utils.string import random_string
 
 
 def def_converter(x):
@@ -82,12 +81,6 @@ def populate(datatype='string', size=10, start=None, end=None,
         for s in range(size):
             data.append(converter(random_string(**kwargs)))
     return data
-
-
-def random_string(min_len=3, max_len=20, characters=None, **kwargs):
-    characters = characters or _characters
-    len = randint(min_len, max_len) if max_len > min_len else min_len
-    return ''.join((choice(characters) for s in range(len)))
 
 
 def random_date(date_start, delta):

@@ -7,7 +7,6 @@ from threading import current_thread
 
 from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
-from pulsar.utils.security import gen_unique_id
 
 from .events import EventHandler
 from .proxy import ActorProxy, ActorProxyMonitor, actor_identity
@@ -23,10 +22,6 @@ __all__ = ['is_actor', 'send', 'spawn',
 
 def is_actor(obj):
     return isinstance(obj, Actor)
-
-
-def create_aid():
-    return gen_unique_id()[:8]
 
 
 def get_stream(cfg):

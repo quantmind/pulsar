@@ -181,16 +181,18 @@ def run_in_greenlet(callable):
     '''
     @wraps(callable)
     def _(*args, **kwargs):
-        gr = GreenletWorker(callable)
+        greenlet = GreenletWorker(callable)
         # switch to the new greenlet
-        result = gr.switch(*args, **kwargs)
+        result = greenlet.switch(*args, **kwargs)
         # back to the parent
-        while isfuture(result):
+        while is_async(result):
             # keep on switching back to the greenlet if we get a Future
-            result = gr.switch((yield from result))
-        # For some reason this line does not show in coverage reports
-        # but it is covered!
-        return result    # pragma nocover
+            try:
+                result = greenlet.switch((yield from result))
+            except Exception as exc:
+                result = greenlet.throw(exc)
+
+        return greenlet.switch(result)
 
     return _
 

@@ -2,6 +2,7 @@ import unittest
 
 import pulsar
 from pulsar.utils import security
+from pulsar.utils.string import random_string
 
 
 class TestSecurity(unittest.TestCase):
@@ -24,9 +25,9 @@ class TestSecurity(unittest.TestCase):
         self.assertTrue(security.check_password_hash(hash, password))
 
     def test_random_string(self):
-        s1 = security.random_string(length=20)
+        s1 = random_string(min_len=20)
         self.assertEqual(len(s1), 20)
         self.assertIsInstance(s1, str)
-        self.assertNotEqual(s1, security.random_string(length=20))
-        self.assertNotEqual(s1, security.random_string(length=20))
-        self.assertNotEqual(s1, security.random_string(length=20))
+        self.assertNotEqual(s1, random_string(min_len=20))
+        self.assertNotEqual(s1, random_string(min_len=20))
+        self.assertNotEqual(s1, random_string(min_len=20))

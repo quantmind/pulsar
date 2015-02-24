@@ -3,7 +3,7 @@ from functools import partial
 
 import pulsar
 from pulsar.utils.structures import OrderedDict
-from pulsar.utils.pep import force_native_str, to_bytes
+from pulsar.utils.pep import to_string, to_bytes
 
 
 COMMANDS_INFO = OrderedDict()
@@ -62,7 +62,7 @@ class ClientMixin(object):
         '''
         handle = None
         if request:
-            request[0] = command = force_native_str(request[0]).lower()
+            request[0] = command = to_string(request[0]).lower()
             info = COMMANDS_INFO.get(command)
             if info:
                 handle = getattr(self.store, info.method_name)

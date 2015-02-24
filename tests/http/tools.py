@@ -7,7 +7,6 @@ from pulsar.utils.httpurl import (Headers, CacheControl,
                                   remove_double_slash, appendslash, capfirst,
                                   encode_multipart_formdata, http_date,
                                   cookiejar_from_dict, SimpleCookie)
-from pulsar.utils.pep import to_bytes, native_str, force_native_str
 from pulsar.apps.http import Auth, HTTPBasicAuth, HTTPDigestAuth
 
 
@@ -58,26 +57,6 @@ class TestAuth(unittest.TestCase):
 
 
 class TestTools(unittest.TestCase):
-
-    def test_to_bytes(self):
-        s = to_bytes('ciao')
-        self.assertTrue(isinstance(s, bytes))
-        s2 = to_bytes(s)
-        self.assertEqual(id(s), id(s2))
-        s3 = to_bytes(s, 'latin-1')
-        self.assertEqual(s, s3)
-        self.assertNotEqual(id(s), id(s3))
-
-    def test_native_str(self):
-        s = 'ciao'
-        s2 = native_str(s)
-        self.assertEqual(id(s), id(s2))
-
-    def test_force_native_str(self):
-        self.assertEqual(force_native_str('ciao'), 'ciao')
-        self.assertEqual(force_native_str(b'ciao'), 'ciao')
-        self.assertEqual(force_native_str(1), '1')
-        self.assertEqual(force_native_str((1, 'b')), str((1, 'b')))
 
     def test_quote_unreserved(self):
         '''Test a string of unreserved characters'''

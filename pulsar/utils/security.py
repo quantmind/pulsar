@@ -14,10 +14,6 @@ SALT_CHARS = ascii_letters + string.digits
 _sys_rng = SystemRandom()
 
 
-def gen_unique_id():
-    return 'i%s' % uuid4().hex
-
-
 def gen_salt(length):
     """Generate a random string of SALT_CHARS with specified ``length``."""
     if length <= 0:
@@ -41,8 +37,3 @@ def check_password_hash(pwhash, password):
     salt, hashval = pwhash.split('$')
     return _hash_internal(salt, password) == hashval
 
-
-def random_string(characters=None, length=None):
-    length = length or 20
-    characters = characters or SALT_CHARS
-    return ''.join((choice(characters) for s in range(length)))

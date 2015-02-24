@@ -164,6 +164,15 @@ class Store(metaclass=ABCMeta):
         '''
         return noop()
 
+    def table_index_create(self, table_name, index, **kw):
+        return noop()
+
+    def table_index_drop(self, table_name, index, **kw):
+        return noop()
+
+    def table_index_all(self, table_name, **kw):
+        return noop()
+
     #    INTERNALS
     #######################
     def _init(self, **kw):  # pragma    nocover

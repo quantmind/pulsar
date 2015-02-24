@@ -57,7 +57,7 @@ from collections import namedtuple
 from pulsar import ProtocolError, CommandError
 from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import frame_parser
-from pulsar.utils.security import gen_unique_id
+from pulsar.utils.string import gen_unique_id
 
 from .access import get_actor, is_async
 from .futures import Future, task
@@ -67,6 +67,10 @@ from .clients import AbstractClient
 
 
 CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
+
+
+def create_aid():
+    return gen_unique_id()[:8]
 
 
 def command_in_context(command, caller, target, args, kwargs, connection=None):
@@ -128,7 +132,7 @@ class Message(object):
                 'kwargs': kwargs if kwargs is not None else {}}
         waiter = Future()
         if command.ack:
-            data['ack'] = gen_unique_id()[:8]
+            data['ack'] = create_aid()
         else:
             waiter.set_result(None)
         return cls(data, waiter)
