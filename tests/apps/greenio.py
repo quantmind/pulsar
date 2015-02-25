@@ -37,7 +37,8 @@ class TestGreenIO(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        s = server(name=cls.__name__.lower(), bind='127.0.0.1:0')
+        s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
+                   concurrency=cls.cfg.concurrency)
         cls.server_cfg = yield from send('arbiter', 'run', s)
         cls.client = EchoGreen(cls.server_cfg.addresses[0])
 

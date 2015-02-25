@@ -158,7 +158,7 @@ _DEFAULT_WORKERS = 100
 _MAX_WORKERS = 1000
 
 
-class _WAIT:
+class _DONE:
     pass
 
 
@@ -267,20 +267,16 @@ class GreenPool(AsyncObject):
     def _green_task(self, greenlet, task):
         # Run in the main greenlet of the event-loop thread
 
-        # switch to the greenlet to start the task
-        result = greenlet.switch(task)
+        while task is not _DONE:
+            # switch to the greenlet to start the task
+            task = greenlet.switch(task)
 
-        # if an asynchronous result is returned, yield from and switch back
-        # to the greenlet once the result is ready
-        while is_async(result):
-            try:
-                result = greenlet.switch((yield from result))
-            except Exception as exc:
-                result = greenlet.throw(exc)
-
-        # all done, switch back to greenlet
-        if result is not _WAIT:
-            greenlet.switch(result)
+            # if an asynchronous result is returned, yield from
+            if is_async(task):
+                try:
+                    task = yield from task
+                except Exception as exc:
+                    task = greenlet.throw(exc)
 
     def _green_run(self):
         # The run method of a worker greenlet
@@ -291,7 +287,7 @@ class GreenPool(AsyncObject):
             assert parent
             self._available.add(greenlet)
             self._loop.call_soon(self._check_queue)
-            task = parent.switch(_WAIT)  # switch back to the main execution
+            task = parent.switch(_DONE)  # switch back to the main execution
             if task:
                 # If a new task is available execute it
                 # Here we are in the child greenlet
@@ -302,16 +298,14 @@ class GreenPool(AsyncObject):
                     future.set_exception(exc)
                 else:
                     future.set_result(result)
-            else:
-                self._shutdown_greenlet(greenlet)
-
-    def _shutdown_greenlet(self, greenlet):
-        self._greenlets.remove(greenlet)
-        if self._greenlets:
-            self._put(None)
-        elif self._waiter:
-            self._waiter.set_result(None)
-            self._waiter = None
+            else:  # Greenlet cleanup
+                self._greenlets.remove(greenlet)
+                if self._greenlets:
+                    self._put(None)
+                elif self._waiter:
+                    self._waiter.set_result(None)
+                    self._waiter = None
+                parent.switch(_DONE)
 
 
 class WsgiGreen:
