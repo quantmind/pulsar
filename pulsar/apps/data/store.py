@@ -102,9 +102,11 @@ class Store(metaclass=ABCMeta):
     def register(cls):
         pass
 
+    def __str__(self):
+        return self._dns
+
     def __repr__(self):
-        return 'Store(dns="%s")' % self.dns
-    __str__ = __repr__
+        return 'Store(dns="%s")' % self
 
     def database_create(self, dbname=None, **kw):
         '''Create a new database in this store.
