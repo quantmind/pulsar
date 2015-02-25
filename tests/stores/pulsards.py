@@ -1095,6 +1095,14 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         if cls.app_cfg is not None:
             return pulsar.send('arbiter', 'kill_actor', cls.app_cfg.name)
 
+    def test_store_methods(self):
+        store = self.create_store('%s/8' % self.pulsards_uri)
+        self.assertEqual(store.database, '8')
+        store.database = 10
+        self.assertEqual(store.database, 10)
+        self.assertTrue(store.dns.startswith('%s/10?' % self.pulsards_uri))
+        self.assertEqual(store.encoding, 'utf-8')
+        self.assertTrue(repr(store))
 
 @unittest.skipUnless(pulsar.HAS_C_EXTENSIONS, 'Requires cython extensions')
 class TestPulsarStorePyParser(TestPulsarStore):

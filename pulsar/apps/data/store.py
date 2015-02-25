@@ -26,7 +26,7 @@ __all__ = ['Command',
 data_stores = {}
 
 
-def noop():
+def noop():     # pragma    nocover
     if False:
         yield None
 
@@ -55,22 +55,10 @@ class Command(object):
         return cls(args, cls.INSERT)
 
 
-class Compiler(object):
-    '''Interface for :class:`Store` compilers.
-    '''
-    def __init__(self, store):
-        self.store = store
-
-    def compile_query(self, query):
-        raise NotImplementedError
-
-    def create_table(self, model_class):
-        raise NotImplementedError
-
-
 class Store(metaclass=ABCMeta):
     _scheme = None
     registered = False
+    default_manager = None
 
     def __init__(self, name, host, database=None,
                  user=None, password=None, encoding=None, **kw):
@@ -222,8 +210,6 @@ class RemoteStore(Producer, Store):
 
         The user password
     '''
-    compiler_class = None
-    default_manager = None
     MANY_TIMES_EVENTS = ('request',)
 
     def __init__(self, name, host, loop=None, **kw):
