@@ -1104,6 +1104,7 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         self.assertEqual(store.encoding, 'utf-8')
         self.assertTrue(repr(store))
 
+
 @unittest.skipUnless(pulsar.HAS_C_EXTENSIONS, 'Requires cython extensions')
 class TestPulsarStorePyParser(TestPulsarStore):
     redis_py_parser = True
