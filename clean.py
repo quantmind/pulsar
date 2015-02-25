@@ -3,10 +3,10 @@ import shutil
 
 remove_dirs = ('dist', 'build', 'pulsar.egg-info')
 
+
 def rmgeneric(path, __func__):
     try:
         __func__(path)
-        #print 'Removed ', path
         return 1
     except OSError as e:
         print('Could not remove {0}, {1}'.format(path, e))

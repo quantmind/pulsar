@@ -91,7 +91,7 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
 def run_setup(params=None):
     argv = sys.argv
     command = argv[1] if len(argv) > 1 else None
-    if not params or command=='sdist':
+    if not params or command == 'sdist':
         params = {'cmdclass': {}}
     else:
         params = params()

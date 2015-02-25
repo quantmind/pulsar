@@ -15,9 +15,9 @@ services:
   - redis-server
 
 script:
-  - python -m covrun --pep8 pulsar examples tests
+  - pep8
   - sudo rm -rf pulsar
-  - python -m covrun
+  - python -m runtests --coverage
   - python -m runtests --coveralls
 
 notifications:

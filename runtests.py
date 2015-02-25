@@ -21,7 +21,7 @@ def run(**params):
                          repo_token=repo_token)
         sys.exit(0)
     # Run the test suite
-    if '--coverage' in args or params.get('coverage'):
+    if '--coverage' in args:
         import coverage
         print('Start coverage')
         p = current_process()
