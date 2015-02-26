@@ -262,8 +262,9 @@ def render_error(request, exc):
     debug = cfg.debug if cfg else False
     response = request.response
     if not response.content_type:
+        content_type = request.get('default.content_type')
         response.content_type = request.content_types.best_match(
-            DEFAULT_RESPONSE_CONTENT_TYPES)
+            content_type or DEFAULT_RESPONSE_CONTENT_TYPES)
     content_type = None
     if response.content_type:
         content_type = response.content_type.split(';')[0]

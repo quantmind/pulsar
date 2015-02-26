@@ -256,11 +256,11 @@ class GreenPool(AsyncObject):
 
     def _check_queue(self):
         # Run in the main greenlet of the event-loop thread
+        if not self._available:
+            return
         try:
             task = self._queue.pop()
         except IndexError:
-            return
-        if not self._available:
             return
         async(self._green_task(self._available.pop(), task), loop=self._loop)
 
