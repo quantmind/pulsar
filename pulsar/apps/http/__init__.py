@@ -853,16 +853,19 @@ class HttpResponse(ProtocolConsumer):
         request = self._request
         # request.parser my change (100-continue)
         # Always invoke it via request
-        if request.parser.execute(data, len(data)) == len(data):
-            if request.parser.is_headers_complete():
-                self._status_code = request.parser.get_status_code()
-                if not self.event('on_headers').fired():
-                    self.fire_event('on_headers')
-                if (not self.event('post_request').fired() and
-                        request.parser.is_message_complete()):
-                    self.finished()
-        else:
-            raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
+        try:
+            if request.parser.execute(data, len(data)) == len(data):
+                if request.parser.is_headers_complete():
+                    self._status_code = request.parser.get_status_code()
+                    if not self.event('on_headers').fired():
+                        self.fire_event('on_headers')
+                    if (not self.event('post_request').fired() and
+                            request.parser.is_message_complete()):
+                        self.finished()
+            else:
+                raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
+        except Exception as exc:
+            self.finished(exc=exc)
 
 
 class HttpClient(AbstractClient):

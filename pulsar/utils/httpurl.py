@@ -778,7 +778,9 @@ class HttpParser(object):
         self.__on_headers_complete = False
         self.__on_message_begin = False
         self.__on_message_complete = False
+        # decompress
         self.__decompress_obj = None
+        self.__decompress_first_try = True
 
     @property
     def kind(self):
@@ -1015,8 +1017,10 @@ class HttpParser(object):
             encoding = self._headers['Content-Encoding'][0]
             if encoding == "gzip":
                 self.__decompress_obj = zlib.decompressobj(16+zlib.MAX_WBITS)
+                self.__decompress_first_try = False
             elif encoding == "deflate":
                 self.__decompress_obj = zlib.decompressobj()
+
         rest = data[idx+4:]
         self._buf = [rest]
         self.__on_headers_complete = True
@@ -1034,9 +1038,10 @@ class HttpParser(object):
             else:
                 if self._clen_rest is not None:
                     self._clen_rest -= len(data)
+
                 # maybe decompress
-                if self.__decompress_obj is not None:
-                    data = self.__decompress_obj.decompress(data)
+                data = self._decompress(data)
+
                 self._partial_body = True
                 if data:
                     self._body.append(data)
@@ -1056,8 +1061,9 @@ class HttpParser(object):
             if size is None or len(rest) < size + 2:
                 return None
             body_part, rest = rest[:size], rest[size:]
-            if self.__decompress_obj is not None:
-                body_part = self.__decompress_obj.decompress(body_part)
+
+            # maybe decompress
+            body_part = self._decompress(body_part)
             self._partial_body = True
             self._body.append(body_part)
             rest = rest[2:]
@@ -1083,6 +1089,22 @@ class HttpParser(object):
         idx = data.find(b'\r\n\r\n')
         if data[:2] == b'\r\n':
             self._trailers = self._parse_headers(data[:idx])
+
+    def _decompress(self, data):
+        deco = self.__decompress_obj
+        if deco is not None:
+            if not self.__decompress_first_try:
+                data = deco.decompress(data)
+            else:
+                try:
+                    data = deco.decompress(data)
+                except zlib.error:
+                    self.__decompress_obj = zlib.decompressobj(-zlib.MAX_WBITS)
+                    deco = self.__decompress_obj
+                    data = deco.decompress(data)
+                self.__decompress_first_try = False
+        return data
+
 
 if not hasextensions:   # pragma    nocover
     setDefaultHttpParser(HttpParser)
