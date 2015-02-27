@@ -72,7 +72,6 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     stream.buffer = body or b''
     stream.on_message_complete.set_result(None)
     extra = extra or {}
-    #extra['pulsar.connection'] = AsyncObject()
     return wsgi_environ(stream, ('127.0.0.1', 8060), '777.777.777.777:8080',
                         headers, https=secure, extra=extra)
 
