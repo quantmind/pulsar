@@ -40,12 +40,6 @@ MAX_CHUNK_SIZE = 65536
 MAX_TIME_IN_LOOP = 0.5
 
 
-class FakeConnection(object):
-
-    def __init__(self, loop=None):
-        self._loop = loop
-
-
 def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
                       secure=False, loop=None, body=None):
     '''An function to create a WSGI environment dictionary for testing.
@@ -78,7 +72,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     stream.buffer = body or b''
     stream.on_message_complete.set_result(None)
     extra = extra or {}
-    extra['pulsar.connection'] = FakeConnection(loop=loop)
+    #extra['pulsar.connection'] = AsyncObject()
     return wsgi_environ(stream, ('127.0.0.1', 8060), '777.777.777.777:8080',
                         headers, https=secure, extra=extra)
 
@@ -250,11 +244,11 @@ def wsgi_environ(stream, address, client_address, headers,
 def chunk_encoding(chunk):
     '''Write a chunk::
 
-    chunk-size(hex) CRLF
-    chunk-data CRLF
+        chunk-size(hex) CRLF
+        chunk-data CRLF
 
-If the size is 0, this is the last chunk, and an extra CRLF is appended.
-'''
+    If the size is 0, this is the last chunk, and an extra CRLF is appended.
+    '''
     head = ("%X\r\n" % len(chunk)).encode('utf-8')
     return head + chunk + b'\r\n'
 

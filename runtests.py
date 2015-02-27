@@ -36,7 +36,7 @@ def runtests(**params):
     from pulsar.apps.test.plugins import bench, profile
     import pulsar.utils.settings.backend
     djangopath = os.path.join(os.path.dirname(__file__),
-                              'examples', 'djangoapp')
+                              'examples', 'djchat')
     if djangopath not in sys.path:
         sys.path.append(djangopath)
     #

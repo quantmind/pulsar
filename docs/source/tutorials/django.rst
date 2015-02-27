@@ -4,7 +4,7 @@
 Django with Pulsar
 =======================
 
-The code for this example is located in the :mod:`examples.djangoapp.manage`
+The code for this example is located in the :mod:`examples.djchat.manage`
 module.
 
-.. automodule:: examples.djangoapp.manage
+.. automodule:: examples.djchat.manage

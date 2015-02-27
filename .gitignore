@@ -3,6 +3,8 @@
 *.so
 *.o
 *.def
+
+# Python
 __pycache__
 build
 docs/build
@@ -13,20 +15,17 @@ htmlprof
 .coveralls-repo-token
 .project
 .pydevproject
-cfg.py
 MANIFEST
 .settings
 .python-version
-examples/webmail/config.py
+extensions/lib/lib.c
 examples/tweets/settings.py
 *~
 .htmlprof
-examples/djangoapp/test.db
 test.pid
 pulsar.egg-info
-extensions/lua/lua.c
-extensions/lib/lib.c
 .coveralls.yml
+*.sqlite3
 *.rdb
 *.log
 *.mp4

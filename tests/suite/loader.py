@@ -30,9 +30,9 @@ class TestTestLoader(unittest.TestCase):
         self.assertTrue(modules)
         self.assertFalse('httpbin' in modules)
         self.assertTrue('echo' in modules)
-        self.assertTrue('djangoapp' in modules)
-        self.assertTrue('djangoapp.app' in modules)
-        self.assertTrue('djangoapp.pulse' in modules)
+        self.assertTrue('djchat' in modules)
+        self.assertTrue('djchat.app' in modules)
+        self.assertTrue('djchat.pulse' in modules)
         self.assertTrue('async' in modules)
         self.assertTrue('suite.single' in modules)
 
@@ -59,10 +59,3 @@ class TestTestLoader(unittest.TestCase):
         for module in modules:
             self.assertTrue('taskqueue' not in module)
             self.assertTrue('apps.pubsub' not in module)
-
-    def __test_djangoapp_tags(self):
-        # TODO Fix this
-        app = yield from get_application('test')
-        loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
-        modules = dict(loader.testmodules(('djangoapp',)))
-        self.assertEqual(len(modules), 3)

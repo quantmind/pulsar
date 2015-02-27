@@ -60,12 +60,6 @@ from pulsar.apps.wsgi import (LazyWsgi, WsgiHandler,
                               wait_for_body_middleware,
                               middleware_in_executor)
 from pulsar.utils.importer import module_attribute
-try:
-    from pulsar.apps import greenio
-    from pulsar.apps.greenio import pg, local
-except ImportError:
-    greenio = None
-    pg = None
 
 
 class Wsgi(LazyWsgi):
