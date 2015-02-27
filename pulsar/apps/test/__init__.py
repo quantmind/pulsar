@@ -329,7 +329,6 @@ from .plugins.base import *
 from .loader import *
 from .utils import *
 from .wsgi import *
-from .pep import pep8_run
 from .runner import Runner
 
 
@@ -423,14 +422,6 @@ class TestShowLeaks(TestOption):
     """
 
 
-class TestPep8(TestOption):
-    name = "pep8"
-    flags = ['--pep8']
-    nargs = '*'
-    validator = pulsar.validate_list
-    desc = """Run pep8"""
-
-
 class TestSuite(pulsar.Application):
     '''An asynchronous test suite which works like a task queue.
 
@@ -515,12 +506,6 @@ class TestSuite(pulsar.Application):
             for tag in sorted(_tags()):
                 stream.writeln(tag)
             stream.writeln('')
-            return False
-        elif self.cfg.pep8:
-            msg, code = pep8_run(self.cfg.pep8)
-            stream.writeln(msg)
-            if code:
-                sys.exit(code)
             return False
 
     def monitor_start(self, monitor):

@@ -35,6 +35,7 @@ class MessageHandler(ws.WS):
         return self.queue.put(message)
 
 
+@test_timeout(30)
 @unittest.skipUnless(execute_from_command_line, 'Requires django')
 class TestDjangoChat(unittest.TestCase):
     concurrency = 'thread'

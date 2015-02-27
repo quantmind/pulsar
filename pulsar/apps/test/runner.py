@@ -4,7 +4,7 @@ from unittest import SkipTest
 from pulsar import async, is_async, HaltServer
 
 from .utils import (TestFailure, skip_test, skip_reason,
-                    expecting_failure, AsyncAssert)
+                    expecting_failure, AsyncAssert, get_test_timeout)
 
 
 class Runner(object):
@@ -63,10 +63,11 @@ class Runner(object):
     def _run_testcls(self, testcls, all_tests):
         cfg = testcls.cfg
         seq = getattr(testcls, '_sequential_execution', cfg.sequential)
+        test_timeout = get_test_timeout(testcls, cfg.test_timeout)
         try:
             if skip_test(testcls):
                 raise SkipTest(skip_reason(testcls))
-            yield from self._run(testcls.setUpClass)
+            yield from self._run(testcls.setUpClass, test_timeout)
             yield None  # release the loop
         except SkipTest as exc:
             reason = str(exc)
@@ -81,28 +82,28 @@ class Runner(object):
         else:
             if seq:
                 for test in all_tests:
-                    yield from self._run_test(test)
+                    yield from self._run_test(test, test_timeout)
             else:
-                yield from asyncio.wait([self._run_test(test)
+                yield from asyncio.wait([self._run_test(test, test_timeout)
                                          for test in all_tests],
                                         loop=self._loop)
 
         try:
-            yield from self._run(testcls.tearDownClass)
+            yield from self._run(testcls.tearDownClass, test_timeout)
         except Exception as exc:
             self.logger.exception('Failure in tearDownClass',
                                   exc_info=True)
 
         self.concurrent.remove(testcls)
 
-    def _run(self, method):
+    def _run(self, method, test_timeout):
         coro = method()
         # a coroutine
         if coro:
-            timeout = self.monitor.cfg.test_timeout
-            yield from asyncio.wait_for(coro, timeout, loop=self._loop)
+            test_timeout = get_test_timeout(method, test_timeout)
+            yield from asyncio.wait_for(coro, test_timeout, loop=self._loop)
 
-    def _run_test(self, test):
+    def _run_test(self, test, test_timeout):
         '''Run a ``test`` function using the following algorithm
 
         * Run :meth:`setUp` method in :attr:`testcls`
@@ -118,25 +119,27 @@ class Runner(object):
             reason = skip_reason(method)
             runner.addSkip(test, reason)
         else:
-            error = yield from self._run_safe(test, 'setUp')
+            error = yield from self._run_safe(test, 'setUp', test_timeout)
             if not error:
                 test = runner.before_test_function_run(test)
-                error = yield from self._run_safe(test, test_name)
-            error = yield from self._run_safe(test, 'tearDown', error)
+                error = yield from self._run_safe(test, test_name,
+                                                  test_timeout)
+            error = yield from self._run_safe(test, 'tearDown',
+                                              test_timeout, error)
             if not error:
                 runner.addSuccess(test)
         runner.stopTest(test)
         yield None  # release the loop
 
-    def _run_safe(self, test, method_name, error=None):
+    def _run_safe(self, test, method_name, test_timeout, error=None):
         try:
             method = getattr(test, method_name)
             coro = method()
             # a coroutine
             if is_async(coro):
-                timeout = getattr(method, 'timeout',
-                                  self.monitor.cfg.test_timeout)
-                yield from asyncio.wait_for(coro, timeout, loop=self._loop)
+                test_timeout = get_test_timeout(method, test_timeout)
+                yield from asyncio.wait_for(coro, test_timeout,
+                                            loop=self._loop)
         except Exception as exc:
             if not error:
                 error = TestFailure(exc)

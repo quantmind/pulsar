@@ -23,7 +23,6 @@ def run(**params):
     # Run the test suite
     if '--coverage' in args:
         import coverage
-        print('Start coverage')
         p = current_process()
         p._coverage = coverage.coverage(data_suffix=True)
         p._coverage.start()

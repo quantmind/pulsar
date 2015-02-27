@@ -108,8 +108,13 @@ class test_timeout:
         self.timeout = timeout
 
     def __call__(self, f):
-        f.timeout = self.timeout
+        f._test_timeout = self.timeout
         return f
+
+
+def get_test_timeout(o, timeout):
+    val = getattr(o, '_test_timeout', 0)
+    return max(val, timeout)
 
 
 class AsyncAssert(object):
