@@ -272,10 +272,11 @@ class GreenPool(AsyncObject):
             task = greenlet.switch(task)
 
             # if an asynchronous result is returned, yield from
-            if is_async(task):
+            while is_async(task):
                 try:
                     task = yield from task
                 except Exception as exc:
+                    # This call can return an asynchronous component
                     task = greenlet.throw(exc)
 
     def _green_run(self):

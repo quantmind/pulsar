@@ -78,7 +78,9 @@ class Runner(object):
             exc = TestFailure(exc)
             # setUpClass failed, fails all tests
             for test in all_tests:
+                self.runner.startTest(test)
                 self.add_failure(test, exc)
+                self.runner.stopTest(test)
         else:
             if seq:
                 for test in all_tests:

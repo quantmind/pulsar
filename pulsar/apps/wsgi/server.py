@@ -30,8 +30,8 @@ from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
-from .utils import handle_wsgi_error, wsgi_request, HOP_HEADERS, wsgi_info
-
+from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
+                    log_wsgi_info, LOGGER)
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 
@@ -287,6 +287,7 @@ class HttpServerResponse(ProtocolConsumer):
     _headers_sent = None
     _stream = None
     _buffer = None
+    _logger = LOGGER
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
@@ -508,7 +509,7 @@ class HttpServerResponse(ProtocolConsumer):
                 if not self.keep_alive:
                     self.connection.close()
                 self.finished()
-                self.logger.info(wsgi_info(environ, self.status))
+                log_wsgi_info(self.logger.info, environ, self.status)
             finally:
                 if hasattr(response, 'close'):
                     try:

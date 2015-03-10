@@ -41,7 +41,7 @@ HOP_HEADERS = frozenset(('connection',
                          'upgrade')
                         )
 
-logger = logging.getLogger('pulsar.wsgi')
+LOGGER = logging.getLogger('pulsar.wsgi')
 error_css = '''
 .pulsar-error {
     width: 500px;
@@ -62,12 +62,15 @@ def set_wsgi_request_class(RequestClass):
     _RequestClass = RequestClass
 
 
-def wsgi_info(environ, status, exc=None):
-    msg = '' if not exc else ' - %s' % exc
-    return '%s %s %s - %s%s' % (environ.get('REQUEST_METHOD'),
-                                environ.get('RAW_URI'),
-                                environ.get('SERVER_PROTOCOL'),
-                                status, msg)
+def log_wsgi_info(log, environ, status, exc=None):
+    if not environ.get('pulsar.logged'):
+        environ['pulsar.logged'] = True
+        msg = '' if not exc else ' - %s' % exc
+        log('%s %s %s - %s%s',
+            environ.get('REQUEST_METHOD'),
+            environ.get('RAW_URI'),
+            environ.get('SERVER_PROTOCOL'),
+            status, msg)
 
 
 def cookie_date(epoch_seconds=None):
@@ -235,10 +238,10 @@ def handle_wsgi_error(environ, exc):
     path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
     if status >= 500:
-        logger.critical('Unhandled exception during HTTP response %s.%s',
+        LOGGER.critical('Unhandled exception during HTTP response %s.\n%s',
                         path, dump_environ(environ), exc_info=exc_info)
     else:
-        logger.warning(wsgi_info(environ, response.status, exc))
+        log_wsgi_info(LOGGER.warning, environ, response.status, exc)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         response.content_type = None
         response.content = None
@@ -248,7 +251,7 @@ def handle_wsgi_error(environ, exc):
         try:
             content = renderer(request, exc)
         except Exception:
-            logger.critical('Error while rendering error', exc_info=True)
+            LOGGER.critical('Error while rendering error', exc_info=True)
             response.content_type = 'text/plain'
             content = 'Critical server error'
         if content is not response:

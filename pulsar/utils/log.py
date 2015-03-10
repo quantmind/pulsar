@@ -244,23 +244,26 @@ def configured_logger(name, config=None, level=None, handlers=None,
             logconfig.pop('root', None)
 
         level = get_level(level)
-        rootlevel = get_level(rootlevel or level)
+        root = original.get('root')
         # No loggers configured. This means no logconfig setting
         # parameter was used. Set up the root logger with default
         # loggers
         if level == logging.NOTSET:
             handlers = ['silent']
-        else:
-            handlers = handlers or ['console']
+        elif not handlers:
+            handlers = root['handlers'] if root else ['console']
+
         level = logging.getLevelName(level)
+        if not root:
+            rootlevel = get_level(rootlevel or level)
+            logconfig['root'] = {'handlers': handlers, 'level': rootlevel}
+        #
         if 'loggers' not in logconfig:
             logconfig['loggers'] = {}
         l = {'level': level, 'handlers': handlers, 'propagate': False}
         original['loggers'][name] = l
         logconfig['loggers'][name] = l
         #
-        if not original.get('root'):
-            logconfig['root'] = {'handlers': handlers, 'level': rootlevel}
         if logconfig:
             dictConfig(logconfig)
         return logging.getLogger(name)
