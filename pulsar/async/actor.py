@@ -1,7 +1,6 @@
 import sys
 import os
 import pickle
-from time import time
 from itertools import chain
 from threading import current_thread
 
@@ -409,7 +408,7 @@ class Actor(EventHandler, Coverage):
         actor = {'name': self.name,
                  'state': self.info_state,
                  'actor_id': self.aid,
-                 'uptime': time() - self._started,
+                 'uptime':  self._loop.time() - self._started,
                  'thread_id': self.tid,
                  'process_id': self.pid,
                  'is_process': isp,
