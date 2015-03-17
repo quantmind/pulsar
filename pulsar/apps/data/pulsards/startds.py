@@ -13,7 +13,7 @@ def start_pulsar_ds(arbiter, host, workers=0):
     try:
         app = yield from get_application('pulsards')
         if not app:
-            app = PulsarDS(bind=host, workers=workers)
+            app = PulsarDS(bind=host, workers=workers, load_config=False)
             cfg = yield from app(arbiter)
         else:
             cfg = app.cfg

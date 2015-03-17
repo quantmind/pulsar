@@ -146,7 +146,7 @@ class Runner(object):
             if not error:
                 error = TestFailure(exc)
                 self.add_failure(test, error, expecting_failure(method))
-            return error
+        return error
 
     def add_failure(self, test, failure, expecting_failure=False):
         '''Add ``error`` to the list of errors.
