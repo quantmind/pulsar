@@ -194,11 +194,12 @@ class route(object):
     creation_count = 0
 
     def __init__(self, rule=None, method=None, defaults=None,
-                 position=None, **parameters):
+                 position=None, re=False, **parameters):
         self.__class__.creation_count += 1
         self.position = position
         self.creation_count = self.__class__.creation_count
         self.rule = rule
+        self.re = re
         self.defaults = defaults
         self.method = method
         self.parameters = parameters
@@ -222,7 +223,7 @@ class route(object):
             method = tuple((m.lower() for m in method))
         else:
             method = method.lower()
-        rule = Route(self.rule or name, defaults=self.defaults)
+        rule = Route(self.rule or name, defaults=self.defaults, is_re=self.re)
         callable.rule_method = rule_info(rule, method, self.parameters,
                                          self.position, self.order)
         return callable
@@ -259,7 +260,7 @@ class Route(object):
 
     .. _werkzeug: https://github.com/mitsuhiko/werkzeug
     '''
-    def __init__(self, rule, defaults=None):
+    def __init__(self, rule, defaults=None, is_re=False):
         rule = remove_double_slash('/%s' % rule)
         self.defaults = defaults if defaults is not None else {}
         self.is_leaf = not rule.endswith('/')
@@ -290,9 +291,9 @@ class Route(object):
                     self._converters[variable] = convobj
                     self.variables.add(str(variable))
                 else:
-                    variable = bit
-                    regex_parts.append(re.escape(variable))
-                    breadcrumbs.append((False, variable))
+                    variable = bit if is_re else re.escape(bit)
+                    regex_parts.append(variable)
+                    breadcrumbs.append((False, bit))
 
         self.breadcrumbs = tuple(breadcrumbs)
         self._regex_string = '/'.join(regex_parts)
@@ -419,12 +420,14 @@ class Route(object):
     def __add__(self, other):
         cls = self.__class__
         defaults = self.defaults.copy()
+        is_re = False
         if isinstance(other, cls):
             rule = other.rule
             defaults.update(other.defaults)
+            is_re = True
         else:
             rule = str(other)
-        return cls('%s/%s' % (self.rule, rule), defaults)
+        return cls('%s/%s' % (self.rule, rule), defaults, is_re=is_re)
 
 
 class BaseConverter(object):
