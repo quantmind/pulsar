@@ -389,8 +389,6 @@ class Config(object):
         for namespace in (basename, 'asyncio'):
             if namespace not in namespaces:
                 namespaces[namespace] = internal_level
-        # Trollius same as asyncio
-        namespaces['trollius'] = namespaces['asyncio']
 
         if name and name not in namespaces:
             namespaces[name] = namespaces[basename]

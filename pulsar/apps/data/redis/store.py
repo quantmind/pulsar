@@ -44,7 +44,8 @@ class RedisStore(RemoteStore):
             self._urlparams['namespace'] = namespace
         self._pool = Pool(self.connect, pool_size=pool_size, loop=self._loop)
         if self._database is None:
-            self._database = 7
+            self._database = 0
+        self._database = int(self._database)
         self.loaded_scripts = {}
 
     @property
