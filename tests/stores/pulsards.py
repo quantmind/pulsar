@@ -1097,7 +1097,7 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
 
     def test_store_methods(self):
         store = self.create_store('%s/8' % self.pulsards_uri)
-        self.assertEqual(store.database, '8')
+        self.assertEqual(store.database, 8)
         store.database = 10
         self.assertEqual(store.database, 10)
         self.assertTrue(store.dns.startswith('%s/10?' % self.pulsards_uri))

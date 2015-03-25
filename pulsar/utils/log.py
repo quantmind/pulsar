@@ -264,8 +264,7 @@ def configured_logger(name, config=None, level=None, handlers=None,
         original['loggers'][name] = l
         logconfig['loggers'][name] = l
         #
-        if logconfig:
-            dictConfig(logconfig)
+        dictConfig(logconfig)
         return logging.getLogger(name)
 
 

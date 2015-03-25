@@ -48,6 +48,10 @@ class RedisPubSub(PubSub):
         kw = {'subcommand': 'numsub'}
         return self.store.execute('PUBSUB', 'NUMSUB', *channels, **kw)
 
+    def count_patterns(self):
+        kw = {'subcommand': 'numpat'}
+        return self.store.execute('PUBSUB', 'NUMPAT', **kw)
+
     def channels(self, pattern=None):
         '''Lists the currently active channels matching ``pattern``
         '''
