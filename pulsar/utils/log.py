@@ -221,6 +221,10 @@ class Silence(logging.Handler):
         pass
 
 
+def clear_logger():
+    process_global('_config_logging', None, True)
+
+
 def configured_logger(name, config=None, level=None, handlers=None,
                       rootlevel=None, replace=False):
     '''Configured logger.
