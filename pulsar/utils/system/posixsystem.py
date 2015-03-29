@@ -91,48 +91,94 @@ def get_maxfd():
     return resource.getrlimit(resource.RLIMIT_NOFILE)[0]
 
 
-def daemonize(auto_close_fds=True, keep_fds=None):    # pragma    nocover
-    '''Standard daemonization of a process
-    '''
-    process_id = os.fork()
-    if process_id < 0:
-        # Fork error. Exit badly.
-        sys.exit(1)
-    elif process_id != 0:
-        # This is the parent process. Exit.
-        sys.exit(0)
-    # This is the child process. Continue.
+def daemonize(enable_stdio_inheritance=False,
+              auto_close_fds=True,
+              keep_fds=None):
+    """\
+    Standard daemonization of a process.
+    http://www.svbug.com/documentation/comp.unix.programmer-FAQ/faq_2.html#SEC16
+    """
+    if os.fork():
+        os._exit(0)
+    os.setsid()
 
-    # Stop listening for signals that the parent process receives.
-    # This is done by getting a new process id.
-    # setpgrp() is an alternative to setsid().
-    # setsid puts the process in a new parent group and detaches
-    # its controlling terminal.
-    process_id = os.setsid()
-    if process_id == -1:
-        # Uh oh, there was a problem.
-        sys.exit(1)
-    #
-    # Iterate through and close file descriptors
-    if auto_close_fds:
-        keep_fds = set(keep_fds or ())
-        for fd in range(3, get_maxfd()):
-            if fd not in keep_fds:
-                try:
+    if os.fork():
+        os._exit(0)
+
+    os.umask(0o22)
+
+    # In both the following any file descriptors above stdin
+    # stdout and stderr are left untouched. The inheritence
+    # option simply allows one to have output go to a file
+    # specified by way of shell redirection when not wanting
+    # to use --error-log option.
+
+    if not enable_stdio_inheritance:
+        # Remap all of stdin, stdout and stderr on to
+        # /dev/null. The expectation is that users have
+        # specified the --error-log option.
+
+        if keep_fds:
+            keep_fds = set(keep_fds)
+            for fd in range(0, 3):
+                if fd not in keep_fds:
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+        else:
+            os.closerange(0, 3)
+
+        fd_null = os.open(REDIRECT_TO, os.O_RDWR)
+
+        if fd_null != 0:
+            os.dup2(fd_null, 0)
+
+        os.dup2(fd_null, 1)
+        os.dup2(fd_null, 2)
+
+    else:
+        fd_null = os.open(REDIRECT_TO, os.O_RDWR)
+
+        # Always redirect stdin to /dev/null as we would
+        # never expect to need to read interactive input.
+
+        if fd_null != 0:
+            os.close(0)
+            os.dup2(fd_null, 0)
+
+        # If stdout and stderr are still connected to
+        # their original file descriptors we check to see
+        # if they are associated with terminal devices.
+        # When they are we map them to /dev/null so that
+        # are still detached from any controlling terminal
+        # properly. If not we preserve them as they are.
+        #
+        # If stdin and stdout were not hooked up to the
+        # original file descriptors, then all bets are
+        # off and all we can really do is leave them as
+        # they were.
+        #
+        # This will allow 'gunicorn ... > output.log 2>&1'
+        # to work with stdout/stderr going to the file
+        # as expected.
+        #
+        # Note that if using --error-log option, the log
+        # file specified through shell redirection will
+        # only be used up until the log file specified
+        # by the option takes over. As it replaces stdout
+        # and stderr at the file descriptor level, then
+        # anything using stdout or stderr, including having
+        # cached a reference to them, will still work.
+
+        def redirect(stream, fd_expect):
+            try:
+                fd = stream.fileno()
+                if fd == fd_expect and stream.isatty():
                     os.close(fd)
-                except OSError:
-                    pass
+                    os.dup2(fd_null, fd)
+            except AttributeError:
+                pass
 
-    devnull_fd = os.open(REDIRECT_TO, os.O_RDWR)
-    for i in range(3):
-        try:
-            os.dup2(devnull_fd, i)
-        except OSError as e:
-            if e.errno != errno.EBADF:
-                raise
-
-    # Set umask to default to safe file permissions when running as a  daemon.
-    # 027 is an octal number which we are typing as 0o27
-    # for Python3 compatibility
-    os.umask(0o27)
-    os.close(devnull_fd)
+        redirect(sys.stdout, 1)
+        redirect(sys.stderr, 2)

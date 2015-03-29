@@ -10,8 +10,6 @@ seconds = platform.seconds
 
 if platform.type == 'win':    # pragma nocover
     from .windowssystem import *
-elif platform.is_appengine:    # pragma nocover
-    from .appengine import *
 else:
     from .posixsystem import *
 

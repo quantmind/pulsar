@@ -65,7 +65,11 @@ LOGGING_CONFIG = {
         }
     },
     'filters ': {},
-    'loggers': {},
+    'loggers': {
+        'asyncio': {
+            'level': 'WARNING'
+        }
+    },
     'root': {}
 }
 
@@ -225,50 +229,54 @@ def clear_logger():
     process_global('_config_logging', None, True)
 
 
-def configured_logger(name, config=None, level=None, handlers=None,
-                      rootlevel=None, replace=False):
+def configured_logger(name=None, config=None, level=None, handlers=None):
     '''Configured logger.
     '''
+    name = name or ''
     with process_global('lock'):
-        logconfig = original = process_global('_config_logging')
+        logconfig = process_global('_config_logging')
         # if the logger was not configured, do so.
-        if not logconfig or replace:
-            logconfig = deepcopy(LOGGING_CONFIG)
-            if config:
-                update_config(logconfig, config)
-            original = logconfig
+        if not logconfig:
+            logconfig = deepcopy(config or LOGGING_CONFIG)
+            logconfig['configured'] = set()
             process_global('_config_logging', logconfig, True)
         else:
-            loggers = logconfig.get('loggers')
-            if loggers and name in loggers:
+            configured = logconfig.get('configured')
+            if name in configured:
                 return logging.getLogger(name)
-            logconfig = deepcopy(logconfig)
-            logconfig['disable_existing_loggers'] = False
-            logconfig.pop('loggers', None)
-            logconfig.pop('root', None)
 
         level = get_level(level)
-        root = original.get('root')
         # No loggers configured. This means no logconfig setting
         # parameter was used. Set up the root logger with default
         # loggers
         if level == logging.NOTSET:
             handlers = ['silent']
-        elif not handlers:
-            handlers = root['handlers'] if root else ['console']
 
         level = logging.getLevelName(level)
-        if not root:
-            rootlevel = get_level(rootlevel or level)
-            logconfig['root'] = {'handlers': handlers, 'level': rootlevel}
+        cfg = {'level': level, 'propagate': False}
+        if handlers:
+            cfg['handlers'] = handlers
+
+        config = copy(logconfig)
+        configured = config.pop('configured')
+        configured.add(name)
+
+        if name:
+            config.pop('root', None)
+            loggers = config.pop('logger', {})
+            if name in loggers:
+                loggers[name].update(cfg)
+                cfg = loggers[name]
+            config['loggers'] = {name: cfg}
+        else:
+            if 'root' in config:
+                config['root'].update(cfg)
+                cfg = config['root']
+            if 'handlers' not in cfg:
+                cfg['handlers'] = ['console']
+            config['root'] = cfg
         #
-        if 'loggers' not in logconfig:
-            logconfig['loggers'] = {}
-        l = {'level': level, 'handlers': handlers, 'propagate': False}
-        original['loggers'][name] = l
-        logconfig['loggers'][name] = l
-        #
-        dictConfig(logconfig)
+        dictConfig(config)
         return logging.getLogger(name)
 
 

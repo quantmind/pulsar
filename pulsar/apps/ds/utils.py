@@ -3,7 +3,7 @@ import pickle
 
 
 def save_data(cfg, filename, data):
-    logger = cfg.configured_logger('ds')
+    logger = cfg.configured_logger('pulsar.ds')
     temp = 'temp_%s' % filename
     with open(temp, 'wb') as file:
         pickle.dump(data, file, protocol=2)

@@ -136,7 +136,7 @@ class Concurrency(object):
     def setup_event_loop(self, actor):
         '''Set up the event loop for ``actor``.
         '''
-        actor._logger = self.cfg.configured_logger(actor.name)
+        actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
         loop = asyncio.SelectorEventLoop(self.selector())
         loop.logger = actor._logger
         asyncio.set_event_loop(loop)
@@ -483,7 +483,7 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
         return True
 
     def setup_event_loop(self, actor):
-        actor._logger = self.cfg.configured_logger(actor.name)
+        actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
         actor.mailbox = ProxyMailbox(actor)
         loop = actor.mailbox._loop
         loop.call_soon(actor.start)
@@ -696,8 +696,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         actor.collect_coverage()
         exit_code = actor.exit_code or 0
         if exit_code == autoreload.EXIT_CODE:
-            actor.stream.writeln("\nCode changed, reloading server")
+            actor.logger.writeln("\nCode changed, reloading server")
         else:
+            actor.logger.info("Bye (exit code = %s)", exit_code)
             actor.stream.writeln("\nBye (exit code = %s)" % exit_code)
         try:
             actor.cfg.when_exit(actor)

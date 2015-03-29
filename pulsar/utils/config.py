@@ -359,43 +359,29 @@ class Config(object):
     def clone(self):
         return pickle.loads(pickle.dumps(self))
 
-    def configured_logger(self, name=None, replace=False):
+    def configured_logger(self, name=None):
         '''Configured logger.
         '''
         loggers = {}
-        internal_level = get_level('warning')
         loghandlers = self.loghandlers
-        # base name is always pulsar
-        basename = 'pulsar'
-        # the namespace which uses the default log level
-        # (the one without namespace prefix)
-        defname = self.log_name or basename
-        # the namespace name for this config
-        name = name or self.name
-        if name:
-            name = '%s.%s' % (basename, name)
+        # logname
+        if not name:
+            # base name is always pulsar
+            basename = 'pulsar'
+            # the namespace name for this config
+            name = self.name
+            if name and name != basename:
+                name = '%s.%s' % (basename, name)
+            else:
+                name = basename
         #
         namespaces = {}
 
         for loglevel in self.loglevel or ():
             bits = loglevel.split('.')
-            namespaces['.'.join(bits[:-1]) or defname] = bits[-1]
-
-        if defname not in namespaces:
-            namespaces[defname] = self.settings['loglevel'].default[0]
-
-        deflevel = get_level(namespaces[defname])
-        internal_level = max(deflevel, internal_level) if deflevel else 0
-        for namespace in (basename, 'asyncio'):
-            if namespace not in namespaces:
-                namespaces[namespace] = internal_level
-
-        if name and name not in namespaces:
-            namespaces[name] = namespaces[basename]
+            namespaces['.'.join(bits[:-1]) or ''] = bits[-1]
 
         for namespace in sorted(namespaces):
-            if namespace in loggers:
-                continue
             if self.daemon:     # pragma    nocover
                 handlers = []
                 for hnd in loghandlers:
@@ -404,14 +390,11 @@ class Config(object):
                 if not handlers:
                     handlers.append('file')
                 loghandlers = handlers
-            logger = configured_logger(namespace,
-                                       config=self.logconfig,
-                                       level=namespaces[namespace],
-                                       handlers=loghandlers,
-                                       rootlevel=internal_level,
-                                       replace=replace)
-            loggers[namespace] = logger
-        return loggers.get(name)
+            configured_logger(namespace,
+                              config=self.logconfig,
+                              level=namespaces[namespace],
+                              handlers=loghandlers)
+        return logging.getLogger(name)
 
     def __copy__(self):
         return self.copy()
