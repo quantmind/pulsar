@@ -189,6 +189,8 @@ class Store(metaclass=ABCMeta):
         scheme = self._name
         if self._scheme:
             scheme = '%s+%s' % (self._scheme, scheme)
+        if not host:
+            path = '//%s' % path
         return urlunparse((scheme, host, path, '', query, ''))
 
 
