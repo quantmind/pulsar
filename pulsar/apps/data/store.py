@@ -457,7 +457,7 @@ def create_store(url, **kw):
 
     :param kw: additional key-valued parameters to pass to the :class:`.Store`
         initialisation method. It can contains parameters such as
-        ``database``, ``user`` and ``password`` to override the
+        ``database``, ``user`` and ``password`` to overridexo the
         ``url`` values. Additional parameters are processed by the
         :meth:`.Store._init` method.
     :return: a :class:`Store`.
@@ -469,6 +469,8 @@ def create_store(url, **kw):
     if not dotted_path:
         raise ImproperlyConfigured('%s store not available' % scheme)
     store_class = module_attribute(dotted_path)
+    if not store_class:
+        raise ImproperlyConfigured('"%s" store not available' % dotted_path)
     if not store_class.registered:
         store_class.registered = True
         store_class.register()
