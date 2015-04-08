@@ -20,7 +20,8 @@ __all__ = ['Command',
            'parse_store_url',
            'create_store',
            'register_store',
-           'data_stores']
+           'data_stores',
+           'NoSuchStore']
 
 
 data_stores = {}
@@ -29,6 +30,10 @@ data_stores = {}
 def noop():     # pragma    nocover
     if False:
         yield None
+
+
+class NoSuchStore(ImproperlyConfigured):
+    pass
 
 
 class Command(object):
@@ -467,7 +472,7 @@ def create_store(url, **kw):
     scheme, address, params = parse_store_url(url)
     dotted_path = data_stores.get(scheme)
     if not dotted_path:
-        raise ImproperlyConfigured('%s store not available' % scheme)
+        raise NoSuchStore('%s store not available' % scheme)
     store_class = module_attribute(dotted_path)
     if not store_class:
         raise ImproperlyConfigured('"%s" store not available' % dotted_path)

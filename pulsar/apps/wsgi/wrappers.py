@@ -51,7 +51,8 @@ from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
                                   has_empty_content, REDIRECT_CODES,
                                   ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
-                                  remove_double_slash, iri_to_uri)
+                                  remove_double_slash, iri_to_uri,
+                                  is_absolute_uri)
 
 from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, set_cookie, query_dict,
@@ -63,7 +64,6 @@ __all__ = ['EnvironMixin', 'WsgiResponse',
            'WsgiRequest', 'cached_property']
 
 MAX_BUFFER_SIZE = 2**16
-absolute_http_url_re = re.compile(r"^https?://", re.I)
 
 
 def redirect(path, code=None, permanent=False):
@@ -627,7 +627,7 @@ class WsgiRequest(EnvironMixin):
         If no ``location`` is specified, the relative URI is built from
         :meth:`full_path`.
         '''
-        if not location or not absolute_http_url_re.match(location):
+        if not is_absolute_uri(location):
             location = self.full_path(location)
             if not scheme:
                 scheme = self.is_secure and 'https' or 'http'

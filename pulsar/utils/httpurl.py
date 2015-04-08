@@ -1111,6 +1111,15 @@ if not hasextensions:   # pragma    nocover
 
 
 # ############################################    UTILITIES, ENCODERS, PARSERS
+absolute_http_url_re = re.compile(r"^https?://", re.I)
+
+
+def is_absolute_uri(location):
+    '''Check if a ``location`` is absolute, i.e. it includes the scheme
+    '''
+    return location and absolute_http_url_re.match(location)
+
+
 def get_environ_proxies():
     """Return a dict of environment proxies. From requests_."""
 
@@ -1210,7 +1219,7 @@ def http_date(epoch_seconds=None):
     return formatdate(epoch_seconds, usegmt=True)
 
 
-# ################################################################# COOKIE
+# ################################################################# COOKIES
 def create_cookie(name, value, **kwargs):
     """Make a cookie from underspecified parameters.
 
@@ -1263,18 +1272,19 @@ def cookiejar_from_dict(*cookie_dicts):
     return cookiejar
 
 
+# ################################################################# VARY HEADER
 cc_delim_re = re.compile(r'\s*,\s*')
 
 
 def patch_vary_headers(response, newheaders):
-    """\
-Adds (or updates) the "Vary" header in the given HttpResponse object.
-newheaders is a list of header names that should be in "Vary". Existing
-headers in "Vary" aren't removed.
+    """Adds (or updates) the "Vary" header in the given HttpResponse object.
 
-For information on the Vary header, see:
+    newheaders is a list of header names that should be in "Vary". Existing
+    headers in "Vary" aren't removed.
 
-    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44
+    For information on the Vary header, see:
+
+        http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44
     """
     # Note that we need to keep the original order intact, because cache
     # implementations may rely on the order of the Vary contents in, say,
