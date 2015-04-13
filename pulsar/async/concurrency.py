@@ -696,7 +696,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         actor.collect_coverage()
         exit_code = actor.exit_code or 0
         if exit_code == autoreload.EXIT_CODE:
-            actor.logger.writeln("\nCode changed, reloading server")
+            actor.logger.info("Code changed, reloading server")
         else:
             actor.logger.info("Bye (exit code = %s)", exit_code)
             actor.stream.writeln("\nBye (exit code = %s)" % exit_code)
