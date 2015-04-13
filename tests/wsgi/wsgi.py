@@ -152,7 +152,7 @@ class WsgiRequestTests(unittest.TestCase):
         example_cookie = response.cookies['example']
         # A compat cookie may be in use -- check that it has worked
         # both as an output string, and using the cookie attributes
-        self.assertTrue('; httponly' in str(example_cookie))
+        self.assertTrue('; httponly' in str(example_cookie).lower())
         self.assertTrue(example_cookie['httponly'])
 
     def test_headers(self):

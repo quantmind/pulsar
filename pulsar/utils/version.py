@@ -13,7 +13,7 @@ def get_version(version):
         if git_changeset:
             sub = '-dev.%s' % git_changeset
     elif version[3] != 'final':
-        sub = '-%s.%s' % tuple(version[3:])
+        sub = '%s%s' % tuple(version[3:])
     return main + sub
 
 
