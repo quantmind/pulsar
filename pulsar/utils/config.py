@@ -288,6 +288,23 @@ class Config(object):
                     self.set(kl, val)
         return unknowns
 
+    def parse_command_line(self, argv=None):
+        '''Parse the command line
+        '''
+        parser = self.parser()
+        opts = parser.parse_args(argv)
+        config = getattr(opts, 'config', None)
+        # set the config only if config is part of the settings
+        if config is not None and self.config:
+            self.set('config', config)
+
+        self.params.update(self.import_from_module())
+
+        for k, v in opts.__dict__.items():
+            if v is None:
+                continue
+            self.set(k.lower(), v)
+
     def on_start(self):
         '''Invoked by a :class:`.Application` just before starting.
         '''

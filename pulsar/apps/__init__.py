@@ -338,24 +338,9 @@ class Configurator(object):
                     self.cfg.set(name, value)
         # parse console args
         if self.console_parsed:
-            parser = self.cfg.parser()
-            opts = parser.parse_args(self.argv)
-            config = getattr(opts, 'config', None)
-            # set the config only if config is part of the settings
-            if config is not None and self.cfg.config:
-                self.cfg.set('config', config)
+            self.cfg.parse_command_line(self.argv)
         else:
-            parser, opts = None, None
-        #
-        # Load up the config file if found.
-        self.cfg.params.update(self.cfg.import_from_module())
-        #
-        # Update the configuration with any command line settings.
-        if opts:
-            for k, v in opts.__dict__.items():
-                if v is None:
-                    continue
-                self.cfg.set(k.lower(), v)
+            self.cfg.params.update(self.cfg.import_from_module())
 
     def start(self):
         '''Invoked the application callable method and start

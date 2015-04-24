@@ -142,6 +142,8 @@ class Runner(object):
                 test_timeout = get_test_timeout(method, test_timeout)
                 yield from asyncio.wait_for(coro, test_timeout,
                                             loop=self._loop)
+        except SkipTest as exc:
+            self.runner.addSkip(test, str(exc))
         except Exception as exc:
             if not error:
                 error = TestFailure(exc)

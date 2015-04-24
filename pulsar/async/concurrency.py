@@ -306,7 +306,7 @@ class ProcessMixin(object):
     def handle_exit_signal(self, actor, sig):
         actor.logger.warning("Got %s. Stopping.", system.SIG_NAMES.get(sig))
         actor._loop.exit_signal = sig
-        raise _StopError
+        actor._loop.stop()
 
 
 class MonitorMixin(object):

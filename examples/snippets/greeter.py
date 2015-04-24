@@ -1,9 +1,9 @@
-from pulsar import arbiter, task, command, spawn, send
+import pulsar
 
 names = ['john', 'luca', 'jo', 'alex']
 
 
-@command()
+@pulsar.command()
 def greetme(request, message):
     echo = 'Hello {}!'.format(message['name'])
     request.actor.logger.info(echo)
@@ -13,21 +13,24 @@ def greetme(request, message):
 class Greeter:
 
     def __init__(self):
-        a = arbiter()
+        cfg = pulsar.Config()
+        cfg.parse_command_line()
+        a = pulsar.arbiter(cfg=cfg)
+        self.cfg = a.cfg
         self._loop = a._loop
-        self._loop.call_later(1, self)
+        self._loop.call_later(1, pulsar.async, self())
         a.start()
 
-    @task
     def __call__(self, a=None):
         if a is None:
-            a = yield spawn(name='greeter')
+            a = yield from pulsar.spawn(name='greeter')
         if names:
             name = names.pop()
-            send(a, 'greetme', {'name': name})
-            self._loop.call_later(1, self, a)
+            self._loop.logger.info("Hi! I'm %s" % name)
+            yield from pulsar.send(a, 'greetme', {'name': name})
+            self._loop.call_later(1, pulsar.async, self(a))
         else:
-            arbiter().stop()
+            pulsar.arbiter().stop()
 
 
 if __name__ == '__main__':
