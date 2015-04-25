@@ -181,6 +181,7 @@ class WrapTransport:
         self.extra = transport._extra
         self.sock = self.extra.pop('socket')
         self.transport = transport.__class__
+        del transport._sock
 
     def __call__(self, loop, protocol):
         return self.transport(loop, self.sock, protocol, extra=self.extra)
@@ -338,8 +339,8 @@ class UdpSocketServer(SocketServer):
             asyncio.DatagramProtocol, address)
         sock = t.get_extra_info('socket')
         assert loop.remove_reader(sock.fileno())
-        monitor.sockets = [WrapTransport(t)]
         cfg.addresses = [sock.getsockname()]
+        monitor.sockets = [WrapTransport(t)]
 
     def actorparams(self, monitor, params):
         params.update({'sockets': monitor.sockets})
