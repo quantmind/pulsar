@@ -181,6 +181,9 @@ class WrapTransport:
         self.extra = transport._extra
         self.sock = self.extra.pop('socket')
         self.transport = transport.__class__
+        # For some reasons if we don't delete the _sock from the
+        # transport, it get closed by python garbadge collector
+        # on python 3.4.3 mac os x
         del transport._sock
 
     def __call__(self, loop, protocol):

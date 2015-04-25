@@ -258,9 +258,19 @@ class Concurrency(object):
                 except ValueError:
                     pass
 
+    def _remove_signals(self, actor):
+        if signal and actor.is_process():
+            actor.logger.debug('Remove signal handlers')
+            for sig in system.EXIT_SIGNALS:
+                try:
+                    actor._loop.remove_signal_handler(sig)
+                except Exception:
+                    pass
+
     def _stop_actor(self, actor, finished=False):
         '''Exit from the :class:`.Actor` domain.'''
         if finished:
+            self._remove_signals(actor)
             if actor._loop.is_running():  # pragma nocover
                 actor.logger.critical('Event loop still running when stopping')
                 actor._loop.stop()
@@ -644,6 +654,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         elif actor._loop.is_running():
             self._exit_arbiter(actor)
         else:
+            monitors = len(self.monitors)
+            managed = len(self.managed_actors)
             actor.logger.debug('Restarts event loop to stop actors')
             actor._loop.call_soon(self._exit_arbiter, actor)
             actor._run(False)
@@ -686,6 +698,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return removed
 
     def _stop_arbiter(self, actor):     # pragma    nocover
+        self._remove_signals(actor)
         p = self.pidfile
         if p is not None:
             actor.logger.debug('Removing %s' % p.fname)
