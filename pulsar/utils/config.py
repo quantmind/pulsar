@@ -1104,9 +1104,9 @@ class ThreadWorkers(Setting):
     flags = ["--thread-workers"]
     validator = validate_pos_int
     type = int
-    default = 1
+    default = 5
     desc = """\
-        The number of threads used by the actor event loop executor.
+        Maximum number of threads used by the actor event loop executor.
 
         The executor is a thread pool used by the event loop to perform CPU
         intensive operations or when it needs to execute blocking calls.

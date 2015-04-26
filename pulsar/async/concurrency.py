@@ -3,6 +3,7 @@ import sys
 from time import time
 from collections import OrderedDict
 from multiprocessing import Process, current_process
+from concurrent.futures import ThreadPoolExecutor
 
 import asyncio
 
@@ -138,6 +139,8 @@ class Concurrency(object):
         '''
         actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
         loop = asyncio.SelectorEventLoop(self.selector())
+        executor = ThreadPoolExecutor(self.cfg.thread_workers)
+        loop.set_default_executor(executor)
         loop.logger = actor._logger
         asyncio.set_event_loop(loop)
         actor.mailbox = self.create_mailbox(actor, loop)

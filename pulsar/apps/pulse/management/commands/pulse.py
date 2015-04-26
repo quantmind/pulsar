@@ -48,8 +48,7 @@ class Command(BaseCommand):
         cfg = pulsar.Config(apps=['socket', 'pulse'],
                             exclude=['debug'],
                             description=self.help,
-                            version=self.get_version(),
-                            thread_workers=5)
+                            version=self.get_version())
         parser = cfg.parser()
         for option in self.option_list:
             flags = []
@@ -68,6 +67,8 @@ class Command(BaseCommand):
 
     def run_from_argv(self, argv):
         parser = self.create_parser(argv[0], argv[1])
+        parser.add_argument('--settings')
+        parser.add_argument('--pythonpath')
         options = parser.parse_args(argv[2:])
         handle_default_options(options)
         try:
