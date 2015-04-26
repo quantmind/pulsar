@@ -209,24 +209,22 @@ def async_while(timeout, while_clause, *args):
     :return: A :class:`.Future`.
     '''
     loop = get_event_loop()
+    start = loop.time()
+    di = 0.1
+    interval = 0
+    result = while_clause(*args)
 
-    def _():
-        start = loop.time()
-        di = 0.1
-        interval = 0
+    while result:
+        interval = min(interval+di, MAX_ASYNC_WHILE)
+        try:
+            yield from sleep(interval, loop=loop)
+        except TimeoutError:
+            pass
+        if timeout and loop.time() - start >= timeout:
+            break
         result = while_clause(*args)
-        while result:
-            interval = min(interval+di, MAX_ASYNC_WHILE)
-            try:
-                yield from sleep(interval, loop=loop)
-            except TimeoutError:
-                pass
-            if timeout and loop.time() - start >= timeout:
-                break
-            result = while_clause(*args)
-        return result
 
-    return async(_(), loop=loop)
+    return result
 
 
 # ############################################################## Bench
