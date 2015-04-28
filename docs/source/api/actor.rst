@@ -69,14 +69,6 @@ ActorProxy
    :member-order: bysource
 
 
-ActorProxyFuture
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.proxy.ActorProxyFuture
-   :members:
-   :member-order: bysource
-
-
 ActorProxyMonitor
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

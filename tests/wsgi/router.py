@@ -140,6 +140,7 @@ class TestRouter(unittest.TestCase):
 
     def test_router_child(self):
         router = TRouter('/', HttpBin2('bin'), random=9)
+        self.assertEqual(router.name, '')
         self.assertEqual(len(router.routes), 1)
         self.assertEqual(router.random, 9)
         self.assertEqual(router.root, router)
@@ -153,7 +154,8 @@ class TestRouter(unittest.TestCase):
         self.assertTrue(child.has_parent(router))
 
     def test_child_methods(self):
-        router = TRouter('/', HttpBin2('bin'))
+        router = TRouter('/', HttpBin2('bin'), name='home')
+        self.assertEqual(router.name, 'home')
         child = router.get_route('bin')
         self.assertTrue(child)
         #

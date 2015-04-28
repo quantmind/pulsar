@@ -149,7 +149,7 @@ For options and help type::
 
 pep8_ check (requires pep8 package)::
 
-    python runtests.py --pep8 pulsar
+    pep8
 
 
 .. _contributing:

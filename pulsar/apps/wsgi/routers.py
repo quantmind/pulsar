@@ -224,7 +224,7 @@ class Router(RouterType('RouterBase', (object,), {})):
         if not isinstance(rule, Route):
             rule = Route(rule)
         self._route = rule
-        parameters.setdefault('name', rule.name)
+        parameters.setdefault('name', rule.name or self.name or '')
         self._set_params(parameters)
         self.routes = []
         # add routes specified via the initialiser first

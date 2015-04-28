@@ -58,7 +58,6 @@ Ver. 0.9.0 - 2014-Aug-04
 * Finally removed the ``get_request_loop`` method. Full compatibility with
   asyncio
 * Bug fix in :class:`.Store` constructor
-* :ref:`Twisted integration <tutorials-twisted>` via the :func:`.tx` decorator
 * When throwing an :class:`.ImproperlyConfigured` exception, pulsar will log
   and error without the full stack-trace
   (:class:`~.ImproperlyConfigured.exit_code` attribute is set to 2).
@@ -97,7 +96,6 @@ Ver. 0.8.3 - 2014-Jun-23
 
 Ver. 0.8.2 - 2014-May-30
 ===========================
-* :ref:`--pep8 <setting-pep8>` is a new command line option for the
   :mod:`~pulsar.apps.test` application
 * :class:`.ProtocolConsumer` has its own ``_loop`` attribute rather than
   obtaining indirectly from the underling :class:`.Connection`.
@@ -125,7 +123,6 @@ Ver. 0.8.1 - 2014-Apr-14
 * Moved :class:`.PulsarDS` server into its own :mod:`pulsar.apps.ds`
   module
 * The task application can run on redis.
-* Added support for :ref:`couchdb datastore <store_couchdb>` (alpha)
 * Added :ref:`twisted integration <tutorials-twisted>` (alpha)
 * Removed ``Server`` and ``Date`` from Hop headers
 * Fixed installation problem with extensions

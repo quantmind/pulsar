@@ -7,7 +7,7 @@ and :ref:`pulsard-ds <pulsar-data-store>` servers.
 Redis Store
 ~~~~~~~~~~~~
 
-.. autoclass:: pulsar.apps.data.stores.redis.store.RedisStore
+.. autoclass:: pulsar.apps.data.redis.store.RedisStore
    :members:
    :member-order: bysource
 
@@ -15,14 +15,14 @@ Redis Store
 Redis Client
 ~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.apps.data.stores.redis.client.RedisClient
+.. autoclass:: pulsar.apps.data.redis.client.RedisClient
    :members:
    :member-order: bysource
 
 Redis Pipeline
 ~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.apps.data.stores.redis.client.Pipeline
+.. autoclass:: pulsar.apps.data.redis.client.Pipeline
    :members:
    :member-order: bysource
 '''

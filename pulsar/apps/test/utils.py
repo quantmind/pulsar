@@ -1,10 +1,4 @@
 '''
-run on arbiter
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: run_on_arbiter
-
-
 sequential
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -36,8 +36,6 @@ located in the :mod:`pulsar.apps` module.
    apps/http
    apps/pulse
    apps/greenio
-   apps/tasks
    apps/test
-   apps/shell
    apps/ds
    apps/data/index

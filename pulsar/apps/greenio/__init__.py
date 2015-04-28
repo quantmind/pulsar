@@ -97,25 +97,12 @@ Wait
 
 .. autofunction:: wait
 
-Wait file descriptor
------------------------
-
-.. autofunction:: wait_fd
-
 
 Run in greenlet
 -------------------
 
 .. autofunction:: run_in_greenlet
 
-
-Green task
--------------
-
-.. autofunction:: green_task
-
-
-.. module:: pulsar.apps.greenio.pool
 
 Green Pool
 ----------------
@@ -124,20 +111,12 @@ Green Pool
    :members:
    :member-order: bysource
 
-Run in Pool
+Wsgi Green
 ----------------
 
-.. autoclass:: RunInPool
+.. autoclass:: WsgiGreen
    :members:
    :member-order: bysource
-
-
-.. _psycopg2:
-
-Psycopg2
-===========
-
-.. automodule:: pulsar.apps.greenio.pg
 
 
 .. _gevent: http://www.gevent.org/

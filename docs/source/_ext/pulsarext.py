@@ -7,7 +7,6 @@ from docutils import nodes, statemachine
 
 from pulsar.utils.config import ordered_settings, section_docs
 import pulsar.apps.wsgi
-import pulsar.apps.tasks
 import pulsar.apps.test
 
 targetid = "pulsar_settings"
