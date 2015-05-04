@@ -171,9 +171,7 @@ A good ``pull`` request should:
 * Include tests to cover the new code (inside the ``tests`` directory)
 * Preferably have one commit only (you can use rebase_ to combine several
   commits into one)
-* Make sure ``pep8`` tests pass::
-
-    python runtests.py --pep8 pulsar examples tests
+* Make sure ``pep8`` tests pass
 
 .. _license:
 
