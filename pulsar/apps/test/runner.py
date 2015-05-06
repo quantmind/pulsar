@@ -126,6 +126,7 @@ class Runner(object):
                 test = runner.before_test_function_run(test)
                 error = yield from self._run_safe(test, test_name,
                                                   test_timeout)
+                runner.after_test_function_run(test)
             error = yield from self._run_safe(test, 'tearDown',
                                               test_timeout, error)
             if not error:
