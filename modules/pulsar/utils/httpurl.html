@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>pulsar.utils.httpurl &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
+    <title>pulsar.utils.httpurl &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,14 +24,15 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" /> 
-</head>
- <body>
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -45,26 +41,15 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/modules/pulsar/utils/httpurl.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <h1>Source code for pulsar.utils.httpurl</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;This is a substantial module which imporfts several classes and functions</span>
@@ -120,10 +105,18 @@
 <span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">formatdate</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 <span class="kn">import</span> <span class="nn">zlib</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span> <span class="k">as</span> <span class="n">urllibr</span>
+<span class="kn">from</span> <span class="nn">http</span> <span class="kn">import</span> <span class="n">client</span> <span class="k">as</span> <span class="n">httpclient</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="p">(</span><span class="n">quote</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">urlencode</span><span class="p">,</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span>
+                          <span class="n">parse_qs</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">splitport</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span>
+                          <span class="n">urljoin</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">http.client</span> <span class="kn">import</span> <span class="n">responses</span>
+<span class="kn">from</span> <span class="nn">http.cookiejar</span> <span class="kn">import</span> <span class="n">CookieJar</span><span class="p">,</span> <span class="n">Cookie</span>
+<span class="kn">from</span> <span class="nn">http.cookies</span> <span class="kn">import</span> <span class="n">SimpleCookie</span>
 
-<span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">mapping_iterator</span><span class="p">,</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span><span class="p">,</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">native_str</span>
+<span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">mapping_iterator</span>
+<span class="kn">from</span> <span class="nn">.string</span> <span class="kn">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">to_string</span>
 <span class="kn">from</span> <span class="nn">.html</span> <span class="kn">import</span> <span class="n">capfirst</span>
 
 <span class="c"># try:</span>
@@ -158,8 +151,6 @@
     <span class="k">return</span> <span class="n">_Http_Parser</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<span class="n">create_connection</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">create_connection</span>
-
 <span class="k">try</span><span class="p">:</span>    <span class="c"># Compiled with SSL?</span>
     <span class="n">BaseSSLError</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>
@@ -168,81 +159,9 @@
 <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>   <span class="c"># pragma : no cover</span>
     <span class="k">pass</span>
 
-<span class="k">if</span> <span class="n">ispy3k</span><span class="p">:</span>  <span class="c"># Python 3</span>
-    <span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span> <span class="k">as</span> <span class="n">urllibr</span>
-    <span class="kn">from</span> <span class="nn">http</span> <span class="kn">import</span> <span class="n">client</span> <span class="k">as</span> <span class="n">httpclient</span>
-    <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="p">(</span><span class="n">quote</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">urlencode</span><span class="p">,</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span>
-                              <span class="n">parse_qs</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">splitport</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span>
-                              <span class="n">urljoin</span><span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">http.client</span> <span class="kn">import</span> <span class="n">responses</span>
-    <span class="kn">from</span> <span class="nn">http.cookiejar</span> <span class="kn">import</span> <span class="n">CookieJar</span><span class="p">,</span> <span class="n">Cookie</span>
-    <span class="kn">from</span> <span class="nn">http.cookies</span> <span class="kn">import</span> <span class="n">SimpleCookie</span>
 
-    <span class="n">string_type</span> <span class="o">=</span> <span class="nb">str</span>
-    <span class="n">getproxies_environment</span> <span class="o">=</span> <span class="n">urllibr</span><span class="o">.</span><span class="n">getproxies_environment</span>
-    <span class="n">ascii_letters</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span>
-    <span class="nb">chr</span> <span class="o">=</span> <span class="nb">chr</span>
-    <span class="n">is_string</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">force_native_str</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span> <span class="ow">or</span> <span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">s</span>
-
-<span class="k">else</span><span class="p">:</span>   <span class="c"># pragma : no cover</span>
-    <span class="kn">import</span> <span class="nn">urllib2</span> <span class="kn">as</span> <span class="nn">urllibr</span>
-    <span class="kn">import</span> <span class="nn">httplib</span> <span class="kn">as</span> <span class="nn">httpclient</span>
-    <span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="p">(</span><span class="n">quote</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">urlencode</span><span class="p">,</span> <span class="n">getproxies_environment</span><span class="p">,</span>
-                        <span class="n">splitport</span><span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">urlparse</span> <span class="kn">import</span> <span class="p">(</span><span class="n">urlparse</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qs</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span> <span class="n">urljoin</span><span class="p">,</span>
-                          <span class="n">parse_qsl</span><span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">httplib</span> <span class="kn">import</span> <span class="n">responses</span>
-    <span class="kn">from</span> <span class="nn">cookielib</span> <span class="kn">import</span> <span class="n">CookieJar</span><span class="p">,</span> <span class="n">Cookie</span>
-    <span class="kn">from</span> <span class="nn">Cookie</span> <span class="kn">import</span> <span class="n">SimpleCookie</span>
-
-    <span class="n">string_type</span> <span class="o">=</span> <span class="nb">unicode</span>
-    <span class="n">ascii_letters</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">letters</span>
-    <span class="nb">chr</span> <span class="o">=</span> <span class="nb">unichr</span>
-    <span class="n">is_string</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
-        <span class="c">#</span>
-        <span class="k">def</span> <span class="nf">create_connection</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">_GLOBAL_DEFAULT_TIMEOUT</span><span class="p">,</span>
-                              <span class="n">source_address</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;Form Python 2.7&quot;&quot;&quot;</span>
-            <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">address</span>
-            <span class="n">err</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">socket</span><span class="o">.</span><span class="n">getaddrinfo</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">):</span>
-                <span class="n">af</span><span class="p">,</span> <span class="n">socktype</span><span class="p">,</span> <span class="n">proto</span><span class="p">,</span> <span class="n">canonname</span><span class="p">,</span> <span class="n">sa</span> <span class="o">=</span> <span class="n">res</span>
-                <span class="n">sock</span> <span class="o">=</span> <span class="bp">None</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">af</span><span class="p">,</span> <span class="n">socktype</span><span class="p">,</span> <span class="n">proto</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">socket</span><span class="o">.</span><span class="n">_GLOBAL_DEFAULT_TIMEOUT</span><span class="p">:</span>
-                        <span class="n">sock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">source_address</span><span class="p">:</span>
-                        <span class="n">sock</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">source_address</span><span class="p">)</span>
-                    <span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">sa</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="n">sock</span>
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
-                    <span class="n">err</span> <span class="o">=</span> <span class="n">_</span>
-                    <span class="k">if</span> <span class="n">sock</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                        <span class="n">sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">err</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;getaddrinfo returns an empty list&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">force_native_str</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span> <span class="ow">or</span> <span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">s</span>
-
+<span class="n">getproxies_environment</span> <span class="o">=</span> <span class="n">urllibr</span><span class="o">.</span><span class="n">getproxies_environment</span>
+<span class="n">ascii_letters</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span>
 <span class="n">HTTPError</span> <span class="o">=</span> <span class="n">urllibr</span><span class="o">.</span><span class="n">HTTPError</span>
 <span class="n">URLError</span> <span class="o">=</span> <span class="n">urllibr</span><span class="o">.</span><span class="n">URLError</span>
 <span class="n">request_host</span> <span class="o">=</span> <span class="n">urllibr</span><span class="o">.</span><span class="n">request_host</span>
@@ -269,13 +188,18 @@
 <span class="n">HEADER_TOKEN_CHARS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="s">&quot;!#$%&amp;&#39;*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;</span>
                                <span class="s">&#39;^_`abcdefghijklmnopqrstuvwxyz|~&#39;</span><span class="p">)</span>
 
-<span class="n">escape</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">quote</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="s">&#39;~&#39;</span><span class="p">)</span>
-<span class="n">urlquote</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">iri</span><span class="p">:</span> <span class="n">quote</span><span class="p">(</span><span class="n">iri</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="n">URI_RESERVED_CHARS</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">escape</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">quote</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="s">&#39;~&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">urlquote</span><span class="p">(</span><span class="n">iri</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">quote</span><span class="p">(</span><span class="n">iri</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="n">URI_RESERVED_CHARS</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_gen_unquote</span><span class="p">(</span><span class="n">uri</span><span class="p">):</span>
     <span class="n">unreserved_set</span> <span class="o">=</span> <span class="n">URI_UNRESERVED_SET</span>
-    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">force_native_str</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="s">&#39;latin1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;%&#39;</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="s">&#39;latin1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;%&#39;</span><span class="p">)):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">n</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">part</span>
         <span class="k">else</span><span class="p">:</span>
@@ -317,8 +241,8 @@
     <span class="k">if</span> <span class="n">iri</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">iri</span>
     <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="n">iri</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">?</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">force_native_str</span><span class="p">(</span><span class="n">iri</span><span class="p">,</span> <span class="s">&#39;latin1&#39;</span><span class="p">),</span>
-                         <span class="s">&#39;&amp;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kv</span> <span class="k">for</span> <span class="n">kv</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">kwargs</span><span class="p">))))</span>
+        <span class="n">iri</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">?</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">iri</span><span class="p">,</span> <span class="s">&#39;latin1&#39;</span><span class="p">),</span>
+                         <span class="s">&#39;&amp;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kv</span> <span class="k">for</span> <span class="n">kv</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span>
     <span class="k">return</span> <span class="n">urlquote</span><span class="p">(</span><span class="n">unquote_unreserved</span><span class="p">(</span><span class="n">iri</span><span class="p">))</span>
 
 
@@ -513,7 +437,6 @@
 
 
 <span class="k">def</span> <span class="nf">header_values</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-    <span class="n">value</span> <span class="o">=</span> <span class="n">native_str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">header_parsers</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">header_parsers</span><span class="p">[</span><span class="n">header</span><span class="p">](</span><span class="n">value</span><span class="p">)</span>
@@ -529,7 +452,7 @@
 <span class="sd">    :param allow_token: if this is enabled token values are returned</span>
 <span class="sd">        unchanged.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">value</span> <span class="o">=</span> <span class="n">force_native_str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">allow_token</span><span class="p">:</span>
         <span class="n">token_chars</span> <span class="o">=</span> <span class="n">HEADER_TOKEN_CHARS</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">extra_chars</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">token_chars</span><span class="p">):</span>
@@ -813,7 +736,7 @@
 </div>
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">dj</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">joiner</span> <span class="o">=</span> <span class="n">HEADER_FIELDS_JOINER</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dj</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">joiner</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="n">joiner</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
@@ -909,7 +832,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c"># decompress</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="bp">True</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -984,8 +909,8 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">__on_firstline</span> <span class="o">=</span> <span class="bp">True</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">])</span>
-                    <span class="n">first_line</span> <span class="o">=</span> <span class="n">native_str</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">),</span>
-                                            <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
+                    <span class="n">first_line</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">),</span>
+                                           <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
                     <span class="n">rest</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="mi">2</span><span class="p">:]</span>
                     <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_firstline</span><span class="p">(</span><span class="n">first_line</span><span class="p">):</span>
@@ -1090,7 +1015,7 @@
         <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c"># we don&#39;t have all headers</span>
             <span class="k">return</span> <span class="bp">False</span>
-        <span class="n">chunk</span> <span class="o">=</span> <span class="n">native_str</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
         <span class="c"># Split lines on \r\n keeping the \r\n on each line</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="n">deque</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="se">\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">chunk</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)))</span>
         <span class="c"># Parse headers into key/value pairs paying attention</span>
@@ -1146,8 +1071,10 @@
             <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s">&#39;Content-Encoding&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s">&quot;gzip&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="n">zlib</span><span class="o">.</span><span class="n">decompressobj</span><span class="p">(</span><span class="mi">16</span><span class="o">+</span><span class="n">zlib</span><span class="o">.</span><span class="n">MAX_WBITS</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="k">elif</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s">&quot;deflate&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="n">zlib</span><span class="o">.</span><span class="n">decompressobj</span><span class="p">()</span>
+
         <span class="n">rest</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="mi">4</span><span class="p">:]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="p">[</span><span class="n">rest</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span> <span class="o">=</span> <span class="bp">True</span>
@@ -1165,9 +1092,10 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="o">-=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
                 <span class="c"># maybe decompress</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
                 <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">True</span>
                 <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -1187,8 +1115,9 @@
             <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">size</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">None</span>
             <span class="n">body_part</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">rest</span><span class="p">[:</span><span class="n">size</span><span class="p">],</span> <span class="n">rest</span><span class="p">[</span><span class="n">size</span><span class="p">:]</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">body_part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">body_part</span><span class="p">)</span>
+
+            <span class="c"># maybe decompress</span>
+            <span class="n">body_part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decompress</span><span class="p">(</span><span class="n">body_part</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body_part</span><span class="p">)</span>
             <span class="n">rest</span> <span class="o">=</span> <span class="n">rest</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
@@ -1214,12 +1143,37 @@
         <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_trailers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_headers</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_decompress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">deco</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span>
+        <span class="k">if</span> <span class="n">deco</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">deco</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">deco</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">zlib</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="n">zlib</span><span class="o">.</span><span class="n">decompressobj</span><span class="p">(</span><span class="o">-</span><span class="n">zlib</span><span class="o">.</span><span class="n">MAX_WBITS</span><span class="p">)</span>
+                    <span class="n">deco</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">deco</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="n">data</span>
+
 </div>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">hasextensions</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
     <span class="n">setDefaultHttpParser</span><span class="p">(</span><span class="n">HttpParser</span><span class="p">)</span>
 
 
 <span class="c"># ############################################    UTILITIES, ENCODERS, PARSERS</span>
+<span class="n">absolute_http_url_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&quot;^https?://&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">is_absolute_uri</span><span class="p">(</span><span class="n">location</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Check if a ``location`` is absolute, i.e. it includes the scheme</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">location</span> <span class="ow">and</span> <span class="n">absolute_http_url_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">get_environ_proxies</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Return a dict of environment proxies. From requests_.&quot;&quot;&quot;</span>
 
@@ -1234,7 +1188,9 @@
         <span class="s">&#39;no&#39;</span>
     <span class="p">]</span>
 
-    <span class="n">get_proxy</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+    <span class="k">def</span> <span class="nf">get_proxy</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+
     <span class="n">proxies</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">get_proxy</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s">&#39;_proxy&#39;</span><span class="p">))</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">proxy_keys</span><span class="p">]</span>
     <span class="k">return</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">proxies</span> <span class="k">if</span> <span class="n">val</span><span class="p">])</span>
 
@@ -1317,7 +1273,7 @@
     <span class="k">return</span> <span class="n">formatdate</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="p">,</span> <span class="n">usegmt</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 
-<span class="c"># ################################################################# COOKIE</span>
+<span class="c"># ################################################################# COOKIES</span>
 <span class="k">def</span> <span class="nf">create_cookie</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Make a cookie from underspecified parameters.</span>
 
@@ -1370,18 +1326,19 @@
     <span class="k">return</span> <span class="n">cookiejar</span>
 
 
+<span class="c"># ################################################################# VARY HEADER</span>
 <span class="n">cc_delim_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\s*,\s*&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">patch_vary_headers</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">newheaders</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;\</span>
-<span class="sd">Adds (or updates) the &quot;Vary&quot; header in the given HttpResponse object.</span>
-<span class="sd">newheaders is a list of header names that should be in &quot;Vary&quot;. Existing</span>
-<span class="sd">headers in &quot;Vary&quot; aren&#39;t removed.</span>
+    <span class="sd">&quot;&quot;&quot;Adds (or updates) the &quot;Vary&quot; header in the given HttpResponse object.</span>
 
-<span class="sd">For information on the Vary header, see:</span>
+<span class="sd">    newheaders is a list of header names that should be in &quot;Vary&quot;. Existing</span>
+<span class="sd">    headers in &quot;Vary&quot; aren&#39;t removed.</span>
 
-<span class="sd">    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44</span>
+<span class="sd">    For information on the Vary header, see:</span>
+
+<span class="sd">        http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c"># Note that we need to keep the original order intact, because cache</span>
     <span class="c"># implementations may rely on the order of the Vary contents in, say,</span>
@@ -1447,26 +1404,54 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../index.html">
-  <img class="logo" width="200" src="../../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-<div id="searchbox" style="display: none">
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pics.html">Pics</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
       <input type="text" name="q" />
@@ -1483,29 +1468,33 @@
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Available Clients &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <title>Available Clients &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,15 +24,16 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
-    <link rel="prev" title="Object Data Mapper" href="odm.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Datastore Clients" href="clients.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -47,74 +43,57 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="odm.html" title="Object Data Mapper"
+          <a href="clients.html" title="Datastore Clients"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/data/stores.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="available-clients">
 <span id="builtin-data-stores"></span><h1>Available Clients<a class="headerlink" href="#available-clients" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-pulsar.apps.data.stores.redis">
-<span id="redis"></span><span id="store-redis"></span><h2>Redis<a class="headerlink" href="#module-pulsar.apps.data.stores.redis" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar is shipped with a <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> implementation for <a class="reference external" href="http://redis.io/">redis</a>
-and <a class="reference internal" href="../ds.html#pulsar-data-store"><em>pulsard-ds</em></a> servers.</p>
+<div class="section" id="module-pulsar.apps.data.redis">
+<span id="redis"></span><span id="store-redis"></span><h2>Redis<a class="headerlink" href="#module-pulsar.apps.data.redis" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar is shipped with a <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> implementation for <a class="reference external" href="http://redis.io/">redis</a>
+and <a class="reference internal" href="../ds.html#pulsar-data-store"><span>pulsard-ds</span></a> servers.</p>
 <div class="section" id="redis-store">
 <h3>Redis Store<a class="headerlink" href="#redis-store" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.apps.data.stores.redis.store.RedisStore">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.redis.store.</tt><tt class="descname">RedisStore</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop=None</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore" title="Permalink to this definition">¶</a></dt>
-<dd><p>Redis <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> implementation.</p>
+<dt id="pulsar.apps.data.redis.store.RedisStore">
+<em class="property">class </em><code class="descclassname">pulsar.apps.data.redis.store.</code><code class="descname">RedisStore</code><span class="sig-paren">(</span><em>name</em>, <em>host</em>, <em>loop=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/store.html#RedisStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.store.RedisStore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Redis <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> implementation.</p>
 <dl class="attribute">
-<dt id="pulsar.apps.data.stores.redis.store.RedisStore.namespace">
-<tt class="descname">namespace</tt><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.namespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.namespace" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.data.redis.store.RedisStore.namespace">
+<code class="descname">namespace</code><a class="headerlink" href="#pulsar.apps.data.redis.store.RedisStore.namespace" title="Permalink to this definition">¶</a></dt>
 <dd><p>The prefix namespace to append to all transaction on keys</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.stores.redis.store.RedisStore.client">
-<tt class="descname">client</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a <a class="reference internal" href="#pulsar.apps.data.stores.redis.client.RedisClient" title="pulsar.apps.data.stores.redis.client.RedisClient"><tt class="xref py py-class docutils literal"><span class="pre">RedisClient</span></tt></a> for the Store</p>
+<dt id="pulsar.apps.data.redis.store.RedisStore.client">
+<code class="descname">client</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/store.html#RedisStore.client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.store.RedisStore.client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a <a class="reference internal" href="#pulsar.apps.data.redis.client.RedisClient" title="pulsar.apps.data.redis.client.RedisClient"><code class="xref py py-class docutils literal"><span class="pre">RedisClient</span></code></a> for the Store</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.stores.redis.store.RedisStore.pipeline">
-<tt class="descname">pipeline</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.pipeline" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a <a class="reference internal" href="#pulsar.apps.data.stores.redis.client.Pipeline" title="pulsar.apps.data.stores.redis.client.Pipeline"><tt class="xref py py-class docutils literal"><span class="pre">Pipeline</span></tt></a> for the Store</p>
+<dt id="pulsar.apps.data.redis.store.RedisStore.pipeline">
+<code class="descname">pipeline</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/store.html#RedisStore.pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.store.RedisStore.pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a <a class="reference internal" href="#pulsar.apps.data.redis.client.Pipeline" title="pulsar.apps.data.redis.client.Pipeline"><code class="xref py py-class docutils literal"><span class="pre">Pipeline</span></code></a> for the Store</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.stores.redis.store.RedisStore.execute_transaction">
-<tt class="descname">execute_transaction</tt><big>(</big><em>transaction</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.execute_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.execute_transaction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute a <a class="reference internal" href="odm.html#pulsar.apps.data.odm.transaction.Transaction" title="pulsar.apps.data.odm.transaction.Transaction"><tt class="xref py py-class docutils literal"><span class="pre">Transaction</span></tt></a></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.redis.store.RedisStore.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.close" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.data.redis.store.RedisStore.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/store.html#RedisStore.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.store.RedisStore.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close all open connections.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.stores.redis.store.RedisStore.meta">
-<tt class="descname">meta</tt><big>(</big><em>meta</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/store.html#RedisStore.meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.store.RedisStore.meta" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.data.redis.store.RedisStore.meta">
+<code class="descname">meta</code><span class="sig-paren">(</span><em>meta</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/store.html#RedisStore.meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.store.RedisStore.meta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract model metadata for lua script stdnet/lib/lua/odm.lua</p>
 </dd></dl>
 
@@ -124,31 +103,31 @@ and <a class="reference internal" href="../ds.html#pulsar-data-store"><em>pulsar
 <div class="section" id="redis-client">
 <h3>Redis Client<a class="headerlink" href="#redis-client" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.apps.data.stores.redis.client.RedisClient">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.redis.client.</tt><tt class="descname">RedisClient</tt><big>(</big><em>store</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#RedisClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.RedisClient" title="Permalink to this definition">¶</a></dt>
-<dd><p>Client for <a class="reference internal" href="#pulsar.apps.data.stores.redis.store.RedisStore" title="pulsar.apps.data.stores.redis.store.RedisStore"><tt class="xref py py-class docutils literal"><span class="pre">RedisStore</span></tt></a>.</p>
+<dt id="pulsar.apps.data.redis.client.RedisClient">
+<em class="property">class </em><code class="descclassname">pulsar.apps.data.redis.client.</code><code class="descname">RedisClient</code><span class="sig-paren">(</span><em>store</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/client.html#RedisClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.client.RedisClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Client for <a class="reference internal" href="#pulsar.apps.data.redis.store.RedisStore" title="pulsar.apps.data.redis.store.RedisStore"><code class="xref py py-class docutils literal"><span class="pre">RedisStore</span></code></a>.</p>
 <dl class="attribute">
-<dt id="pulsar.apps.data.stores.redis.RedisClient.store">
-<tt class="descname">store</tt><a class="headerlink" href="#pulsar.apps.data.stores.redis.RedisClient.store" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="#pulsar.apps.data.stores.redis.store.RedisStore" title="pulsar.apps.data.stores.redis.store.RedisStore"><tt class="xref py py-class docutils literal"><span class="pre">RedisStore</span></tt></a> for this client.</p>
+<dt id="pulsar.apps.data.redis.RedisClient.store">
+<code class="descname">store</code><a class="headerlink" href="#pulsar.apps.data.redis.RedisClient.store" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.apps.data.redis.store.RedisStore" title="pulsar.apps.data.redis.store.RedisStore"><code class="xref py py-class docutils literal"><span class="pre">RedisStore</span></code></a> for this client.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.stores.redis.client.RedisClient.pipeline">
-<tt class="descname">pipeline</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#RedisClient.pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.RedisClient.pipeline" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a <a class="reference internal" href="#pulsar.apps.data.stores.redis.client.Pipeline" title="pulsar.apps.data.stores.redis.client.Pipeline"><tt class="xref py py-class docutils literal"><span class="pre">Pipeline</span></tt></a> for pipelining commands</p>
+<dt id="pulsar.apps.data.redis.client.RedisClient.pipeline">
+<code class="descname">pipeline</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/client.html#RedisClient.pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.client.RedisClient.pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <a class="reference internal" href="#pulsar.apps.data.redis.client.Pipeline" title="pulsar.apps.data.redis.client.Pipeline"><code class="xref py py-class docutils literal"><span class="pre">Pipeline</span></code></a> for pipelining commands</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.stores.redis.client.RedisClient.zadd">
-<tt class="descname">zadd</tt><big>(</big><em>name</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#RedisClient.zadd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.RedisClient.zadd" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set any number of score, element-name pairs to the key <tt class="docutils literal"><span class="pre">name</span></tt>. Pairs
+<dt id="pulsar.apps.data.redis.client.RedisClient.zadd">
+<code class="descname">zadd</code><span class="sig-paren">(</span><em>name</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/client.html#RedisClient.zadd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.client.RedisClient.zadd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set any number of score, element-name pairs to the key <code class="docutils literal"><span class="pre">name</span></code>. Pairs
 can be specified in two ways:</p>
-<p>As <tt class="docutils literal"><span class="pre">*args</span></tt>, in the form of:</p>
+<p>As <code class="docutils literal"><span class="pre">*args</span></code>, in the form of:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">score1</span><span class="p">,</span> <span class="n">name1</span><span class="p">,</span> <span class="n">score2</span><span class="p">,</span> <span class="n">name2</span><span class="p">,</span> <span class="o">...</span>
 </pre></div>
 </div>
-<p>or as <tt class="docutils literal"><span class="pre">**kwargs</span></tt>, in the form of:</p>
+<p>or as <code class="docutils literal"><span class="pre">**kwargs</span></code>, in the form of:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">name1</span><span class="o">=</span><span class="n">score1</span><span class="p">,</span> <span class="n">name2</span><span class="o">=</span><span class="n">score2</span><span class="p">,</span> <span class="o">...</span>
 </pre></div>
 </div>
@@ -160,25 +139,25 @@ can be specified in two ways:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.stores.redis.client.RedisClient.sort">
-<tt class="descname">sort</tt><big>(</big><em>key</em>, <em>start=None</em>, <em>num=None</em>, <em>by=None</em>, <em>get=None</em>, <em>desc=False</em>, <em>alpha=False</em>, <em>store=None</em>, <em>groups=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#RedisClient.sort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.RedisClient.sort" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sort and return the list, set or sorted set at <tt class="docutils literal"><span class="pre">key</span></tt>.</p>
-<p><tt class="docutils literal"><span class="pre">start</span></tt> and <tt class="docutils literal"><span class="pre">num</span></tt> allow for paging through the sorted data</p>
+<dt id="pulsar.apps.data.redis.client.RedisClient.sort">
+<code class="descname">sort</code><span class="sig-paren">(</span><em>key</em>, <em>start=None</em>, <em>num=None</em>, <em>by=None</em>, <em>get=None</em>, <em>desc=False</em>, <em>alpha=False</em>, <em>store=None</em>, <em>groups=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/client.html#RedisClient.sort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.client.RedisClient.sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort and return the list, set or sorted set at <code class="docutils literal"><span class="pre">key</span></code>.</p>
+<p><code class="docutils literal"><span class="pre">start</span></code> and <code class="docutils literal"><span class="pre">num</span></code> allow for paging through the sorted data</p>
 <dl class="docutils">
-<dt><tt class="docutils literal"><span class="pre">by</span></tt> allows using an external key to weight and sort the items.</dt>
+<dt><code class="docutils literal"><span class="pre">by</span></code> allows using an external key to weight and sort the items.</dt>
 <dd>Use an &#8220;*&#8221; to indicate where in the key the item value is located</dd>
-<dt><tt class="docutils literal"><span class="pre">get</span></tt> allows for returning items from external keys rather than the</dt>
+<dt><code class="docutils literal"><span class="pre">get</span></code> allows for returning items from external keys rather than the</dt>
 <dd>sorted data itself.  Use an &#8220;*&#8221; to indicate where int he key
 the item value is located</dd>
 </dl>
-<p><tt class="docutils literal"><span class="pre">desc</span></tt> allows for reversing the sort</p>
-<p><tt class="docutils literal"><span class="pre">alpha</span></tt> allows for sorting lexicographically rather than numerically</p>
+<p><code class="docutils literal"><span class="pre">desc</span></code> allows for reversing the sort</p>
+<p><code class="docutils literal"><span class="pre">alpha</span></code> allows for sorting lexicographically rather than numerically</p>
 <dl class="docutils">
-<dt><tt class="docutils literal"><span class="pre">store</span></tt> allows for storing the result of the sort into</dt>
-<dd>the key <tt class="docutils literal"><span class="pre">store</span></tt></dd>
-<dt><tt class="docutils literal"><span class="pre">groups</span></tt> if set to True and if <tt class="docutils literal"><span class="pre">get</span></tt> contains at least two</dt>
+<dt><code class="docutils literal"><span class="pre">store</span></code> allows for storing the result of the sort into</dt>
+<dd>the key <code class="docutils literal"><span class="pre">store</span></code></dd>
+<dt><code class="docutils literal"><span class="pre">groups</span></code> if set to True and if <code class="docutils literal"><span class="pre">get</span></code> contains at least two</dt>
 <dd>elements, sort will return a list of tuples, each containing the
-values fetched from the arguments to <tt class="docutils literal"><span class="pre">get</span></tt>.</dd>
+values fetched from the arguments to <code class="docutils literal"><span class="pre">get</span></code>.</dd>
 </dl>
 </dd></dl>
 
@@ -188,12 +167,12 @@ values fetched from the arguments to <tt class="docutils literal"><span class="p
 <div class="section" id="redis-pipeline">
 <h3>Redis Pipeline<a class="headerlink" href="#redis-pipeline" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.apps.data.stores.redis.client.Pipeline">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.redis.client.</tt><tt class="descname">Pipeline</tt><big>(</big><em>store</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#Pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.Pipeline" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.apps.data.stores.redis.client.RedisClient" title="pulsar.apps.data.stores.redis.client.RedisClient"><tt class="xref py py-class docutils literal"><span class="pre">RedisClient</span></tt></a> for pipelining commands</p>
+<dt id="pulsar.apps.data.redis.client.Pipeline">
+<em class="property">class </em><code class="descclassname">pulsar.apps.data.redis.client.</code><code class="descname">Pipeline</code><span class="sig-paren">(</span><em>store</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/client.html#Pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.client.Pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.data.redis.client.RedisClient" title="pulsar.apps.data.redis.client.RedisClient"><code class="xref py py-class docutils literal"><span class="pre">RedisClient</span></code></a> for pipelining commands</p>
 <dl class="method">
-<dt id="pulsar.apps.data.stores.redis.client.Pipeline.commit">
-<tt class="descname">commit</tt><big>(</big><em>raise_on_error=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/redis/client.html#Pipeline.commit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.redis.client.Pipeline.commit" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.data.redis.client.Pipeline.commit">
+<code class="descname">commit</code><span class="sig-paren">(</span><em>raise_on_error=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/client.html#Pipeline.commit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.client.Pipeline.commit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send commands to redis.</p>
 </dd></dl>
 
@@ -203,132 +182,7 @@ values fetched from the arguments to <tt class="docutils literal"><span class="p
 </div>
 <div class="section" id="pulsards">
 <span id="store-pulsar"></span><h2>PulsarDs<a class="headerlink" href="#pulsards" title="Permalink to this headline">¶</a></h2>
-<p>It has the same implementation as <a class="reference internal" href="#store-redis"><em>redis client</em></a>.</p>
-</div>
-<div class="section" id="module-pulsar.apps.data.stores.couchdb.store">
-<span id="couchdb"></span><span id="store-couchdb"></span><h2>CouchDb<a class="headerlink" href="#module-pulsar.apps.data.stores.couchdb.store" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="http://couchdb.apache.org/">CouchDB</a> document store:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;http+couchdb://localhost:5984/mydb&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="section" id="models">
-<h3>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h3>
-<p>A <a class="reference internal" href="odm.html#pulsar.apps.data.odm.model.Model" title="pulsar.apps.data.odm.model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> is stored as a document in the store database, this
-means instances of different models which use the same couchdb store
-are stored in exactly the same database.</p>
-<p>To differentiate and query over different types of models, the
-<tt class="docutils literal"><span class="pre">Type</span></tt> field is added to the document representing a model.</p>
-</div>
-<div class="section" id="queries">
-<h3>Queries<a class="headerlink" href="#queries" title="Permalink to this headline">¶</a></h3>
-</div>
-<div class="section" id="search">
-<h3>Search<a class="headerlink" href="#search" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="https://github.com/rnewson/couchdb-lucene">https://github.com/rnewson/couchdb-lucene</a></p>
-</div>
-<div class="section" id="couchdbstore">
-<h3>CouchDBStore<a class="headerlink" href="#couchdbstore" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.couchdb.store.</tt><tt class="descname">CouchDBStore</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop=None</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.info">
-<tt class="descname">info</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Information about the running server</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.ping">
-<tt class="descname">ping</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.ping" title="Permalink to this definition">¶</a></dt>
-<dd><p>Information about the running server</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_database">
-<tt class="descname">create_database</tt><big>(</big><em>dbname=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.create_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.create_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new database</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dbname</strong> &#8211; optional database name. If not provided
-the <tt class="xref py py-attr docutils literal"><span class="pre">_database</span></tt> is created instead.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.delete_database">
-<tt class="descname">delete_database</tt><big>(</big><em>dbname=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.delete_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.delete_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delete a database <tt class="docutils literal"><span class="pre">dbname</span></tt></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.all_databases">
-<tt class="descname">all_databases</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.all_databases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.all_databases" title="Permalink to this definition">¶</a></dt>
-<dd><p>The list of all databases</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_create">
-<tt class="descname">design_create</tt><big>(</big><em>name</em>, <em>views</em>, <em>language=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.design_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_create" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new design document</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_delete">
-<tt class="descname">design_delete</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.design_delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.design_delete" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delete an existing design document at <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.get_document">
-<tt class="descname">get_document</tt><big>(</big><em>dbname</em>, <em>pkvalue</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.get_document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.get_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch a document from <tt class="docutils literal"><span class="pre">dbname</span></tt> with id <tt class="docutils literal"><span class="pre">pkvalue</span></tt></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.update_documents">
-<tt class="descname">update_documents</tt><big>(</big><em>dbname</em>, <em>documents</em>, <em>new_edits=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.update_documents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.update_documents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bulk update/insert of documents in a database</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.drop_table">
-<tt class="descname">drop_table</tt><big>(</big><em>model</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.drop_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.drop_table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Drop model table by simply removing model design views</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.execute_transaction">
-<tt class="descname">execute_transaction</tt><big>(</big><em>transaction</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.execute_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.execute_transaction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute a <tt class="docutils literal"><span class="pre">transaction</span></tt></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.query_model_view">
-<tt class="descname">query_model_view</tt><big>(</big><em>model</em>, <em>view_name</em>, <em>key=None</em>, <em>keys=None</em>, <em>group=None</em>, <em>limit=None</em>, <em>include_docs=None</em>, <em>reduce=True</em>, <em>method=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.query_model_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.query_model_view" title="Permalink to this definition">¶</a></dt>
-<dd><p>Query an existing view</p>
-<p>All view parameters here:</p>
-<p><a class="reference external" href="http://wiki.apache.org/couchdb/HTTP_view_API">http://wiki.apache.org/couchdb/HTTP_view_API</a></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.request">
-<tt class="descname">request</tt><big>(</big><em>method</em>, <em>*bits</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.request" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute the HTTP request</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.stores.couchdb.store.CouchDBStore.model_data">
-<tt class="descname">model_data</tt><big>(</big><em>model</em>, <em>action</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/couchdb/store.html#CouchDBStore.model_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.couchdb.store.CouchDBStore.model_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>A generator of field/value pair for the store</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
+<p>It has the same implementation as <a class="reference internal" href="#store-redis"><span>redis client</span></a>.</p>
 </div>
 </div>
 
@@ -336,55 +190,54 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../index.html">
-  <img class="logo" width="200" src="../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Available Clients</a><ul>
-<li><a class="reference internal" href="#module-pulsar.apps.data.stores.redis">Redis</a><ul>
-<li><a class="reference internal" href="#redis-store">Redis Store</a></li>
-<li><a class="reference internal" href="#redis-client">Redis Client</a></li>
-<li><a class="reference internal" href="#redis-pipeline">Redis Pipeline</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pics.html">Pics</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#pulsards">PulsarDs</a></li>
-<li><a class="reference internal" href="#module-pulsar.apps.data.stores.couchdb.store">CouchDb</a><ul>
-<li><a class="reference internal" href="#models">Models</a></li>
-<li><a class="reference internal" href="#queries">Queries</a></li>
-<li><a class="reference internal" href="#search">Search</a></li>
-<li><a class="reference internal" href="#couchdbstore">CouchDBStore</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="odm.html"
-                        title="previous chapter">Object Data Mapper</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../../sources/apps/data/stores.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
       <input type="text" name="q" />
@@ -401,29 +254,36 @@ the <tt class="xref py py-attr docutils literal"><span class="pre">_database</sp
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../../sources/apps/data/stores.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

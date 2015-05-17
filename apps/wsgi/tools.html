@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Utilities &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <title>Utilities &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,16 +24,17 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="JSON-RPC" href="../rpc.html" />
-    <link rel="prev" title="Asynchronous Content" href="content.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Asynchronous Content" href="content.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -53,34 +49,23 @@
         <li class="right" >
           <a href="content.html" title="Asynchronous Content"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/wsgi/tools.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="utilities">
 <h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="http-parsers">
 <h2>HTTP Parsers<a class="headerlink" href="#http-parsers" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar ships with its own <a class="reference internal" href="../../api/utilities.html#tools-http-parser"><em>HTTP parser</em></a> used by
-both server and the <a class="reference internal" href="../http.html#apps-http"><em>HTTP client</em></a>. Headers are collected using
-the <a class="reference internal" href="../../api/utilities.html#tools-http-headers"><em>Headers data structure</em></a> which exposes a
+<p>Pulsar ships with its own <a class="reference internal" href="../../api/utilities.html#tools-http-parser"><span>HTTP parser</span></a> used by
+both server and the <a class="reference internal" href="../http.html#apps-http"><span>HTTP client</span></a>. Headers are collected using
+the <a class="reference internal" href="../../api/utilities.html#tools-http-headers"><span>Headers data structure</span></a> which exposes a
 list/dictionary-type interface.</p>
 </div>
 <div class="section" id="module-pulsar.apps.wsgi.auth">
@@ -90,10 +75,10 @@ list/dictionary-type interface.</p>
 <h3>HttpAuthenticate<a class="headerlink" href="#httpauthenticate" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.auth.HttpAuthenticate">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.auth.</tt><tt class="descname">HttpAuthenticate</tt><big>(</big><em>type</em>, <em>realm=None</em>, <em>**options</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/auth.html#HttpAuthenticate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.auth.HttpAuthenticate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Exception when <tt class="docutils literal"><span class="pre">basic</span></tt> or <tt class="docutils literal"><span class="pre">digest</span></tt> authentication is required.</p>
-<p>This HttpException is raised with status code <tt class="docutils literal"><span class="pre">401</span></tt> and the extra
-<tt class="docutils literal"><span class="pre">WWW_Authenticate</span></tt> header if <tt class="docutils literal"><span class="pre">type</span></tt> is either <tt class="docutils literal"><span class="pre">basic</span></tt> or <tt class="docutils literal"><span class="pre">digest</span></tt>.</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.auth.</code><code class="descname">HttpAuthenticate</code><span class="sig-paren">(</span><em>type</em>, <em>realm=None</em>, <em>**options</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/auth.html#HttpAuthenticate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.auth.HttpAuthenticate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception when <code class="docutils literal"><span class="pre">basic</span></code> or <code class="docutils literal"><span class="pre">digest</span></code> authentication is required.</p>
+<p>This HttpException is raised with status code <code class="docutils literal"><span class="pre">401</span></code> and the extra
+<code class="docutils literal"><span class="pre">WWW_Authenticate</span></code> header if <code class="docutils literal"><span class="pre">type</span></code> is either <code class="docutils literal"><span class="pre">basic</span></code> or <code class="docutils literal"><span class="pre">digest</span></code>.</p>
 </dd></dl>
 
 </div>
@@ -101,7 +86,7 @@ list/dictionary-type interface.</p>
 <h3>Authorization header parser<a class="headerlink" href="#authorization-header-parser" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.auth.parse_authorization_header">
-<tt class="descclassname">pulsar.apps.wsgi.auth.</tt><tt class="descname">parse_authorization_header</tt><big>(</big><em>value</em>, <em>charset='utf-8'</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/auth.html#parse_authorization_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.auth.parse_authorization_header" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.apps.wsgi.auth.</code><code class="descname">parse_authorization_header</code><span class="sig-paren">(</span><em>value</em>, <em>charset='utf-8'</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/auth.html#parse_authorization_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.auth.parse_authorization_header" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse an HTTP basic/digest authorisation header.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -110,7 +95,7 @@ list/dictionary-type interface.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; the authorisation header to parse.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">either <cite>None</cite> if the header was invalid or
-not given, otherwise an <tt class="xref py py-class docutils literal"><span class="pre">Auth</span></tt> object.</td>
+not given, otherwise an <code class="xref py py-class docutils literal"><span class="pre">Auth</span></code> object.</td>
 </tr>
 </tbody>
 </table>
@@ -122,10 +107,10 @@ not given, otherwise an <tt class="xref py py-class docutils literal"><span clas
 <span id="structures"></span><h2>Structures<a class="headerlink" href="#module-pulsar.apps.wsgi.structures" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.structures.Accept">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.structures.</tt><tt class="descname">Accept</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> object is a tuple subclass for tuples of
-<tt class="docutils literal"><span class="pre">(value,</span> <span class="pre">quality)</span></tt> tuples.  It is automatically sorted by quality.</p>
-<p>All <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> objects work similar to a list but provide extra
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.structures.</code><code class="descname">Accept</code><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><code class="xref py py-class docutils literal"><span class="pre">Accept</span></code></a> object is a tuple subclass for tuples of
+<code class="docutils literal"><span class="pre">(value,</span> <span class="pre">quality)</span></code> tuples.  It is automatically sorted by quality.</p>
+<p>All <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><code class="xref py py-class docutils literal"><span class="pre">Accept</span></code></a> objects work similar to a list but provide extra
 functionality for working with the data.  Containment checks are
 normalised to the rules of that header:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">CharsetAccept</span><span class="p">([(</span><span class="s">&#39;ISO-8859-1&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)])</span>
@@ -148,13 +133,13 @@ normalised to the rules of that header:</p>
 </div>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.structures.Accept.best">
-<tt class="descname">best</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.best"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.best" title="Permalink to this definition">¶</a></dt>
+<code class="descname">best</code><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.best" title="Permalink to this definition">¶</a></dt>
 <dd><p>The best match as value.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.structures.Accept.best_match">
-<tt class="descname">best_match</tt><big>(</big><em>matches</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.best_match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.best_match" title="Permalink to this definition">¶</a></dt>
+<code class="descname">best_match</code><span class="sig-paren">(</span><em>matches</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.best_match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.best_match" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the best match from a list of possible matches based
 on the quality of the client.  If two items have the same quality,
 the one is returned that comes first.</p>
@@ -174,7 +159,7 @@ the one is returned that comes first.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.structures.Accept.find">
-<tt class="descname">find</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.find" title="Permalink to this definition">¶</a></dt>
+<code class="descname">find</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.find" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the position of an entry or return -1.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -188,8 +173,8 @@ the one is returned that comes first.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.structures.Accept.index">
-<tt class="descname">index</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the position of an entry or raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#ValueError" title="(in Python v3.5)"><tt class="xref py py-exc docutils literal"><span class="pre">ValueError</span></tt></a>.</p>
+<code class="descname">index</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the position of an entry or raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#ValueError" title="(in Python v3.5)"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -199,67 +184,61 @@ the one is returned that comes first.</p>
 </tbody>
 </table>
 <div class="versionchanged">
-<p><span class="versionmodified">Changed in version 0.5: </span>This used to raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#IndexError" title="(in Python v3.5)"><tt class="xref py py-exc docutils literal"><span class="pre">IndexError</span></tt></a>, which was inconsistent
+<p><span class="versionmodified">Changed in version 0.5: </span>This used to raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#IndexError" title="(in Python v3.5)"><code class="xref py py-exc docutils literal"><span class="pre">IndexError</span></code></a>, which was inconsistent
 with the list API.</p>
 </div>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.wsgi.structures.Accept.itervalues">
-<tt class="descname">itervalues</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.itervalues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.itervalues" title="Permalink to this definition">¶</a></dt>
-<dd><p>Iterate over all values.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.wsgi.structures.Accept.quality">
-<tt class="descname">quality</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.quality"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.quality" title="Permalink to this definition">¶</a></dt>
+<code class="descname">quality</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.quality"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.quality" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the quality of the key.</p>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 0.6: </span>In previous versions you had to use the item-lookup syntax
-(eg: <tt class="docutils literal"><span class="pre">obj[key]</span></tt> instead of <tt class="docutils literal"><span class="pre">obj.quality(key)</span></tt>)</p>
+(eg: <code class="docutils literal"><span class="pre">obj[key]</span></code> instead of <code class="docutils literal"><span class="pre">obj.quality(key)</span></code>)</p>
 </div>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.structures.Accept.to_header">
-<tt class="descname">to_header</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.to_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.to_header" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to_header</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.to_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.to_header" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert the header set into an HTTP header string.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.structures.Accept.values">
-<tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of the values, not the qualities.</p>
+<code class="descname">values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over all values.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="pulsar.apps.wsgi.structures.CharsetAccept">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.structures.</tt><tt class="descname">CharsetAccept</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#CharsetAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.CharsetAccept" title="Permalink to this definition">¶</a></dt>
-<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> but with normalisation for charsets.</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.structures.</code><code class="descname">CharsetAccept</code><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#CharsetAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.CharsetAccept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><code class="xref py py-class docutils literal"><span class="pre">Accept</span></code></a> but with normalisation for charsets.</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="pulsar.apps.wsgi.structures.ContentAccept">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.structures.</tt><tt class="descname">ContentAccept</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept" title="Permalink to this definition">¶</a></dt>
-<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> but with special methods and behaviour for
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.structures.</code><code class="descname">ContentAccept</code><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><code class="xref py py-class docutils literal"><span class="pre">Accept</span></code></a> but with special methods and behaviour for
 content types.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.structures.ContentAccept.accept_html">
-<tt class="descname">accept_html</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept.accept_html"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_html" title="Permalink to this definition">¶</a></dt>
+<code class="descname">accept_html</code><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_html" title="Permalink to this definition">¶</a></dt>
 <dd><p>True if this object accepts HTML.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.structures.ContentAccept.accept_json">
-<tt class="descname">accept_json</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept.accept_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_json" title="Permalink to this definition">¶</a></dt>
+<code class="descname">accept_json</code><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>True if this object accepts JSON.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.structures.ContentAccept.accept_xhtml">
-<tt class="descname">accept_xhtml</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept.accept_xhtml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_xhtml" title="Permalink to this definition">¶</a></dt>
+<code class="descname">accept_xhtml</code><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_xhtml" title="Permalink to this definition">¶</a></dt>
 <dd><p>True if this object accepts XHTML.</p>
 </dd></dl>
 
@@ -267,18 +246,18 @@ content types.</p>
 
 <dl class="class">
 <dt id="pulsar.apps.wsgi.structures.LanguageAccept">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.structures.</tt><tt class="descname">LanguageAccept</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#LanguageAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.LanguageAccept" title="Permalink to this definition">¶</a></dt>
-<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> but with normalisation for languages.</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.structures.</code><code class="descname">LanguageAccept</code><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#LanguageAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.LanguageAccept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><code class="xref py py-class docutils literal"><span class="pre">Accept</span></code></a> but with normalisation for languages.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="module-pulsar.apps.wsgi.utils">
 <span id="miscellaneous"></span><h2>Miscellaneous<a class="headerlink" href="#module-pulsar.apps.wsgi.utils" title="Permalink to this headline">¶</a></h2>
-<p>The <a class="reference internal" href="#module-pulsar.apps.wsgi.utils" title="pulsar.apps.wsgi.utils"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi.utils</span></tt></a> module include several utilities used
-by various components in the <a class="reference internal" href="index.html#apps-wsgi"><em>wsgi application</em></a></p>
+<p>The <a class="reference internal" href="#module-pulsar.apps.wsgi.utils" title="pulsar.apps.wsgi.utils"><code class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi.utils</span></code></a> module include several utilities used
+by various components in the <a class="reference internal" href="index.html#apps-wsgi"><span>wsgi application</span></a></p>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.utils.handle_wsgi_error">
-<tt class="descclassname">pulsar.apps.wsgi.utils.</tt><tt class="descname">handle_wsgi_error</tt><big>(</big><em>environ</em>, <em>exc</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#handle_wsgi_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.handle_wsgi_error" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">handle_wsgi_error</code><span class="sig-paren">(</span><em>environ</em>, <em>exc</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#handle_wsgi_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.handle_wsgi_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>The default error handler while serving a WSGI request.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -290,7 +269,7 @@ by various components in the <a class="reference internal" href="index.html#apps
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a></p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><code class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></code></a></p>
 </td>
 </tr>
 </tbody>
@@ -299,8 +278,8 @@ by various components in the <a class="reference internal" href="index.html#apps
 
 <dl class="function">
 <dt id="pulsar.apps.wsgi.utils.render_error_debug">
-<tt class="descclassname">pulsar.apps.wsgi.utils.</tt><tt class="descname">render_error_debug</tt><big>(</big><em>request</em>, <em>exception</em>, <em>is_html</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#render_error_debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.render_error_debug" title="Permalink to this definition">¶</a></dt>
-<dd><p>Render the <tt class="docutils literal"><span class="pre">exception</span></tt> traceback</p>
+<code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">render_error_debug</code><span class="sig-paren">(</span><em>request</em>, <em>exception</em>, <em>is_html</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#render_error_debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.render_error_debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Render the <code class="docutils literal"><span class="pre">exception</span></code> traceback</p>
 </dd></dl>
 
 </div>
@@ -310,52 +289,54 @@ by various components in the <a class="reference internal" href="index.html#apps
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../index.html">
-  <img class="logo" width="200" src="../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Utilities</a><ul>
-<li><a class="reference internal" href="#http-parsers">HTTP Parsers</a></li>
-<li><a class="reference internal" href="#module-pulsar.apps.wsgi.auth">Authentication</a><ul>
-<li><a class="reference internal" href="#httpauthenticate">HttpAuthenticate</a></li>
-<li><a class="reference internal" href="#authorization-header-parser">Authorization header parser</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pics.html">Pics</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#module-pulsar.apps.wsgi.structures">Structures</a></li>
-<li><a class="reference internal" href="#module-pulsar.apps.wsgi.utils">Miscellaneous</a></li>
-</ul>
-</li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../socket.html">Socket Servers</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="content.html"
-                        title="previous chapter">Asynchronous Content</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../rpc.html"
-                        title="next chapter">JSON-RPC</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../../sources/apps/wsgi/tools.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
       <input type="text" name="q" />
@@ -372,29 +353,36 @@ by various components in the <a class="reference internal" href="index.html#apps
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../../sources/apps/wsgi/tools.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

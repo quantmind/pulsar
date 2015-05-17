@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Asynchronous Middleware &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <title>Asynchronous Middleware &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,16 +24,17 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Response Middleware" href="response.html" />
-    <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
-</head>
- <body>
+    <link rel="prev" title="WSGI Wrappers" href="wrappers.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -53,47 +49,36 @@
         <li class="right" >
           <a href="wrappers.html" title="WSGI Wrappers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/wsgi/middleware.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="module-pulsar.apps.wsgi.middleware">
 <span id="asynchronous-middleware"></span><span id="wsgi-middleware"></span><h1>Asynchronous Middleware<a class="headerlink" href="#module-pulsar.apps.wsgi.middleware" title="Permalink to this headline">¶</a></h1>
 <p>A WSGI Middleware is a function or callable object similar to a
-<a class="reference internal" href="async.html#wsgi-handlers"><em>WSGI application handlers</em></a>
-with the only difference that it can return nothing (<tt class="docutils literal"><span class="pre">None</span></tt>).</p>
+<a class="reference internal" href="async.html#wsgi-handlers"><span>WSGI application handlers</span></a>
+with the only difference that it can return nothing (<code class="docutils literal"><span class="pre">None</span></code>).</p>
 <p>Middleware can be used in conjunction with a
-<a class="reference internal" href="async.html#wsgi-handler"><em>WsgiHandler</em></a> or any
+<a class="reference internal" href="async.html#wsgi-handler"><span>WsgiHandler</span></a> or any
 other handler which iterate through a list of middleware in a similar
 way (for example django wsgi handler).</p>
 <div class="admonition important">
 <p class="first admonition-title">Important</p>
 <p class="last">An asynchronous WSGI middleware is a callble accepting a WSGI
-<tt class="docutils literal"><span class="pre">environ</span></tt> and <tt class="docutils literal"><span class="pre">start_response</span></tt> as the only input paramaters and
-it must returns an <a class="reference internal" href="async.html#wsgi-async-iter"><em>asynchronous iterator</em></a>
+<code class="docutils literal"><span class="pre">environ</span></code> and <code class="docutils literal"><span class="pre">start_response</span></code> as the only input paramaters and
+it must returns an <a class="reference internal" href="async.html#wsgi-async-iter"><span>asynchronous iterator</span></a>
 or nothing.</p>
 </div>
 <p>The two most important wsgi middleware in pulsar are:</p>
 <ul class="simple">
-<li>the <a class="reference internal" href="routing.html#wsgi-router"><em>Router</em></a> for serving dynamic web applications</li>
-<li>the <a class="reference internal" href="routing.html#wsgi-media-router"><em>MediaRouter</em></a> for serving static files</li>
+<li>the <a class="reference internal" href="routing.html#wsgi-router"><span>Router</span></a> for serving dynamic web applications</li>
+<li>the <a class="reference internal" href="routing.html#wsgi-media-router"><span>MediaRouter</span></a> for serving static files</li>
 </ul>
 <p>In addition, pulsar provides with the following four middlewares which don&#8217;t
 serve requests, instead they perform initialisation and sanity checks.</p>
@@ -101,7 +86,7 @@ serve requests, instead they perform initialisation and sanity checks.</p>
 <span id="wsgi-additional-middleware"></span><h2>Clean path<a class="headerlink" href="#clean-path" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.middleware.clean_path_middleware">
-<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">clean_path_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#clean_path_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.clean_path_middleware" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.apps.wsgi.middleware.</code><code class="descname">clean_path_middleware</code><span class="sig-paren">(</span><em>environ</em>, <em>start_response=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#clean_path_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.clean_path_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clean url from double slashes and redirect if needed.</p>
 </dd></dl>
 
@@ -110,10 +95,10 @@ serve requests, instead they perform initialisation and sanity checks.</p>
 <h2>Authorization<a class="headerlink" href="#authorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.middleware.authorization_middleware">
-<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">authorization_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#authorization_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.authorization_middleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_AUTHORIZATION</span></tt> key in the <tt class="docutils literal"><span class="pre">environ</span></tt>.</p>
-<p>If available, set the <tt class="docutils literal"><span class="pre">http.authorization</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with
-the result obtained from <a class="reference internal" href="tools.html#pulsar.apps.wsgi.auth.parse_authorization_header" title="pulsar.apps.wsgi.auth.parse_authorization_header"><tt class="xref py py-func docutils literal"><span class="pre">parse_authorization_header()</span></tt></a> function.</p>
+<code class="descclassname">pulsar.apps.wsgi.middleware.</code><code class="descname">authorization_middleware</code><span class="sig-paren">(</span><em>environ</em>, <em>start_response=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#authorization_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.authorization_middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the <code class="docutils literal"><span class="pre">HTTP_AUTHORIZATION</span></code> key in the <code class="docutils literal"><span class="pre">environ</span></code>.</p>
+<p>If available, set the <code class="docutils literal"><span class="pre">http.authorization</span></code> key in <code class="docutils literal"><span class="pre">environ</span></code> with
+the result obtained from <a class="reference internal" href="tools.html#pulsar.apps.wsgi.auth.parse_authorization_header" title="pulsar.apps.wsgi.auth.parse_authorization_header"><code class="xref py py-func docutils literal"><span class="pre">parse_authorization_header()</span></code></a> function.</p>
 </dd></dl>
 
 </div>
@@ -121,7 +106,7 @@ the result obtained from <a class="reference internal" href="tools.html#pulsar.a
 <span id="wait-for-body-middleware"></span><h2>Wait for request body<a class="headerlink" href="#wait-for-request-body" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.middleware.wait_for_body_middleware">
-<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">wait_for_body_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#wait_for_body_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.wait_for_body_middleware" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.apps.wsgi.middleware.</code><code class="descname">wait_for_body_middleware</code><span class="sig-paren">(</span><em>environ</em>, <em>start_response=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#wait_for_body_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.wait_for_body_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use this middleware to wait for the full body.</p>
 <p>This middleware wait for the full body to be received before letting
 other middleware to be processed.</p>
@@ -133,7 +118,7 @@ other middleware to be processed.</p>
 <h2>Middleware in Executor<a class="headerlink" href="#middleware-in-executor" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.middleware.middleware_in_executor">
-<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">middleware_in_executor</tt><big>(</big><em>middleware</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#middleware_in_executor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.middleware_in_executor" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.apps.wsgi.middleware.</code><code class="descname">middleware_in_executor</code><span class="sig-paren">(</span><em>middleware</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#middleware_in_executor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.middleware_in_executor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use this middleware to run a synchronous middleware in the event loop
 executor.</p>
 <p>Useful when using synchronous web-frameworks such as <a class="reference external" href="https://www.djangoproject.com/">django</a>.</p>
@@ -146,48 +131,54 @@ executor.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../index.html">
-  <img class="logo" width="200" src="../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Asynchronous Middleware</a><ul>
-<li><a class="reference internal" href="#clean-path">Clean path</a></li>
-<li><a class="reference internal" href="#authorization">Authorization</a></li>
-<li><a class="reference internal" href="#wait-for-request-body">Wait for request body</a></li>
-<li><a class="reference internal" href="#middleware-in-executor">Middleware in Executor</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pics.html">Pics</a></li>
 </ul>
-</li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../socket.html">Socket Servers</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="wrappers.html"
-                        title="previous chapter">WSGI Wrappers</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="response.html"
-                        title="next chapter">Response Middleware</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../../sources/apps/wsgi/middleware.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
       <input type="text" name="q" />
@@ -204,29 +195,36 @@ executor.</p>
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../../sources/apps/wsgi/middleware.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

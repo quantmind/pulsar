@@ -24,13 +24,11 @@ Most of the material presented in the these tutorials is based on the
    proxy
    calculator
    chat
-   taskqueue
    django
    tweets
    philosophers
    pulsards
    udp
-   webmail
    logging
 
 

@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>JSON-RPC &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    <title>JSON-RPC &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,15 +24,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
     <link rel="next" title="WebSockets" href="websockets.html" />
-    <link rel="prev" title="Utilities" href="wsgi/tools.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Utilities" href="wsgi/tools.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -52,31 +48,20 @@
         <li class="right" >
           <a href="wsgi/tools.html" title="Utilities"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/rpc.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="module-pulsar.apps.rpc">
 <span id="json-rpc"></span><span id="apps-rpc"></span><h1>JSON-RPC<a class="headerlink" href="#module-pulsar.apps.rpc" title="Permalink to this headline">¶</a></h1>
 <p>Asynchronous <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI</a> Remote Procedure Calls middleware. It implements a
 <a class="reference external" href="http://www.jsonrpc.org/specification">JSON-RPC</a> server and client. Check out the
-<a class="reference internal" href="../tutorials/calculator.html#tutorials-calculator"><em>json-rpc tutorial</em></a> if you want to get started
+<a class="reference internal" href="../tutorials/calculator.html#tutorials-calculator"><span>json-rpc tutorial</span></a> if you want to get started
 quickly with a working example.</p>
 <p>To quickly setup a server:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyRpc</span><span class="p">(</span><span class="n">rpc</span><span class="o">.</span><span class="n">JSONRPC</span><span class="p">):</span>
@@ -98,9 +83,9 @@ quickly with a working example.</p>
 </pre></div>
 </div>
 <ul class="simple">
-<li>The <tt class="docutils literal"><span class="pre">MyRpc</span></tt> handles the requests</li>
-<li>Routing is delegated to the <a class="reference internal" href="wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> which handle only <tt class="docutils literal"><span class="pre">post</span></tt>
-requests with content type <tt class="docutils literal"><span class="pre">application/json</span></tt>.</li>
+<li>The <code class="docutils literal"><span class="pre">MyRpc</span></code> handles the requests</li>
+<li>Routing is delegated to the <a class="reference internal" href="wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> which handle only <code class="docutils literal"><span class="pre">post</span></code>
+requests with content type <code class="docutils literal"><span class="pre">application/json</span></code>.</li>
 </ul>
 <div class="section" id="module-pulsar.apps.rpc.handlers">
 <span id="api"></span><h2>API<a class="headerlink" href="#module-pulsar.apps.rpc.handlers" title="Permalink to this headline">¶</a></h2>
@@ -108,44 +93,44 @@ requests with content type <tt class="docutils literal"><span class="pre">applic
 <h3>RpcHandler<a class="headerlink" href="#rpchandler" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.handlers.</tt><tt class="descname">RpcHandler</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.rpc.handlers.</code><code class="descname">RpcHandler</code><span class="sig-paren">(</span><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for classes to handle remote procedure calls.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler.serve_as">
-<tt class="descname">serve_as</tt><em class="property"> = 'rpc'</em><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.serve_as" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prefix for class methods providing remote services. Default: <tt class="docutils literal"><span class="pre">rpc</span></tt>.</p>
+<code class="descname">serve_as</code><em class="property"> = 'rpc'</em><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.serve_as" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prefix for class methods providing remote services. Default: <code class="docutils literal"><span class="pre">rpc</span></code>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler.separator">
-<tt class="descname">separator</tt><em class="property"> = '.'</em><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.separator" title="Permalink to this definition">¶</a></dt>
+<code class="descname">separator</code><em class="property"> = '.'</em><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.separator" title="Permalink to this definition">¶</a></dt>
 <dd><p>HTTP method allowed by this handler.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler.parent">
-<tt class="descname">parent</tt><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler.parent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.parent" title="Permalink to this definition">¶</a></dt>
-<dd><p>The parent <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> or <tt class="docutils literal"><span class="pre">None</span></tt> if this
+<code class="descname">parent</code><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>The parent <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><code class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></code></a> or <code class="docutils literal"><span class="pre">None</span></code> if this
 is the root handler.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler.root">
-<tt class="descname">root</tt><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler.root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.root" title="Permalink to this definition">¶</a></dt>
-<dd><p>The root <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> or <tt class="docutils literal"><span class="pre">self</span></tt> if this
+<code class="descname">root</code><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.root" title="Permalink to this definition">¶</a></dt>
+<dd><p>The root <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><code class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></code></a> or <code class="docutils literal"><span class="pre">self</span></code> if this
 is the root handler.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler.isroot">
-<tt class="descname">isroot</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler.isroot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.isroot" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this is the root handler.</p>
+<code class="descname">isroot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler.isroot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.isroot" title="Permalink to this definition">¶</a></dt>
+<dd><p><code class="docutils literal"><span class="pre">True</span></code> if this is the root handler.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler.putSubHandler">
-<tt class="descname">putSubHandler</tt><big>(</big><em>prefix</em>, <em>handler</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler.putSubHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.putSubHandler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a sub <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> with prefix <tt class="docutils literal"><span class="pre">prefix</span></tt>.</p>
+<code class="descname">putSubHandler</code><span class="sig-paren">(</span><em>prefix</em>, <em>handler</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler.putSubHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.putSubHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a sub <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><code class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></code></a> with prefix <code class="docutils literal"><span class="pre">prefix</span></code>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -162,8 +147,8 @@ is the root handler.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler.getSubHandler">
-<tt class="descname">getSubHandler</tt><big>(</big><em>prefix</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler.getSubHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.getSubHandler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a sub <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> at <tt class="docutils literal"><span class="pre">prefix</span></tt>.</p>
+<code class="descname">getSubHandler</code><span class="sig-paren">(</span><em>prefix</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler.getSubHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.getSubHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a sub <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><code class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></code></a> at <code class="docutils literal"><span class="pre">prefix</span></code>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -173,8 +158,8 @@ is the root handler.</p>
 <h3>rpc method decorator<a class="headerlink" href="#rpc-method-decorator" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.rpc.handlers.rpc_method">
-<tt class="descclassname">pulsar.apps.rpc.handlers.</tt><tt class="descname">rpc_method</tt><big>(</big><em>func</em>, <em>doc=None</em>, <em>format='json'</em>, <em>request_handler=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#rpc_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.rpc_method" title="Permalink to this definition">¶</a></dt>
-<dd><p>A decorator which exposes a function <tt class="docutils literal"><span class="pre">func</span></tt> as an rpc function.</p>
+<code class="descclassname">pulsar.apps.rpc.handlers.</code><code class="descname">rpc_method</code><span class="sig-paren">(</span><em>func</em>, <em>doc=None</em>, <em>format='json'</em>, <em>request_handler=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#rpc_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.rpc_method" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator which exposes a function <code class="docutils literal"><span class="pre">func</span></code> as an rpc function.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -182,10 +167,10 @@ is the root handler.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>func</strong> &#8211; The function to expose.</li>
 <li><strong>doc</strong> &#8211; Optional doc string. If not provided the doc string of
-<tt class="docutils literal"><span class="pre">func</span></tt> will be used.</li>
+<code class="docutils literal"><span class="pre">func</span></code> will be used.</li>
 <li><strong>format</strong> &#8211; Optional output format.</li>
-<li><strong>request_handler</strong> &#8211; function which takes <tt class="docutils literal"><span class="pre">request</span></tt>, <tt class="docutils literal"><span class="pre">format</span></tt>
-and <tt class="docutils literal"><span class="pre">kwargs</span></tt> and return a new <tt class="docutils literal"><span class="pre">kwargs</span></tt> to be passed to <tt class="docutils literal"><span class="pre">func</span></tt>.
+<li><strong>request_handler</strong> &#8211; function which takes <code class="docutils literal"><span class="pre">request</span></code>, <code class="docutils literal"><span class="pre">format</span></code>
+and <code class="docutils literal"><span class="pre">kwargs</span></code> and return a new <code class="docutils literal"><span class="pre">kwargs</span></code> to be passed to <code class="docutils literal"><span class="pre">func</span></code>.
 It can be used to add additional parameters based on request and
 format.</li>
 </ul>
@@ -200,8 +185,8 @@ format.</li>
 <h3>JSON RPC<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.rpc.jsonrpc.JSONRPC">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.jsonrpc.</tt><tt class="descname">JSONRPC</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JSONRPC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> for JSON-RPC services.</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.rpc.jsonrpc.</code><code class="descname">JSONRPC</code><span class="sig-paren">(</span><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JSONRPC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><code class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></code></a> for JSON-RPC services.</p>
 <p>Design to comply with the <a class="reference external" href="http://www.jsonrpc.org/specification">JSON-RPC 2.0</a> Specification.</p>
 <p>JSON-RPC is a lightweight remote procedure call protocol
 designed to be simple.
@@ -214,33 +199,33 @@ the request is a single object serialised using JSON.</p>
 <h3>JsonProxy<a class="headerlink" href="#jsonproxy" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.rpc.jsonrpc.JsonProxy">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.jsonrpc.</tt><tt class="descname">JsonProxy</tt><big>(</big><em>url</em>, <em>version=None</em>, <em>data=None</em>, <em>full_response=False</em>, <em>http=None</em>, <em>timeout=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JsonProxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JsonProxy" title="Permalink to this definition">¶</a></dt>
-<dd><p>A python Proxy class for <a class="reference internal" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> Servers.</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.rpc.jsonrpc.</code><code class="descname">JsonProxy</code><span class="sig-paren">(</span><em>url</em>, <em>version=None</em>, <em>data=None</em>, <em>full_response=False</em>, <em>http=None</em>, <em>timeout=None</em>, <em>sync=False</em>, <em>loop=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JsonProxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JsonProxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A python Proxy class for <a class="reference internal" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><code class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></code></a> Servers.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>url</strong> &#8211; server location</li>
-<li><strong>version</strong> &#8211; JSON-RPC server version. Default <tt class="docutils literal"><span class="pre">2.0</span></tt></li>
+<li><strong>version</strong> &#8211; JSON-RPC server version. Default <code class="docutils literal"><span class="pre">2.0</span></code></li>
 <li><strong>id</strong> &#8211; optional request id, generated if not provided.
-Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
-<li><strong>data</strong> &#8211; Extra data to include in all requests. Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+Default <code class="docutils literal"><span class="pre">None</span></code>.</li>
+<li><strong>data</strong> &#8211; Extra data to include in all requests. Default <code class="docutils literal"><span class="pre">None</span></code>.</li>
 <li><strong>full_response</strong> &#8211; return the full Http response rather than
 just the content.</li>
-<li><strong>http</strong> &#8211; <p>optional http client. If provided it must have the <tt class="docutils literal"><span class="pre">request</span></tt>
+<li><strong>http</strong> &#8211; <p>optional http client. If provided it must have the <code class="docutils literal"><span class="pre">request</span></code>
 method available which must be of the form:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">body</span><span class="o">=...</span><span class="p">,</span> <span class="n">method</span><span class="o">=...</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Default <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+<p>Default <code class="docutils literal"><span class="pre">None</span></code>.</p>
 </li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-<p>Lets say your RPC server is running at <tt class="docutils literal"><span class="pre">http://domain.name.com/</span></tt>:</p>
+<p>Lets say your RPC server is running at <code class="docutils literal"><span class="pre">http://domain.name.com/</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://domain.name.com/&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
 <span class="go">7</span>
@@ -250,13 +235,13 @@ method available which must be of the form:</p>
 </div>
 <dl class="method">
 <dt id="pulsar.apps.rpc.jsonrpc.JsonProxy.makeid">
-<tt class="descname">makeid</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JsonProxy.makeid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JsonProxy.makeid" title="Permalink to this definition">¶</a></dt>
+<code class="descname">makeid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JsonProxy.makeid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JsonProxy.makeid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Can be re-implemented by your own Proxy</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.jsonrpc.JsonProxy.get_params">
-<tt class="descname">get_params</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JsonProxy.get_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JsonProxy.get_params" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_params</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JsonProxy.get_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JsonProxy.get_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an array or positional or named parameters
 Mixing positional and named parameters in one
 call is not possible.</p>
@@ -269,53 +254,53 @@ call is not possible.</p>
 <h3>Server Commands<a class="headerlink" href="#server-commands" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.mixins.</tt><tt class="descname">PulsarServerCommands</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands" title="Permalink to this definition">¶</a></dt>
-<dd><p>Useful commands to add to your <a class="reference internal" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> handler.</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.rpc.mixins.</code><code class="descname">PulsarServerCommands</code><span class="sig-paren">(</span><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Useful commands to add to your <a class="reference internal" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><code class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></code></a> handler.</p>
 <p>It exposes the following functions:</p>
 <dl class="method">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_ping">
-<tt class="descname">rpc_ping</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_ping" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rpc_ping</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_ping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Ping the server.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_echo">
-<tt class="descname">rpc_echo</tt><big>(</big><em>request</em>, <em>message=''</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_echo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_echo" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rpc_echo</code><span class="sig-paren">(</span><em>request</em>, <em>message=''</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_echo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_echo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Echo the server.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_server_info">
-<tt class="descname">rpc_server_info</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_server_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_server_info" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rpc_server_info</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_server_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_server_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a dictionary of information regarding the server and workers.</p>
-<p>It invokes the <a class="reference internal" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.extra_server_info" title="pulsar.apps.rpc.mixins.PulsarServerCommands.extra_server_info"><tt class="xref py py-meth docutils literal"><span class="pre">extra_server_info()</span></tt></a> for adding custom
+<p>It invokes the <a class="reference internal" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.extra_server_info" title="pulsar.apps.rpc.mixins.PulsarServerCommands.extra_server_info"><code class="xref py py-meth docutils literal"><span class="pre">extra_server_info()</span></code></a> for adding custom
 information.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_functions_list">
-<tt class="descname">rpc_functions_list</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_functions_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_functions_list" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rpc_functions_list</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_functions_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_functions_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of (method name, method document) pair of all method exposed
-by this <a class="reference internal" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> handler.</p>
+by this <a class="reference internal" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><code class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></code></a> handler.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_documentation">
-<tt class="descname">rpc_documentation</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_documentation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_documentation" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rpc_documentation</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_documentation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_documentation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Documentation in restructured text.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_kill_actor">
-<tt class="descname">rpc_kill_actor</tt><big>(</big><em>request</em>, <em>aid</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_kill_actor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_kill_actor" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rpc_kill_actor</code><span class="sig-paren">(</span><em>request</em>, <em>aid</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_kill_actor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_kill_actor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kill the actor with id equal to <em>aid</em>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.extra_server_info">
-<tt class="descname">extra_server_info</tt><big>(</big><em>request</em>, <em>info</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.extra_server_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.extra_server_info" title="Permalink to this definition">¶</a></dt>
+<code class="descname">extra_server_info</code><span class="sig-paren">(</span><em>request</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.extra_server_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.extra_server_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>An internal method.</p>
-<p>Used by the <a class="reference internal" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_server_info" title="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_server_info"><tt class="xref py py-meth docutils literal"><span class="pre">rpc_server_info()</span></tt></a> method to add additional
+<p>Used by the <a class="reference internal" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_server_info" title="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_server_info"><code class="xref py py-meth docutils literal"><span class="pre">rpc_server_info()</span></code></a> method to add additional
 information to the info dictionary.</p>
 </dd></dl>
 
@@ -329,52 +314,54 @@ information to the info dictionary.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">JSON-RPC</a><ul>
-<li><a class="reference internal" href="#module-pulsar.apps.rpc.handlers">API</a><ul>
-<li><a class="reference internal" href="#rpchandler">RpcHandler</a></li>
-<li><a class="reference internal" href="#rpc-method-decorator">rpc method decorator</a></li>
-<li><a class="reference internal" href="#id1">JSON RPC</a></li>
-<li><a class="reference internal" href="#jsonproxy">JsonProxy</a></li>
-<li><a class="reference internal" href="#server-commands">Server Commands</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
-</li>
-</ul>
-</li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="wsgi/tools.html"
-                        title="previous chapter">Utilities</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="websockets.html"
-                        title="next chapter">WebSockets</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../sources/apps/rpc.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -391,29 +378,36 @@ information to the info dictionary.</p>
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../sources/apps/rpc.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

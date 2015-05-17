@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>pulsar.apps.test &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
+    <title>pulsar.apps.test &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,14 +24,15 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../../index.html" />
-    <link rel="up" title="pulsar.apps" href="../apps.html" /> 
-</head>
- <body>
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar.apps" href="../apps.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -45,27 +41,16 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/test.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.test</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;The :class:`TestSuite` is a testing framework for both synchronous and</span>
@@ -389,22 +374,17 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">task</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">tasks</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="kn">import</span> <span class="n">PulsarDS</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">lazyproperty</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span><span class="p">,</span> <span class="n">TestOption</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">default_timer</span><span class="p">,</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
 
-<span class="kn">from</span> <span class="nn">.case</span> <span class="kn">import</span> <span class="n">mock</span>
-<span class="kn">from</span> <span class="nn">.populate</span> <span class="kn">import</span> <span class="n">populate</span>
+<span class="kn">from</span> <span class="nn">.populate</span> <span class="kn">import</span> <span class="n">populate</span><span class="p">,</span> <span class="n">random_string</span>
 <span class="kn">from</span> <span class="nn">.result</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.plugins.base</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.loader</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.wsgi</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">pep8_run</span>
+<span class="kn">from</span> <span class="nn">.runner</span> <span class="kn">import</span> <span class="n">Runner</span>
 
 
 <span class="n">pyver</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
@@ -431,7 +411,7 @@
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--test-timeout&#39;</span><span class="p">]</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_int</span>
     <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="mi">30</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="mi">5</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
 <span class="s">        Tests which take longer than this many seconds are timed-out</span>
 <span class="s">        and failed.&#39;&#39;&#39;</span>
@@ -497,15 +477,7 @@
 <span class="s">    &quot;&quot;&quot;</span>
 
 
-<span class="k">class</span> <span class="nc">TestPep8</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;pep8&quot;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--pep8&#39;</span><span class="p">]</span>
-    <span class="n">nargs</span> <span class="o">=</span> <span class="s">&#39;*&#39;</span>
-    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_list</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Run pep8&quot;&quot;&quot;</span>
-
-
-<div class="viewcode-block" id="TestSuite"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite">[docs]</a><span class="k">class</span> <span class="nc">TestSuite</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">TaskQueue</span><span class="p">):</span>
+<div class="viewcode-block" id="TestSuite"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite">[docs]</a><span class="k">class</span> <span class="nc">TestSuite</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An asynchronous test suite which works like a task queue.</span>
 
 <span class="sd">    Each task is a group of test methods in a python TestCase class.</span>
@@ -532,17 +504,13 @@
 <span class="sd">    :parameter plugins: Optional list of :class:`.TestPlugin` instances.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;test&#39;</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tasks&#39;</span><span class="p">,</span> <span class="s">&#39;test&#39;</span><span class="p">),</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;test&#39;</span><span class="p">],</span>
                         <span class="n">loglevel</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;none&#39;</span><span class="p">],</span>
-                        <span class="n">task_paths</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;pulsar.apps.test.case&#39;</span><span class="p">],</span>
                         <span class="n">plugins</span><span class="o">=</span><span class="p">())</span>
 
 <div class="viewcode-block" id="TestSuite.new_runner"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.new_runner">[docs]</a>    <span class="k">def</span> <span class="nf">new_runner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The :class:`.TestRunner` driving test cases.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">mock</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
-            <span class="k">raise</span> <span class="n">ExitTest</span><span class="p">(</span><span class="s">&#39;python </span><span class="si">%s</span><span class="s"> requires mock library for pulsar &#39;</span>
-                           <span class="s">&#39;test suite application&#39;</span> <span class="o">%</span> <span class="n">pyver</span><span class="p">)</span>
         <span class="n">result_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;result_class&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">stream</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="n">runner</span> <span class="o">=</span> <span class="n">TestRunner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">result_class</span><span class="p">)</span>
@@ -594,29 +562,14 @@
                 <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
             <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">False</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">pep8</span><span class="p">:</span>
-            <span class="n">msg</span><span class="p">,</span> <span class="n">code</span> <span class="o">=</span> <span class="n">pep8_run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">pep8</span><span class="p">)</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">code</span><span class="p">:</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">False</span>
 
-    <span class="nd">@task</span>
 <div class="viewcode-block" id="TestSuite.monitor_start"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When the monitor starts load all test classes into the queue&#39;&#39;&#39;</span>
-        <span class="c"># Create a datastore for this test suite</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">task_backend</span><span class="p">:</span>
-            <span class="n">server</span> <span class="o">=</span> <span class="n">PulsarDS</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="s">&#39;127.0.0.1:0&#39;</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                              <span class="n">key_value_save</span><span class="o">=</span><span class="p">[],</span>
-                              <span class="n">name</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_store&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="n">server</span><span class="p">()</span>
-            <span class="n">address</span> <span class="o">=</span> <span class="s">&#39;pulsar://</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">server</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">task_backend</span>
-
-        <span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
+        <span class="n">workers</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">)</span>
+        <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="n">workers</span><span class="p">)</span>
         <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span>
+
         <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">labels</span>
         <span class="n">exclude_tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exclude_labels</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">show_leaks</span><span class="p">:</span>
@@ -634,23 +587,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">if</span> <span class="n">tests</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;loading </span><span class="si">%s</span><span class="s"> test classes&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">))</span>
-                <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">)))</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
-                <span class="n">queued</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_tests_done</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_tests_queued</span> <span class="o">=</span> <span class="bp">None</span>
-                <span class="c">#</span>
-                <span class="c"># Bind to the task_done event</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;task_done&#39;</span><span class="p">,</span>
-                                        <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_done</span><span class="p">,</span> <span class="n">monitor</span><span class="p">))</span>
-                <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">testcls</span> <span class="ow">in</span> <span class="n">tests</span><span class="p">:</span>
-                    <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">queue_task</span><span class="p">(</span><span class="s">&#39;test&#39;</span><span class="p">,</span> <span class="n">testcls</span><span class="o">=</span><span class="n">testcls</span><span class="p">,</span>
-                                                <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
-                    <span class="n">queued</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-                <span class="n">queued</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">queued</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;loaded </span><span class="si">%s</span><span class="s"> test classes&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">))</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_tests_queued</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">queued</span><span class="p">)</span>
-                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_test_done</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
+                <span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="n">Runner</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">loader</span><span class="o">.</span><span class="n">runner</span><span class="p">,</span> <span class="n">tests</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
                 <span class="k">raise</span> <span class="n">ExitTest</span><span class="p">(</span><span class="s">&#39;Could not find any tests.&#39;</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">ExitTest</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
@@ -673,57 +610,60 @@
     <span class="k">def</span> <span class="nf">arbiter_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">params</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">TestSuite</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">arbiter_params</span><span class="p">()</span>
         <span class="n">params</span><span class="p">[</span><span class="s">&#39;concurrency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span>
-        <span class="k">return</span> <span class="n">params</span>
-
-    <span class="nd">@task</span>
-    <span class="k">def</span> <span class="nf">_test_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">task_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">runner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runner</span>
-        <span class="k">if</span> <span class="n">task_id</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_tests_done</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">task_id</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tests_queued</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tests_queued</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tests_done</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">left</span><span class="p">:</span>
-                <span class="n">tests</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tests_done</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;All tests have finished.&#39;</span><span class="p">)</span>
-                <span class="n">time_taken</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span>
-                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tests</span><span class="p">:</span>
-                    <span class="n">runner</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;result&#39;</span><span class="p">))</span>
-                <span class="n">runner</span><span class="o">.</span><span class="n">on_end</span><span class="p">()</span>
-                <span class="n">runner</span><span class="o">.</span><span class="n">printSummary</span><span class="p">(</span><span class="n">time_taken</span><span class="p">)</span>
-                <span class="c"># Shut down the arbiter</span>
-                <span class="k">if</span> <span class="n">runner</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">errors</span> <span class="ow">or</span> <span class="n">runner</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">failures</span><span class="p">:</span>
-                    <span class="n">exit_code</span> <span class="o">=</span> <span class="mi">2</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">exit_code</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exit</span><span class="p">,</span> <span class="n">exit_code</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exit_code</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">HaltServer</span><span class="p">(</span><span class="n">exit_code</span><span class="o">=</span><span class="n">exit_code</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">params</span></div>
 </pre></div>
 
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../index.html">
-  <img class="logo" width="200" src="../../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-<div id="searchbox" style="display: none">
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pics.html">Pics</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
       <input type="text" name="q" />
@@ -740,29 +680,33 @@
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

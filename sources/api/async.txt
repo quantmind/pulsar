@@ -60,11 +60,6 @@ Chain Future
 .. autofunction:: chain_future
 
 
-Coroutine return
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: coroutine_return
-
 
 Multi Async
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,39 +74,3 @@ Async While
 Run in loop
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: run_in_loop
-
-
-Yield From
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: yield_from
-
-
-.. module:: pulsar.async.threads
-
-Executor
-================
-
-Classes used by pulsar to create event loop executors.
-For more information on how to use an event loop executor check the
-asyncio documentation and pulsar :ref:`CPU based actors <cpubound>`.
-
-Thread pool
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: ThreadPool
-   :members:
-   :member-order: bysource
-
-Queue Event Loop
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: QueueEventLoop
-   :members:
-   :member-order: bysource
-
-IOqueue
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: IOqueue
-   :members:
-   :member-order: bysource

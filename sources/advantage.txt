@@ -6,10 +6,8 @@ Pulsar Advantage
 
 Python 3 - Asyncio
 --------------------
-Pulsar is written using python 3 while keeping compatibility to python 2.7.
-
-It is built on top of asyncio_, the new asynchronous module in the python
-standard library.
+Pulsar is written in python 3 and it is built on top of asyncio_, the new
+asynchronous module in the python standard library.
 
 Flexibility
 -------------------

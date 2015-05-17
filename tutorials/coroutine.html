@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Asynchronous Components &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    <title>Asynchronous Components &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,16 +24,17 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Actor messages" href="messages.html" />
-    <link rel="prev" title="The Arbiter" href="actors.html" /> 
-</head>
- <body>
+    <link rel="prev" title="The Arbiter" href="actors.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -53,33 +49,22 @@
         <li class="right" >
           <a href="actors.html" title="The Arbiter"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/tutorials/coroutine.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <span class="target" id="module-pulsar"></span><div class="section" id="asynchronous-components">
 <span id="tutorials-coroutine"></span><h1>Asynchronous Components<a class="headerlink" href="#asynchronous-components" title="Permalink to this headline">¶</a></h1>
 <p>There are three, closely related, ways to create asynchronous components in
 pulsar:</p>
 <ul>
-<li><p class="first">Directly create a of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>:</p>
+<li><p class="first">Directly create a of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">asyncio</span>
 
 <span class="n">o</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
@@ -92,7 +77,7 @@ pulsar:</p>
 </pre></div>
 </div>
 </li>
-<li><p class="first">A <a class="reference internal" href="#coroutine"><em>coroutine</em></a>, a generator which consumes values.
+<li><p class="first">A <a class="reference internal" href="#coroutine"><span>coroutine</span></a>, a generator which consumes values.
 For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span>
 
@@ -108,14 +93,14 @@ For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">o</span> <span class="o">=</span> <span class="n">my_async_generator</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Note that <tt class="docutils literal"><span class="pre">o</span></tt> is coroutine which has not yet started.</p>
+<p>Note that <code class="docutils literal"><span class="pre">o</span></code> is coroutine which has not yet started.</p>
 </li>
 </ul>
 <ul id="task-component">
-<li><p class="first">An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Task</span></tt></a>, is a component which has been added to
-pulsar asynchronous engine. It is created via the <tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt> function
+<li><p class="first">An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Task</span></code></a>, is a component which has been added to
+pulsar asynchronous engine. It is created via the <code class="xref py py-func docutils literal"><span class="pre">async()</span></code> function
 when applied to a generator function or, equivalently, by the
-<tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt> and <a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators:</p>
+<code class="xref py py-func docutils literal"><span class="pre">in_loop()</span></code> and <a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><code class="xref py py-func docutils literal"><span class="pre">task()</span></code></a> decorators:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span>
 
 <span class="k">def</span> <span class="nf">my_async_generator1</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
@@ -127,7 +112,7 @@ when applied to a generator function or, equivalently, by the
 <span class="n">task</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">my_async_generator2</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a subclass of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> and
+<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Task</span></code></a> is a subclass of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> and
 therefore it has the same API, for example, you can add callbacks to a task:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">task</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 </pre></div>
@@ -137,8 +122,8 @@ therefore it has the same API, for example, you can add callbacks to a task:</p>
 <div class="section" id="coroutines">
 <span id="coroutine"></span><h2>Coroutines<a class="headerlink" href="#coroutines" title="Permalink to this headline">¶</a></h2>
 <p>As mentioned above, a coroutine is a generator which consumes values. A pulsar
-coroutine can consume synchronous values as well as <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
-and other <a class="reference internal" href="#coroutine"><em>coroutines</em></a>.
+coroutine can consume synchronous values as well as <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>
+and other <a class="reference internal" href="#coroutine"><span>coroutines</span></a>.
 Let&#8217;s consider the following code:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">d</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
 
@@ -154,30 +139,30 @@ Let&#8217;s consider the following code:</p>
       <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Then we create a coroutine by calling the <tt class="docutils literal"><span class="pre">my_async_generator</span></tt> generator
+<p>Then we create a coroutine by calling the <code class="docutils literal"><span class="pre">my_async_generator</span></code> generator
 function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">o</span> <span class="o">=</span> <span class="n">my_async_generator</span><span class="p">()</span>
 </pre></div>
 </div>
-<p><tt class="docutils literal"><span class="pre">o</span></tt> is has not yet started. To use it, it must be added to pulsar
-asynchronous engine via the <tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt> function:</p>
+<p><code class="docutils literal"><span class="pre">o</span></code> is has not yet started. To use it, it must be added to pulsar
+asynchronous engine via the <code class="xref py py-func docutils literal"><span class="pre">async()</span></code> function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">task</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>task is a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> instance.</p>
-<p>Coroutines can return values via the <a class="reference internal" href="../api/async.html#pulsar.async.futures.coroutine_return" title="pulsar.async.futures.coroutine_return"><tt class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></tt></a> function.
-Otherwise they always return <tt class="docutils literal"><span class="pre">None</span></tt> (unless exceptions occur).</p>
+<p>task is a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Task</span></code></a> instance.</p>
+<p>Coroutines can return values via the <code class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></code> function.
+Otherwise they always return <code class="docutils literal"><span class="pre">None</span></code> (unless exceptions occur).</p>
 </div>
 <div class="section" id="task">
 <h2>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h2>
-<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> which consumes
-<a class="reference internal" href="#coroutine"><em>coroutines</em></a>.
-A coroutine is transformed into a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>
-via the <tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt> function or the <tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt> and
-<a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators.</p>
+<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Task</span></code></a> is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> which consumes
+<a class="reference internal" href="#coroutine"><span>coroutines</span></a>.
+A coroutine is transformed into a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Task</span></code></a>
+via the <code class="xref py py-func docutils literal"><span class="pre">async()</span></code> function or the <code class="xref py py-func docutils literal"><span class="pre">in_loop()</span></code> and
+<a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><code class="xref py py-func docutils literal"><span class="pre">task()</span></code></a> decorators.</p>
 <p>A task consumes a coroutine until the coroutine yield an asynchronous component
 not yet done. When this appends, the task pauses and returns the control of execution.
-Before it returns, it adds a <tt class="docutils literal"><span class="pre">callback</span></tt> to the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
+Before it returns, it adds a <code class="docutils literal"><span class="pre">callback</span></code> to the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>
 on which the coroutine is blocked to resume the coroutine once the future
 is called.
 A task in this state is said to be <strong>suspended</strong>.</p>
@@ -186,7 +171,7 @@ A task in this state is said to be <strong>suspended</strong>.</p>
 <h2>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h2>
 <p>When dealing with several asynchronous components in a collection such as
 a list, tuple, set or even a dictionary (values only, keys must be synchronous
-python types), one can use the <a class="reference internal" href="../api/async.html#pulsar.async.futures.multi_async" title="pulsar.async.futures.multi_async"><tt class="xref py py-func docutils literal"><span class="pre">multi_async()</span></tt></a> function to create
+python types), one can use the <a class="reference internal" href="../api/async.html#pulsar.async.futures.multi_async" title="pulsar.async.futures.multi_async"><code class="xref py py-func docutils literal"><span class="pre">multi_async()</span></code></a> function to create
 an asynchronous component which will be ready once all the components
 are ready.</p>
 </div>
@@ -196,47 +181,54 @@ are ready.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Asynchronous Components</a><ul>
-<li><a class="reference internal" href="#coroutines">Coroutines</a></li>
-<li><a class="reference internal" href="#task">Task</a></li>
-<li><a class="reference internal" href="#collections">Collections</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps/socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="actors.html"
-                        title="previous chapter">The Arbiter</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="messages.html"
-                        title="next chapter">Actor messages</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/coroutine.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -253,29 +245,36 @@ are ready.</p>
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../sources/tutorials/coroutine.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

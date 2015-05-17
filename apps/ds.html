@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Pulsar Data Store Server &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    <title>Pulsar Data Store Server &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,15 +24,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
     <link rel="next" title="Data Stores" href="data/index.html" />
-    <link rel="prev" title="Asynchronous Shell" href="shell.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Test Suite" href="test.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -50,27 +46,16 @@
           <a href="data/index.html" title="Data Stores"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="shell.html" title="Asynchronous Shell"
+          <a href="test.html" title="Test Suite"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/ds.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <span class="target" id="module-pulsar.apps.ds"><span id="pulsar-data-store"></span></span><div class="section" id="module-pulsar.apps.ds.server">
 <span id="pulsar-data-store-server"></span><h1>Pulsar Data Store Server<a class="headerlink" href="#module-pulsar.apps.ds.server" title="Permalink to this headline">¶</a></h1>
@@ -85,7 +70,7 @@ as redis does.</p>
     <span class="n">PulsarDS</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>More information on the <a class="reference internal" href="../tutorials/pulsards.html#tutorials-pulsards"><em>pulsar data store example</em></a>.</p>
+<p>More information on the <a class="reference internal" href="../tutorials/pulsards.html#tutorials-pulsards"><span>pulsar data store example</span></a>.</p>
 <p>Check out these <a class="reference external" href="https://gist.github.com/lsbardel/8068579">benchmarks</a></p>
 <div class="section" id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
@@ -93,8 +78,8 @@ as redis does.</p>
 <h3>Pulsar Data Store Server<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.ds.server.PulsarDS">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.ds.server.</tt><tt class="descname">PulsarDS</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ds/server.html#PulsarDS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ds.server.PulsarDS" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> serving a pulsar datastore.</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.ds.server.</code><code class="descname">PulsarDS</code><span class="sig-paren">(</span><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/ds/server.html#PulsarDS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ds.server.PulsarDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><code class="xref py py-class docutils literal"><span class="pre">SocketServer</span></code></a> serving a pulsar datastore.</p>
 </dd></dl>
 
 </div>
@@ -102,7 +87,7 @@ as redis does.</p>
 <h3>Storage<a class="headerlink" href="#storage" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.ds.server.Storage">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.ds.server.</tt><tt class="descname">Storage</tt><big>(</big><em>server</em>, <em>cfg</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ds/server.html#Storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ds.server.Storage" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.ds.server.</code><code class="descname">Storage</code><span class="sig-paren">(</span><em>server</em>, <em>cfg</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/ds/server.html#Storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ds.server.Storage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Implement redis commands.</p>
 </dd></dl>
 
@@ -162,63 +147,54 @@ as redis does.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Pulsar Data Store Server</a><ul>
-<li><a class="reference internal" href="#implementation">Implementation</a><ul>
-<li><a class="reference internal" href="#id1">Pulsar Data Store Server</a></li>
-<li><a class="reference internal" href="#storage">Storage</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#commands">Commands</a><ul>
-<li><a class="reference internal" href="#keys">Keys</a></li>
-<li><a class="reference internal" href="#strings">Strings</a></li>
-<li><a class="reference internal" href="#hashes">Hashes</a></li>
-<li><a class="reference internal" href="#lists">Lists</a></li>
-<li><a class="reference internal" href="#sets">Sets</a></li>
-<li><a class="reference internal" href="#sorted-sets">Sorted Sets</a></li>
-<li><a class="reference internal" href="#pub-sub">Pub/Sub</a></li>
-<li><a class="reference internal" href="#transactions">Transactions</a></li>
-<li><a class="reference internal" href="#scripting">Scripting</a></li>
-<li><a class="reference internal" href="#connections">Connections</a></li>
-<li><a class="reference internal" href="#server">Server</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Test Suite</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="shell.html"
-                        title="previous chapter">Asynchronous Shell</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="data/index.html"
-                        title="next chapter">Data Stores</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../sources/apps/ds.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -235,29 +211,36 @@ as redis does.</p>
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../sources/apps/ds.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

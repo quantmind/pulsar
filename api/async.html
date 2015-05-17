@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Asynchonous API &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    <title>Asynchonous API &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,16 +24,17 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
-    <link rel="prev" title="API" href="index.html" /> 
-</head>
- <body>
+    <link rel="prev" title="API" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -53,84 +49,73 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/api/async.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <span class="target" id="module-pulsar.async.futures"><span id="async-api"></span></span><div class="section" id="asynchonous-api">
 <h1>Asynchonous API<a class="headerlink" href="#asynchonous-api" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar asynchronous api is built on top of the new python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.5)"><tt class="xref py py-mod docutils literal"><span class="pre">asyncio</span></tt></a>
-module, therefore <tt class="docutils literal"><span class="pre">pulsar.Future</span></tt> class is an alias for
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a>.</p>
+<p>Pulsar asynchronous api is built on top of the new python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.5)"><code class="xref py py-mod docutils literal"><span class="pre">asyncio</span></code></a>
+module, therefore <code class="docutils literal"><span class="pre">pulsar.Future</span></code> class is an alias for
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></code></a>.</p>
 <p>However, pulsar can run on python 2.7 and 3.3+ using the same code base.
-To achieve this, pulsar uses a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Task</span></tt></a> class
+To achieve this, pulsar uses a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Task</span></code></a> class
 with the following features:</p>
 <ul class="simple">
-<li>works with both <tt class="docutils literal"><span class="pre">yield</span></tt> and <tt class="docutils literal"><span class="pre">yield</span> <span class="pre">from</span></tt></li>
+<li>works with both <code class="docutils literal"><span class="pre">yield</span></code> and <code class="docutils literal"><span class="pre">yield</span> <span class="pre">from</span></code></li>
 <li>tolerant of synchronous values</li>
 </ul>
 <div class="section" id="async-object-interface">
 <h2>Async object interface<a class="headerlink" href="#async-object-interface" title="Permalink to this headline">¶</a></h2>
 <p>This small class is the default interface for
-<a class="reference internal" href="../design.html#async-object"><em>asynchronous objects</em></a>. It is provided mainly for
+<a class="reference internal" href="../design.html#async-object"><span>asynchronous objects</span></a>. It is provided mainly for
 documentation purposes.</p>
 <dl class="class">
 <dt id="pulsar.async.futures.AsyncObject">
-<em class="property">class </em><tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">AsyncObject</tt><a class="reference internal" href="../modules/pulsar/async/futures.html#AsyncObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.AsyncObject" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interface for <a class="reference internal" href="../design.html#async-object"><em>async objects</em></a></p>
+<em class="property">class </em><code class="descclassname">pulsar.async.futures.</code><code class="descname">AsyncObject</code><a class="reference internal" href="../modules/pulsar/async/futures.html#AsyncObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.AsyncObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface for <a class="reference internal" href="../design.html#async-object"><span>async objects</span></a></p>
 <dl class="attribute">
 <dt id="pulsar.async.futures.AsyncObject._loop">
-<tt class="descname">_loop</tt><a class="headerlink" href="#pulsar.async.futures.AsyncObject._loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> associated with this object</p>
+<code class="descname">_loop</code><a class="headerlink" href="#pulsar.async.futures.AsyncObject._loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a> associated with this object</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.async.futures.AsyncObject._logger">
-<tt class="descname">_logger</tt><a class="headerlink" href="#pulsar.async.futures.AsyncObject._logger" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optional logger instance, used by the <a class="reference internal" href="#pulsar.async.futures.AsyncObject.logger" title="pulsar.async.futures.AsyncObject.logger"><tt class="xref py py-attr docutils literal"><span class="pre">logger</span></tt></a> attribute</p>
+<code class="descname">_logger</code><a class="headerlink" href="#pulsar.async.futures.AsyncObject._logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional logger instance, used by the <a class="reference internal" href="#pulsar.async.futures.AsyncObject.logger" title="pulsar.async.futures.AsyncObject.logger"><code class="xref py py-attr docutils literal"><span class="pre">logger</span></code></a> attribute</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.async.futures.AsyncObject.logger">
-<tt class="descname">logger</tt><a class="reference internal" href="../modules/pulsar/async/futures.html#AsyncObject.logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.AsyncObject.logger" title="Permalink to this definition">¶</a></dt>
+<code class="descname">logger</code><a class="headerlink" href="#pulsar.async.futures.AsyncObject.logger" title="Permalink to this definition">¶</a></dt>
 <dd><p>The logger for this object.</p>
-<p>It is either the <a class="reference internal" href="#pulsar.async.futures.AsyncObject._logger" title="pulsar.async.futures.AsyncObject._logger"><tt class="xref py py-attr docutils literal"><span class="pre">_logger</span></tt></a> or the logger of the <a class="reference internal" href="#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><tt class="xref py py-attr docutils literal"><span class="pre">_loop</span></tt></a></p>
+<p>It is either the <a class="reference internal" href="#pulsar.async.futures.AsyncObject._logger" title="pulsar.async.futures.AsyncObject._logger"><code class="xref py py-attr docutils literal"><span class="pre">_logger</span></code></a> or the logger of the <a class="reference internal" href="#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a></p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.async.futures.AsyncObject.timeit">
-<tt class="descname">timeit</tt><big>(</big><em>method</em>, <em>times</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#AsyncObject.timeit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.AsyncObject.timeit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Useful utility for benchmarking an asynchronous <tt class="docutils literal"><span class="pre">method</span></tt>.</p>
+<code class="descname">timeit</code><span class="sig-paren">(</span><em>method</em>, <em>times</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#AsyncObject.timeit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.AsyncObject.timeit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Useful utility for benchmarking an asynchronous <code class="docutils literal"><span class="pre">method</span></code>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>method</strong> &#8211; the name of the <tt class="docutils literal"><span class="pre">method</span></tt> to execute</li>
-<li><strong>times</strong> &#8211; number of times to execute the <tt class="docutils literal"><span class="pre">method</span></tt></li>
-<li><strong>args</strong> &#8211; positional arguments to pass to the <tt class="docutils literal"><span class="pre">method</span></tt></li>
-<li><strong>kwargs</strong> &#8211; key-valued arguments to pass to the <tt class="docutils literal"><span class="pre">method</span></tt></li>
+<li><strong>method</strong> &#8211; the name of the <code class="docutils literal"><span class="pre">method</span></code> to execute</li>
+<li><strong>times</strong> &#8211; number of times to execute the <code class="docutils literal"><span class="pre">method</span></code></li>
+<li><strong>args</strong> &#8211; positional arguments to pass to the <code class="docutils literal"><span class="pre">method</span></code></li>
+<li><strong>kwargs</strong> &#8211; key-valued arguments to pass to the <code class="docutils literal"><span class="pre">method</span></code></li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> which results in a <a class="reference internal" href="#pulsar.async.futures.Bench" title="pulsar.async.futures.Bench"><tt class="xref py py-class docutils literal"><span class="pre">Bench</span></tt></a>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> which results in a <a class="reference internal" href="#pulsar.async.futures.Bench" title="pulsar.async.futures.Bench"><code class="xref py py-class docutils literal"><span class="pre">Bench</span></code></a>
 object if successful</p>
 </td>
 </tr>
@@ -146,29 +131,29 @@ object if successful</p>
 
 <dl class="class">
 <dt id="pulsar.async.futures.Bench">
-<em class="property">class </em><tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">Bench</tt><big>(</big><em>times</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#Bench"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.Bench" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.async.futures.</code><code class="descname">Bench</code><span class="sig-paren">(</span><em>times</em>, <em>loop=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#Bench"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.Bench" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute a given number of asynchronous requests and wait for results.</p>
 <dl class="attribute">
 <dt id="pulsar.async.futures.Bench.start">
-<tt class="descname">start</tt><em class="property"> = None</em><a class="headerlink" href="#pulsar.async.futures.Bench.start" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.BaseEventLoop.time" title="(in Python v3.5)"><tt class="xref py py-meth docutils literal"><span class="pre">time()</span></tt></a> when the execution starts</p>
+<code class="descname">start</code><em class="property"> = None</em><a class="headerlink" href="#pulsar.async.futures.Bench.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.BaseEventLoop.time" title="(in Python v3.5)"><code class="xref py py-meth docutils literal"><span class="pre">time()</span></code></a> when the execution starts</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.async.futures.Bench.finish">
-<tt class="descname">finish</tt><em class="property"> = None</em><a class="headerlink" href="#pulsar.async.futures.Bench.finish" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.BaseEventLoop.time" title="(in Python v3.5)"><tt class="xref py py-meth docutils literal"><span class="pre">time()</span></tt></a> when the execution finishes</p>
+<code class="descname">finish</code><em class="property"> = None</em><a class="headerlink" href="#pulsar.async.futures.Bench.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.BaseEventLoop.time" title="(in Python v3.5)"><code class="xref py py-meth docutils literal"><span class="pre">time()</span></code></a> when the execution finishes</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.async.futures.Bench.result">
-<tt class="descname">result</tt><em class="property"> = ()</em><a class="headerlink" href="#pulsar.async.futures.Bench.result" title="Permalink to this definition">¶</a></dt>
+<code class="descname">result</code><em class="property"> = ()</em><a class="headerlink" href="#pulsar.async.futures.Bench.result" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tuple of results</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.async.futures.Bench.taken">
-<tt class="descname">taken</tt><a class="reference internal" href="../modules/pulsar/async/futures.html#Bench.taken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.Bench.taken" title="Permalink to this definition">¶</a></dt>
+<code class="descname">taken</code><a class="headerlink" href="#pulsar.async.futures.Bench.taken" title="Permalink to this definition">¶</a></dt>
 <dd><p>The total time taken for execution</p>
 </dd></dl>
 
@@ -178,27 +163,26 @@ object if successful</p>
 <div class="section" id="async-utilities">
 <span id="async-discovery"></span><h2>Async Utilities<a class="headerlink" href="#async-utilities" title="Permalink to this headline">¶</a></h2>
 <p>A collection of asynchronous utilities which facilitates manipulation and
-interaction with <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous components</em></a>.</p>
+interaction with <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><span>asynchronous components</span></a>.</p>
 <div class="section" id="task">
 <h3>task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.async.futures.task">
-<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">task</tt><big>(</big><em>function</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Thread-safe decorator to run a <tt class="docutils literal"><span class="pre">function</span></tt> in an event loop.</p>
+<code class="descclassname">pulsar.async.futures.</code><code class="descname">task</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thread-safe decorator to run a <code class="docutils literal"><span class="pre">function</span></code> in an event loop.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> &#8211; a callable which can return coroutines,
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a> or synchronous data. Can be a method of
-an <a class="reference internal" href="../design.html#async-object"><em>async object</em></a>, in which case the loop
-is given by the object <tt class="docutils literal"><span class="pre">_loop</span></tt> attribute.</td>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></code></a> or synchronous data. Can be a method of
+an <a class="reference internal" href="../design.html#async-object"><span>async object</span></a>, in which case the loop
+is given by the object <code class="docutils literal"><span class="pre">_loop</span></code> attribute.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a></td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></td>
 </tr>
 </tbody>
 </table>
-<p>The coroutine is wrapped with the <a class="reference internal" href="#pulsar.async.futures.yield_from" title="pulsar.async.futures.yield_from"><tt class="xref py py-func docutils literal"><span class="pre">yield_from()</span></tt></a> function.</p>
 </dd></dl>
 
 </div>
@@ -206,10 +190,10 @@ is given by the object <tt class="docutils literal"><span class="pre">_loop</spa
 <h3>Maybe Async<a class="headerlink" href="#maybe-async" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.async.futures.maybe_async">
-<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">maybe_async</tt><big>(</big><em>value</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#maybe_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.maybe_async" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handle a possible asynchronous <tt class="docutils literal"><span class="pre">value</span></tt>.</p>
-<p>Return an <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous instance</em></a>
-only if <tt class="docutils literal"><span class="pre">value</span></tt> is a generator, a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>.</p>
+<code class="descclassname">pulsar.async.futures.</code><code class="descname">maybe_async</code><span class="sig-paren">(</span><em>value</em>, <em>loop=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#maybe_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.maybe_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle a possible asynchronous <code class="docutils literal"><span class="pre">value</span></code>.</p>
+<p>Return an <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><span>asynchronous instance</span></a>
+only if <code class="docutils literal"><span class="pre">value</span></code> is a generator, a <code class="xref py py-class docutils literal"><span class="pre">Future</span></code>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -217,11 +201,11 @@ only if <tt class="docutils literal"><span class="pre">value</span></tt> is a ge
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>value</strong> &#8211; the value to convert to an asynchronous instance
 if it needs to.</li>
-<li><strong>loop</strong> &#8211; optional <tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt>.</li>
+<li><strong>loop</strong> &#8211; optional <code class="xref py py-class docutils literal"><span class="pre">EventLoop</span></code>.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> or a synchronous <tt class="docutils literal"><span class="pre">value</span></tt>.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <code class="xref py py-class docutils literal"><span class="pre">Future</span></code> or a synchronous <code class="docutils literal"><span class="pre">value</span></code>.</p>
 </td>
 </tr>
 </tbody>
@@ -233,27 +217,26 @@ if it needs to.</li>
 <h3>Chain Future<a class="headerlink" href="#chain-future" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.async.futures.chain_future">
-<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">chain_future</tt><big>(</big><em>future</em>, <em>callback=None</em>, <em>errback=None</em>, <em>next=None</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#chain_future"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.chain_future" title="Permalink to this definition">¶</a></dt>
-<dd><p>Chain a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> to an existing <tt class="docutils literal"><span class="pre">future</span></tt>.</p>
-<p>This function <cite>chain</cite> the <tt class="docutils literal"><span class="pre">next</span></tt> future to an existing <tt class="docutils literal"><span class="pre">future</span></tt>.
-When the input <tt class="docutils literal"><span class="pre">future</span></tt> receive a result the optional
-<tt class="docutils literal"><span class="pre">callback</span></tt> is executed and its result set as the results of <tt class="docutils literal"><span class="pre">next</span></tt>.
-If an exception occurs the optional <tt class="docutils literal"><span class="pre">errback</span></tt> is executed.</p>
+<code class="descclassname">pulsar.async.futures.</code><code class="descname">chain_future</code><span class="sig-paren">(</span><em>future</em>, <em>callback=None</em>, <em>errback=None</em>, <em>next=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#chain_future"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.chain_future" title="Permalink to this definition">¶</a></dt>
+<dd><p>Chain a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> to an existing <code class="docutils literal"><span class="pre">future</span></code>.</p>
+<p>This function <cite>chain</cite> the <code class="docutils literal"><span class="pre">next</span></code> future to an existing <code class="docutils literal"><span class="pre">future</span></code>.
+When the input <code class="docutils literal"><span class="pre">future</span></code> receive a result the optional
+<code class="docutils literal"><span class="pre">callback</span></code> is executed and its result set as the results of <code class="docutils literal"><span class="pre">next</span></code>.
+If an exception occurs the optional <code class="docutils literal"><span class="pre">errback</span></code> is executed.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>future</strong> &#8211; the original <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> (can be a coroutine)</li>
-<li><strong>callback</strong> &#8211; optional callback to execute on the result of <tt class="docutils literal"><span class="pre">future</span></tt></li>
-<li><strong>errback</strong> &#8211; optional callback to execute on the exception of <tt class="docutils literal"><span class="pre">future</span></tt></li>
-<li><strong>next</strong> &#8211; optional <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> to chain.
+<li><strong>future</strong> &#8211; the original <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> (can be a coroutine)</li>
+<li><strong>callback</strong> &#8211; optional callback to execute on the result of <code class="docutils literal"><span class="pre">future</span></code></li>
+<li><strong>errback</strong> &#8211; optional callback to execute on the exception of <code class="docutils literal"><span class="pre">future</span></code></li>
+<li><strong>next</strong> &#8211; optional <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> to chain.
 If not provided a new future is created</li>
-<li><strong>timeout</strong> &#8211; optional timeout to set on <tt class="docutils literal"><span class="pre">next</span></tt></li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the future <tt class="docutils literal"><span class="pre">next</span></tt></p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the future <code class="docutils literal"><span class="pre">next</span></code></p>
 </td>
 </tr>
 </tbody>
@@ -261,19 +244,11 @@ If not provided a new future is created</li>
 </dd></dl>
 
 </div>
-<div class="section" id="coroutine-return">
-<h3>Coroutine return<a class="headerlink" href="#coroutine-return" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.async.futures.coroutine_return">
-<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">coroutine_return</tt><big>(</big><em>*value</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#coroutine_return"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.coroutine_return" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
 <div class="section" id="multi-async">
 <h3>Multi Async<a class="headerlink" href="#multi-async" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.async.futures.multi_async">
-<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">multi_async</tt><big>(</big><em>data=None</em>, <em>loop=None</em>, <em>type=None</em>, <em>raise_on_error=True</em><big>)</big><a class="headerlink" href="#pulsar.async.futures.multi_async" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.async.futures.</code><code class="descname">multi_async</code><span class="sig-paren">(</span><em>data=None</em>, <em>loop=None</em>, <em>type=None</em>, <em>raise_on_error=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pulsar.async.futures.multi_async" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handle several futures at once. Thread safe.</p>
 </dd></dl>
 
@@ -282,10 +257,10 @@ If not provided a new future is created</li>
 <h3>Async While<a class="headerlink" href="#async-while" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.async.futures.async_while">
-<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">async_while</tt><big>(</big><em>timeout</em>, <em>while_clause</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#async_while"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.async_while" title="Permalink to this definition">¶</a></dt>
-<dd><p>The asynchronous equivalent of <tt class="docutils literal"><span class="pre">while</span> <span class="pre">while_clause(*args):</span></tt></p>
-<p>Use this function within a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a> when you need
-to wait <tt class="docutils literal"><span class="pre">while_clause</span></tt> to be satisfied.</p>
+<code class="descclassname">pulsar.async.futures.</code><code class="descname">async_while</code><span class="sig-paren">(</span><em>timeout</em>, <em>while_clause</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#async_while"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.async_while" title="Permalink to this definition">¶</a></dt>
+<dd><p>The asynchronous equivalent of <code class="docutils literal"><span class="pre">while</span> <span class="pre">while_clause(*args):</span></code></p>
+<p>Use this function within a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><span>coroutine</span></a> when you need
+to wait <code class="docutils literal"><span class="pre">while_clause</span></code> to be satisfied.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -293,12 +268,12 @@ to wait <tt class="docutils literal"><span class="pre">while_clause</span></tt> 
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>timeout</strong> &#8211; a timeout in seconds after which this function stop.</li>
 <li><strong>while_clause</strong> &#8211; while clause callable.</li>
-<li><strong>args</strong> &#8211; optional arguments to pass to the <tt class="docutils literal"><span class="pre">while_clause</span></tt>
+<li><strong>args</strong> &#8211; optional arguments to pass to the <code class="docutils literal"><span class="pre">while_clause</span></code>
 callable.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A <code class="xref py py-class docutils literal"><span class="pre">Future</span></code>.</p>
 </td>
 </tr>
 </tbody>
@@ -310,77 +285,18 @@ callable.</li>
 <h3>Run in loop<a class="headerlink" href="#run-in-loop" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.async.futures.run_in_loop">
-<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">run_in_loop</tt><big>(</big><em>_loop</em>, <em>callable</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#run_in_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.run_in_loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run <tt class="docutils literal"><span class="pre">callable</span></tt> in the event <tt class="docutils literal"><span class="pre">loop</span></tt> thread, thread safe.</p>
+<code class="descclassname">pulsar.async.futures.</code><code class="descname">run_in_loop</code><span class="sig-paren">(</span><em>_loop</em>, <em>callable</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#run_in_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.run_in_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run <code class="docutils literal"><span class="pre">callable</span></code> in the event <code class="docutils literal"><span class="pre">loop</span></code> thread, thread safe.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>_loop</strong> &#8211; The event loop where <tt class="docutils literal"><span class="pre">callable</span></tt> is run</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>_loop</strong> &#8211; The event loop where <code class="docutils literal"><span class="pre">callable</span></code> is run</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a></td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-</div>
-<div class="section" id="yield-from">
-<h3>Yield From<a class="headerlink" href="#yield-from" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.async.futures.yield_from">
-<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">yield_from</tt><big>(</big><em>coro</em>, <em>timeout=None</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#yield_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.yield_from" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wraps a <tt class="docutils literal"><span class="pre">coroutine</span></tt> by yielding values wrapped with
-the <tt class="docutils literal"><span class="pre">From</span></tt> function.</p>
-</dd></dl>
-
-<span class="target" id="module-pulsar.async.threads"></span></div>
-</div>
-<div class="section" id="executor">
-<h2>Executor<a class="headerlink" href="#executor" title="Permalink to this headline">¶</a></h2>
-<p>Classes used by pulsar to create event loop executors.
-For more information on how to use an event loop executor check the
-asyncio documentation and pulsar <a class="reference internal" href="../design.html#cpubound"><em>CPU based actors</em></a>.</p>
-<div class="section" id="thread-pool">
-<h3>Thread pool<a class="headerlink" href="#thread-pool" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.async.threads.ThreadPool">
-<em class="property">class </em><tt class="descclassname">pulsar.async.threads.</tt><tt class="descname">ThreadPool</tt><big>(</big><em>max_workers=None</em>, <em>actor=None</em>, <em>loop=None</em>, <em>maxtasks=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/threads.html#ThreadPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.threads.ThreadPool" title="Permalink to this definition">¶</a></dt>
-<dd><p>A thread pool for an actor.</p>
-<p>This pool maintains a group of threads to perform asynchronous tasks via
-the <a class="reference internal" href="#pulsar.async.threads.ThreadPool.submit" title="pulsar.async.threads.ThreadPool.submit"><tt class="xref py py-meth docutils literal"><span class="pre">submit()</span></tt></a> method.</p>
-<dl class="method">
-<dt id="pulsar.async.threads.ThreadPool.submit">
-<tt class="descname">submit</tt><big>(</big><em>func</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/threads.html#ThreadPool.submit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.threads.ThreadPool.submit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Equivalent to <tt class="docutils literal"><span class="pre">func(*args,</span> <span class="pre">**kwargs)</span></tt>.</p>
-<p>This method create a new task for function <tt class="docutils literal"><span class="pre">func</span></tt> and adds it to
-the queue.
-Return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called back once the task
-has finished.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="queue-event-loop">
-<h3>Queue Event Loop<a class="headerlink" href="#queue-event-loop" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.async.threads.QueueEventLoop">
-<em class="property">class </em><tt class="descclassname">pulsar.async.threads.</tt><tt class="descname">QueueEventLoop</tt><big>(</big><em>executor</em>, <em>iothreadloop=False</em>, <em>logger=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/threads.html#QueueEventLoop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.threads.QueueEventLoop" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">asyncio event loop</em></a> which
-uses <a class="reference internal" href="#pulsar.async.threads.IOqueue" title="pulsar.async.threads.IOqueue"><tt class="xref py py-class docutils literal"><span class="pre">IOqueue</span></tt></a> as its selector.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="ioqueue">
-<h3>IOqueue<a class="headerlink" href="#ioqueue" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.async.threads.IOqueue">
-<em class="property">class </em><tt class="descclassname">pulsar.async.threads.</tt><tt class="descname">IOqueue</tt><big>(</big><em>executor</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/threads.html#IOqueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.threads.IOqueue" title="Permalink to this definition">¶</a></dt>
-<dd><p>A selector based on a distributed queue</p>
-<p>Since there is no way to my knowledge to wake up the queue while
-getting an item from the task queue, the timeout cannot be larger than
-a small number which by default is <tt class="docutils literal"><span class="pre">0.5</span></tt> seconds.</p>
 </dd></dl>
 
 </div>
@@ -391,62 +307,54 @@ a small number which by default is <tt class="docutils literal"><span class="pre
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Asynchonous API</a><ul>
-<li><a class="reference internal" href="#async-object-interface">Async object interface</a></li>
-<li><a class="reference internal" href="#async-utilities">Async Utilities</a><ul>
-<li><a class="reference internal" href="#task">task</a></li>
-<li><a class="reference internal" href="#maybe-async">Maybe Async</a></li>
-<li><a class="reference internal" href="#chain-future">Chain Future</a></li>
-<li><a class="reference internal" href="#coroutine-return">Coroutine return</a></li>
-<li><a class="reference internal" href="#multi-async">Multi Async</a></li>
-<li><a class="reference internal" href="#async-while">Async While</a></li>
-<li><a class="reference internal" href="#run-in-loop">Run in loop</a></li>
-<li><a class="reference internal" href="#yield-from">Yield From</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#executor">Executor</a><ul>
-<li><a class="reference internal" href="#thread-pool">Thread pool</a></li>
-<li><a class="reference internal" href="#queue-event-loop">Queue Event Loop</a></li>
-<li><a class="reference internal" href="#ioqueue">IOqueue</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps/socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">API</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="actor.html"
-                        title="next chapter">Actors API</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../sources/api/async.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -463,29 +371,36 @@ a small number which by default is <tt class="docutils literal"><span class="pre
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../sources/api/async.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

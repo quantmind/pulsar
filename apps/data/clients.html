@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Datastore Clients &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <title>Datastore Clients &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,16 +24,17 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
-    <link rel="next" title="Object Data Mapper" href="odm.html" />
-    <link rel="prev" title="Data Stores" href="index.html" /> 
-</head>
- <body>
+    <link rel="next" title="Available Clients" href="stores.html" />
+    <link rel="prev" title="Data Stores" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -48,43 +44,32 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="odm.html" title="Object Data Mapper"
+          <a href="stores.html" title="Available Clients"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Data Stores"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/data/clients.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="module-pulsar.apps.data.store">
 <span id="datastore-clients"></span><span id="data-stores"></span><h1>Datastore Clients<a class="headerlink" href="#module-pulsar.apps.data.store" title="Permalink to this headline">¶</a></h1>
-<p>Tha main component for pulsar datastore clients is the <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
+<p>Tha main component for pulsar datastore clients is the <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
 class which encapsulates the essential API for communicating and executing
 commands on remote servers.
-A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> can also implement several methods for managing
-the higher level <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
+A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> can also implement several methods for managing
+the higher level <span class="xref std std-ref">object data mapper</span>.</p>
 <div class="section" id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<p>To create a data <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> client one uses the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><tt class="xref py py-func docutils literal"><span class="pre">create_store()</span></tt></a>
-function with a valid <a class="reference internal" href="#connection-string"><em>connection string</em></a>:</p>
+<p>To create a data <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> client one uses the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><code class="xref py py-func docutils literal"><span class="pre">create_store()</span></code></a>
+function with a valid <a class="reference internal" href="#connection-string"><span>connection string</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">name</span>
@@ -106,37 +91,37 @@ parameters. For example:</p>
 <div class="section" id="connection-string">
 <span id="id1"></span><h3>Connection String<a class="headerlink" href="#connection-string" title="Permalink to this headline">¶</a></h3>
 <p>The connection string is a way to specify the various parameters for the
-data store connection. All <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> support a connection string
+data store connection. All <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> support a connection string
 of the form:</p>
 <div class="highlight-python"><div class="highlight"><pre>&lt;scheme&gt;://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;/&lt;database&gt;?param1=...&amp;param2=...
 </pre></div>
 </div>
 <p>where:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">schema</span></tt> is the store name</li>
-<li><tt class="docutils literal"><span class="pre">database</span></tt> is the database name (or number for redis)</li>
-<li><tt class="docutils literal"><span class="pre">username</span></tt> is an optional database username</li>
-<li><tt class="docutils literal"><span class="pre">password</span></tt> is an optional database password</li>
+<li><code class="docutils literal"><span class="pre">schema</span></code> is the store name</li>
+<li><code class="docutils literal"><span class="pre">database</span></code> is the database name (or number for redis)</li>
+<li><code class="docutils literal"><span class="pre">username</span></code> is an optional database username</li>
+<li><code class="docutils literal"><span class="pre">password</span></code> is an optional database password</li>
 </ul>
 </div>
 </div>
 <div class="section" id="implement-a-store">
 <h2>Implement a Store<a class="headerlink" href="#implement-a-store" title="Permalink to this headline">¶</a></h2>
-<p>When implementing a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> there are several methods which need
+<p>When implementing a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> there are several methods which need
 to be covered:</p>
 <ul class="simple">
-<li><a class="reference internal" href="#pulsar.apps.data.store.Store.ping" title="pulsar.apps.data.store.Store.ping"><tt class="xref py py-meth docutils literal"><span class="pre">ping()</span></tt></a> to check if the server is available</li>
-<li><a class="reference internal" href="#pulsar.apps.data.store.Store.connect" title="pulsar.apps.data.store.Store.connect"><tt class="xref py py-meth docutils literal"><span class="pre">connect()</span></tt></a> to create a new connection</li>
-<li><a class="reference internal" href="#pulsar.apps.data.store.Store.execute" title="pulsar.apps.data.store.Store.execute"><tt class="xref py py-meth docutils literal"><span class="pre">execute()</span></tt></a> to execute a command on the store server</li>
+<li><code class="xref py py-meth docutils literal"><span class="pre">ping()</span></code> to check if the server is available</li>
+<li><code class="xref py py-meth docutils literal"><span class="pre">connect()</span></code> to create a new connection</li>
+<li><code class="xref py py-meth docutils literal"><span class="pre">execute()</span></code> to execute a command on the store server</li>
 </ul>
 <p>These additional methods must be implemented only if the store supports
-the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>:</p>
+the <span class="xref std std-ref">object data mapper</span>:</p>
 <ul class="simple">
-<li><a class="reference internal" href="#pulsar.apps.data.store.Store.execute_transaction" title="pulsar.apps.data.store.Store.execute_transaction"><tt class="xref py py-meth docutils literal"><span class="pre">execute_transaction()</span></tt></a> execute a transaction</li>
+<li><code class="xref py py-meth docutils literal"><span class="pre">execute_transaction()</span></code> execute a transaction</li>
 </ul>
-<p>A new store needs to be registered via the <a class="reference internal" href="#pulsar.apps.data.store.register_store" title="pulsar.apps.data.store.register_store"><tt class="xref py py-func docutils literal"><span class="pre">register_store()</span></tt></a>
+<p>A new store needs to be registered via the <a class="reference internal" href="#pulsar.apps.data.store.register_store" title="pulsar.apps.data.store.register_store"><code class="xref py py-func docutils literal"><span class="pre">register_store()</span></code></a>
 function.</p>
-<p>All registered data stores are stored in the <tt class="docutils literal"><span class="pre">data_stores</span></tt> dictionary:</p>
+<p>All registered data stores are stored in the <code class="docutils literal"><span class="pre">data_stores</span></code> dictionary:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">data_stores</span>
 </pre></div>
 </div>
@@ -144,50 +129,50 @@ function.</p>
 </div>
 <div class="section" id="publish-subscribe">
 <span id="apps-pubsub"></span><h2>Publish/Subscribe<a class="headerlink" href="#publish-subscribe" title="Permalink to this headline">¶</a></h2>
-<p>A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> can implement the <a class="reference internal" href="#pulsar.apps.data.store.Store.pubsub" title="pulsar.apps.data.store.Store.pubsub"><tt class="xref py py-meth docutils literal"><span class="pre">pubsub()</span></tt></a> method to return
-a valid <a class="reference internal" href="#pulsar.apps.data.store.PubSub" title="pulsar.apps.data.store.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler.</p>
+<p>A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> can implement the <code class="xref py py-meth docutils literal"><span class="pre">pubsub()</span></code> method to return
+a valid <a class="reference internal" href="#pulsar.apps.data.store.PubSub" title="pulsar.apps.data.store.PubSub"><code class="xref py py-class docutils literal"><span class="pre">PubSub</span></code></a> handler.</p>
 </div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
-<p>The main component of the data store API is the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><tt class="xref py py-func docutils literal"><span class="pre">create_store()</span></tt></a>
-function which creates in one function call a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
+<p>The main component of the data store API is the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><code class="xref py py-func docutils literal"><span class="pre">create_store()</span></code></a>
+function which creates in one function call a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
 object which can be used to interact directly with the backend database
-or indirectly via the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
+or indirectly via the <span class="xref std std-ref">object data mapper</span>.</p>
 <div class="section" id="create-store">
 <h3>Create store<a class="headerlink" href="#create-store" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.data.store.create_store">
-<tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">create_store</tt><big>(</big><em>url</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#create_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.create_store" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> for a valid <tt class="docutils literal"><span class="pre">url</span></tt>.</p>
+<code class="descclassname">pulsar.apps.data.store.</code><code class="descname">create_store</code><span class="sig-paren">(</span><em>url</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#create_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.create_store" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> for a valid <code class="docutils literal"><span class="pre">url</span></code>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>url</strong> &#8211; <p>a valid <tt class="docutils literal"><span class="pre">url</span></tt> takes the following forms:</p>
-<p><a class="reference internal" href="stores.html#store-pulsar"><em>Pulsar datastore</em></a>:</p>
+<li><strong>url</strong> &#8211; <p>a valid <code class="docutils literal"><span class="pre">url</span></code> takes the following forms:</p>
+<p><a class="reference internal" href="stores.html#store-pulsar"><span>Pulsar datastore</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre>pulsar://user:password@127.0.0.1:6410
 </pre></div>
 </div>
-<p><a class="reference internal" href="stores.html#store-redis"><em>Redis</em></a>:</p>
+<p><a class="reference internal" href="stores.html#store-redis"><span>Redis</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre>redis://user:password@127.0.0.1:6500/11?namespace=testdb
 </pre></div>
 </div>
-<p><a class="reference internal" href="stores.html#store-couchdb"><em>CouchDb</em></a>:</p>
+<p><span class="xref std std-ref">CouchDb</span>:</p>
 <div class="highlight-python"><div class="highlight"><pre>couchdb://user:password@127.0.0.1:6500/testdb
 https+couchdb://user:password@127.0.0.1:6500/testdb
 </pre></div>
 </div>
 </li>
-<li><strong>kw</strong> &#8211; additional key-valued parameters to pass to the <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
+<li><strong>kw</strong> &#8211; additional key-valued parameters to pass to the <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
 initialisation method. It can contains parameters such as
-<tt class="docutils literal"><span class="pre">database</span></tt>, <tt class="docutils literal"><span class="pre">user</span></tt> and <tt class="docutils literal"><span class="pre">password</span></tt> to override the
-<tt class="docutils literal"><span class="pre">url</span></tt> values. Additional parameters are processed by the
-<tt class="xref py py-meth docutils literal"><span class="pre">Store._init()</span></tt> method.</li>
+<code class="docutils literal"><span class="pre">database</span></code>, <code class="docutils literal"><span class="pre">user</span></code> and <code class="docutils literal"><span class="pre">password</span></code> to overridexo the
+<code class="docutils literal"><span class="pre">url</span></code> values. Additional parameters are processed by the
+<code class="xref py py-meth docutils literal"><span class="pre">Store._init()</span></code> method.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>.</p>
 </td>
 </tr>
 </tbody>
@@ -198,11 +183,11 @@ initialisation method. It can contains parameters such as
 <div class="section" id="start-store">
 <h3>Start store<a class="headerlink" href="#start-store" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="pulsar.apps.data.stores.pulsards.startds.start_store">
-<tt class="descclassname">pulsar.apps.data.stores.pulsards.startds.</tt><tt class="descname">start_store</tt><big>(</big><em>url</em>, <em>workers=0</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/startds.html#start_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.startds.start_store" title="Permalink to this definition">¶</a></dt>
-<dd><p>Equivalent to <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><tt class="xref py py-func docutils literal"><span class="pre">create_store()</span></tt></a> for most cases excepts when the
-<tt class="docutils literal"><span class="pre">url</span></tt> is for a pulsar store not yet started.
-In this case, a <a class="reference internal" href="../ds.html#pulsar.apps.ds.server.PulsarDS" title="pulsar.apps.ds.server.PulsarDS"><tt class="xref py py-class docutils literal"><span class="pre">PulsarDS</span></tt></a> is started.</p>
+<dt id="pulsar.apps.data.pulsards.startds.start_store">
+<code class="descclassname">pulsar.apps.data.pulsards.startds.</code><code class="descname">start_store</code><span class="sig-paren">(</span><em>app</em>, <em>url</em>, <em>workers=0</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/pulsards/startds.html#start_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.pulsards.startds.start_store" title="Permalink to this definition">¶</a></dt>
+<dd><p>Equivalent to <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><code class="xref py py-func docutils literal"><span class="pre">create_store()</span></code></a> for most cases excepts when the
+<code class="docutils literal"><span class="pre">url</span></code> is for a pulsar store not yet started.
+In this case, a <a class="reference internal" href="../ds.html#pulsar.apps.ds.server.PulsarDS" title="pulsar.apps.ds.server.PulsarDS"><code class="xref py py-class docutils literal"><span class="pre">PulsarDS</span></code></a> is started.</p>
 </dd></dl>
 
 </div>
@@ -210,9 +195,9 @@ In this case, a <a class="reference internal" href="../ds.html#pulsar.apps.ds.se
 <h3>Register a new store<a class="headerlink" href="#register-a-new-store" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.data.store.register_store">
-<tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">register_store</tt><big>(</big><em>name</em>, <em>dotted_path</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#register_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.register_store" title="Permalink to this definition">¶</a></dt>
-<dd><p>Register a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> with schema <tt class="docutils literal"><span class="pre">name</span></tt> which
-can be found at the python <tt class="docutils literal"><span class="pre">dotted_path</span></tt>.</p>
+<code class="descclassname">pulsar.apps.data.store.</code><code class="descname">register_store</code><span class="sig-paren">(</span><em>name</em>, <em>dotted_path</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#register_store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.register_store" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> with schema <code class="docutils literal"><span class="pre">name</span></code> which
+can be found at the python <code class="docutils literal"><span class="pre">dotted_path</span></code>.</p>
 </dd></dl>
 
 </div>
@@ -220,87 +205,34 @@ can be found at the python <tt class="docutils literal"><span class="pre">dotted
 <h3>Store<a class="headerlink" href="#store" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.store.Store">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">Store</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop=None</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for an asynchronous <a class="reference internal" href="#data-stores"><em>data stores</em></a>.</p>
-<p>It is an <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> for accessing and retrieving
-data from remote data servers such as redis, couchdb and so forth.
-A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> should not be created directly, the high level
-<a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><tt class="xref py py-func docutils literal"><span class="pre">create_store()</span></tt></a> function should be used instead.</p>
-<dl class="attribute">
-<dt id="pulsar.apps.data.store.Store._host">
-<tt class="descname">_host</tt><a class="headerlink" href="#pulsar.apps.data.store.Store._host" title="Permalink to this definition">¶</a></dt>
-<dd><p>The remote host, tuple or string</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.data.store.Store._user">
-<tt class="descname">_user</tt><a class="headerlink" href="#pulsar.apps.data.store.Store._user" title="Permalink to this definition">¶</a></dt>
-<dd><p>The user name</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.data.store.Store._password">
-<tt class="descname">_password</tt><a class="headerlink" href="#pulsar.apps.data.store.Store._password" title="Permalink to this definition">¶</a></dt>
-<dd><p>The user password</p>
-</dd></dl>
-
-<dl class="attribute">
+<em class="property">class </em><code class="descclassname">pulsar.apps.data.store.</code><code class="descname">Store</code><span class="sig-paren">(</span><em>name</em>, <em>host</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
 <dt id="pulsar.apps.data.store.Store.name">
-<tt class="descname">name</tt><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.name" title="Permalink to this definition">¶</a></dt>
+<code class="descname">name</code><a class="headerlink" href="#pulsar.apps.data.store.Store.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Store name</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.data.store.Store.database">
-<tt class="descname">database</tt><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.database" title="Permalink to this definition">¶</a></dt>
+<code class="descname">database</code><a class="headerlink" href="#pulsar.apps.data.store.Store.database" title="Permalink to this definition">¶</a></dt>
 <dd><p>Database name/number associated with this store.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.data.store.Store.encoding">
-<tt class="descname">encoding</tt><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.encoding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.encoding" title="Permalink to this definition">¶</a></dt>
-<dd><p>Store encoding (usually <tt class="docutils literal"><span class="pre">utf-8</span></tt>)</p>
+<code class="descname">encoding</code><a class="headerlink" href="#pulsar.apps.data.store.Store.encoding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store encoding (usually <code class="docutils literal"><span class="pre">utf-8</span></code>)</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.data.store.Store.dns">
-<tt class="descname">dns</tt><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.dns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.dns" title="Permalink to this definition">¶</a></dt>
+<code class="descname">dns</code><a class="headerlink" href="#pulsar.apps.data.store.Store.dns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Domain name server</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.store.Store.connect">
-<tt class="descname">connect</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.connect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Connect with store server</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.execute">
-<tt class="descname">execute</tt><big>(</big><em>*args</em>, <em>**options</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.execute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute a command</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.ping">
-<tt class="descname">ping</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.ping" title="Permalink to this definition">¶</a></dt>
-<dd><p>Used to check if the data server is available</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.client">
-<tt class="descname">client</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a client for the Store if implemented</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.pubsub">
-<tt class="descname">pubsub</tt><big>(</big><em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.pubsub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.pubsub" title="Permalink to this definition">¶</a></dt>
-<dd><p>Obtain a <a class="reference internal" href="#pulsar.apps.data.store.PubSub" title="pulsar.apps.data.store.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler for the Store if implemented</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.create_database">
-<tt class="descname">create_database</tt><big>(</big><em>dbname=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.create_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.create_database" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.data.store.Store.database_create">
+<code class="descname">database_create</code><span class="sig-paren">(</span><em>dbname=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.database_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.database_create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new database in this store.</p>
 <p>By default it does nothing, stores must implement this method
 only if they support database creation.</p>
@@ -309,16 +241,16 @@ only if they support database creation.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dbname</strong> &#8211; optional database name. If not supplied a
-database with <a class="reference internal" href="#pulsar.apps.data.store.Store.database" title="pulsar.apps.data.store.Store.database"><tt class="xref py py-attr docutils literal"><span class="pre">database</span></tt></a> is created.</td>
+database with <a class="reference internal" href="#pulsar.apps.data.store.Store.database" title="pulsar.apps.data.store.Store.database"><code class="xref py py-attr docutils literal"><span class="pre">database</span></code></a> is created.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.store.Store.delete_database">
-<tt class="descname">delete_database</tt><big>(</big><em>dbname=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.delete_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.delete_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delete a database <tt class="docutils literal"><span class="pre">dbname</span></tt></p>
+<dt id="pulsar.apps.data.store.Store.database_drop">
+<code class="descname">database_drop</code><span class="sig-paren">(</span><em>dbname=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.database_drop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.database_drop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop a database <code class="docutils literal"><span class="pre">dbname</span></code></p>
 <p>By default it does nothing, stores must implement this method
 only if they support database deletion.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -326,156 +258,32 @@ only if they support database deletion.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dbname</strong> &#8211; optional database name. If not supplied a
-database named <a class="reference internal" href="#pulsar.apps.data.store.Store.database" title="pulsar.apps.data.store.Store.database"><tt class="xref py py-attr docutils literal"><span class="pre">database</span></tt></a> is deleted.</td>
+database named <a class="reference internal" href="#pulsar.apps.data.store.Store.database" title="pulsar.apps.data.store.Store.database"><code class="xref py py-attr docutils literal"><span class="pre">database</span></code></a> is deleted.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.store.Store.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close all open connections</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.flush">
-<tt class="descname">flush</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.flush" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flush the store.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.encode_bytes">
-<tt class="descname">encode_bytes</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.encode_bytes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.encode_bytes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encode bytes <tt class="docutils literal"><span class="pre">data</span></tt></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> &#8211; a bytes string</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bytes or string</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.dencode_bytes">
-<tt class="descname">dencode_bytes</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.dencode_bytes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.dencode_bytes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Decode bytes <tt class="docutils literal"><span class="pre">data</span></tt></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> &#8211; bytes or string</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bytes</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.transaction">
-<tt class="descname">transaction</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.transaction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a transaction for this store.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.create_table">
-<tt class="descname">create_table</tt><big>(</big><em>model</em>, <em>remove_existing=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.create_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.create_table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create the table for <tt class="docutils literal"><span class="pre">model</span></tt>.</p>
-<p>This method is used by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.
+<dt id="pulsar.apps.data.store.Store.table_create">
+<code class="descname">table_create</code><span class="sig-paren">(</span><em>table_name</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.table_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.table_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the table for <code class="docutils literal"><span class="pre">model</span></code>.</p>
+<p>This method is used by the <span class="xref std std-ref">object data mapper</span>.
 By default it does nothing.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.store.Store.drop_table">
-<tt class="descname">drop_table</tt><big>(</big><em>model</em>, <em>remove_existing=False</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.drop_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.drop_table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Drop the table for <tt class="docutils literal"><span class="pre">model</span></tt>.</p>
-<p>This method is used by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.
+<dt id="pulsar.apps.data.store.Store.table_drop">
+<code class="descname">table_drop</code><span class="sig-paren">(</span><em>table_name</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.table_drop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.table_drop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop the table for <code class="docutils literal"><span class="pre">model</span></code>.</p>
+<p>This method is used by the <span class="xref std std-ref">object data mapper</span>.
 By default it does nothing.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.data.store.Store.table_info">
-<tt class="descname">table_info</tt><big>(</big><em>model</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.table_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.table_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Information about the table/collection mapping <tt class="docutils literal"><span class="pre">model</span></tt></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.create_model">
-<tt class="descname">create_model</tt><big>(</big><em>manager</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.create_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new model from a <tt class="docutils literal"><span class="pre">manager</span></tt></p>
-<p>Method used by the <a class="reference internal" href="odm.html#pulsar.apps.data.odm.manager.Manager" title="pulsar.apps.data.odm.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">Manager</span></tt></a> callable method.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.execute_transaction">
-<tt class="descname">execute_transaction</tt><big>(</big><em>transaction</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.execute_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.execute_transaction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute a  <a class="reference internal" href="#pulsar.apps.data.store.Store.transaction" title="pulsar.apps.data.store.Store.transaction"><tt class="xref py py-meth docutils literal"><span class="pre">transaction()</span></tt></a> in a multi-store
-<a class="reference internal" href="odm.html#pulsar.apps.data.odm.transaction.Transaction" title="pulsar.apps.data.odm.transaction.Transaction"><tt class="xref py py-class docutils literal"><span class="pre">Transaction</span></tt></a>.</p>
-<p>THis methid is used by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a> and
-should not be invoked directly.
-It returns a list of models committed to the backend server.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.compile_query">
-<tt class="descname">compile_query</tt><big>(</big><em>query</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.compile_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.compile_query" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compile the <a class="reference internal" href="odm.html#pulsar.apps.data.odm.query.Query" title="pulsar.apps.data.odm.query.Query"><tt class="xref py py-class docutils literal"><span class="pre">Query</span></tt></a> <tt class="docutils literal"><span class="pre">query</span></tt>.</p>
-<p>Method required by the <tt class="xref py py-class docutils literal"><span class="pre">Object</span> <span class="pre">data</span> <span class="pre">mapper</span></tt>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an instance of <a class="reference internal" href="odm.html#pulsar.apps.data.odm.query.CompiledQuery" title="pulsar.apps.data.odm.query.CompiledQuery"><tt class="xref py py-class docutils literal"><span class="pre">CompiledQuery</span></tt></a> if implemented</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.get_model">
-<tt class="descname">get_model</tt><big>(</big><em>manager</em>, <em>pkvalue</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.get_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch an instance of a <tt class="docutils literal"><span class="pre">model</span></tt> with primary key <tt class="docutils literal"><span class="pre">pkvalue</span></tt>.</p>
-<p>This method required by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>manager</strong> &#8211; the <a class="reference internal" href="odm.html#pulsar.apps.data.odm.manager.Manager" title="pulsar.apps.data.odm.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">Manager</span></tt></a> calling this method</li>
-<li><strong>pkvalue</strong> &#8211; the primary key of the model to retrieve</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.has_query">
-<tt class="descname">has_query</tt><big>(</big><em>query_type</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.has_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.has_query" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if this <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> supports <tt class="docutils literal"><span class="pre">query_type</span></tt>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query_type</strong> &#8211; a string indicating the query type to check
-(<tt class="docutils literal"><span class="pre">filter</span></tt>, <tt class="docutils literal"><span class="pre">exclude</span></tt>, <tt class="docutils literal"><span class="pre">search</span></tt>).</td>
-</tr>
-</tbody>
-</table>
-<p>This method is used by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.model_data">
-<tt class="descname">model_data</tt><big>(</big><em>model</em>, <em>action</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.model_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.model_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generator of <tt class="docutils literal"><span class="pre">field,</span> <span class="pre">value</span></tt> pair for the data store.</p>
-<p>By default invokes the <tt class="xref py py-class docutils literal"><span class="pre">ModelMeta.store_data</span></tt> method.</p>
+<dt id="pulsar.apps.data.store.Store.table_all">
+<code class="descname">table_all</code><span class="sig-paren">(</span><em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.table_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.table_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Information about the table/collection mapping <code class="docutils literal"><span class="pre">model</span></code></p>
 </dd></dl>
 
 </dd></dl>
@@ -485,11 +293,11 @@ It returns a list of models committed to the backend server.</p>
 <h3>Command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.store.Command">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">Command</tt><big>(</big><em>args</em>, <em>action=0</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Command" title="Permalink to this definition">¶</a></dt>
-<dd><p>A command executed during a in a <a class="reference internal" href="#pulsar.apps.data.store.Store.execute_transaction" title="pulsar.apps.data.store.Store.execute_transaction"><tt class="xref py py-meth docutils literal"><span class="pre">execute_transaction()</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.data.store.</code><code class="descname">Command</code><span class="sig-paren">(</span><em>args</em>, <em>action=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Command" title="Permalink to this definition">¶</a></dt>
+<dd><p>A command executed during a in a <code class="xref py py-meth docutils literal"><span class="pre">execute_transaction()</span></code></p>
 <dl class="attribute">
 <dt id="pulsar.apps.data.store.Command.action">
-<tt class="descname">action</tt><a class="headerlink" href="#pulsar.apps.data.store.Command.action" title="Permalink to this definition">¶</a></dt>
+<code class="descname">action</code><a class="headerlink" href="#pulsar.apps.data.store.Command.action" title="Permalink to this definition">¶</a></dt>
 <dd><p>Type of action:
 * 0 custom command
 * 1 equivalent to an SQL INSERT
@@ -503,10 +311,10 @@ It returns a list of models committed to the backend server.</p>
 <h3>PubSub<a class="headerlink" href="#pubsub" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.data.store.PubSub">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.data.store.</tt><tt class="descname">PubSub</tt><big>(</big><em>store</em>, <em>protocol=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.data.store.</code><code class="descname">PubSub</code><span class="sig-paren">(</span><em>store</em>, <em>protocol=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub" title="Permalink to this definition">¶</a></dt>
 <dd><p>A Publish/Subscriber interface.</p>
-<p>A <a class="reference internal" href="#pulsar.apps.data.store.PubSub" title="pulsar.apps.data.store.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler is never initialised directly, instead,
-the <a class="reference internal" href="#pulsar.apps.data.store.Store.pubsub" title="pulsar.apps.data.store.Store.pubsub"><tt class="xref py py-meth docutils literal"><span class="pre">pubsub()</span></tt></a> method of a data <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
+<p>A <a class="reference internal" href="#pulsar.apps.data.store.PubSub" title="pulsar.apps.data.store.PubSub"><code class="xref py py-class docutils literal"><span class="pre">PubSub</span></code></a> handler is never initialised directly, instead,
+the <code class="xref py py-meth docutils literal"><span class="pre">pubsub()</span></code> method of a data <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
 is used.</p>
 <p>To listen for messages one adds clients to the handler:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">do_somethind</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
@@ -518,88 +326,88 @@ is used.</p>
 </pre></div>
 </div>
 <p>You can add as many listening clients as you like. Clients are functions
-which receive two parameters only, the <tt class="docutils literal"><span class="pre">channel</span></tt> sending the message
-and the <tt class="docutils literal"><span class="pre">message</span></tt>.</p>
-<p>A <a class="reference internal" href="#pulsar.apps.data.store.PubSub" title="pulsar.apps.data.store.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler can be used to publish messages too:</p>
+which receive two parameters only, the <code class="docutils literal"><span class="pre">channel</span></code> sending the message
+and the <code class="docutils literal"><span class="pre">message</span></code>.</p>
+<p>A <a class="reference internal" href="#pulsar.apps.data.store.PubSub" title="pulsar.apps.data.store.PubSub"><code class="xref py py-class docutils literal"><span class="pre">PubSub</span></code></a> handler can be used to publish messages too:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s">&#39;mychannel&#39;</span><span class="p">,</span> <span class="s">&#39;Hello&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>An additional <tt class="docutils literal"><span class="pre">protocol</span></tt> object can be supplied. The protocol must
-implement the <tt class="docutils literal"><span class="pre">encode</span></tt> and <tt class="docutils literal"><span class="pre">decode</span></tt> methods.</p>
+<p>An additional <code class="docutils literal"><span class="pre">protocol</span></code> object can be supplied. The protocol must
+implement the <code class="docutils literal"><span class="pre">encode</span></code> and <code class="docutils literal"><span class="pre">decode</span></code> methods.</p>
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.publish">
-<tt class="descname">publish</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.publish" title="Permalink to this definition">¶</a></dt>
-<dd><p>Publish a new <tt class="docutils literal"><span class="pre">message</span></tt> to a <tt class="docutils literal"><span class="pre">channel</span></tt>.</p>
+<code class="descname">publish</code><span class="sig-paren">(</span><em>channel</em>, <em>message</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.publish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publish a new <code class="docutils literal"><span class="pre">message</span></code> to a <code class="docutils literal"><span class="pre">channel</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.count">
-<tt class="descname">count</tt><big>(</big><em>*channels</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.count" title="Permalink to this definition">¶</a></dt>
+<code class="descname">count</code><span class="sig-paren">(</span><em>*channels</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of subscribers (not counting clients
 subscribed to patterns) for the specified channels.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.channels">
-<tt class="descname">channels</tt><big>(</big><em>pattern=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.channels" title="Permalink to this definition">¶</a></dt>
+<code class="descname">channels</code><span class="sig-paren">(</span><em>pattern=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.channels" title="Permalink to this definition">¶</a></dt>
 <dd><p>Lists the currently active channels.</p>
 <p>An active channel is a Pub/Sub channel with one ore more subscribers
 (not including clients subscribed to patterns).
-If no <tt class="docutils literal"><span class="pre">pattern</span></tt> is specified, all the channels are listed,
-otherwise if <tt class="docutils literal"><span class="pre">pattern</span></tt> is specified only channels matching the
+If no <code class="docutils literal"><span class="pre">pattern</span></code> is specified, all the channels are listed,
+otherwise if <code class="docutils literal"><span class="pre">pattern</span></code> is specified only channels matching the
 specified glob-style pattern are listed.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.psubscribe">
-<tt class="descname">psubscribe</tt><big>(</big><em>pattern</em>, <em>*patterns</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.psubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.psubscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subscribe to a list of <tt class="docutils literal"><span class="pre">patterns</span></tt>.</p>
+<code class="descname">psubscribe</code><span class="sig-paren">(</span><em>pattern</em>, <em>*patterns</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.psubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.psubscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subscribe to a list of <code class="docutils literal"><span class="pre">patterns</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.punsubscribe">
-<tt class="descname">punsubscribe</tt><big>(</big><em>*channels</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.punsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.punsubscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unsubscribe from a list of <tt class="docutils literal"><span class="pre">patterns</span></tt>.</p>
+<code class="descname">punsubscribe</code><span class="sig-paren">(</span><em>*channels</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.punsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.punsubscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unsubscribe from a list of <code class="docutils literal"><span class="pre">patterns</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.subscribe">
-<tt class="descname">subscribe</tt><big>(</big><em>channel</em>, <em>*channels</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.subscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.subscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subscribe to a list of <tt class="docutils literal"><span class="pre">channels</span></tt>.</p>
+<code class="descname">subscribe</code><span class="sig-paren">(</span><em>channel</em>, <em>*channels</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.subscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.subscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subscribe to a list of <code class="docutils literal"><span class="pre">channels</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.unsubscribe">
-<tt class="descname">unsubscribe</tt><big>(</big><em>*channels</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.unsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.unsubscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Un-subscribe from a list of <tt class="docutils literal"><span class="pre">channels</span></tt>.</p>
+<code class="descname">unsubscribe</code><span class="sig-paren">(</span><em>*channels</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.unsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.unsubscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-subscribe from a list of <code class="docutils literal"><span class="pre">channels</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.close" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop listening for messages.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.add_client">
-<tt class="descname">add_client</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.add_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.add_client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a new <tt class="docutils literal"><span class="pre">client</span></tt> to the set of all <tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt>.</p>
+<code class="descname">add_client</code><span class="sig-paren">(</span><em>client</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.add_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.add_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new <code class="docutils literal"><span class="pre">client</span></code> to the set of all <code class="xref py py-attr docutils literal"><span class="pre">clients</span></code>.</p>
 <p>Clients must be callable accepting two parameters, the channel and
 the message. When a new message is received
-from the publisher, the <a class="reference internal" href="#pulsar.apps.data.store.PubSub.broadcast" title="pulsar.apps.data.store.PubSub.broadcast"><tt class="xref py py-meth docutils literal"><span class="pre">broadcast()</span></tt></a> method will notify all
-<tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt> via the <tt class="docutils literal"><span class="pre">callable</span></tt> method.</p>
+from the publisher, the <a class="reference internal" href="#pulsar.apps.data.store.PubSub.broadcast" title="pulsar.apps.data.store.PubSub.broadcast"><code class="xref py py-meth docutils literal"><span class="pre">broadcast()</span></code></a> method will notify all
+<code class="xref py py-attr docutils literal"><span class="pre">clients</span></code> via the <code class="docutils literal"><span class="pre">callable</span></code> method.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.remove_client">
-<tt class="descname">remove_client</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.remove_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.remove_client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove <em>client</em> from the set of all <tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt>.</p>
+<code class="descname">remove_client</code><span class="sig-paren">(</span><em>client</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.remove_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.remove_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove <em>client</em> from the set of all <code class="xref py py-attr docutils literal"><span class="pre">clients</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.store.PubSub.broadcast">
-<tt class="descname">broadcast</tt><big>(</big><em>response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.broadcast" title="Permalink to this definition">¶</a></dt>
-<dd><p>Broadcast <tt class="docutils literal"><span class="pre">message</span></tt> to all <tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt>.</p>
+<code class="descname">broadcast</code><span class="sig-paren">(</span><em>response</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.PubSub.broadcast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Broadcast <code class="docutils literal"><span class="pre">message</span></code> to all <code class="xref py py-attr docutils literal"><span class="pre">clients</span></code>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -612,59 +420,54 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.data.st
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../index.html">
-  <img class="logo" width="200" src="../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Datastore Clients</a><ul>
-<li><a class="reference internal" href="#getting-started">Getting Started</a><ul>
-<li><a class="reference internal" href="#connection-string">Connection String</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pics.html">Pics</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#implement-a-store">Implement a Store</a></li>
-<li><a class="reference internal" href="#publish-subscribe">Publish/Subscribe</a></li>
-<li><a class="reference internal" href="#api">API</a><ul>
-<li><a class="reference internal" href="#create-store">Create store</a></li>
-<li><a class="reference internal" href="#start-store">Start store</a></li>
-<li><a class="reference internal" href="#register-a-new-store">Register a new store</a></li>
-<li><a class="reference internal" href="#store">Store</a></li>
-<li><a class="reference internal" href="#command">Command</a></li>
-<li><a class="reference internal" href="#pubsub">PubSub</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">Data Stores</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="odm.html"
-                        title="next chapter">Object Data Mapper</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../../sources/apps/data/clients.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
       <input type="text" name="q" />
@@ -681,29 +484,36 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.data.st
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../../sources/apps/data/clients.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

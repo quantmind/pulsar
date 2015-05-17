@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Overview &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
+    <title>Overview &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,15 +24,16 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
-    <link rel="prev" title="Pulsar" href="index.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Pulsar" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -52,29 +48,17 @@
         <li class="right" >
           <a href="index.html" title="Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/overview.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="overview">
 <span id="intro-overview"></span><h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
-<a class="reference internal image-reference" href="http://quantmind.github.io/pulsar/images/pulsar-banner.svg"><img alt="pulsar" src="http://quantmind.github.io/pulsar/images/pulsar-banner.svg" width="90%" /></a>
 <p>Event driven concurrent framework for python.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.</p>
@@ -82,9 +66,9 @@ activities in different threads and/or processes.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=master" /></a> <a class="reference external" href="https://coveralls.io/r/quantmind/pulsar?branch=master"><img alt="coverage-master" src="https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=master" /></a></td>
+<tr class="field-odd field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://img.shields.io/travis/quantmind/pulsar/master.svg" /></a> <a class="reference external" href="https://coveralls.io/r/quantmind/pulsar?branch=master"><img alt="coverage-master" src="https://img.shields.io/coveralls/quantmind/pulsar/master.svg" /></a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=dev" /></a> <a class="reference external" href="https://coveralls.io/r/quantmind/pulsar?branch=dev"><img alt="coverage-dev" src="https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=dev" /></a></td>
+<tr class="field-even field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://img.shields.io/travis/quantmind/pulsar/dev.svg" /></a> <a class="reference external" href="https://coveralls.io/r/quantmind/pulsar?branch=dev"><img alt="coverage-dev" src="https://img.shields.io/coveralls/quantmind/pulsar/dev.svg" /></a></td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://pythonhosted.org/pulsar/">http://pythonhosted.org/pulsar/</a></td>
 </tr>
@@ -96,16 +80,16 @@ activities in different threads and/or processes.</p>
 </tr>
 <tr class="field-odd field"><th class="field-name">Design by:</th><td class="field-body"><a class="reference external" href="http://quantmind.com">Quantmind</a> and <a class="reference external" href="http://lucasbardella.com">Luca Sbardella</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 2.7, 3.3, 3.4 and <a class="reference external" href="http://pypy.org/">pypy</a></td>
+<tr class="field-even field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 3.4 and above</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Keywords:</th><td class="field-body">client, server, asynchronous, concurrency, actor, thread, process,
 socket, task queue, wsgi, websocket, redis, json-rpc</td>
 </tr>
 </tbody>
 </table>
-<p>An example of a web server written with <tt class="docutils literal"><span class="pre">pulsar</span></tt> which responds with
+<p>An example of a web server written with <code class="docutils literal"><span class="pre">pulsar</span></code> which responds with
 &#8220;Hello World!&#8221; for every request:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
 <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;Hello World!</span><span class="se">\n</span><span class="s">&#39;</span>
@@ -122,7 +106,7 @@ socket, task queue, wsgi, websocket, redis, json-rpc</td>
 </pre></div>
 </div>
 <p>Pulsar&#8217;s goal is to provide an easy way to build scalable network programs.
-In the <tt class="docutils literal"><span class="pre">Hello</span> <span class="pre">world!</span></tt> web server example above, many client
+In the <code class="docutils literal"><span class="pre">Hello</span> <span class="pre">world!</span></code> web server example above, many client
 connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.</p>
@@ -131,12 +115,7 @@ it can be configured to run in multi-processing mode, multi-threading mode or
 a combination of the two.</p>
 <div class="section" id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar requires and install the following packages:</p>
-<ul class="simple">
-<li><a class="reference external" href="https://pypi.python.org/pypi/trollius">trollius</a></li>
-<li><a class="reference external" href="https://pypi.python.org/pypi/asyncio">asyncio</a> (python 3.3 only)</li>
-</ul>
-<p>Install via <tt class="docutils literal"><span class="pre">pip</span></tt>:</p>
+<p>Pulsar has no hard dependencies, install via pi:</p>
 <div class="highlight-python"><div class="highlight"><pre>pip install pulsar
 </pre></div>
 </div>
@@ -153,8 +132,6 @@ Out of the box it is shipped with the the following:</p>
 <li>WSGI server</li>
 <li>JSON-RPC</li>
 <li>Web Sockets</li>
-<li>Task queue</li>
-<li>Shell</li>
 <li>Test suite</li>
 <li>Data stores</li>
 <li><a class="reference external" href="https://www.djangoproject.com/">django</a> integration</li>
@@ -162,30 +139,28 @@ Out of the box it is shipped with the the following:</p>
 </div>
 <div class="section" id="examples">
 <span id="id1"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
-<p>Check out the <tt class="docutils literal"><span class="pre">examples</span></tt> directory for various working applications.
+<p>Check out the <code class="docutils literal"><span class="pre">examples</span></code> directory for various working applications.
 It includes:</p>
 <ul class="simple">
 <li>Hello world! wsgi example</li>
 <li>An Httpbin wsgi application</li>
 <li>An HTTP Proxy server</li>
 <li>A JSON-RPC Calculator server</li>
-<li>A taskqueue application with a JSON-RPC interface</li>
 <li>Websocket random graph.</li>
 <li>Websocket chat room.</li>
 <li><a class="reference external" href="https://www.djangoproject.com/">django</a> web site with a websocket based chat room.</li>
-<li>A web mail application which uses <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a> IMAP4 API.</li>
 <li>The <a class="reference external" href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">dining philosophers problem</a>.</li>
 <li>Asynchronous shell.</li>
 </ul>
 </div>
 <div class="section" id="design">
 <h2>Design<a class="headerlink" href="#design" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar internals are based on <a class="reference external" href="http://en.wikipedia.org/wiki/Actor_model">actors primitive</a>. <tt class="docutils literal"><span class="pre">Actors</span></tt> are the <em>atoms</em>
+<p>Pulsar internals are based on <a class="reference external" href="http://en.wikipedia.org/wiki/Actor_model">actors primitive</a>. <code class="docutils literal"><span class="pre">Actors</span></code> are the <em>atoms</em>
 of pulsar&#8217;s concurrent computation, they do not share state between them,
 communication is achieved via asynchronous inter-process message passing,
 implemented using the standard python socket library.</p>
-<p>Two special classes of actors are the <tt class="docutils literal"><span class="pre">Arbiter</span></tt>, used as a <a class="reference external" href="http://en.wikipedia.org/wiki/Singleton_pattern">singleton</a>,
-and the <tt class="docutils literal"><span class="pre">Monitor</span></tt>, a manager of several actors performing similar functions.
+<p>Two special classes of actors are the <code class="docutils literal"><span class="pre">Arbiter</span></code>, used as a <a class="reference external" href="http://en.wikipedia.org/wiki/Singleton_pattern">singleton</a>,
+and the <code class="docutils literal"><span class="pre">Monitor</span></code>, a manager of several actors performing similar functions.
 The Arbiter runs the main eventloop and it controls the life of all actors.
 Monitors manage group of actors performing similar functions, You can think
 of them as a pool of actors.</p>
@@ -198,17 +173,16 @@ uses them to add additional functionalities or improve performance:</p>
 <ul class="simple">
 <li><a class="reference external" href="http://code.google.com/p/py-setproctitle/">setproctitle</a>: if installed, pulsar can use it to change the processes names
 of the running application.</li>
-<li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary
+<li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <code class="docutils literal"><span class="pre">system</span></code> key is available in the dictionary
 returned by Actor info method.</li>
-<li><a class="reference external" href="https://pypi.python.org/pypi/ujson">ujson</a>: if installed it is used instead of the native <tt class="docutils literal"><span class="pre">json</span></tt> module.</li>
-<li><a class="reference external" href="https://www.djangoproject.com/">django</a>: required by the <tt class="docutils literal"><span class="pre">pulsar.apps.pulse</span></tt> application.</li>
-<li><a class="reference external" href="https://pypi.python.org/pypi/Unidecode">unidecode</a>: to enhance the <tt class="docutils literal"><span class="pre">slugify</span></tt> function</li>
+<li><a class="reference external" href="https://pypi.python.org/pypi/ujson">ujson</a>: if installed it is used instead of the native <code class="docutils literal"><span class="pre">json</span></code> module.</li>
+<li><a class="reference external" href="https://www.djangoproject.com/">django</a>: required by the <code class="docutils literal"><span class="pre">pulsar.apps.pulse</span></code> application.</li>
+<li><a class="reference external" href="https://pypi.python.org/pypi/Unidecode">unidecode</a>: to enhance the <code class="docutils literal"><span class="pre">slugify</span></code> function</li>
 </ul>
 </div>
 <div class="section" id="running-tests">
 <h2>Running Tests<a class="headerlink" href="#running-tests" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar test suite uses the pulsar test application.
-If not running on python 3.4 or above the <a class="reference external" href="http://pypi.python.org/pypi/mock">mock</a> is needed. To run tests:</p>
+<p>Pulsar test suite uses the pulsar test application. To run tests:</p>
 <div class="highlight-python"><div class="highlight"><pre>python runtests.py
 </pre></div>
 </div>
@@ -217,21 +191,9 @@ If not running on python 3.4 or above the <a class="reference external" href="ht
 </pre></div>
 </div>
 <p><a class="reference external" href="http://www.python.org/dev/peps/pep-0008/">pep8</a> check (requires pep8 package):</p>
-<div class="highlight-python"><div class="highlight"><pre>python runtests.py --pep8 pulsar
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pep8</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="kudos">
-<span id="kudo"></span><h2>Kudos<a class="headerlink" href="#kudos" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar project started as a fork of <a class="reference external" href="http://gunicorn.org/">gunicorn</a>
-and since version 0.5 has been implemented on top of asyncio
-(<a class="reference external" href="https://code.google.com/p/tulip/">tulip</a> and <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">PEP-3156</a>).
-Pulsar uses several snippet of code from around the open-source
-community, in particular:</p>
-<ul class="simple">
-<li>A python HTTP Parser originally written by <a class="reference external" href="https://github.com/benoitc">benoitc</a>.</li>
-<li>A <tt class="docutils literal"><span class="pre">url</span></tt> Rule class originally from <a class="reference external" href="http://werkzeug.pocoo.org/">werkzeug</a>.</li>
-</ul>
 </div>
 <div class="section" id="contributing">
 <span id="id2"></span><h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
@@ -239,25 +201,18 @@ community, in particular:</p>
 of course. To do so, simply follow these guidelines:</p>
 <ul class="simple">
 <li>Fork <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar</a> on github</li>
-<li>Create a topic branch <tt class="docutils literal"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">my_branch</span></tt></li>
-<li>Push to your branch <tt class="docutils literal"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">my_branch</span></tt></li>
+<li>Create a topic branch <code class="docutils literal"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">my_branch</span></code></li>
+<li>Push to your branch <code class="docutils literal"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">my_branch</span></code></li>
 <li>Create an issue at <a class="reference external" href="https://github.com/quantmind/pulsar/issues">https://github.com/quantmind/pulsar/issues</a> with
 pull request for the <strong>dev branch</strong>.</li>
 </ul>
-<p>A good <tt class="docutils literal"><span class="pre">pull</span></tt> request should:</p>
-<ul>
-<li><p class="first">Cover one bug fix or new feature only</p>
-</li>
-<li><p class="first">Include tests to cover the new code (inside the <tt class="docutils literal"><span class="pre">tests</span></tt> directory)</p>
-</li>
-<li><p class="first">Preferably have one commit only (you can use <a class="reference external" href="https://help.github.com/articles/about-git-rebase">rebase</a> to combine several
-commits into one)</p>
-</li>
-<li><p class="first">Make sure <tt class="docutils literal"><span class="pre">pep8</span></tt> tests pass:</p>
-<div class="highlight-python"><div class="highlight"><pre>python runtests.py --pep8 pulsar examples tests
-</pre></div>
-</div>
-</li>
+<p>A good <code class="docutils literal"><span class="pre">pull</span></code> request should:</p>
+<ul class="simple">
+<li>Cover one bug fix or new feature only</li>
+<li>Include tests to cover the new code (inside the <code class="docutils literal"><span class="pre">tests</span></code> directory)</li>
+<li>Preferably have one commit only (you can use <a class="reference external" href="https://help.github.com/articles/about-git-rebase">rebase</a> to combine several
+commits into one)</li>
+<li>Make sure <code class="docutils literal"><span class="pre">pep8</span></code> tests pass</li>
 </ul>
 </div>
 <div class="section" id="license">
@@ -271,30 +226,54 @@ file in the top distribution directory for the full license text.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p>
-  Pulsar is a concurrent framework library for the python programming language.
-  It can be used to handle asynchronous applications such as HTTP servers,
-  RPC servers, task queues and much more.
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<ul>
-  <li><a href="http://pypi.python.org/pypi/pulsar" target="_blank">
-  <i class="fa fa-download fa-2x"></i> pulsar @ PyPI</a></li>
-  <li><a href="https://github.com/quantmind/pulsar" target="_blank">
-  <i class="fa fa-github fa-2x"></i> pulsar @ github</a></li>
-  <li><a href="https://groups.google.com/forum/?fromgroups=#!forum/python-pulsar" target="_blank">
-  <i class="fa fa-envelope fa-2x"></i> email list @ google</a></li>
-  <li><a href="http://twitter.com/quantmind" target="_blank">
-  <i class="fa fa-twitter fa-2x"></i> quantmind @ twitter</a></li>
-  <li><a href="http://webchat.freenode.net/?channels=pulsar-python" target="_blank">
-  <i class="fa fa-comments fa-2x"></i> IRC #pulsar-python</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pics.html">Pics</a></li>
 </ul>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="sources/overview.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="apps/socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/data/index.html">Data Stores</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -311,29 +290,36 @@ file in the top distribution directory for the full license text.</p>
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="sources/overview.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

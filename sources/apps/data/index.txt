@@ -8,8 +8,8 @@ Data Stores
 
     This is an experimental module, by any means complete.
     Use at your own risk.
-	
-	
+
+
 .. automodule:: pulsar.apps.data
 
 
@@ -17,5 +17,4 @@ Data Stores
    :maxdepth: 2
 
    clients
-   odm
    stores

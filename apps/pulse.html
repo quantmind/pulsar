@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Django Application &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    <title>Django Application &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,15 +24,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
     <link rel="next" title="Greenlet Support" href="greenio.html" />
-    <link rel="prev" title="Asynchronous HTTP client" href="http.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Asynchronous HTTP client" href="http.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -52,31 +48,20 @@
         <li class="right" >
           <a href="http.html" title="Asynchronous HTTP client"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/pulse.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="module-pulsar.apps.pulse">
 <span id="django-application"></span><span id="apps-pulse"></span><h1>Django Application<a class="headerlink" href="#module-pulsar.apps.pulse" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#module-pulsar.apps.pulse" title="pulsar.apps.pulse"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pulse</span></tt></a> module is a <a class="reference external" href="https://www.djangoproject.com/">django application</a>
+<p>The <a class="reference internal" href="#module-pulsar.apps.pulse" title="pulsar.apps.pulse"><code class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pulse</span></code></a> module is a <a class="reference external" href="https://www.djangoproject.com/">django application</a>
 for running a django web site with pulsar.
-Add it to the list of your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>:</p>
+Add it to the list of your <code class="docutils literal"><span class="pre">INSTALLED_APPS</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre>INSTALLED_APPS = (
     ...,
     &#39;pulsar.apps.pulse&#39;,
@@ -84,25 +69,25 @@ Add it to the list of your <tt class="docutils literal"><span class="pre">INSTAL
 )
 </pre></div>
 </div>
-<p>and run the site via the <tt class="docutils literal"><span class="pre">pulse</span></tt> command:</p>
+<p>and run the site via the <code class="docutils literal"><span class="pre">pulse</span></code> command:</p>
 <div class="highlight-python"><div class="highlight"><pre>python manage.py pulse
 </pre></div>
 </div>
-<p>Check the <a class="reference internal" href="../tutorials/django.html#tutorials-django"><em>django chat example</em></a> for a django chat
+<p>Check the <a class="reference internal" href="../tutorials/django.html#tutorials-django"><span>django chat example</span></a> for a django chat
 application served by a multiprocessing pulsar server.</p>
-<p>By default, the <tt class="docutils literal"><span class="pre">pulse</span></tt> command creates a <a class="reference internal" href="#pulsar.apps.pulse.Wsgi" title="pulsar.apps.pulse.Wsgi"><tt class="xref py py-class docutils literal"><span class="pre">Wsgi</span></tt></a> middleware which
+<p>By default, the <code class="docutils literal"><span class="pre">pulse</span></code> command creates a <a class="reference internal" href="#pulsar.apps.pulse.Wsgi" title="pulsar.apps.pulse.Wsgi"><code class="xref py py-class docutils literal"><span class="pre">Wsgi</span></code></a> middleware which
 runs the django application in a separate thread of execution from the
 main event loop.
-This is a standard programming pattern when using <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-dev.html#asyncio-multithreading" title="(in Python v3.5)"><em class="xref std std-ref">asyncio with blocking
-functions</em></a>.
+This is a standard programming pattern when using <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-dev.html#asyncio-multithreading" title="(in Python v3.5)"><span class="xref std std-ref">asyncio with blocking
+functions</span></a>.
 To control the number of thread workers in the event loop executor (which
 is a pool of threads) one uses the
-<a class="reference internal" href="../settings.html#setting-thread-workers"><em>thread-workers</em></a> option. For example, the
+<a class="reference internal" href="../settings.html#setting-thread-workers"><span>thread-workers</span></a> option. For example, the
 following command:</p>
 <div class="highlight-python"><div class="highlight"><pre>python manage.py pulse -w 4 --thread-workers 20
 </pre></div>
 </div>
-<p>will run four <a class="reference internal" href="../design.html#concurrency"><em>process based actors</em></a>, each with
+<p>will run four <a class="reference internal" href="../design.html#concurrency"><span>process based actors</span></a>, each with
 an executor with up to 20 threads.</p>
 <div class="section" id="greenlets">
 <h2>Greenlets<a class="headerlink" href="#greenlets" title="Permalink to this headline">¶</a></h2>
@@ -125,12 +110,12 @@ adjust this number:</p>
 <h2>Wsgi middleware<a class="headerlink" href="#wsgi-middleware" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.pulse.Wsgi">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.pulse.</tt><tt class="descname">Wsgi</tt><a class="reference internal" href="../modules/pulsar/apps/pulse.html#Wsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pulse.Wsgi" title="Permalink to this definition">¶</a></dt>
-<dd><p>The Wsgi middleware used by the django <tt class="docutils literal"><span class="pre">pulse</span></tt> command</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.pulse.</code><code class="descname">Wsgi</code><a class="reference internal" href="../modules/pulsar/apps/pulse.html#Wsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pulse.Wsgi" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Wsgi middleware used by the django <code class="docutils literal"><span class="pre">pulse</span></code> command</p>
 <dl class="method">
 <dt id="pulsar.apps.pulse.Wsgi.setup">
-<tt class="descname">setup</tt><big>(</big><em>environ=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pulse.html#Wsgi.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pulse.Wsgi.setup" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set up the <a class="reference internal" href="wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a> the first time this
+<code class="descname">setup</code><span class="sig-paren">(</span><em>environ=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/pulse.html#Wsgi.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pulse.Wsgi.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up the <a class="reference internal" href="wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><code class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></code></a> the first time this
 middleware is accessed.</p>
 </dd></dl>
 
@@ -143,46 +128,54 @@ middleware is accessed.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Django Application</a><ul>
-<li><a class="reference internal" href="#greenlets">Greenlets</a></li>
-<li><a class="reference internal" href="#wsgi-middleware">Wsgi middleware</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
-</li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="http.html"
-                        title="previous chapter">Asynchronous HTTP client</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="greenio.html"
-                        title="next chapter">Greenlet Support</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../sources/apps/pulse.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -199,29 +192,36 @@ middleware is accessed.</p>
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../sources/apps/pulse.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

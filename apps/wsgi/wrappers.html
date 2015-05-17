@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>WSGI Wrappers &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <title>WSGI Wrappers &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,16 +24,17 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous Middleware" href="middleware.html" />
-    <link rel="prev" title="Routing" href="routing.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Routing" href="routing.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -53,71 +49,60 @@
         <li class="right" >
           <a href="routing.html" title="Routing"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/apps/wsgi/wrappers.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="module-pulsar.apps.wsgi.wrappers">
 <span id="wsgi-wrappers"></span><span id="apps-wsgi-wrappers"></span><h1>WSGI Wrappers<a class="headerlink" href="#module-pulsar.apps.wsgi.wrappers" title="Permalink to this headline">¶</a></h1>
 <p>This section introduces two classes used by pulsar
-<a class="reference internal" href="index.html#apps-wsgi"><em>wsgi application</em></a> to pass a request/response state
+<a class="reference internal" href="index.html#apps-wsgi"><span>wsgi application</span></a> to pass a request/response state
 during an HTTP request.
-The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="pulsar.apps.wsgi.wrappers.WsgiRequest"><tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest</span></tt></a> is a thin wrapper around a WSGI <tt class="docutils literal"><span class="pre">environ</span></tt>
+The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="pulsar.apps.wsgi.wrappers.WsgiRequest"><code class="xref py py-class docutils literal"><span class="pre">WsgiRequest</span></code></a> is a thin wrapper around a WSGI <code class="docutils literal"><span class="pre">environ</span></code>
 dictionary.
-It contains only the <tt class="docutils literal"><span class="pre">environ</span></tt> as its private data.
-The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a>, which is available in the
-<a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.response" title="pulsar.apps.wsgi.wrappers.WsgiRequest.response"><tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest.response</span></tt></a> attribute, is an iterable over bytestring with
+It contains only the <code class="docutils literal"><span class="pre">environ</span></code> as its private data.
+The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><code class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></code></a>, which is available in the
+<a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.response" title="pulsar.apps.wsgi.wrappers.WsgiRequest.response"><code class="xref py py-class docutils literal"><span class="pre">WsgiRequest.response</span></code></a> attribute, is an iterable over bytestring with
 several utility methods for manipulating headers and asynchronous content.</p>
 <div class="section" id="environ-mixin">
 <h2>Environ Mixin<a class="headerlink" href="#environ-mixin" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.EnvironMixin">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">EnvironMixin</tt><big>(</big><em>environ</em>, <em>name=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.wrappers.</code><code class="descname">EnvironMixin</code><span class="sig-paren">(</span><em>environ</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>A wrapper around a <a class="reference external" href="http://www.wsgi.org">WSGI</a> environ.</p>
-<p>Instances of this class have the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> attribute as their
-only private data. Every other attribute is stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a>
-itself at the <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt> wsgi-extension key.</p>
+<p>Instances of this class have the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><code class="xref py py-attr docutils literal"><span class="pre">environ</span></code></a> attribute as their
+only private data. Every other attribute is stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><code class="xref py py-attr docutils literal"><span class="pre">environ</span></code></a>
+itself at the <code class="docutils literal"><span class="pre">pulsar.cache</span></code> wsgi-extension key.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.environ">
-<tt class="descname">environ</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="Permalink to this definition">¶</a></dt>
+<code class="descname">environ</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="http://www.wsgi.org">WSGI</a> environ dictionary</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.cache">
-<tt class="descname">cache</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin.cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.cache" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference internal" href="../../api/utilities.html#attribute-dictionary"><em>attribute dictionary</em></a> of
-pulsar-specific data stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> at
-the wsgi-extension key <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt></p>
+<code class="descname">cache</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference internal" href="../../api/utilities.html#attribute-dictionary"><span>attribute dictionary</span></a> of
+pulsar-specific data stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><code class="xref py py-attr docutils literal"><span class="pre">environ</span></code></a> at
+the wsgi-extension key <code class="docutils literal"><span class="pre">pulsar.cache</span></code></p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.connection">
-<tt class="descname">connection</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin.connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.connection" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a> handling the request</p>
+<code class="descname">connection</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><code class="xref py py-class docutils literal"><span class="pre">Connection</span></code></a> handling the request</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.get">
-<tt class="descname">get</tt><big>(</big><em>key</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Shortcut to the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> get method.</p>
+<code class="descname">get</code><span class="sig-paren">(</span><em>key</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut to the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><code class="xref py py-attr docutils literal"><span class="pre">environ</span></code></a> get method.</p>
 </dd></dl>
 
 </dd></dl>
@@ -127,167 +112,161 @@ the wsgi-extension key <tt class="docutils literal"><span class="pre">pulsar.cac
 <span id="app-wsgi-request"></span><h2>Wsgi Request<a class="headerlink" href="#wsgi-request" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">WsgiRequest</tt><big>(</big><em>environ</em>, <em>app_handler=None</em>, <em>urlargs=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="pulsar.apps.wsgi.wrappers.EnvironMixin"><tt class="xref py py-class docutils literal"><span class="pre">EnvironMixin</span></tt></a> for wsgi requests.</p>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.wrappers.</code><code class="descname">WsgiRequest</code><span class="sig-paren">(</span><em>environ</em>, <em>app_handler=None</em>, <em>urlargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="pulsar.apps.wsgi.wrappers.EnvironMixin"><code class="xref py py-class docutils literal"><span class="pre">EnvironMixin</span></code></a> for wsgi requests.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.content_types">
-<tt class="descname">content_types</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.content_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.content_types" title="Permalink to this definition">¶</a></dt>
+<code class="descname">content_types</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.content_types" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of content types this client supports as a
-<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.ContentAccept" title="pulsar.apps.wsgi.structures.ContentAccept"><tt class="xref py py-class docutils literal"><span class="pre">ContentAccept</span></tt></a> object.</p>
-<p>Obtained form the <tt class="docutils literal"><span class="pre">Accept</span></tt> request header.</p>
+<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.ContentAccept" title="pulsar.apps.wsgi.structures.ContentAccept"><code class="xref py py-class docutils literal"><span class="pre">ContentAccept</span></code></a> object.</p>
+<p>Obtained form the <code class="docutils literal"><span class="pre">Accept</span></code> request header.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.charsets">
-<tt class="descname">charsets</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.charsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets" title="Permalink to this definition">¶</a></dt>
+<code class="descname">charsets</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of charsets this client supports as a
-<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.CharsetAccept" title="pulsar.apps.wsgi.structures.CharsetAccept"><tt class="xref py py-class docutils literal"><span class="pre">CharsetAccept</span></tt></a> object.</p>
-<p>Obtained form the <tt class="docutils literal"><span class="pre">Accept-Charset</span></tt> request header.</p>
+<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.CharsetAccept" title="pulsar.apps.wsgi.structures.CharsetAccept"><code class="xref py py-class docutils literal"><span class="pre">CharsetAccept</span></code></a> object.</p>
+<p>Obtained form the <code class="docutils literal"><span class="pre">Accept-Charset</span></code> request header.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.encodings">
-<tt class="descname">encodings</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.encodings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.encodings" title="Permalink to this definition">¶</a></dt>
+<code class="descname">encodings</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.encodings" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of encodings this client supports as
-<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> object.</p>
-<p>Obtained form the <tt class="docutils literal"><span class="pre">Accept-Charset</span></tt> request header.
+<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><code class="xref py py-class docutils literal"><span class="pre">Accept</span></code></a> object.</p>
+<p>Obtained form the <code class="docutils literal"><span class="pre">Accept-Charset</span></code> request header.
 Encodings in a HTTP term are compression encodings such as gzip.
-For charsets have a look at <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets" title="pulsar.apps.wsgi.wrappers.WsgiRequest.charsets"><tt class="xref py py-attr docutils literal"><span class="pre">charsets</span></tt></a> attribute.</p>
+For charsets have a look at <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets" title="pulsar.apps.wsgi.wrappers.WsgiRequest.charsets"><code class="xref py py-attr docutils literal"><span class="pre">charsets</span></code></a> attribute.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.languages">
-<tt class="descname">languages</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.languages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.languages" title="Permalink to this definition">¶</a></dt>
+<code class="descname">languages</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.languages" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of languages this client accepts as
-<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.LanguageAccept" title="pulsar.apps.wsgi.structures.LanguageAccept"><tt class="xref py py-class docutils literal"><span class="pre">LanguageAccept</span></tt></a> object.</p>
-<p>Obtained form the <tt class="docutils literal"><span class="pre">Accept-Language</span></tt> request header.</p>
+<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.LanguageAccept" title="pulsar.apps.wsgi.structures.LanguageAccept"><code class="xref py py-class docutils literal"><span class="pre">LanguageAccept</span></code></a> object.</p>
+<p>Obtained form the <code class="docutils literal"><span class="pre">Accept-Language</span></code> request header.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.cookies">
-<tt class="descname">cookies</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.cookies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.cookies" title="Permalink to this definition">¶</a></dt>
+<code class="descname">cookies</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.cookies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Container of request cookies</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler">
-<tt class="descname">app_handler</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.app_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler" title="Permalink to this definition">¶</a></dt>
+<code class="descname">app_handler</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>The WSGI application handling this request.</p>
 <p>The WSGI handler is responsible for setting this value in the
-same way as the <a class="reference internal" href="routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> does.</p>
+same way as the <a class="reference internal" href="routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> does.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.urlargs">
-<tt class="descname">urlargs</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.urlargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.urlargs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">urlargs</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.urlargs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary of url parameters obtained when matching a
-<a class="reference internal" href="routing.html#wsgi-router"><em>router</em></a> with this request <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.path"><tt class="xref py py-attr docutils literal"><span class="pre">path</span></tt></a>.</p>
+<a class="reference internal" href="routing.html#wsgi-router"><span>router</span></a> with this request <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.path"><code class="xref py py-attr docutils literal"><span class="pre">path</span></code></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.cfg">
-<tt class="descname">cfg</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.cfg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.cfg" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="../../settings.html#settings"><em>config container</em></a> of the server</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.ipaddress">
-<tt class="descname">ipaddress</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.ipaddress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.ipaddress" title="Permalink to this definition">¶</a></dt>
-<dd><p>internet protocol address of the client</p>
+<code class="descname">cfg</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.cfg" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="../../settings.html#settings"><span>config container</span></a> of the server</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.response">
-<tt class="descname">response</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.response" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> for this client request.</p>
+<code class="descname">response</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.response" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><code class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></code></a> for this client request.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.is_xhr">
-<tt class="descname">is_xhr</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.is_xhr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.is_xhr" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this is an <a class="reference external" href="http://en.wikipedia.org/wiki/Ajax_(programming)">AJAX</a> request</p>
+<code class="descname">is_xhr</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.is_xhr" title="Permalink to this definition">¶</a></dt>
+<dd><p><code class="docutils literal"><span class="pre">True</span></code> if this is an <a class="reference external" href="http://en.wikipedia.org/wiki/Ajax_(programming)">AJAX</a> request</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.is_secure">
-<tt class="descname">is_secure</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.is_secure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.is_secure" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this request is via a <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a> connection</p>
+<code class="descname">is_secure</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.is_secure" title="Permalink to this definition">¶</a></dt>
+<dd><p><code class="docutils literal"><span class="pre">True</span></code> if this request is via a <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a> connection</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.path">
-<tt class="descname">path</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Shortcut to the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt> value.</p>
+<code class="descname">path</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut to the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><code class="xref py py-attr docutils literal"><span class="pre">environ</span></code></a> <code class="docutils literal"><span class="pre">PATH_INFO</span></code> value.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.method">
-<tt class="descname">method</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.method" title="Permalink to this definition">¶</a></dt>
+<code class="descname">method</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.method" title="Permalink to this definition">¶</a></dt>
 <dd><p>The request method (uppercase).</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files">
-<tt class="descname">data_and_files</tt><big>(</big><em>data=True</em>, <em>files=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.data_and_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files" title="Permalink to this definition">¶</a></dt>
+<code class="descname">data_and_files</code><span class="sig-paren">(</span><em>data=True</em>, <em>files=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.data_and_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve body data.</p>
 <p>Returns a two-elements tuple of a
-<a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.misc.MultiValueDict" title="pulsar.utils.structures.misc.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">MultiValueDict</span></tt></a> containing data from
+<a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.misc.MultiValueDict" title="pulsar.utils.structures.misc.MultiValueDict"><code class="xref py py-class docutils literal"><span class="pre">MultiValueDict</span></code></a> containing data from
 the request body, and data from uploaded files.</p>
-<p>If the body data is not ready, return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>
+<p>If the body data is not ready, return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>
 which results in the tuple.</p>
 <p>The result is cached.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.body_data">
-<tt class="descname">body_data</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.body_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.misc.MultiValueDict" title="pulsar.utils.structures.misc.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">MultiValueDict</span></tt></a> containing data from the request body.</p>
+<code class="descname">body_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.body_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.misc.MultiValueDict" title="pulsar.utils.structures.misc.MultiValueDict"><code class="xref py py-class docutils literal"><span class="pre">MultiValueDict</span></code></a> containing data from the request body.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.url_data">
-<tt class="descname">url_data</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.url_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.url_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>A (cached) dictionary containing data from the <tt class="docutils literal"><span class="pre">QUERY_STRING</span></tt>
-in <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a>.</p>
+<code class="descname">url_data</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.url_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A (cached) dictionary containing data from the <code class="docutils literal"><span class="pre">QUERY_STRING</span></code>
+in <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><code class="xref py py-attr docutils literal"><span class="pre">environ</span></code></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.html_document">
-<tt class="descname">html_document</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.html_document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a cached instance of <a class="reference internal" href="content.html#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a>.</p>
+<code class="descname">html_document</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a cached instance of <a class="reference internal" href="content.html#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><code class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></code></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.get_host">
-<tt class="descname">get_host</tt><big>(</big><em>use_x_forwarded=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.get_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.get_host" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_host</code><span class="sig-paren">(</span><em>use_x_forwarded=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.get_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.get_host" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the HTTP host using the environment or request headers.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.get_client_address">
-<tt class="descname">get_client_address</tt><big>(</big><em>use_x_forwarded=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.get_client_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.get_client_address" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_client_address</code><span class="sig-paren">(</span><em>use_x_forwarded=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.get_client_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.get_client_address" title="Permalink to this definition">¶</a></dt>
 <dd><p>Obtain the client IP address</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.full_path">
-<tt class="descname">full_path</tt><big>(</big><em>*args</em>, <em>**query</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.full_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="Permalink to this definition">¶</a></dt>
+<code class="descname">full_path</code><span class="sig-paren">(</span><em>*args</em>, <em>**query</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.full_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a full path</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri">
-<tt class="descname">absolute_uri</tt><big>(</big><em>location=None</em>, <em>scheme=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.absolute_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds an absolute URI from <tt class="docutils literal"><span class="pre">location</span></tt> and variables
+<code class="descname">absolute_uri</code><span class="sig-paren">(</span><em>location=None</em>, <em>scheme=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.absolute_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds an absolute URI from <code class="docutils literal"><span class="pre">location</span></code> and variables
 available in this request.</p>
-<p>If no <tt class="docutils literal"><span class="pre">location</span></tt> is specified, the relative URI is built from
-<a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.full_path"><tt class="xref py py-meth docutils literal"><span class="pre">full_path()</span></tt></a>.</p>
+<p>If no <code class="docutils literal"><span class="pre">location</span></code> is specified, the relative URI is built from
+<a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.full_path"><code class="xref py py-meth docutils literal"><span class="pre">full_path()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.redirect">
-<tt class="descname">redirect</tt><big>(</big><em>path</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.redirect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Redirect to a different <tt class="docutils literal"><span class="pre">path</span></tt></p>
+<code class="descname">redirect</code><span class="sig-paren">(</span><em>path</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.redirect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Redirect to a different <code class="docutils literal"><span class="pre">path</span></code></p>
 </dd></dl>
 
 </dd></dl>
@@ -297,61 +276,61 @@ available in this request.</p>
 <span id="id1"></span><h2>Wsgi Response<a class="headerlink" href="#wsgi-response" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">WsgiResponse</tt><big>(</big><em>status=None</em>, <em>content=None</em>, <em>response_headers=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>environ=None</em>, <em>can_store_cookies=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.wrappers.</code><code class="descname">WsgiResponse</code><span class="sig-paren">(</span><em>status=None</em>, <em>content=None</em>, <em>response_headers=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>environ=None</em>, <em>can_store_cookies=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="Permalink to this definition">¶</a></dt>
 <dd><p>A WSGI response.</p>
 <p>Instances are callable using the standard WSGI call and, importantly,
 iterable:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="n">WsgiResponse</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>A <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> is an iterable over bytes to send back to the
+<p>A <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><code class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></code></a> is an iterable over bytes to send back to the
 requesting client.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.status_code">
-<tt class="descname">status_code</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.status_code" title="Permalink to this definition">¶</a></dt>
+<code class="descname">status_code</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.status_code" title="Permalink to this definition">¶</a></dt>
 <dd><p>Integer indicating the HTTP status, (i.e. 200)</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.response">
-<tt class="descname">response</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.response" title="Permalink to this definition">¶</a></dt>
+<code class="descname">response</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.response" title="Permalink to this definition">¶</a></dt>
 <dd><p>String indicating the HTTP status (i.e. &#8216;OK&#8217;)</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.status">
-<tt class="descname">status</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.status" title="Permalink to this definition">¶</a></dt>
+<code class="descname">status</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.status" title="Permalink to this definition">¶</a></dt>
 <dd><p>String indicating the HTTP status code and response (i.e. &#8216;200 OK&#8217;)</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.content_type">
-<tt class="descname">content_type</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.content_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>The content type of this response. Can be <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+<code class="descname">content_type</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.content_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The content type of this response. Can be <code class="docutils literal"><span class="pre">None</span></code>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.headers">
-<tt class="descname">headers</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.headers" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.Headers" title="pulsar.utils.httpurl.Headers"><tt class="xref py py-class docutils literal"><span class="pre">Headers</span></tt></a> container for this response.</p>
+<code class="descname">headers</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.Headers" title="pulsar.utils.httpurl.Headers"><code class="xref py py-class docutils literal"><span class="pre">Headers</span></code></a> container for this response.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.environ">
-<tt class="descname">environ</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.environ" title="Permalink to this definition">¶</a></dt>
+<code class="descname">environ</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.environ" title="Permalink to this definition">¶</a></dt>
 <dd><p>The dictionary of WSGI environment if passed to the constructor.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.cookies">
-<tt class="descname">cookies</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.cookies" title="Permalink to this definition">¶</a></dt>
-<dd><p>A python <tt class="xref py py-class docutils literal"><span class="pre">SimpleCookie</span></tt> container of cookies included in the
+<code class="descname">cookies</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.cookies" title="Permalink to this definition">¶</a></dt>
+<dd><p>A python <code class="xref py py-class docutils literal"><span class="pre">SimpleCookie</span></code> container of cookies included in the
 request as well as cookies set during the response.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.is_streamed">
-<tt class="descname">is_streamed</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.is_streamed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.is_streamed" title="Permalink to this definition">¶</a></dt>
+<code class="descname">is_streamed</code><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.is_streamed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if the response is streamed.</p>
 <p>A streamed response is an iterable with no length information.
 In this case streamed means that there is no information about
@@ -361,22 +340,22 @@ the number of iterations.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.close" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close this response, required by WSGI</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.set_cookie">
-<tt class="descname">set_cookie</tt><big>(</big><em>key</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.set_cookie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.set_cookie" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_cookie</code><span class="sig-paren">(</span><em>key</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.set_cookie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.set_cookie" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets a cookie.</p>
-<p><tt class="docutils literal"><span class="pre">expires</span></tt> can be a string in the correct format or a
-<tt class="docutils literal"><span class="pre">datetime.datetime</span></tt> object in UTC. If <tt class="docutils literal"><span class="pre">expires</span></tt> is a datetime
-object then <tt class="docutils literal"><span class="pre">max_age</span></tt> will be calculated.</p>
+<p><code class="docutils literal"><span class="pre">expires</span></code> can be a string in the correct format or a
+<code class="docutils literal"><span class="pre">datetime.datetime</span></code> object in UTC. If <code class="docutils literal"><span class="pre">expires</span></code> is a datetime
+object then <code class="docutils literal"><span class="pre">max_age</span></code> will be calculated.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.get_headers">
-<tt class="descname">get_headers</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.get_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.get_headers" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_headers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.get_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.get_headers" title="Permalink to this definition">¶</a></dt>
 <dd><p>The list of headers for this response</p>
 </dd></dl>
 
@@ -389,47 +368,54 @@ object then <tt class="docutils literal"><span class="pre">max_age</span></tt> w
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../index.html">
-  <img class="logo" width="200" src="../../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">WSGI Wrappers</a><ul>
-<li><a class="reference internal" href="#environ-mixin">Environ Mixin</a></li>
-<li><a class="reference internal" href="#wsgi-request">Wsgi Request</a></li>
-<li><a class="reference internal" href="#wsgi-response">Wsgi Response</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pics.html">Pics</a></li>
 </ul>
-</li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../socket.html">Socket Servers</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="routing.html"
-                        title="previous chapter">Routing</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="middleware.html"
-                        title="next chapter">Asynchronous Middleware</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../../sources/apps/wsgi/wrappers.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
       <input type="text" name="q" />
@@ -446,29 +432,36 @@ object then <tt class="docutils literal"><span class="pre">max_age</span></tt> w
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../../sources/apps/wsgi/wrappers.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

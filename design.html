@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Design &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
+    <title>Design &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,15 +24,16 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="index.html" />
     <link rel="next" title="FAQ" href="faq.html" />
-    <link rel="prev" title="Overview" href="overview.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Overview" href="overview.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -52,42 +48,31 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/design.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <span class="target" id="module-pulsar"><span id="design"></span></span><div class="section" id="id1">
 <h1>Design<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar implements two layers of components on top of python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.5)"><tt class="xref py py-mod docutils literal"><span class="pre">asyncio</span></tt></a>
+<p>Pulsar implements two layers of components on top of python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.5)"><code class="xref py py-mod docutils literal"><span class="pre">asyncio</span></code></a>
 module:</p>
 <ul class="simple">
-<li><a class="reference internal" href="#design-actor"><em>The actor layer</em></a> provides parallel execution in
-processes and threads and uses the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.5)"><tt class="xref py py-mod docutils literal"><span class="pre">asyncio</span></tt></a> module
+<li><a class="reference internal" href="#design-actor"><span>The actor layer</span></a> provides parallel execution in
+processes and threads and uses the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html#module-asyncio" title="(in Python v3.5)"><code class="xref py py-mod docutils literal"><span class="pre">asyncio</span></code></a> module
 as building block.</li>
 <li>The second layer, built on top of the first one, is based on the higher level
-<a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> class.</li>
+<a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> class.</li>
 </ul>
 <div class="section" id="async-objects">
 <span id="async-object"></span><h2>Async Objects<a class="headerlink" href="#async-objects" title="Permalink to this headline">¶</a></h2>
 <p>Introduced in pulsar 0.8, an asynchronous object is any instance which exposes
-the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><tt class="xref py py-attr docutils literal"><span class="pre">_loop</span></tt></a> attribute.
-This attribute is the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> where
+the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a> attribute.
+This attribute is the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a> where
 the instance performs its asynchronous operations, whatever they may be.</p>
 <p>For example this is a class for valid async objects:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">new_event_loop</span>
@@ -101,29 +86,29 @@ the instance performs its asynchronous operations, whatever they may be.</p>
 </div>
 <p>Properties:</p>
 <ul class="simple">
-<li>Several classes in pulsar are async objects, for example: <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>,
-<a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a>, <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>, <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
+<li>Several classes in pulsar are async objects, for example: <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a>,
+<a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><code class="xref py py-class docutils literal"><span class="pre">Connection</span></code></a>, <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><code class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></code></a>, <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
 and so forth</li>
-<li>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> is an async object</li>
-<li>However an async object <strong>is not</strong> necessarily a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a></li>
-<li>When they use and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators for their methods,
-<a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><tt class="xref py py-attr docutils literal"><span class="pre">_loop</span></tt></a> attribute is used to run the method</li>
-<li>Pulsar provides the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject" title="pulsar.async.futures.AsyncObject"><tt class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></tt></a> signature class,
+<li>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> is an async object</li>
+<li>However an async object <strong>is not</strong> necessarily a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></li>
+<li>When they use and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><code class="xref py py-func docutils literal"><span class="pre">task()</span></code></a> decorators for their methods,
+<a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a> attribute is used to run the method</li>
+<li>Pulsar provides the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject" title="pulsar.async.futures.AsyncObject"><code class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></code></a> signature class,
 however it is not a requirement to derive from it</li>
 </ul>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">An async object can also run its asynchronous methods in a synchronous
 fashion. To do that, one should pass a bright new event loop during
-initialisation. Check <a class="reference internal" href="tutorials/sync.html#tutorials-synchronous"><em>synchronous components</em></a>
+initialisation. Check <a class="reference internal" href="tutorials/sync.html#tutorials-synchronous"><span>synchronous components</span></a>
 for further details.</p>
 </div>
 </div>
 <div class="section" id="actors">
 <span id="design-actor"></span><h2>Actors<a class="headerlink" href="#actors" title="Permalink to this headline">¶</a></h2>
-<p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is the atom of pulsar&#8217;s concurrent computation,
+<p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> is the atom of pulsar&#8217;s concurrent computation,
 they do not share state between them, communication is achieved via asynchronous
-<a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>inter-process message passing</em></a>,
+<a class="reference internal" href="tutorials/messages.html#tutorials-messages"><span>inter-process message passing</span></a>,
 implemented using the standard python socket library. A pulsar actor can be
 process based as well as thread based and can perform one or many activities.</p>
 <div class="section" id="the-theory">
@@ -140,7 +125,7 @@ determine how to respond to the next message received.</p>
 </div></blockquote>
 <p><strong>Actor&#8217;s properties</strong></p>
 <ul class="simple">
-<li>Each actor has its own <tt class="docutils literal"><span class="pre">process</span></tt> (not intended as an OS process) and they
+<li>Each actor has its own <code class="docutils literal"><span class="pre">process</span></code> (not intended as an OS process) and they
 don&#8217;t shares state between them.</li>
 <li>Actors can change their own states.</li>
 <li>Actors can create other actors and when they do that they receive back the new actor address.</li>
@@ -161,13 +146,13 @@ process (flow of control).</li>
 <span id="arbiter"></span><h3>The Arbiter<a class="headerlink" href="#the-arbiter" title="Permalink to this headline">¶</a></h3>
 <p>When using pulsar actor layer, you need to use pulsar in <strong>server state</strong>,
 that is to say, there will be a centralised <strong>Arbiter</strong> controlling the main
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> in the <strong>main thread</strong> of the
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a> in the <strong>main thread</strong> of the
 <strong>master process</strong>.
-The arbiter is a specialised <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
-which control the life of all <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> and
-<a class="reference internal" href="#design-monitor"><em>monitors</em></a></p>
+The arbiter is a specialised <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a>
+which control the life of all <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> and
+<a class="reference internal" href="#design-monitor"><span>monitors</span></a></p>
 <p id="design-arbiter">To access the arbiter, from the main process, one can use the
-<a class="reference internal" href="api/actor.html#pulsar.async.concurrency.arbiter" title="pulsar.async.concurrency.arbiter"><tt class="xref py py-func docutils literal"><span class="pre">arbiter()</span></tt></a> high level function:</p>
+<a class="reference internal" href="api/actor.html#pulsar.async.concurrency.arbiter" title="pulsar.async.concurrency.arbiter"><code class="xref py py-func docutils literal"><span class="pre">arbiter()</span></code></a> high level function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">arbiter</span><span class="o">.</span><span class="n">is_running</span><span class="p">()</span>
 <span class="go">False</span>
@@ -177,7 +162,7 @@ which control the life of all <a class="reference internal" href="api/actor.html
 <div class="section" id="implementation">
 <span id="concurrency"></span><h3>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h3>
 <p>An actor can be <strong>processed based</strong> (default) or <strong>thread based</strong> and control
-at least one running <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a>.
+at least one running <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a>.
 To obtain the actor controlling the current thread:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">()</span>
 </pre></div>
@@ -186,11 +171,11 @@ To obtain the actor controlling the current thread:</p>
 actor takes control of the main thread of that new process. On the other hand,
 thread-based actors always exist in the master process (the same process
 as the arbiter) and control threads other than the main thread.</p>
-<p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> can control more than one thread if it needs to, via the
-<a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor.executor" title="pulsar.async.actor.Actor.executor"><tt class="xref py py-meth docutils literal"><span class="pre">executor()</span></tt></a> as explained in the <a class="reference internal" href="#cpubound"><em>CPU bound</em></a>
+<p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> can control more than one thread if it needs to, via the
+<code class="xref py py-meth docutils literal"><span class="pre">executor()</span></code> as explained in the <a class="reference internal" href="#cpubound"><span>CPU bound</span></a>
 paragraph.
-The actor <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><em class="xref std std-ref">event loop</em></a> is installed in all threads
-controlled by the actor so that when the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloops.html#asyncio.get_event_loop" title="(in Python v3.5)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>
+The actor <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a> is installed in all threads
+controlled by the actor so that when the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloops.html#asyncio.get_event_loop" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></code></a>
 function is invoked on these threads it returns the event loop of
 the controlling actor.</p>
 <div class="admonition note" id="actor-io-thread">
@@ -199,57 +184,57 @@ the controlling actor.</p>
 one thread, the <strong>actor io thread</strong>. In the case of process-based actors
 this thread is the main thread of the actor process.</p>
 </div>
-<p>An actor is a <a class="reference internal" href="#async-object"><em>async object</em></a> and therefore it has
-a <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><tt class="xref py py-attr docutils literal"><span class="pre">_loop</span></tt></a>
+<p>An actor is a <a class="reference internal" href="#async-object"><span>async object</span></a> and therefore it has
+a <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a>
 attribute, which can be used to register handlers on file descriptors.
-The <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></tt></a> is created just after forking (or after the
+The <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></code></a> is created just after forking (or after the
 actor&#8217;s thread starts for thread-based actors).</p>
 </div>
 <div class="section" id="io-bound">
 <span id="iobound"></span><h3>IO-bound<a class="headerlink" href="#io-bound" title="Permalink to this headline">¶</a></h3>
-<p>The most common usage for an <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is to handle Input/Output
-events on file descriptors. An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></tt></a> tells
-the operating system (through <tt class="docutils literal"><span class="pre">epoll</span></tt> or <tt class="docutils literal"><span class="pre">select</span></tt>) that it should be notified
+<p>The most common usage for an <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> is to handle Input/Output
+events on file descriptors. An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></code></a> tells
+the operating system (through <code class="docutils literal"><span class="pre">epoll</span></code> or <code class="docutils literal"><span class="pre">select</span></code>) that it should be notified
 when a new connection is made, and then it goes to sleep.
 Serving the new request should occur as fast as possible so that other
 connections can be served simultaneously.</p>
 </div>
 <div class="section" id="cpu-bound">
 <span id="cpubound"></span><h3>CPU-bound<a class="headerlink" href="#cpu-bound" title="Permalink to this headline">¶</a></h3>
-<p>Another way for an actor to function is to use its <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor.executor" title="pulsar.async.actor.Actor.executor"><tt class="xref py py-meth docutils literal"><span class="pre">executor()</span></tt></a>
+<p>Another way for an actor to function is to use its <code class="xref py py-meth docutils literal"><span class="pre">executor()</span></code>
 to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
-CPU-bound <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> have the following properties:</p>
+CPU-bound <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> have the following properties:</p>
 <ul class="simple" id="request-loop">
-<li>Their <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></tt></a> listen for requests on file descriptors
+<li>Their <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></code></a> listen for requests on file descriptors
 as usual and it is running (and installed) in the
-<a class="reference internal" href="#actor-io-thread"><em>actor io thread</em></a> as usual.</li>
-<li>The threads in the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor.executor" title="pulsar.async.actor.Actor.executor"><tt class="xref py py-meth docutils literal"><span class="pre">executor()</span></tt></a> install an additional
+<a class="reference internal" href="#actor-io-thread"><span>actor io thread</span></a> as usual.</li>
+<li>The threads in the <code class="xref py py-meth docutils literal"><span class="pre">executor()</span></code> install an additional
 event loop which listen for events on a message queue.
 Pulsar refers to this specialised event loop as the <strong>request loop</strong> and
-it is an instance of <a class="reference internal" href="api/async.html#pulsar.async.threads.QueueEventLoop" title="pulsar.async.threads.QueueEventLoop"><tt class="xref py py-class docutils literal"><span class="pre">QueueEventLoop</span></tt></a>.</li>
+it is an instance of <code class="xref py py-class docutils literal"><span class="pre">QueueEventLoop</span></code>.</li>
 </ul>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">A CPU-bound actor controls more than one thread, the <a class="reference internal" href="#actor-io-thread"><em>IO thread</em></a>
+<p class="last">A CPU-bound actor controls more than one thread, the <a class="reference internal" href="#actor-io-thread"><span>IO thread</span></a>
 which runs the actor main event loop for listening to events on file descriptors and
 one or more threads for performing CPU-intensive calculations. These CPU-threads
 have installed two events loops: the event loop running on the
-<a class="reference internal" href="#actor-io-thread"><em>IO thread</em></a> and the <a class="reference internal" href="#request-loop"><em>request-loop</em></a>.</p>
+<a class="reference internal" href="#actor-io-thread"><span>IO thread</span></a> and the <a class="reference internal" href="#request-loop"><span>request-loop</span></a>.</p>
 </div>
 </div>
 <div class="section" id="periodic-task">
 <span id="actor-periodic-task"></span><h3>Periodic task<a class="headerlink" href="#periodic-task" title="Permalink to this headline">¶</a></h3>
-<p>Each <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>, including the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> and <tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt>,
+<p>Each <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a>, including the <code class="xref py py-class docutils literal"><span class="pre">Arbiter</span></code> and <code class="xref py py-class docutils literal"><span class="pre">Monitor</span></code>,
 perform one crucial periodic task at given intervals. The next
-call of the task is stored in the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor.next_periodic_task" title="pulsar.async.actor.Actor.next_periodic_task"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.next_periodic_task</span></tt></a>
+call of the task is stored in the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor.next_periodic_task" title="pulsar.async.actor.Actor.next_periodic_task"><code class="xref py py-attr docutils literal"><span class="pre">Actor.next_periodic_task</span></code></a>
 attribute.</p>
-<p>Periodic task are implemented by the <tt class="xref py py-meth docutils literal"><span class="pre">Concurrency.periodic_task()</span></tt> method.</p>
+<p>Periodic task are implemented by the <code class="xref py py-meth docutils literal"><span class="pre">Concurrency.periodic_task()</span></code> method.</p>
 </div>
 </div>
 <div class="section" id="spawning">
 <span id="design-spawning"></span><h2>Spawning<a class="headerlink" href="#spawning" title="Permalink to this headline">¶</a></h2>
-<p>Spawning a new actor is achieved via the <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> function:</p>
+<p>Spawning a new actor is achieved via the <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><code class="xref py py-func docutils literal"><span class="pre">spawn()</span></code></a> function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">spawn</span>
 
 <span class="k">def</span> <span class="nf">task</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -259,48 +244,48 @@ attribute.</p>
 <span class="n">ap</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">(</span><span class="n">periodic_task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The value returned by <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> is an <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxyFuture" title="pulsar.async.proxy.ActorProxyFuture"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyFuture</span></tt></a>,
-a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> with the <tt class="xref py py-attr docutils literal"><span class="pre">,</span> <span class="pre">which</span> <span class="pre">has</span> <span class="pre">the</span> <span class="pre">actor</span> <span class="pre">id</span> <span class="pre">``aid`</span></tt>
+<p>The value returned by <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><code class="xref py py-func docutils literal"><span class="pre">spawn()</span></code></a> is an <code class="xref py py-class docutils literal"><span class="pre">ActorProxyFuture</span></code>,
+a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> with the <code class="xref py py-attr docutils literal"><span class="pre">,</span> <span class="pre">which</span> <span class="pre">has</span> <span class="pre">the</span> <span class="pre">actor</span> <span class="pre">id</span> <span class="pre">``aid`</span></code>
 and it is called back once the remote actor has started.
-The callback will be an <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>, a lightweight proxy
+The callback will be an <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><code class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></code></a>, a lightweight proxy
 for the remote actor.</p>
-<p>When spawning from an actor other than the <a class="reference internal" href="#design-arbiter"><em>arbiter</em></a>,
-the workflow of the <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> function is as follow:</p>
+<p>When spawning from an actor other than the <a class="reference internal" href="#design-arbiter"><span>arbiter</span></a>,
+the workflow of the <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><code class="xref py py-func docutils literal"><span class="pre">spawn()</span></code></a> function is as follow:</p>
 <ul class="simple">
-<li><a class="reference internal" href="api/actor.html#pulsar.async.actor.send" title="pulsar.async.actor.send"><tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt></a> a message to the <a class="reference internal" href="#design-arbiter"><em>arbiter</em></a> to spawn
+<li><a class="reference internal" href="api/actor.html#pulsar.async.actor.send" title="pulsar.async.actor.send"><code class="xref py py-func docutils literal"><span class="pre">send()</span></code></a> a message to the <a class="reference internal" href="#design-arbiter"><span>arbiter</span></a> to spawn
 a new actor.</li>
 <li>The arbiter spawn the actor and wait for the actor&#8217;s
-<a class="reference internal" href="#handshake"><em>handshake</em></a>. Once the hand shake is done, it sends the
-response (the <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> of the
+<a class="reference internal" href="#handshake"><span>handshake</span></a>. Once the hand shake is done, it sends the
+response (the <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><code class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></code></a> of the
 spawned actor) to the original actor.</li>
 </ul>
 <div class="section" id="handshake">
 <span id="id2"></span><h3>Handshake<a class="headerlink" href="#handshake" title="Permalink to this headline">¶</a></h3>
-<p>The actor <strong>hand-shake</strong> is the mechanism with which an <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
-register its <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>mailbox address</em></a> with its manager.
-The actor manager is either a <tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt> or the
-<a class="reference internal" href="#design-arbiter"><em>arbiter</em></a> depending on which spawned the actor.</p>
+<p>The actor <strong>hand-shake</strong> is the mechanism with which an <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a>
+register its <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><span>mailbox address</span></a> with its manager.
+The actor manager is either a <code class="xref py py-class docutils literal"><span class="pre">Monitor</span></code> or the
+<a class="reference internal" href="#design-arbiter"><span>arbiter</span></a> depending on which spawned the actor.</p>
 <p>The handshake occurs when the monitor receives, for the first time,
-the actor <a class="reference internal" href="#actor-notify-command"><em>notify message</em></a>.</p>
+the actor <a class="reference internal" href="#actor-notify-command"><span>notify message</span></a>.</p>
 <p>For the curious, the handshake is responsible for setting the
-<a class="reference internal" href="api/actor.html#pulsar.async.actor.ActorProxyMonitor.mailbox" title="pulsar.async.actor.ActorProxyMonitor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">ActorProxyMonitor.mailbox</span></tt></a> attribute.</p>
+<a class="reference internal" href="api/actor.html#pulsar.async.actor.ActorProxyMonitor.mailbox" title="pulsar.async.actor.ActorProxyMonitor.mailbox"><code class="xref py py-attr docutils literal"><span class="pre">ActorProxyMonitor.mailbox</span></code></a> attribute.</p>
 <p>If the hand-shake fails, the spawned actor will eventually stop.</p>
 </div>
 <div class="section" id="hooks">
 <span id="actor-hooks"></span><h3>Hooks<a class="headerlink" href="#hooks" title="Permalink to this headline">¶</a></h3>
-<p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> exposes three <a class="reference internal" href="tutorials/events.html#one-time-event"><em>one time events</em></a>
+<p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> exposes three <a class="reference internal" href="tutorials/events.html#one-time-event"><span>one time events</span></a>
 which can be used to customise its behaviour and two
-<a class="reference internal" href="tutorials/events.html#many-times-event"><em>many times event</em></a> used when accessing actor
+<a class="reference internal" href="tutorials/events.html#many-times-event"><span>many times event</span></a> used when accessing actor
 information and when the actor spawn other actors.
-Hooks are passed as key-valued parameters to the <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> function.</p>
+Hooks are passed as key-valued parameters to the <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><code class="xref py py-func docutils literal"><span class="pre">spawn()</span></code></a> function.</p>
 <p><strong>start</strong></p>
 <p>Fired just after the actor has received the
-<a class="reference internal" href="#handshake"><em>hand-shake from its monitor</em></a>. This hook can be used to setup
+<a class="reference internal" href="#handshake"><span>hand-shake from its monitor</span></a>. This hook can be used to setup
 the application and register event handlers. For example, the
-<a class="reference internal" href="apps/socket.html#apps-socket"><em>socket server application</em></a> creates the server and register
-its file descriptor with the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></tt></a>.</p>
+<a class="reference internal" href="apps/socket.html#apps-socket"><span>socket server application</span></a> creates the server and register
+its file descriptor with the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></code></a>.</p>
 <p>This snippet spawns a new actor which starts an
-<a class="reference internal" href="tutorials/clients.html#tutorials-writing-clients"><em>Echo server</em></a>:</p>
+<a class="reference internal" href="tutorials/clients.html#tutorials-writing-clients"><span>Echo server</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">spawn</span><span class="p">,</span> <span class="n">TcpServer</span>
@@ -316,65 +301,65 @@ its file descriptor with the <a class="reference internal" href="api/actor.html#
 <span class="n">proxy</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">create_echo_server</span><span class="p">,</span> <span class="s">&#39;localhost:9898&#39;</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The <a class="reference internal" href="tutorials/clients.html#examples.echo.manage.EchoServerProtocol" title="examples.echo.manage.EchoServerProtocol"><tt class="xref py py-class docutils literal"><span class="pre">EchoServerProtocol</span></tt></a> is introduced in the
-<a class="reference internal" href="tutorials/clients.html#tutorials-writing-clients"><em>echo server and client tutorial</em></a>.</p>
+<p>The <a class="reference internal" href="tutorials/clients.html#examples.echo.manage.EchoServerProtocol" title="examples.echo.manage.EchoServerProtocol"><code class="xref py py-class docutils literal"><span class="pre">EchoServerProtocol</span></code></a> is introduced in the
+<a class="reference internal" href="tutorials/clients.html#tutorials-writing-clients"><span>echo server and client tutorial</span></a>.</p>
 <p><strong>stopping</strong></p>
-<p>Fired when the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> starts stopping.</p>
+<p>Fired when the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> starts stopping.</p>
 <p><strong>periodic_task</strong></p>
 <p>Fired at every actor periodic task (More docs here)</p>
 <p><strong>on_info</strong></p>
 <p>Fired every time the actor status information is accessed via the
-<a class="reference internal" href="#actor-info-command"><em>info command</em></a>:</p>
+<a class="reference internal" href="#actor-info-command"><span>info command</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">extra_info</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">info</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Hello&#39;</span>
 
 <span class="n">proxy</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">(</span><span class="n">on_info</span><span class="o">=</span><span class="n">extra_info</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The hook must accept the actor as first parameter and the <tt class="docutils literal"><span class="pre">key-valued</span></tt>
-parameter <tt class="docutils literal"><span class="pre">info</span></tt> (a dictionary).</p>
+<p>The hook must accept the actor as first parameter and the <code class="docutils literal"><span class="pre">key-valued</span></code>
+parameter <code class="docutils literal"><span class="pre">info</span></code> (a dictionary).</p>
 <p><strong>on_params</strong></p>
 <p>Fired every time an actor is about to spawn another actor. It can be used to
-add additional key-valued parameters passed to the <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a>
+add additional key-valued parameters passed to the <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><code class="xref py py-func docutils literal"><span class="pre">spawn()</span></code></a>
 function.</p>
 </div>
 </div>
 <div class="section" id="commands">
 <span id="actor-commands"></span><h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
-<p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> communicates with another remote <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> by <em>sending</em>
+<p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> communicates with another remote <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> by <em>sending</em>
 an <strong>action</strong> to perform. This action takes the form of a <strong>command</strong> name and
 optional positional and key-valued parameters. It is possible to add new
-commands via the <a class="reference internal" href="api/actor.html#pulsar.async.commands.command" title="pulsar.async.commands.command"><tt class="xref py py-class docutils literal"><span class="pre">command</span></tt></a> decorator as explained in the
-<a class="reference internal" href="api/actor.html#api-remote-commands"><em>api documentation</em></a>.</p>
+commands via the <a class="reference internal" href="api/actor.html#pulsar.async.commands.command" title="pulsar.async.commands.command"><code class="xref py py-class docutils literal"><span class="pre">command</span></code></a> decorator as explained in the
+<a class="reference internal" href="api/actor.html#api-remote-commands"><span>api documentation</span></a>.</p>
 <div class="section" id="ping">
 <h3>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h3>
-<p>Ping the remote actor <tt class="docutils literal"><span class="pre">abcd</span></tt> and receive an asynchronous <tt class="docutils literal"><span class="pre">pong</span></tt>:</p>
+<p>Ping the remote actor <code class="docutils literal"><span class="pre">abcd</span></code> and receive an asynchronous <code class="docutils literal"><span class="pre">pong</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abcd&#39;</span><span class="p">,</span> <span class="s">&#39;ping&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="echo">
 <h3>echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h3>
-<p>received an asynchronous echo from a remote actor <tt class="docutils literal"><span class="pre">abcd</span></tt>:</p>
+<p>received an asynchronous echo from a remote actor <code class="docutils literal"><span class="pre">abcd</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abcd&#39;</span><span class="p">,</span> <span class="s">&#39;echo&#39;</span><span class="p">,</span> <span class="s">&#39;Hello!&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="info">
 <span id="actor-info-command"></span><h3>info<a class="headerlink" href="#info" title="Permalink to this headline">¶</a></h3>
-<p>Request information about a remote actor <tt class="docutils literal"><span class="pre">abcd</span></tt>:</p>
+<p>Request information about a remote actor <code class="docutils literal"><span class="pre">abcd</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abcd&#39;</span><span class="p">,</span> <span class="s">&#39;info&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The asynchronous result will be called back with the dictionary returned
-by the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor.info" title="pulsar.async.actor.Actor.info"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.info()</span></tt></a> method.</p>
+by the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor.info" title="pulsar.async.actor.Actor.info"><code class="xref py py-meth docutils literal"><span class="pre">Actor.info()</span></code></a> method.</p>
 </div>
 <div class="section" id="notify">
 <span id="actor-notify-command"></span><h3>notify<a class="headerlink" href="#notify" title="Permalink to this headline">¶</a></h3>
 <p>This message is used periodically by actors, to notify their manager. If an
 actor fails to notify itself on a regular basis, its manager will shut it down.
-The first <tt class="docutils literal"><span class="pre">notify</span></tt> message is sent to the manager as soon as the actor is up
-and running so that the <a class="reference internal" href="#handshake"><em>handshake</em></a> can occur.</p>
+The first <code class="docutils literal"><span class="pre">notify</span></code> message is sent to the manager as soon as the actor is up
+and running so that the <a class="reference internal" href="#handshake"><span>handshake</span></a> can occur.</p>
 </div>
 <div class="section" id="run">
 <span id="actor-run-command"></span><h3>run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h3>
@@ -389,7 +374,7 @@ initial parameter:</p>
 </div>
 <div class="section" id="stop">
 <span id="actor-stop-command"></span><h3>stop<a class="headerlink" href="#stop" title="Permalink to this headline">¶</a></h3>
-<p>Tell the remote actor <tt class="docutils literal"><span class="pre">abc</span></tt> to gracefully shutdown:</p>
+<p>Tell the remote actor <code class="docutils literal"><span class="pre">abc</span></code> to gracefully shutdown:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abc&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -397,7 +382,7 @@ initial parameter:</p>
 </div>
 <div class="section" id="monitors">
 <span id="design-monitor"></span><h2>Monitors<a class="headerlink" href="#monitors" title="Permalink to this headline">¶</a></h2>
-<p>Monitors are specialised actors which share the <a class="reference internal" href="#design-arbiter"><em>arbiter</em></a>
+<p>Monitors are specialised actors which share the <a class="reference internal" href="#design-arbiter"><span>arbiter</span></a>
 event loop and therefore they live in the main thread of the master process
 of your application.</p>
 <p>TODO: more docs</p>
@@ -405,10 +390,10 @@ of your application.</p>
 <div class="section" id="exceptions">
 <span id="exception-design"></span><h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
 <p>There are two categories of exceptions in Python: those that derive from the
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#Exception" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Exception</span></tt></a> class and those that derive from <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#BaseException" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt></a>.
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#Exception" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></a> class and those that derive from <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#BaseException" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">BaseException</span></code></a>.
 Exceptions deriving from Exception will generally be caught and handled
 appropriately; for example, they will be passed through by a
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>,
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>,
 and they will be logged and ignored when they occur in a callback.</p>
 <p>However, exceptions deriving only from BaseException are never caught,
 and will usually cause the program to terminate with a traceback.
@@ -418,7 +403,7 @@ it is usually unwise to treat these the same as most other exceptions.)</p>
 <div class="section" id="application-framework">
 <span id="design-application"></span><h2>Application Framework<a class="headerlink" href="#application-framework" title="Permalink to this headline">¶</a></h2>
 <p>To aid the development of applications running on top of pulsar concurrent
-framework, the library ships with the <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> class.</p>
+framework, the library ships with the <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> class.</p>
 </div>
 </div>
 
@@ -426,71 +411,54 @@ framework, the library ships with the <a class="reference internal" href="api/ap
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="index.html">
-  <img class="logo" width="200" src="static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Design</a><ul>
-<li><a class="reference internal" href="#async-objects">Async Objects</a></li>
-<li><a class="reference internal" href="#actors">Actors</a><ul>
-<li><a class="reference internal" href="#the-theory">The theory</a></li>
-<li><a class="reference internal" href="#the-arbiter">The Arbiter</a></li>
-<li><a class="reference internal" href="#implementation">Implementation</a></li>
-<li><a class="reference internal" href="#io-bound">IO-bound</a></li>
-<li><a class="reference internal" href="#cpu-bound">CPU-bound</a></li>
-<li><a class="reference internal" href="#periodic-task">Periodic task</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pics.html">Pics</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#spawning">Spawning</a><ul>
-<li><a class="reference internal" href="#handshake">Handshake</a></li>
-<li><a class="reference internal" href="#hooks">Hooks</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#commands">Commands</a><ul>
-<li><a class="reference internal" href="#ping">ping</a></li>
-<li><a class="reference internal" href="#echo">echo</a></li>
-<li><a class="reference internal" href="#info">info</a></li>
-<li><a class="reference internal" href="#notify">notify</a></li>
-<li><a class="reference internal" href="#run">run</a></li>
-<li><a class="reference internal" href="#stop">stop</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#monitors">Monitors</a></li>
-<li><a class="reference internal" href="#exceptions">Exceptions</a></li>
-<li><a class="reference internal" href="#application-framework">Application Framework</a></li>
-</ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="apps/socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps/data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="overview.html"
-                        title="previous chapter">Overview</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="faq.html"
-                        title="next chapter">FAQ</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="sources/design.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -507,29 +475,36 @@ framework, the library ships with the <a class="reference internal" href="api/ap
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="sources/design.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>

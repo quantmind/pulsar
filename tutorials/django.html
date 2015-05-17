@@ -1,25 +1,20 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-
-<html>
-<head>
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-    <title>Django with Pulsar &mdash; pulsar 0.9.3-beta.1 documentation</title>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    <title>Django with Pulsar &mdash; pulsar 1.0.0beta0 documentation</title>
+    
+    <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.3-beta.1',
+        VERSION:     '1.0.0beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,16 +24,17 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.9.3-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Twitter Streaming" href="tweets.html" />
-    <link rel="prev" title="A Task Queue with a JSON-RPC Api" href="taskqueue.html" /> 
-</head>
- <body>
+    <link rel="prev" title="Websocket Chat Server" href="chat.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-
-
-    <div class="related">
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -51,146 +47,76 @@
           <a href="tweets.html" title="Twitter Streaming"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="taskqueue.html" title="A Task Queue with a JSON-RPC Api"
+          <a href="chat.html" title="Websocket Chat Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.9.3-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
-    </div>
-<div class="deck">
-<div class="header">
-    
-        <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/tutorials/django.html">release docs here</a>.
-        </p>
-    
-</div>
-</div>
-  
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="django-with-pulsar">
 <span id="tutorials-django"></span><h1>Django with Pulsar<a class="headerlink" href="#django-with-pulsar" title="Permalink to this headline">¶</a></h1>
-<p>The code for this example is located in the <a class="reference internal" href="#module-examples.djangoapp.manage" title="examples.djangoapp.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.djangoapp.manage</span></tt></a>
+<p>The code for this example is located in the <a class="reference internal" href="#module-examples.djchat.manage" title="examples.djchat.manage"><code class="xref py py-mod docutils literal"><span class="pre">examples.djchat.manage</span></code></a>
 module.</p>
-<span class="target" id="module-examples.djangoapp.manage"></span><p>This is a web chat application which illustrates how to run a django
-site with pulsar and how to include pulsar asynchronous request middlewares
-into django.
-Requires django 1.4 or above. To run:</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse
-</pre></div>
-</div>
-<p>If running for the first time, issue the:</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py syncdb
-</pre></div>
-</div>
-<p>command and create the super user.</p>
-<p>This example uses the <a class="reference internal" href="../apps/pulse.html#apps-pulse"><em>django pulse</em></a> application.</p>
-<div class="section" id="message-and-data-backend">
-<h2>Message and data backend<a class="headerlink" href="#message-and-data-backend" title="Permalink to this headline">¶</a></h2>
-<p>By default, messages from connected (websocket) clients are synchronised via
-the <a class="reference internal" href="../apps/ds.html#pulsar-data-store"><em>pulsar data store</em></a> which starts when the django
-site starts. It is possible to specify a different data store via the
-<a class="reference internal" href="../settings.html#setting-data-store"><em>data-store option</em></a>.</p>
-<p>For example, it is possible to use <a class="reference external" href="http://redis.io/">redis</a> as an alternative data store
-simply by issuing the following start up command:</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse --data-store redis://127.0.0.1:6379/3
-</pre></div>
-</div>
-</div>
-<div class="section" id="views-and-middleware">
-<h2>Views and Middleware<a class="headerlink" href="#views-and-middleware" title="Permalink to this headline">¶</a></h2>
-<p>Check the <tt class="xref py py-mod docutils literal"><span class="pre">examples.djangoapp.djchat.settings</span></tt> module to see how this
-classes are used.</p>
-<span class="target" id="module-examples.djangoapp.djchat.views"></span><dl class="class">
-<dt id="examples.djangoapp.djchat.views.Chat">
-<em class="property">class </em><tt class="descclassname">examples.djangoapp.djchat.views.</tt><tt class="descname">Chat</tt><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a> handler managing the chat application.</p>
-<dl class="method">
-<dt id="examples.djangoapp.djchat.views.Chat.get_pubsub">
-<tt class="descname">get_pubsub</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat.get_pubsub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat.get_pubsub" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create the pubsub handler if not already available</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="examples.djangoapp.djchat.views.Chat.on_open">
-<tt class="descname">on_open</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat.on_open" title="Permalink to this definition">¶</a></dt>
-<dd><p>A new websocket connection is established.</p>
-<p>Add it to the set of clients listening for messages.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="examples.djangoapp.djchat.views.Chat.on_close">
-<tt class="descname">on_close</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat.on_close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Leave the chat room</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="examples.djangoapp.djchat.views.Chat.on_message">
-<tt class="descname">on_message</tt><big>(</big><em>websocket</em>, <em>msg</em><big>)</big><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#Chat.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.Chat.on_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>When a new message arrives, it publishes to all listening clients.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="examples.djangoapp.djchat.views.middleware">
-<em class="property">class </em><tt class="descclassname">examples.djangoapp.djchat.views.</tt><tt class="descname">middleware</tt><a class="reference internal" href="../modules/examples/djangoapp/djchat/views.html#middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djangoapp.djchat.views.middleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>Django middleware for serving the Chat websocket.</p>
-</dd></dl>
-
-</div>
-</div>
+<span class="target" id="module-examples.djchat.manage"></span></div>
 
 
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar-logo.svg" alt="pulsar" title="Pulsar"/>
-</a>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
 </p>
-<div class="g-plusone"></div>
-<script type="text/javascript">
-  window.___gcfg = {lang: 'en-GB'};
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-<br>
-<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-<br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Django with Pulsar</a><ul>
-<li><a class="reference internal" href="#message-and-data-backend">Message and data backend</a></li>
-<li><a class="reference internal" href="#views-and-middleware">Views and Middleware</a></li>
+
+
+
+<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps/socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/pulse.html">Django Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="taskqueue.html"
-                        title="previous chapter">A Task Queue with a JSON-RPC Api</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="tweets.html"
-                        title="next chapter">Twitter Streaming</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/django.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -207,29 +133,36 @@ classes are used.</p>
       </div>
       <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2011-2015, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      
+      |
+      <a href="../sources/tutorials/django.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
 
+    
 
-<div class="footer">
-     &copy; Copyright 2011-2014, Luca Sbardella.
-   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.
- </div>
+    
+    <script type="text/javascript">
 
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
 
-<script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
 
-  var _gaq = _gaq || [];
-  
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-
-</body>
+    </script>
+    
+  </body>
 </html>
