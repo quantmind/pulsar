@@ -19,6 +19,18 @@ year = date.today().year
 version = pulsar.__version__
 release = version
 
+html_theme_options = {
+    'logo': 'pulsar-logo.png',
+    'github_user': 'quantmind',
+    'github_repo': 'pulsar',
+    'description': 'Concurrent framework for python 3.4 and above.'
+}
+html_sidebars = {
+    '**': [
+        'about.html', 'navigation.html', 'searchbox.html'
+    ]
+}
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -32,6 +44,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode',
               #'pulsar.utils.docs.html',
+              'alabaster',
               'pulsarext',
               'redisext']
 
@@ -52,31 +65,16 @@ master_doc = 'index'
 project = 'pulsar'
 copyright = '2011-%s, %s' % (year, pulsar.__author__)
 
-html_theme = 'pulsar'
+html_theme = 'alabaster'
 pygments_style = 'sphinx'
 templates_path = ['_templates']
 html_static_path = ['_static']
-html_theme_path = ["_theme"]
+html_theme_path = ['_theme']
 exclude_trees = ['_build']
-html_sidebars = {
-    'index': ['sidebarlogo.html', 'sidebarintro.html',
-              'sourcelink.html', 'searchbox.html'],
-    'overview': ['sidebarintro.html',
-              'sourcelink.html', 'searchbox.html'],
-    '**': ['sidebarlogo.html', 'localtoc.html', 'relations.html',
-           'sourcelink.html', 'searchbox.html'],
-}
+
 exclude_trees = []
 html_additional_pages = {
 }
-
-# -- Options for HTML output ---------------------------------------------------
-
-
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []

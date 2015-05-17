@@ -4,7 +4,7 @@ import os
 
 from .utils.version import get_version
 
-VERSION = (1, 4, 0, 'alpha', 0)
+VERSION = (1, 0, 0, 'final', 0)
 
 __version__ = version = get_version(VERSION)
 __license__ = "BSD"
@@ -12,18 +12,14 @@ __author__ = "Luca Sbardella"
 __contact__ = "luca.sbardella@gmail.com"
 __homepage__ = "https://github.com/quantmind/pulsar"
 __docformat__ = "restructuredtext"
-CLASSIFIERS = ['Development Status :: 4 - Beta',
+CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                'Environment :: Web Environment',
                'Intended Audience :: Developers',
                'License :: OSI Approved :: BSD License',
                'Operating System :: OS Independent',
                'Programming Language :: Python',
-               'Programming Language :: Python :: 2',
-               'Programming Language :: Python :: 2.7',
                'Programming Language :: Python :: 3',
-               'Programming Language :: Python :: 3.3',
                'Programming Language :: Python :: 3.4',
-               'Programming Language :: Python :: Implementation :: PyPy',
                'Topic :: Internet',
                'Topic :: Utilities',
                'Topic :: System :: Distributed Computing',
