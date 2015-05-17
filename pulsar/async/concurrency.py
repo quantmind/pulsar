@@ -560,7 +560,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                 self.cfg.set('pidfile', 'pulsar.pid')
             system.daemonize(keep_fds=logger_fds())
         self.aid = self.name
-        actor = super(ArbiterConcurrency, self).create_actor()
+        actor = super().create_actor()
         self.monitors = OrderedDict()
         self.registered = {self.identity(actor): actor}
         actor.bind_event('start', self._start_arbiter)
@@ -568,7 +568,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
 
     def get_actor(self, actor, aid, check_monitor=True):
         '''Given an actor unique id return the actor proxy.'''
-        a = super(ArbiterConcurrency, self).get_actor(actor, aid)
+        a = super().get_actor(actor, aid)
         if a is None:
             if aid in self.monitors:  # Check in monitors aid
                 return self.monitors[aid]
@@ -691,8 +691,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         self._exit_arbiter(actor, True)
 
     def _remove_actor(self, arbiter, actor, log=True):
-        a = super(ArbiterConcurrency, self)._remove_actor(arbiter, actor,
-                                                          False)
+        a = super()._remove_actor(arbiter, actor, False)
         b = self.registered.pop(self.identity(actor), None)
         c = self.monitors.pop(self.identity(actor), None)
         removed = a or b or c

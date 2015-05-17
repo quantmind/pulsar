@@ -178,7 +178,7 @@ class Config(object):
     def __setattr__(self, name, value):
         if name != "settings" and name in self.settings:
             raise AttributeError("Invalid access!")
-        super(Config, self).__setattr__(name, value)
+        super().__setattr__(name, value)
 
     def update(self, data, default=False):
         '''Update this :attr:`Config` with ``data``.

@@ -30,8 +30,7 @@ class CommandError(PulsarException):
 class CommandNotFound(CommandError):
 
     def __init__(self, name):
-        super(CommandNotFound, self).__init__('Command "%s" not available' %
-                                              name)
+        super().__init__('Command "%s" not available' % name)
 
 
 class ProtocolError(PulsarException):
@@ -43,7 +42,7 @@ class ProtocolError(PulsarException):
     status_code = None
 
     def ProtocolError(self, msg=None, status_code=None):
-        super(ProtocolError, self).__init__(msg)
+        super().__init__(msg)
         self.status_code = status_code
 
 
@@ -62,7 +61,7 @@ class HaltServer(BaseException):
     When ``exit_code`` is greater than 1, it is considered an expected
     failure and therefore the full stack trace is not logged.'''
     def __init__(self, reason='Exiting server.', exit_code=3):
-        super(HaltServer, self).__init__(reason)
+        super().__init__(reason)
         self.exit_code = exit_code
 
 
@@ -102,7 +101,7 @@ class HttpException(HTTPError):
         self.strict = strict
         self.headers = headers
         self.content_type = content_type
-        super(HttpException, self).__init__(msg)
+        super().__init__(msg)
 
     @property
     def hdrs(self):
@@ -119,8 +118,7 @@ class HttpRedirect(HttpException):
     def __init__(self, location, status=None, headers=None, **kw):
         headers = [] if headers is None else headers
         headers.append(('location', location))
-        super(HttpRedirect, self).__init__(status=status or self.status,
-                                           headers=headers, **kw)
+        super().__init__(status=status or self.status, headers=headers, **kw)
 
     @property
     def location(self):

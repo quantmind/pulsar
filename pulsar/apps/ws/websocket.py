@@ -131,7 +131,7 @@ class WebSocket(wsgi.Router):
     parser_factory = frame_parser
 
     def __init__(self, route, handle, parser_factory=None, **kwargs):
-        super(WebSocket, self).__init__(route, **kwargs)
+        super().__init__(route, **kwargs)
         self.handle = handle
         self.parser_factory = parser_factory or frame_parser
 

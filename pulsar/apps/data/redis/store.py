@@ -12,7 +12,7 @@ from .pubsub import RedisPubSub
 class RedisStoreConnection(Connection):
 
     def __init__(self, *args, **kw):
-        super(RedisStoreConnection, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.parser = self._producer._parser_class()
 
     def execute(self, *args, **options):

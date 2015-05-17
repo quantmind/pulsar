@@ -225,7 +225,7 @@ class PulsarProtocol(EventHandler, FlowControl):
     _type = 'server'
 
     def __init__(self, loop=None, session=1, producer=None, **kw):
-        super(PulsarProtocol, self).__init__(loop)
+        super().__init__(loop)
         FlowControl.__init__(self, **kw)
         self._session = session
         self._producer = producer
@@ -373,7 +373,7 @@ class Connection(Protocol, Timeout):
     '''
     def __init__(self, consumer_factory=None, timeout=None,
                  low_limit=None, high_limit=None, **kw):
-        super(Connection, self).__init__(**kw)
+        super().__init__(**kw)
         self.bind_event('connection_lost', self._connection_lost)
         self._processed = 0
         self._current_consumer = None
@@ -435,7 +435,7 @@ class Connection(Protocol, Timeout):
             self._build_consumer(None)
 
     def info(self):
-        info = super(Connection, self).info()
+        info = super().info()
         c = info['connection']
         c['request_processed'] = self._processed
         c['data_processed_count'] = self._data_received_count
@@ -477,7 +477,7 @@ class Producer(EventHandler):
 
     def __init__(self, loop, protocol_factory=None, name=None,
                  max_requests=None, logger=None):
-        super(Producer, self).__init__(get_io_loop(loop))
+        super().__init__(get_io_loop(loop))
         self.protocol_factory = protocol_factory or self.protocol_factory
         self._name = name or self.__class__.__name__
         self._requests_processed = 0
@@ -540,9 +540,8 @@ class TcpServer(Producer):
     def __init__(self, protocol_factory, loop, address=None,
                  name=None, sockets=None, max_requests=None,
                  keep_alive=None, logger=None):
-        super(TcpServer, self).__init__(loop, protocol_factory, name=name,
-                                        max_requests=max_requests,
-                                        logger=logger)
+        super().__init__(loop, protocol_factory, name=name,
+                         max_requests=max_requests, logger=logger)
         self._params = {'address': address, 'sockets': sockets}
         self._keep_alive = max(keep_alive or 0, 0)
         self._concurrent_connections = set()
@@ -651,8 +650,7 @@ class TcpServer(Producer):
     def create_protocol(self):
         '''Override :meth:`Producer.create_protocol`.
         '''
-        protocol = super(TcpServer, self).create_protocol(
-            timeout=self._keep_alive)
+        protocol = super().create_protocol(timeout=self._keep_alive)
         protocol.bind_event('connection_made', self._connection_made)
         protocol.bind_event('connection_lost', self._connection_lost)
         if (self._server and self._max_requests and
@@ -709,9 +707,8 @@ class DatagramServer(Producer):
     def __init__(self, protocol_factory, loop=None, address=None,
                  name=None, sockets=None, max_requests=None,
                  logger=None):
-        super(DatagramServer, self).__init__(loop, protocol_factory, name=name,
-                                             max_requests=max_requests,
-                                             logger=logger)
+        super().__init__(loop, protocol_factory, name=name,
+                         max_requests=max_requests, logger=logger)
         self._params = {'address': address, 'sockets': sockets}
 
     @task

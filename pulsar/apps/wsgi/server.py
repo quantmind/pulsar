@@ -292,7 +292,7 @@ class HttpServerResponse(ProtocolConsumer):
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
     def __init__(self, wsgi_callable, cfg, server_software=None, loop=None):
-        super(HttpServerResponse, self).__init__(loop=loop)
+        super().__init__(loop=loop)
         self.wsgi_callable = wsgi_callable
         self.cfg = cfg
         self.parser = http_parser(kind=0)

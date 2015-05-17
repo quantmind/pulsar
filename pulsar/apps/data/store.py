@@ -326,7 +326,7 @@ class PubSub(object):
     '''
 
     def __init__(self, store, protocol=None):
-        super(PubSub, self).__init__()
+        super().__init__()
         self.store = store
         self._loop = store._loop
         self._protocol = protocol

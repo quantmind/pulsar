@@ -47,7 +47,7 @@ class HttpAuthenticate(HttpException):
             value = None
         if value:
             value = [('WWW-Authenticate', value)]
-        super(HttpAuthenticate, self).__init__(status=401, headers=value)
+        super().__init__(status=401, headers=value)
 
     def digest_auth_header(self, realm=None, nonce=None, qop=None, opaque=None,
                            algorithm=None, stale=None):

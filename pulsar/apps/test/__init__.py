@@ -553,6 +553,6 @@ class TestSuite(pulsar.Application):
         return cfg
 
     def arbiter_params(self):
-        params = super(TestSuite, self).arbiter_params()
+        params = super().arbiter_params()
         params['concurrency'] = self.cfg.concurrency
         return params

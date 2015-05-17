@@ -162,13 +162,13 @@ class KeyValueFileName(PulsarDsSetting):
 class TcpServer(pulsar.TcpServer):
 
     def __init__(self, cfg, *args, **kwargs):
-        super(TcpServer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.cfg = cfg
         self._parser_class = redis_parser(cfg.redis_py_parser)
         self._key_value_store = Storage(self, cfg)
 
     def info(self):
-        info = super(TcpServer, self).info()
+        info = super().info()
         info.update(self._key_value_store._info())
         return info
 
@@ -191,7 +191,7 @@ class PulsarDS(SocketServer):
         cfg = self.cfg
         workers = min(1, cfg.workers)
         cfg.set('workers', workers)
-        return super(PulsarDS, self).monitor_start(monitor)
+        return super().monitor_start(monitor)
 
 
 # #############################################################################

@@ -560,7 +560,7 @@ class FloatConverter(NumberConverter):
     num_convert = float
 
     def __init__(self, min=None, max=None):
-        super(FloatConverter, self).__init__(0, min, max)
+        super().__init__(0, min, max)
 
 
 def parse_converter_args(argstr):

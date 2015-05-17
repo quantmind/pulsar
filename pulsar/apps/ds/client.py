@@ -136,7 +136,7 @@ class PulsarStoreClient(pulsar.Protocol, ClientMixin):
     '''Used both by client and server'''
 
     def __init__(self, cfg, *args, **kw):
-        super(PulsarStoreClient, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         ClientMixin.__init__(self, self._producer._key_value_store)
         self.cfg = cfg
         self.parser = self._producer._parser_class()

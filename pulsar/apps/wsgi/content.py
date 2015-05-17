@@ -445,7 +445,7 @@ class Json(AsyncString):
 
     def _setup(self, as_list=False, **params):
         self.as_list = as_list
-        super(Json, self)._setup(**params)
+        super()._setup(**params)
 
     def do_stream(self, request):
         if self._children:
@@ -572,7 +572,7 @@ class Html(AsyncString):
                         child = Html(tag, child)
                 elif not child.startswith('<%s' % tag):
                     child = Html(tag, child)
-            super(Html, self).append(child)
+            super().append(child)
 
     def _setup(self, cn=None, attr=None, css=None, data=None,
                content_type=None, **params):
@@ -773,7 +773,7 @@ class Media(AsyncString):
     mediatype = None
 
     def __init__(self, media_path, minified=False, asset_protocol=None):
-        super(Media, self).__init__()
+        super().__init__()
         self.media_path = media_path
         self.asset_protocol = asset_protocol
         if self.media_path and not self.media_path.endswith('/'):
@@ -876,7 +876,7 @@ class Scripts(Media):
         self.wait = kwargs.pop('wait', 200)
         self.require = []
         self.paths = {}
-        super(Scripts, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def script(self, src, type=None, **kwargs):
         type = type or 'application/javascript'
@@ -915,7 +915,7 @@ class Scripts(Media):
 class Embedded(Html):
 
     def __init__(self, tag, **kwargs):
-        super(Embedded, self).__init__(None, **kwargs)
+        super().__init__(None, **kwargs)
         self._child_tag = tag
         self._child_kwargs = kwargs
 
@@ -928,7 +928,7 @@ class Embedded(Html):
             if media:
                 kwargs['media'] = media
             child = Html(self._child_tag, child, **kwargs)
-        super(Embedded, self).insert(index, child)
+        super().insert(index, child)
 
 
 class Head(Html):
@@ -985,7 +985,7 @@ class Head(Html):
     '''
     def __init__(self, media_path=None, title=None, meta=None, minified=False,
                  asset_protocol=None, **params):
-        super(Head, self).__init__('head', **params)
+        super().__init__('head', **params)
         self.title = title
         self.append(Html(None, meta))
         self.append(Links(media_path, minified=minified,
@@ -1039,7 +1039,7 @@ class Head(Html):
     def do_stream(self, request):
         if self.title:
             self._children.insert(0, '<title>%s</title>\n' % self.title)
-        return super(Head, self).do_stream(request)
+        return super().do_stream(request)
 
     def add_meta(self, **kwargs):
         '''Add a new :class:`Html` meta tag to the :attr:`meta` collection.'''
@@ -1115,7 +1115,7 @@ class HtmlDocument(Html):
 
     def __init__(self, title=None, media_path='/media/', charset=None,
                  minified=False, loop=None, asset_protocol=None, **params):
-        super(HtmlDocument, self).__init__(None, **params)
+        super().__init__(None, **params)
         self.head = Head(title=title, media_path=media_path, minified=minified,
                          charset=charset, asset_protocol=asset_protocol)
         self.body = Html('body')

@@ -307,7 +307,7 @@ class MultiFuture(Future):
     '''Handle several futures at once. Thread safe.
     '''
     def __init__(self, data=None, loop=None, type=None, raise_on_error=True):
-        super(MultiFuture, self).__init__(loop=loop)
+        super().__init__(loop=loop)
         self._futures = {}
         self._failures = []
         self._raise_on_error = raise_on_error

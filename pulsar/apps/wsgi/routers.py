@@ -582,7 +582,7 @@ class MediaRouter(Router, MediaMixin):
     def __init__(self, rule, path, show_indexes=False,
                  default_suffix=None, default_file='index.html',
                  raise_404=True, **params):
-        super(MediaRouter, self).__init__('%s/<path:path>' % rule, **params)
+        super().__init__('%s/<path:path>' % rule, **params)
         self._default_suffix = default_suffix
         self._default_file = default_file
         self._show_indexes = show_indexes
@@ -629,7 +629,7 @@ class FileRouter(Router, MediaMixin):
     cache_control = CacheControl(maxage=86400)
 
     def __init__(self, route, file_path, status_code=None, raise_404=True):
-        super(FileRouter, self).__init__(route)
+        super().__init__(route)
         self._status_code = status_code
         self._file_path = file_path
         self._raise_404 = raise_404

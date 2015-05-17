@@ -377,7 +377,7 @@ class EnvironMixin(object):
 class WsgiRequest(EnvironMixin):
     '''An :class:`EnvironMixin` for wsgi requests.'''
     def __init__(self, environ, app_handler=None, urlargs=None):
-        super(WsgiRequest, self).__init__(environ)
+        super().__init__(environ)
         self.cache.cfg = environ.get('pulsar.cfg', {})
         if app_handler:
             self.cache.app_handler = app_handler

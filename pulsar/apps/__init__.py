@@ -413,7 +413,7 @@ class Application(Configurator):
         Default ``None``
     """
     def __init__(self, callable=None, load_config=True, **params):
-        super(Application, self).__init__(load_config=load_config, **params)
+        super().__init__(load_config=load_config, **params)
         self.cfg.callable = callable
         self.logger = None
         if load_config:

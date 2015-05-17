@@ -7,7 +7,7 @@ class Handler(EventHandler):
 
     def __init__(self, **kw):
         self._loop = get_event_loop()
-        super(Handler, self).__init__(self._loop, **kw)
+        super().__init__(self._loop, **kw)
 
 
 class TestFailure(unittest.TestCase):

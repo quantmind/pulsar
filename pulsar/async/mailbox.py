@@ -149,7 +149,7 @@ class MailboxProtocol(Protocol):
     Encoding and decoding uses the unmasked websocket protocol.
     '''
     def __init__(self, **kw):
-        super(MailboxProtocol, self).__init__(**kw)
+        super().__init__(**kw)
         self._pending_responses = {}
         self._parser = frame_parser(kind=2, pyparser=True)
         actor = get_actor()
@@ -258,13 +258,13 @@ class MailboxClient(AbstractClient):
     protocol_factory = MailboxProtocol
 
     def __init__(self, address, actor, loop):
-        super(MailboxClient, self).__init__(loop)
+        super().__init__(loop)
         self.address = address
         self.name = 'Mailbox for %s' % actor
         self._connection = None
 
     def response(self, request):
-        resp = super(MailboxClient, self).response
+        resp = super().response
         self._consumer = resp(request, self._consumer, False)
         return self._consumer
 

@@ -969,7 +969,7 @@ class HttpClient(AbstractClient):
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None,
                  pool_size=10, frame_parser=None):
-        super(HttpClient, self).__init__(loop)
+        super().__init__(loop)
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
         self.pool_size = pool_size

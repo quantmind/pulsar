@@ -63,7 +63,7 @@ handlers.
         self.wsgi_handler = wsgi_handler
         self.server_consumer = partial(HttpServerResponse, wsgi_handler,
                                        test.cfg)
-        super(HttpTestClient, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def data_received(self, connnection, data):
         pass

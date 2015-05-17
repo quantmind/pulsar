@@ -35,7 +35,7 @@ class MultiValueDict(dict):
 values for the same key.
     """
     def __init__(self, data=None):
-        super(MultiValueDict, self).__init__()
+        super().__init__()
         if data:
             self.update(data)
 
@@ -43,19 +43,19 @@ values for the same key.
         """Returns the data value for this key. If the value is a list with
 only one element, it returns that element, otherwise it returns the list.
 Raises KeyError if key is not found."""
-        l = super(MultiValueDict, self).__getitem__(key)
+        l = super().__getitem__(key)
         return l[0] if len(l) == 1 else l
 
     def __setitem__(self, key, value):
         if key in self:
-            l = super(MultiValueDict, self).__getitem__(key)
+            l = super().__getitem__(key)
             # if value already there don't add it.
             # I'm not sure this is the correct way of doing thing but
             # it makes sense not to have repeating items
             if value not in l:
                 l.append(value)
         else:
-            super(MultiValueDict, self).__setitem__(key, [value])
+            super().__setitem__(key, [value])
 
     def update(self, items):
         if isinstance(items, dict):
@@ -74,21 +74,21 @@ Raises KeyError if key is not found."""
 
     def pop(self, key, *arg):
         if key in self:
-            l = super(MultiValueDict, self).pop(key)
+            l = super().pop(key)
             return l[0] if len(l) == 1 else l
         else:
-            return super(MultiValueDict, self).pop(key, *arg)
+            return super().pop(key, *arg)
 
     def getlist(self, key):
         """Returns the list of values for the passed key."""
-        return super(MultiValueDict, self).__getitem__(key)
+        return super().__getitem__(key)
 
     def setlist(self, key, _list):
         if key in self:
             self.getlist(key).extend(_list)
         else:
             _list = aslist(_list)
-            super(MultiValueDict, self).__setitem__(key, _list)
+            super().__setitem__(key, _list)
 
     def setdefault(self, key, default=None):
         if key not in self:
@@ -107,7 +107,7 @@ Raises KeyError if key is not found."""
 
     def lists(self):
         """Returns a list of (key, list) pairs."""
-        return super(MultiValueDict, self).items()
+        return super().items()
 
     def values(self):
         """Returns a list of the last value on every key list."""
@@ -188,7 +188,7 @@ class FrozenDict(dict):
     '''A dictionary which cannot be changed once initialised.'''
 
     def __init__(self, *iterable, **kwargs):
-        update = super(FrozenDict, self).update
+        update = super().update
         if iterable:
             if len(iterable) > 1:
                 raise TypeError('%s exceped at most 1 arguments, got %s.' %

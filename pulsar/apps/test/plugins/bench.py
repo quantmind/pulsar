@@ -63,7 +63,7 @@ def simple(info, *args):
 class BenchTest(test.WrapTest):
 
     def __init__(self, test, number, repeat):
-        super(BenchTest, self).__init__(test)
+        super().__init__(test)
         self.number = number
         self.repeat = repeat
 

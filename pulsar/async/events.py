@@ -100,11 +100,11 @@ class OneTime(Future, AbstractEvent):
     Implemented mainly for the one time events of the :class:`EventHandler`.
     '''
     def __init__(self, loop=None, name=None):
-        super(OneTime, self).__init__(loop=loop)
+        super().__init__(loop=loop)
         self._name = name or self.__class__.__name__.lower()
 
     def __repr__(self):
-        return '%s: %s' % (self._name, super(OneTime, self).__repr__())
+        return '%s: %s' % (self._name, super().__repr__())
     __str__ = __repr__
 
     @property

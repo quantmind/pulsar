@@ -7,7 +7,7 @@ from pulsar.apps.data import PubSub
 class PubsubProtocol(Protocol):
 
     def __init__(self, handler, **kw):
-        super(PubsubProtocol, self).__init__(handler._loop, **kw)
+        super().__init__(handler._loop, **kw)
         self.parser = self._producer._parser_class()
         self.handler = handler
 

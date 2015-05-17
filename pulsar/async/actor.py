@@ -205,7 +205,7 @@ class Actor(EventHandler, Coverage):
         for name, value in impl.params.items():
             setattr(self, name, value)
         del impl.params
-        super(Actor, self).__init__(impl.setup_event_loop(self))
+        super().__init__(impl.setup_event_loop(self))
         for name, hook in hooks:
             self.bind_event(name, hook)
         try:

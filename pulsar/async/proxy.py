@@ -158,7 +158,7 @@ class ActorProxyMonitor(ActorProxy):
         self.callback = None
         self.spawning_start = None
         self.stopping_start = None
-        super(ActorProxyMonitor, self).__init__(impl)
+        super().__init__(impl)
 
     @property
     def notified(self):
