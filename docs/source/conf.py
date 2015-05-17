@@ -51,6 +51,11 @@ extensions = ['sphinx.ext.autodoc',
 # Beta version is published in github pages
 if pulsar.VERSION[3] == 'beta':
     extensions.append('sphinxtogithub')
+    analytics_id = 'UA-3900561-8'
+else:
+    analytics_id = 'UA-3900561-7'
+
+html_theme_options['analytics_id'] = analytics_id
 html_context = {'release_version': pulsar.VERSION[3] == 'final'}
 # The suffix of source filenames.
 source_suffix = '.rst'
