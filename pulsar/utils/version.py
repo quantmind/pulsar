@@ -3,16 +3,16 @@ import os
 import subprocess
 
 
-def get_version(version):
+def get_version(version, filename=None):
     assert len(version) == 5
     assert version[3] in ('alpha', 'beta', 'rc', 'final')
     main = '.'.join(map(str, version[:3]))
     sub = ''
     if version[3] == 'alpha' and version[4] == 0:
-        git_changeset = get_git_changeset()
+        git_changeset = get_git_changeset(filename)
         if git_changeset:
             sub = '-dev.%s' % git_changeset
-    elif version[3] != 'final':
+    if version[3] != 'final' and not sub:
         sub = '%s%s' % tuple(version[3:])
     return main + sub
 
@@ -26,14 +26,15 @@ def sh(command, cwd=None):
                             universal_newlines=True).communicate()[0]
 
 
-def get_git_changeset():
+def get_git_changeset(filename=None):
     """Returns a numeric identifier of the latest git changeset.
 
     The result is the UTC timestamp of the changeset in YYYYMMDDHHMMSS format.
     This value isn't guaranteed to be unique, but collisions are very unlikely,
     so it's sufficient for generating the development version numbers.
     """
-    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    filename = filename or __file__
+    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(filename)))
     git_show = sh('git show --pretty=format:%ct --quiet HEAD',
                   cwd=repo_dir)
     timestamp = git_show.partition('\n')[0]

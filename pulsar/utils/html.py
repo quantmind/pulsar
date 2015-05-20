@@ -44,7 +44,7 @@ def is_safe(v):
 
 def escape(html, force=False):
     """Returns the given HTML with ampersands,
-quotes and angle brackets encoded."""
+    quotes and angle brackets encoded."""
     if hasattr(html, '__html__') and not force:
         return html
     if html in NOTHING:

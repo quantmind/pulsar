@@ -11,7 +11,7 @@ activities in different threads and/or processes.
 :Design by: `Quantmind`_ and `Luca Sbardella`_
 :Platforms: Linux, OSX, Windows. Python 3.4 and above
 :Keywords: client, server, asynchronous, concurrency, actor, thread, process,
-    socket, task queue, wsgi, websocket, redis, json-rpc
+    socket, wsgi, websocket, redis, json-rpc
 
 
 .. |master-build| image:: https://img.shields.io/travis/quantmind/pulsar/master.svg
