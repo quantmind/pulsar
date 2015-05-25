@@ -221,8 +221,8 @@ class RemoteStore(Producer, Store):
     '''
     MANY_TIMES_EVENTS = ('request',)
 
-    def __init__(self, name, host, loop=None, **kw):
-        super().__init__(loop)
+    def __init__(self, name, host, loop=None, protocol_factory=None, **kw):
+        super().__init__(loop, protocol_factory=protocol_factory)
         Store.__init__(self, name, host, **kw)
 
     @abstractmethod

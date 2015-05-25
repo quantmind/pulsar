@@ -993,6 +993,7 @@ class RedisCommands(StoreMixin):
 
     def test_info(self):
         info = yield from self.client.info()
+        self.assertTrue(info)
         self.assertIsInstance(info, dict)
 
     def test_time(self):

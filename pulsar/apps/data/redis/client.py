@@ -14,7 +14,11 @@ INVERSE_COMMANDS_INFO = dict(((i.method_name, i.name)
                               for i in COMMANDS_INFO.values()))
 
 
-class CommandError(pulsar.PulsarException):
+class RedisError(pulsar.PulsarException):
+    pass
+
+
+class CommandError(RedisError):
     pass
 
 
