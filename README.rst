@@ -58,7 +58,7 @@ a combination of the two.
 Installing
 ============
 
-Pulsar has no hard dependencies, install via pi::
+Pulsar has no hard dependencies, install via pip::
 
     pip install pulsar
 
