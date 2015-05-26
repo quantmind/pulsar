@@ -10,22 +10,22 @@ response to an :ref:`HTTP client request <app-wsgi-request>`.
 A string can be ``html``, ``json``, ``plain text`` or any other valid HTTP
 content type.
 
-The main class of this module is the :class:`AsyncString`, which can be
+The main class of this module is the :class:`String`, which can be
 considered as the atomic component of an asynchronous web framework::
 
-    >>> from pulsar.apps.wsgi import AsyncString
-    >>> string = AsyncString('Hello')
+    >>> from pulsar.apps.wsgi import String
+    >>> string = String('Hello')
     >>> string.render()
     'Hello'
     >>> string.render()
     ...
-    RuntimeError: AsyncString already streamed
+    RuntimeError: String already streamed
 
-An :class:`AsyncString` can only be rendered once, and it accepts
+An :class:`String` can only be rendered once, and it accepts
 :ref:`asynchronous components  <tutorials-coroutine>`::
 
     >>> a = Future()
-    >>> string = AsyncString('Hello, ', a)
+    >>> string = String('Hello, ', a)
     >>> value = string.render()
     >>> value
     MultiFuture (pending)
@@ -44,20 +44,20 @@ Once the future is done, we have the concatenated string::
 Design
 ===============
 
-The :meth:`~AsyncString.do_stream` method is responsible for the streaming
+The :meth:`~String.do_stream` method is responsible for the streaming
 of ``strings`` or :ref:`asynchronous components  <tutorials-coroutine>`.
 It can be overwritten by subclasses to customise the way an
-:class:`AsyncString` streams its :attr:`~AsyncString.children`.
+:class:`String` streams its :attr:`~String.children`.
 
-On the other hand, the :meth:`~AsyncString.to_string` method is responsible
-for the concatenation of ``strings`` and, like :meth:`~AsyncString.do_stream`,
+On the other hand, the :meth:`~String.to_string` method is responsible
+for the concatenation of ``strings`` and, like :meth:`~String.do_stream`,
 it can be customised by subclasses.
 
 
 Asynchronous String
 =====================
 
-.. autoclass:: AsyncString
+.. autoclass:: String
    :members:
    :member-order: bysource
 
@@ -145,10 +145,9 @@ import re
 
 from collections import Mapping
 from functools import partial
-from inspect import isgenerator
 
 from pulsar import HttpException
-from pulsar import multi_async, async, chain_future
+from pulsar import multi_async, chain_future, is_async
 from pulsar.utils.slugify import slugify
 from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
 from pulsar.utils.pep import to_string
@@ -156,7 +155,7 @@ from pulsar.utils.system import json
 
 from .html import html_visitor, newline
 
-__all__ = ['AsyncString', 'Html',
+__all__ = ['AsyncString', 'String', 'Html',
            'Json', 'HtmlDocument', 'Links', 'Scripts', 'Media',
            'html_factory']
 
@@ -176,13 +175,16 @@ def stream_to_string(stream):
             yield str(value)
 
 
-def stream_mapping(value, request=None):
+def stream_mapping(value, request):
     result = {}
+    async = False
     for key, value in value.items():
-        if isinstance(value, AsyncString):
+        if isinstance(value, String):
             value = value.render(request)
+        if is_async(value):
+            async = True
         result[key] = value
-    return multi_async(result)
+    return multi_async(result) if async else result
 
 
 def attr_iter(attrs):
@@ -192,12 +194,12 @@ def attr_iter(attrs):
             yield " %s='%s'" % (k, escape(v, force=True))
 
 
-class AsyncString(object):
+class String(object):
     '''An asynchronous string which can be used with pulsar WSGI servers.
     '''
     _default_content_type = 'text/plain'
     _content_type = None
-    '''Content type for this :class:`AsyncString`'''
+    '''Content type for this :class:`String`'''
     _streamed = False
     _children = None
     _parent = None
@@ -219,15 +221,15 @@ class AsyncString(object):
 
     @property
     def parent(self):
-        '''The :class:`AsyncString` element which contains this
-        :class:`AsyncString`.'''
+        '''The :class:`String` element which contains this
+        :class:`String`.'''
         return self._parent
 
     @property
     def children(self):
-        '''A copy of all children of this :class:`AsyncString`.
+        '''A copy of all children of this :class:`String`.
 
-        Children can be other :class:`AsyncString` or string or bytes,
+        Children can be other :class:`String` or string or bytes,
         depending on implementation.
         :attr:`children` are added and removed via the :meth:`append` and
         :meth:`remove` methods.
@@ -251,8 +253,8 @@ class AsyncString(object):
     def append(self, child):
         '''Append ``child`` to the list of :attr:`children`.
 
-        :param child: String, bytes or another :class:`.AsyncString`.
-            If it is an :class:`.AsyncString`, this instance will be
+        :param child: String, bytes or another :class:`.String`.
+            If it is an :class:`.String`, this instance will be
             set as its :attr:`parent`.
             If ``child`` is ``None``, this method does nothing.
 
@@ -264,8 +266,8 @@ class AsyncString(object):
 
         This is a shortcut for the :meth:`insert` method at index 0.
 
-        :param child: String, bytes or another :class:`AsyncString`.
-            If it is an :class:`.AsyncString`, this instance will be set
+        :param child: String, bytes or another :class:`String`.
+            If it is an :class:`.String`, this instance will be set
             as its :attr:`parent`.
             If ``child`` is ``None``, this method does nothing.
         '''
@@ -275,14 +277,14 @@ class AsyncString(object):
         '''Insert ``child`` into the list of :attr:`children` at ``index``.
 
         :param index: The index (positive integer) where to insert ``child``.
-        :param child: String, bytes or another :class:`AsyncString`.
-            If it is an :class:`.AsyncString`, this instance will be set as
+        :param child: String, bytes or another :class:`String`.
+            If it is an :class:`.String`, this instance will be set as
             its :attr:`parent`.
             If ``child`` is ``None``, this method does nothing.
         '''
         # make sure that child is not in child
         if child not in (None, self):
-            if isinstance(child, AsyncString):
+            if isinstance(child, String):
                 child_parent = child._parent
                 if self._parent is child:
                     # the parent is the child we are appending.
@@ -304,7 +306,7 @@ class AsyncString(object):
         '''Remove a ``child`` from the list of :attr:`children`.'''
         try:
             self.children.remove(child)
-            if isinstance(child, AsyncString):
+            if isinstance(child, String):
                 child._parent = None
         except ValueError:
             pass
@@ -313,7 +315,7 @@ class AsyncString(object):
         '''Remove all :attr:`children`.'''
         if self._children:
             for child in self._children:
-                if isinstance(child, AsyncString):
+                if isinstance(child, String):
                     child._parent = None
             self._children = []
 
@@ -325,9 +327,9 @@ class AsyncString(object):
     def stream(self, request):
         '''An iterable over strings or asynchronous elements.
 
-        This is the most important method of an :class:`AsyncString`.
+        This is the most important method of an :class:`String`.
         It is called by :meth:`http_response` or by the :attr:`parent`
-        of this :class:`AsyncString`.
+        of this :class:`String`.
         It returns an iterable (list, tuple or a generator) over
         strings (``unicode/str`` for python 2, ``str`` only for python 3) or
         :ref:`asynchronous elements <tutorials-coroutine>` which result in
@@ -356,7 +358,7 @@ class AsyncString(object):
         '''
         if self._children:
             for child in self._children:
-                if isinstance(child, AsyncString):
+                if isinstance(child, String):
                     for bit in child.stream(request):
                         yield bit
                 else:
@@ -368,20 +370,15 @@ class AsyncString(object):
         This method asynchronously wait for :meth:`stream` and subsequently
         returns a :class:`.WsgiResponse`.
         '''
+        if not stream:
+            return self.render(request,
+                               partial(self.http_response, request))
+        stream = stream[0]
         content_types = request.content_types
         if not content_types or self._content_type in content_types:
             response = request.response
             response.content_type = self._content_type
             response.encoding = self.charset
-            if stream:
-                stream = stream[0]
-            else:
-                stream = multi_async(self.stream(request))
-                if stream.done():
-                    stream = stream.result()
-                else:
-                    return chain_future(
-                        stream, callback=partial(self.http_response, request))
             response.content = self.to_string(stream)
             return response
         else:
@@ -408,28 +405,39 @@ class AsyncString(object):
             self._before_stream = []
         self._before_stream.append(callback)
 
-    def render(self, request=None):
+    def render(self, request=None, callback=None):
         '''Render this string.
 
         This method returns a string or a :class:`~asyncio.Future` which
         results in a string. On the other hand, the callable method of
-        a :class:`.AsyncString` **always** returns a :class:`~asyncio.Future`.
+        a :class:`.String` **always** returns a :class:`~asyncio.Future`.
         '''
-        stream = multi_async(self.stream(request))
-        if stream.done():
-            return self.to_string(stream.result())
+        stream = []
+        async = False
+        for data in self.stream(request):
+            if is_async(data):
+                async = True
+            stream.append(data)
+
+        if not callback:
+            callback = self.to_string
+
+        if async:
+            return chain_future(multi_async(stream), callback=callback)
         else:
-            return chain_future(stream, callback=self.to_string)
+            return callback(stream)
 
     def __call__(self, request):
         stream = multi_async(self.stream(request))
         return chain_future(stream, callback=self.to_string)
 
+AsyncString = String
 
-class Json(AsyncString):
-    '''An :class:`AsyncString` which renders into a json string.
 
-    The :attr:`AsyncString.content_type` attribute is set to
+class Json(String):
+    '''An :class:`String` which renders into a json string.
+
+    The :attr:`String.content_type` attribute is set to
     ``application/json``.
 
     .. attribute:: as_list
@@ -450,7 +458,7 @@ class Json(AsyncString):
     def do_stream(self, request):
         if self._children:
             for child in self._children:
-                if isinstance(child, AsyncString):
+                if isinstance(child, String):
                     for bit in child.stream(request):
                         yield bit
                 elif isinstance(child, Mapping):
@@ -480,15 +488,15 @@ def html_factory(tag, **defaults):
     return html_input
 
 
-class Html(AsyncString):
-    '''An :class:`AsyncString` for ``html`` content.
+class Html(String):
+    '''An :class:`String` for ``html`` content.
 
-    The :attr:`~AsyncString.content_type` attribute is set to ``text/html``.
+    The :attr:`~String.content_type` attribute is set to ``text/html``.
 
     :param tag: Set the :attr:`tag` attribute. Must be given and can be
         ``None``.
     :param children: Optional children which will be added via the
-        :meth:`~AsyncString.append` method.
+        :meth:`~String.append` method.
     :param params: Optional keyed-value parameters
         including:
 
@@ -726,11 +734,9 @@ class Html(AsyncString):
                     yield '<%s%s>%s' % (tag, self.flatatt(), n)
             if self._children:
                 for child in self._children:
-                    if isinstance(child, AsyncString):
+                    if isinstance(child, String):
                         for bit in child.stream(request):
                             yield bit
-                    elif isgenerator(child):
-                        yield async(child, getattr(request, '_loop', None))
                     else:
                         yield child
                 if tag:
@@ -754,7 +760,7 @@ class Html(AsyncString):
                 return cont.get(name) if cont else None, False
 
 
-class Media(AsyncString):
+class Media(String):
     '''A container for both :class:`.Links` and :class:`.Scripts`.
 
     .. attribute:: media_path
@@ -1122,28 +1128,28 @@ class HtmlDocument(Html):
 
     def do_stream(self, request):
         # stream the body
-        body = multi_async(self.body.stream(request))
+        body = self.body.render(request)
         # the body has asynchronous components
         # delay the header untl later
-        if not body.done():
+        if is_async(body):
             yield self._html(request, body)
+
+        head = self.head.render(request)
+        #
+        # header not ready (this should never occur really)
+        if is_async(head):
+            yield self._html(request, body, head)
         else:
-            head = multi_async(self.head.stream(request))
-            #
-            # header not ready (this should never occur really)
-            if not head.done():
-                yield self._html(request, body, head)
-            else:
-                yield self._template % (self.flatatt(),
-                                        self.head.to_string(head.result()),
-                                        self.body.to_string(body.result()))
+            yield self._template % (self.flatatt(), head, body)
 
     def _html(self, request, body, head=None):
+        '''Asynchronous rendering
+        '''
         if head is None:
             body = yield from body
-            head = multi_async(self.head.stream(request))
-        head = yield from head
-        result = self._template % (self.flatatt(),
-                                   self.head.to_string(head),
-                                   self.body.to_string(body))
-        return result
+            head = self.head.render(request)
+
+        if is_async(head):
+            head = yield from head
+
+        return self._template % (self.flatatt(), head, body)
