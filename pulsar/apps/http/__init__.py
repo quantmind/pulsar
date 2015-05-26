@@ -276,6 +276,8 @@ import platform
 from functools import partial
 from collections import namedtuple
 from base64 import b64encode
+from asyncio import wait_for
+from asyncio.events import new_event_loop
 from io import StringIO, BytesIO
 
 import pulsar
@@ -296,7 +298,6 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, DEFAULT_CHARSET,
                                   JSON_CONTENT_TYPES)
-from asyncio.events import new_event_loop
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
@@ -430,7 +431,7 @@ class HttpRequest(RequestBase):
     _tunnel = None
 
     def __init__(self, client, url, method, inp_params=None, headers=None,
-                 data=None, files=None, timeout=None, history=None,
+                 data=None, files=None, history=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
@@ -442,7 +443,6 @@ class HttpRequest(RequestBase):
         self.urlparams = urlparams
         self.inp_params = inp_params or {}
         self.unredirected_headers = Headers(kind='client')
-        self.timeout = timeout
         self.method = method.upper()
         self.full_url = url
         if urlparams:
@@ -492,7 +492,7 @@ class HttpRequest(RequestBase):
 
     @property
     def key(self):
-        return (self.scheme, self.host, self.port, self.timeout)
+        return (self.scheme, self.host, self.port)
 
     @property
     def proxy(self):
@@ -897,8 +897,7 @@ class HttpClient(AbstractClient):
 
     .. attribute:: timeout
 
-        Default timeout for the connecting sockets. If 0 it is an asynchronous
-        client.
+        Default timeout for requests. If None or 0, no timeout on requests
 
     .. attribute:: encode_multipart
 
@@ -956,7 +955,7 @@ class HttpClient(AbstractClient):
         kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
                           'allow_redirects', 'multipart_boundary', 'version',
-                          'timeout', 'websocket_handler')
+                          'websocket_handler')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', platform.node()))
@@ -1077,7 +1076,7 @@ class HttpClient(AbstractClient):
         '''
         return self.request('DELETE', url, **kwargs)
 
-    def request(self, method, url, **params):
+    def request(self, method, url, timeout=None, **params):
         '''Constructs and sends a request to a remote server.
 
         It returns a :class:`.Future` which results in a
@@ -1094,6 +1093,10 @@ class HttpClient(AbstractClient):
         :rtype: a :class:`.Future`
         '''
         response = self._request(method, url, **params)
+        if timeout is None:
+            timeout = self.timeout
+        if timeout:
+            response = wait_for(response, timeout, loop=self._loop)
         if not self._loop.is_running():
             return self._loop.run_until_complete(response)
         else:
@@ -1135,7 +1138,7 @@ class HttpClient(AbstractClient):
             consumer = yield from self._request(method, url, **params)
         return consumer
 
-    def close(self, async=True, timeout=5):
+    def close(self, async=True):
         '''Close all connections.
 
         Fire the ``finish`` :ref:`one time event <one-time-event>` once done.

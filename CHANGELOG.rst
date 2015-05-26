@@ -1,6 +1,7 @@
 Development
 ===========================
 * Better support of ``get_version`` for third party packages
+* Added optional timeout to :class:`.HttpClient` requests
 
 Ver. 1.0.0 - 2015-May-18
 ===========================

@@ -1,3 +1,4 @@
+import logging
 from functools import reduce
 
 from pulsar.utils.internet import is_socket_closed
@@ -11,6 +12,9 @@ from .protocols import Producer
 __all__ = ['Pool', 'PoolConnection', 'AbstractClient', 'AbstractUdpClient']
 
 
+logger = logging.getLogger('pulsar.pool')
+
+
 class Pool(AsyncObject):
     '''An asynchronous pool of open connections.
 
@@ -20,12 +24,27 @@ class Pool(AsyncObject):
     This class is not thread safe.
     '''
     def __init__(self, creator, pool_size=10, loop=None, timeout=None, **kw):
+        '''
+        Construct an asynchronous Pool.
+
+        :param creator: a callable function that returns a connection object.
+
+        :param pool_size: The size of the pool to be maintained,
+          defaults to 10. This is the largest number of connections that
+          will be kept persistently in the pool. Note that the pool
+          begins with no connections; once this number of connections
+          is requested, that number of connections will remain.
+
+        :param timeout: The number of seconds to wait before giving up
+          on returning a connection. Defaults to 30.
+        '''
         self._creator = creator
         self._closed = False
         self._timeout = timeout
         self._queue = asyncio.Queue(maxsize=pool_size, loop=loop)
         self._connecting = 0
         self._loop = self._queue._loop
+        self._logger = logger
         self._in_use_connections = set()
 
     @property
@@ -124,14 +143,10 @@ class Pool(AsyncObject):
             return True
         return False
 
-    def info(self, message=None, level=None):   # pragma    nocover
-        if self._queue._maxsize != 2:
-            return
-        message = '%s: ' % message if message else ''
-        self.logger.log(level or 10,
-                        '%smax size %s, in_use %s, available %s',
-                        message, self._queue._maxsize, self.in_use,
-                        self.available)
+    def status(self, message=None, level=None):
+        return ('Pool size: %d  Connections in pool: %d '
+                'Current Checked out connections: %d' %
+                (self._queue._maxsize, self.available, self.in_use))
 
     def _count_connections(self, x, y):
         return x + int(y is not None)

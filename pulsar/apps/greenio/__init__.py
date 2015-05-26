@@ -123,6 +123,7 @@ Wsgi Green
 '''
 import threading
 import asyncio
+import logging
 from collections import deque
 from functools import wraps
 
@@ -193,6 +194,7 @@ class GreenPool(AsyncObject):
         self._queue = deque()
         self._shutdown = False
         self._waiter = None
+        self._logger = logging.getLogger('pulsar.greenpool')
         self._shutdown_lock = threading.Lock()
 
     def submit(self, func, *args, **kwargs):
@@ -214,28 +216,30 @@ class GreenPool(AsyncObject):
     def shutdown(self, wait=True):
         with self._shutdown_lock:
             self._shutdown = True
-            self._put()
+            self._put(None)
             if wait:
                 self._waiter = Future(loop=self._loop)
                 return self._waiter
 
     # INTERNALS
     def _adjust_greenlet_count(self):
-        if not self._available and len(self._greenlets) < self._max_workers:
+        if (not self._shutdown and not self._available and
+                len(self._greenlets) < self._max_workers):
             greenlet = GreenletWorker(self._green_run)
             self._greenlets.add(greenlet)
+            self.logger.debug('Num greenlets: %d', len(self._greenlets))
             greenlet.switch()
+        return self._greenlets
 
-    def _put(self, task=None):
+    def _put(self, task):
         # Run in the main greenlet of the evnet-loop thread
-        if task:
-            self._adjust_greenlet_count()
         self._queue.appendleft(task)
         self._check_queue()
 
     def _check_queue(self):
         # Run in the main greenlet of the event-loop thread
-        if not self._available:
+        if not self._adjust_greenlet_count():
+            self.logger.debug('No greenlet available')
             return
         try:
             task = self._queue.pop()
@@ -265,6 +269,7 @@ class GreenPool(AsyncObject):
             greenlet = getcurrent()
             parent = greenlet.parent
             assert parent
+            # add greenlet in the available greenlets
             self._available.add(greenlet)
             self._loop.call_soon(self._check_queue)
             task = parent.switch(_DONE)  # switch back to the main execution

@@ -8,7 +8,7 @@ def start(arbiter, **kw):
 
 
 def app(arbiter):
-    # Spwn a new actor
+    # Spawn a new actor
     proxy = yield from spawn(name='actor1')
     print(proxy.name)
     # Execute inner method in actor1
