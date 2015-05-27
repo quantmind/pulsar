@@ -82,6 +82,7 @@ class TestGreenIO(unittest.TestCase):
     def test_shutdown(self):
         # Test an error
         pool = greenio.GreenPool()
+        self.assertEqual(pool._max_workers, greenio._DEFAULT_WORKERS)
         yield from self.async.assertEqual(pool.submit(lambda: 'OK'), 'OK')
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)

@@ -229,7 +229,7 @@ class GreenPool(AsyncObject):
             self._greenlets.add(greenlet)
             self.logger.debug('Num greenlets: %d', len(self._greenlets))
             greenlet.switch()
-        return self._greenlets
+        return self._available
 
     def _put(self, task):
         # Run in the main greenlet of the evnet-loop thread
@@ -240,7 +240,7 @@ class GreenPool(AsyncObject):
         # Run in the main greenlet of the event-loop thread
         if not self._adjust_greenlet_count():
             self.logger.debug('No greenlet available')
-            return
+            return self._loop.call_soon(self._check_queue)
         try:
             task = self._queue.pop()
         except IndexError:
@@ -248,7 +248,8 @@ class GreenPool(AsyncObject):
         async(self._green_task(self._available.pop(), task), loop=self._loop)
 
     def _green_task(self, greenlet, task):
-        # Run in the main greenlet of the event-loop thread
+        # Coroutine executing the in main greenlet
+        # This coroutine is executed for every task pu into the queue
 
         while task is not _DONE:
             # switch to the greenlet to start the task
@@ -271,7 +272,6 @@ class GreenPool(AsyncObject):
             assert parent
             # add greenlet in the available greenlets
             self._available.add(greenlet)
-            self._loop.call_soon(self._check_queue)
             task = parent.switch(_DONE)  # switch back to the main execution
             if task:
                 # If a new task is available execute it
