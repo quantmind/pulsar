@@ -296,17 +296,12 @@ class GreenPool(AsyncObject):
 class WsgiGreen:
     '''Wraps a Wsgi application to be executed on a pool of greenlet
     '''
-    def __init__(self, wsgi, max_workers=None):
+    def __init__(self, wsgi, pool):
         self.wsgi = wsgi
-        self.max_workers = max_workers
-        self.pool = None
+        self.pool = pool
 
     def __call__(self, environ, start_response):
-        if self.pool is None:
-            self.pool = GreenPool(max_workers=self.max_workers)
-
         return self.pool.submit(self._green_handler, environ, start_response)
 
     def _green_handler(self, environ, start_response):
-        # Running on a greenlet worker
         return wait(self.wsgi(environ, start_response))
