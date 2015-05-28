@@ -207,7 +207,7 @@ class RedisCommands(StoreMixin):
         yield from self._remove_and_push(key)
         yield from self.async.assertRaises(ResponseError, c.append, key, 'g')
 
-    def __test_bitcount(self):
+    def test_bitcount(self):
         key = self.randomkey()
         c = self.client
         eq = self.async.assertEqual
@@ -218,7 +218,7 @@ class RedisCommands(StoreMixin):
         yield from eq(c.bitcount(key), 2)
         yield from eq(c.setbit(key, 5, 0), 1)
         yield from eq(c.bitcount(key), 1)
-        yield eq(c.setbit(key, 9, 1), 0)
+        yield from eq(c.setbit(key, 9, 1), 0)
         yield from eq(c.setbit(key, 17, 1), 0)
         yield from eq(c.setbit(key, 25, 1), 0)
         yield from eq(c.setbit(key, 33, 1), 0)
