@@ -1,3 +1,6 @@
+'''
+Error classes and redis parser function
+'''
 import pulsar
 
 from .pyparser import Parser

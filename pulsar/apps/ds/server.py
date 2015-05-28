@@ -1930,49 +1930,17 @@ class Storage(object):
 
     # #########################################################################
     # #    SCRIPTING
-    @command('Scripting', script=0)
+    @command('Scripting', supported=False)
     def eval(self, client, request, N):
-        check_input(request, N < 2)
-        if not self.lua:
-            return client.reply_error(self.SYNTAX_ERROR)
-        script = request[1]
-        self._eval_script(client, script, request)
+        client.reply_error(self.NOT_SUPPORTED)
 
-    @command('Scripting', script=0)
+    @command('Scripting', supported=False)
     def evalsha(self, client, request, N):
-        check_input(request, N < 2)
-        if not self.lua:
-            return client.reply_error(self.SYNTAX_ERROR)
-        script = self.scripts.get(request[2])
-        if script is None:
-            client.reply_error('the script is not available', 'NOSCRIPT')
-        else:
-            self._eval_script(client, script, request)
+        client.reply_error(self.NOT_SUPPORTED)
 
-    @command('Scripting', script=0)
+    @command('Scripting', supported=False)
     def script(self, client, request, N):
-        check_input(request, not N)
-        if not self.lua:
-            return client.reply_error(self.SYNTAX_ERROR)
-        scripts = self.scripts
-        subcommand = request[1].upper()
-        if subcommand == b'EXISTS':
-            check_input(request, N < 2)
-            result = [int(sha in scripts) for sha in request[2:]]
-            client.reply_multi_bulk(result)
-        elif subcommand == b'FLUSH':
-            check_input(request, N != 1)
-            scripts.clear()
-            client.reply_ok()
-        elif subcommand == b'KILL':
-            check_input(request, N != 1)
-            client.reply_ok()
-        elif subcommand == b'LOAD':
-            check_input(request, N != 2)
-            script = request[2]
-            sha = sha1(script).hexdigest().encode('utf-8')
-            scripts[sha] = script
-            client.reply_bulk(sha)
+        client.reply_error(self.NOT_SUPPORTED)
 
     # #########################################################################
     # #    CONNECTION COMMANDS
@@ -2538,54 +2506,6 @@ class Storage(object):
                 remove.add(m)
         if remove:
             self._monitors.difference_update(remove)
-
-    def _eval_script(self, client, script, request):
-        try:
-            numkeys = int(request[2])
-            if numkeys > 0:
-                keys = request[3:3+numkeys]
-                if len(keys) < numkeys:
-                    raise ValueError
-            elif numkeys < 0:
-                raise ValueError
-            else:
-                keys = []
-        except Exception:
-            return client.reply_error(self.SYNTAX_ERROR)
-        args = request[3+numkeys:]
-        self.lua.set_global('KEYS', keys)
-        self.lua.set_global('ARGV', args)
-        result = self.lua.execute(script)
-        if isinstance(result, dict):
-            if len(result) == 1:
-                key = tuple(result)[0]
-                keyu = key.upper()
-                if keyu == b'OK':
-                    return client.reply_ok()
-                elif keyu == b'ERR':
-                    return client.reply_error(result[key])
-                else:
-                    return client.reply_multi_bulk(())
-            else:
-                array = []
-                index = 0
-                while result:
-                    index += 1
-                    value = result.pop(index, None)
-                    if value is None:
-                        break
-                    array.append(value)
-                result = array
-        if isinstance(result, list):
-            client.reply_multi_bulk(result)
-        elif result is True:
-            client.reply_one()
-        elif result is False:
-            client.reply_bulk()
-        elif isinstance(result, (int, float)):
-            client.reply_int(int(result))
-        else:
-            client.reply_bulk(result)
 
 
 class Db(object):
