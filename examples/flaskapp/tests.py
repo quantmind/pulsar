@@ -46,6 +46,7 @@ class TestFlaskThread(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.get_content(), b'404 Page')
 
+
 @dont_run_with_thread
 class TestFlaskProcess(TestFlaskThread):
     concurrency = 'process'

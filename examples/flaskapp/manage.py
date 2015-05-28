@@ -2,6 +2,7 @@ from flask import Flask, make_response
 
 from pulsar.apps import wsgi
 
+
 def FlaskApp():
     app = Flask(__name__)
 
