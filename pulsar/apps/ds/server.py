@@ -371,7 +371,7 @@ class Storage(object):
             if db2 is None:
                 raise ValueError
         except Exception:
-            return client.reply_zero()
+            return client.reply_error('index out of range')
         db = client.db
         value = db.get(key)
         if db2.exists(key) or value is None:

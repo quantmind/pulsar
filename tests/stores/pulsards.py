@@ -142,7 +142,7 @@ class RedisCommands(StoreMixin):
         c = self.client
         eq = self.async.assertEqual
         db = 3 if c.store.database == 4 else 4
-        yield from eq(c.move(key, 'bla'), False)
+        yield from self.async.assertRaises(ResponseError, c.move, key, 'bla')
         yield from eq(c.move(key, db), False)
         yield from eq(c.set(key, 'ciao'), True)
         yield from eq(c.move(key, db), True)

@@ -5,12 +5,10 @@ import pulsar
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import to_string, to_bytes
 
+from .parser import CommandError
+
 
 COMMANDS_INFO = OrderedDict()
-
-
-class CommandError(Exception):
-    pass
 
 
 def check_input(request, failed):

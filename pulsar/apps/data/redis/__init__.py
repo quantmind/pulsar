@@ -28,9 +28,10 @@ Redis Pipeline
 '''
 from pulsar.utils.config import Global
 from pulsar.apps.data import register_store
+from pulsar.apps.ds import RedisError
 
 from .store import RedisStore, RedisStoreConnection
-from .client import RedisScript, ResponseError, RedisError, Consumer
+from .client import RedisScript, ResponseError, Consumer
 
 
 __all__ = ['RedisStore', 'RedisScript']

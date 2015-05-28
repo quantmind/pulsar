@@ -3,11 +3,20 @@ import pulsar
 from .pyparser import Parser
 
 
-class ResponseError(pulsar.PulsarException):
+class RedisError(pulsar.PulsarException):
+    '''Redis Error Base class'''
     pass
 
 
-class InvalidResponse(pulsar.PulsarException):
+class CommandError(RedisError):
+    pass
+
+
+class ResponseError(RedisError):
+    pass
+
+
+class InvalidResponse(RedisError):
     pass
 
 

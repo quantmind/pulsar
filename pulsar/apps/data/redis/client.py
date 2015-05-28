@@ -4,7 +4,7 @@ from hashlib import sha1
 import pulsar
 from pulsar.utils.pep import to_string
 from pulsar.utils.structures import mapping_iterator, Zset
-from pulsar.apps.ds import COMMANDS_INFO
+from pulsar.apps.ds import COMMANDS_INFO, CommandError
 
 from .pubsub import RedisPubSub
 
@@ -12,14 +12,6 @@ str_or_bytes = (bytes, str)
 
 INVERSE_COMMANDS_INFO = dict(((i.method_name, i.name)
                               for i in COMMANDS_INFO.values()))
-
-
-class RedisError(pulsar.PulsarException):
-    pass
-
-
-class CommandError(RedisError):
-    pass
 
 
 class Executor:
