@@ -40,7 +40,7 @@ class RedisServer(Global):
     name = 'redis_server'
     flags = ['--redis-server']
     meta = "CONNECTION_STRING"
-    default = '127.0.0.1:6379'
+    default = '127.0.0.1:6379/7'
     desc = 'Default connection string for the redis server'
 
 

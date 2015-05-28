@@ -10,14 +10,13 @@ from pulsar.utils.string import gen_unique_id
 from pulsar.utils.system import json
 
 try:
-    from django.core.management import execute_from_command_line
+    from .manage import server
 except ImportError:
-    execute_from_command_line = None
+    server = None
 
 
 def start_server(actor, name, argv):
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djchat.settings")
-    execute_from_command_line(argv)
+    server(argv)
     yield None
     app = yield from get_application(name)
     return app.cfg
@@ -36,7 +35,7 @@ class MessageHandler(ws.WS):
 
 
 @test_timeout(30)
-@unittest.skipUnless(execute_from_command_line, 'Requires django')
+@unittest.skipUnless(server, 'Requires django')
 class TestDjangoChat(unittest.TestCase):
     concurrency = 'thread'
     app_cfg = None

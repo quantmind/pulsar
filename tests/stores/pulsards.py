@@ -137,7 +137,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(set(k1), keys_with_underscores)
         self.assertEqual(set(k2), keys)
 
-    def __test_move(self):
+    def test_move(self):
         key = self.randomkey()
         c = self.client
         eq = self.async.assertEqual

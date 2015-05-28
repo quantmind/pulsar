@@ -93,7 +93,7 @@ def get_maxfd():
 
 def daemonize(enable_stdio_inheritance=False,
               auto_close_fds=True,
-              keep_fds=None):
+              keep_fds=None):   # pragma    nocover
     """\
     Standard daemonization of a process.
     http://www.svbug.com/documentation/comp.unix.programmer-FAQ/faq_2.html#SEC16

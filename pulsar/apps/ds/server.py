@@ -56,15 +56,10 @@ import pulsar
 from pulsar.apps.socket import SocketServer
 from pulsar.utils.config import Global
 from pulsar.utils.structures import Dict, Zset, Deque
-try:
-    from pulsar.utils.lua import Lua
-except ImportError:     # pragma    nocover
-    Lua = None
-
 
 from .parser import redis_parser
 from .utils import sort_command, count_bytes, and_op, or_op, xor_op, save_data
-from .client import (command, PulsarStoreClient, LuaClient, Blocked,
+from .client import (command, PulsarStoreClient, Blocked,
                      COMMANDS_INFO, check_input, redis_to_py_pattern)
 
 
@@ -288,15 +283,8 @@ class Storage(object):
         self.databases = dict(((num, Db(num, self))
                                for num in range(cfg.key_value_databases)))
         # Initialise lua
-        if Lua:
-            self.lua = Lua()
-            self.scripts = {}
-            self.lua.register('redis', LuaClient(self),
-                              'call', 'pcall', 'error_reply', 'status_reply')
-            self.version = '2.6.16'
-        else:   # pragma    nocover
-            self.lua = None
-            self.version = '2.4.10'
+        self.lua = None
+        self.version = '2.4.10'
         self._loaddb()
         self._cron()
 

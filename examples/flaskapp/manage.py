@@ -29,5 +29,5 @@ def server(**kwargs):
     return wsgi.WSGIServer(Site(), **kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma    nocover
     server().start()
