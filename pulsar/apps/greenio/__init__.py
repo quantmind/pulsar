@@ -1,17 +1,14 @@
 '''
-Greenlet support facilitates the integration of synchronous
+Pulsar :mod:`~greenio` facilitates the integration of synchronous
 third-party libraries into pulsar asynchronous framework.
 It requires the :greenlet:`greenlet <>` library.
 
 If you want to understand how integration works but you are unfamiliar with
 greenlets, check out the :greenlet:`greenlet documentation <>` first.
-On the other hand,
-if you need to use it in the context of :ref:`asynchronous psycopg2 <psycopg2>`
-connections for example, you can skip the implementation details.
 
 This application **does not use monkey patching** and therefore it
 works quite differently from implicit asynchronous libraries such as
-gevent_. All it does, it provides the user with a limited set
+gevent_. All it does, it provides the user with a set
 of utilities for **explicitly** transferring execution from one greenlet
 to a another which execute the blocking call in a greenlet-friendly way.
 
@@ -40,17 +37,19 @@ Green WSGI
 
 Assume you are using pulsar web server and would like to write your application
 in an implicit asynchronous mode, i.e. without dealing with futures nor
-coroutines, then you can wrap your wsgi ``app`` with the :class:`.RunInPool`
+coroutines, then you can wrap your WSGI ``app`` with the :class:`.GreenWSGI`
 utility::
 
     from pulsar.apps import wsgi, greenio
 
+    green_pool = greenio.GreenPool()
     callable = wsgi.WsgiHandler([wsgi.wait_for_body_middleware,
-                                 greenio.RunInPool(app, 20)])
+                                 greenio.GreenWSGI(app, green_pool)],
+                                async=True)
 
     wsgi.WsgiServer(callable=callable).start()
 
-The :class:`.RunInPool` manages a pool of greenlets which execute your
+The :class:`.GreenPool` manages a pool of greenlets which execute your
 application. In this way, within your ``app`` you can invoke the
 :func:`.wait` function when needing to wait for asynchronous results to be
 ready.
@@ -111,10 +110,18 @@ Green Pool
    :members:
    :member-order: bysource
 
-Wsgi Green
+Green Lock
 ----------------
 
-.. autoclass:: WsgiGreen
+.. autoclass:: GreenLock
+   :members:
+   :member-order: bysource
+
+
+Green WSGI
+----------------
+
+.. autoclass:: GreenWSGI
    :members:
    :member-order: bysource
 
@@ -366,8 +373,8 @@ class GreenLock:
         self.release()
 
 
-class WsgiGreen:
-    '''Wraps a Wsgi application to be executed on a pool of greenlet
+class GreenWSGI:
+    '''Wraps a WSGI application to be executed on a :class:`.GreenPool`
     '''
     def __init__(self, wsgi, pool):
         self.wsgi = wsgi
