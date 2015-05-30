@@ -98,3 +98,42 @@ class TestGreenIO(unittest.TestCase):
         yield from pool.shutdown()
         self.assertEqual(len(pool._greenlets), 0)
         self.assertEqual(len(pool._available), 0)
+
+    def test_lock_error(self):
+        lock = greenio.GreenLock()
+        self.assertFalse(lock.locked())
+        self.assertRaises(RuntimeError, lock.acquire)
+        self.assertFalse(lock.locked())
+        self.assertRaises(RuntimeError, lock.release)
+
+    @run_in_greenlet
+    def test_lock(self):
+        lock = greenio.GreenLock()
+        self.assertTrue(lock.acquire())
+        self.assertEqual(lock.locked(), greenio.getcurrent())
+        lock.release()
+        self.assertFalse(lock.locked())
+
+    @run_in_greenlet
+    def test_lock(self):
+        green = greenio.getcurrent()
+        lock = greenio.GreenLock()
+        self.assertTrue(lock.acquire())
+        self.assertEqual(lock.locked(), green)
+        #
+        # create a new greenlet
+        child = greenio.greenlet(self._test_lock)
+        future = child.switch(lock)
+
+        self.assertIsInstance(future, Future)
+        self.assertEqual(lock.locked(), green)
+
+        # release the lock
+        lock.release()
+        self.assertTrue(future.done())
+        self.assertEqual(lock.locked(), green)
+        #
+        # self.assertEqual(lock.locked(), child)
+
+    def _test_lock(self, lock):
+        return lock.acquire()

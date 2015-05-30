@@ -134,6 +134,7 @@ class Pool(AsyncObject):
             try:
                 self._queue.put_nowait(None if discard else conn)
             except asyncio.QueueFull:
+                # The queue of available connection is already full
                 conn.close()
         self._in_use_connections.discard(conn)
 
