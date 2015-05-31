@@ -130,9 +130,9 @@ class Pool(AsyncObject):
         return connection
 
     def _put(self, conn, discard=False):
-        if not self._closed:
+        if conn and not self._closed and not discard:
             try:
-                self._queue.put_nowait(None if discard else conn)
+                self._queue.put_nowait(conn)
             except asyncio.QueueFull:
                 # The queue of available connection is already full
                 conn.close()
