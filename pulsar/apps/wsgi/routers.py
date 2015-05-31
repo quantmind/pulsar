@@ -306,9 +306,9 @@ class Router(RouterType('RouterBase', (object,), {})):
             return default
 
     def __getattr__(self, name):
-        '''Check the value of a :attr:`parameters` ``name``.
+        '''Get the value of the ``name`` attribute.
 
-        If the parameter is not available, retrieve the parameter from the
+        If the ``name`` is not available, retrieve it from the
         :attr:`parent` :class:`Router` if it exists.
         '''
         if name in self.defaults:
@@ -470,13 +470,6 @@ class Router(RouterType('RouterBase', (object,), {})):
             else:
                 setattr(router, method, handler)
         return router
-
-    @classmethod
-    def copy(cls):
-        '''Create a copy of this router without routes'''
-        newcls = RouterType(cls.__name__ + 'Copy', (cls,), {})
-        newcls.rule_methods.clear()
-        return newcls
 
     # INTERNALS
     def _set_params(self, parameters):

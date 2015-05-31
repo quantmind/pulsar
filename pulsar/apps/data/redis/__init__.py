@@ -31,10 +31,10 @@ from pulsar.apps.data import register_store
 from pulsar.apps.ds import RedisError
 
 from .store import RedisStore, RedisStoreConnection
-from .client import RedisScript, ResponseError, Consumer
+from .client import ResponseError, Consumer
 
 
-__all__ = ['RedisStore', 'RedisScript']
+__all__ = ['RedisStore']
 
 
 class RedisServer(Global):

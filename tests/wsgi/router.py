@@ -168,3 +168,18 @@ class TestRouter(unittest.TestCase):
         # It has both get and post methods
         self.assertTrue(async.get)
         self.assertTrue(async.post)
+
+    def test_rule(self):
+        router = TRouter('/', HttpBin2('bin'))
+        self.assertEqual(repr(router), '/')
+        self.assertEqual(router.rule, router.full_route.rule)
+
+    def test_remove_child(self):
+        router = TRouter('/', HttpBin2('bin'))
+        child = router.routes[0]
+        self.assertEqual(child.path(), '/bin')
+        self.assertEqual(child.parent, router)
+        router.remove_child(child)
+        self.assertFalse(router.routes)
+        self.assertEqual(child.parent, None)
+

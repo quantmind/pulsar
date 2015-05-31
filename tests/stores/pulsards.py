@@ -297,6 +297,17 @@ class RedisCommands(StoreMixin):
         self.assertEqual(int(binascii.hexlify(res2), 16), 0x0102FFFF)
         self.assertEqual(int(binascii.hexlify(res3), 16), 0x000000FF)
 
+    def test_decr(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.decr(key), -1)
+        yield from eq(c.get(key), b'-1')
+        yield from eq(c.decr(key), -2)
+        yield from eq(c.get(key), b'-2')
+        yield from eq(c.decr(key, 5), -7)
+        yield from eq(c.get(key), b'-7')
+
     def test_getbit(self):
         key = self.randomkey()
         c = self.client
@@ -336,16 +347,21 @@ class RedisCommands(StoreMixin):
         yield from self.async.assertRaises(
             ResponseError, c.getrange, key, 1, 2)
 
-    def test_decr(self):
+    def test_getset(self):
         key = self.randomkey()
         c = self.client
         eq = self.async.assertEqual
-        yield from eq(c.decr(key), -1)
-        yield from eq(c.get(key), b'-1')
-        yield from eq(c.decr(key), -2)
-        yield from eq(c.get(key), b'-2')
-        yield from eq(c.decr(key, 5), -7)
-        yield from eq(c.get(key), b'-7')
+        yield from eq(c.getset(key, 'foo'), None)
+        yield from eq(c.getset(key, 'bar'), b'foo')
+        yield from eq(c.get(key), b'bar')
+
+    def test_get(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield from c.set(key, 'foo')
+        yield from eq(c.get(key), b'foo')
+        yield from eq(c.get('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'), None)
 
     def test_incr(self):
         key = self.randomkey()
@@ -358,14 +374,6 @@ class RedisCommands(StoreMixin):
         yield from eq(c.incr(key, 5), 7)
         yield from eq(c.get(key), b'7')
 
-    def test_get(self):
-        key = self.randomkey()
-        eq = self.async.assertEqual
-        c = self.client
-        yield from c.set(key, 'foo')
-        yield from eq(c.get(key), b'foo')
-        yield from eq(c.get('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'), None)
-
     def test_mget(self):
         key1 = self.randomkey()
         key2 = key1 + 'x'
@@ -375,6 +383,20 @@ class RedisCommands(StoreMixin):
         yield from eq(c.set(key1, 'foox'), True)
         yield from eq(c.set(key2, 'fooxx'), True)
         yield from eq(c.mget(key1, key2, key3), [b'foox', b'fooxx', None])
+
+    def test_msetnx(self):
+        key1 = self.randomkey()
+        key2 = self.randomkey()
+        key3 = self.randomkey()
+        key4 = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.msetnx(key1, '1', key2, '2', key3, '3'), True)
+        yield from eq(c.msetnx(key1, 'x', key4, 'y'), False)
+        values = yield from c.mget(key1, key2, key3, key4)
+        self.assertEqual(len(values), 4)
+        for value, target in zip(values, (b'1', b'2', b'3', None)):
+            self.assertEqual(value, target)
 
     ###########################################################################
     #    HASHES
