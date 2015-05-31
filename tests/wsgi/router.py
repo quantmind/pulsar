@@ -182,4 +182,3 @@ class TestRouter(unittest.TestCase):
         router.remove_child(child)
         self.assertFalse(router.routes)
         self.assertEqual(child.parent, None)
-
