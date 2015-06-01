@@ -18,12 +18,18 @@ class RedisStoreConnection(Connection):
     def execute(self, *args, **options):
         consumer = self.current_consumer()
         consumer.start((args, options))
-        return consumer.on_finished
+        result = yield from consumer.on_finished
+        if isinstance(result, ResponseError):
+            raise result.exception
+        return result
 
     def execute_pipeline(self, commands, raise_on_error=True):
         consumer = self.current_consumer()
         consumer.start((commands, raise_on_error, []))
-        return consumer.on_finished
+        result = yield from consumer.on_finished
+        if isinstance(result, ResponseError):
+            raise result.exception
+        return result
 
 
 class RedisStore(RemoteStore):
@@ -80,16 +86,12 @@ class RedisStore(RemoteStore):
         connection = yield from self._pool.connect()
         with connection:
             result = yield from connection.execute(*args, **options)
-            if isinstance(result, ResponseError):
-                raise result.exception
             return result
 
     def execute_pipeline(self, commands, raise_on_error=True):
         conn = yield from self._pool.connect()
         with conn:
             result = yield from conn.execute_pipeline(commands, raise_on_error)
-            if isinstance(result, ResponseError):
-                raise result.exception
             return result
 
     def connect(self, protocol_factory=None):

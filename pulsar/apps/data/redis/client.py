@@ -171,16 +171,17 @@ class Consumer(pulsar.ProtocolConsumer):
                     self.finished(response)
             else:   # pipeline
                 commands, raise_on_error, responses = request
-                error = None
                 while response is not False:
-                    if (isinstance(response, Exception) and
-                            raise_on_error and not error):
-                        error = response
                     responses.append(response)
                     response = parser.get()
                 if len(responses) == len(commands):
+                    error = None
+                    result = responses[-1]
                     response = []
-                    for cmds, resp in zip(commands[1:-1], responses[-1]):
+                    if isinstance(result, Exception):
+                        error = result
+                        result = responses[1:-1]
+                    for cmds, resp in zip(commands[1:-1], result):
                         args, options = cmds
                         if isinstance(resp, Exception) and not error:
                             error = resp
