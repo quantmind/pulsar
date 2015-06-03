@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Components &mdash; pulsar 1.0.0beta0 documentation</title>
+    <title>Asynchronous Components &mdash; pulsar 1.0.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.0beta0',
+        VERSION:     '1.0.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Actor messages" href="messages.html" />
     <link rel="prev" title="The Arbiter" href="actors.html" />
@@ -49,7 +49,7 @@
         <li class="right" >
           <a href="actors.html" title="The Arbiter"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>  
@@ -61,10 +61,13 @@
             
   <span class="target" id="module-pulsar"></span><div class="section" id="asynchronous-components">
 <span id="tutorials-coroutine"></span><h1>Asynchronous Components<a class="headerlink" href="#asynchronous-components" title="Permalink to this headline">¶</a></h1>
-<p>There are three, closely related, ways to create asynchronous components in
-pulsar:</p>
-<ul>
-<li><p class="first">Directly create a of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>:</p>
+<p>Pulsar is built on top of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio.html">asyncio</a> and therefore it uses all its asynchronous
+components and syntax.
+There are three, closely related, ways to create asynchronous components in
+pulsar.</p>
+<div class="section" id="futures">
+<span id="future"></span><h2>Futures<a class="headerlink" href="#futures" title="Permalink to this headline">¶</a></h2>
+<p>Directly create a of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">asyncio</span>
 
 <span class="n">o</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
@@ -76,17 +79,17 @@ pulsar:</p>
 <span class="n">o</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
 </pre></div>
 </div>
-</li>
-<li><p class="first">A <a class="reference internal" href="#coroutine"><span>coroutine</span></a>, a generator which consumes values.
+</div>
+<div class="section" id="coroutines">
+<span id="coroutine"></span><h2>Coroutines<a class="headerlink" href="#coroutines" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="#coroutine"><span>coroutine</span></a>, a generator which consumes values.
 For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span>
-
-<span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
-    <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+    <span class="k">yield from</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
     <span class="o">...</span>
-    <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
-    <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">bla</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 <p>a coroutine is obtained by calling the generator function:</p>
@@ -94,22 +97,15 @@ For example:</p>
 </pre></div>
 </div>
 <p>Note that <code class="docutils literal"><span class="pre">o</span></code> is coroutine which has not yet started.</p>
-</li>
-</ul>
-<ul id="task-component">
-<li><p class="first">An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Task</span></code></a>, is a component which has been added to
+</div>
+<div class="section" id="task">
+<span id="task-component"></span><h2>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h2>
+<p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Task</span></code></a>, is a component which has been added to
 pulsar asynchronous engine. It is created via the <code class="xref py py-func docutils literal"><span class="pre">async()</span></code> function
-when applied to a generator function or, equivalently, by the
-<code class="xref py py-func docutils literal"><span class="pre">in_loop()</span></code> and <a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><code class="xref py py-func docutils literal"><span class="pre">task()</span></code></a> decorators:</p>
+when applied to a generator function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span>
 
-<span class="k">def</span> <span class="nf">my_async_generator1</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
-    <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
-    <span class="o">...</span>
-    <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
-    <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
-
-<span class="n">task</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">my_async_generator2</span><span class="p">())</span>
+<span class="n">task</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">my_async_generator</span><span class="p">())</span>
 </pre></div>
 </div>
 <p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Task</span></code></a> is a subclass of <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> and
@@ -117,63 +113,12 @@ therefore it has the same API, for example, you can add callbacks to a task:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">task</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
-</li>
-</ul>
-<div class="section" id="coroutines">
-<span id="coroutine"></span><h2>Coroutines<a class="headerlink" href="#coroutines" title="Permalink to this headline">¶</a></h2>
-<p>As mentioned above, a coroutine is a generator which consumes values. A pulsar
-coroutine can consume synchronous values as well as <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>
-and other <a class="reference internal" href="#coroutine"><span>coroutines</span></a>.
-Let&#8217;s consider the following code:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">d</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
-
-<span class="k">def</span> <span class="nf">do_something</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
-      <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
-      <span class="o">...</span>
-      <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
-      <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
-      <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-
-<span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">():</span>
-      <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">d</span>
-      <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Then we create a coroutine by calling the <code class="docutils literal"><span class="pre">my_async_generator</span></code> generator
-function:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">o</span> <span class="o">=</span> <span class="n">my_async_generator</span><span class="p">()</span>
-</pre></div>
-</div>
-<p><code class="docutils literal"><span class="pre">o</span></code> is has not yet started. To use it, it must be added to pulsar
-asynchronous engine via the <code class="xref py py-func docutils literal"><span class="pre">async()</span></code> function:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">task</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>task is a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Task</span></code></a> instance.</p>
-<p>Coroutines can return values via the <code class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></code> function.
-Otherwise they always return <code class="docutils literal"><span class="pre">None</span></code> (unless exceptions occur).</p>
-</div>
-<div class="section" id="task">
-<h2>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h2>
-<p>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Task</span></code></a> is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> which consumes
-<a class="reference internal" href="#coroutine"><span>coroutines</span></a>.
-A coroutine is transformed into a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Task" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Task</span></code></a>
-via the <code class="xref py py-func docutils literal"><span class="pre">async()</span></code> function or the <code class="xref py py-func docutils literal"><span class="pre">in_loop()</span></code> and
-<a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><code class="xref py py-func docutils literal"><span class="pre">task()</span></code></a> decorators.</p>
 <p>A task consumes a coroutine until the coroutine yield an asynchronous component
 not yet done. When this appends, the task pauses and returns the control of execution.
 Before it returns, it adds a <code class="docutils literal"><span class="pre">callback</span></code> to the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>
 on which the coroutine is blocked to resume the coroutine once the future
 is called.
 A task in this state is said to be <strong>suspended</strong>.</p>
-</div>
-<div class="section" id="collections">
-<h2>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h2>
-<p>When dealing with several asynchronous components in a collection such as
-a list, tuple, set or even a dictionary (values only, keys must be synchronous
-python types), one can use the <a class="reference internal" href="../api/async.html#pulsar.async.futures.multi_async" title="pulsar.async.futures.multi_async"><code class="xref py py-func docutils literal"><span class="pre">multi_async()</span></code></a> function to create
-an asynchronous component which will be ready once all the components
-are ready.</p>
 </div>
 </div>
 

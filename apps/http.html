@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous HTTP client &mdash; pulsar 1.0.0beta0 documentation</title>
+    <title>Asynchronous HTTP client &mdash; pulsar 1.0.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.0beta0',
+        VERSION:     '1.0.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../index.html" />
     <link rel="next" title="Django Application" href="pulse.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" />
    
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -308,8 +308,7 @@ serves.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpClient.timeout">
 <code class="descname">timeout</code><a class="headerlink" href="#pulsar.apps.http.HttpClient.timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Default timeout for the connecting sockets. If 0 it is an asynchronous
-client.</p>
+<dd><p>Default timeout for requests. If None or 0, no timeout on requests</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -355,7 +354,7 @@ encoding.</p>
 
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpClient.client_version">
-<code class="descname">client_version</code><em class="property"> = 'pulsar/1.0.0beta0'</em><a class="headerlink" href="#pulsar.apps.http.HttpClient.client_version" title="Permalink to this definition">¶</a></dt>
+<code class="descname">client_version</code><em class="property"> = 'pulsar/1.0.2beta0'</em><a class="headerlink" href="#pulsar.apps.http.HttpClient.client_version" title="Permalink to this definition">¶</a></dt>
 <dd><p>String for the <code class="docutils literal"><span class="pre">User-Agent</span></code> header.</p>
 </dd></dl>
 
@@ -487,7 +486,7 @@ encoding.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpClient.request">
-<code class="descname">request</code><span class="sig-paren">(</span><em>method</em>, <em>url</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.request" title="Permalink to this definition">¶</a></dt>
+<code class="descname">request</code><span class="sig-paren">(</span><em>method</em>, <em>url</em>, <em>timeout=None</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructs and sends a request to a remote server.</p>
 <p>It returns a <code class="xref py py-class docutils literal"><span class="pre">Future</span></code> which results in a
 <a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><code class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></code></a> object.</p>
@@ -515,7 +514,7 @@ initialisation.</li>
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpClient.close">
-<code class="descname">close</code><span class="sig-paren">(</span><em>async=True</em>, <em>timeout=5</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.close" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close</code><span class="sig-paren">(</span><em>async=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close all connections.</p>
 <p>Fire the <code class="docutils literal"><span class="pre">finish</span></code> <a class="reference internal" href="../tutorials/events.html#one-time-event"><span>one time event</span></a> once done.
 Return the <code class="xref py py-class docutils literal"><span class="pre">Future</span></code> fired by the <code class="docutils literal"><span class="pre">finish</span></code> event.</p>
@@ -540,7 +539,7 @@ Return the <code class="xref py py-class docutils literal"><span class="pre">Fut
 <h3>HTTP Request<a class="headerlink" href="#http-request" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.http.HttpRequest">
-<em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">HttpRequest</code><span class="sig-paren">(</span><em>client</em>, <em>url</em>, <em>method</em>, <em>inp_params=None</em>, <em>headers=None</em>, <em>data=None</em>, <em>files=None</em>, <em>timeout=None</em>, <em>history=None</em>, <em>charset=None</em>, <em>encode_multipart=True</em>, <em>multipart_boundary=None</em>, <em>source_address=None</em>, <em>allow_redirects=False</em>, <em>max_redirects=10</em>, <em>decompress=True</em>, <em>version=None</em>, <em>wait_continue=False</em>, <em>websocket_handler=None</em>, <em>cookies=None</em>, <em>urlparams=None</em>, <em>**ignored</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">HttpRequest</code><span class="sig-paren">(</span><em>client</em>, <em>url</em>, <em>method</em>, <em>inp_params=None</em>, <em>headers=None</em>, <em>data=None</em>, <em>files=None</em>, <em>history=None</em>, <em>charset=None</em>, <em>encode_multipart=True</em>, <em>multipart_boundary=None</em>, <em>source_address=None</em>, <em>allow_redirects=False</em>, <em>max_redirects=10</em>, <em>decompress=True</em>, <em>version=None</em>, <em>wait_continue=False</em>, <em>websocket_handler=None</em>, <em>cookies=None</em>, <em>urlparams=None</em>, <em>**ignored</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a> request for an HTTP resource.</p>
 <p>This class has a similar interface to <a class="reference external" href="http://python.readthedocs.org/en/latest/library/urllib.request.html#urllib.request.Request" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">urllib.request.Request</span></code></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">

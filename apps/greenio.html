@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Greenlet Support &mdash; pulsar 1.0.0beta0 documentation</title>
+    <title>Greenlet Support &mdash; pulsar 1.0.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.0beta0',
+        VERSION:     '1.0.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../index.html" />
     <link rel="next" title="Test Suite" href="test.html" />
     <link rel="prev" title="Django Application" href="pulse.html" />
    
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="pulse.html" title="Django Application"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -59,17 +59,14 @@
             
   <div class="section" id="module-pulsar.apps.greenio">
 <span id="greenlet-support"></span><span id="greenio"></span><h1>Greenlet Support<a class="headerlink" href="#module-pulsar.apps.greenio" title="Permalink to this headline">¶</a></h1>
-<p>Greenlet support facilitates the integration of synchronous
+<p>Pulsar <code class="xref py py-mod docutils literal"><span class="pre">greenio</span></code> facilitates the integration of synchronous
 third-party libraries into pulsar asynchronous framework.
 It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet</a> library.</p>
 <p>If you want to understand how integration works but you are unfamiliar with
-greenlets, check out the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet documentation</a> first.
-On the other hand,
-if you need to use it in the context of <span class="xref std std-ref">asynchronous psycopg2</span>
-connections for example, you can skip the implementation details.</p>
+greenlets, check out the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet documentation</a> first.</p>
 <p>This application <strong>does not use monkey patching</strong> and therefore it
 works quite differently from implicit asynchronous libraries such as
-<a class="reference external" href="http://www.gevent.org/">gevent</a>. All it does, it provides the user with a limited set
+<a class="reference external" href="http://www.gevent.org/">gevent</a>. All it does, it provides the user with a set
 of utilities for <strong>explicitly</strong> transferring execution from one greenlet
 to a another which execute the blocking call in a greenlet-friendly way.</p>
 <p>The caller has the responsibility that the blocking call is greenlet-friendly,
@@ -91,17 +88,19 @@ your client code can be used on other frameworks just as well.</li>
 <span id="id1"></span><h3>Green WSGI<a class="headerlink" href="#green-wsgi" title="Permalink to this headline">¶</a></h3>
 <p>Assume you are using pulsar web server and would like to write your application
 in an implicit asynchronous mode, i.e. without dealing with futures nor
-coroutines, then you can wrap your wsgi <code class="docutils literal"><span class="pre">app</span></code> with the <code class="xref py py-class docutils literal"><span class="pre">RunInPool</span></code>
+coroutines, then you can wrap your WSGI <code class="docutils literal"><span class="pre">app</span></code> with the <a class="reference internal" href="#pulsar.apps.greenio.GreenWSGI" title="pulsar.apps.greenio.GreenWSGI"><code class="xref py py-class docutils literal"><span class="pre">GreenWSGI</span></code></a>
 utility:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">greenio</span>
 
+<span class="n">green_pool</span> <span class="o">=</span> <span class="n">greenio</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 <span class="nb">callable</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">wsgi</span><span class="o">.</span><span class="n">wait_for_body_middleware</span><span class="p">,</span>
-                             <span class="n">greenio</span><span class="o">.</span><span class="n">RunInPool</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="mi">20</span><span class="p">)])</span>
+                             <span class="n">greenio</span><span class="o">.</span><span class="n">GreenWSGI</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">green_pool</span><span class="p">)],</span>
+                            <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="nb">callable</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>The <code class="xref py py-class docutils literal"><span class="pre">RunInPool</span></code> manages a pool of greenlets which execute your
+<p>The <a class="reference internal" href="#pulsar.apps.greenio.GreenPool" title="pulsar.apps.greenio.GreenPool"><code class="xref py py-class docutils literal"><span class="pre">GreenPool</span></code></a> manages a pool of greenlets which execute your
 application. In this way, within your <code class="docutils literal"><span class="pre">app</span></code> you can invoke the
 <a class="reference internal" href="#pulsar.apps.greenio.wait" title="pulsar.apps.greenio.wait"><code class="xref py py-func docutils literal"><span class="pre">wait()</span></code></a> function when needing to wait for asynchronous results to be
 ready.</p>
@@ -160,7 +159,7 @@ statement as usual.</p>
 <h3>Green Pool<a class="headerlink" href="#green-pool" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.greenio.GreenPool">
-<em class="property">class </em><code class="descclassname">pulsar.apps.greenio.</code><code class="descname">GreenPool</code><span class="sig-paren">(</span><em>max_workers=None</em>, <em>loop=None</em>, <em>maxtasks=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#GreenPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.GreenPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.greenio.</code><code class="descname">GreenPool</code><span class="sig-paren">(</span><em>max_workers=None</em>, <em>loop=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#GreenPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.GreenPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool of running greenlets.</p>
 <p>This pool maintains a group of greenlets to perform asynchronous
 tasks via the <a class="reference internal" href="#pulsar.apps.greenio.GreenPool.submit" title="pulsar.apps.greenio.GreenPool.submit"><code class="xref py py-meth docutils literal"><span class="pre">submit()</span></code></a> method.</p>
@@ -177,12 +176,52 @@ has finished.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="wsgi-green">
-<h3>Wsgi Green<a class="headerlink" href="#wsgi-green" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="green-lock">
+<h3>Green Lock<a class="headerlink" href="#green-lock" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.apps.greenio.WsgiGreen">
-<em class="property">class </em><code class="descclassname">pulsar.apps.greenio.</code><code class="descname">WsgiGreen</code><span class="sig-paren">(</span><em>wsgi</em>, <em>max_workers=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#WsgiGreen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.WsgiGreen" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wraps a Wsgi application to be executed on a pool of greenlet</p>
+<dt id="pulsar.apps.greenio.GreenLock">
+<em class="property">class </em><code class="descclassname">pulsar.apps.greenio.</code><code class="descname">GreenLock</code><span class="sig-paren">(</span><em>loop=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#GreenLock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.GreenLock" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Locking primitive that is owned by a particular greenlet
+when locked.The main greenlet cannot acquire the lock.</p>
+<p>A primitive lock is in one of two states, &#8216;locked&#8217; or &#8216;unlocked&#8217;.</p>
+<p>It is created in the unlocked state. It has two basic methods,
+<a class="reference internal" href="#pulsar.apps.greenio.GreenLock.acquire" title="pulsar.apps.greenio.GreenLock.acquire"><code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code></a> and <code class="xref py py-meth docutils literal"><span class="pre">release.</span> <span class="pre">When</span> <span class="pre">the</span> <span class="pre">state</span> <span class="pre">is</span> <span class="pre">unlocked,</span>
+<span class="pre">:meth:()</span></code>.acquire` changes the state to locked and returns immediately.</p>
+<p>When the state is locked, <a class="reference internal" href="#pulsar.apps.greenio.GreenLock.acquire" title="pulsar.apps.greenio.GreenLock.acquire"><code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code></a> blocks the current greenlet
+until a call to <a class="reference internal" href="#pulsar.apps.greenio.GreenLock.release" title="pulsar.apps.greenio.GreenLock.release"><code class="xref py py-meth docutils literal"><span class="pre">release()</span></code></a> changes it to unlocked,
+then the <a class="reference internal" href="#pulsar.apps.greenio.GreenLock.acquire" title="pulsar.apps.greenio.GreenLock.acquire"><code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code></a> call resets it to locked and returns.</p>
+<dl class="method">
+<dt id="pulsar.apps.greenio.GreenLock.locked">
+<code class="descname">locked</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#GreenLock.locked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.GreenLock.locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>&#8216;Return the greenlet that acquire the lock or None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.greenio.GreenLock.acquire">
+<code class="descname">acquire</code><span class="sig-paren">(</span><em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#GreenLock.acquire"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.GreenLock.acquire" title="Permalink to this definition">¶</a></dt>
+<dd><p>Acquires the lock if in the unlocked state otherwise switch
+back to the parent coroutine.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.greenio.GreenLock.release">
+<code class="descname">release</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#GreenLock.release"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.GreenLock.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Release the lock.</p>
+<p>This method should only be called in the locked state;
+it changes the state to unlocked and returns immediately.
+If an attempt is made to release an unlocked lock,
+a RuntimeError will be raised.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="id3">
+<h3>Green WSGI<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.greenio.GreenWSGI">
+<em class="property">class </em><code class="descclassname">pulsar.apps.greenio.</code><code class="descname">GreenWSGI</code><span class="sig-paren">(</span><em>wsgi</em>, <em>pool</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#GreenWSGI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.GreenWSGI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps a WSGI application to be executed on a <a class="reference internal" href="#pulsar.apps.greenio.GreenPool" title="pulsar.apps.greenio.GreenPool"><code class="xref py py-class docutils literal"><span class="pre">GreenPool</span></code></a></p>
 </dd></dl>
 
 </div>

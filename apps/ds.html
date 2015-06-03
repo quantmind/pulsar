@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Pulsar Data Store Server &mdash; pulsar 1.0.0beta0 documentation</title>
+    <title>Pulsar Data Store Server &mdash; pulsar 1.0.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.0beta0',
+        VERSION:     '1.0.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../index.html" />
     <link rel="next" title="Data Stores" href="data/index.html" />
     <link rel="prev" title="Test Suite" href="test.html" />
    
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="test.html" title="Test Suite"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -95,7 +95,7 @@ as redis does.</p>
 </div>
 <div class="section" id="commands">
 <h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
-<p><strong>Commands not yet supported</strong>: <a class="reference external" href="http://redis.io/commands/bgrewriteaof">bgrewriteaof</a>, <a class="reference external" href="http://redis.io/commands/debug">debug</a>, <a class="reference external" href="http://redis.io/commands/hscan">hscan</a>, <a class="reference external" href="http://redis.io/commands/migrate">migrate</a>, <a class="reference external" href="http://redis.io/commands/object">object</a>, <a class="reference external" href="http://redis.io/commands/scan">scan</a>, <a class="reference external" href="http://redis.io/commands/shutdown">shutdown</a>, <a class="reference external" href="http://redis.io/commands/slaveof">slaveof</a>, <a class="reference external" href="http://redis.io/commands/slowlog">slowlog</a>, <a class="reference external" href="http://redis.io/commands/sscan">sscan</a>, <a class="reference external" href="http://redis.io/commands/sync">sync</a>, <a class="reference external" href="http://redis.io/commands/zrevrange">zrevrange</a>, <a class="reference external" href="http://redis.io/commands/zrevrangebyscore">zrevrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zscan">zscan</a></p>
+<p><strong>Commands not yet supported</strong>: <a class="reference external" href="http://redis.io/commands/bgrewriteaof">bgrewriteaof</a>, <a class="reference external" href="http://redis.io/commands/debug">debug</a>, <a class="reference external" href="http://redis.io/commands/eval">eval</a>, <a class="reference external" href="http://redis.io/commands/evalsha">evalsha</a>, <a class="reference external" href="http://redis.io/commands/hscan">hscan</a>, <a class="reference external" href="http://redis.io/commands/migrate">migrate</a>, <a class="reference external" href="http://redis.io/commands/object">object</a>, <a class="reference external" href="http://redis.io/commands/scan">scan</a>, <a class="reference external" href="http://redis.io/commands/script">script</a>, <a class="reference external" href="http://redis.io/commands/shutdown">shutdown</a>, <a class="reference external" href="http://redis.io/commands/slaveof">slaveof</a>, <a class="reference external" href="http://redis.io/commands/slowlog">slowlog</a>, <a class="reference external" href="http://redis.io/commands/sscan">sscan</a>, <a class="reference external" href="http://redis.io/commands/sync">sync</a>, <a class="reference external" href="http://redis.io/commands/zrevrange">zrevrange</a>, <a class="reference external" href="http://redis.io/commands/zrevrangebyscore">zrevrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zscan">zscan</a></p>
 <div class="section" id="keys">
 <span id="redis-keys"></span><h3>Keys<a class="headerlink" href="#keys" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="http://redis.io/commands/del">del</a>, <a class="reference external" href="http://redis.io/commands/dump">dump</a>, <a class="reference external" href="http://redis.io/commands/exists">exists</a>, <a class="reference external" href="http://redis.io/commands/expire">expire</a>, <a class="reference external" href="http://redis.io/commands/expireat">expireat</a>, <a class="reference external" href="http://redis.io/commands/keys">keys</a>, <a class="reference external" href="http://redis.io/commands/move">move</a>, <a class="reference external" href="http://redis.io/commands/persist">persist</a>, <a class="reference external" href="http://redis.io/commands/pexpire">pexpire</a>, <a class="reference external" href="http://redis.io/commands/pexpireat">pexpireat</a>, <a class="reference external" href="http://redis.io/commands/pttl">pttl</a>, <a class="reference external" href="http://redis.io/commands/randomkey">randomkey</a>, <a class="reference external" href="http://redis.io/commands/rename">rename</a>, <a class="reference external" href="http://redis.io/commands/renamenx">renamenx</a>, <a class="reference external" href="http://redis.io/commands/restore">restore</a>, <a class="reference external" href="http://redis.io/commands/sort">sort</a>, <a class="reference external" href="http://redis.io/commands/ttl">ttl</a>, <a class="reference external" href="http://redis.io/commands/type">type</a></p>
@@ -130,7 +130,6 @@ as redis does.</p>
 </div>
 <div class="section" id="scripting">
 <span id="redis-scripting"></span><h3>Scripting<a class="headerlink" href="#scripting" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="http://redis.io/commands/eval">eval</a>, <a class="reference external" href="http://redis.io/commands/evalsha">evalsha</a>, <a class="reference external" href="http://redis.io/commands/script">script</a></p>
 </div>
 <div class="section" id="connections">
 <span id="redis-connections"></span><h3>Connections<a class="headerlink" href="#connections" title="Permalink to this headline">¶</a></h3>

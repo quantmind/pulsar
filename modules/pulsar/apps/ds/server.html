@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.ds.server &mdash; pulsar 1.0.0beta0 documentation</title>
+    <title>pulsar.apps.ds.server &mdash; pulsar 1.0.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.0.0beta0',
+        VERSION:     '1.0.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -111,15 +111,10 @@
 <span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">Global</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Zset</span><span class="p">,</span> <span class="n">Deque</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">pulsar.utils.lua</span> <span class="kn">import</span> <span class="n">Lua</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
-    <span class="n">Lua</span> <span class="o">=</span> <span class="bp">None</span>
-
 
 <span class="kn">from</span> <span class="nn">.parser</span> <span class="kn">import</span> <span class="n">redis_parser</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">sort_command</span><span class="p">,</span> <span class="n">count_bytes</span><span class="p">,</span> <span class="n">and_op</span><span class="p">,</span> <span class="n">or_op</span><span class="p">,</span> <span class="n">xor_op</span><span class="p">,</span> <span class="n">save_data</span>
-<span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">PulsarStoreClient</span><span class="p">,</span> <span class="n">LuaClient</span><span class="p">,</span> <span class="n">Blocked</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">PulsarStoreClient</span><span class="p">,</span> <span class="n">Blocked</span><span class="p">,</span>
                      <span class="n">COMMANDS_INFO</span><span class="p">,</span> <span class="n">check_input</span><span class="p">,</span> <span class="n">redis_to_py_pattern</span><span class="p">)</span>
 
 
@@ -217,13 +212,13 @@
 <span class="k">class</span> <span class="nc">TcpServer</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">TcpServer</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">TcpServer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_parser_class</span> <span class="o">=</span> <span class="n">redis_parser</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">redis_py_parser</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_key_value_store</span> <span class="o">=</span> <span class="n">Storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">info</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">TcpServer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
         <span class="n">info</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_value_store</span><span class="o">.</span><span class="n">_info</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">info</span>
 
@@ -246,7 +241,7 @@
         <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
         <span class="n">workers</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">)</span>
         <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="n">workers</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">PulsarDS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
 
 
 <span class="c"># #############################################################################</span>
@@ -343,15 +338,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">databases</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">num</span><span class="p">,</span> <span class="n">Db</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
                                <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">key_value_databases</span><span class="p">)))</span>
         <span class="c"># Initialise lua</span>
-        <span class="k">if</span> <span class="n">Lua</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lua</span> <span class="o">=</span> <span class="n">Lua</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">scripts</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lua</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s">&#39;redis&#39;</span><span class="p">,</span> <span class="n">LuaClient</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
-                              <span class="s">&#39;call&#39;</span><span class="p">,</span> <span class="s">&#39;pcall&#39;</span><span class="p">,</span> <span class="s">&#39;error_reply&#39;</span><span class="p">,</span> <span class="s">&#39;status_reply&#39;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s">&#39;2.6.16&#39;</span>
-        <span class="k">else</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lua</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s">&#39;2.4.10&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lua</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s">&#39;2.4.10&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loaddb</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cron</span><span class="p">()</span>
 
@@ -438,7 +426,7 @@
             <span class="k">if</span> <span class="n">db2</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_zero</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="s">&#39;index out of range&#39;</span><span class="p">)</span>
         <span class="n">db</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">db</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">db2</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -1997,49 +1985,17 @@
 
     <span class="c"># #########################################################################</span>
     <span class="c"># #    SCRIPTING</span>
-    <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Scripting&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Scripting&#39;</span><span class="p">,</span> <span class="n">supported</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
-        <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">lua</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
-        <span class="n">script</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_eval_script</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOT_SUPPORTED</span><span class="p">)</span>
 
-    <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Scripting&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Scripting&#39;</span><span class="p">,</span> <span class="n">supported</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">evalsha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
-        <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">lua</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
-        <span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">script</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="s">&#39;the script is not available&#39;</span><span class="p">,</span> <span class="s">&#39;NOSCRIPT&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_eval_script</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOT_SUPPORTED</span><span class="p">)</span>
 
-    <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Scripting&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Scripting&#39;</span><span class="p">,</span> <span class="n">supported</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">script</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
-        <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="ow">not</span> <span class="n">N</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">lua</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
-        <span class="n">scripts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scripts</span>
-        <span class="n">subcommand</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">subcommand</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;EXISTS&#39;</span><span class="p">:</span>
-            <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">sha</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">)</span> <span class="k">for</span> <span class="n">sha</span> <span class="ow">in</span> <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">:]]</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_multi_bulk</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">subcommand</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;FLUSH&#39;</span><span class="p">:</span>
-            <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">scripts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">subcommand</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;KILL&#39;</span><span class="p">:</span>
-            <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">subcommand</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;LOAD&#39;</span><span class="p">:</span>
-            <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="n">script</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-            <span class="n">sha</span> <span class="o">=</span> <span class="n">sha1</span><span class="p">(</span><span class="n">script</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-            <span class="n">scripts</span><span class="p">[</span><span class="n">sha</span><span class="p">]</span> <span class="o">=</span> <span class="n">script</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_bulk</span><span class="p">(</span><span class="n">sha</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOT_SUPPORTED</span><span class="p">)</span>
 
     <span class="c"># #########################################################################</span>
     <span class="c"># #    CONNECTION COMMANDS</span>
@@ -2605,54 +2561,6 @@
                 <span class="n">remove</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">remove</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_monitors</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">remove</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_eval_script</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">numkeys</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">numkeys</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">keys</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">3</span><span class="o">+</span><span class="n">numkeys</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">numkeys</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span>
-            <span class="k">elif</span> <span class="n">numkeys</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">keys</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">3</span><span class="o">+</span><span class="n">numkeys</span><span class="p">:]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lua</span><span class="o">.</span><span class="n">set_global</span><span class="p">(</span><span class="s">&#39;KEYS&#39;</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lua</span><span class="o">.</span><span class="n">set_global</span><span class="p">(</span><span class="s">&#39;ARGV&#39;</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lua</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">result</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">keyu</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">keyu</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;OK&#39;</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="n">keyu</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;ERR&#39;</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_multi_bulk</span><span class="p">(())</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">array</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="k">while</span> <span class="n">result</span><span class="p">:</span>
-                    <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                        <span class="k">break</span>
-                    <span class="n">array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">array</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_multi_bulk</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_one</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_bulk</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_int</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_bulk</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
 </div>
 <span class="k">class</span> <span class="nc">Db</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>

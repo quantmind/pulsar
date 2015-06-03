@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.greenio &mdash; pulsar 1.0.0beta0 documentation</title>
+    <title>pulsar.apps.greenio &mdash; pulsar 1.0.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.0beta0',
+        VERSION:     '1.0.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -54,19 +54,16 @@
             
   <h1>Source code for pulsar.apps.greenio</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">Greenlet support facilitates the integration of synchronous</span>
+<span class="sd">Pulsar :mod:`~greenio` facilitates the integration of synchronous</span>
 <span class="sd">third-party libraries into pulsar asynchronous framework.</span>
 <span class="sd">It requires the :greenlet:`greenlet &lt;&gt;` library.</span>
 
 <span class="sd">If you want to understand how integration works but you are unfamiliar with</span>
 <span class="sd">greenlets, check out the :greenlet:`greenlet documentation &lt;&gt;` first.</span>
-<span class="sd">On the other hand,</span>
-<span class="sd">if you need to use it in the context of :ref:`asynchronous psycopg2 &lt;psycopg2&gt;`</span>
-<span class="sd">connections for example, you can skip the implementation details.</span>
 
 <span class="sd">This application **does not use monkey patching** and therefore it</span>
 <span class="sd">works quite differently from implicit asynchronous libraries such as</span>
-<span class="sd">gevent_. All it does, it provides the user with a limited set</span>
+<span class="sd">gevent_. All it does, it provides the user with a set</span>
 <span class="sd">of utilities for **explicitly** transferring execution from one greenlet</span>
 <span class="sd">to a another which execute the blocking call in a greenlet-friendly way.</span>
 
@@ -95,17 +92,19 @@
 
 <span class="sd">Assume you are using pulsar web server and would like to write your application</span>
 <span class="sd">in an implicit asynchronous mode, i.e. without dealing with futures nor</span>
-<span class="sd">coroutines, then you can wrap your wsgi ``app`` with the :class:`.RunInPool`</span>
+<span class="sd">coroutines, then you can wrap your WSGI ``app`` with the :class:`.GreenWSGI`</span>
 <span class="sd">utility::</span>
 
 <span class="sd">    from pulsar.apps import wsgi, greenio</span>
 
+<span class="sd">    green_pool = greenio.GreenPool()</span>
 <span class="sd">    callable = wsgi.WsgiHandler([wsgi.wait_for_body_middleware,</span>
-<span class="sd">                                 greenio.RunInPool(app, 20)])</span>
+<span class="sd">                                 greenio.GreenWSGI(app, green_pool)],</span>
+<span class="sd">                                async=True)</span>
 
 <span class="sd">    wsgi.WsgiServer(callable=callable).start()</span>
 
-<span class="sd">The :class:`.RunInPool` manages a pool of greenlets which execute your</span>
+<span class="sd">The :class:`.GreenPool` manages a pool of greenlets which execute your</span>
 <span class="sd">application. In this way, within your ``app`` you can invoke the</span>
 <span class="sd">:func:`.wait` function when needing to wait for asynchronous results to be</span>
 <span class="sd">ready.</span>
@@ -166,10 +165,18 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
-<span class="sd">Wsgi Green</span>
+<span class="sd">Green Lock</span>
 <span class="sd">----------------</span>
 
-<span class="sd">.. autoclass:: WsgiGreen</span>
+<span class="sd">.. autoclass:: GreenLock</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
+
+<span class="sd">Green WSGI</span>
+<span class="sd">----------------</span>
+
+<span class="sd">.. autoclass:: GreenWSGI</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
@@ -178,11 +185,11 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
-<span class="kn">import</span> <span class="nn">greenlet</span>
-<span class="kn">from</span> <span class="nn">greenlet</span> <span class="kn">import</span> <span class="n">getcurrent</span>
+<span class="kn">from</span> <span class="nn">greenlet</span> <span class="kn">import</span> <span class="n">greenlet</span><span class="p">,</span> <span class="n">getcurrent</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">isfuture</span><span class="p">,</span> <span class="n">async</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">is_async</span>
@@ -196,14 +203,14 @@
     <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">GreenletWorker</span><span class="p">(</span><span class="n">greenlet</span><span class="o">.</span><span class="n">greenlet</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">GreenletWorker</span><span class="p">(</span><span class="n">greenlet</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
 <div class="viewcode-block" id="wait"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.wait">[docs]</a><span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Wait for a possible asynchronous value to complete.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">current</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">getcurrent</span><span class="p">()</span>
     <span class="n">parent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
     <span class="k">return</span> <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">parent</span> <span class="k">else</span> <span class="n">value</span>
 
@@ -215,18 +222,18 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="nd">@wraps</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">greenlet</span> <span class="o">=</span> <span class="n">GreenletWorker</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
+        <span class="n">green</span> <span class="o">=</span> <span class="n">GreenletWorker</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
         <span class="c"># switch to the new greenlet</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c"># back to the parent</span>
         <span class="k">while</span> <span class="n">is_async</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
             <span class="c"># keep on switching back to the greenlet if we get a Future</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">yield from</span> <span class="n">result</span><span class="p">))</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">yield from</span> <span class="n">result</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_</span>
 
@@ -239,16 +246,26 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">worker_name</span> <span class="o">=</span> <span class="s">&#39;exec&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">maxtasks</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_workers</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_workers</span> <span class="ow">or</span> <span class="n">_DEFAULT_WORKERS</span><span class="p">,</span> <span class="n">_MAX_WORKERS</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_available</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_maxtasks</span> <span class="o">=</span> <span class="n">maxtasks</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.greenpool&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">max_workers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_workers</span>
+
+    <span class="nd">@max_workers.setter</span>
+    <span class="k">def</span> <span class="nf">max_workers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_max_workers</span> <span class="o">=</span> <span class="n">value</span>
 
 <div class="viewcode-block" id="GreenPool.submit"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenPool.submit">[docs]</a>    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Equivalent to ``func(*args, **kwargs)``.</span>
@@ -269,41 +286,44 @@
     <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_put</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_put</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">wait</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span>
 
     <span class="c"># INTERNALS</span>
     <span class="k">def</span> <span class="nf">_adjust_greenlet_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_available</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_workers</span><span class="p">:</span>
-            <span class="n">greenlet</span> <span class="o">=</span> <span class="n">GreenletWorker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_green_run</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">greenlet</span><span class="p">)</span>
-            <span class="n">greenlet</span><span class="o">.</span><span class="n">switch</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_available</span> <span class="ow">and</span>
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_workers</span><span class="p">):</span>
+            <span class="n">green</span> <span class="o">=</span> <span class="n">GreenletWorker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_green_run</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">green</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Num greenlets: </span><span class="si">%d</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span><span class="p">))</span>
+            <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_available</span>
 
-    <span class="k">def</span> <span class="nf">_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
         <span class="c"># Run in the main greenlet of the evnet-loop thread</span>
-        <span class="k">if</span> <span class="n">task</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_greenlet_count</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_queue</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_check_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Run in the main greenlet of the event-loop thread</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_available</span><span class="p">:</span>
-            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_greenlet_count</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;No greenlet available&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_queue</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_green_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_available</span><span class="o">.</span><span class="n">pop</span><span class="p">(),</span> <span class="n">task</span><span class="p">),</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_green_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">greenlet</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
-        <span class="c"># Run in the main greenlet of the event-loop thread</span>
+    <span class="k">def</span> <span class="nf">_green_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">green</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="c"># Coroutine executing the in main greenlet</span>
+        <span class="c"># This coroutine is executed for every task put into the queue</span>
 
         <span class="k">while</span> <span class="n">task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_DONE</span><span class="p">:</span>
             <span class="c"># switch to the greenlet to start the task</span>
-            <span class="n">task</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
             <span class="c"># if an asynchronous result is returned, yield from</span>
             <span class="k">while</span> <span class="n">is_async</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
@@ -311,21 +331,19 @@
                     <span class="n">task</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">task</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                     <span class="c"># This call can return an asynchronous component</span>
-                    <span class="n">task</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+                    <span class="n">task</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_green_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># The run method of a worker greenlet</span>
         <span class="n">task</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">while</span> <span class="n">task</span><span class="p">:</span>
-            <span class="n">greenlet</span> <span class="o">=</span> <span class="n">getcurrent</span><span class="p">()</span>
-            <span class="n">parent</span> <span class="o">=</span> <span class="n">greenlet</span><span class="o">.</span><span class="n">parent</span>
+            <span class="n">green</span> <span class="o">=</span> <span class="n">getcurrent</span><span class="p">()</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">parent</span>
             <span class="k">assert</span> <span class="n">parent</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_available</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">greenlet</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_queue</span><span class="p">)</span>
+            <span class="c"># add greenlet in the available greenlets</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_available</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">green</span><span class="p">)</span>
             <span class="n">task</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">_DONE</span><span class="p">)</span>  <span class="c"># switch back to the main execution</span>
             <span class="k">if</span> <span class="n">task</span><span class="p">:</span>
-                <span class="c"># If a new task is available execute it</span>
-                <span class="c"># Here we are in the child greenlet</span>
                 <span class="n">future</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">task</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -334,7 +352,7 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>  <span class="c"># Greenlet cleanup</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">greenlet</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">green</span><span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_greenlets</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_put</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span><span class="p">:</span>
@@ -343,22 +361,84 @@
                 <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">_DONE</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="WsgiGreen"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.WsgiGreen">[docs]</a><span class="k">class</span> <span class="nc">WsgiGreen</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Wraps a Wsgi application to be executed on a pool of greenlet</span>
+<div class="viewcode-block" id="GreenLock"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenLock">[docs]</a><span class="k">class</span> <span class="nc">GreenLock</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A Locking primitive that is owned by a particular greenlet</span>
+<span class="sd">    when locked.The main greenlet cannot acquire the lock.</span>
+
+<span class="sd">    A primitive lock is in one of two states, &#39;locked&#39; or &#39;unlocked&#39;.</span>
+
+<span class="sd">    It is created in the unlocked state. It has two basic methods,</span>
+<span class="sd">    :meth:`.acquire` and :meth:`.release. When the state is unlocked,</span>
+<span class="sd">    :meth:`.acquire` changes the state to locked and returns immediately.</span>
+
+<span class="sd">    When the state is locked, :meth:`.acquire` blocks the current greenlet</span>
+<span class="sd">    until a call to :meth:`.release` changes it to unlocked,</span>
+<span class="sd">    then the :meth:`.acquire` call resets it to locked and returns.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_local</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GreenLock.locked"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenLock.locked">[docs]</a>    <span class="k">def</span> <span class="nf">locked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;&#39;Return the greenlet that acquire the lock or None.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span>
+</div>
+<div class="viewcode-block" id="GreenLock.acquire"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenLock.acquire">[docs]</a>    <span class="k">def</span> <span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Acquires the lock if in the unlocked state otherwise switch</span>
+<span class="sd">        back to the parent coroutine.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">green</span> <span class="o">=</span> <span class="n">getcurrent</span><span class="p">()</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;acquire in main greenlet&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span><span class="p">:</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="n">green</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">locked</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="GreenLock.release"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenLock.release">[docs]</a>    <span class="k">def</span> <span class="nf">release</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Release the lock.</span>
+
+<span class="sd">        This method should only be called in the locked state;</span>
+<span class="sd">        it changes the state to unlocked and returns immediately.</span>
+<span class="sd">        If an attempt is made to release an unlocked lock,</span>
+<span class="sd">        a RuntimeError will be raised.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="p">:</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">future</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;release unlocked lock&#39;</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="GreenWSGI"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenWSGI">[docs]</a><span class="k">class</span> <span class="nc">GreenWSGI</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Wraps a WSGI application to be executed on a :class:`.GreenPool`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wsgi</span> <span class="o">=</span> <span class="n">wsgi</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span> <span class="o">=</span> <span class="n">max_workers</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">pool</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">GreenPool</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)</span>
-
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_green_handler</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_green_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="c"># Running on a greenlet worker</span>
         <span class="k">return</span> <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wsgi</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">))</span></div>
 </pre></div>
 

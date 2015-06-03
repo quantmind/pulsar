@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Release Notes &mdash; pulsar 1.0.0beta0 documentation</title>
+    <title>Release Notes &mdash; pulsar 1.0.2beta0 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.0beta0',
+        VERSION:     '1.0.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" />
    
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -59,8 +59,23 @@
             
   <div class="section" id="release-notes">
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-1-0-0-2015-may-17">
-<h2>Ver. 1.0.0 - 2015-May-17<a class="headerlink" href="#ver-1-0-0-2015-may-17" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="development">
+<h2>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="ver-1-0-1-2015-jun-03">
+<h2>Ver. 1.0.1 - 2015-Jun-03<a class="headerlink" href="#ver-1-0-1-2015-jun-03" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Better support of <code class="docutils literal"><span class="pre">get_version</span></code> for third party packages.</li>
+<li>Added optional timeout to <a class="reference internal" href="apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a> requests.</li>
+<li>Refactored <a class="reference internal" href="apps/wsgi/content.html#pulsar.apps.wsgi.content.String" title="pulsar.apps.wsgi.content.String"><code class="xref py py-class docutils literal"><span class="pre">String</span></code></a> and renamed from <code class="docutils literal"><span class="pre">AsyncString</span></code>. <code class="docutils literal"><span class="pre">AsyncString</span></code>
+still available for backward compatibility.</li>
+<li>Added the new <a class="reference internal" href="apps/greenio.html#pulsar.apps.greenio.GreenLock" title="pulsar.apps.greenio.GreenLock"><code class="xref py py-class docutils literal"><span class="pre">GreenLock</span></code></a> class. A locking primitive for
+greenlets in a greenlet pool.</li>
+<li>Added new example to snippets directory. A simple Actor application.</li>
+</ul>
+</div>
+<div class="section" id="ver-1-0-0-2015-may-18">
+<h2>Ver. 1.0.0 - 2015-May-18<a class="headerlink" href="#ver-1-0-0-2015-may-18" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Python 3.4 and above</li>
 <li>New test runner</li>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.data.redis.store &mdash; pulsar 1.0.0beta0 documentation</title>
+    <title>pulsar.apps.data.redis.store &mdash; pulsar 1.0.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '1.0.0beta0',
+        VERSION:     '1.0.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.0beta0 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../../apps.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../../index.html">pulsar 1.0.0beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -67,18 +67,24 @@
 <span class="k">class</span> <span class="nc">RedisStoreConnection</span><span class="p">(</span><span class="n">Connection</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">RedisStoreConnection</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_producer</span><span class="o">.</span><span class="n">_parser_class</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
         <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
         <span class="n">consumer</span><span class="o">.</span><span class="n">start</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">options</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ResponseError</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">result</span><span class="o">.</span><span class="n">exception</span>
+        <span class="k">return</span> <span class="n">result</span>
 
     <span class="k">def</span> <span class="nf">execute_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
         <span class="n">consumer</span><span class="o">.</span><span class="n">start</span><span class="p">((</span><span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="p">,</span> <span class="p">[]))</span>
-        <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ResponseError</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">result</span><span class="o">.</span><span class="n">exception</span>
+        <span class="k">return</span> <span class="n">result</span>
 
 
 <div class="viewcode-block" id="RedisStore"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.store.RedisStore">[docs]</a><span class="k">class</span> <span class="nc">RedisStore</span><span class="p">(</span><span class="n">RemoteStore</span><span class="p">):</span>
@@ -135,16 +141,12 @@
         <span class="n">connection</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">connection</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ResponseError</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">result</span><span class="o">.</span><span class="n">exception</span>
             <span class="k">return</span> <span class="n">result</span>
 
     <span class="k">def</span> <span class="nf">execute_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute_pipeline</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ResponseError</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">result</span><span class="o">.</span><span class="n">exception</span>
             <span class="k">return</span> <span class="n">result</span>
 
     <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
