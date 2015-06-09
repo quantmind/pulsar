@@ -5,6 +5,7 @@ import pulsar
 from pulsar import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
+from pulsar.apps.test import test_timeout
 
 
 def dummy(environ, start_response):
@@ -26,6 +27,7 @@ class TestMultiApp(unittest.TestCase):
         # create the application
         return MultiWsgi(**params)
 
+    @test_timeout(30)
     def testInstall(self):
         arbiter = get_actor()
         self.assertTrue(arbiter.is_arbiter())
