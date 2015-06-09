@@ -398,6 +398,16 @@ class RedisCommands(StoreMixin):
         for value, target in zip(values, (b'1', b'2', b'3', None)):
             self.assertEqual(value, target)
 
+    def test_setrange(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.setrange(key, 5, 'foo'), 8)
+        yield from eq(c.get(key), b'\0\0\0\0\0foo')
+        yield from eq(c.set(key, 'abcdefghijh'), True)
+        yield from eq(c.setrange(key, 6, '12345'), 11)
+        yield from eq(c.get(key), b'abcdef12345')
+
     ###########################################################################
     #    HASHES
     def test_hdel(self):

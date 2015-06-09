@@ -849,13 +849,13 @@ class Storage(object):
         db = client.db
         string = db.get(key)
         if string is None:
-            string = bytearray(b'\x00')
+            string = bytearray(b'')
             db._data[key] = string
         elif not isinstance(string, bytearray):
             return client.reply_wrongtype()
         N = len(string)
         if N < T:
-            string.extend((T + 1 - N)*b'\x00')
+            string.extend((T - N)*b'\x00')
         string[offset:T] = value
         self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         client.reply_int(len(string))
