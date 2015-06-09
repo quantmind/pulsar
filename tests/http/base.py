@@ -1,13 +1,12 @@
 import os
-import sys
 from base64 import b64decode
 import unittest
 
 import examples
 
-from pulsar import send, SERVER_SOFTWARE, new_event_loop, get_event_loop
+from pulsar import send, SERVER_SOFTWARE, get_event_loop
 from pulsar.utils.path import Path
-from pulsar.utils.httpurl import iri_to_uri, SimpleCookie
+from pulsar.utils.httpurl import iri_to_uri
 from pulsar.utils.pep import pypy
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)

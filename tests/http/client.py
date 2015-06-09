@@ -1,5 +1,3 @@
-from pulsar.utils.httpurl import urlparse
-
 from . import base
 
 

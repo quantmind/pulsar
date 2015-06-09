@@ -2,8 +2,6 @@ import socket
 import unittest
 
 from pulsar import get_actor
-from pulsar.apps import http
-from pulsar.apps.http import URLError
 
 from .base import TestHttpClientBase
 

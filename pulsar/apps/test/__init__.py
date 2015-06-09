@@ -315,13 +315,10 @@ Utilities
 
 '''
 import sys
-import unittest
-from functools import partial
 
 import pulsar
 from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs, TestOption
-from pulsar.utils.pep import to_string
 
 from .populate import populate, random_string
 from .result import *

@@ -7,7 +7,3 @@ class TestTlsHttpClient(base.TestHttpClient):
     def test_large_response(self):
         # TODO: This fails on python 2.7 (sometimes)
         pass
-
-    def test_large_response(self):
-        # TODO: This fails on python 2.7 (sometimes)
-        pass

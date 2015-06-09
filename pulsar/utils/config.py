@@ -476,8 +476,7 @@ class SettingMeta(type):
         setattr(cls, "short", '' if not lines else lines[0])
 
 
-# This works for Python 2 and Python 3
-class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
+class Setting(metaclass=SettingMeta):
     '''Class for creating :ref:`pulsar settings <settings>`.
 
     Most parameters can be specified on the command line,

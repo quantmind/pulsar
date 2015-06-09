@@ -27,10 +27,8 @@ check server
 .. autofunction:: check_server
 
 '''
-import gc
 import logging
 import unittest
-from inspect import isclass
 
 import pulsar
 from pulsar import (get_actor, send, multi_async, new_event_loop,

@@ -16,6 +16,7 @@ import sys
 import time
 import os
 import socket
+import io
 from asyncio import wait_for
 from wsgiref.handlers import format_date_time
 
@@ -67,13 +68,15 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     data = data.encode('latin1')
     parser.execute(data, len(data))
     #
-    headers = Headers()
-    stream = StreamReader(request_headers, parser)
-    stream.buffer = body or b''
-    stream.on_message_complete.set_result(None)
-    extra = extra or {}
-    return wsgi_environ(stream, ('127.0.0.1', 8060), '777.777.777.777:8080',
-                        headers, https=secure, extra=extra)
+    stream = io.BytesIO(body or b'')
+    return wsgi_environ(stream, parser, request_headers,
+                        ('127.0.0.1', 8060), '777.777.777.777:8080',
+                        Headers(), https=secure, extra=extra)
+
+
+def http_protocol(parser):
+    version = parser.get_version()
+    return "HTTP/%s" % ".".join(('%s' % v for v in version))
 
 
 class StreamReader:
@@ -96,10 +99,6 @@ class StreamReader:
         '''
         return self.on_message_complete.done()
 
-    def protocol(self):
-        version = self.parser.get_version()
-        return "HTTP/%s" % ".".join(('%s' % v for v in version))
-
     def waiting_expect(self):
         '''``True`` when the client is waiting for 100 Continue.
         '''
@@ -117,7 +116,7 @@ class StreamReader:
             if self.parser.get_version() < (1, 1):
                 raise HttpException(status=417)
             else:
-                msg = '%s 100 Continue\r\n\r\n' % self.protocol()
+                msg = '%s 100 Continue\r\n\r\n' % http_protocol(self.parser)
                 self._expect_sent = msg
                 self.transport.write(msg.encode(DEFAULT_CHARSET))
         return self.parser.recv_body()
@@ -154,11 +153,18 @@ class StreamReader:
         return body
 
 
-def wsgi_environ(stream, address, client_address, headers,
-                 server_software=None, https=False, extra=None):
-    protocol = stream.protocol()
-    parser = stream.parser
-    request_headers = stream.headers
+def wsgi_environ(stream, parser, request_headers, address, client_address,
+                 headers, server_software=None, https=False, extra=None):
+    '''Build the WSGI Environment dictionary
+
+    :param stream: a wsgi stream object
+    :param parser: pulsar HTTP parser
+    :param request_headers: headers of request
+    :param address: server address
+    :param client_address: client address
+    :param headers: container for response headers
+    '''
+    protocol = http_protocol(parser)
     raw_uri = parser.get_url()
     request_uri = urlparse(raw_uri)
     #
@@ -558,6 +564,8 @@ class HttpServerResponse(ProtocolConsumer):
         https = True if is_tls(transport.get_extra_info('socket')) else False
         multiprocess = (self.cfg.concurrency == 'process')
         environ = wsgi_environ(self._stream,
+                               self.parser,
+                               self._stream.headers,
                                transport.get_extra_info('sockname'),
                                self.address, self.headers,
                                self.SERVER_SOFTWARE,

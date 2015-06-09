@@ -8,9 +8,8 @@ import textwrap
 import logging
 from datetime import datetime, timedelta
 from email.utils import formatdate
-from asyncio import iscoroutinefunction, iscoroutine
 
-from pulsar import format_traceback, isfuture
+from pulsar import format_traceback
 from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape

@@ -24,15 +24,6 @@ class TestPythonHttpParser(unittest.TestCase):
         self.assertTrue(p.is_headers_complete())
         self.assertTrue(p.is_message_begin())
 
-    def test_client_connect(self):
-        p = self.parser()
-        data = b'HTTP/1.1 200 Connection established\r\n\r\n'
-        self.assertEqual(p.execute(data, len(data)), len(data))
-        self.assertTrue(p.is_headers_complete())
-        self.assertTrue(p.is_message_begin())
-        self.assertFalse(p.is_partial_body())
-        self.assertFalse(p.is_message_complete())
-
     def test_client_200_OK_no_headers(self):
         p = self.parser()
         data = b'HTTP/1.1 200 OK\r\n\r\n'

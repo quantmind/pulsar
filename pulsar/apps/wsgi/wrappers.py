@@ -40,7 +40,6 @@ Wsgi Response
 .. _AJAX: http://en.wikipedia.org/wiki/Ajax_(programming)
 .. _TLS: http://en.wikipedia.org/wiki/Transport_Layer_Security
 '''
-import re
 from functools import reduce, partial
 from io import BytesIO
 

@@ -6,7 +6,7 @@ from pulsar.utils.httpurl import (Headers, CacheControl,
                                   urlquote, unquote_unreserved, requote_uri,
                                   remove_double_slash, appendslash, capfirst,
                                   encode_multipart_formdata, http_date,
-                                  cookiejar_from_dict, SimpleCookie)
+                                  cookiejar_from_dict)
 from pulsar.apps.http import Auth, HTTPBasicAuth, HTTPDigestAuth
 
 
