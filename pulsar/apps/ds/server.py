@@ -1277,9 +1277,7 @@ class Storage(object):
             client.reply_wrongtype()
         else:
             assert value
-            start = len(value)
             value.trim(start, end)
-            client.reply_ok()
             self._signal(self.NOTIFY_LIST, db, request[0], key,
                          start-len(value))
             client.reply_ok()

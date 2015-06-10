@@ -408,6 +408,14 @@ class RedisCommands(StoreMixin):
         yield from eq(c.setrange(key, 6, '12345'), 11)
         yield from eq(c.get(key), b'abcdef12345')
 
+    def test_strlen(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.strlen(key), 0)
+        yield from eq(c.set(key, 'foo'), True)
+        yield from eq(c.strlen(key), 3)
+
     ###########################################################################
     #    HASHES
     def test_hdel(self):
@@ -602,6 +610,23 @@ class RedisCommands(StoreMixin):
         yield from self._remove_and_sadd(key, 0)
         yield from self.async.assertRaises(ResponseError, c.lpop, key)
         yield from self.async.assertRaises(ResponseError, c.lpush, key, 4)
+
+    def test_lset(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.rpush(key, '1', '2', '3'), 3)
+        yield from eq(c.lrange(key, 0, -1), [b'1', b'2', b'3'])
+        yield from eq(c.lset(key, 1, '4'), True)
+        yield from eq(c.lrange(key, 0, 2), [b'1', b'4', b'3'])
+
+    def test_ltrim(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.rpush(key, '1', '2', '3'), 3)
+        yield from eq(c.ltrim(key, 0, 1), True)
+        yield from eq(c.lrange(key, 0, -1), [b'1', b'2'])
 
     def test_rpop(self):
         key = self.randomkey()
