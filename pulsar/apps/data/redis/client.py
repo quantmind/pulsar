@@ -1,5 +1,6 @@
 from itertools import chain
 from hashlib import sha1
+import datetime
 
 import pulsar
 from pulsar.utils.pep import to_string
@@ -234,6 +235,35 @@ class RedisClient(object):
             return self.execute('incr', key)
         else:
             return self.execute('incrby', key, ammount)
+
+    def set(self, name, value, ex=None, px=None, nx=False, xx=False):
+        """
+        Set the value at key ``name`` to ``value``
+        ``ex`` sets an expire flag on key ``name`` for ``ex`` seconds.
+        ``px`` sets an expire flag on key ``name`` for ``px`` milliseconds.
+        ``nx`` if set to True, set the value at key ``name`` to ``value`` if it
+            does not already exist.
+        ``xx`` if set to True, set the value at key ``name`` to ``value`` if it
+            already exists.
+        """
+        pieces = [name, value]
+        if ex:
+            pieces.append('EX')
+            if isinstance(ex, datetime.timedelta):
+                ex = ex.seconds + ex.days * 24 * 3600
+            pieces.append(ex)
+        if px:
+            pieces.append('PX')
+            if isinstance(px, datetime.timedelta):
+                ms = int(px.microseconds / 1000)
+                px = (px.seconds + px.days * 24 * 3600) * 1000 + ms
+            pieces.append(px)
+
+        if nx:
+            pieces.append('NX')
+        if xx:
+            pieces.append('XX')
+        return self.execute('set', *pieces)
 
     # HASHES
     def hmget(self, key, *fields):
