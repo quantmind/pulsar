@@ -70,7 +70,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     #
     stream = io.BytesIO(body or b'')
     return wsgi_environ(stream, parser, request_headers,
-                        ('127.0.0.1', 8060), '777.777.777.777:8080',
+                        ('127.0.0.1', 8060), '255.0.1.2:8080',
                         Headers(), https=secure, extra=extra)
 
 
