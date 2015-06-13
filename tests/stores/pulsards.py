@@ -2,6 +2,7 @@ import binascii
 import time
 import unittest
 import asyncio
+import datetime
 
 import pulsar
 from pulsar.utils.string import random_string
@@ -397,6 +398,64 @@ class RedisCommands(StoreMixin):
         self.assertEqual(len(values), 4)
         for value, target in zip(values, (b'1', b'2', b'3', None)):
             self.assertEqual(value, target)
+
+    def test_set_ex(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.set(key, '1', ex=5), True)
+        ttl = yield from c.ttl(key)
+        self.assertTrue(0 < ttl <= 5)
+
+    def test_set_ex_timedelta(self):
+        expire_at = datetime.timedelta(seconds=5)
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.set(key, '1', ex=expire_at), True)
+        ttl = yield from c.ttl(key)
+        self.assertTrue(0 < ttl <= 5)
+
+    def test_set_nx(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.set(key, '1', nx=True), True)
+        yield from eq(c.set(key, '2', nx=True), False)
+        yield from eq(c.get(key), b'1')
+
+    def test_set_px(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.set(key, '1', px=10000, nx=True), True)
+        yield from eq(c.get(key), b'1')
+        pttl = yield from c.pttl(key)
+        self.assertTrue(0 < pttl <= 10000)
+        ttl = yield from c.ttl(key)
+        self.assertTrue(0 < ttl <= 10)
+
+    def test_set_px_timedelta(self):
+        expire_at = datetime.timedelta(milliseconds=5000)
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.set(key, '1', px=expire_at, nx=True), True)
+        yield from eq(c.get(key), b'1')
+        pttl = yield from c.pttl(key)
+        self.assertTrue(0 < pttl <= 5000)
+        ttl = yield from c.ttl(key)
+        self.assertTrue(0 < ttl <= 5)
+
+    def test_set_xx(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.set(key, '1', xx=True), False)
+        yield from eq(c.get(key), None)
+        yield from eq(c.set(key, 'bar'), True)
+        yield from eq(c.set(key, '2', xx=True), True)
+        yield from eq(c.get(key), b'2')
 
     def test_setrange(self):
         key = self.randomkey()

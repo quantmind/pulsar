@@ -1,8 +1,9 @@
 Development
 ===========================
 * Test WSGI environment does not use asynchronous stream
+* Bug fixes in pulsar data store commands
+* Increased test coverage
 * Code cleanup
-
 
 Ver. 1.0.1 - 2015-Jun-03
 ===========================

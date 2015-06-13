@@ -245,7 +245,7 @@ class Storage(object):
                                 self.NOTIFY_HASH: self._hash_event,
                                 self.NOTIFY_LIST: self._list_event,
                                 self.NOTIFY_ZSET: self._zset_event}
-        self._set_options = (b'ex', b'px', 'nx', b'xx')
+        self._set_options = (b'ex', b'px', b'nx', b'xx')
         self.OK = b'+OK\r\n'
         self.QUEUED = b'+QUEUED\r\n'
         self.ZERO = b':0\r\n'
@@ -2124,7 +2124,7 @@ class Storage(object):
              nx=False, xx=False):
         try:
             seconds = int(seconds)
-            milliseconds = 0.000001*int(milliseconds)
+            milliseconds = 0.001*int(milliseconds)
             if seconds < 0 or milliseconds < 0:
                 raise ValueError
         except Exception:
@@ -2507,7 +2507,7 @@ class Storage(object):
 
 
 class Db(object):
-    '''The database.
+    '''A database.
     '''
     def __init__(self, num, store):
         self.store = store
@@ -2544,7 +2544,7 @@ class Db(object):
             return self._data[key]
         elif key in self._expires:
             self.store._hit_keys += 1
-            return self._expires[key]
+            return self._expires[key][1]
         else:
             self.store._missed_keys += 1
             return default
