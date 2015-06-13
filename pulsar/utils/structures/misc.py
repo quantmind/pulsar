@@ -183,6 +183,9 @@ class AttributeDictionary(collections.Mapping):
     def items(self):
         return self.__dict__.items()
 
+    def copy(self):
+        return self.__class__(self)
+
 
 class FrozenDict(dict):
     '''A dictionary which cannot be changed once initialised.'''

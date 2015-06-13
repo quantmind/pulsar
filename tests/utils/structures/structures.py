@@ -111,6 +111,13 @@ class TestAttributeDictionary(unittest.TestCase):
         self.assertEqual(list(a.values()), [5])
         self.assertEqual(list(a.items()), [('ciao', 5)])
 
+    def testCopy(self):
+        a = AttributeDictionary(foo=5, bla='ciao')
+        self.assertEqual(len(a), 2)
+        b = a.copy()
+        self.assertEqual(a, b)
+        self.assertNotEqual(id(a), id(b))
+
     def __test_pickle(self):
         # TODO: this fails at times
         a = AttributeDictionary()
