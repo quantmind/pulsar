@@ -319,11 +319,8 @@ class Router(RouterType('RouterBase', (object,), {})):
                     pass
             return self.defaults[name]
 
-        if self._parent:
-            return getattr(self._parent, name)
-        else:
-            raise AttributeError("'%s' object has no attribute '%s'" %
-                                 (self.__class__.__name__, name))
+        raise AttributeError("'%s' object has no attribute '%s'" %
+                             (self.__class__.__name__, name))
 
     def content_type(self, request):
         '''Evaluate the content type for the response to a client ``request``.
