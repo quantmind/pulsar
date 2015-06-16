@@ -63,6 +63,9 @@ from pulsar.apps import data
 from .websocket import WebSocket, WebSocketProtocol
 
 
+__all__ = ['WebSocket', 'WebSocketProtocol', 'WS']
+
+
 class WS(object):
     '''A web socket handler for both servers and clients.
 

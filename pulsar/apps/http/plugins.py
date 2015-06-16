@@ -4,7 +4,6 @@ from copy import copy
 
 from pulsar import OneTime, Future, task
 from pulsar.apps.ws import WebSocketProtocol, WS
-from pulsar.utils.websocket import frame_parser
 from pulsar.utils.internet import is_tls
 from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
                                   requote_uri, SimpleCookie)

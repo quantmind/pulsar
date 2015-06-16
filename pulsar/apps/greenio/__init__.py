@@ -129,14 +129,13 @@ Green WSGI
 .. _gevent: http://www.gevent.org/
 '''
 import threading
-import asyncio
 import logging
 from collections import deque
 from functools import wraps
 
 from greenlet import greenlet, getcurrent
 
-from pulsar import isfuture, async
+from pulsar import async
 from pulsar import Future, get_event_loop, AsyncObject, is_async
 
 

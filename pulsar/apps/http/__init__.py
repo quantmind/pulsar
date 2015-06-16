@@ -277,7 +277,6 @@ from functools import partial
 from collections import namedtuple
 from base64 import b64encode
 from asyncio import wait_for
-from asyncio.events import new_event_loop
 from io import StringIO, BytesIO
 
 import pulsar
@@ -304,6 +303,10 @@ from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
+
+
+__all__ = ['HttpRequest', 'HttpResponse', 'HttpClient',
+           'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2']
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')

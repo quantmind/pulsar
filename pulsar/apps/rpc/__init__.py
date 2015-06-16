@@ -76,6 +76,6 @@ Server Commands
 .. _JSON-RPC: http://www.jsonrpc.org/specification
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''
-from .handlers import *
-from .jsonrpc import *
-from .mixins import *
+from .handlers import *     # noqa
+from .jsonrpc import *      # noqa
+from .mixins import *       # noqa

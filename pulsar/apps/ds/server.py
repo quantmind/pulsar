@@ -46,7 +46,6 @@ import time
 import math
 import pickle
 from random import choice
-from hashlib import sha1
 from itertools import islice, chain
 from functools import partial, reduce
 from collections import namedtuple
@@ -1604,7 +1603,7 @@ class Storage(object):
                 start, end = self._range_values(value, request[2], request[3])
             except Exception:
                 return client.reply_error(self.SYNTAX_ERROR)
-            reverse = (request[0] == b'zrevrange')
+            # reverse = (request[0] == b'zrevrange')
             if N == 4:
                 if request[4].lower() == b'withscores':
                     result = []

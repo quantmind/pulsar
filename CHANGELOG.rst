@@ -2,6 +2,7 @@ Development
 ===========================
 * Test WSGI environment does not use asynchronous stream
 * Bug fixes in pulsar data store commands
+* Critical bug fix in Wsgi Router degault parameters (RouterParameter).
 * Increased test coverage
 * Code cleanup
 

@@ -321,12 +321,15 @@ from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs, TestOption
 
 from .populate import populate, random_string
-from .result import *
-from .plugins.base import *
-from .loader import *
-from .utils import *
-from .wsgi import *
+from .result import *           # noqa
+from .plugins.base import *     # noqa
+from .loader import *           # noqa
+from .utils import *            # noqa
+from .wsgi import *             # noqa
 from .runner import Runner
+
+
+__all__ = ['populate', 'random_string']
 
 
 pyver = '%s.%s' % (sys.version_info[:2])

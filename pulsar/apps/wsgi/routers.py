@@ -129,10 +129,11 @@ class RouterType(type):
     ''':class:`Router` metaclass.'''
     def __new__(cls, name, bases, attrs):
         rule_methods = get_roule_methods(attrs.items())
-        defaults = {}
+        defaults = set()
         for key, value in list(attrs.items()):
             if isinstance(value, RouterParam):
-                defaults[key] = attrs.pop(key).value
+                defaults.add(key)
+                attrs[key] = value.value
         no_rule = set(attrs) - set((x[0] for x in rule_methods))
         base_rules = []
         for base in reversed(bases):
@@ -162,7 +163,7 @@ class RouterType(type):
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
 
 
-class Router(RouterType('RouterBase', (object,), {})):
+class Router(metaclass=RouterType):
     '''A :ref:`WSGI middleware <wsgi-middleware>` to handle client requests
     on multiple :ref:`routes <apps-wsgi-route>`.
 
@@ -311,13 +312,8 @@ class Router(RouterType('RouterBase', (object,), {})):
         If the ``name`` is not available, retrieve it from the
         :attr:`parent` :class:`Router` if it exists.
         '''
-        if name in self.defaults:
-            if self._parent:
-                try:
-                    return getattr(self._parent, name)
-                except AttributeError:
-                    pass
-            return self.defaults[name]
+        if self._parent:
+            return getattr(self._parent, name)
 
         raise AttributeError("'%s' object has no attribute '%s'" %
                              (self.__class__.__name__, name))

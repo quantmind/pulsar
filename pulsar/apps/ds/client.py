@@ -3,7 +3,7 @@ from functools import partial
 
 import pulsar
 from pulsar.utils.structures import OrderedDict
-from pulsar.utils.pep import to_string, to_bytes
+from pulsar.utils.pep import to_string
 
 from .parser import CommandError
 

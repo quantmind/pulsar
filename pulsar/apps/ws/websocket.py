@@ -8,7 +8,7 @@ from pulsar.utils.httpurl import DEFAULT_CHARSET
 from pulsar.utils.websocket import frame_parser, parse_close
 from pulsar.apps import wsgi
 
-from . import extensions
+from . import extensions as ext    # noqa
 
 WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
@@ -181,8 +181,8 @@ class WebSocket(wsgi.Router):
         ws_extensions = []
         extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS')
         if extensions:
-            for ext in extensions.split(','):
-                ws_extensions.append(ext.strip())
+            for e in extensions.split(','):
+                ws_extensions.append(e.strip())
         # Build the frame parser
         version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
         try:

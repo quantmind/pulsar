@@ -34,7 +34,8 @@ from .store import RedisStore, RedisStoreConnection
 from .client import ResponseError, Consumer, Pipeline
 
 
-__all__ = ['RedisStore']
+__all__ = ['RedisStore', 'RedisError', 'NoScriptError', 'redis_parser',
+           'RedisStoreConnection', 'Consumer', 'Pipeline', 'ResponseError']
 
 
 class RedisServer(Global):

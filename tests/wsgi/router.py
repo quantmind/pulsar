@@ -155,11 +155,14 @@ class TestRouter(unittest.TestCase):
 
     def test_child_methods(self):
         router = TRouter('/', HttpBin2('bin'), name='home')
+        self.assertTrue('random' in router.defaults)
+        #
         self.assertEqual(router.name, 'home')
         child = router.get_route('bin')
         self.assertTrue(child)
         #
         async = router.get_route('async')
+        self.assertFalse('random' in async.defaults)
         self.assertTrue(async)
         self.assertEqual(async.root, router)
         self.assertEqual(async.parent, child)
