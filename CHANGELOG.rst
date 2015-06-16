@@ -1,10 +1,10 @@
-Development
+Ver. 1.0.2 - 2015-Jun-16
 ===========================
 * Test WSGI environment does not use asynchronous stream
 * Bug fixes in pulsar data store commands
-* Critical bug fix in Wsgi Router degault parameters (RouterParameter).
+* Critical bug fix in Wsgi Router default parameters (RouterParameter).
 * Increased test coverage
-* Code cleanup
+* Code cleanup and several internal fixes
 
 Ver. 1.0.1 - 2015-Jun-03
 ===========================
