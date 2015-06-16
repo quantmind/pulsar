@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Available Clients &mdash; pulsar 1.0.2beta0 documentation</title>
+    <title>Available Clients &mdash; pulsar 1.0.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.2beta0',
+        VERSION:     '1.0.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="prev" title="Datastore Clients" href="clients.html" />
    
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="clients.html" title="Datastore Clients"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
     </div>  
@@ -116,6 +116,21 @@ and <a class="reference internal" href="../ds.html#pulsar-data-store"><span>puls
 <dt id="pulsar.apps.data.redis.client.RedisClient.pipeline">
 <code class="descname">pipeline</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/client.html#RedisClient.pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.client.RedisClient.pipeline" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a <a class="reference internal" href="#pulsar.apps.data.redis.client.Pipeline" title="pulsar.apps.data.redis.client.Pipeline"><code class="xref py py-class docutils literal"><span class="pre">Pipeline</span></code></a> for pipelining commands</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.redis.client.RedisClient.set">
+<code class="descname">set</code><span class="sig-paren">(</span><em>name</em>, <em>value</em>, <em>ex=None</em>, <em>px=None</em>, <em>nx=False</em>, <em>xx=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/redis/client.html#RedisClient.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.redis.client.RedisClient.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the value at key <code class="docutils literal"><span class="pre">name</span></code> to <code class="docutils literal"><span class="pre">value</span></code>
+<code class="docutils literal"><span class="pre">ex</span></code> sets an expire flag on key <code class="docutils literal"><span class="pre">name</span></code> for <code class="docutils literal"><span class="pre">ex</span></code> seconds.
+<code class="docutils literal"><span class="pre">px</span></code> sets an expire flag on key <code class="docutils literal"><span class="pre">name</span></code> for <code class="docutils literal"><span class="pre">px</span></code> milliseconds.
+<code class="docutils literal"><span class="pre">nx</span></code> if set to True, set the value at key <code class="docutils literal"><span class="pre">name</span></code> to <code class="docutils literal"><span class="pre">value</span></code> if it</p>
+<blockquote>
+<div>does not already exist.</div></blockquote>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">xx</span></code> if set to True, set the value at key <code class="docutils literal"><span class="pre">name</span></code> to <code class="docutils literal"><span class="pre">value</span></code> if it</dt>
+<dd>already exists.</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">

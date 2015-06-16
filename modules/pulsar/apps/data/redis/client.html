@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.data.redis.client &mdash; pulsar 1.0.2beta0 documentation</title>
+    <title>pulsar.apps.data.redis.client &mdash; pulsar 1.0.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '1.0.2beta0',
+        VERSION:     '1.0.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../../apps.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -54,7 +54,7 @@
             
   <h1>Source code for pulsar.apps.data.redis.client</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
-<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
@@ -290,7 +290,36 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;incrby&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="p">)</span>
 
-    <span class="c"># HASHES</span>
+<div class="viewcode-block" id="RedisClient.set"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.client.RedisClient.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ex</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">px</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nx</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">xx</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the value at key ``name`` to ``value``</span>
+<span class="sd">        ``ex`` sets an expire flag on key ``name`` for ``ex`` seconds.</span>
+<span class="sd">        ``px`` sets an expire flag on key ``name`` for ``px`` milliseconds.</span>
+<span class="sd">        ``nx`` if set to True, set the value at key ``name`` to ``value`` if it</span>
+<span class="sd">            does not already exist.</span>
+<span class="sd">        ``xx`` if set to True, set the value at key ``name`` to ``value`` if it</span>
+<span class="sd">            already exists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pieces</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;EX&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">):</span>
+                <span class="n">ex</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">seconds</span> <span class="o">+</span> <span class="n">ex</span><span class="o">.</span><span class="n">days</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span>
+            <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">px</span><span class="p">:</span>
+            <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;PX&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">px</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">):</span>
+                <span class="n">ms</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">px</span><span class="o">.</span><span class="n">microseconds</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+                <span class="n">px</span> <span class="o">=</span> <span class="p">(</span><span class="n">px</span><span class="o">.</span><span class="n">seconds</span> <span class="o">+</span> <span class="n">px</span><span class="o">.</span><span class="n">days</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">+</span> <span class="n">ms</span>
+            <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">px</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">nx</span><span class="p">:</span>
+            <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;NX&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">xx</span><span class="p">:</span>
+            <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;XX&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;set&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">pieces</span><span class="p">)</span>
+
+    <span class="c"># HASHES</span></div>
     <span class="k">def</span> <span class="nf">hmget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;hmget&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
 

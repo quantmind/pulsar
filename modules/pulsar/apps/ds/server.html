@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.ds.server &mdash; pulsar 1.0.2beta0 documentation</title>
+    <title>pulsar.apps.ds.server &mdash; pulsar 1.0.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.0.2beta0',
+        VERSION:     '1.0.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -101,7 +101,6 @@
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">choice</span>
-<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span><span class="p">,</span> <span class="n">chain</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="nb">reduce</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
@@ -300,7 +299,7 @@
                                 <span class="bp">self</span><span class="o">.</span><span class="n">NOTIFY_HASH</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hash_event</span><span class="p">,</span>
                                 <span class="bp">self</span><span class="o">.</span><span class="n">NOTIFY_LIST</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_event</span><span class="p">,</span>
                                 <span class="bp">self</span><span class="o">.</span><span class="n">NOTIFY_ZSET</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zset_event</span><span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_options</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="s">&#39;ex&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;px&#39;</span><span class="p">,</span> <span class="s">&#39;nx&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;xx&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_options</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="s">&#39;ex&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;px&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;nx&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;xx&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">OK</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;+OK</span><span class="se">\r\n</span><span class="s">&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">QUEUED</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;+QUEUED</span><span class="se">\r\n</span><span class="s">&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ZERO</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;:0</span><span class="se">\r\n</span><span class="s">&#39;</span>
@@ -904,13 +903,13 @@
         <span class="n">db</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">db</span>
         <span class="n">string</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">string</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">string</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;</span><span class="se">\x00</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">)</span>
             <span class="n">db</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">string</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_wrongtype</span><span class="p">()</span>
         <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="n">T</span><span class="p">:</span>
-            <span class="n">string</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">T</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">N</span><span class="p">)</span><span class="o">*</span><span class="n">b</span><span class="s">&#39;</span><span class="se">\x00</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="n">string</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">T</span> <span class="o">-</span> <span class="n">N</span><span class="p">)</span><span class="o">*</span><span class="n">b</span><span class="s">&#39;</span><span class="se">\x00</span><span class="s">&#39;</span><span class="p">)</span>
         <span class="n">string</span><span class="p">[</span><span class="n">offset</span><span class="p">:</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_signal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOTIFY_STRING</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">request</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">))</span>
@@ -1332,9 +1331,7 @@
             <span class="n">client</span><span class="o">.</span><span class="n">reply_wrongtype</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">assert</span> <span class="n">value</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="n">value</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_signal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOTIFY_LIST</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">request</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">,</span>
                          <span class="n">start</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
             <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
@@ -1661,7 +1658,7 @@
                 <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_range_values</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">request</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
-            <span class="n">reverse</span> <span class="o">=</span> <span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;zrevrange&#39;</span><span class="p">)</span>
+            <span class="c"># reverse = (request[0] == b&#39;zrevrange&#39;)</span>
             <span class="k">if</span> <span class="n">N</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">request</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;withscores&#39;</span><span class="p">:</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
@@ -2181,7 +2178,7 @@
              <span class="n">nx</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">xx</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
-            <span class="n">milliseconds</span> <span class="o">=</span> <span class="mf">0.000001</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">milliseconds</span><span class="p">)</span>
+            <span class="n">milliseconds</span> <span class="o">=</span> <span class="mf">0.001</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">milliseconds</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">seconds</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">milliseconds</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -2564,7 +2561,7 @@
 
 </div>
 <span class="k">class</span> <span class="nc">Db</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;The database.</span>
+    <span class="sd">&#39;&#39;&#39;A database.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">store</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">store</span>
@@ -2601,7 +2598,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_hit_keys</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_missed_keys</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">return</span> <span class="n">default</span>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.server &mdash; pulsar 1.0.2beta0 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar 1.0.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.0.2beta0',
+        VERSION:     '1.0.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.2beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li class="nav-item nav-item-3"><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -72,6 +72,7 @@
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">wait_for</span>
 <span class="kn">from</span> <span class="nn">wsgiref.handlers</span> <span class="kn">import</span> <span class="n">format_date_time</span>
 
@@ -123,15 +124,17 @@
     <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;latin1&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
     <span class="c">#</span>
-    <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>
-    <span class="n">stream</span> <span class="o">=</span> <span class="n">StreamReader</span><span class="p">(</span><span class="n">request_headers</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
-    <span class="n">stream</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">body</span> <span class="ow">or</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
-    <span class="n">stream</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
-    <span class="n">extra</span> <span class="o">=</span> <span class="n">extra</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="k">return</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="s">&#39;777.777.777.777:8080&#39;</span><span class="p">,</span>
-                        <span class="n">headers</span><span class="p">,</span> <span class="n">https</span><span class="o">=</span><span class="n">secure</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span><span class="p">)</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">body</span> <span class="ow">or</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">request_headers</span><span class="p">,</span>
+                        <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="s">&#39;255.0.1.2:8080&#39;</span><span class="p">,</span>
+                        <span class="n">Headers</span><span class="p">(),</span> <span class="n">https</span><span class="o">=</span><span class="n">secure</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span><span class="p">)</span>
 
 </div>
+<span class="k">def</span> <span class="nf">http_protocol</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">()</span>
+    <span class="k">return</span> <span class="s">&quot;HTTP/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">version</span><span class="p">))</span>
+
+
 <span class="k">class</span> <span class="nc">StreamReader</span><span class="p">:</span>
     <span class="n">_expect_sent</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_waiting</span> <span class="o">=</span> <span class="bp">None</span>
@@ -152,10 +155,6 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">protocol</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">()</span>
-        <span class="k">return</span> <span class="s">&quot;HTTP/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">version</span><span class="p">))</span>
-
     <span class="k">def</span> <span class="nf">waiting_expect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;``True`` when the client is waiting for 100 Continue.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -173,7 +172,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">()</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">417</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> 100 Continue</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">()</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> 100 Continue</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">http_protocol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_expect_sent</span> <span class="o">=</span> <span class="n">msg</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">DEFAULT_CHARSET</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">recv_body</span><span class="p">()</span>
@@ -210,11 +209,18 @@
         <span class="k">return</span> <span class="n">body</span>
 
 
-<span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">client_address</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span>
-                 <span class="n">server_software</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">https</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="n">protocol</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">protocol</span><span class="p">()</span>
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">parser</span>
-    <span class="n">request_headers</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">headers</span>
+<span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">request_headers</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">client_address</span><span class="p">,</span>
+                 <span class="n">headers</span><span class="p">,</span> <span class="n">server_software</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">https</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Build the WSGI Environment dictionary</span>
+
+<span class="sd">    :param stream: a wsgi stream object</span>
+<span class="sd">    :param parser: pulsar HTTP parser</span>
+<span class="sd">    :param request_headers: headers of request</span>
+<span class="sd">    :param address: server address</span>
+<span class="sd">    :param client_address: client address</span>
+<span class="sd">    :param headers: container for response headers</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">protocol</span> <span class="o">=</span> <span class="n">http_protocol</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
     <span class="n">raw_uri</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_url</span><span class="p">()</span>
     <span class="n">request_uri</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">raw_uri</span><span class="p">)</span>
     <span class="c">#</span>
@@ -614,6 +620,8 @@
         <span class="n">https</span> <span class="o">=</span> <span class="bp">True</span> <span class="k">if</span> <span class="n">is_tls</span><span class="p">(</span><span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;socket&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="bp">False</span>
         <span class="n">multiprocess</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">)</span>
         <span class="n">environ</span> <span class="o">=</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="p">,</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">,</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
                                <span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;sockname&#39;</span><span class="p">),</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">,</span>
