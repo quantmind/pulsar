@@ -7,6 +7,7 @@ from multiprocessing import current_process
 def run(**params):
     args = params.get('argv', sys.argv)
     if '--coveralls' in args:
+        import pulsar
         from pulsar.utils.path import Path
         from pulsar.apps.test.cov import coveralls
 
@@ -27,10 +28,10 @@ def run(**params):
 
 
 def runtests(**params):
-    import pulsar
     from pulsar.apps.test import TestSuite
     from pulsar.apps.test.plugins import bench, profile
-    import pulsar.utils.settings.backend
+    import pulsar.utils.settings.backend    # noqa
+
     djangopath = os.path.join(os.path.dirname(__file__),
                               'examples', 'djchat')
     if djangopath not in sys.path:

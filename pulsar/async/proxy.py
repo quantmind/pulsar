@@ -2,7 +2,7 @@ from pulsar import CommandNotFound
 from pulsar.utils.pep import default_timer
 
 from .futures import Future, chain_future
-from .consts import *
+from .consts import *   # noqa
 
 __all__ = ['ActorProxy',
            'ActorProxyMonitor',
