@@ -375,6 +375,23 @@ class RedisCommands(StoreMixin):
         yield from eq(c.incr(key, 5), 7)
         yield from eq(c.get(key), b'7')
 
+    def test_incrby(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.incrby(key), 1)
+        yield from eq(c.incrby(key, 4), 5)
+        yield from eq(c.get(key), b'5')
+
+    def test_incrbyfloat(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield from eq(c.incrbyfloat(key), 1.0)
+        yield from eq(c.get(key), b'1')
+        yield from eq(c.incrbyfloat(key, 1.1), 2.1)
+        yield from eq(c.get(key), b'2.1')
+
     def test_mget(self):
         key1 = self.randomkey()
         key2 = key1 + 'x'
@@ -623,6 +640,27 @@ class RedisCommands(StoreMixin):
         yield from eq(c.rpush(key1, '1'), 1)
         yield from eq(c.brpop(key1, 1), (bk1, b'1'))
 
+    def test_brpoplpush(self):
+        key1 = self.randomkey()
+        key2 = key1 + 'x'
+        eq = self.async.assertEqual
+        c = self.client
+        yield from eq(c.rpush(key1, 1, 2), 2)
+        yield from eq(c.rpush(key2, 3, 4), 2)
+        yield from eq(c.brpoplpush(key1, key2), b'2')
+        yield from eq(c.brpoplpush(key1, key2), b'1')
+        yield from eq(c.brpoplpush(key1, key2, timeout=1), None)
+        yield from eq(c.lrange(key1, 0, -1), [])
+        yield from eq(c.lrange(key2, 0, -1), [b'1', b'2', b'3', b'4'])
+
+    def test_brpoplpush_empty_string(self):
+        key1 = self.randomkey()
+        key2 = key1 + 'x'
+        eq = self.async.assertEqual
+        c = self.client
+        yield from eq(c.rpush(key1, ''), 1)
+        yield from eq(c.brpoplpush(key1, key2), b'')
+
     def test_lindex_llen(self):
         key = self.randomkey()
         c = self.client
@@ -687,17 +725,6 @@ class RedisCommands(StoreMixin):
         yield from eq(c.ltrim(key, 0, 1), True)
         yield from eq(c.lrange(key, 0, -1), [b'1', b'2'])
 
-    def test_rpop(self):
-        key = self.randomkey()
-        eq = self.async.assertEqual
-        c = self.client
-        yield from eq(c.rpop(key), None)
-        yield from eq(c.rpush(key, 1, 2), 2)
-        yield from eq(c.rpop(key), b'2')
-        yield from eq(c.rpop(key), b'1')
-        yield from eq(c.rpop(key), None)
-        yield from eq(c.type(key), 'none')
-
     def test_lpushx_rpushx(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -729,6 +756,28 @@ class RedisCommands(StoreMixin):
         yield from eq(c.lrem(key, 0, 'b'), 1)
         yield from self._remove_and_sadd(key, 0)
         yield from self.async.assertRaises(ResponseError, c.lrem, key, 1)
+
+    def test_rpop(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield from eq(c.rpop(key), None)
+        yield from eq(c.rpush(key, 1, 2), 2)
+        yield from eq(c.rpop(key), b'2')
+        yield from eq(c.rpop(key), b'1')
+        yield from eq(c.rpop(key), None)
+        yield from eq(c.type(key), 'none')
+
+    def test_rpoplpush(self):
+        key1 = self.randomkey()
+        key2 = key1 + 'x'
+        eq = self.async.assertEqual
+        c = self.client
+        yield from eq(c.rpush(key1, 'a1', 'a2', 'a3'), 3)
+        yield from eq(c.rpush(key2, 'b1', 'b2', 'b3'), 3)
+        yield from eq(c.rpoplpush(key1, key2), b'a3')
+        yield from eq(c.lrange(key1, 0, -1), [b'a1', b'a2'])
+        yield from eq(c.lrange(key2, 0, -1), [b'a3', b'b1', b'b2', b'b3'])
 
     ###########################################################################
     #    SORT

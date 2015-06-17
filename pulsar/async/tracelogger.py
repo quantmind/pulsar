@@ -2,6 +2,9 @@ import sys
 import traceback
 
 
+__all__ = ['format_traceback']
+
+
 def is_relevant_tb(tb):
     return '__skip_traceback__' not in tb.tb_frame.f_locals
 

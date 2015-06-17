@@ -11,6 +11,13 @@ class TRouter(Router):
     random = RouterParam(6)
 
 
+class Router2(Router):
+    random1 = RouterParam(5)
+
+    def get(self, request):
+        return request.response
+
+
 class HttpBin2(HttpBin):
 
     def gzip(self):
@@ -185,3 +192,14 @@ class TestRouter(unittest.TestCase):
         router.remove_child(child)
         self.assertFalse(router.routes)
         self.assertEqual(child.parent, None)
+
+    def test_default(self):
+        router = Router2('/', TRouter('foo'))
+        self.assertTrue(router.get)
+        foo = router.get_route('foo')
+        self.assertRaises(AttributeError, lambda: foo.get)
+        self.assertEqual(foo.random1, 5)
+        router = Router2('/', TRouter('foo'), random1=10)
+        foo = router.get_route('foo')
+        self.assertRaises(AttributeError, lambda: foo.get)
+        self.assertEqual(foo.random1, 10)

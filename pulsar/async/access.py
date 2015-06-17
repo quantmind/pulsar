@@ -2,12 +2,10 @@ import os
 import sys
 import threading
 import logging
-from functools import wraps
 from collections import OrderedDict
 from threading import current_thread
 import asyncio
 
-from asyncio.base_events import BaseEventLoop, _StopError
 from asyncio import (selectors, events, iscoroutine, iscoroutinefunction,
                      coroutine)
 

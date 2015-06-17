@@ -48,13 +48,13 @@ if os.environ.get('pulsar_setup_running') != 'yes':
         except ImportError:
             HAS_C_EXTENSIONS = False
 
-    from .utils.exceptions import *
-    from .utils import system
-    platform = system.platform
-    from .utils.config import *
-    from .async import *
-    from .apps import *
+    from .utils.exceptions import *     # noqa
+    from .utils import system           # noqa
+    platform = system.platform          # noqa
+    from .utils.config import *         # noqa
+    from .async import *                # noqa
+    from .apps import *                 # noqa
 
     del get_version
     # Import data stores
-    from .apps.data import data_stores
+    from .apps.data import data_stores  # noqa
