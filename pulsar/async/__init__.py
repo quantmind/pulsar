@@ -5,7 +5,6 @@ from .events import *           # noqa
 from .proxy import *            # noqa
 from .protocols import *        # noqa
 from .clients import *          # noqa
-from .tracelogger import *      # noqa
 from .actor import *            # noqa
 from .concurrency import *      # noqa
 from . import commands          # noqa

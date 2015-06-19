@@ -6,7 +6,7 @@ import socket
 import getpass
 from multiprocessing import current_process
 
-from .base import *
+from .base import *     # noqa
 
 __all__ = ['close_on_exec',
            'daemonize',

@@ -3,8 +3,8 @@ Module containing utilities and mixins for logging and serialisation.
 '''
 import sys
 import logging
+from logging.config import dictConfig
 from copy import deepcopy, copy
-from time import time
 from threading import Lock
 from functools import wraps
 
@@ -13,16 +13,6 @@ from .string import to_string
 from .structures import AttributeDictionary
 
 win32 = sys.platform == "win32"
-
-if sys.version_info < (2, 7):    # pragma    nocover
-    from .fallbacks._dictconfig import dictConfig
-
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-else:
-    from logging.config import dictConfig
-    from logging import NullHandler
 
 
 LOGGING_CONFIG = {
