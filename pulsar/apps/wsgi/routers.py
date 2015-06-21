@@ -307,13 +307,17 @@ class Router(metaclass=RouterType):
         '''
         return self.full_route.url(**urlargs)
 
-    def getparam(self, name, default=None):
+    def getparam(self, name, default=None, parents=False):
         '''A parameter in this :class:`.Router`
         '''
-        try:
-            return getattr(self, name)
-        except AttributeError:
-            return default
+        value = getattr(self, name, None)
+        if value is None:
+            if parents and self._parent:
+                return self._parent.getparam(name, default, parents)
+            else:
+                return default
+        else:
+            return value
 
     def __getattr__(self, name):
         '''Get the value of the ``name`` attribute.
