@@ -32,33 +32,53 @@ class JSONRPC(RpcHandler):
     version = '2.0'
 
     def __call__(self, request):
-        return Json(self._call(request)).http_response(request)
+        return Json(self._execute_request(request)).http_response(request)
 
     @task
-    def _call(self, request):
+    def _execute_request(self, request):
         response = request.response
-        data = {}
-        exc_info = None
-        callable = None
+
         try:
-            try:
-                data = yield from as_coroutine(request.body_data())
-            except ValueError:
-                raise InvalidRequest(
-                    status=415, msg='Content-Type must be application/json')
-            if data.get('jsonrpc') != self.version:
+            data = yield from as_coroutine(request.body_data())
+        except ValueError:
+            res, status = self._get_error_and_status(InvalidRequest(
+                status=415, msg='Content-Type must be application/json'))
+        else:
+            # if it's batch request
+            if isinstance(data, list):
+                status = 200
+
+                res = []
+                for each_data in data:
+                    each_res, _ = yield from self._call(request, each_data)
+                    res.append(each_res)
+            else:
+                res, status = yield from self._call(request, data)
+
+        response.status_code = status
+        return res
+
+    @task
+    def _call(self, request, data):
+        exc_info = None
+        procedure = None
+        try:
+            if (not isinstance(data, dict) or
+                    data.get('jsonrpc') != self.version or
+                    'id' not in data):
                 raise InvalidRequest(
                     'jsonrpc must be supplied and equal to "%s"' %
-                    self.version)
+                    self.version
+                )
             params = data.get('params')
             if isinstance(params, dict):
                 args, kwargs = (), params
             else:
                 args, kwargs = tuple(params or ()), {}
             #
-            callable = self.get_handler(data.get('method'))
+            procedure = self.get_handler(data.get('method'))
             result = yield from as_coroutine(
-                callable(request, *args, **kwargs))
+                procedure(request, *args, **kwargs))
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
@@ -69,28 +89,45 @@ class JSONRPC(RpcHandler):
                 result = exc
                 exc_info = sys.exc_info()
         #
-        res = {'id': data.get('id'), "jsonrpc": self.version}
         if exc_info:
-            msg = None
-            code = getattr(result, 'fault_code', None)
-            if not code:
-                if isinstance(result, TypeError) and callable:
-                    msg = checkarity(callable, args, kwargs, discount=1)
-                code = -32602 if msg else -32603
-            msg = msg or str(result) or 'JSON RPC exception'
-            code = getattr(result, 'fault_code', code)
-            if code == -32603:
-                logger.error(msg, exc_info=exc_info)
+            if isinstance(result, TypeError) and procedure:
+                msg = checkarity(procedure, args, kwargs, discount=1)
             else:
-                logger.warning(msg)
-            error = {'code': code,
-                     'message': msg,
-                     'data': getattr(result, 'data', '')}
-            response.status_code = getattr(result, 'status', 400)
-            res['error'] = error
+                msg = None
+
+            rpc_id = data.get('id') if isinstance(data, dict) else None
+
+            res, status = self._get_error_and_status(
+                result, msg=msg, rpc_id=rpc_id, exc_info=exc_info)
         else:
-            res['result'] = result
-        return res
+            res = {
+                'id': data.get('id'),
+                'jsonrpc': self.version,
+                'result': result
+            }
+            status = 200
+
+        return res, status
+
+    def _get_error_and_status(self, exc, msg=None, rpc_id=None,
+                              exc_info=None):
+        res = {'id': rpc_id, 'jsonrpc': self.version}
+
+        code = getattr(exc, 'fault_code', None)
+        if not code:
+            code = -32602 if msg else -32603
+        msg = msg or str(exc) or 'JSON RPC exception'
+        if code == -32603:
+            logger.error(msg, exc_info=exc_info)
+        else:
+            logger.warning(msg)
+        res['error'] = {
+            'code': code,
+            'message': msg,
+            'data': getattr(exc, 'data', '')
+        }
+
+        return res, getattr(exc, 'status', 400)
 
 
 class JsonCall:
