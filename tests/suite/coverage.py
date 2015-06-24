@@ -1,5 +1,4 @@
-'''Test cases for code not covered in standard test cases
-'''
+'''Test cases for code not covered in standard test cases'''
 import tempfile
 import shutil
 import unittest

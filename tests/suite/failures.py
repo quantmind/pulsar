@@ -1,5 +1,4 @@
-'''Tests the test suite loader
-'''
+'''Tests the test suite loader'''
 import unittest
 
 

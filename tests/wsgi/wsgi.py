@@ -4,12 +4,12 @@ import pickle
 import unittest
 from unittest import mock
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 import pulsar
 from pulsar.apps import wsgi
 from pulsar.apps import http
 from pulsar.utils.multipart import parse_form_data, MultipartError
-from pulsar.utils.httpurl import urlparse
 from pulsar.apps.wsgi.utils import cookie_date
 
 
