@@ -179,14 +179,6 @@ class RedisCommands(StoreMixin):
         yield from eq(c.renamenx(key, des+'a'), True)
         yield from eq(c.exists(key), False)
 
-    def test_watch(self):
-        key1 = self.randomkey()
-        key2 = key1 + '2'
-        c = self.client
-        eq = self.async.assertEqual
-        yield from eq(c.watch(key1, key2), True)
-        yield from eq(c.unwatch(), True)
-
     ###########################################################################
     #    BAD REQUESTS
     # def test_no_command(self):
@@ -266,7 +258,6 @@ class RedisCommands(StoreMixin):
 
     def test_bitop_single_string(self):
         key = self.randomkey()
-        des = key + 'd'
         c = self.client
         eq = self.async.assertEqual
         test_str = b'\x01\x02\xFF'
@@ -786,16 +777,14 @@ class RedisCommands(StoreMixin):
         c = self.client
         eq = self.async.assertEqual
         yield from c.rpush(key, '3', '2', '1', '4')
-        yield from self.async.assertEqual(c.sort(key),
-                                          [b'1', b'2', b'3', b'4'])
+        yield from eq(c.sort(key), [b'1', b'2', b'3', b'4'])
 
     def test_sort_limited(self):
         key = self.randomkey()
         c = self.client
         eq = self.async.assertEqual
         yield from c.rpush(key, '3', '2', '1', '4')
-        yield from self.async.assertEqual(c.sort(key, start=1, num=2),
-                                          [b'2', b'3'])
+        yield from eq(c.sort(key, start=1, num=2), [b'2', b'3'])
 
     def test_sort_by(self):
         key = self.randomkey()
@@ -988,7 +977,6 @@ class RedisCommands(StoreMixin):
         key = self.randomkey()
         eq = self.async.assertEqual
         c = self.client
-        members = (b'1', b'2', b'3', b'2')
         yield from eq(c.zadd(key, a1=1, a2=2, a3=3), 3)
         yield from eq(c.zrange(key, 0, -1), [b'a1', b'a2', b'a3'])
         yield from eq(c.zcard(key), 3)
@@ -1165,6 +1153,7 @@ class RedisCommands(StoreMixin):
         t = yield from self.client.time()
         self.assertIsInstance(t, tuple)
         total = t[0] + 0.000001*t[1]
+        self.assertTrue(total)
 
     ###########################################################################
     #    PUBSUB
@@ -1237,7 +1226,7 @@ class RedisCommands(StoreMixin):
     #    TRANSACTION
     def test_watch(self):
         key1 = self.randomkey()
-        key2 = key1 + '2'
+        # key2 = key1 + '2'
         result = yield from self.client.watch(key1)
         self.assertEqual(result, 1)
 

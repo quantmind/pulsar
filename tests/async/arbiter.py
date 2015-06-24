@@ -1,12 +1,9 @@
 '''Tests for arbiter and monitors.'''
-import os
 import unittest
 import asyncio
 
 import pulsar
-from pulsar import (send, spawn, system, platform, ACTOR_ACTION_TIMEOUT,
-                    MONITOR_TASK_PERIOD, multi_async)
-from pulsar.utils.pep import default_timer
+from pulsar import send, spawn, ACTOR_ACTION_TIMEOUT
 from pulsar.apps.test import (ActorTestMixin, dont_run_with_thread,
                               test_timeout)
 
@@ -137,7 +134,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
         #
-        result = yield from send(proxy, 'run', cause_terminate)
+        yield from send(proxy, 'run', cause_terminate)
         #
         # The arbiter should now terminate the actor
         yield from wait_for_stop(self, proxy.aid, True)

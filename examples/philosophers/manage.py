@@ -54,14 +54,9 @@ Implementation
 import os
 import random
 import json
-try:
-    import pulsar
-except ImportError:
-    import sys
-    sys.path.append('../../')
-    import pulsar
+
+import pulsar
 from pulsar import command, task
-from pulsar.apps import wsgi, ws, data, ds
 
 # WEB INTERFACE
 media_libraries = {

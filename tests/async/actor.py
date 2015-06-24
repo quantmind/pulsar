@@ -1,16 +1,13 @@
 '''Tests actor and actor proxies.'''
 import unittest
-import pickle
 
-from multiprocessing.queues import Queue
 from functools import partial
 
 import pulsar
-from pulsar import (send, get_actor, CommandNotFound, async_while, TcpServer,
-                    Connection)
+from pulsar import send, async_while, TcpServer, Connection
 from pulsar.apps.test import ActorTestMixin, dont_run_with_thread
 
-from examples.echo.manage import Echo, EchoServerProtocol
+from examples.echo.manage import EchoServerProtocol
 
 
 def add(actor, a, b):
@@ -24,7 +21,6 @@ class create_echo_server(object):
 
     def __call__(self, actor):
         '''Starts an echo server on a newly spawn actor'''
-        address = self.address
         server = TcpServer(partial(Connection, EchoServerProtocol),
                            actor._loop, self.address)
         yield from server.start_serving()

@@ -1,5 +1,4 @@
 import unittest
-import asyncio
 
 from pulsar import Future, send, multi_async, get_event_loop
 
@@ -28,7 +27,7 @@ class EchoGreen(Echo):
         with connection:
             consumer = connection.current_consumer()
             consumer.start(message)
-            result = greenio.wait(consumer.on_finished)
+            greenio.wait(consumer.on_finished)
             return consumer if self.full_response else consumer.buffer
 
 
@@ -105,14 +104,6 @@ class TestGreenIO(unittest.TestCase):
         self.assertRaises(RuntimeError, lock.acquire)
         self.assertFalse(lock.locked())
         self.assertRaises(RuntimeError, lock.release)
-
-    @run_in_greenlet
-    def test_lock(self):
-        lock = greenio.GreenLock()
-        self.assertTrue(lock.acquire())
-        self.assertEqual(lock.locked(), greenio.getcurrent())
-        lock.release()
-        self.assertFalse(lock.locked())
 
     @run_in_greenlet
     def test_lock(self):

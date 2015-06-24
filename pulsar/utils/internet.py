@@ -1,5 +1,6 @@
 import socket
 from functools import partial
+from urllib.parse import urlsplit, parse_qsl, urlencode
 
 try:
     from select import poll, POLLIN
@@ -24,8 +25,7 @@ except ImportError:  # pragma: no cover
     pass
 
 
-from .httpurl import urlsplit, parse_qsl, urlencode
-from .pep import native_str
+from .string import native_str
 from .exceptions import SSLError
 
 

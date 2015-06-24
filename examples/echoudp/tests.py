@@ -1,6 +1,6 @@
 import unittest
 
-from pulsar import send, multi_async, new_event_loop, get_application
+from pulsar import send, new_event_loop, get_application
 from pulsar.apps.test import dont_run_with_thread
 
 from .manage import server, Echo, EchoUdpServerProtocol

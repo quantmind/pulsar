@@ -278,6 +278,8 @@ from collections import namedtuple
 from base64 import b64encode
 from asyncio import wait_for
 from io import StringIO, BytesIO
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+from http.client import responses
 
 import pulsar
 from pulsar import AbstractClient, Pool, Connection, ProtocolConsumer
@@ -288,11 +290,10 @@ from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.utils.internet import CERT_NONE, SSLContext
 from pulsar.utils.multipart import parse_options_header
-from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
-                                  http_parser, ENCODE_URL_METHODS,
-                                  encode_multipart_formdata, urlencode,
+from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
+                                  encode_multipart_formdata,
                                   Headers, get_environ_proxies,
-                                  choose_boundary, urlunparse, request_host,
+                                  choose_boundary, request_host,
                                   is_succesful, HTTPError, URLError,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, DEFAULT_CHARSET,

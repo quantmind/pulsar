@@ -20,9 +20,9 @@ except ImportError:    # pragma    nocover
     psutil = None
 
 try:
-    import ujson as json
-except ImportError:     # pragma    nocover
-    import json
+    import ujson as json    # noqa
+except ImportError:         # pragma    nocover
+    import json             # noqa
 
 
 memory_symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')

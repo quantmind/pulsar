@@ -30,13 +30,13 @@ class HttpBin2(HttpBin):
     @route()
     def async(self, request):
         future = pulsar.Future()
-        futute._loop.call_later(0.5, lambda: future.set_result(['Hello!']))
+        future._loop.call_later(0.5, lambda: future.set_result(['Hello!']))
         return future
 
     @route()
     def post_async(self, request):
         future = pulsar.Future()
-        futute._loop.call_later(0.5, lambda: future.set_result(['Hello!']))
+        future._loop.call_later(0.5, lambda: future.set_result(['Hello!']))
         return future
 
 

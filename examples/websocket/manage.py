@@ -7,7 +7,6 @@ To run the server type::
 and open a web browser at http://localhost:8060
 '''
 import os
-import sys
 from random import random
 
 from pulsar.apps import ws, wsgi

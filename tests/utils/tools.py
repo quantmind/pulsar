@@ -96,7 +96,7 @@ class TestSystemInfo(unittest.TestCase):
     def testMe(self):
         worker = get_actor()
         info = system.process_info(worker.pid)
-        info2 = system.process_info()
+        system.process_info()
         self.assertTrue(isinstance(info, dict))
 
 

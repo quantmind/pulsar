@@ -8,7 +8,7 @@ from copy import deepcopy, copy
 from threading import Lock
 from functools import wraps
 
-from .system import current_process, platform
+from .system import current_process
 from .string import to_string
 from .structures import AttributeDictionary
 
@@ -64,14 +64,13 @@ LOGGING_CONFIG = {
 }
 
 
-if not platform.is_appengine:
+def file_handler(**kw):
+    return logging.FileHandler('pulsar.log', **kw)
 
-    def file_handler(**kw):
-        return logging.FileHandler('pulsar.log', **kw)
 
-    LOGGING_CONFIG['handlers']['file'] = {
-        '()': file_handler,
-        'formatter': 'verbose'}
+LOGGING_CONFIG['handlers']['file'] = {
+    '()': file_handler,
+    'formatter': 'verbose'}
 
 
 def update_config(config, c):

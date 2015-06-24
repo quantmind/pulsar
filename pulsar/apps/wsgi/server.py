@@ -19,14 +19,15 @@ import socket
 import io
 from asyncio import wait_for
 from wsgiref.handlers import format_date_time
+from urllib.parse import urlparse, unquote
 
 import pulsar
 from pulsar import (reraise, HttpException, ProtocolError, Future, task,
                     isfuture, chain_future)
 from pulsar.utils.pep import native_str
-from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
+from pulsar.utils.httpurl import (Headers, has_empty_content,
                                   host_and_port_default, http_parser,
-                                  urlparse, iri_to_uri, DEFAULT_CHARSET)
+                                  iri_to_uri, DEFAULT_CHARSET)
 
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer

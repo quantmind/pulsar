@@ -1,5 +1,5 @@
 from time import mktime
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 __all__ = ['date2timestamp']

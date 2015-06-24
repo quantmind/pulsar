@@ -2,9 +2,8 @@
 Security related helpers such as secure password hashing tools.
 """
 from hashlib import sha1
-from uuid import uuid4
 import string
-from random import SystemRandom, choice
+from random import SystemRandom
 
 from .httpurl import ascii_letters
 

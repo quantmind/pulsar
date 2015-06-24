@@ -1,12 +1,10 @@
 '''Tests the test suite and pulsar distribution.'''
-import os
 import unittest
-from threading import current_thread
 
 import pulsar
-from pulsar import asyncio, send, multi_async, get_event_loop, Future
-from pulsar.apps.test import TestSuite, sequential
-from pulsar.apps.test.plugins import bench, profile
+from pulsar import asyncio, send, multi_async
+from pulsar.apps.test import TestSuite
+from pulsar.apps.test.plugins import profile
 from pulsar.utils.version import get_version
 
 

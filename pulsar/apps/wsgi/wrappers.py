@@ -42,12 +42,13 @@ Wsgi Response
 '''
 from functools import reduce, partial
 from io import BytesIO
+from http.client import responses
 
 from pulsar import Future, chain_future
 from pulsar.utils.system import json
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
-from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
+from pulsar.utils.httpurl import (Headers, SimpleCookie,
                                   has_empty_content, REDIRECT_CODES,
                                   ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
                                   remove_double_slash, iri_to_uri,

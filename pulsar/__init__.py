@@ -44,7 +44,7 @@ if os.environ.get('pulsar_setup_running') != 'yes':
     else:
         HAS_C_EXTENSIONS = True
         try:
-            from .utils import lib
+            from .utils import lib      # noqa
         except ImportError:
             HAS_C_EXTENSIONS = False
 

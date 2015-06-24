@@ -51,10 +51,7 @@ import zlib
 from collections import deque, OrderedDict
 from urllib import request as urllibr
 from http import client as httpclient
-from urllib.parse import (quote, unquote, urlencode, urlparse, urlsplit,
-                          parse_qs, parse_qsl, splitport, urlunparse,
-                          urljoin)
-from http.client import responses
+from urllib.parse import quote, urlsplit, splitport
 from http.cookiejar import CookieJar, Cookie
 from http.cookies import SimpleCookie
 

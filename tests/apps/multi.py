@@ -5,7 +5,6 @@ import pulsar
 from pulsar import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
-from pulsar.apps.test import test_timeout
 
 
 def dummy(environ, start_response):
@@ -27,27 +26,6 @@ class TestMultiApp(unittest.TestCase):
         # create the application
         return MultiWsgi(**params)
 
-    @test_timeout(30)
-    def testInstall(self):
-        arbiter = get_actor()
-        self.assertTrue(arbiter.is_arbiter())
-        app = self.create(name='pluto')
-        self.assertTrue(app)
-        self.assertFalse(arbiter.get_actor('pluto'))
-        self.assertFalse(arbiter.get_actor('rpc_pluto'))
-        # create the application
-        yield from app.start()
-        monitor1 = arbiter.get_actor('pluto')
-        self.assertTrue(monitor1)
-        self.assertTrue(monitor1.is_monitor())
-        monitor2 = arbiter.get_actor('rpc_pluto')
-        self.assertTrue(monitor2)
-        self.assertTrue(monitor2.is_monitor())
-        yield from monitor1.stop()
-        self.assertFalse(arbiter.get_actor('pluto'))
-        yield from monitor2.stop()
-        self.assertFalse(arbiter.get_actor('rpc_pluto'))
-
     def test_app(self):
         app = self.create(version='2.0')
         self.assertEqual(app.version, '2.0')
@@ -61,7 +39,7 @@ class TestMultiApp(unittest.TestCase):
         app = self.create(bind=':9999', unz='whatz')
         self.assertTrue(app)
         self.assertEqual(len(app.cfg.params), 4)
-        apps = app.apps()
+        app.apps()
         self.assertEqual(len(app.cfg.params), 2)
         self.assertEqual(app.cfg.bla, 'foo')
         self.assertEqual(app.cfg.unz, 'whatz')

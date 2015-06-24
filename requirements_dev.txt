@@ -1,9 +1,10 @@
 coverage
 cython
 django
-pep8
+flake8
 setproctitle
 psutil
 greenlet
 unidecode
 flask
+pyinotify

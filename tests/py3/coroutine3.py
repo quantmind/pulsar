@@ -1,4 +1,3 @@
-import sys
 import unittest
 
 from pulsar import async, Future, new_event_loop

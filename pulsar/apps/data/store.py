@@ -6,11 +6,11 @@ A :class:`.Store` can also implement several methods for managing
 the higher level :ref:`object data mapper <odm>`.
 '''
 from abc import ABCMeta, abstractmethod
+from urllib.parse import urlsplit, parse_qsl, urlunparse, urlencode
 
 from pulsar import ImproperlyConfigured, Producer
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
-from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 __all__ = ['Command',
            'Store',

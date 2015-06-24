@@ -57,12 +57,6 @@ Raises KeyError if key is not found."""
         else:
             super().__setitem__(key, [value])
 
-    def update(self, items):
-        if isinstance(items, dict):
-            items = items.items()
-        for k, v in items:
-            self[k] = v
-
     def __copy__(self):
         return self.__class__(((k, v[:]) for k, v in self.lists()))
 

@@ -6,13 +6,13 @@ This module provides a parser for the multipart/form-data format. It can read
 from a file, a socket or a WSGI environment.
 '''
 import re
-import sys
 from tempfile import TemporaryFile
 from wsgiref.headers import Headers
 from base64 import b64encode
 from io import BytesIO
+from urllib.parse import parse_qs
 
-from .httpurl import parse_qs, ENCODE_BODY_METHODS, mapping_iterator
+from .httpurl import ENCODE_BODY_METHODS, mapping_iterator
 from .structures import MultiValueDict
 
 
@@ -265,7 +265,6 @@ class MultipartPart(object):
         self.headers = Headers(self.headerlist)
         cdis = self.headers.get('Content-Disposition', '')
         ctype = self.headers.get('Content-Type', '')
-        clen = self.headers.get('Content-Length', '-1')
         if not cdis:
             raise MultipartError('Content-Disposition header is missing.')
         self.disposition, self.options = parse_options_header(cdis)

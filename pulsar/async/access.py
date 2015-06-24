@@ -6,11 +6,10 @@ from collections import OrderedDict
 from threading import current_thread
 import asyncio
 
-from asyncio import (selectors, events, iscoroutine, iscoroutinefunction,
-                     coroutine)
+from asyncio import iscoroutine, coroutine
 
 from pulsar.utils.config import Global
-from pulsar.utils.system import platform, current_process
+from pulsar.utils.system import current_process
 
 
 __all__ = ['get_event_loop',

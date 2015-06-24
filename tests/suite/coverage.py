@@ -1,11 +1,8 @@
-'''Test cases for code not covered in standard test cases'''
-import os
+'''Test cases for code not covered in standard test cases
+'''
 import tempfile
-import uuid
 import shutil
 import unittest
-
-import pulsar
 
 
 class PulsarCoverage(unittest.TestCase):
