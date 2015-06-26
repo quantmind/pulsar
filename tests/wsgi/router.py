@@ -40,6 +40,17 @@ class HttpBin2(HttpBin):
         return future
 
 
+class MyRouter(Router):
+
+    @route('/<id>')
+    def get_elem(self, request):
+        return request.response
+
+    @route('/<id>')
+    def post_elem(self, request):
+        return request.response
+
+
 class HttpBin3(HttpBin):
 
     @route('new', position=0)
@@ -203,3 +214,10 @@ class TestRouter(unittest.TestCase):
         foo = router.get_route('foo')
         self.assertRaises(AttributeError, lambda: foo.get)
         self.assertEqual(foo.random1, 10)
+
+    def test_multiple_methods(self):
+        router = MyRouter('/')
+        child = router.get_route('elem')
+        self.assertTrue(child)
+        self.assertTrue(child.get.__name__, 'get_elem')
+        self.assertTrue(child.post.__name__, 'post_elem')
