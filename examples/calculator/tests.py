@@ -1,8 +1,9 @@
 '''Tests the RPC "calculator" example.'''
 import unittest
+import types
 
 from pulsar import send
-from pulsar.apps import rpc
+from pulsar.apps import rpc, http
 from pulsar.apps.test import dont_run_with_thread
 
 from .manage import server, Root, Calculator
@@ -165,6 +166,78 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue(docs)
         response = yield from self.p.documentation()
         self.assertEqual(response, docs)
+
+    def test_batch_one_call(self):
+        bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
+
+        call_id1 = bp.ping()
+        self.assertIsNotNone(call_id1)
+        self.assertEqual(len(bp), 1)
+
+        batch_generator = yield from bp
+        self.assertIsInstance(batch_generator, types.GeneratorType)
+        self.assertEqual(len(bp), 0)
+
+        for ind, batch_response in enumerate(batch_generator):
+            self.assertEqual(ind, 0)
+            self.assertEqual(call_id1, batch_response.id)
+            self.assertEqual(batch_response.result, 'pong')
+            self.assertIsNone(batch_response.exception)
+
+    def test_batch_few_call(self):
+        bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
+
+        call_id1 = bp.ping()
+        self.assertIsNotNone(call_id1)
+        self.assertEqual(len(bp), 1)
+
+        call_id2 = bp.calc.add(1, 1)
+        self.assertIsNotNone(call_id2)
+        self.assertEqual(len(bp), 2)
+
+        batch_generator = yield from bp
+        self.assertIsInstance(batch_generator, types.GeneratorType)
+        self.assertEqual(len(bp), 0)
+
+        for ind, batch_response in enumerate(batch_generator):
+            self.assertIn(ind, (0, 1))
+            if call_id1 == batch_response.id:
+                self.assertEqual(batch_response.result, 'pong')
+                self.assertIsNone(batch_response.exception)
+            elif call_id2 == batch_response.id:
+                self.assertEqual(batch_response.result, 2)
+                self.assertIsNone(batch_response.exception)
+
+    def test_batch_error_response_call(self):
+        bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
+
+        call_id1 = bp.ping('wrong param')
+        self.assertIsNotNone(call_id1)
+        self.assertEqual(len(bp), 1)
+
+        batch_generator = yield from bp
+        self.assertIsInstance(batch_generator, types.GeneratorType)
+        self.assertEqual(len(bp), 0)
+
+        for ind, batch_response in enumerate(batch_generator):
+            self.assertEqual(ind, 0)
+            self.assertEqual(call_id1, batch_response.id)
+            self.assertIsInstance(batch_response.exception, rpc.InvalidParams)
+            self.assertIsNone(batch_response.result)
+
+    def test_batch_full_response_call(self):
+        bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout,
+                                full_response=True)
+
+        bp.ping()
+        bp.ping()
+        bp.ping()
+        self.assertEqual(len(bp), 3)
+
+        response = yield from bp
+        self.assertIsInstance(response, http.HttpResponse)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(bp), 0)
 
 
 @dont_run_with_thread
