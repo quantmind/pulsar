@@ -1,6 +1,5 @@
 import sys
 import unittest
-from datetime import timedelta
 
 from pulsar import reraise
 

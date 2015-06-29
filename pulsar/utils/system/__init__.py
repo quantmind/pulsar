@@ -3,15 +3,15 @@
 import os
 
 from .runtime import Platform
-from .base import *
+from .base import *     # noqa
 
 platform = Platform()
 seconds = platform.seconds
 
 if platform.type == 'win':    # pragma nocover
-    from .windowssystem import *
+    from .windowssystem import *    # noqa
 else:
-    from .posixsystem import *
+    from .posixsystem import *      # noqa
 
 
 try:
@@ -20,9 +20,9 @@ except ImportError:    # pragma    nocover
     psutil = None
 
 try:
-    import ujson as json
-except ImportError:     # pragma    nocover
-    import json
+    import ujson as json    # noqa
+except ImportError:         # pragma    nocover
+    import json             # noqa
 
 
 memory_symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')

@@ -15,7 +15,7 @@ services:
   - redis-server
 
 script:
-  - pep8
+  - flake8
   - sudo rm -rf pulsar
   - python -m runtests --coverage
   - python -m runtests --coveralls

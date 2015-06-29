@@ -280,9 +280,9 @@ class FrameParser(object):
             chunk = self._chunk(2)
             first_byte, second_byte = unpack("BB", chunk)
             fin = (first_byte >> 7) & 1
-            rsv1 = (first_byte >> 6) & 1
-            rsv2 = (first_byte >> 5) & 1
-            rsv3 = (first_byte >> 4) & 1
+            # rsv1 = (first_byte >> 6) & 1
+            # rsv2 = (first_byte >> 5) & 1
+            # rsv3 = (first_byte >> 4) & 1
             opcode = first_byte & 0xf
             if fin not in (0, 1):
                 raise ProtocolError('FIN must be 0 or 1')

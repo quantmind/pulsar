@@ -113,7 +113,7 @@ scores and values.'''
 
     def clear(self):
         '''Clear this :class:`zset`.'''
-        self._sl = skiplist()
+        self._sl = Skiplist()
         self._dict.clear()
 
     def rank(self, item):
@@ -156,7 +156,6 @@ scores and values.'''
         for zset, weight in zip(zsets, weights):
             if result is None:
                 result = cls()
-                sl = result._sl
                 for score, value in zset._sl:
                     if value in values:
                         result.add(score*weight, value)

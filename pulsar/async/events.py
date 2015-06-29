@@ -41,7 +41,6 @@ class AbstractEvent(AsyncObject):
     def remove_callback(self, callback):
         '''Remove a callback from the list
         '''
-        removed = []
         handlers = self.handlers
         filtered_callbacks = [f for f in handlers if f != callback]
         removed_count = len(handlers) - len(filtered_callbacks)

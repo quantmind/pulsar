@@ -31,7 +31,7 @@ from . import system
 from .internet import parse_address
 from .importer import import_system_file
 from .httpurl import HttpParser as PyHttpParser
-from .log import configured_logger, get_level
+from .log import configured_logger
 from .pep import to_bytes
 
 
@@ -379,7 +379,6 @@ class Config(object):
     def configured_logger(self, name=None):
         '''Configured logger.
         '''
-        loggers = {}
         loghandlers = self.loghandlers
         # logname
         if not name:

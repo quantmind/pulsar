@@ -20,12 +20,6 @@ Open a new shell and launch python and type::
     1
 
 '''
-try:
-    import pulsar
-except ImportError:  # pragma nocover
-    import sys
-    sys.path.append('../../')
-
 from pulsar.apps.ds import PulsarDS
 
 

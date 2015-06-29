@@ -79,14 +79,6 @@ class Platform(object):
     def is_windows(self):
         return self.getType() == 'win'
 
-    @property
-    def is_appengine(self):
-        try:
-            import ctypes
-            return False
-        except ImportError:
-            return True
-
     def supportsThreads(self):
         """Can threads be created?
         """

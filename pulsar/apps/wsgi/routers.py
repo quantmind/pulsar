@@ -107,6 +107,15 @@ def update_args(urlargs, args):
     return args
 
 
+def _get_default(parent, name):
+    if name in parent.defaults:
+        return getattr(parent, name)
+    elif parent._parent:
+        return _get_default(parent._parent, name)
+    else:
+        raise AttributeError
+
+
 class RouterParam(object):
     '''A :class:`RouterParam` is a way to flag a :class:`Router` parameter
     so that children can inherit the value if they don't define their own.
@@ -298,13 +307,17 @@ class Router(metaclass=RouterType):
         '''
         return self.full_route.url(**urlargs)
 
-    def getparam(self, name, default=None):
+    def getparam(self, name, default=None, parents=False):
         '''A parameter in this :class:`.Router`
         '''
-        try:
-            return getattr(self, name)
-        except AttributeError:
-            return default
+        value = getattr(self, name, None)
+        if value is None:
+            if parents and self._parent:
+                return self._parent.getparam(name, default, parents)
+            else:
+                return default
+        else:
+            return value
 
     def __getattr__(self, name):
         '''Get the value of the ``name`` attribute.
@@ -313,7 +326,10 @@ class Router(metaclass=RouterType):
         :attr:`parent` :class:`Router` if it exists.
         '''
         if self._parent:
-            return getattr(self._parent, name)
+            try:
+                return _get_default(self._parent, name)
+            except AttributeError:
+                pass
 
         raise AttributeError("'%s' object has no attribute '%s'" %
                              (self.__class__.__name__, name))

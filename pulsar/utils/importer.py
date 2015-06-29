@@ -1,7 +1,7 @@
 import os
 import sys
 import glob
-from importlib import *
+from importlib import *     # noqa
 
 
 def expand_star(mod_name):
@@ -28,7 +28,7 @@ def import_modules(modules):
         for module in to_load:
             try:
                 all.append(import_module(module))
-            except ImportError as e:
+            except ImportError:
                 pass
     return all
 
@@ -44,7 +44,7 @@ def module_attribute(dotpath, default=None, safe=False):
         try:
             module = import_module('.'.join(bits[:-1]))
             return getattr(module, bits[-1], default)
-        except Exception as e:
+        except Exception:
             if not safe:
                 raise
             return default

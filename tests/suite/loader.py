@@ -1,11 +1,8 @@
 '''Tests the test suite loader.'''
 import os
-import sys
-import time
 import unittest
-from threading import current_thread
 
-from pulsar import get_actor, get_application
+from pulsar import get_application
 from pulsar.apps.test import TestLoader
 
 

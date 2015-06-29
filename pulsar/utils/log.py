@@ -3,26 +3,16 @@ Module containing utilities and mixins for logging and serialisation.
 '''
 import sys
 import logging
+from logging.config import dictConfig
 from copy import deepcopy, copy
-from time import time
 from threading import Lock
 from functools import wraps
 
-from .system import current_process, platform
+from .system import current_process
 from .string import to_string
 from .structures import AttributeDictionary
 
 win32 = sys.platform == "win32"
-
-if sys.version_info < (2, 7):    # pragma    nocover
-    from .fallbacks._dictconfig import dictConfig
-
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-else:
-    from logging.config import dictConfig
-    from logging import NullHandler
 
 
 LOGGING_CONFIG = {
@@ -74,14 +64,13 @@ LOGGING_CONFIG = {
 }
 
 
-if not platform.is_appengine:
+def file_handler(**kw):
+    return logging.FileHandler('pulsar.log', **kw)
 
-    def file_handler(**kw):
-        return logging.FileHandler('pulsar.log', **kw)
 
-    LOGGING_CONFIG['handlers']['file'] = {
-        '()': file_handler,
-        'formatter': 'verbose'}
+LOGGING_CONFIG['handlers']['file'] = {
+    '()': file_handler,
+    'formatter': 'verbose'}
 
 
 def update_config(config, c):

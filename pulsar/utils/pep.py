@@ -1,11 +1,11 @@
 import time
 
-from .string import *
+from .string import *   # noqa
 
 try:
     pypy = True
-    import __pypy__
-except ImportError:
+    import __pypy__     # noqa
+except ImportError:     # pragma    nocover
     pypy = False
 
 

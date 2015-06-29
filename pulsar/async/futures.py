@@ -1,10 +1,10 @@
 from collections import Mapping
-from inspect import isgeneratorfunction, isgenerator
+from inspect import isgeneratorfunction
 from functools import wraps, partial
 
 from asyncio import Future, CancelledError, TimeoutError, async, sleep
 from .consts import MAX_ASYNC_WHILE
-from .access import get_event_loop, LOGGER, Future, isfuture, is_async
+from .access import get_event_loop, LOGGER, isfuture, is_async
 
 
 __all__ = ['maybe_async',

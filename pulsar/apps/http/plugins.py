@@ -1,12 +1,12 @@
 from functools import partial
 from collections import namedtuple
 from copy import copy
+from urllib.parse import urlparse, urljoin
 
 from pulsar import OneTime, Future, task
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.internet import is_tls
-from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
-                                  requote_uri, SimpleCookie)
+from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
 
 from pulsar import PulsarException
 

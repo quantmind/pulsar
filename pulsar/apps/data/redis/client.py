@@ -121,7 +121,7 @@ class Consumer(pulsar.ProtocolConsumer):
         string_keys_to_dict('SORT', sort_return_tuples),
         string_keys_to_dict('BLPOP BRPOP', lambda r: r and tuple(r) or None),
         string_keys_to_dict('SMEMBERS SDIFF SINTER SUNION', set),
-        string_keys_to_dict('ZINCRBY ZSCORE',
+        string_keys_to_dict('INCRBYFLOAT HINCRBYFLOAT ZINCRBY ZSCORE',
                             lambda v: float(v) if v is not None else v),
         string_keys_to_dict('ZRANGE ZRANGEBYSCORE ZREVRANGE ZREVRANGEBYSCORE',
                             values_to_zset),
@@ -134,7 +134,6 @@ class Consumer(pulsar.ProtocolConsumer):
             'INFO': parse_info,
             'TIME': lambda x: (int(float(x[0])), int(float(x[1]))),
             'HGETALL': pairs_to_object,
-            'HINCRBYFLOAT': lambda r: float(r),
             'HMGET': values_to_object,
             'TYPE': lambda r: r.decode('utf-8')
         }
@@ -223,17 +222,24 @@ class RedisClient(object):
     # special commands
 
     # STRINGS
-    def decr(self, key, ammount=None):
+    def decrby(self, key, ammount=None):
         if ammount is None:
             return self.execute('decr', key)
         else:
             return self.execute('decrby', key, ammount)
+    decr = decrby
 
-    def incr(self, key, ammount=None):
+    def incrby(self, key, ammount=None):
         if ammount is None:
             return self.execute('incr', key)
         else:
             return self.execute('incrby', key, ammount)
+    incr = incrby
+
+    def incrbyfloat(self, key, ammount=None):
+        if ammount is None:
+            ammount = 1
+        return self.execute('incrbyfloat', key, ammount)
 
     def set(self, name, value, ex=None, px=None, nx=False, xx=False):
         """
@@ -293,6 +299,11 @@ class RedisClient(object):
             keys = list(keys)
         keys.append(timeout)
         return self.execute_command('BRPOP', *keys)
+
+    def brpoplpush(self, src, dst, timeout=0):
+        if timeout is None:
+            timeout = 0
+        return self.execute_command('BRPOPLPUSH', src, dst, timeout)
 
     # SORTED SETS
     def zadd(self, name, *args, **kwargs):

@@ -3,7 +3,7 @@ import sys
 import logging
 import time
 
-import pythoncom
+import pythoncom            # noqa
 import win32serviceutil
 import win32service
 import win32event
@@ -13,7 +13,7 @@ import servicemanager
 import pulsar
 from pulsar.utils.importer import import_module
 
-import multiprocessing
+import multiprocessing      # noqa
 
 
 class ServiceManagerLogHandler(logging.Handler):

@@ -38,12 +38,7 @@ Implementation
    :member-order: bysource
 '''
 import os
-import sys
 import time
-try:
-    import pulsar
-except ImportError:  # pragma nocover
-    sys.path.append('../../')
 
 from pulsar import get_actor, Future, async
 from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,

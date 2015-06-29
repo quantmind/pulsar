@@ -1,4 +1,4 @@
-from pulsar import new_event_loop, HAS_C_EXTENSIONS
+from pulsar import HAS_C_EXTENSIONS
 from pulsar.apps.test import check_server
 
 from .pulsards import unittest, RedisCommands, create_store

@@ -1,4 +1,4 @@
-from random import randint, choice
+from random import choice
 import string
 import unittest
 
@@ -40,7 +40,7 @@ class RedisPyParser(unittest.TestCase):
 
     def test_decode_multi_bulk(self):
         self.parser.feed(self.chunk)
-        result = self.parser.get()
+        self.parser.get()
 
 
 @unittest.skipUnless(HAS_C_EXTENSIONS, 'Requires C extensions')

@@ -4,7 +4,6 @@ import unittest
 
 from pulsar import ProtocolError, HAS_C_EXTENSIONS
 from pulsar.utils.websocket import frame_parser, parse_close
-import pulsar.apps.ws
 
 
 def i2b(args):
@@ -78,7 +77,7 @@ class FrameTest(unittest.TestCase):
             s = self.parser()
             try:
                 s.decode(chunk)
-            except ProtocolError as e:
+            except ProtocolError:
                 pass
             else:
                 raise Exception('Protocol error not raised')

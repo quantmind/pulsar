@@ -1,16 +1,15 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 import time
-import sys
 import pickle
 import unittest
 from unittest import mock
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 import pulsar
 from pulsar.apps import wsgi
 from pulsar.apps import http
 from pulsar.utils.multipart import parse_form_data, MultipartError
-from pulsar.utils.httpurl import urlparse, unquote
 from pulsar.apps.wsgi.utils import cookie_date
 
 
@@ -176,7 +175,7 @@ class WsgiRequestTests(unittest.TestCase):
     def testHttpBinServer(self):
         from examples.httpbin.manage import server
         app = server(bind='127.0.0.1:0')
-        app2 = pickle.loads(pickle.dumps(app))
+        pickle.loads(pickle.dumps(app))
 
     def test_clean_path_middleware(self):
         url = 'bla//foo'

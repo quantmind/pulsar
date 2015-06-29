@@ -2,9 +2,10 @@ import os
 import time
 from hashlib import sha1
 from base64 import b64encode
+from urllib.parse import urlparse
 
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
-                                  urlparse, to_string, DEFAULT_CHARSET)
+                                  to_string, DEFAULT_CHARSET)
 
 from .plugins import request_again
 

@@ -74,10 +74,9 @@ Echo Server
 
 '''
 from functools import partial
-from asyncio.events import get_event_loop
 
 import pulsar
-from pulsar import Pool, task, Connection, AbstractClient
+from pulsar import Pool, Connection, AbstractClient
 from pulsar.apps.socket import SocketServer
 
 

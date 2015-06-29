@@ -7,10 +7,9 @@ import pwd
 import signal
 import socket
 import ctypes
-import errno
-from multiprocessing import Pipe, current_process
+from multiprocessing import current_process
 
-from .base import *
+from .base import *     # noqa
 
 __all__ = ['close_on_exec',
            'daemonize',

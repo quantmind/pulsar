@@ -1,4 +1,3 @@
-from random import randint
 import unittest
 
 from pulsar import send
@@ -22,14 +21,14 @@ class TestGreenIo(unittest.TestCase):
         cls.pool = greenio.GreenPool()
 
     def test_yield_io(self):
-        msg = yield from self.client(self.msg)
-        self.assertEqual(result, msg)
+        result = yield from self.client(self.msg)
+        self.assertEqual(result, self.msg)
 
     @greenio.run_in_greenlet
     def test_green_io(self):
-        msg = self.green(self.msg)
-        self.assertEqual(result, msg)
+        result = self.green(self.msg)
+        self.assertEqual(result, self.msg)
 
     def test_green_pool(self):
-        msg = yield from self.pool.submit(self.green, self.msg)
-        self.assertEqual(result, msg)
+        result = yield from self.pool.submit(self.green, self.msg)
+        self.assertEqual(result, self.msg)

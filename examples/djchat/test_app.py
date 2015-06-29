@@ -1,13 +1,10 @@
 '''Tests django chat application.'''
-import os
-import sys
 import unittest
 
 from pulsar import asyncio, send, get_application
 from pulsar.apps import http, ws
 from pulsar.apps.test import dont_run_with_thread, test_timeout
 from pulsar.utils.string import gen_unique_id
-from pulsar.utils.system import json
 
 try:
     from .manage import server

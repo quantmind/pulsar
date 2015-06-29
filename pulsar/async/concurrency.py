@@ -14,13 +14,13 @@ from pulsar.utils import autoreload
 from pulsar.utils.tools import Pidfile
 
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
-from .access import get_actor, set_actor, logger, _StopError, SELECTORS
+from .access import get_actor, set_actor, logger, SELECTORS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
 from .futures import async, add_errback, chain_future, Future
 from .protocols import TcpServer
 from .actor import Actor
-from .consts import *
+from .consts import *   # noqa
 
 
 if sys.platform == 'win32':     # pragma    nocover
@@ -657,8 +657,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         elif actor._loop.is_running():
             self._exit_arbiter(actor)
         else:
-            monitors = len(self.monitors)
-            managed = len(self.managed_actors)
             actor.logger.debug('Restarts event loop to stop actors')
             actor._loop.call_soon(self._exit_arbiter, actor)
             actor._run(False)

@@ -1,6 +1,28 @@
 '''
 A list of all Exception specific to pulsar library.
 '''
+import traceback
+
+__all__ = ['PulsarException',
+           'MonitorStarted',
+           'ImproperlyConfigured',
+           'CommandError',
+           'CommandNotFound',
+           'ProtocolError',
+           'EventAlreadyRegistered',
+           'InvalidOperation',
+           'HaltServer',
+           'HTTPError',
+           'SSLError',
+           # HTTP Exceptions
+           'HttpException',
+           'HttpRedirect',
+           'BadRequest',
+           'PermissionDenied',
+           'MethodNotAllowed',
+           'Http404',
+           #
+           'format_traceback']
 
 
 class PulsarException(Exception):
@@ -146,3 +168,7 @@ class Http404(HttpException):
 class MethodNotAllowed(HttpException):
     '''An :class:`HttpException` with default ``405`` status code.'''
     status = 405
+
+
+def format_traceback(exc):
+    return traceback.format_exception(exc.__class__, exc, exc.__traceback__)

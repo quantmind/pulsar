@@ -80,7 +80,7 @@ class TestZset(unittest.TestCase):
         self.assertTrue(values)
         self.assertEqual(len(values), 7)
         all = list(s)[3:10]
-        all2 = [v for s, v in values]
+        all2 = [v for _, v in values]
         self.assertEqual(all, all2)
 
     def test_remove_range_by_score(self):

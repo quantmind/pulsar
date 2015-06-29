@@ -1,4 +1,3 @@
-from functools import partial
 try:
     from pulsar.apps import http
 except ImportError:

@@ -42,10 +42,7 @@ import os
 import sys
 import re
 import string
-import time
 import mimetypes
-import platform
-import socket
 from hashlib import sha1, md5
 from uuid import uuid4
 from email.utils import formatdate
@@ -54,10 +51,7 @@ import zlib
 from collections import deque, OrderedDict
 from urllib import request as urllibr
 from http import client as httpclient
-from urllib.parse import (quote, unquote, urlencode, urlparse, urlsplit,
-                          parse_qs, parse_qsl, splitport, urlunparse,
-                          urljoin)
-from http.client import responses
+from urllib.parse import quote, urlsplit, splitport
 from http.cookiejar import CookieJar, Cookie
 from http.cookies import SimpleCookie
 
@@ -76,15 +70,6 @@ from .html import capfirst
 # The http_parser has several bugs, therefore it is switched off
 hasextensions = False
 _Http_Parser = None
-
-try:
-    from select import poll, POLLIN
-except ImportError:   # pragma    nocover
-    poll = False
-    try:
-        from select import select
-    except ImportError:  # pragma    nocover
-        select = False
 
 
 def setDefaultHttpParser(parser):   # pragma    nocover
@@ -1257,7 +1242,6 @@ def cookiejar_from_dict(*cookie_dicts):
 
     :param cookie_dict: Dict of key/values to insert into CookieJar.
     """
-    jars = []
     cookie_dicts = tuple((d for d in cookie_dicts if d))
     if len(cookie_dicts) == 1 and isinstance(cookie_dicts[0], CookieJar):
         return cookie_dicts[0]

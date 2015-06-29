@@ -1,8 +1,7 @@
 '''MultiFuture coverage'''
-import sys
 import unittest
 
-from pulsar import get_event_loop, multi_async, Future, maybe_async
+from pulsar import multi_async, Future
 
 
 class TestMulti(unittest.TestCase):

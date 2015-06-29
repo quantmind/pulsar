@@ -10,9 +10,9 @@ from pulsar.utils.log import WritelnDecorator
 from .events import EventHandler
 from .proxy import ActorProxy, ActorProxyMonitor, actor_identity
 from .mailbox import command_in_context
-from .access import get_actor, set_actor
+from .access import get_actor
 from .cov import Coverage
-from .consts import *
+from .consts import *   # noqa
 
 
 __all__ = ['is_actor', 'send', 'spawn',

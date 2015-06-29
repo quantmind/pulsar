@@ -3,7 +3,6 @@
 #
 import os
 import sys
-from distutils.core import setup
 from distutils.extension import Extension
 from distutils.errors import (CCompilerError, DistutilsExecError,
                               DistutilsPlatformError)

@@ -1,17 +1,9 @@
-import os
-import io
 import socket
-import tempfile
-import time
 import unittest
-import pickle
 from unittest import mock
 
-import pulsar
-from pulsar import platform
 from pulsar.utils.internet import (parse_address, parse_connection_string,
-                                   close_socket, is_socket_closed,
-                                   format_address)
+                                   close_socket, format_address)
 
 
 class TestParseAddress(unittest.TestCase):

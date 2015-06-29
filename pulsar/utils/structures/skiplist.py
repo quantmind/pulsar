@@ -1,15 +1,9 @@
 # Modified version of skiplist
 # http://code.activestate.com/recipes/
 #    576930-efficient-running-median-using-an-indexable-skipli/
-import sys
 from random import random
 from math import log
 from collections import Sequence
-
-ispy3k = int(sys.version[0]) >= 3
-
-if not ispy3k:
-    range = xrange
 
 
 class Node(object):

@@ -1,6 +1,5 @@
 import unittest
 
-import pulsar
 from pulsar.utils import security
 from pulsar.utils.string import random_string
 

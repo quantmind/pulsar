@@ -37,7 +37,6 @@ Implemenation
 .. _`HTTP proxy server`: http://en.wikipedia.org/wiki/Proxy_server
 '''
 import io
-import sys
 import logging
 from functools import partial
 import asyncio
