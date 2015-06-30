@@ -75,7 +75,7 @@ Out of the box it is shipped with the the following:
 
 * Socket servers
 * WSGI server
-* JSON-RPC
+* JSON-RPC_
 * Web Sockets
 * Test suite
 * Data stores
@@ -89,14 +89,13 @@ Check out the ``examples`` directory for various working applications.
 It includes:
 
 * Hello world! wsgi example
-* An Httpbin wsgi application
+* An Httpbin WSGI application
 * An HTTP Proxy server
 * A JSON-RPC Calculator server
 * Websocket random graph.
 * Websocket chat room.
 * django_ web site with a websocket based chat room.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
-* Asynchronous shell.
 
 
 Design
@@ -192,4 +191,4 @@ file in the top distribution directory for the full license text.
 .. _unidecode: https://pypi.python.org/pypi/Unidecode
 .. _`Luca Sbardella`: http://lucasbardella.com
 .. _`Quantmind`: http://quantmind.com
-.. _`pulsar user survey`: http://goo.gl/forms/3EQKkVbHQc
+.. _JSON-RPC: http://www.jsonrpc.org/
