@@ -653,6 +653,7 @@ class TcpServer(Producer):
         protocol = super().create_protocol(timeout=self._keep_alive)
         protocol.bind_event('connection_made', self._connection_made)
         protocol.bind_event('connection_lost', self._connection_lost)
+        protocol.copy_many_times_events(self)
         if (self._server and self._max_requests and
                 self._sessions >= self._max_requests):
             self.logger.info('Reached maximum number of connections %s. '

@@ -76,7 +76,7 @@ Echo Server
 from functools import partial
 
 import pulsar
-from pulsar import Pool, Connection, AbstractClient
+from pulsar import Pool, Connection, AbstractClient, ProtocolError
 from pulsar.apps.socket import SocketServer
 
 
@@ -97,15 +97,18 @@ class EchoProtocol(pulsar.ProtocolConsumer):
         It simply search for the :attr:`separator` and, if found, it invokes
         the :meth:`response` method with the value of the message.
         '''
+        if self.buffer:
+            data = self.buffer + data
+
         idx = data.find(self.separator)
         if idx >= 0:    # we have a full message
             idx += len(self.separator)
             data, rest = data[:idx], data[idx:]
-            self.buffer = self.response(self.buffer+data)
+            self.buffer = self.response(data, rest)
             self.finished()
             return rest
         else:
-            self.buffer = self.buffer + data
+            self.buffer = data
 
     def start_request(self):
         '''Override :meth:`~.ProtocolConsumer.start_request` to write
@@ -113,18 +116,20 @@ class EchoProtocol(pulsar.ProtocolConsumer):
         '''
         self.transport.write(self._request + self.separator)
 
-    def response(self, data):
+    def response(self, data, rest):
         '''Clients return the message so that the
         :attr:`.ProtocolConsumer.on_finished` is called back with the
         message value, while servers sends the message back to the client.
         '''
+        if rest:
+            raise ProtocolError
         return data[:-len(self.separator)]
 
 
 class EchoServerProtocol(EchoProtocol):
     '''The :class:`EchoProtocol` used by the echo :func:`server`.
     '''
-    def response(self, data):
+    def response(self, data, rest):
         '''Override :meth:`~EchoProtocol.response` method by writing the
         ``data`` received back to the client.
         '''
@@ -210,5 +215,10 @@ def server(name=None, description=None, **kwargs):
                         description=description, **kwargs)
 
 
+def log_connection(connection, exc=None):
+    if not exc:
+        connection.logger.info('Got a new connection!')
+
+
 if __name__ == '__main__':  # pragma nocover
-    server().start()
+    server(connection_made=log_connection).start()
