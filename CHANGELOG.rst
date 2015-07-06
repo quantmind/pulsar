@@ -1,6 +1,9 @@
 Development
 ===========================
-
+* Flake8 on all codebase
+* Added JSON-RPC 2.0 Batch - part of specification (by artemmus)
+* Attach configuration ``connection_made`` and ``connection_lost``
+  to connections of TCP and UDP servers (connection providers).
 
 Ver. 1.0.2 - 2015-Jun-16
 ===========================

@@ -89,8 +89,6 @@ class Timeout(object):
             self.bind_event('after_write', self._add_timeout)
             self.bind_event('data_received', self._cancel_timeout)
             self.bind_event('data_processed', self._add_timeout)
-        else:
-            self._cancel_timeout(None)
         self._timeout = timeout or 0
         self._add_timeout(None)
 

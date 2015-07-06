@@ -410,7 +410,7 @@ class Connection(Protocol, Timeout):
             data = consumer._data_received(data)
             if isinstance(data, Future):
                 break
-        self.fire_event('data_received', data=data)
+        self.fire_event('data_processed', data=data)
 
     def upgrade(self, consumer_factory):
         '''Upgrade the :func:`_consumer_factory` callable.

@@ -61,13 +61,7 @@ Echo Server
 .. autofunction:: server
 
 '''
-try:
-    import pulsar
-except ImportError:     # pragma nocover
-    import sys
-    sys.path.append('../../')
-    import pulsar
-
+import pulsar
 from pulsar import Pool, Future, DatagramProtocol
 from pulsar.utils.pep import to_bytes
 from pulsar.apps.socket import UdpSocketServer
