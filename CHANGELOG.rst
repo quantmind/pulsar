@@ -4,6 +4,9 @@ Development
 * Added JSON-RPC 2.0 Batch - part of specification (by artemmus)
 * Attach configuration ``connection_made`` and ``connection_lost``
   to connections of TCP and UDP servers (connection providers).
+* Bug fix in Connection ``data_received`` method. The ``data_processed``
+  event was not triggered.
+* Process title does not append arbiter to the main process name.
 
 Ver. 1.0.2 - 2015-Jun-16
 ===========================
