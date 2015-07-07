@@ -4,7 +4,7 @@ import unittest
 from functools import partial
 
 import pulsar
-from pulsar import send, async_while, TcpServer, Connection
+from pulsar import send, spawn, async_while, TcpServer, Connection
 from pulsar.apps.test import ActorTestMixin, dont_run_with_thread
 
 from examples.echo.manage import EchoServerProtocol
@@ -12,6 +12,13 @@ from examples.echo.manage import EchoServerProtocol
 
 def add(actor, a, b):
     return (actor.name, a+b)
+
+
+def spawn_actor_from_actor(actor, name):
+    actor2 = yield from spawn(name=name)
+    pong = yield from send(actor2, 'ping')
+    assert pong == 'pong', 'no pong from actor'
+    return actor2.aid
 
 
 class create_echo_server(object):
@@ -72,6 +79,30 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         # (here we are in the arbiter domain)
         yield from self.stop_actors(proxy)
         is_alive = yield from async_while(3, proxy_monitor.is_alive)
+        self.assertFalse(is_alive)
+
+    def test_spawn_from_actor(self):
+        proxy = yield from self.spawn_actor(
+            name='spawning-actor-%s' % self.concurrency)
+        arbiter = pulsar.get_actor()
+        self.assertTrue(repr(proxy).startswith('spawning-actor-'))
+        self.assertEqual(proxy, proxy.proxy)
+        proxy_monitor = arbiter.get_actor(proxy.aid)
+        self.assertFalse(proxy != proxy_monitor)
+        #
+        # do the spawning
+        name = 'spawned-actor-%s-from-actor' % self.concurrency
+        aid = yield from send(proxy, 'run', spawn_actor_from_actor, name)
+        self.assertTrue(aid)
+        proxy_monitor2 = arbiter.get_actor(aid)
+        self.assertEqual(proxy_monitor2.name, name)
+        self.assertNotEquals(proxy_monitor, proxy_monitor2)
+        #
+        # stop them
+        yield from self.stop_actors(proxy, proxy_monitor2)
+        is_alive = yield from async_while(3, proxy_monitor.is_alive)
+        self.assertFalse(is_alive)
+        is_alive = yield from async_while(3, proxy_monitor2.is_alive)
         self.assertFalse(is_alive)
 
 

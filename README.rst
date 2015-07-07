@@ -18,10 +18,10 @@ activities in different threads and/or processes.
 .. _master-build: http://travis-ci.org/quantmind/pulsar
 .. |dev-build| image:: https://img.shields.io/travis/quantmind/pulsar/dev.svg
 .. _dev-build: http://travis-ci.org/quantmind/pulsar
-.. |coverage-master| image:: https://img.shields.io/coveralls/quantmind/pulsar/master.svg
-  :target: https://coveralls.io/r/quantmind/pulsar?branch=master
-.. |coverage-dev| image:: https://img.shields.io/coveralls/quantmind/pulsar/dev.svg
-  :target: https://coveralls.io/r/quantmind/pulsar?branch=dev
+.. |coverage-master| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master
+  :target: https://coveralls.io/github/quantmind/pulsar?branch=master
+.. |coverage-dev| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=dev
+  :target: https://coveralls.io/github/quantmind/pulsar?branch=dev
 
 
 An example of a web server written with ``pulsar`` which responds with

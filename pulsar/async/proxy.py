@@ -167,10 +167,6 @@ class ActorProxyMonitor(ActorProxy):
         return self.info.get('last_notified')
 
     @property
-    def pid(self):
-        return self.impl.pid
-
-    @property
     def proxy(self):
         '''The :class:`.ActorProxy` for this monitor.'''
         return ActorProxy(self)
