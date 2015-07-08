@@ -116,7 +116,7 @@ class MetaRpcHandler(type):
         return make(cls, name, bases, attrs)
 
 
-class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
+class RpcHandler(metaclass=MetaRpcHandler):
     '''Base class for classes to handle remote procedure calls.
     '''
     serve_as = 'rpc'
