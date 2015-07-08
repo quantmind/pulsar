@@ -77,6 +77,8 @@ class Remote(metaclass=RemoteType):
             return getattr(self.proxy, name)
 
 
+# EXAMPLE APPLICATION
+
 class Calculator(Remote):
     '''A simple example
     '''
@@ -99,9 +101,9 @@ def app(arbiter):
     # Spawn a new actor
     calc = yield from Calculator.spawn(name='calc1')
     print(calc.name)
-    # Execute inner method in actor1
+    # set value in the remote calculator
     yield from calc.set_value(46)
-
+    # get value from the remote calculator
     value = yield from calc.get_value()
     print(value)
 
