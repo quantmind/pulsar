@@ -352,10 +352,6 @@ class MonitorMixin(object):
         elif actor.monitor and check_monitor:
             return actor.monitor.get_actor(aid)
 
-    @property
-    def pid(self):
-        return current_process().pid
-
     def spawn(self, monitor, kind=None, **params):
         '''Spawn a new :class:`Actor` and return its
         :class:`.ActorProxyMonitor`.
@@ -558,7 +554,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return True
 
     def create_actor(self):
-        if self.cfg.daemon:
+        if self.cfg.daemon:     # pragma    nocover
+            # Daemonize the system
             if not self.cfg.pidfile:
                 self.cfg.set('pidfile', 'pulsar.pid')
             system.daemonize(keep_fds=logger_fds())

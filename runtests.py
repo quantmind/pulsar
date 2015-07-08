@@ -27,7 +27,7 @@ def run(**params):
     runtests(**params)
 
 
-def runtests(**params):
+def runtests(debug=True, **params):
     from pulsar.apps.test import TestSuite
     from pulsar.apps.test.plugins import bench, profile
     import pulsar.utils.settings.backend    # noqa
@@ -44,6 +44,7 @@ def runtests(**params):
               plugins=(bench.BenchMark(),
                        profile.Profile()),
               pidfile='test.pid',
+              debug=debug,
               **params).start()
 
 

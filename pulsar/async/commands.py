@@ -28,6 +28,7 @@ def config(request, setget, name, *values):
         if len(values) > 1:
             raise CommandError('"config get" accept only two parameters')
         request.actor.cfg.set(name, values[0])
+        return True
     else:
         raise CommandError('config must be followed by set or get')
 
@@ -73,7 +74,7 @@ def notify(request, info):
         elif actor.cfg.debug:
             actor.logger.debug('Got notification from %s', remote_actor)
     else:
-        actor._logger.warning('notify got a bad actor')
+        actor.logger.warning('notify got a bad actor')
     return t
 
 

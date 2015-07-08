@@ -1,5 +1,6 @@
 '''Tests actor and actor proxies.'''
 import unittest
+from time import time
 
 from functools import partial
 
@@ -18,6 +19,11 @@ def spawn_actor_from_actor(actor, name):
     actor2 = yield from spawn(name=name)
     pong = yield from send(actor2, 'ping')
     assert pong == 'pong', 'no pong from actor'
+    t1 = time()
+    # cover the notify from a fron actor
+    t2 = yield from send(actor2, 'notify', {})
+    assert t2 >= t1
+
     return actor2.aid
 
 
@@ -103,6 +109,31 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         is_alive = yield from async_while(3, proxy_monitor.is_alive)
         self.assertFalse(is_alive)
         is_alive = yield from async_while(3, proxy_monitor2.is_alive)
+        self.assertFalse(is_alive)
+
+    def test_config_command(self):
+        proxy = yield from self.spawn_actor(
+            name='actor-test-config-%s' % self.concurrency)
+        arbiter = pulsar.get_actor()
+        proxy_monitor = arbiter.get_actor(proxy.aid)
+        result = yield from send(proxy, 'config', 'khjkh', 'name')
+        self.assertEqual(result, None)
+        result = yield from send(proxy, 'config', 'get', 'concurrency')
+        self.assertEqual(result, self.concurrency)
+        result = yield from send(proxy, 'config', 'get', 'concurrency', 'foo')
+        self.assertEqual(result, None)
+        #
+        result = yield from send(proxy, 'config', 'set', 'max_requests',
+                                 1000, 1000)
+        self.assertEqual(result, None)
+        result = yield from send(proxy, 'config', 'set', 'max_requests',
+                                 1000)
+        self.assertEqual(result, True)
+        result = yield from send(proxy, 'config', 'get', 'max_requests')
+        self.assertEqual(result, 1000)
+        #
+        yield from self.stop_actors(proxy)
+        is_alive = yield from async_while(3, proxy_monitor.is_alive)
         self.assertFalse(is_alive)
 
 
