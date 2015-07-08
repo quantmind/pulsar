@@ -7,6 +7,8 @@ Development
 * Bug fix in Connection ``data_received`` method. The ``data_processed``
   event was not triggered.
 * Process title does not append arbiter to the main process name.
+* Added a snippet in examples on how to build a simple framework for remote
+  objects.
 
 Ver. 1.0.2 - 2015-Jun-16
 ===========================
