@@ -138,11 +138,11 @@ class RouterType(type):
     ''':class:`Router` metaclass.'''
     def __new__(cls, name, bases, attrs):
         rule_methods = get_roule_methods(attrs.items())
-        defaults = set()
+        defaults = {}
         for key, value in list(attrs.items()):
             if isinstance(value, RouterParam):
-                defaults.add(key)
-                attrs[key] = value.value
+                defaults[key] = attrs.pop(key).value
+
         no_rule = set(attrs) - set((x[0] for x in rule_methods))
         base_rules = []
         for base in reversed(bases):
@@ -325,11 +325,21 @@ class Router(metaclass=RouterType):
         If the ``name`` is not available, retrieve it from the
         :attr:`parent` :class:`Router` if it exists.
         '''
-        if self._parent:
+        available = False
+        value = None
+
+        if name in self.defaults:
+            available = True
+            value = self.defaults[name]
+
+        if self._parent and value is None:
             try:
                 return _get_default(self._parent, name)
             except AttributeError:
                 pass
+
+        if available:
+            return value
 
         raise AttributeError("'%s' object has no attribute '%s'" %
                              (self.__class__.__name__, name))
