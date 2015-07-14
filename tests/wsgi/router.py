@@ -2,7 +2,7 @@
 import unittest
 
 import pulsar
-from pulsar.apps.wsgi import Router, RouterParam, route
+from pulsar.apps.wsgi import Router, RouterParam, route, test_wsgi_environ
 
 from examples.httpbin.manage import HttpBin
 
@@ -221,3 +221,26 @@ class TestRouter(unittest.TestCase):
         self.assertTrue(child)
         self.assertTrue(child.get.__name__, 'get_elem')
         self.assertTrue(child.post.__name__, 'post_elem')
+
+    def test_response_wrapper(self):
+
+        def response_wrapper(callable, response):
+            raise pulsar.PermissionDenied('Test Response Wrapper')
+
+        router = HttpBin('/', response_wrapper=response_wrapper)
+
+        environ = test_wsgi_environ()
+        try:
+            router(environ, None)
+        except pulsar.PermissionDenied as exc:
+            self.assertEqual(str(exc), 'Test Response Wrapper')
+        else:
+            raise RuntimeError
+
+        environ = test_wsgi_environ('/get')
+        try:
+            router(environ, None)
+        except pulsar.PermissionDenied as exc:
+            self.assertEqual(str(exc), 'Test Response Wrapper')
+        else:
+            raise RuntimeError

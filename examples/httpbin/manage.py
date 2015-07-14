@@ -126,7 +126,6 @@ class HttpBin(BaseRouter):
         html.head.title = title
         html.head.links.append('httpbin.css')
         html.head.links.append('favicon.ico', rel="icon", type='image/x-icon')
-        html.head.scripts.append('jquery')
         html.head.scripts.append('httpbin.js')
         ul = ul.render(request)
         templ, _, _ = asset('template.html')
