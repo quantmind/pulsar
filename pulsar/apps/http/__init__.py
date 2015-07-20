@@ -313,6 +313,9 @@ __all__ = ['HttpRequest', 'HttpResponse', 'HttpClient',
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
 tls_schemes = ('https', 'wss')
 
+FORM_URL_ENCODED = 'application/x-www-form-urlencoded'
+MULTIPART_FORM_DATA = 'multipart/form-data'
+
 
 def guess_filename(obj):
     """Tries to guess the filename of the given object."""
@@ -417,7 +420,8 @@ class HttpRequest(RequestBase):
 
         If ``True`` (default), defaults POST data as ``multipart/form-data``.
         Pass ``encode_multipart=False`` to default to
-        ``application/x-www-form-urlencoded``.
+        ``application/x-www-form-urlencoded``. In any case, this parameter is
+        overwritten by passing the correct content-type header.
 
     .. attribute:: history
 
@@ -698,17 +702,20 @@ class HttpRequest(RequestBase):
 
     def _encode_params(self, data):
         content_type = self.headers.get('content-type')
-        # No content type given
+        # No content type given, chose one
         if not content_type:
             if self.encode_multipart:
-                return encode_multipart_formdata(
-                    data, boundary=self.multipart_boundary,
-                    charset=self.charset)
+                content_type = MULTIPART_FORM_DATA
             else:
-                content_type = 'application/x-www-form-urlencoded'
-                body = urlencode(data).encode(self.charset)
-        elif content_type in JSON_CONTENT_TYPES:
+                content_type = FORM_URL_ENCODED
+
+        if content_type in JSON_CONTENT_TYPES:
             body = json.dumps(data).encode(self.charset)
+        elif content_type == FORM_URL_ENCODED:
+            body = urlencode(data).encode(self.charset)
+        elif content_type == MULTIPART_FORM_DATA:
+            body, content_type = encode_multipart_formdata(
+                data, boundary=self.multipart_boundary, charset=self.charset)
         else:
             raise ValueError("Don't know how to encode body for %s" %
                              content_type)

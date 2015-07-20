@@ -9,6 +9,7 @@ Development
 * Process title does not append arbiter to the main process name.
 * Added a snippet in examples on how to build a simple framework for remote
   objects.
+* Better handling of content-type headers in the HTTP client requests
 
 Ver. 1.0.2 - 2015-Jun-16
 ===========================
