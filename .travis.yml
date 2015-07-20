@@ -1,5 +1,7 @@
 language: python
 
+sudo: false
+
 python:
   - "3.4"
 
@@ -9,14 +11,13 @@ services:
 install:
   - pip install -r requirements_dev.txt
   - python setup.py install
-  - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 
 services:
   - redis-server
 
 script:
   - flake8
-  - sudo rm -rf pulsar
+  - rm -rf pulsar
   - python -m runtests --coverage
   - python -m runtests --coveralls
 
