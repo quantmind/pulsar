@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.rpc.jsonrpc &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>pulsar.apps.rpc.jsonrpc &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -56,8 +56,9 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">as_coroutine</span><span class="p">,</span> <span class="n">new_event_loop</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">as_coroutine</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span> <span class="n">multi_async</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.string</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.tools</span> <span class="kn">import</span> <span class="n">checkarity</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">Json</span>
@@ -66,10 +67,12 @@
 <span class="kn">from</span> <span class="nn">.handlers</span> <span class="kn">import</span> <span class="n">RpcHandler</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">exception</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;JSONRPC&#39;</span><span class="p">,</span> <span class="s">&#39;JsonProxy&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;JSONRPC&#39;</span><span class="p">,</span> <span class="s">&#39;JsonProxy&#39;</span><span class="p">,</span> <span class="s">&#39;JsonBatchProxy&#39;</span><span class="p">]</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.jsonrpc&#39;</span><span class="p">)</span>
+
+<span class="n">BatchResponse</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;BatchResponse&#39;</span><span class="p">,</span> <span class="s">&#39;id result exception&#39;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="JSONRPC"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.jsonrpc.JSONRPC">[docs]</a><span class="k">class</span> <span class="nc">JSONRPC</span><span class="p">(</span><span class="n">RpcHandler</span><span class="p">):</span>
@@ -87,33 +90,52 @@
     <span class="n">version</span> <span class="o">=</span> <span class="s">&#39;2.0&#39;</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">request</span><span class="p">))</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_execute_request</span><span class="p">(</span><span class="n">request</span><span class="p">))</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 
     <span class="nd">@task</span>
-    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_execute_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="nb">callable</span> <span class="o">=</span> <span class="bp">None</span>
+
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">body_data</span><span class="p">())</span>
-            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">InvalidRequest</span><span class="p">(</span>
-                    <span class="n">status</span><span class="o">=</span><span class="mi">415</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Content-Type must be application/json&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;jsonrpc&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">body_data</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">res</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_error_and_status</span><span class="p">(</span><span class="n">InvalidRequest</span><span class="p">(</span>
+                <span class="n">status</span><span class="o">=</span><span class="mi">415</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Content-Type must be application/json&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># if it&#39;s batch request</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="mi">200</span>
+
+                <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">each</span><span class="p">)</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
+                <span class="k">yield from</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">each</span><span class="o">.</span><span class="n">result</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="nd">@task</span>
+    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">procedure</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;jsonrpc&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="ow">or</span>
+                    <span class="s">&#39;id&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">InvalidRequest</span><span class="p">(</span>
                     <span class="s">&#39;jsonrpc must be supplied and equal to &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">version</span>
+                <span class="p">)</span>
             <span class="n">params</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;params&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
                 <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">params</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">params</span> <span class="ow">or</span> <span class="p">()),</span> <span class="p">{}</span>
             <span class="c">#</span>
-            <span class="nb">callable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_handler</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;method&#39;</span><span class="p">))</span>
+            <span class="n">procedure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_handler</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;method&#39;</span><span class="p">))</span>
             <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">as_coroutine</span><span class="p">(</span>
-                <span class="nb">callable</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+                <span class="n">procedure</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">exc</span>
             <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
@@ -124,28 +146,45 @@
                 <span class="n">result</span> <span class="o">=</span> <span class="n">exc</span>
                 <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
         <span class="c">#</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;id&#39;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">),</span> <span class="s">&quot;jsonrpc&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="n">code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;fault_code&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">code</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">:</span>
-                    <span class="n">msg</span> <span class="o">=</span> <span class="n">checkarity</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">discount</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">code</span> <span class="o">=</span> <span class="o">-</span><span class="mi">32602</span> <span class="k">if</span> <span class="n">msg</span> <span class="k">else</span> <span class="o">-</span><span class="mi">32603</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;JSON RPC exception&#39;</span>
-            <span class="n">code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;fault_code&#39;</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">code</span> <span class="o">==</span> <span class="o">-</span><span class="mi">32603</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="n">exc_info</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="ow">and</span> <span class="n">procedure</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">checkarity</span><span class="p">(</span><span class="n">procedure</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">discount</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-            <span class="n">error</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;code&#39;</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span>
-                     <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">msg</span><span class="p">,</span>
-                     <span class="s">&#39;data&#39;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)}</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
-            <span class="n">res</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">error</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="bp">None</span>
+
+            <span class="n">rpc_id</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span>
+
+            <span class="n">res</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_error_and_status</span><span class="p">(</span>
+                <span class="n">result</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">rpc_id</span><span class="o">=</span><span class="n">rpc_id</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="n">exc_info</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">res</span><span class="p">[</span><span class="s">&#39;result&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
-        <span class="k">return</span> <span class="n">res</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s">&#39;id&#39;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">),</span>
+                <span class="s">&#39;jsonrpc&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+                <span class="s">&#39;result&#39;</span><span class="p">:</span> <span class="n">result</span>
+            <span class="p">}</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="mi">200</span>
+
+        <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">status</span>
+
+    <span class="k">def</span> <span class="nf">_get_error_and_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rpc_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                              <span class="n">exc_info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;id&#39;</span><span class="p">:</span> <span class="n">rpc_id</span><span class="p">,</span> <span class="s">&#39;jsonrpc&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">}</span>
+
+        <span class="n">code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s">&#39;fault_code&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">code</span><span class="p">:</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="o">-</span><span class="mi">32602</span> <span class="k">if</span> <span class="n">msg</span> <span class="k">else</span> <span class="o">-</span><span class="mi">32603</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;JSON RPC exception&#39;</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="o">==</span> <span class="o">-</span><span class="mi">32603</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="n">exc_info</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;code&#39;</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span>
+            <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">msg</span><span class="p">,</span>
+            <span class="s">&#39;data&#39;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
 
 </div>
 <span class="k">class</span> <span class="nc">JsonCall</span><span class="p">:</span>
@@ -285,14 +324,104 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">kwargs</span>
 </div>
-    <span class="k">def</span> <span class="nf">loads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">loads</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">if</span> <span class="s">&#39;error&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
                 <span class="n">error</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span>
                 <span class="k">raise</span> <span class="n">exception</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;code&#39;</span><span class="p">),</span> <span class="n">error</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;result&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">obj</span></div>
+        <span class="k">return</span> <span class="n">obj</span>
+
+</div>
+<span class="k">class</span> <span class="nc">JsonBatchProxy</span><span class="p">(</span><span class="n">JsonProxy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A python Proxy class for :class:`.JSONRPC` Servers</span>
+<span class="sd">    implementing batch protocol.</span>
+
+<span class="sd">    :param url: server location</span>
+<span class="sd">    :param version: JSON-RPC server version. Default ``2.0``</span>
+<span class="sd">    :param id: optional request id, generated if not provided.</span>
+<span class="sd">        Default ``None``.</span>
+<span class="sd">    :param data: Extra data to include in all requests. Default ``None``.</span>
+<span class="sd">    :param full_response: return the full Http response rather than</span>
+<span class="sd">        just the response generator.</span>
+<span class="sd">    :param http: optional http client. If provided it must have the ``request``</span>
+<span class="sd">        method available which must be of the form::</span>
+
+<span class="sd">            http.request(url, body=..., method=...)</span>
+
+<span class="sd">        Default ``None``.</span>
+<span class="sd">    :return: generator that returns batch response</span>
+<span class="sd">        (a named tuple &#39;id result exception&#39;). If ``full_response`` is True,</span>
+<span class="sd">        then returns Http response.</span>
+
+<span class="sd">    Lets say your RPC server is running at ``http://domain.name.com/``::</span>
+
+<span class="sd">        &gt;&gt;&gt; a = JsonBatchProxy(&#39;http://domain.name.com/&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; a.add(3,4)</span>
+<span class="sd">        &#39;i86863002653c42278d7c5ff7506d84c7&#39;</span>
+<span class="sd">        &gt;&gt;&gt; a.ping()</span>
+<span class="sd">        &#39;i71a9b79eef9b48eea2fb9d691c8e897e&#39;</span>
+
+<span class="sd">        &gt;&gt;&gt; for each in (yield from a):</span>
+<span class="sd">        &gt;&gt;&gt;     print(each.id, each.result, each.exception)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">discard</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Clear pool of batch requests.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_data</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">b</span><span class="s">&#39;[&#39;</span> <span class="o">+</span> <span class="n">b</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="s">&#39;]&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_response</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">discard</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">resp</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">decode_content</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">is_error</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s">&#39;error&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                    <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">discard</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response_gen</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_response_gen</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="p">[</span><span class="n">content</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">resp</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">BatchResponse</span><span class="p">(</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="n">resp</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">],</span>
+                    <span class="n">result</span><span class="o">=</span><span class="n">JsonBatchProxy</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="p">),</span>
+                    <span class="n">exception</span><span class="o">=</span><span class="bp">None</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">BatchResponse</span><span class="p">(</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="n">resp</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">],</span> <span class="n">result</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="n">err</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">()</span>
 </pre></div>
 
           </div>

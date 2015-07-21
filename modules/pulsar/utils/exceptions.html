@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.exceptions &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>pulsar.utils.exceptions &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -55,6 +55,28 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">A list of all Exception specific to pulsar library.</span>
 <span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;PulsarException&#39;</span><span class="p">,</span>
+           <span class="s">&#39;MonitorStarted&#39;</span><span class="p">,</span>
+           <span class="s">&#39;ImproperlyConfigured&#39;</span><span class="p">,</span>
+           <span class="s">&#39;CommandError&#39;</span><span class="p">,</span>
+           <span class="s">&#39;CommandNotFound&#39;</span><span class="p">,</span>
+           <span class="s">&#39;ProtocolError&#39;</span><span class="p">,</span>
+           <span class="s">&#39;EventAlreadyRegistered&#39;</span><span class="p">,</span>
+           <span class="s">&#39;InvalidOperation&#39;</span><span class="p">,</span>
+           <span class="s">&#39;HaltServer&#39;</span><span class="p">,</span>
+           <span class="s">&#39;HTTPError&#39;</span><span class="p">,</span>
+           <span class="s">&#39;SSLError&#39;</span><span class="p">,</span>
+           <span class="c"># HTTP Exceptions</span>
+           <span class="s">&#39;HttpException&#39;</span><span class="p">,</span>
+           <span class="s">&#39;HttpRedirect&#39;</span><span class="p">,</span>
+           <span class="s">&#39;BadRequest&#39;</span><span class="p">,</span>
+           <span class="s">&#39;PermissionDenied&#39;</span><span class="p">,</span>
+           <span class="s">&#39;MethodNotAllowed&#39;</span><span class="p">,</span>
+           <span class="s">&#39;Http404&#39;</span><span class="p">,</span>
+           <span class="c">#</span>
+           <span class="s">&#39;format_traceback&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="PulsarException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.PulsarException">[docs]</a><span class="k">class</span> <span class="nc">PulsarException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -199,7 +221,11 @@
 </div>
 <div class="viewcode-block" id="MethodNotAllowed"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.MethodNotAllowed">[docs]</a><span class="k">class</span> <span class="nc">MethodNotAllowed</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``405`` status code.&#39;&#39;&#39;</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="mi">405</span></div>
+    <span class="n">status</span> <span class="o">=</span> <span class="mi">405</span>
+
+</div>
+<span class="k">def</span> <span class="nf">format_traceback</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc</span><span class="o">.</span><span class="n">__traceback__</span><span class="p">)</span>
 </pre></div>
 
           </div>

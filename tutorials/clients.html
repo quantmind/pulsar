@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Echo Server and Client &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>Echo Server and Client &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="WSGI" href="wsgi.html" />
     <link rel="prev" title="Hello World!" href="hello.html" />
@@ -49,7 +49,7 @@
         <li class="right" >
           <a href="hello.html" title="Hello World!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>  
@@ -138,7 +138,7 @@ the message ended by the <a class="reference internal" href="#examples.echo.mana
 
 <dl class="method">
 <dt id="examples.echo.manage.EchoProtocol.response">
-<code class="descname">response</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/echo/manage.html#EchoProtocol.response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoProtocol.response" title="Permalink to this definition">¶</a></dt>
+<code class="descname">response</code><span class="sig-paren">(</span><em>data</em>, <em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/echo/manage.html#EchoProtocol.response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoProtocol.response" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clients return the message so that the
 <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.on_finished" title="pulsar.async.protocols.ProtocolConsumer.on_finished"><code class="xref py py-attr docutils literal"><span class="pre">ProtocolConsumer.on_finished</span></code></a> is called back with the
 message value, while servers sends the message back to the client.</p>
@@ -155,7 +155,7 @@ message value, while servers sends the message back to the client.</p>
 <dd><p>The <a class="reference internal" href="#examples.echo.manage.EchoProtocol" title="examples.echo.manage.EchoProtocol"><code class="xref py py-class docutils literal"><span class="pre">EchoProtocol</span></code></a> used by the echo <a class="reference internal" href="#examples.echo.manage.server" title="examples.echo.manage.server"><code class="xref py py-func docutils literal"><span class="pre">server()</span></code></a>.</p>
 <dl class="method">
 <dt id="examples.echo.manage.EchoServerProtocol.response">
-<code class="descname">response</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/echo/manage.html#EchoServerProtocol.response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoServerProtocol.response" title="Permalink to this definition">¶</a></dt>
+<code class="descname">response</code><span class="sig-paren">(</span><em>data</em>, <em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/echo/manage.html#EchoServerProtocol.response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoServerProtocol.response" title="Permalink to this definition">¶</a></dt>
 <dd><p>Override <a class="reference internal" href="#examples.echo.manage.EchoProtocol.response" title="examples.echo.manage.EchoProtocol.response"><code class="xref py py-meth docutils literal"><span class="pre">response()</span></code></a> method by writing the
 <code class="docutils literal"><span class="pre">data</span></code> received back to the client.</p>
 </dd></dl>

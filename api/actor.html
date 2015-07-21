@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actors API &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>Actors API &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Event API" href="events.html" />
     <link rel="prev" title="Asynchonous API" href="async.html" />
@@ -49,7 +49,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchonous API"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -754,7 +754,7 @@ the <code class="xref py py-class docutils literal"><span class="pre">Arbiter</s
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'TERMINATE': 6, 'STARTING': 2, 'RUN': 3, 'CLOSE': 5, 'STOPPING': 4, 'INACTIVE': 1, 'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'CLOSE': 5, 'TERMINATE': 6, 'INITIAL': 0, 'STARTING': 2, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3, 'INACTIVE': 1, 'STOPPING': 4}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous HTTP client &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>Asynchronous HTTP client &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../index.html" />
     <link rel="next" title="Django Application" href="pulse.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" />
    
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -354,7 +354,7 @@ encoding.</p>
 
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpClient.client_version">
-<code class="descname">client_version</code><em class="property"> = 'pulsar/1.0.3beta0'</em><a class="headerlink" href="#pulsar.apps.http.HttpClient.client_version" title="Permalink to this definition">¶</a></dt>
+<code class="descname">client_version</code><em class="property"> = 'pulsar/1.0.4beta0'</em><a class="headerlink" href="#pulsar.apps.http.HttpClient.client_version" title="Permalink to this definition">¶</a></dt>
 <dd><p>String for the <code class="docutils literal"><span class="pre">User-Agent</span></code> header.</p>
 </dd></dl>
 
@@ -571,7 +571,8 @@ Return the <code class="xref py py-class docutils literal"><span class="pre">Fut
 <code class="descname">encode_multipart</code><a class="headerlink" href="#pulsar.apps.http.HttpRequest.encode_multipart" title="Permalink to this definition">¶</a></dt>
 <dd><p>If <code class="docutils literal"><span class="pre">True</span></code> (default), defaults POST data as <code class="docutils literal"><span class="pre">multipart/form-data</span></code>.
 Pass <code class="docutils literal"><span class="pre">encode_multipart=False</span></code> to default to
-<code class="docutils literal"><span class="pre">application/x-www-form-urlencoded</span></code>.</p>
+<code class="docutils literal"><span class="pre">application/x-www-form-urlencoded</span></code>. In any case, this parameter is
+overwritten by passing the correct content-type header.</p>
 </dd></dl>
 
 <dl class="attribute">

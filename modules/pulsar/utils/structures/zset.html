@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.structures.zset &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>pulsar.utils.structures.zset &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="Module code" href="../../../index.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -167,7 +167,7 @@
 </div>
 <div class="viewcode-block" id="Zset.clear"><a class="viewcode-back" href="../../../../api/utilities.html#pulsar.utils.structures.zset.Zset.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Clear this :class:`zset`.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sl</span> <span class="o">=</span> <span class="n">skiplist</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sl</span> <span class="o">=</span> <span class="n">Skiplist</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="Zset.rank"><a class="viewcode-back" href="../../../../api/utilities.html#pulsar.utils.structures.zset.Zset.rank">[docs]</a>    <span class="k">def</span> <span class="nf">rank</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
@@ -210,7 +210,6 @@
         <span class="k">for</span> <span class="n">zset</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">zsets</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">cls</span><span class="p">()</span>
-                <span class="n">sl</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">_sl</span>
                 <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">zset</span><span class="o">.</span><span class="n">_sl</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
                         <span class="n">result</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">score</span><span class="o">*</span><span class="n">weight</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>

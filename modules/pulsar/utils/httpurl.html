@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.httpurl &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>pulsar.utils.httpurl &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -96,10 +96,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">string</span>
-<span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">mimetypes</span>
-<span class="kn">import</span> <span class="nn">platform</span>
-<span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span><span class="p">,</span> <span class="n">md5</span>
 <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
 <span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">formatdate</span>
@@ -108,10 +105,7 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span> <span class="k">as</span> <span class="n">urllibr</span>
 <span class="kn">from</span> <span class="nn">http</span> <span class="kn">import</span> <span class="n">client</span> <span class="k">as</span> <span class="n">httpclient</span>
-<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="p">(</span><span class="n">quote</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">urlencode</span><span class="p">,</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span>
-                          <span class="n">parse_qs</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">splitport</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span>
-                          <span class="n">urljoin</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">http.client</span> <span class="kn">import</span> <span class="n">responses</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">quote</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">splitport</span>
 <span class="kn">from</span> <span class="nn">http.cookiejar</span> <span class="kn">import</span> <span class="n">CookieJar</span><span class="p">,</span> <span class="n">Cookie</span>
 <span class="kn">from</span> <span class="nn">http.cookies</span> <span class="kn">import</span> <span class="n">SimpleCookie</span>
 
@@ -130,15 +124,6 @@
 <span class="c"># The http_parser has several bugs, therefore it is switched off</span>
 <span class="n">hasextensions</span> <span class="o">=</span> <span class="bp">False</span>
 <span class="n">_Http_Parser</span> <span class="o">=</span> <span class="bp">None</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">select</span> <span class="kn">import</span> <span class="n">poll</span><span class="p">,</span> <span class="n">POLLIN</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
-    <span class="n">poll</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">select</span> <span class="kn">import</span> <span class="n">select</span>
-    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
-        <span class="n">select</span> <span class="o">=</span> <span class="bp">False</span>
 
 
 <span class="k">def</span> <span class="nf">setDefaultHttpParser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>   <span class="c"># pragma    nocover</span>
@@ -1311,7 +1296,6 @@
 
 <span class="sd">    :param cookie_dict: Dict of key/values to insert into CookieJar.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">jars</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">cookie_dicts</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">cookie_dicts</span> <span class="k">if</span> <span class="n">d</span><span class="p">))</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cookie_dicts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cookie_dicts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CookieJar</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">cookie_dicts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>

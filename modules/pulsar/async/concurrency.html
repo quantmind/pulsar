@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.concurrency &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>pulsar.async.concurrency &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -68,13 +68,13 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.tools</span> <span class="kn">import</span> <span class="n">Pidfile</span>
 
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">ActorProxyMonitor</span><span class="p">,</span> <span class="n">get_proxy</span><span class="p">,</span> <span class="n">actor_proxy_future</span>
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">set_actor</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">_StopError</span><span class="p">,</span> <span class="n">SELECTORS</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">set_actor</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">SELECTORS</span>
 <span class="kn">from</span> <span class="nn">.threads</span> <span class="kn">import</span> <span class="n">Thread</span>
 <span class="kn">from</span> <span class="nn">.mailbox</span> <span class="kn">import</span> <span class="n">MailboxClient</span><span class="p">,</span> <span class="n">MailboxProtocol</span><span class="p">,</span> <span class="n">ProxyMailbox</span><span class="p">,</span> <span class="n">create_aid</span>
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">async</span><span class="p">,</span> <span class="n">add_errback</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">Future</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">TcpServer</span>
 <span class="kn">from</span> <span class="nn">.actor</span> <span class="kn">import</span> <span class="n">Actor</span>
-<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="o">*</span>   <span class="c"># noqa</span>
 
 
 <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s">&#39;win32&#39;</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
@@ -301,7 +301,10 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">_install_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
-        <span class="n">proc_name</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">proc_name</span><span class="p">,</span> <span class="n">actor</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">proc_name</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">proc_name</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">proc_name</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">proc_name</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">set_proctitle</span><span class="p">(</span><span class="n">proc_name</span><span class="p">):</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Set process title to </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
                                <span class="n">system</span><span class="o">.</span><span class="n">get_proctitle</span><span class="p">())</span>
@@ -402,10 +405,6 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">[</span><span class="n">aid</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">actor</span><span class="o">.</span><span class="n">monitor</span> <span class="ow">and</span> <span class="n">check_monitor</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">aid</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">pid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">current_process</span><span class="p">()</span><span class="o">.</span><span class="n">pid</span>
 
     <span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Spawn a new :class:`Actor` and return its</span>
@@ -609,7 +608,8 @@
         <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">create_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">daemon</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">daemon</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
+            <span class="c"># Daemonize the system</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">pidfile</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;pidfile&#39;</span><span class="p">,</span> <span class="s">&#39;pulsar.pid&#39;</span><span class="p">)</span>
             <span class="n">system</span><span class="o">.</span><span class="n">daemonize</span><span class="p">(</span><span class="n">keep_fds</span><span class="o">=</span><span class="n">logger_fds</span><span class="p">())</span>
@@ -711,8 +711,6 @@
         <span class="k">elif</span> <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_exit_arbiter</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">monitors</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">monitors</span><span class="p">)</span>
-            <span class="n">managed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">)</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Restarts event loop to stop actors&#39;</span><span class="p">)</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exit_arbiter</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>

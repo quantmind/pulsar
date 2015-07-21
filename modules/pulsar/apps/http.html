@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.http &mdash; pulsar 1.0.3beta0 documentation</title>
+    <title>pulsar.apps.http &mdash; pulsar 1.0.4beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.3beta0',
+        VERSION:     '1.0.4beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
   
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.3beta0 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
           <li class="nav-item nav-item-2"><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -333,6 +333,8 @@
 <span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span>
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">wait_for</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">StringIO</span><span class="p">,</span> <span class="n">BytesIO</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">urlencode</span><span class="p">,</span> <span class="n">urlunparse</span>
+<span class="kn">from</span> <span class="nn">http.client</span> <span class="kn">import</span> <span class="n">responses</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">AbstractClient</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">ProtocolConsumer</span>
@@ -343,11 +345,10 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.websocket</span> <span class="kn">import</span> <span class="n">SUPPORTED_VERSIONS</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">CERT_NONE</span><span class="p">,</span> <span class="n">SSLContext</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.multipart</span> <span class="kn">import</span> <span class="n">parse_options_header</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">urlparse</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">responses</span><span class="p">,</span>
-                                  <span class="n">http_parser</span><span class="p">,</span> <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span>
-                                  <span class="n">encode_multipart_formdata</span><span class="p">,</span> <span class="n">urlencode</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">http_parser</span><span class="p">,</span> <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span>
+                                  <span class="n">encode_multipart_formdata</span><span class="p">,</span>
                                   <span class="n">Headers</span><span class="p">,</span> <span class="n">get_environ_proxies</span><span class="p">,</span>
-                                  <span class="n">choose_boundary</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span> <span class="n">request_host</span><span class="p">,</span>
+                                  <span class="n">choose_boundary</span><span class="p">,</span> <span class="n">request_host</span><span class="p">,</span>
                                   <span class="n">is_succesful</span><span class="p">,</span> <span class="n">HTTPError</span><span class="p">,</span> <span class="n">URLError</span><span class="p">,</span>
                                   <span class="n">get_hostport</span><span class="p">,</span> <span class="n">cookiejar_from_dict</span><span class="p">,</span>
                                   <span class="n">host_no_default_port</span><span class="p">,</span> <span class="n">DEFAULT_CHARSET</span><span class="p">,</span>
@@ -366,6 +367,9 @@
 
 <span class="n">scheme_host</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;scheme_host&#39;</span><span class="p">,</span> <span class="s">&#39;scheme netloc&#39;</span><span class="p">)</span>
 <span class="n">tls_schemes</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;https&#39;</span><span class="p">,</span> <span class="s">&#39;wss&#39;</span><span class="p">)</span>
+
+<span class="n">FORM_URL_ENCODED</span> <span class="o">=</span> <span class="s">&#39;application/x-www-form-urlencoded&#39;</span>
+<span class="n">MULTIPART_FORM_DATA</span> <span class="o">=</span> <span class="s">&#39;multipart/form-data&#39;</span>
 
 
 <span class="k">def</span> <span class="nf">guess_filename</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
@@ -471,7 +475,8 @@
 
 <span class="sd">        If ``True`` (default), defaults POST data as ``multipart/form-data``.</span>
 <span class="sd">        Pass ``encode_multipart=False`` to default to</span>
-<span class="sd">        ``application/x-www-form-urlencoded``.</span>
+<span class="sd">        ``application/x-www-form-urlencoded``. In any case, this parameter is</span>
+<span class="sd">        overwritten by passing the correct content-type header.</span>
 
 <span class="sd">    .. attribute:: history</span>
 
@@ -752,17 +757,20 @@
 
     <span class="k">def</span> <span class="nf">_encode_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="n">content_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;content-type&#39;</span><span class="p">)</span>
-        <span class="c"># No content type given</span>
+        <span class="c"># No content type given, chose one</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">content_type</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_multipart</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">encode_multipart_formdata</span><span class="p">(</span>
-                    <span class="n">data</span><span class="p">,</span> <span class="n">boundary</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multipart_boundary</span><span class="p">,</span>
-                    <span class="n">charset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">charset</span><span class="p">)</span>
+                <span class="n">content_type</span> <span class="o">=</span> <span class="n">MULTIPART_FORM_DATA</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;application/x-www-form-urlencoded&#39;</span>
-                <span class="n">body</span> <span class="o">=</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">charset</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">content_type</span> <span class="ow">in</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">:</span>
+                <span class="n">content_type</span> <span class="o">=</span> <span class="n">FORM_URL_ENCODED</span>
+
+        <span class="k">if</span> <span class="n">content_type</span> <span class="ow">in</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">:</span>
             <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">charset</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">content_type</span> <span class="o">==</span> <span class="n">FORM_URL_ENCODED</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">charset</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">content_type</span> <span class="o">==</span> <span class="n">MULTIPART_FORM_DATA</span><span class="p">:</span>
+            <span class="n">body</span><span class="p">,</span> <span class="n">content_type</span> <span class="o">=</span> <span class="n">encode_multipart_formdata</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">,</span> <span class="n">boundary</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multipart_boundary</span><span class="p">,</span> <span class="n">charset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">charset</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Don&#39;t know how to encode body for </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span>
                              <span class="n">content_type</span><span class="p">)</span>
