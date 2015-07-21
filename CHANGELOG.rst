@@ -1,4 +1,4 @@
-Development
+Ver. 1.0.3 - 2015-Jul-21
 ===========================
 * Flake8 on all codebase
 * Added JSON-RPC 2.0 Batch - part of specification (by artemmus)
@@ -10,6 +10,7 @@ Development
 * Added a snippet in examples on how to build a simple framework for remote
   objects.
 * Better handling of content-type headers in the HTTP client requests
+* Test coverage at 87%
 
 Ver. 1.0.2 - 2015-Jun-16
 ===========================
