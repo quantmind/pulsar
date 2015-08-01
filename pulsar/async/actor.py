@@ -61,7 +61,7 @@ def send(target, action, *args, **params):
 
 
 def spawn(**kwargs):
-    '''Spawn a new :class:`.Actor` and return an :class:`.ActorProxyFuture`.
+    '''Spawn a new :class:`.Actor` and return an :class:`~asyncio.Future`.
 
     **Parameter kwargs**
 
@@ -72,7 +72,7 @@ def spawn(**kwargs):
     * :ref:`actor hooks <actor-hooks>` such as ``start``, ``stopping``
       and ``periodic_task``
 
-    :return: an :class:`.ActorProxyFuture`.
+    :return: an :class:`~asyncio.Future`.
 
     A typical usage::
 
