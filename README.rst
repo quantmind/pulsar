@@ -51,9 +51,9 @@ connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.
 
-Pulsar uses the multiprocessing_ module from the standard python library and
-it can be configured to run in multi-processing mode, multi-threading mode or
-a combination of the two.
+Pulsar uses the asyncio_ and multiprocessing_ modules from the standard python
+library and it can be configured to run in multi-processing mode,
+multi-threading mode or a combination of the two.
 
 Installing
 ============
@@ -171,7 +171,7 @@ License
 This software is licensed under the BSD_ 3-clause License. See the LICENSE
 file in the top distribution directory for the full license text.
 
-.. _asyncio: https://pypi.python.org/pypi/asyncio
+.. _asyncio: https://docs.python.org/3/library/asyncio.html
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
 .. _`actors primitive`: http://en.wikipedia.org/wiki/Actor_model
 .. _setproctitle: http://code.google.com/p/py-setproctitle/

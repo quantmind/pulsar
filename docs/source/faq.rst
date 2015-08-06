@@ -63,8 +63,8 @@ Logging
 log level
 ~~~~~~~~~~~~~~~~
 
-Pulsar uses the :ref:`log-level <setting_log-level>` setting to control
-logging level on the command line or on your :ref:`config <setting_config`
+Pulsar uses the :ref:`log-level <setting-loglevel>` setting to control
+logging level on the command line or on your :ref:`config <setting-config>`
 file::
 
     python script.py --log-level debug
@@ -81,4 +81,3 @@ How is inter-actor message passing implemented?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Check the :ref:`actor messages documentation <tutorials-messages>`.
-

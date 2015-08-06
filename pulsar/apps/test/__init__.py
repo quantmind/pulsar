@@ -159,7 +159,7 @@ Options
 
 All standard :ref:`settings <settings>` can be applied to the test application.
 In addition, the following options are
-:ref:`test-suite specific <setting-section-test>`:
+:ref:`test suite specific <setting-section-test>`:
 
 .. _apps-test-sequential:
 
@@ -191,11 +191,10 @@ is executed by the :class:`.TestSuite` at a given time. Indeed, several
 :class:`~unittest.TestCase` are executed at the same time and therefore
 each one of the may have one test function running.
 
-In order to run only one function at any time, the ``sequential``
-option should be used in conjunction with
-:ref:`--concurrent-tasks <setting-concurrent_tasks>` option::
+In order to run only one test function at any time, the ``sequential``
+option should be used::
 
-    python runtests.py --sequential --concurrent-tasks 1
+    python runtests.py --sequential
 
 list labels
 ~~~~~~~~~~~~~~~~~~~

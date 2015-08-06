@@ -39,3 +39,11 @@ located in the :mod:`pulsar.apps` module.
    apps/test
    apps/ds
    apps/data/index
+
+Legacy
+=========
+
+.. toctree::
+   :maxdepth: 1
+
+   oldchangelog

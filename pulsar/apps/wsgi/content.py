@@ -1,5 +1,5 @@
 '''The :mod:`pulsar.apps.wsgi.content` introduces several utility classes for
-handling asynchronous content within a :ref:`WSGI handler <wsgi-async> or
+handling asynchronous content within a :ref:`WSGI handler <wsgi-async>` or
 :ref:`middleware <wsgi-middleware>`.
 
 These classes can operate instead or in conjunction with a template engine,

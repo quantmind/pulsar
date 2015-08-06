@@ -1,9 +1,7 @@
 '''
 Tha main component for pulsar datastore clients is the :class:`.Store`
 class which encapsulates the essential API for communicating and executing
-commands on remote servers.
-A :class:`.Store` can also implement several methods for managing
-the higher level :ref:`object data mapper <odm>`.
+asynchronous commands on remote servers.
 '''
 from abc import ABCMeta, abstractmethod
 from urllib.parse import urlsplit, parse_qsl, urlunparse, urlencode
@@ -125,33 +123,6 @@ class Store(metaclass=ABCMeta):
         return noop()
 
     def database_all(self, dbname=None):
-        return noop()
-
-    def database_drop(self, dbname=None):
-        '''Drop a database ``dbname``
-
-        By default it does nothing, stores must implement this method
-        only if they support database deletion.
-
-        :param dbname: optional database name. If not supplied a
-            database named :attr:`database` is deleted.
-        '''
-        return noop()
-
-    def table_create(self, table_name, **kw):
-        '''Create the table for ``model``.
-
-        This method is used by the :ref:`object data mapper <odm>`.
-        By default it does nothing.
-        '''
-        return noop()
-
-    def table_drop(self, table_name, **kw):
-        '''Drop the table for ``model``.
-
-        This method is used by the :ref:`object data mapper <odm>`.
-        By default it does nothing.
-        '''
         return noop()
 
     def table_all(self, **kw):
