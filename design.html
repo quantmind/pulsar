@@ -71,42 +71,6 @@ as building block.</li>
 <li>The second layer, built on top of the first one, is based on the higher level
 <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> class.</li>
 </ul>
-<div class="section" id="async-objects">
-<span id="async-object"></span><h2>Async Objects<a class="headerlink" href="#async-objects" title="Permalink to this headline">¶</a></h2>
-<p>Introduced in pulsar 0.8, an asynchronous object is any instance which exposes
-the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a> attribute.
-This attribute is the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a> where
-the instance performs its asynchronous operations, whatever they may be.</p>
-<p>For example this is a class for valid async objects:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">new_event_loop</span>
-
-
-<span class="k">class</span> <span class="nc">SimpleAsyncObject</span><span class="p">:</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span> <span class="ow">or</span> <span class="n">new_event_loop</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Properties:</p>
-<ul class="simple">
-<li>Several classes in pulsar are async objects, for example: <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a>,
-<a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><code class="xref py py-class docutils literal"><span class="pre">Connection</span></code></a>, <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><code class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></code></a>, <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
-and so forth</li>
-<li>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> is an async object</li>
-<li>However an async object <strong>is not</strong> necessarily a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></li>
-<li>When they use and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><code class="xref py py-func docutils literal"><span class="pre">task()</span></code></a> decorators for their methods,
-<a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a> attribute is used to run the method</li>
-<li>Pulsar provides the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject" title="pulsar.async.futures.AsyncObject"><code class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></code></a> signature class,
-however it is not a requirement to derive from it</li>
-</ul>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">An async object can also run its asynchronous methods in a synchronous
-fashion. To do that, one should pass a bright new event loop during
-initialisation. Check <a class="reference internal" href="tutorials/sync.html#tutorials-synchronous"><span>synchronous components</span></a>
-for further details.</p>
-</div>
-</div>
 <div class="section" id="actors">
 <span id="design-actor"></span><h2>Actors<a class="headerlink" href="#actors" title="Permalink to this headline">¶</a></h2>
 <p>An <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> is the atom of pulsar&#8217;s concurrent computation,
@@ -206,25 +170,7 @@ connections can be served simultaneously.</p>
 <span id="cpubound"></span><h3>CPU-bound<a class="headerlink" href="#cpu-bound" title="Permalink to this headline">¶</a></h3>
 <p>Another way for an actor to function is to use its <code class="xref py py-meth docutils literal"><span class="pre">executor()</span></code>
 to perform CPU intensive operations, such as calculations, data manipulation
-or whatever you need them to do.
-CPU-bound <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> have the following properties:</p>
-<ul class="simple" id="request-loop">
-<li>Their <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></code></a> listen for requests on file descriptors
-as usual and it is running (and installed) in the
-<a class="reference internal" href="#actor-io-thread"><span>actor io thread</span></a> as usual.</li>
-<li>The threads in the <code class="xref py py-meth docutils literal"><span class="pre">executor()</span></code> install an additional
-event loop which listen for events on a message queue.
-Pulsar refers to this specialised event loop as the <strong>request loop</strong> and
-it is an instance of <code class="xref py py-class docutils literal"><span class="pre">QueueEventLoop</span></code>.</li>
-</ul>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">A CPU-bound actor controls more than one thread, the <a class="reference internal" href="#actor-io-thread"><span>IO thread</span></a>
-which runs the actor main event loop for listening to events on file descriptors and
-one or more threads for performing CPU-intensive calculations. These CPU-threads
-have installed two events loops: the event loop running on the
-<a class="reference internal" href="#actor-io-thread"><span>IO thread</span></a> and the <a class="reference internal" href="#request-loop"><span>request-loop</span></a>.</p>
-</div>
+or whatever you need them to do.</p>
 </div>
 <div class="section" id="periodic-task">
 <span id="actor-periodic-task"></span><h3>Periodic task<a class="headerlink" href="#periodic-task" title="Permalink to this headline">¶</a></h3>
@@ -406,6 +352,42 @@ it is usually unwise to treat these the same as most other exceptions.)</p>
 <span id="design-application"></span><h2>Application Framework<a class="headerlink" href="#application-framework" title="Permalink to this headline">¶</a></h2>
 <p>To aid the development of applications running on top of pulsar concurrent
 framework, the library ships with the <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> class.</p>
+</div>
+<div class="section" id="async-objects">
+<span id="async-object"></span><h2>Async Objects<a class="headerlink" href="#async-objects" title="Permalink to this headline">¶</a></h2>
+<p>An asynchronous object is any instance which exposes
+the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a> attribute.
+This attribute is the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a> where
+the instance performs its asynchronous operations, whatever they may be.</p>
+<p>For example this is a class for valid async objects:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">new_event_loop</span>
+
+
+<span class="k">class</span> <span class="nc">SimpleAsyncObject</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span> <span class="ow">or</span> <span class="n">new_event_loop</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Properties:</p>
+<ul class="simple">
+<li>Several classes in pulsar are async objects, for example: <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a>,
+<a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><code class="xref py py-class docutils literal"><span class="pre">Connection</span></code></a>, <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><code class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></code></a>, <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
+and so forth</li>
+<li>A <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> is an async object</li>
+<li>However an async object <strong>is not</strong> necessarily a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></li>
+<li>When they use and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><code class="xref py py-func docutils literal"><span class="pre">task()</span></code></a> decorators for their methods,
+<a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject._loop" title="pulsar.async.futures.AsyncObject._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a> attribute is used to run the method</li>
+<li>Pulsar provides the <a class="reference internal" href="api/async.html#pulsar.async.futures.AsyncObject" title="pulsar.async.futures.AsyncObject"><code class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></code></a> signature class,
+however it is not a requirement to derive from it</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">An async object can also run its asynchronous methods in a synchronous
+fashion. To do that, one should pass a bright new event loop during
+initialisation. Check <a class="reference internal" href="tutorials/sync.html#tutorials-synchronous"><span>synchronous components</span></a>
+for further details.</p>
+</div>
 </div>
 </div>
 
