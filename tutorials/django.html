@@ -84,7 +84,8 @@ This example uses the <a class="reference internal" href="../apps/pulse.html#app
 <p>By default, messages from connected (websocket) clients are synchronised via
 the <a class="reference internal" href="../apps/ds.html#pulsar-data-store"><span>pulsar data store</span></a> which starts when the django
 site starts. It is possible to specify a different data store via the
-<a class="reference internal" href="../settings.html#setting-data-store"><span>data-store option</span></a>.For example, it is possible to use <a class="reference external" href="http://redis.io/">redis</a> as an alternative data store
+<a class="reference internal" href="../settings.html#setting-data-store"><span>data-store option</span></a>.For example, it is possible
+to use <a class="reference external" href="http://redis.io/">redis</a> as an alternative data store
 by issuing the following start up command:</p>
 <div class="highlight-python"><div class="highlight"><pre>python manage.py pulse --data-store redis://127.0.0.1:6379/3
 </pre></div>

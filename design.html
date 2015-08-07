@@ -247,9 +247,8 @@ attribute.</p>
 <span class="n">ap</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">(</span><span class="n">periodic_task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The value returned by <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><code class="xref py py-func docutils literal"><span class="pre">spawn()</span></code></a> is an <code class="xref py py-class docutils literal"><span class="pre">ActorProxyFuture</span></code>,
-a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> with the <code class="xref py py-attr docutils literal"><span class="pre">,</span> <span class="pre">which</span> <span class="pre">has</span> <span class="pre">the</span> <span class="pre">actor</span> <span class="pre">id</span> <span class="pre">``aid`</span></code>
-and it is called back once the remote actor has started.
+<p>The value returned by <a class="reference internal" href="api/actor.html#pulsar.async.actor.spawn" title="pulsar.async.actor.spawn"><code class="xref py py-func docutils literal"><span class="pre">spawn()</span></code></a> is an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>,
+called back once the remote actor has started.
 The callback will be an <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><code class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></code></a>, a lightweight proxy
 for the remote actor.</p>
 <p>When spawning from an actor other than the <a class="reference internal" href="#design-arbiter"><span>arbiter</span></a>,
