@@ -1,4 +1,6 @@
 
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -11,6 +13,7 @@
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -627,6 +630,12 @@
   <dt><a href="tutorials/chat.html#examples.chat.manage.Chat">Chat (class in examples.chat.manage)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="tutorials/django.html#examples.djchat.djchat.views.Chat">(class in examples.djchat.djchat.views)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="apps/test.html#pulsar.apps.test.utils.check_server">check_server() (in module pulsar.apps.test.utils)</a>
   </dt>
@@ -1042,10 +1051,6 @@
   </dt>
 
       
-  <dt><a href="apps/data/clients.html#pulsar.apps.data.store.Store.database_drop">database_drop() (pulsar.apps.data.store.Store method)</a>
-  </dt>
-
-      
   <dt><a href="tutorials/udp.html#examples.echoudp.manage.EchoUdpProtocol.datagram_received">datagram_received() (examples.echoudp.manage.EchoUdpProtocol method)</a>
   </dt>
 
@@ -1057,12 +1062,12 @@
   <dt><a href="api/protocols.html#pulsar.async.protocols.DatagramServer">DatagramServer (class in pulsar.async.protocols)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/http.html#pulsar.apps.http.HttpResponse.decode_content">decode_content() (pulsar.apps.http.HttpResponse method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="api/utilities.html#pulsar.utils.config.Setting.default">default (pulsar.utils.config.Setting attribute)</a>
   </dt>
@@ -1207,12 +1212,12 @@
   <dt><a href="api/events.html#pulsar.async.events.EventHandler.events">events (pulsar.async.events.EventHandler attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="tutorials/index.html#module-examples">examples (module)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="tutorials/calculator.html#module-examples.calculator.manage">examples.calculator.manage (module)</a>
   </dt>
@@ -1222,7 +1227,11 @@
   </dt>
 
       
-  <dt><a href="tutorials/django.html#module-examples.djchat.manage">examples.djchat.manage (module)</a>
+  <dt><a href="tutorials/django.html#module-examples.djchat">examples.djchat (module)</a>
+  </dt>
+
+      
+  <dt><a href="tutorials/django.html#module-examples.djchat.djchat.views">examples.djchat.djchat.views (module)</a>
   </dt>
 
       
@@ -1465,10 +1474,14 @@
   <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Head.get_meta">get_meta() (pulsar.apps.wsgi.content.Head method)</a>
   </dt>
 
+      
+  <dt><a href="apps/rpc.html#pulsar.apps.rpc.jsonrpc.JsonProxy.get_params">get_params() (pulsar.apps.rpc.jsonrpc.JsonProxy method)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="apps/rpc.html#pulsar.apps.rpc.jsonrpc.JsonProxy.get_params">get_params() (pulsar.apps.rpc.jsonrpc.JsonProxy method)</a>
+  <dt><a href="tutorials/django.html#examples.djchat.djchat.views.Chat.get_pubsub">get_pubsub() (examples.djchat.djchat.views.Chat method)</a>
   </dt>
 
       
@@ -2068,9 +2081,15 @@
   </dt>
 
       
-  <dt><a href="apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler.middleware">middleware (pulsar.apps.wsgi.handlers.WsgiHandler attribute)</a>
+  <dt><a href="tutorials/django.html#examples.djchat.djchat.views.middleware">middleware (class in examples.djchat.djchat.views)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler.middleware">(pulsar.apps.wsgi.handlers.WsgiHandler attribute)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.middleware_in_executor">middleware_in_executor() (in module pulsar.apps.wsgi.middleware)</a>
   </dt>
@@ -2222,9 +2241,15 @@
   </dt>
 
       
-  <dt><a href="apps/websockets.html#pulsar.apps.ws.WS.on_close">on_close() (pulsar.apps.ws.WS method)</a>
+  <dt><a href="tutorials/django.html#examples.djchat.djchat.views.Chat.on_close">on_close() (examples.djchat.djchat.views.Chat method)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="apps/websockets.html#pulsar.apps.ws.WS.on_close">(pulsar.apps.ws.WS method)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="api/application.html#pulsar.apps.Configurator.on_config">on_config() (pulsar.apps.Configurator method)</a>
   </dt>
@@ -2253,6 +2278,10 @@
 
       <dd><dl>
         
+  <dt><a href="tutorials/django.html#examples.djchat.djchat.views.Chat.on_message">(examples.djchat.djchat.views.Chat method)</a>
+  </dt>
+
+        
   <dt><a href="apps/websockets.html#pulsar.apps.ws.WS.on_message">(pulsar.apps.ws.WS method)</a>
   </dt>
 
@@ -2264,6 +2293,10 @@
   </dt>
 
       <dd><dl>
+        
+  <dt><a href="tutorials/django.html#examples.djchat.djchat.views.Chat.on_open">(examples.djchat.djchat.views.Chat method)</a>
+  </dt>
+
         
   <dt><a href="apps/websockets.html#pulsar.apps.ws.WS.on_open">(pulsar.apps.ws.WS method)</a>
   </dt>
@@ -3664,14 +3697,6 @@
   </dt>
 
       
-  <dt><a href="apps/data/clients.html#pulsar.apps.data.store.Store.table_create">table_create() (pulsar.apps.data.store.Store method)</a>
-  </dt>
-
-      
-  <dt><a href="apps/data/clients.html#pulsar.apps.data.store.Store.table_drop">table_drop() (pulsar.apps.data.store.Store method)</a>
-  </dt>
-
-      
   <dt><a href="apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.tag">tag (pulsar.apps.wsgi.content.Html attribute)</a>
   </dt>
 
@@ -3711,12 +3736,12 @@
   <dt><a href="apps/test.html#pulsar.apps.test.loader.TestLoader.testmodules">testmodules() (pulsar.apps.test.loader.TestLoader method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/test.html#pulsar.apps.test.plugins.base.TestPlugin">TestPlugin (class in pulsar.apps.test.plugins.base)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="apps/test.html#pulsar.apps.test.result.TestResult">TestResult (class in pulsar.apps.test.result)</a>
   </dt>
@@ -4075,6 +4100,9 @@
 <li class="toctree-l1"><a class="reference internal" href="apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -70,7 +73,7 @@ check out the <a class="reference internal" href="../design.html#design-actor"><
 <dl class="function">
 <dt id="pulsar.async.actor.spawn">
 <code class="descclassname">pulsar.async.actor.</code><code class="descname">spawn</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/actor.html#spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.spawn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spawn a new <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> and return an <code class="xref py py-class docutils literal"><span class="pre">ActorProxyFuture</span></code>.</p>
+<dd><p>Spawn a new <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> and return an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>.</p>
 <p><strong>Parameter kwargs</strong></p>
 <p>These optional parameters are:</p>
 <ul class="simple">
@@ -83,7 +86,7 @@ and <code class="docutils literal"><span class="pre">periodic_task</span></code>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an <code class="xref py py-class docutils literal"><span class="pre">ActorProxyFuture</span></code>.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>.</td>
 </tr>
 </tbody>
 </table>
@@ -754,7 +757,7 @@ the <code class="xref py py-class docutils literal"><span class="pre">Arbiter</s
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'CLOSE': 5, 'TERMINATE': 6, 'INITIAL': 0, 'STARTING': 2, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3, 'INACTIVE': 1, 'STOPPING': 4}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3, 'STARTING': 2, 'CLOSE': 5, 'TERMINATE': 6, 'INACTIVE': 1, 'INITIAL': 0, 'STOPPING': 4}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>
@@ -837,6 +840,9 @@ periodic task.</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

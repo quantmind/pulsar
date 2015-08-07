@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -63,9 +66,7 @@
 <span id="datastore-clients"></span><span id="data-stores"></span><h1>Datastore Clients<a class="headerlink" href="#module-pulsar.apps.data.store" title="Permalink to this headline">¶</a></h1>
 <p>Tha main component for pulsar datastore clients is the <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
 class which encapsulates the essential API for communicating and executing
-commands on remote servers.
-A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> can also implement several methods for managing
-the higher level <span class="xref std std-ref">object data mapper</span>.</p>
+asynchronous commands on remote servers.</p>
 <div class="section" id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
 <p>To create a data <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> client one uses the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><code class="xref py py-func docutils literal"><span class="pre">create_store()</span></code></a>
@@ -114,13 +115,6 @@ to be covered:</p>
 <li><code class="xref py py-meth docutils literal"><span class="pre">connect()</span></code> to create a new connection</li>
 <li><code class="xref py py-meth docutils literal"><span class="pre">execute()</span></code> to execute a command on the store server</li>
 </ul>
-<p>These additional methods must be implemented only if the store supports
-the <span class="xref std std-ref">object data mapper</span>:</p>
-<ul class="simple">
-<li><code class="xref py py-meth docutils literal"><span class="pre">execute_transaction()</span></code> execute a transaction</li>
-</ul>
-<p>A new store needs to be registered via the <a class="reference internal" href="#pulsar.apps.data.store.register_store" title="pulsar.apps.data.store.register_store"><code class="xref py py-func docutils literal"><span class="pre">register_store()</span></code></a>
-function.</p>
 <p>All registered data stores are stored in the <code class="docutils literal"><span class="pre">data_stores</span></code> dictionary:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">data_stores</span>
 </pre></div>
@@ -136,8 +130,7 @@ a valid <a class="reference internal" href="#pulsar.apps.data.store.PubSub" titl
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <p>The main component of the data store API is the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><code class="xref py py-func docutils literal"><span class="pre">create_store()</span></code></a>
 function which creates in one function call a new <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a>
-object which can be used to interact directly with the backend database
-or indirectly via the <span class="xref std std-ref">object data mapper</span>.</p>
+object which can be used to interact with the backend database.</p>
 <div class="section" id="create-store">
 <h3>Create store<a class="headerlink" href="#create-store" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
@@ -156,11 +149,6 @@ or indirectly via the <span class="xref std std-ref">object data mapper</span>.<
 </div>
 <p><a class="reference internal" href="stores.html#store-redis"><span>Redis</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre>redis://user:password@127.0.0.1:6500/11?namespace=testdb
-</pre></div>
-</div>
-<p><span class="xref std std-ref">CouchDb</span>:</p>
-<div class="highlight-python"><div class="highlight"><pre>couchdb://user:password@127.0.0.1:6500/testdb
-https+couchdb://user:password@127.0.0.1:6500/testdb
 </pre></div>
 </div>
 </li>
@@ -245,39 +233,6 @@ database with <a class="reference internal" href="#pulsar.apps.data.store.Store.
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.database_drop">
-<code class="descname">database_drop</code><span class="sig-paren">(</span><em>dbname=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.database_drop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.database_drop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Drop a database <code class="docutils literal"><span class="pre">dbname</span></code></p>
-<p>By default it does nothing, stores must implement this method
-only if they support database deletion.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dbname</strong> &#8211; optional database name. If not supplied a
-database named <a class="reference internal" href="#pulsar.apps.data.store.Store.database" title="pulsar.apps.data.store.Store.database"><code class="xref py py-attr docutils literal"><span class="pre">database</span></code></a> is deleted.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.table_create">
-<code class="descname">table_create</code><span class="sig-paren">(</span><em>table_name</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.table_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.table_create" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create the table for <code class="docutils literal"><span class="pre">model</span></code>.</p>
-<p>This method is used by the <span class="xref std std-ref">object data mapper</span>.
-By default it does nothing.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.data.store.Store.table_drop">
-<code class="descname">table_drop</code><span class="sig-paren">(</span><em>table_name</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store.table_drop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store.table_drop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Drop the table for <code class="docutils literal"><span class="pre">model</span></code>.</p>
-<p>This method is used by the <span class="xref std std-ref">object data mapper</span>.
-By default it does nothing.</p>
 </dd></dl>
 
 <dl class="method">
@@ -464,6 +419,9 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.data.st
 <li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

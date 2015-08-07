@@ -24,34 +24,51 @@ Pulsar loves python as much as the minion in the image!
 
 Logos
 =======
-
 Pulsar needs a logo, can you design one for us?
 
 Logo 1
 ~~~~~~~~~~
+By Luca Sbardella
 
 .. image:: _static/pulsar.png
-   :width: 300 px
+   :width: 200 px
 
 
 Logo 2
 ~~~~~~~~~~
+By Luca Sbardella
 
 Inspired from one of the pulsar oscillator images
 
 .. image:: _static/pulsar3.png
-   :width: 300 px
+   :width: 200 px
 
 
 Logo 3
 ~~~~~~~~~~
+By Luca Sbardella
 
 .. image:: _static/pulsar-logo.svg
-   :width: 300 px
-
-
-Banner
-~~~~~~~~~~
+   :width: 200 px
 
 .. image:: _static/pulsar-banner.svg
-   :width: 500 px
+  :width: 600 px
+
+Logo 4
+~~~~~~~~~~
+By Ralf Hölzemer
+
+A worm's eye view with
+a spiral to symbolize the rotational energy of a Pulsar.
+Creative_ commons license.
+
+.. image:: _static/pulsar_logos/pulsar_colored_logo_only.svg
+  :width: 200 px
+
+.. image:: _static/pulsar_logos/pulsar_monochome_logo_only.svg
+   :width: 200 px
+
+.. image:: _static/pulsar_logos/pulsar_colored_id_horizontal.svg
+  :width: 600 px
+
+.. _Creative: http://creativecommons.org/licenses/by-nc/3.0/

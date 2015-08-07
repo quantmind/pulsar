@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -64,11 +67,17 @@ third-party libraries into pulsar asynchronous framework.
 It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet</a> library.</p>
 <p>If you want to understand how integration works but you are unfamiliar with
 greenlets, check out the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet documentation</a> first.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><a class="reference external" href="https://github.com/quantmind/pulsar-odm">pulsar-odm</a> is a separate library, maintained by the same authors of
+pulsar, which provides asynchronous object data mapping with
+<a class="reference external" href="https://docs.python.org/3/library/asyncio.html">asyncio</a> and <a class="reference external" href="http://www.sqlalchemy.org/">sqlalchemy</a> and uses pulsar greenlet extensions.</p>
+</div>
 <p>This application <strong>does not use monkey patching</strong> and therefore it
 works quite differently from implicit asynchronous libraries such as
 <a class="reference external" href="http://www.gevent.org/">gevent</a>. All it does, it provides the user with a set
 of utilities for <strong>explicitly</strong> transferring execution from one greenlet
-to a another which execute the blocking call in a greenlet-friendly way.</p>
+to a another which executes the blocking call in a greenlet-friendly way.</p>
 <p>The caller has the responsibility that the blocking call is greenlet-friendly,
 i.e. it transfers the control of execution back to the parent greenlet when
 needed.</p>
@@ -276,6 +285,9 @@ a RuntimeError will be raised.</p>
 <li class="toctree-l1"><a class="reference internal" href="test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

@@ -1,5 +1,8 @@
+Changelog Pre Pulsar 1.0
+============================
+
 Ver. 0.9.2 - 2014-Nov-18
-===========================
+---------------------------------------------------
 * A minor release with several bug fixes.
 * Bug fix in :class:`.Links`
 * A more flexible implementation of the :meth:`~.Router.make_router` method
@@ -7,7 +10,7 @@ Ver. 0.9.2 - 2014-Nov-18
   its routes.
 
 Ver. 0.9.1 - 2014-Oct-14
-===========================
+---------------------------------------------------
 * Several fixes on :class:`.Html` initialisation and the :meth:`.Html.attr`
   method
 * Critical bug fix in :class:`.WsgiHandler` when passing response middleware
@@ -19,7 +22,7 @@ Ver. 0.9.1 - 2014-Oct-14
 * Fixed :ref:`--daemon <setting-daemon>` mode
 
 Ver. 0.9.0 - 2014-Aug-04
-===========================
+---------------------------------------------------
 * Works with trollius_ 1.0.1 which is now a dependency for all supported
   python versions
 * Added :class:`.FlowControl` and :class:`.Timeout` protocol mixins,
@@ -60,7 +63,7 @@ Ver. 0.9.0 - 2014-Aug-04
 
 
 Ver. 0.8.4 - 2014-Jul-07
-===========================
+---------------------------------------------------
 * Several bug fixes in wsgi :class:`.Router`
 * Added :attr:`.Route.name` attribute
 * :class:`.WsgiResponse` does not send cookies back to the client by default
@@ -68,7 +71,7 @@ Ver. 0.8.4 - 2014-Jul-07
   windows
 
 Ver. 0.8.3 - 2014-Jun-23
-===========================
+---------------------------------------------------
 * Fixed critical bug in python 2 for :func:`.middleware_in_executor`
 * Set trollius logger to warning by default (same as asyncio)
 * Added :meth:`.WsgiRequest.redirect` and :meth:`.Router.redirect` methods
@@ -76,8 +79,7 @@ Ver. 0.8.3 - 2014-Jun-23
 * Renamed css container as :class:`.Links`
 
 Ver. 0.8.2 - 2014-May-30
-===========================
-  :mod:`~pulsar.apps.test` application
+---------------------------------------------------
 * :class:`.ProtocolConsumer` has its own ``_loop`` attribute rather than
   obtaining indirectly from the underling :class:`.Connection`.
   This avoids several logging errors when a connection is dropped
@@ -98,7 +100,7 @@ Ver. 0.8.2 - 2014-May-30
 * pulsar can be imported and used (with limited scope) in the google appengine
 
 Ver. 0.8.1 - 2014-Apr-14
-===========================
+---------------------------------------------------
 * Added :mod:`pulsar.apps.greenio` application for writing asynchronous code
   using the greenlet_ library.
 * Moved :class:`.PulsarDS` server into its own :mod:`pulsar.apps.ds`
@@ -116,7 +118,7 @@ Ver. 0.8.1 - 2014-Apr-14
   :class:`~asyncio.Future`.
 
 Ver. 0.8.0 - 2014-Mar-06
-===========================
+---------------------------------------------------
 * **Backward incompatible version**
 
 * **Asyncio Integration**
@@ -210,14 +212,14 @@ Ver. 0.8.0 - 2014-Mar-06
 * **1,166 regression tests**, **91% coverage**.
 
 Ver. 0.7.4 - 2013-Dec-22
-===========================
+---------------------------------------------------
 * A bug fix release.
 * Fixes an issue with Cookie handling in the wsgi application.
 * Don't log errors when writing back to a stale client
 * **822 regression tests**, **91% coverage**
 
 Ver. 0.7.3 - 2013-Dec-12
-===========================
+---------------------------------------------------
 * A bug fix release.
 * ``setup.py`` only import pulsar version and skip the rest
 * The :func:`.wait_for_body_middleware` read the HTTP body only without
@@ -226,7 +228,7 @@ Ver. 0.7.3 - 2013-Dec-12
 * **823 regression tests**, **91% coverage**
 
 Ver. 0.7.2 - 2013-Oct-16
-===========================
+---------------------------------------------------
 * A bug fix release.
 * Must upgrade if using the :ref:`django pulse <apps-pulse>` application.
 * Use ujson_ if installed.
@@ -236,14 +238,14 @@ Ver. 0.7.2 - 2013-Oct-16
 * **821 regression tests**, **91% coverage**.
 
 Ver. 0.7.1 - 2013-Oct-14
-===========================
+---------------------------------------------------
 * Documentation fixes
 * Critical fix in ``setup.py`` for python 2.
 * Replaced the favicon in documentation.
 * **807 regression tests**, **90% coverage**.
 
 Ver. 0.7.0 - 2013-Oct-13
-===========================
+---------------------------------------------------
 * Several improvements and bug fixes in the :ref:`Http Client <apps-http>`
   including:
   * SSL support
@@ -276,7 +278,7 @@ Ver. 0.7.0 - 2013-Oct-13
 .. _`rfc2616 sec 5.2`: http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
 
 Ver. 0.6.0 - 2013-Sep-05
-===========================
+---------------------------------------------------
 * Several new features, critical bug fixes and increased tests coverage.
 * **Core library**:
 
@@ -309,8 +311,7 @@ Ver. 0.6.0 - 2013-Sep-05
 
   * Added ``flush`` method to the task queue backend.
     The metod can be used to remove all tasks and empty the task queue.
-  * Better handling of :ref:`non-overlapping jobs <job-non-overlap>`
-    in a task queue.
+  * Better handling of non-overlapping jobs in a task queue.
   * Added :ref:`when_exit <setting-when_exit>` application hook.
   * Added :ref:`--io option <setting-selector>` for controlling the default
     selector from python :mod:`selectors` module.
@@ -336,7 +337,7 @@ Ver. 0.6.0 - 2013-Sep-05
 .. _4bd8a54: https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc
 
 Ver. 0.5.2 - 2013-June-30
-==============================
+---------------------------------------------------
 * Introduced the Router parameter for propagating
   attributes to children routes. router can also have a ``name`` so that
   they can easily be retrieved via the ``get_route`` method.
@@ -347,7 +348,7 @@ Ver. 0.5.2 - 2013-June-30
 * **448 regression tests**, **87% coverage**.
 
 Ver. 0.5.1 - 2013-June-03
-==============================
+---------------------------------------------------
 * Several bug fixes and more docs.
 * Fixed ``ThreadPool`` for for python 2.6.
 * Added the :func:`.safe_async` function for safely executing synchronous
@@ -362,7 +363,7 @@ Ver. 0.5.1 - 2013-June-03
 * **443 regression tests**, **87% coverage**.
 
 Ver. 0.5.0 - 2013-May-22
-==============================
+---------------------------------------------------
 * This is a major release with considerable amount of internal refactoring.
 * **Core library**
 
@@ -410,7 +411,7 @@ Ver. 0.5.0 - 2013-May-22
   * Added :func:`~.set_async` function which can be used to change
     the asynchronous discovery functions :func:`.maybe_async`
     and :func:`.maybe_failure`. The function is used in the
-    implementation of :ref:`twisted integration <tutorials-twisted>` and could
+    implementation of twisted integration and could
     be used in conjunction with other asynchronous libraries as well.
   * New Webmail example application using twisted
     IMAP4 protocol implementation.
@@ -419,7 +420,7 @@ Ver. 0.5.0 - 2013-May-22
 * **444 regression tests**, **87% coverage**.
 
 Ver. 0.4.6 - 2013-Feb-8
-==============================
+---------------------------------------------------
 * Added websocket chat example.
 * Fixed bug in wsgi parser.
 * Log WSGI environ on HTTP response errors.
@@ -427,13 +428,13 @@ Ver. 0.4.6 - 2013-Feb-8
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.5 - 2013-Jan-27
-==============================
+---------------------------------------------------
 * Refactored :class:`pulsar.apps.rpc.JsonProxy` class.
 * Websocket does not support any extensions by default.
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.4 - 2013-Jan-13
-==============================
+---------------------------------------------------
 * Documentation for development version hosted on github.
 * Modified :meth:`.Actor.exit` so that it shuts down :attr:`.Actor.mailbox`
   after closing the :attr:`.Actor.requestloop`.
@@ -446,7 +447,7 @@ Ver. 0.4.4 - 2013-Jan-13
 * **374 regression tests**, **87% coverage**.
 
 Ver. 0.4.3 - 2012-Dec-28
-==============================
+---------------------------------------------------
 * Removed the tasks in event loop. A task can only be added by appending
   callbacks or timeouts.
 * Fixed critical bug in :class:`.MultiDeferred`.
@@ -457,14 +458,14 @@ Ver. 0.4.3 - 2012-Dec-28
 * **365 regression tests**, **87% coverage**.
 
 Ver. 0.4.2 - 2012-Dec-12
-==============================
+---------------------------------------------------
 * Fixed bug in boolean validation.
 * Refactored :class:`.TestPlugin` to handle multi-parameters.
 * Removed unused code and increased test coverage.
 * **338 regression tests**, **86% coverage**.
 
 Ver. 0.4.1 - 2012-Dec-04
-==============================
+---------------------------------------------------
 * Test suite can load test from single files as well as directories.
 * :func:`.handle_wsgi_error` accepts optional ``content_type``
   and ``encoding`` parameters.
@@ -473,7 +474,7 @@ Ver. 0.4.1 - 2012-Dec-04
 * **304 regression tests**, **83% coverage**.
 
 Ver. 0.4 - 2012-Nov-19
-============================
+---------------------------------------------------
 * Overall refactoring of API and therefore incompatible with previous versions.
 * Development status set to ``Beta``.
 * Support pypy_ and python 3.3.
@@ -492,7 +493,7 @@ Ver. 0.4 - 2012-Nov-19
 * **303 regression tests**, **83% coverage**.
 
 Ver. 0.3 - 2012-May-03
-============================
+---------------------------------------------------
 * Development status set to ``Alpha``.
 * This version brings several bug fixes, more tests, more docs, and improvements
   in the :mod:`pulsar.apps.tasks` application.
@@ -521,7 +522,7 @@ Ver. 0.3 - 2012-May-03
 * **95 regression tests**, **75% coverage**.
 
 Ver. 0.2.1 - 2011-Dec-18
-=======================================
+---------------------------------------------------
 * Catch errors in :func:`pulsar.apps.test.run_on_arbiter`.
 * Added new setting for configuring http responses when an unhandled error
   occurs (Issue #7).
@@ -537,7 +538,7 @@ Ver. 0.2.1 - 2011-Dec-18
 * **71 regression tests**
 
 Ver. 0.2.0 - 2011-Nov-05
-=======================================
+---------------------------------------------------
 * A more stable pre-alpha release with overall code refactoring and a lot
   more documentation.
 * Fully asynchronous applications.
@@ -552,7 +553,7 @@ Ver. 0.2.0 - 2011-Nov-05
 * **61 regression tests**
 
 Ver. 0.1.0 - 2011-Aug-24
-=======================================
+---------------------------------------------------
 
 * First (very) pre-alpha release.
 * Working for python 2.6 and up, including python 3.

@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -61,9 +64,75 @@
             
   <div class="section" id="django-with-pulsar">
 <span id="tutorials-django"></span><h1>Django with Pulsar<a class="headerlink" href="#django-with-pulsar" title="Permalink to this headline">¶</a></h1>
-<p>The code for this example is located in the <a class="reference internal" href="#module-examples.djchat.manage" title="examples.djchat.manage"><code class="xref py py-mod docutils literal"><span class="pre">examples.djchat.manage</span></code></a>
+<p>The code for this example is located in the <a class="reference internal" href="#module-examples.djchat" title="examples.djchat"><code class="xref py py-mod docutils literal"><span class="pre">examples.djchat</span></code></a>
 module.</p>
-<span class="target" id="module-examples.djchat.manage"></span></div>
+<span class="target" id="module-examples.djchat"></span><p>This is a web chat application which illustrates how to run a django
+site with pulsar and how to include pulsar asynchronous request middlewares
+into django.
+Requires django 1.4 or above. To run:</p>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse
+</pre></div>
+</div>
+<p>If running for the first time, issue the:</p>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py syncdb
+</pre></div>
+</div>
+<p>command and create the super user.
+This example uses the <a class="reference internal" href="../apps/pulse.html#apps-pulse"><span>django pulse</span></a> application.</p>
+<div class="section" id="message-and-data-backend">
+<h2>Message and data backend<a class="headerlink" href="#message-and-data-backend" title="Permalink to this headline">¶</a></h2>
+<p>By default, messages from connected (websocket) clients are synchronised via
+the <a class="reference internal" href="../apps/ds.html#pulsar-data-store"><span>pulsar data store</span></a> which starts when the django
+site starts. It is possible to specify a different data store via the
+<a class="reference internal" href="../settings.html#setting-data-store"><span>data-store option</span></a>.For example, it is possible to use <a class="reference external" href="http://redis.io/">redis</a> as an alternative data store
+by issuing the following start up command:</p>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py pulse --data-store redis://127.0.0.1:6379/3
+</pre></div>
+</div>
+</div>
+<div class="section" id="views-and-middleware">
+<h2>Views and Middleware<a class="headerlink" href="#views-and-middleware" title="Permalink to this headline">¶</a></h2>
+<p>Check the <code class="xref py py-mod docutils literal"><span class="pre">settings</span></code> module to see how this
+classes are used.</p>
+<span class="target" id="module-examples.djchat.djchat.views"></span><dl class="class">
+<dt id="examples.djchat.djchat.views.Chat">
+<em class="property">class </em><code class="descclassname">examples.djchat.djchat.views.</code><code class="descname">Chat</code><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><code class="xref py py-class docutils literal"><span class="pre">WS</span></code></a> handler managing the chat application.</p>
+<dl class="method">
+<dt id="examples.djchat.djchat.views.Chat.get_pubsub">
+<code class="descname">get_pubsub</code><span class="sig-paren">(</span><em>websocket</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat.get_pubsub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat.get_pubsub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the pubsub handler if not already available</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.djchat.djchat.views.Chat.on_open">
+<code class="descname">on_open</code><span class="sig-paren">(</span><em>websocket</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat.on_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>A new websocket connection is established.</p>
+<p>Add it to the set of clients listening for messages.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.djchat.djchat.views.Chat.on_close">
+<code class="descname">on_close</code><span class="sig-paren">(</span><em>websocket</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat.on_close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Leave the chat room</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.djchat.djchat.views.Chat.on_message">
+<code class="descname">on_message</code><span class="sig-paren">(</span><em>websocket</em>, <em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat.on_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a new message arrives, it publishes to all listening clients.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="examples.djchat.djchat.views.middleware">
+<em class="property">class </em><code class="descclassname">examples.djchat.djchat.views.</code><code class="descname">middleware</code><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Django middleware for serving the Chat websocket.</p>
+</dd></dl>
+
+</div>
+</div>
 
 
           </div>
@@ -113,6 +182,9 @@ module.</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

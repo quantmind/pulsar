@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -208,7 +211,7 @@ directory.</li>
 <span id="test-suite-options"></span><h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
 <p>All standard <a class="reference internal" href="../settings.html#settings"><span>settings</span></a> can be applied to the test application.
 In addition, the following options are
-<a class="reference internal" href="../settings.html#setting-section-test"><span>test-suite specific</span></a>:</p>
+<a class="reference internal" href="../settings.html#setting-section-test"><span>test suite specific</span></a>:</p>
 <div class="section" id="sequential">
 <span id="apps-test-sequential"></span><h3>sequential<a class="headerlink" href="#sequential" title="Permalink to this headline">¶</a></h3>
 <p>By default, test functions within a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>
@@ -235,10 +238,9 @@ the <a class="reference internal" href="#pulsar.apps.test.utils.sequential" titl
 is executed by the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><code class="xref py py-class docutils literal"><span class="pre">TestSuite</span></code></a> at a given time. Indeed, several
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a> are executed at the same time and therefore
 each one of the may have one test function running.</p>
-<p>In order to run only one function at any time, the <code class="docutils literal"><span class="pre">sequential</span></code>
-option should be used in conjunction with
-<span class="xref std std-ref">&#8211;concurrent-tasks</span> option:</p>
-<div class="highlight-python"><div class="highlight"><pre>python runtests.py --sequential --concurrent-tasks 1
+<p>In order to run only one test function at any time, the <code class="docutils literal"><span class="pre">sequential</span></code>
+option should be used:</p>
+<div class="highlight-python"><div class="highlight"><pre>python runtests.py --sequential
 </pre></div>
 </div>
 </div>
@@ -875,7 +877,7 @@ method.</p>
 <dl class="class">
 <dt id="pulsar.apps.test.utils.AsyncAssert">
 <em class="property">class </em><code class="descclassname">pulsar.apps.test.utils.</code><code class="descname">AsyncAssert</code><span class="sig-paren">(</span><em>test</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#AsyncAssert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.AsyncAssert" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference external" href="http://users.rcn.com/python/download/Descriptor.htm">descriptor</a> added by the <span class="xref std std-ref">test-suite</span> to all python
+<dd><p>A <a class="reference external" href="http://users.rcn.com/python/download/Descriptor.htm">descriptor</a> added by the test application to all python
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a> loaded.</p>
 <p>It can be used to invoke the same <code class="docutils literal"><span class="pre">assertXXX</span></code> methods available in
 the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a> in an asynchronous fashion.</p>
@@ -960,6 +962,9 @@ For example:</p>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

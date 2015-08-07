@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -110,9 +113,9 @@ In the <code class="docutils literal"><span class="pre">Hello</span> <span class
 connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.</p>
-<p>Pulsar uses the <a class="reference external" href="http://docs.python.org/library/multiprocessing.html">multiprocessing</a> module from the standard python library and
-it can be configured to run in multi-processing mode, multi-threading mode or
-a combination of the two.</p>
+<p>Pulsar uses the <a class="reference external" href="https://docs.python.org/3/library/asyncio.html">asyncio</a> and <a class="reference external" href="http://docs.python.org/library/multiprocessing.html">multiprocessing</a> modules from the standard python
+library and it can be configured to run in multi-processing mode,
+multi-threading mode or a combination of the two.</p>
 <div class="section" id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar has no hard dependencies, install via pip:</p>
@@ -269,6 +272,9 @@ file in the top distribution directory for the full license text.</p>
 <li class="toctree-l1"><a class="reference internal" href="apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

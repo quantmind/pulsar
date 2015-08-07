@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -56,9 +59,7 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">Tha main component for pulsar datastore clients is the :class:`.Store`</span>
 <span class="sd">class which encapsulates the essential API for communicating and executing</span>
-<span class="sd">commands on remote servers.</span>
-<span class="sd">A :class:`.Store` can also implement several methods for managing</span>
-<span class="sd">the higher level :ref:`object data mapper &lt;odm&gt;`.</span>
+<span class="sd">asynchronous commands on remote servers.</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span> <span class="n">urlencode</span>
@@ -182,33 +183,6 @@
     <span class="k">def</span> <span class="nf">database_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbname</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">noop</span><span class="p">()</span>
 
-<div class="viewcode-block" id="Store.database_drop"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.database_drop">[docs]</a>    <span class="k">def</span> <span class="nf">database_drop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbname</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Drop a database ``dbname``</span>
-
-<span class="sd">        By default it does nothing, stores must implement this method</span>
-<span class="sd">        only if they support database deletion.</span>
-
-<span class="sd">        :param dbname: optional database name. If not supplied a</span>
-<span class="sd">            database named :attr:`database` is deleted.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">noop</span><span class="p">()</span>
-</div>
-<div class="viewcode-block" id="Store.table_create"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.table_create">[docs]</a>    <span class="k">def</span> <span class="nf">table_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create the table for ``model``.</span>
-
-<span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
-<span class="sd">        By default it does nothing.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">noop</span><span class="p">()</span>
-</div>
-<div class="viewcode-block" id="Store.table_drop"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.table_drop">[docs]</a>    <span class="k">def</span> <span class="nf">table_drop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Drop the table for ``model``.</span>
-
-<span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
-<span class="sd">        By default it does nothing.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">noop</span><span class="p">()</span>
-</div>
 <div class="viewcode-block" id="Store.table_all"><a class="viewcode-back" href="../../../../apps/data/clients.html#pulsar.apps.data.store.Store.table_all">[docs]</a>    <span class="k">def</span> <span class="nf">table_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Information about the table/collection mapping ``model``</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -510,11 +484,6 @@
 
 <span class="sd">            redis://user:password@127.0.0.1:6500/11?namespace=testdb</span>
 
-<span class="sd">        :ref:`CouchDb &lt;store_couchdb&gt;`::</span>
-
-<span class="sd">            couchdb://user:password@127.0.0.1:6500/testdb</span>
-<span class="sd">            https+couchdb://user:password@127.0.0.1:6500/testdb</span>
-
 <span class="sd">    :param kw: additional key-valued parameters to pass to the :class:`.Store`</span>
 <span class="sd">        initialisation method. It can contains parameters such as</span>
 <span class="sd">        ``database``, ``user`` and ``password`` to overridexo the</span>
@@ -592,6 +561,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

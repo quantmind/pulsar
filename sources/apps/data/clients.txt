@@ -60,14 +60,6 @@ to be covered:
 * :meth:`~Store.connect` to create a new connection
 * :meth:`~Store.execute` to execute a command on the store server
 
-These additional methods must be implemented only if the store supports
-the :ref:`object data mapper <odm>`:
-
-* :meth:`~Store.execute_transaction` execute a transaction
-
-A new store needs to be registered via the :func:`register_store`
-function.
-
 All registered data stores are stored in the ``data_stores`` dictionary::
 
     from pulsar.apps.data import data_stores
@@ -89,8 +81,7 @@ API
 
 The main component of the data store API is the :func:`.create_store`
 function which creates in one function call a new :class:`.Store`
-object which can be used to interact directly with the backend database
-or indirectly via the :ref:`object data mapper <odm>`.
+object which can be used to interact with the backend database.
 
 Create store
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,4 +123,3 @@ PubSub
 .. autoclass:: PubSub
    :members:
    :member-order: bysource
-

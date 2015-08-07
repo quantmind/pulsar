@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -115,7 +118,7 @@
 
 </div>
 <div class="viewcode-block" id="spawn"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.spawn">[docs]</a><span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Spawn a new :class:`.Actor` and return an :class:`.ActorProxyFuture`.</span>
+    <span class="sd">&#39;&#39;&#39;Spawn a new :class:`.Actor` and return an :class:`~asyncio.Future`.</span>
 
 <span class="sd">    **Parameter kwargs**</span>
 
@@ -126,7 +129,7 @@
 <span class="sd">    * :ref:`actor hooks &lt;actor-hooks&gt;` such as ``start``, ``stopping``</span>
 <span class="sd">      and ``periodic_task``</span>
 
-<span class="sd">    :return: an :class:`.ActorProxyFuture`.</span>
+<span class="sd">    :return: an :class:`~asyncio.Future`.</span>
 
 <span class="sd">    A typical usage::</span>
 
@@ -545,6 +548,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 

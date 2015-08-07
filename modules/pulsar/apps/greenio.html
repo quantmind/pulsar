@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,6 +12,7 @@
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -61,11 +64,17 @@
 <span class="sd">If you want to understand how integration works but you are unfamiliar with</span>
 <span class="sd">greenlets, check out the :greenlet:`greenlet documentation &lt;&gt;` first.</span>
 
+<span class="sd">.. note::</span>
+
+<span class="sd">    pulsar-odm_ is a separate library, maintained by the same authors of</span>
+<span class="sd">    pulsar, which provides asynchronous object data mapping with</span>
+<span class="sd">    asyncio_ and sqlalchemy_ and uses pulsar greenlet extensions.</span>
+
 <span class="sd">This application **does not use monkey patching** and therefore it</span>
 <span class="sd">works quite differently from implicit asynchronous libraries such as</span>
 <span class="sd">gevent_. All it does, it provides the user with a set</span>
 <span class="sd">of utilities for **explicitly** transferring execution from one greenlet</span>
-<span class="sd">to a another which execute the blocking call in a greenlet-friendly way.</span>
+<span class="sd">to a another which executes the blocking call in a greenlet-friendly way.</span>
 
 <span class="sd">The caller has the responsibility that the blocking call is greenlet-friendly,</span>
 <span class="sd">i.e. it transfers the control of execution back to the parent greenlet when</span>
@@ -182,6 +191,9 @@
 
 
 <span class="sd">.. _gevent: http://www.gevent.org/</span>
+<span class="sd">.. _pulsar-odm: https://github.com/quantmind/pulsar-odm</span>
+<span class="sd">.. _sqlalchemy: http://www.sqlalchemy.org/</span>
+<span class="sd">.. _asyncio: https://docs.python.org/3/library/asyncio.html</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -488,6 +500,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
 </ul>
 
 
