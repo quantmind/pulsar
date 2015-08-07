@@ -40,8 +40,8 @@ located in the :mod:`pulsar.apps` module.
    apps/ds
    apps/data/index
 
-Legacy
-=========
+Change Logs
+===============
 
 .. toctree::
    :maxdepth: 1

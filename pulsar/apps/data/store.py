@@ -426,11 +426,6 @@ def create_store(url, **kw):
 
             redis://user:password@127.0.0.1:6500/11?namespace=testdb
 
-        :ref:`CouchDb <store_couchdb>`::
-
-            couchdb://user:password@127.0.0.1:6500/testdb
-            https+couchdb://user:password@127.0.0.1:6500/testdb
-
     :param kw: additional key-valued parameters to pass to the :class:`.Store`
         initialisation method. It can contains parameters such as
         ``database``, ``user`` and ``password`` to overridexo the

@@ -110,7 +110,7 @@ def get_test_timeout(o, timeout):
 
 
 class AsyncAssert(object):
-    '''A `descriptor`_ added by the :ref:`test-suite` to all python
+    '''A `descriptor`_ added by the test application to all python
     :class:`~unittest.TestCase` loaded.
 
     It can be used to invoke the same ``assertXXX`` methods available in

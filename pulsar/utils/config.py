@@ -102,9 +102,9 @@ class Config(object):
         as in the :class:`argparse.ArgumentParser` class.
     :param apps: list of application namespaces to include in the
         :attr:`settings` dictionary. For example if ``apps`` is set to
-        ``['socket', 'tasks']``, the
+        ``['socket', 'test']``, the
         :ref:`socket server <setting-section-socket-servers>` and
-        :ref:`task queue <setting-section-task-consumer>` settings are
+        :ref:`task queue <setting-section-test>` settings are
         loaded in addition to the standard
         :ref:`global settings <setting-section-global-server-settings>`,
         :ref:`worker settings <setting-section-worker-processes>` and

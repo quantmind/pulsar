@@ -1,4 +1,4 @@
-Changelog Pre Python 3.4
+Changelog Pre Pulsar 1.0
 ============================
 
 Ver. 0.9.2 - 2014-Nov-18
@@ -80,7 +80,6 @@ Ver. 0.8.3 - 2014-Jun-23
 
 Ver. 0.8.2 - 2014-May-30
 ---------------------------------------------------
-  :mod:`~pulsar.apps.test` application
 * :class:`.ProtocolConsumer` has its own ``_loop`` attribute rather than
   obtaining indirectly from the underling :class:`.Connection`.
   This avoids several logging errors when a connection is dropped

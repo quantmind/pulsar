@@ -532,9 +532,6 @@ class MultiApp(Configurator):
 
     It makes sure all :ref:`settings <settings>` for the
     applications created are available in the command line.
-    Check the :class:`~examples.taskqueue.manage.server` class in the
-    :ref:`taskqueue example <tutorials-taskqueue>` for an actual
-    implementation.
 
     :class:`MultiApp` derives from :class:`Configurator` and therefore
     supports all its configuration utilities,

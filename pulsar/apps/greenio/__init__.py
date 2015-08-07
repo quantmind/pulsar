@@ -6,11 +6,17 @@ It requires the :greenlet:`greenlet <>` library.
 If you want to understand how integration works but you are unfamiliar with
 greenlets, check out the :greenlet:`greenlet documentation <>` first.
 
+.. note::
+
+    pulsar-odm_ is a separate library, maintained by the same authors of
+    pulsar, which provides asynchronous object data mapping with
+    asyncio_ and sqlalchemy_ and uses pulsar greenlet extensions.
+
 This application **does not use monkey patching** and therefore it
 works quite differently from implicit asynchronous libraries such as
 gevent_. All it does, it provides the user with a set
 of utilities for **explicitly** transferring execution from one greenlet
-to a another which execute the blocking call in a greenlet-friendly way.
+to a another which executes the blocking call in a greenlet-friendly way.
 
 The caller has the responsibility that the blocking call is greenlet-friendly,
 i.e. it transfers the control of execution back to the parent greenlet when
@@ -127,6 +133,9 @@ Green WSGI
 
 
 .. _gevent: http://www.gevent.org/
+.. _pulsar-odm: https://github.com/quantmind/pulsar-odm
+.. _sqlalchemy: http://www.sqlalchemy.org/
+.. _asyncio: https://docs.python.org/3/library/asyncio.html
 '''
 import threading
 import logging
