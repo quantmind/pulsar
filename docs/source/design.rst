@@ -15,45 +15,6 @@ module:
 * The second layer, built on top of the first one, is based on the higher level
   :class:`.Application` class.
 
-.. _async-object:
-
-Async Objects
-=====================
-Introduced in pulsar 0.8, an asynchronous object is any instance which exposes
-the :attr:`~.AsyncObject._loop` attribute.
-This attribute is the :ref:`event loop <asyncio-event-loop>` where
-the instance performs its asynchronous operations, whatever they may be.
-
-For example this is a class for valid async objects::
-
-    from pulsar import get_event_loop, new_event_loop
-
-
-    class SimpleAsyncObject:
-
-        def __init__(self, loop=None):
-            self._loop = loop or get_event_loop() or new_event_loop()
-
-Properties:
-
-* Several classes in pulsar are async objects, for example: :class:`.Actor`,
-  :class:`.Connection`, :class:`.ProtocolConsumer`, :class:`.Store`
-  and so forth
-* A :class:`~asyncio.Future` is an async object
-* However an async object **is not** necessarily a :class:`~asyncio.Future`
-* When they use and :func:`.task` decorators for their methods,
-  :attr:`~.AsyncObject._loop` attribute is used to run the method
-* Pulsar provides the :class:`.AsyncObject` signature class,
-  however it is not a requirement to derive from it
-
-.. note::
-
-    An async object can also run its asynchronous methods in a synchronous
-    fashion. To do that, one should pass a bright new event loop during
-    initialisation. Check :ref:`synchronous components <tutorials-synchronous>`
-    for further details.
-
-
 .. _design-actor:
 
 Actors
@@ -174,25 +135,6 @@ CPU-bound
 Another way for an actor to function is to use its :meth:`~.Actor.executor`
 to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
-CPU-bound :class:`.Actor` have the following properties:
-
-.. _request-loop:
-
-* Their :attr:`.Actor._loop` listen for requests on file descriptors
-  as usual and it is running (and installed) in the
-  :ref:`actor io thread <actor-io-thread>` as usual.
-* The threads in the :meth:`~.Actor.executor` install an additional
-  event loop which listen for events on a message queue.
-  Pulsar refers to this specialised event loop as the **request loop** and
-  it is an instance of :class:`.QueueEventLoop`.
-
-.. note::
-
-    A CPU-bound actor controls more than one thread, the :ref:`IO thread <actor-io-thread>`
-    which runs the actor main event loop for listening to events on file descriptors and
-    one or more threads for performing CPU-intensive calculations. These CPU-threads
-    have installed two events loops: the event loop running on the
-    :ref:`IO thread <actor-io-thread>` and the :ref:`request-loop <request-loop>`.
 
 
 .. _actor-periodic-task:
@@ -222,9 +164,8 @@ Spawning a new actor is achieved via the :func:`.spawn` function::
 
     ap = spawn(periodic_task=task)
 
-The value returned by :func:`.spawn` is an :class:`.ActorProxyFuture`,
-a specialised :class:`~asyncio.Future` with the :attr:`., which has the actor id ``aid``
-and it is called back once the remote actor has started.
+The value returned by :func:`.spawn` is an :class:`~asyncio.Future`,
+called back once the remote actor has started.
 The callback will be an :class:`.ActorProxy`, a lightweight proxy
 for the remote actor.
 
@@ -433,6 +374,44 @@ Application Framework
 
 To aid the development of applications running on top of pulsar concurrent
 framework, the library ships with the :class:`.Application` class.
+
+.. _async-object:
+
+Async Objects
+=====================
+An asynchronous object is any instance which exposes
+the :attr:`~.AsyncObject._loop` attribute.
+This attribute is the :ref:`event loop <asyncio-event-loop>` where
+the instance performs its asynchronous operations, whatever they may be.
+
+For example this is a class for valid async objects::
+
+    from pulsar import get_event_loop, new_event_loop
+
+
+    class SimpleAsyncObject:
+
+        def __init__(self, loop=None):
+            self._loop = loop or get_event_loop() or new_event_loop()
+
+Properties:
+
+* Several classes in pulsar are async objects, for example: :class:`.Actor`,
+  :class:`.Connection`, :class:`.ProtocolConsumer`, :class:`.Store`
+  and so forth
+* A :class:`~asyncio.Future` is an async object
+* However an async object **is not** necessarily a :class:`~asyncio.Future`
+* When they use and :func:`.task` decorators for their methods,
+  :attr:`~.AsyncObject._loop` attribute is used to run the method
+* Pulsar provides the :class:`.AsyncObject` signature class,
+  however it is not a requirement to derive from it
+
+.. note::
+
+    An async object can also run its asynchronous methods in a synchronous
+    fashion. To do that, one should pass a bright new event loop during
+    initialisation. Check :ref:`synchronous components <tutorials-synchronous>`
+    for further details.
 
 
 
