@@ -1,5 +1,7 @@
 Development
 ===========================
+* Added the :ref:`Twitter Streaming <tutorials-tweets>` tutorial
+* Added Javascript directory in examples and a gruntfile for compiling and linting scripts
 * Documentation fixes
 
 Ver. 1.0.3 - 2015-Jul-21

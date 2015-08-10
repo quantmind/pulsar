@@ -1,0 +1,32 @@
+{
+    "name": "Pulsar",
+    "title": "Pulsar Library",
+    "contributors": [],
+    "version": "1.0.3",
+    "homepage": "http://quantmind.github.io/pulsar",
+    "licenses": [
+        {
+            "type": "BSD"
+        }
+    ],
+    "repository": {
+        "url": "https://github.com/quantmind/pulsar",
+        "type": "git"
+    },
+    "description": "pulsar asynchronous framework",
+    "devDependencies": {
+        "grunt-contrib-jshint": "",
+        "grunt-contrib-concat": "",
+        "grunt-docco": "",
+        "benchmark": "",
+        "grunt-html2js": "",
+        "grunt-contrib-uglify": "",
+        "grunt": "",
+        "grunt-contrib-copy": ""
+    },
+    "keywords": [],
+    "author": {
+        "name": "Luca Sbardella",
+        "email": "luca.sbardella@gmail.com"
+    }
+}

@@ -1,10 +1,11 @@
 coverage
-cython
-django
 flake8
+cython
+greenlet
+django
 setproctitle
 psutil
-greenlet
 unidecode
 flask
 pyinotify
+oauthlib

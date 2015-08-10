@@ -20,6 +20,12 @@ MANIFEST
 .python-version
 extensions/lib/lib.c
 examples/tweets/settings.py
+
+# Javascript
+examples/node_modules
+examples/.grunt
+
+# Extensions
 *~
 .htmlprof
 test.pid

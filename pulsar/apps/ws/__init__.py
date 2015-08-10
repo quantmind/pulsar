@@ -58,12 +58,17 @@ WebSocket protocol
    :member-order: bysource
 
 '''
+import logging
+
 from pulsar.apps import data
 
 from .websocket import WebSocket, WebSocketProtocol
 
 
 __all__ = ['WebSocket', 'WebSocketProtocol', 'WS']
+
+
+LOGGER = logging.getLogger('pulsar.ws')
 
 
 class WS(object):
@@ -124,12 +129,13 @@ class WS(object):
 class PubSubClient(data.PubSubClient):
     __slots__ = ('connection', 'channel')
 
-    def __init__(self, connection, channel):
-        self.connection = connection
+    def __init__(self, websocket, channel):
+        self.websocket = websocket
         self.channel = channel
 
     def __call__(self, channel, message):
-        self.connection.write(message)
+        handler = self.websocket.handler
+        handler.write(self.websocket, message)
 
 
 class PubSubWS(WS):
@@ -145,4 +151,9 @@ class PubSubWS(WS):
         '''When a new websocket connection is established it creates a
         new :class:`ChatClient` and adds it to the set of clients of the
         :attr:`pubsub` handler.'''
+        LOGGER.info('New websocket opened. Add client to %s on "%s" channel',
+                    self.pubsub, self.channel)
         self.pubsub.add_client(self.client(websocket, self.channel))
+
+    def write(self, websocket, message):
+        websocket.write(message)

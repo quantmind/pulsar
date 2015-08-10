@@ -304,6 +304,10 @@ class PubSub(object):
         self._connection = None
         self._clients = set()
 
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.store)
+    __str__ = __repr__
+
     def publish(self, channel, message):
         '''Publish a new ``message`` to a ``channel``.
         '''

@@ -9,7 +9,7 @@ services:
   - redis-server
 
 install:
-  - pip install -r requirements_dev.txt
+  - pip install -r requirements-dev.txt
   - python setup.py install
 
 services:

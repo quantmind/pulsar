@@ -1,0 +1,11 @@
+<div class="media" ng-repeat="msg in messages | orderBy: ['-timestamp']">
+	<div class="media-left">
+    	<a ng-href="{{ msg.url }}">
+      		<img class="media-object" ng-src="{{msg.user.profile_image_url_https}}"
+			alt="{{msg.user.name}}" class="img-thumbnail">
+    	</a>
+  	</div>
+	<div class="media-body">
+		<p class='list-group-item-text message'>{{msg.text}}</p>
+	</div>
+</div>
