@@ -1,7 +1,6 @@
 import pulsar
 from pulsar.apps.wsgi import WSGIServer
 from pulsar.apps.ds import pulsards_url
-from pulsar.utils.system import json
 
 from web import TwitterSite
 from twitter import Twitter, PublishTweets
