@@ -64,16 +64,51 @@
             
   <div class="section" id="twitter-streaming">
 <span id="tutorials-tweets"></span><h1>Twitter Streaming<a class="headerlink" href="#twitter-streaming" title="Permalink to this headline">¶</a></h1>
-<p>The code for this example is located in the <a class="reference internal" href="#module-examples.tweets.manage" title="examples.tweets.manage"><code class="xref py py-mod docutils literal"><span class="pre">examples.tweets.manage</span></code></a>
-module.</p>
-<span class="target" id="module-examples.tweets.manage"></span><p>This example uses the streaming capabilities of the <a class="reference internal" href="../apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a>
-to hook into twitter streaming api and send tweets into a processing queue.</p>
+<p>The code for this example is located in the <code class="xref py py-mod docutils literal"><span class="pre">examples.tweets</span></code> module.
+This example uses the streaming capabilities of the <a class="reference internal" href="../apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a>
+to hook into <a class="reference external" href="https://dev.twitter.com/streaming/overview">twitter streaming api</a> and send tweets into a processing queue.</p>
+<a class="reference internal image-reference" href="../images/monitors.svg"><img src="../images/monitors.svg" width="600px" /></a>
+<p>To run the server:</p>
+<div class="highlight-python"><div class="highlight"><pre>python3 manage.py
+</pre></div>
+</div>
+<p>Alternatively, one could use <a class="reference external" href="http://redis.io/">redis</a> as pub/sub rather than pulsar datastore by:</p>
+<div class="highlight-python"><div class="highlight"><pre>python3 manage.py --data-store redis://127.0.0.1:6379
+</pre></div>
+</div>
 <div class="section" id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<p>This example requires the <a class="reference external" href="https://pypi.python.org/pypi/oauthlib">oauthlib</a> library which is used by pulsar <a class="reference internal" href="../apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a>
+to authenticate with twitter <a class="reference external" href="https://dev.twitter.com/oauth">OAuth</a>.</p>
+<p>The server is composed of three, independent, pulsar <a class="reference internal" href="../design.html#design-application"><span>applications</span></a>:</p>
+<ul>
+<li><p class="first">A <a class="reference internal" href="../apps/wsgi/intro.html#pulsar.apps.wsgi.WSGIServer" title="pulsar.apps.wsgi.WSGIServer"><code class="xref py py-class docutils literal"><span class="pre">WSGIServer</span></code></a> for serving:</p>
+<ul class="simple">
+<li>the web page displaying tweets</li>
+<li>the websocket url for streaming tweets.</li>
+<li>Static files</li>
+</ul>
+<p>The wsgi callable is implemented in the <a class="reference internal" href="#examples.tweets.web.TwitterSite" title="examples.tweets.web.TwitterSite"><code class="xref py py-class docutils literal"><span class="pre">TwitterSite</span></code></a> handler.</p>
+</li>
+<li><p class="first"><a class="reference internal" href="../apps/ds.html#pulsar-data-store"><span>Pulsar data store</span></a> for the publish/subscribe
+messaging paradigm. It is possible to replace this component with redis pub/sub
+by passing a redis url to the <a class="reference internal" href="../settings.html#setting-data-store"><span>data_store</span></a> parameter.</p>
+</li>
+<li><p class="first">The <a class="reference internal" href="#examples.tweets.twitter.Twitter" title="examples.tweets.twitter.Twitter"><code class="xref py py-class docutils literal"><span class="pre">Twitter</span></code></a> application implemented in this tutorial. The application connects to
+Twitter streaming API and <strong>publish</strong> tweets to the data store</p>
+</li>
+</ul>
+<p>These three applications have their own process domain and do not share state,
+therefore they could be placed in different machines if necessary.</p>
+</div>
+<div class="section" id="module-examples.tweets.twitter">
+<span id="twitter-application"></span><h2>Twitter Application<a class="headerlink" href="#module-examples.tweets.twitter" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="examples.tweets.manage.Twitter">
-<em class="property">class </em><code class="descclassname">examples.tweets.manage.</code><code class="descname">Twitter</code><span class="sig-paren">(</span><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/manage.html#Twitter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.manage.Twitter" title="Permalink to this definition">¶</a></dt>
-<dd><p>This applications requires the following parameters
+<dt id="examples.tweets.twitter.Twitter">
+<em class="property">class </em><code class="descclassname">examples.tweets.twitter.</code><code class="descname">Twitter</code><span class="sig-paren">(</span><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/twitter.html#Twitter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.twitter.Twitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>A pulsar <a class="reference internal" href="../api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> for connecting and streaming
+tweets from <a class="reference external" href="https://dev.twitter.com/streaming/overview">twitter streaming api</a>.
+This application requires the following parameters
 to be specified in your <code class="docutils literal"><span class="pre">config.py</span></code> file:</p>
 <ul class="simple">
 <li><code class="docutils literal"><span class="pre">twitter_api_key</span></code> the Consumer key of your application</li>
@@ -81,15 +116,81 @@ to be specified in your <code class="docutils literal"><span class="pre">config.
 <li><code class="docutils literal"><span class="pre">twitter_access_token</span></code>, the application Access token</li>
 <li><code class="docutils literal"><span class="pre">twitter_access_secret</span></code>, the Access token secret</li>
 <li><code class="docutils literal"><span class="pre">twitter_stream_filter</span></code>, dictionary of parameters for
-filtering tweets.</li>
+<a class="reference external" href="https://dev.twitter.com/docs/api/1.1/post/statuses/filter">filtering tweets</a>.</li>
 </ul>
-<p>Check the twitter stream filter api for further information</p>
-<p><a class="reference external" href="https://dev.twitter.com/docs/api/1.1/post/statuses/filter">https://dev.twitter.com/docs/api/1.1/post/statuses/filter</a></p>
 <dl class="method">
-<dt id="examples.tweets.manage.Twitter.reconnect">
-<code class="descname">reconnect</code><span class="sig-paren">(</span><em>response</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/manage.html#Twitter.reconnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.manage.Twitter.reconnect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handle reconnection according to twitter streaming policy</p>
-<p><a class="reference external" href="https://dev.twitter.com/docs/streaming-apis/connecting">https://dev.twitter.com/docs/streaming-apis/connecting</a></p>
+<dt id="examples.tweets.twitter.Twitter.monitor_start">
+<code class="descname">monitor_start</code><span class="sig-paren">(</span><em>monitor</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/twitter.html#Twitter.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.twitter.Twitter.monitor_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>When the monitor starts make sure only one worker at most
+is spawned</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.tweets.twitter.Twitter.worker_start">
+<code class="descname">worker_start</code><span class="sig-paren">(</span><em>worker</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/twitter.html#Twitter.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.twitter.Twitter.worker_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>When the worker starts <a class="reference internal" href="#examples.tweets.twitter.Twitter.connect" title="examples.tweets.twitter.Twitter.connect"><code class="xref py py-meth docutils literal"><span class="pre">connect()</span></code></a> to twitter spreaming
+endpoint</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.tweets.twitter.Twitter.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/twitter.html#Twitter.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.twitter.Twitter.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect to twitter streaming endpoint.</p>
+<p>If the connection is dropped, the <a class="reference internal" href="#examples.tweets.twitter.Twitter.reconnect" title="examples.tweets.twitter.Twitter.reconnect"><code class="xref py py-meth docutils literal"><span class="pre">reconnect()</span></code></a> method is invoked
+according to twitter streaming connection <a class="reference external" href="https://dev.twitter.com/docs/streaming-apis/connecting">policy</a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.tweets.twitter.Twitter.connected">
+<code class="descname">connected</code><span class="sig-paren">(</span><em>response</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/twitter.html#Twitter.connected"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.twitter.Twitter.connected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Callback when a succesful connection is made.</p>
+<p>Reset reconnection intervals to 0</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.tweets.twitter.Twitter.process_data">
+<code class="descname">process_data</code><span class="sig-paren">(</span><em>response</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/twitter.html#Twitter.process_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.twitter.Twitter.process_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Callback passed to <code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code> for processing
+streaming data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.tweets.twitter.Twitter.reconnect">
+<code class="descname">reconnect</code><span class="sig-paren">(</span><em>response</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/twitter.html#Twitter.reconnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.twitter.Twitter.reconnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle reconnection according to twitter streaming <a class="reference external" href="https://dev.twitter.com/docs/streaming-apis/connecting">policy</a></p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-examples.tweets.web">
+<span id="twitter-site"></span><h2>Twitter Site<a class="headerlink" href="#module-examples.tweets.web" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="examples.tweets.web.TwitterSite">
+<em class="property">class </em><code class="descclassname">examples.tweets.web.</code><code class="descname">TwitterSite</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/web.html#TwitterSite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.web.TwitterSite" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.LazyWsgi" title="pulsar.apps.wsgi.handlers.LazyWsgi"><code class="xref py py-class docutils literal"><span class="pre">LazyWsgi</span></code></a> handler for displaying tweets</p>
+<dl class="method">
+<dt id="examples.tweets.web.TwitterSite.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><em>environ</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/web.html#TwitterSite.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.web.TwitterSite.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called once only by the WSGI server.</p>
+<p>It returns a <a class="reference internal" href="../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><code class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></code></a> with three routes:</p>
+<ul class="simple">
+<li>The base route served by the <a class="reference internal" href="#examples.tweets.web.TwitterSite.home_page" title="examples.tweets.web.TwitterSite.home_page"><code class="xref py py-meth docutils literal"><span class="pre">home_page()</span></code></a> method</li>
+<li>The websocket route</li>
+<li>A route for static files</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.tweets.web.TwitterSite.home_page">
+<code class="descname">home_page</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/web.html#TwitterSite.home_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.web.TwitterSite.home_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renders the home page</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.tweets.web.TwitterSite.subscribe">
+<code class="descname">subscribe</code><span class="sig-paren">(</span><em>pubsub</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/tweets/web.html#TwitterSite.subscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.tweets.web.TwitterSite.subscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subscribe to the channel for tweets</p>
 </dd></dl>
 
 </dd></dl>

@@ -10,10 +10,16 @@ Pulsar implements two layers of components on top of python :mod:`asyncio`
 module:
 
 * :ref:`The actor layer <design-actor>` provides parallel execution in
-  processes and threads and uses the :mod:`asyncio` module
-  as building block.
-* The second layer, built on top of the first one, is based on the higher level
-  :class:`.Application` class.
+  processes and threads and uses the :mod:`asyncio` and :mod:`multiprocessing`
+  modules as building blocks.
+* :ref:`The application framework <design-application>` is built on top of
+  the actor layer and it is based on the higher level
+  :class:`.Application` class which provides an elegant API for speeding
+  up development of asynchronous and parallel software.
+
+.. contents::
+   :local:
+   :depth: 2
 
 .. _design-actor:
 
@@ -23,11 +29,19 @@ Actors
 An :class:`.Actor` is the atom of pulsar's concurrent computation,
 they do not share state between them, communication is achieved via asynchronous
 :ref:`inter-process message passing <tutorials-messages>`,
-implemented using the standard python socket library. A pulsar actor can be
-process based as well as thread based and can perform one or many activities.
+implemented using :mod:`asyncio` socket utilities.
+
+Messages are exchanged using single bidirectional connections between any actor and are
+encoded using the unmasked websocket protocol as the
+:ref:`actor messages <tutorials-messages>` tutorial highlights.
+A pulsar actor can be process based as well as thread based and
+can perform one or many activities.
+
+.. image:: _static/actors.svg
+  :width: 600 px
 
 The theory
-~~~~~~~~~~~~~~~~~
+------------------
 The actor model is the cornerstone of the Erlang programming language.
 Python has very few implementation and all of them seem quite limited in scope.
 
@@ -59,33 +73,12 @@ Python has very few implementation and all of them seem quite limited in scope.
 * It simplifies error handling code.
 * It makes it easier to build fault-tolerant systems.
 
-.. _arbiter:
-
-The Arbiter
-~~~~~~~~~~~~~~~~~
-When using pulsar actor layer, you need to use pulsar in **server state**,
-that is to say, there will be a centralised **Arbiter** controlling the main
-:ref:`event loop <asyncio-event-loop>` in the **main thread** of the
-**master process**.
-The arbiter is a specialised :class:`.Actor`
-which control the life of all :class:`.Actor` and
-:ref:`monitors <design-monitor>`
-
-.. _design-arbiter:
-
-To access the arbiter, from the main process, one can use the
-:func:`.arbiter` high level function::
-
-    >>> arbiter = pulsar.arbiter()
-    >>> arbiter.is_running()
-    False
-
 .. _concurrency:
 
 Implementation
-~~~~~~~~~~~~~~~~~~
-An actor can be **processed based** (default) or **thread based** and control
-at least one running :ref:`event loop <asyncio-event-loop>`.
+------------------
+An actor can be **processed based** (default) or **thread based** and controls
+one running :ref:`event loop <asyncio-event-loop>`.
 To obtain the actor controlling the current thread::
 
     actor = pulsar.get_actor()
@@ -98,10 +91,6 @@ as the arbiter) and control threads other than the main thread.
 An :class:`.Actor` can control more than one thread if it needs to, via the
 :meth:`~.Actor.executor` as explained in the :ref:`CPU bound <cpubound>`
 paragraph.
-The actor :ref:`event loop <asyncio-event-loop>` is installed in all threads
-controlled by the actor so that when the :func:`~asyncio.get_event_loop`
-function is invoked on these threads it returns the event loop of
-the controlling actor.
 
 .. _actor-io-thread:
 
@@ -120,7 +109,7 @@ actor's thread starts for thread-based actors).
 .. _iobound:
 
 IO-bound
-~~~~~~~~~~~~~~~
+------------------
 The most common usage for an :class:`.Actor` is to handle Input/Output
 events on file descriptors. An :attr:`.Actor._loop` tells
 the operating system (through ``epoll`` or ``select``) that it should be notified
@@ -131,7 +120,7 @@ connections can be served simultaneously.
 .. _cpubound:
 
 CPU-bound
-~~~~~~~~~~~~~~~
+------------------
 Another way for an actor to function is to use its :meth:`~.Actor.executor`
 to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
@@ -140,7 +129,7 @@ or whatever you need them to do.
 .. _actor-periodic-task:
 
 Periodic task
-~~~~~~~~~~~~~~~~~~~~~~
+------------------
 
 Each :class:`.Actor`, including the :class:`.Arbiter` and :class:`.Monitor`,
 perform one crucial periodic task at given intervals. The next
@@ -149,10 +138,65 @@ attribute.
 
 Periodic task are implemented by the :meth:`Concurrency.periodic_task` method.
 
+.. _design-arbiter:
+
+The Arbiter
+------------------
+When using pulsar actor layer, you need to use pulsar in **server state**,
+that is to say, there will be a centralised **Arbiter** controlling the main
+:ref:`event loop <asyncio-event-loop>` in the **main thread** of the
+**master process**.
+The arbiter is a specialised :class:`.Actor`
+which control the life of all :class:`.Actor` and
+:ref:`monitors <design-monitor>`
+
+To access the arbiter, from the main process, one can use the
+:func:`.arbiter` high level function::
+
+    >>> arbiter = pulsar.arbiter()
+    >>> arbiter.is_running()
+    False
+
+
+.. _design-application:
+
+Application Framework
+=============================
+
+To aid the development of applications running on top of pulsar concurrent
+framework, the library ships with the :class:`.Application` class.
+Applications can be of any sorts or forms and the library is shipped
+with several battery included examples in the pulsar.apps module.
+
+When an Application is called for the first time, a new :ref:`monitor <design-monitor>`
+is added to the :ref:`arbiter <design-arbiter>`, ready to perform its duties.
+
+.. _design-monitor:
+
+Monitors
+------------------
+
+Monitors are specialised actors which share the :ref:`arbiter <design-arbiter>`
+event loop and therefore live in the main thread of the master process
+of your application.
+
+It is possible to configure pulsar so that the arbiter delegates the
+management of some actors to monitors.
+The :ref:`application layer <design-application>` is designed specifically
+to obtain such delegation in a straightforward way with an efficient
+and elegant API.
+
+.. image:: _static/monitors.svg
+  :width: 600 px
+
+
+Internals
+=============
+
 .. _design-spawning:
 
 Spawning
-==============
+-------------
 
 Spawning a new actor is achieved via the :func:`.spawn` function::
 
@@ -182,7 +226,7 @@ the workflow of the :func:`.spawn` function is as follow:
 .. _handshake:
 
 Handshake
-~~~~~~~~~~~~~~~
+--------------
 
 The actor **hand-shake** is the mechanism with which an :class:`.Actor`
 register its :ref:`mailbox address <tutorials-messages>` with its manager.
@@ -201,7 +245,7 @@ If the hand-shake fails, the spawned actor will eventually stop.
 .. _actor-hooks:
 
 Hooks
-~~~~~~~~~~~~~~~~~~~
+----------
 
 An :class:`.Actor` exposes three :ref:`one time events <one-time-event>`
 which can be used to customise its behaviour and two
@@ -267,7 +311,7 @@ function.
 .. _actor_commands:
 
 Commands
-===============
+---------------
 
 An :class:`.Actor` communicates with another remote :class:`.Actor` by *sending*
 an **action** to perform. This action takes the form of a **command** name and
@@ -338,21 +382,10 @@ Tell the remote actor ``abc`` to gracefully shutdown::
 
     send('abc', 'stop')
 
-.. _design-monitor:
-
-Monitors
-==============
-
-Monitors are specialised actors which share the :ref:`arbiter <design-arbiter>`
-event loop and therefore they live in the main thread of the master process
-of your application.
-
-TODO: more docs
-
 .. _exception-design:
 
 Exceptions
-=====================
+------------------
 
 There are two categories of exceptions in Python: those that derive from the
 :class:`Exception` class and those that derive from :class:`BaseException`.
@@ -366,19 +399,10 @@ and will usually cause the program to terminate with a traceback.
 (Examples of this category include KeyboardInterrupt and SystemExit;
 it is usually unwise to treat these the same as most other exceptions.)
 
-
-.. _design-application:
-
-Application Framework
-=============================
-
-To aid the development of applications running on top of pulsar concurrent
-framework, the library ships with the :class:`.Application` class.
-
 .. _async-object:
 
 Async Objects
-=====================
+------------------
 An asynchronous object is any instance which exposes
 the :attr:`~.AsyncObject._loop` attribute.
 This attribute is the :ref:`event loop <asyncio-event-loop>` where

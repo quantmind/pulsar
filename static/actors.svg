@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="602px" height="380px" viewBox="0 0 602 380" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <title>actors</title>
+    <description>Created with Sketch (http://www.bohemiancoding.com/sketch)</description>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="Actors" sketch:type="MSLayerGroup" transform="translate(1.000000, 5.000000)">
+            <g id="Oval-1-+-IO-+-Actor" transform="translate(0.000000, 40.000000)">
+                <path d="M50,100 C77.6142389,100 100,77.6142389 100,50 C100,22.3857611 77.6142389,0 50,0 C22.3857611,0 0,22.3857611 0,50 C0,77.6142389 22.3857611,100 50,100 Z" id="Oval-1" stroke="#979797" stroke-width="4" fill="#D8D8D8" sketch:type="MSShapeGroup"></path>
+                <text id="IO-loop" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="14" font-weight="normal" sketch:alignment="middle" fill="#000000">
+                    <tspan x="25.5" y="69">IO loop</tspan>
+                </text>
+                <text id="Actor" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="20" font-weight="normal" sketch:alignment="middle" fill="#000000">
+                    <tspan x="22" y="42">Actor</tspan>
+                </text>
+            </g>
+            <g id="Arbiter" transform="translate(260.000000, 0.000000)">
+                <path d="M60,120 C93.1370866,120 120,93.1370866 120,60 C120,26.8629134 93.1370866,0 60,0 C26.8629134,0 0,26.8629134 0,60 C0,93.1370866 26.8629134,120 60,120 Z" id="Oval-1" stroke="#517196" stroke-width="3" fill="#2C4057" sketch:type="MSShapeGroup"></path>
+                <text id="IO-loop" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="16.3333333" font-weight="normal" sketch:alignment="middle" fill="#FFFFFF">
+                    <tspan x="31.6535" y="82.4">IO loop</tspan>
+                </text>
+                <text sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="23.3333333" font-weight="normal" sketch:alignment="middle" fill="#FFFFFF">
+                    <tspan x="19.645" y="49.8">Arbiter</tspan>
+                </text>
+            </g>
+            <g id="Oval-1-+-IO-+-Actor" transform="translate(305.000000, 269.000000)">
+                <path d="M50,100 C77.6142389,100 100,77.6142389 100,50 C100,22.3857611 77.6142389,0 50,0 C22.3857611,0 0,22.3857611 0,50 C0,77.6142389 22.3857611,100 50,100 Z" id="Oval-1" stroke="#979797" stroke-width="4" fill="#D8D8D8" sketch:type="MSShapeGroup"></path>
+                <text id="IO-loop" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="14" font-weight="normal" sketch:alignment="middle" fill="#000000">
+                    <tspan x="25.5" y="69">IO loop</tspan>
+                </text>
+                <text id="Actor" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="20" font-weight="normal" sketch:alignment="middle" fill="#000000">
+                    <tspan x="22" y="42">Actor</tspan>
+                </text>
+            </g>
+            <g id="Oval-1-+-IO-+-Actor" transform="translate(120.000000, 205.000000)">
+                <path d="M50,100 C77.6142389,100 100,77.6142389 100,50 C100,22.3857611 77.6142389,0 50,0 C22.3857611,0 0,22.3857611 0,50 C0,77.6142389 22.3857611,100 50,100 Z" id="Oval-1" stroke="#979797" stroke-width="4" fill="#D8D8D8" sketch:type="MSShapeGroup"></path>
+                <text id="IO-loop" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="14" font-weight="normal" sketch:alignment="middle" fill="#000000">
+                    <tspan x="25.5" y="69">IO loop</tspan>
+                </text>
+                <text id="Actor" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="20" font-weight="normal" sketch:alignment="middle" fill="#000000">
+                    <tspan x="22" y="42">Actor</tspan>
+                </text>
+            </g>
+            <g id="Oval-1-+-IO-+-Actor" transform="translate(500.000000, 185.000000)">
+                <path d="M50,100 C77.6142389,100 100,77.6142389 100,50 C100,22.3857611 77.6142389,0 50,0 C22.3857611,0 0,22.3857611 0,50 C0,77.6142389 22.3857611,100 50,100 Z" id="Oval-1" stroke="#979797" stroke-width="4" fill="#D8D8D8" sketch:type="MSShapeGroup"></path>
+                <text id="IO-loop" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="14" font-weight="normal" sketch:alignment="middle" fill="#000000">
+                    <tspan x="25.5" y="69">IO loop</tspan>
+                </text>
+                <text id="Actor" sketch:type="MSTextLayer" font-family="Hiragino Maru Gothic ProN" font-size="20" font-weight="normal" sketch:alignment="middle" fill="#000000">
+                    <tspan x="22" y="42">Actor</tspan>
+                </text>
+            </g>
+            <g id="messages" transform="translate(339.929688, 193.500000) rotate(-276.000000) translate(-339.929688, -193.500000) translate(268.929688, 190.000000)" stroke="#979797" stroke-linecap="square" fill="#9B9B9B">
+                <path d="M0.438271605,5.5 L141.561728,5.5" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M141.43827,5.5 C137.65827,4.45 134.41827,3.55 130.63827,2.5 C130.63827,4.6 130.63827,6.4 130.63827,8.5 C134.41827,7.45 137.65827,6.55 141.43827,5.5 C141.43827,5.5 141.43827,5.5 141.43827,5.5 Z"></path>
+                <path d="M141.561728,0.5 L0.438271605,0.5" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M0.561730465,0.5 C4.34173057,1.55 7.58173066,2.45 11.3617308,3.5 C11.3617304,1.4 11.3617302,-0.4 11.3617299,-2.5 C7.58173007,-1.45 4.34173025,-0.55 0.561730465,0.5 C0.561730465,0.5 0.561730465,0.5 0.561730465,0.5 Z"></path>
+            </g>
+            <g id="messages" transform="translate(241.005405, 157.972669) rotate(-230.000000) translate(-241.005405, -157.972669) translate(181.010811, 155.015189)" stroke="#979797" stroke-linecap="square" fill="#9B9B9B">
+                <path d="M0.370337003,4.64746859 L119.618852,4.64746859" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M119.37034,4.64746859 C115.59034,3.59746859 112.35034,2.69746859 108.570339,1.64746859 C108.570339,3.74746859 108.570339,5.54746859 108.570339,7.64746859 C112.35034,6.59746859 115.59034,5.69746859 119.37034,4.64746859 C119.37034,4.64746859 119.37034,4.64746859 119.37034,4.64746859 Z"></path>
+                <path d="M119.618852,0.422497144 L0.370337003,0.422497144" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M0.618849277,0.422497144 C4.39884952,1.47249714 7.63884973,2.37249714 11.41885,3.42249714 C11.4188497,1.32249714 11.4188494,-0.477502856 11.4188491,-2.57750286 C7.63884914,-1.52750286 4.3988492,-0.627502856 0.618849277,0.422497144 C0.618849277,0.422497144 0.618849277,0.422497144 0.618849277,0.422497144 Z"></path>
+            </g>
+            <g id="messages" transform="translate(450.000000, 271.500000) rotate(-203.000000) translate(-450.000000, -271.500000) translate(400.000000, 269.000000)" stroke="#979797" stroke-linecap="square" fill="#9B9B9B">
+                <path d="M0.308641975,3.92857143 L99.691358,3.92857143" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M99.3086447,3.92857143 C95.5286446,2.87857143 92.2886445,1.97857143 88.5086444,0.928571429 C88.5086444,3.02857143 88.5086444,4.82857143 88.5086444,6.92857143 C92.2886445,5.87857143 95.5286446,4.97857143 99.3086447,3.92857143 C99.3086447,3.92857143 99.3086447,3.92857143 99.3086447,3.92857143 Z"></path>
+                <path d="M99.691358,0.357142857 L0.308641975,0.357142857" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M0.691355304,0.357142857 C4.47135557,1.40714286 7.71135579,2.30714286 11.4913561,3.35714286 C11.4913557,1.25714286 11.4913555,-0.542857143 11.4913551,-2.64285714 C7.7113552,-1.59285714 4.47135525,-0.692857143 0.691355304,0.357142857 C0.691355304,0.357142857 0.691355304,0.357142857 0.691355304,0.357142857 Z"></path>
+            </g>
+            <g id="messages" transform="translate(362.000000, 229.500000) rotate(-185.000000) translate(-362.000000, -229.500000) translate(227.000000, 226.000000)" stroke="#979797" stroke-linecap="square" fill="#9B9B9B">
+                <path d="M0.833333333,5.5 L269.166667,5.5" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M268.833323,5.5 C265.053323,4.45 261.813323,3.55 258.033324,2.5 C258.033324,4.6 258.033324,6.4 258.033324,8.5 C261.813323,7.45 265.053323,6.55 268.833323,5.5 C268.833323,5.5 268.833323,5.5 268.833323,5.5 Z"></path>
+                <path d="M269.166667,0.5 L0.833333333,0.5" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M1.16667683,0.5 C4.94667684,1.55 8.18667685,2.45 11.9666769,3.5 C11.9666766,1.4 11.9666763,-0.4 11.966676,-2.5 C8.18667627,-1.45 4.94667652,-0.55 1.16667683,0.5 C1.16667683,0.5 1.16667683,0.5 1.16667683,0.5 Z"></path>
+            </g>
+            <g id="messages" transform="translate(299.000000, 148.863376) rotate(-166.000000) translate(-299.000000, -148.863376) translate(99.000000, 145.363376)" stroke="#979797" stroke-linecap="square" fill="#9B9B9B">
+                <path d="M1.2345679,5.5 L398.765432,5.5" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M398.234579,5.5 C394.454579,4.45 391.214579,3.55 387.434579,2.5 C387.434579,4.6 387.434579,6.4 387.434579,8.5 C391.214579,7.45 394.454579,6.55 398.234579,5.5 C398.234579,5.5 398.234579,5.5 398.234579,5.5 Z"></path>
+                <path d="M398.765432,0.5 L1.2345679,0.5" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M1.76542119,0.5 C5.54542145,1.55 8.78542167,2.45 12.5654219,3.5 C12.5654216,1.4 12.5654213,-0.4 12.565421,-2.5 C8.78542109,-1.45 5.54542113,-0.55 1.76542119,0.5 C1.76542119,0.5 1.76542119,0.5 1.76542119,0.5 Z"></path>
+            </g>
+            <g id="messages" transform="translate(106.000000, 174.500000) rotate(-303.000000) translate(-106.000000, -174.500000) translate(61.000000, 171.000000)" stroke="#979797" stroke-linecap="square" fill="#9B9B9B">
+                <path d="M0.277777778,5.5 L89.7222222,5.5" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M89.2777795,5.5 C85.4977794,4.45 82.2577793,3.55 78.4777793,2.5 C78.4777793,4.6 78.4777793,6.4 78.4777793,8.5 C82.2577793,7.45 85.4977794,6.55 89.2777795,5.5 C89.2777795,5.5 89.2777795,5.5 89.2777795,5.5 Z"></path>
+                <path d="M89.7222222,0.5 L0.277777778,0.5" id="Line" sketch:type="MSShapeGroup"></path>
+                <path id="Line-decoration-1" d="M0.722220535,0.5 C4.50222077,1.55 7.74222096,2.45 11.5222212,3.5 C11.5222209,1.4 11.5222206,-0.4 11.5222203,-2.5 C7.74222037,-1.45 4.50222045,-0.55 0.722220535,0.5 C0.722220535,0.5 0.722220535,0.5 0.722220535,0.5 Z"></path>
+            </g>
+        </g>
+    </g>
+</svg>
