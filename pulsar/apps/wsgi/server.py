@@ -27,13 +27,14 @@ from pulsar import (reraise, HttpException, ProtocolError, Future, task,
 from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, has_empty_content,
                                   host_and_port_default, http_parser,
-                                  iri_to_uri, DEFAULT_CHARSET)
+                                  iri_to_uri)
 
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
 from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
                     log_wsgi_info, LOGGER)
+from .multipart import http_protocol, HttpStreamReader
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 
@@ -73,85 +74,6 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     return wsgi_environ(stream, parser, request_headers,
                         ('127.0.0.1', 8060), '255.0.1.2:8080',
                         Headers(), https=secure, extra=extra)
-
-
-def http_protocol(parser):
-    version = parser.get_version()
-    return "HTTP/%s" % ".".join(('%s' % v for v in version))
-
-
-class StreamReader:
-    _expect_sent = None
-    _waiting = None
-
-    def __init__(self, headers, parser, transport=None):
-        self.headers = headers
-        self.parser = parser
-        self.transport = transport
-        self.buffer = b''
-        self.on_message_complete = Future()
-
-    def __repr__(self):
-        return repr(self.transport)
-    __str__ = __repr__
-
-    def done(self):
-        '''``True`` when the full HTTP message has been read.
-        '''
-        return self.on_message_complete.done()
-
-    def waiting_expect(self):
-        '''``True`` when the client is waiting for 100 Continue.
-        '''
-        if self._expect_sent is None:
-            if (not self.parser.is_message_complete() and
-                    self.headers.has('expect', '100-continue')):
-                return True
-            self._expect_sent = ''
-        return False
-
-    def recv(self):
-        '''Read bytes in the buffer.
-        '''
-        if self.waiting_expect():
-            if self.parser.get_version() < (1, 1):
-                raise HttpException(status=417)
-            else:
-                msg = '%s 100 Continue\r\n\r\n' % http_protocol(self.parser)
-                self._expect_sent = msg
-                self.transport.write(msg.encode(DEFAULT_CHARSET))
-        return self.parser.recv_body()
-
-    def read(self, maxbuf=None):
-        '''Return bytes in the buffer.
-
-        If the stream is not yet ready, return a :class:`asyncio.Future`
-        which results in the bytes read.
-        '''
-        if not self._waiting:
-            body = self.recv()
-            if self.done():
-                return self._getvalue(body, maxbuf)
-            else:
-                self._waiting = chain_future(
-                    self.on_message_complete,
-                    lambda r: self._getvalue(body, maxbuf))
-                return self._waiting
-        else:
-            return self._waiting
-
-    def fail(self):
-        if self.waiting_expect():
-            raise HttpException(status=417)
-
-    #    INTERNALS
-    def _getvalue(self, body, maxbuf):
-        if self.buffer:
-            body = self.buffer + body
-        body = body + self.recv()
-        if maxbuf and len(body) > maxbuf:
-            body, self.buffer = body[:maxbuf], body[maxbuf:]
-        return body
 
 
 def wsgi_environ(stream, parser, request_headers, address, client_address,
@@ -324,10 +246,13 @@ class HttpServerResponse(ProtocolConsumer):
         '''
         parser = self.parser
         processed = parser.execute(data, len(data))
-        if not self._stream and parser.is_headers_complete():
-            headers = Headers(parser.get_headers(), kind='client')
-            self._stream = StreamReader(headers, parser, self.transport)
-            self._response(self.wsgi_environ())
+        if parser.is_headers_complete():
+            if not self._stream:
+                headers = Headers(parser.get_headers(), kind='client')
+                self._stream = HttpStreamReader(headers, parser,
+                                                self.transport)
+                self._response(self.wsgi_environ())
+            self._stream.data_received()
         #
         if parser.is_message_complete():
             #

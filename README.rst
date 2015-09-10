@@ -138,9 +138,9 @@ For options and help type::
 
     python runtests.py -h
 
-pep8_ check (requires pep8 package)::
+flake8_ check (requires flake8 package)::
 
-    pep8
+    flake8
 
 
 .. _contributing:
@@ -162,7 +162,7 @@ A good ``pull`` request should:
 * Include tests to cover the new code (inside the ``tests`` directory)
 * Preferably have one commit only (you can use rebase_ to combine several
   commits into one)
-* Make sure ``pep8`` tests pass
+* Make sure ``flake8`` tests pass
 
 .. _license:
 
@@ -181,10 +181,9 @@ file in the top distribution directory for the full license text.
 .. _pulsar: https://github.com/quantmind/pulsar
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
 .. _django: https://www.djangoproject.com/
-.. _pep-3156: http://www.python.org/dev/peps/pep-3156/
 .. _cython: http://cython.org/
 .. _`google user group`: https://groups.google.com/forum/?fromgroups#!forum/python-pulsar
-.. _pep8: http://www.python.org/dev/peps/pep-0008/
+.. _flake8: https://pypi.python.org/pypi/flake8
 .. _ujson: https://pypi.python.org/pypi/ujson
 .. _trollius: https://pypi.python.org/pypi/trollius
 .. _rebase: https://help.github.com/articles/about-git-rebase

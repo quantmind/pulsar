@@ -12,9 +12,6 @@ from base64 import b64encode
 from io import BytesIO
 from urllib.parse import parse_qs
 
-from .httpurl import ENCODE_BODY_METHODS, mapping_iterator
-from .structures import MultiValueDict
-
 
 def copy_file(stream, target, maxread=-1, buffer_size=2*16):
     ''' Read from :stream and write to :target until :maxread or EOF. '''
@@ -302,58 +299,3 @@ class MultipartPart(object):
         finally:
             self.file.seek(pos)
         return size
-
-
-def parse_form_data(environ, charset='utf-8', strict=False, **kw):
-    '''Parse form data from an environ dict and return a (forms, files) tuple.
-Both tuple values are dictionaries with the form-field name as a key
-(unicode) and lists as values (multiple values per key are possible).
-The forms-dictionary contains form-field values as unicode strings.
-The files-dictionary contains :class:`MultipartPart` instances, either
-because the form-field was a file-upload or the value is to big to fit
-into memory limits.
-
-:parameter environ: A WSGI environment dict.
-:parameter charset: The charset to use if unsure. (default: utf8)
-:parameter strict: If True, raise :exc:`MultipartError` on any parsing
-    errors. These are silently ignored by default.'''
-    forms, files = MultiValueDict(), MultiValueDict()
-    try:
-        if (environ.get('REQUEST_METHOD', 'GET').upper()
-                not in ENCODE_BODY_METHODS):
-            raise MultipartError("Request method not valid.")
-        content_length = int(environ.get('CONTENT_LENGTH', '-1'))
-        content_type = environ.get('CONTENT_TYPE', '')
-        if not content_type:
-            raise MultipartError("Missing Content-Type header.")
-        content_type, options = parse_options_header(content_type)
-        stream = environ.get('wsgi.input') or BytesIO()
-        kw['charset'] = charset = options.get('charset', charset)
-        if content_type == 'multipart/form-data':
-            boundary = options.get('boundary', '')
-            if not boundary:
-                raise MultipartError("No boundary for multipart/form-data.")
-            for part in MultipartParser(stream, boundary,
-                                        content_length, **kw):
-                if part.filename or not part.is_buffered():
-                    files[part.name] = part
-                else:
-                    forms[part.name] = part.string()
-        elif content_type in ('application/x-www-form-urlencoded',
-                              'application/x-url-encoded'):
-            mem_limit = kw.get('mem_limit', 2**20)
-            if content_length > mem_limit:
-                raise MultipartError("Request to big. Increase MAXMEM.")
-            data = stream.read(mem_limit).decode(charset)
-            if stream.read(1):  # These is more that does not fit mem_limit
-                raise MultipartError("Request to big. Increase MAXMEM.")
-            data = parse_qs(data, keep_blank_values=True)
-            for key, values in mapping_iterator(data):
-                for value in values:
-                    forms[key] = value
-        else:
-            raise MultipartError("Unsupported content type.")
-    except MultipartError:
-        if strict:
-            raise
-    return forms, files

@@ -46,7 +46,7 @@ from http.client import responses
 
 from pulsar import Future, chain_future
 from pulsar.utils.system import json
-from pulsar.utils.multipart import parse_form_data, parse_options_header
+from pulsar.utils.multipart import parse_options_header
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie,
                                   has_empty_content, REDIRECT_CODES,
@@ -58,6 +58,7 @@ from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, set_cookie, query_dict,
                     parse_accept_header)
 from .structures import ContentAccept, CharsetAccept, LanguageAccept
+from .multipart import parse_form_data
 
 
 __all__ = ['EnvironMixin', 'WsgiResponse',

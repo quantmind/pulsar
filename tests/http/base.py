@@ -127,6 +127,18 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
+    def test_upload(self):
+        http = self._client
+        files = {'test': 'simple file'}
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = yield from http.put(self.httpbin('upload'),
+                                       files=files)
+        self.assertTrue(response)
+
+
+class d:
+
     def _test_stream_response(self, siz=3000, rep=10):
         http = self._client
         response = yield from http.get(

@@ -32,7 +32,7 @@ from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import (route, Html, Json, HtmlDocument, GZipMiddleware,
-                              AsyncString)
+                              AsyncString, parse_form_data)
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.system import json
 
@@ -295,6 +295,16 @@ class HttpBin(BaseRouter):
         return AsyncString('Hello, World!').http_response(request)
 
 
+class Upload(wsgi.Router):
+
+    def put(self, request):
+        yield from parse_form_data(request.environ,
+                                   stream_callback=self.stream)
+
+    def stream(self, data):
+        pass
+
+
 class ExpectFail(BaseRouter):
 
     def post(self, request):
@@ -316,6 +326,7 @@ class Site(wsgi.LazyWsgi):
     def setup(self, environ):
         router = HttpBin('/')
         return wsgi.WsgiHandler([ExpectFail('expect'),
+                                 Upload('/upload'),
                                  wsgi.wait_for_body_middleware,
                                  wsgi.clean_path_middleware,
                                  wsgi.authorization_middleware,

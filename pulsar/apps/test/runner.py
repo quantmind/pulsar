@@ -7,6 +7,10 @@ from .utils import (TestFailure, skip_test, skip_reason,
                     expecting_failure, AsyncAssert, get_test_timeout)
 
 
+class AbortTests(Exception):
+    pass
+
+
 class Runner(object):
 
     def __init__(self, monitor, runner, tests):
@@ -15,33 +19,23 @@ class Runner(object):
         self.logger = monitor.logger
         self.monitor = monitor
         self.runner = runner
-        self.concurrent = set()
         self.tests = list(reversed(tests))
-        async(self._run_all_tests(tests), loop=self._loop)
-        self._loop.call_soon(self._check_done)
-
-    def _check_done(self):
-        if self.tests or self.concurrent:
-            return self._loop.call_soon(self._check_done)
-        #
-        time_taken = self._loop.time() - self._time_start
-        runner = self.runner
-        runner.on_end()
-        runner.printSummary(time_taken)
-        if runner.result.errors or runner.result.failures:
-            exit_code = 2
-        else:
-            exit_code = 0
-        self._loop.call_soon(self._exit, exit_code)
+        self._loop.call_soon(self._next)
 
     def _exit(self, exit_code):
         raise HaltServer(exit_code=exit_code)
 
-    def _run_all_tests(self, tests):
+    def _check_abort(self):
+        if getattr(self._loop, 'exit_code', None):
+            print('\nAbort tests')
+            raise AbortTests
+
+    def _next(self):
         runner = self.runner
         cfg = self.monitor.cfg
 
-        while self.tests:
+        if self.tests:
+            run = True
             tag, testcls = self.tests.pop()
             testcls.tag = tag
             testcls.cfg = cfg
@@ -50,15 +44,26 @@ class Runner(object):
                 all_tests = runner.loadTestsFromTestCase(testcls)
             except Exception:
                 self.logger.exception('Could not load tests', exc_info=True)
-                continue
-            if not all_tests.countTestCases():
-                continue
+                run = False
+            else:
+                run = all_tests.countTestCases()
 
-            self.logger.info('Running Tests from %s', testcls)
-            runner.startTestClass(testcls)
-            self.concurrent.add(testcls)
-            yield from self._run_testcls(testcls, all_tests)
-            self.logger.info('Finished Tests from %s', testcls)
+            if run:
+                self.logger.info('Running Tests from %s', testcls)
+                runner.startTestClass(testcls)
+                async(self._run_testcls(testcls, all_tests), loop=self._loop)
+            else:
+                self._loop.call_soon(self._next)
+        else:
+            time_taken = self._loop.time() - self._time_start
+            runner = self.runner
+            runner.on_end()
+            runner.printSummary(time_taken)
+            if runner.result.errors or runner.result.failures:
+                exit_code = 2
+            else:
+                exit_code = 0
+            self._loop.call_soon(self._exit, exit_code)
 
     def _run_testcls(self, testcls, all_tests):
         cfg = testcls.cfg
@@ -73,6 +78,8 @@ class Runner(object):
             reason = str(exc)
             for test in all_tests:
                 self.runner.addSkip(test, reason)
+        except AbortTests:
+            return
         except Exception as exc:
             self.logger.exception('Failure in setUpClass', exc_info=True)
             exc = TestFailure(exc)
@@ -82,23 +89,30 @@ class Runner(object):
                 self.add_failure(test, exc)
                 self.runner.stopTest(test)
         else:
-            if seq:
-                for test in all_tests:
-                    yield from self._run_test(test, test_timeout)
-            else:
-                yield from asyncio.wait([self._run_test(test, test_timeout)
-                                         for test in all_tests],
-                                        loop=self._loop)
+            try:
+                if seq:
+                    for test in all_tests:
+                        yield from self._run_test(test, test_timeout)
+                else:
+                    yield from asyncio.wait([self._run_test(test, test_timeout)
+                                             for test in all_tests],
+                                            loop=self._loop)
+            except AbortTests:
+                return
 
         try:
             yield from self._run(testcls.tearDownClass, test_timeout)
+        except AbortTests:
+            return
         except Exception as exc:
             self.logger.exception('Failure in tearDownClass',
                                   exc_info=True)
 
-        self.concurrent.remove(testcls)
+        self.logger.info('Finished Tests from %s', testcls)
+        self._loop.call_soon(self._next)
 
     def _run(self, method, test_timeout):
+        self._check_abort()
         coro = method()
         # a coroutine
         if coro:
@@ -135,6 +149,7 @@ class Runner(object):
         yield None  # release the loop
 
     def _run_safe(self, test, method_name, test_timeout, error=None):
+        self._check_abort()
         try:
             method = getattr(test, method_name)
             coro = method()
