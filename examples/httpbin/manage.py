@@ -298,9 +298,8 @@ class HttpBin(BaseRouter):
 class Upload(wsgi.Router):
 
     def put(self, request):
-        raise HttpException(status=401)
-        yield from parse_form_data(request.environ,
-                                   stream_callback=self.stream)
+        yield from request.data_and_files(stream=self.stream)
+        return self.json(request)
 
     def stream(self, data):
         pass
@@ -327,7 +326,7 @@ class Site(wsgi.LazyWsgi):
     def setup(self, environ):
         router = HttpBin('/')
         return wsgi.WsgiHandler([ExpectFail('expect'),
-                                 Upload('/upload'),
+                                 Upload('upload'),
                                  wsgi.wait_for_body_middleware,
                                  wsgi.clean_path_middleware,
                                  wsgi.authorization_middleware,

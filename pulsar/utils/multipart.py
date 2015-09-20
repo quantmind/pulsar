@@ -10,7 +10,6 @@ from tempfile import TemporaryFile
 from wsgiref.headers import Headers
 from base64 import b64encode
 from io import BytesIO
-from urllib.parse import parse_qs
 
 
 def copy_file(stream, target, maxread=-1, buffer_size=2*16):

@@ -34,7 +34,7 @@ from pulsar.async.protocols import ProtocolConsumer
 
 from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
                     log_wsgi_info, LOGGER)
-from .multipart import http_protocol, HttpStreamReader
+from .formdata import http_protocol, HttpStreamReader
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 

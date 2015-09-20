@@ -58,7 +58,7 @@ from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, set_cookie, query_dict,
                     parse_accept_header)
 from .structures import ContentAccept, CharsetAccept, LanguageAccept
-from .multipart import parse_form_data
+from .formdata import parse_form_data
 
 
 __all__ = ['EnvironMixin', 'WsgiResponse',
@@ -509,7 +509,7 @@ class WsgiRequest(EnvironMixin):
         else:
             return None, {}
 
-    def data_and_files(self, data=True, files=True):
+    def data_and_files(self, data=True, files=True, stream=None):
         '''Retrieve body data.
 
         Returns a two-elements tuple of a
@@ -521,9 +521,13 @@ class WsgiRequest(EnvironMixin):
 
         The result is cached.
         '''
-        value = self.cache.data_and_files
+        if self.method in ENCODE_URL_METHODS:
+            value = {}, None
+        else:
+            value = self.cache.data_and_files
+
         if not value:
-            return self._data_and_files(data, files)
+            return self._data_and_files(data, files, stream)
         elif data and files:
             return value
         elif data:
@@ -538,29 +542,18 @@ class WsgiRequest(EnvironMixin):
         '''
         return self.data_and_files(files=False)
 
-    def _data_and_files(self, data=True, files=True, future=None):
+    def _data_and_files(self, data=True, files=True, stream=None, future=None):
         result = {}, None
         chunk = None
         if future is None:
-            stream = self.environ.get('wsgi.input')
-            if self.method not in ENCODE_URL_METHODS and stream:
-                chunk = stream.read()
-                if isinstance(chunk, Future):
-                    return chain_future(
-                        chunk, partial(self._data_and_files, data, files))
+            data_files = parse_form_data(self.environ, charset, stream=stream)
+            if isinstance(chunk, Future):
+                return chain_future(
+                    data_files, partial(self._data_and_files, data, files))
         else:
-            chunk = future
-        if chunk is not None:
-            content_type, options = self.content_type_options
-            charset = options.get('charset', 'utf-8')
-            self.environ['wsgi.input'] = BytesIO(chunk)
-            if content_type in JSON_CONTENT_TYPES:
-                result = json.loads(chunk.decode(charset)), None
-            elif content_type:
-                result = parse_form_data(self.environ, charset)
-            else:
-                result = chunk, None
-        self.cache.data_and_files = result
+            data_files = files
+
+        self.cache.data_and_files = data_files
         return self.data_and_files(data, files)
 
     @cached_property

@@ -1,11 +1,14 @@
+import json
 from io import BytesIO
 from asyncio import Future
+from urllib.parse import parse_qs
 
 from pulsar import HttpException
 from pulsar.utils.structures import MultiValueDict, mapping_iterator
 from pulsar.utils.httpurl import DEFAULT_CHARSET, ENCODE_BODY_METHODS
 from pulsar.utils.multipart import (MultipartError, MultipartParser,
                                     parse_options_header)
+from pulsar.async.futures import chain_future
 
 __all__ = ['parse_form_data']
 
@@ -13,6 +16,9 @@ __all__ = ['parse_form_data']
 ONEMB = 2**20
 # Default max size for body when not streaming
 DEFAULT_MAXSIZE = 10*ONEMB
+
+FORM_ENCODED_TYPES = ('application/x-www-form-urlencoded',
+                      'application/x-url-encoded')
 
 
 def http_protocol(parser):
@@ -110,14 +116,7 @@ class HttpStreamReader:
         return body
 
 
-class AsyncMultipartParser(MultipartParser):
-
-    def __iter__(self):
-        pass
-
-
-def parse_form_data(environ, charset='utf-8', strict=False,
-                    stream_callback=None, **kw):
+def parse_form_data(environ, stream=None, **kw):
     '''Parse form data from an environ dict and return a (forms, files) tuple.
 
     Both tuple values are dictionaries with the form-field name as a key
@@ -133,59 +132,106 @@ def parse_form_data(environ, charset='utf-8', strict=False,
         errors. These are silently ignored by default.
     :parameter stream_callback: a callback when the content is streamed
     '''
-    forms, files = MultiValueDict(), MultiValueDict()
-    try:
-        if (environ.get('REQUEST_METHOD', 'GET').upper()
-                not in ENCODE_BODY_METHODS):
-            raise MultipartError("Request method not valid.")
-        content_length = int(environ.get('CONTENT_LENGTH', '-1'))
-        content_type = environ.get('CONTENT_TYPE', '')
-        if not content_type:
-            raise MultipartError("Missing Content-Type header.")
-        content_type, options = parse_options_header(content_type)
-        stream = environ.get('wsgi.input') or BytesIO()
-        kw['charset'] = charset = options.get('charset', charset)
+    method = environ.get('REQUEST_METHOD', 'GET').upper()
+    if method not in ENCODE_BODY_METHODS:
+        raise MultipartError("Request method not valid.")
 
-        async = isinstance(stream, HttpStreamReader)
+    content_type = environ.get('CONTENT_TYPE')
+    if not content_type:
+        raise MultipartError("Missing Content-Type header.")
+    content_type, options = parse_options_header(content_type)
+    options.update(kw)
 
-        if isinstance(stream, HttpStreamReader):
-            stream.set_streaming_callback(stream_callback)
-            multi_parse = async_multi_parse
+    if content_type == 'multipart/form-data':
+        decoder = MultipartDecoder(environ, options, stream)
+    elif content_type in FORM_ENCODED_TYPES:
+        decoder = UrlEncoded(environ, options, stream)
+    elif content_type in JSON_CONTENT_TYPES:
+        decoder = JsonDecoder(environ, options, stream)
+    else:
+        raise MultipartError("Unsupported content type.")
+
+    return decoder.parse()
+
+
+class FormDecoder:
+
+    def __init__(self, environ, options, stream):
+        self.environ = environ
+        self.options = options
+        self.stream = stream
+
+    @property
+    def content_length(self):
+        return int(self.environ.get('CONTENT_LENGTH', -1))
+
+    @property
+    def charset(self):
+        return int(self.options.get('charset', 'utf-8'))
+
+    def parse(self):
+        raise NotImplementedError
+
+
+class MultipartDecoder(FormDecoder):
+    boundary = None
+
+    def parse(self):
+        self.boundary = self.options.get('boundary')
+        if not self.boundary:
+            raise MultipartError("No boundary for multipart/form-data.")
+        self.separator = '--{0}'.format(self.boundary).encode()
+        self.terminator = '--{0}--'.format(self.boundary).encode()
+        inp = self.environ.get('wsgi.input') or BytesIO()
+
+        if isinstance(inp, HttpStreamReader):
+            inp.set_streaming_callback(self._recv)
+            return self.read()
         else:
-            assert not stream_callback
-
-
-        if content_type == 'multipart/form-data':
-            boundary = options.get('boundary', '')
-            if not boundary:
-                raise MultipartError("No boundary for multipart/form-data.")
-
-            return multi_parse(stream, boundary, content_length, **kw)
-
-        elif content_type in ('application/x-www-form-urlencoded',
-                              'application/x-url-encoded'):
-            mem_limit = kw.get('mem_limit', 2**20)
-            if content_length > mem_limit:
-                raise MultipartError("Request to big. Increase MAXMEM.")
-            data = stream.read(mem_limit).decode(charset)
-            if stream.read(1):  # These is more that does not fit mem_limit
-                raise MultipartError("Request to big. Increase MAXMEM.")
-            data = parse_qs(data, keep_blank_values=True)
-            for key, values in mapping_iterator(data):
-                for value in values:
-                    forms[key] = value
+            data = inp.read()
+            
+        
+        if isinstance(data, Future):
+            return chain_future(data, self._recv)
         else:
-            raise MultipartError("Unsupported content type.")
-    except MultipartError:
-        if strict:
-            raise
-    return forms, files
+            self.ready(data)
+
+    def _recv(self, data):
+        pass
 
 
-def async_multi_parse(stream, boundary, content_length, **kw):
+class UrlEncodedDecoder(FormDecoder):
 
-    for part in MultipartParser(stream, boundary, content_length, **kw):
-        if part.filename or not part.is_buffered():
-            files[part.name] = part
+    def parse(self, mem_limit=None, **kw):
+        mem_limit = mem_limit or DEFAULT_MAXSIZE
+        if self.content_length > mem_limit:
+            raise MultipartError("Request to big. Increase MAXMEM.")
+        data = inp.read(mem_limit)
+
+        if isinstance(data, Future):
+            return chain_future(data, self.ready)
         else:
-            forms[part.name] = part.string()
+            self.ready(data)
+
+    def ready(self, data):
+        charset = self.options['charset']
+        forms, files = MultiValueDict(), MultiValueDict()
+        data = parse_qs(data.decode(charset), keep_blank_values=True)
+        for key, values in mapping_iterator(data):
+            for value in values:
+                forms[key] = value
+        if self.stream:
+            self.stream((forms, files))
+        else:
+            return (forms, files)
+
+
+def JsonDecoder(UrlEncodedDecoder):
+
+    def ready(self, data):
+        charset = self.options.get('charset', 'utf-8')
+        forms = json.loads(data.decode(charset))
+        if self.stream:
+            self.stream((forms, None))
+        else:
+            return (forms, None)
