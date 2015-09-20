@@ -284,6 +284,8 @@ class PulsarProtocol(EventHandler, FlowControl):
     def close(self):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
+            if self._transport.can_write_eof():
+                self._transport.write_eof()
             self._transport.close()
 
     def abort(self):
