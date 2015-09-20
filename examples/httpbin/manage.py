@@ -298,6 +298,7 @@ class HttpBin(BaseRouter):
 class Upload(wsgi.Router):
 
     def put(self, request):
+        raise HttpException(status=401)
         yield from parse_form_data(request.environ,
                                    stream_callback=self.stream)
 
