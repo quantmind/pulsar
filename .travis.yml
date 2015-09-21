@@ -16,8 +16,7 @@ services:
 script:
   - flake8
   - ls -la
-  - rm -rf pulsar
-  - rm -rf build
+  - rm -rf pulsar build pulsar.egg-info dist
   - python -m runtests --coverage
   - python -m runtests --coveralls
 

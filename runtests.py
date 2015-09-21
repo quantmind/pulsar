@@ -7,8 +7,6 @@ from multiprocessing import current_process
 def run(**params):
     args = params.get('argv', sys.argv)
     if '--coveralls' in args:
-        import pulsar
-        from pulsar.utils.path import Path
         from pulsar.apps.test.cov import coveralls
 
         repo_token = None
