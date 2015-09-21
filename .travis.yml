@@ -15,6 +15,7 @@ services:
 
 script:
   - flake8
+  - ls -la
   - rm -rf pulsar
   - rm -rf build
   - python -m runtests --coverage
