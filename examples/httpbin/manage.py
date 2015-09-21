@@ -23,8 +23,11 @@ import os
 import sys
 import string
 import mimetypes
+from functools import partial
 from itertools import repeat, chain
 from random import random
+from base64 import b64encode
+from asyncio import async
 
 from pulsar import HttpRedirect, HttpException, version, JAPANESE, CHINESE
 from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
@@ -32,7 +35,7 @@ from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import (route, Html, Json, HtmlDocument, GZipMiddleware,
-                              AsyncString, parse_form_data)
+                              AsyncString)
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.system import json
 
@@ -84,14 +87,18 @@ class BaseRouter(wsgi.Router):
         else:
             args, files = request.data_and_files()
             jfiles = MultiValueDict()
-            for name, parts in files.lists():
-                for part in parts:
-                    try:
-                        part = part.string()
-                    except UnicodeError:
-                        part = part.base64()
-                    jfiles[name] = part
-            data.update((('args', dict(args)),
+            if files:
+                for name, parts in files.lists():
+                    for part in parts:
+                        try:
+                            part = part.string()
+                        except UnicodeError:
+                            part = part.base64()
+                        jfiles[name] = part
+            if isinstance(args, MultiValueDict):
+                args = dict(args)
+
+            data.update((('args', args),
                          ('files', dict(jfiles))))
         data.update(params)
         return data
@@ -295,24 +302,50 @@ class HttpBin(BaseRouter):
         return AsyncString('Hello, World!').http_response(request)
 
 
-class Upload(wsgi.Router):
+class Upload(BaseRouter):
+    response_content_types = ['multipart/form-data']
 
     def put(self, request):
-        yield from request.data_and_files(stream=self.stream)
-        return self.json(request)
+        return async(self._async_put(request))
 
-    def stream(self, data):
-        pass
+    def _async_put(self, request):
+        headers = self.getheaders(request)
+        data = {'method': request.method,
+                'headers': headers,
+                'pulsar': self.pulsar_info(request),
+                'args': MultiValueDict(),
+                'files': MultiValueDict()}
+        request.cache.response_data = data
+        yield from request.data_and_files(stream=partial(self.stream, request))
+        data['args'] = dict(data['args'])
+        data['files'] = dict(data['files'])
+        return Json(data).http_response(request)
+
+    def stream(self, request, part):
+        if request.cache.current_data is not part:
+            request.cache.current_data = part
+            request.cache.current_data_buffer = []
+
+        request.cache.current_data_buffer.append(part.recv())
+
+        if part.complete():
+            data_store = request.cache.response_data
+            data = b''.join(request.cache.current_data_buffer)
+            store = data_store['args']
+            if part.is_file():
+                store = data_store['files']
+                try:
+                    data.decode('utf-8')
+                except UnicodeError:
+                    data = b64encode(data)
+
+            store[part.name] = data.decode('utf-8')
 
 
 class ExpectFail(BaseRouter):
 
     def post(self, request):
-        chunk = request.get('wsgi.input')
-        if not chunk.done():
-            chunk.fail()
-        else:
-            return self.info_data_response(request)
+        request.get('wsgi.input').fail()
 
 
 class Graph(ws.WS):

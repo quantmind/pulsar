@@ -127,17 +127,56 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
-    def test_upload(self):
+    def test_json_post(self):
+        data = {'bla': 'foo',
+                'unz': 'whatz',
+                'numero': [1, 2]}
         http = self._client
+        ct = 'application/json'
+        response = yield from http.post(self.httpbin('post'),
+                                        headers=[('content-type', ct)],
+                                        data=data)
+        self.assertEqual(response.request.headers['content-type'], ct)
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'], [1, 2])
+
+    def test_upload_images(self):
+        path = Path(examples.__file__).parent.parent
+        path = path.join('docs', 'source', '_static')
+        files = []
+        sent = []
+        for name in ('pulsar.png', 'favicon.ico'):
+            with open(path.join(name), 'rb') as file:
+                image = file.read()
+            sent.append(image)
+            files.append(('images', (name, image)))
+        client = self._client
+        response = yield from client.put(self.httpbin('upload'), files=files)
+        self.assertEqual(response.status_code, 200)
+        ct = response.request.headers['content-type']
+        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
+        data = response.json()
+        images = data['files']['images']
+        self.assertEqual(len(images), 2)
+        for image, s in zip(images, sent):
+            image = b64decode(image.encode('utf-8'))
+            self.assertEqual(image, s)
+
+    def test_upload_files(self):
+        client = self._client
         files = {'test': 'simple file'}
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield from http.put(self.httpbin('upload'),
-                                       files=files)
-        self.assertTrue(response)
-
-
-class d:
+        response = yield from client.put(self.httpbin('upload'), data=data,
+                                         files=files)
+        self.assertEqual(response.status_code, 200)
+        ct = response.request.headers['content-type']
+        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
+        data = response.json()
+        self.assertEqual(data['files'], {'test': ['simple file']})
+        self.assertEqual(data['args']['numero'], ['1', '2'])
 
     def _test_stream_response(self, siz=3000, rep=10):
         http = self._client
@@ -528,16 +567,6 @@ class d:
         response = yield from http.post(self.httpbin('expect'), data=data,
                                         wait_continue=True)
         self.assertEqual(response.status_code, 417)
-
-    def test_expect_fail_no_waiting(self):
-        http = self._client
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        response = yield from http.post(self.httpbin('expect'), data=data)
-        self.assertEqual(response.status_code, 200)
-        result = response.json()
-        self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_media_root(self):
         http = self._client

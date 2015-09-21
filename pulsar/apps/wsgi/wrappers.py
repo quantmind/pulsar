@@ -41,18 +41,15 @@ Wsgi Response
 .. _TLS: http://en.wikipedia.org/wiki/Transport_Layer_Security
 '''
 from functools import reduce, partial
-from io import BytesIO
 from http.client import responses
 
 from pulsar import Future, chain_future
-from pulsar.utils.system import json
-from pulsar.utils.multipart import parse_options_header
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie,
                                   has_empty_content, REDIRECT_CODES,
                                   ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
                                   remove_double_slash, iri_to_uri,
-                                  is_absolute_uri)
+                                  is_absolute_uri, parse_options_header)
 
 from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, set_cookie, query_dict,
@@ -543,18 +540,17 @@ class WsgiRequest(EnvironMixin):
         return self.data_and_files(files=False)
 
     def _data_and_files(self, data=True, files=True, stream=None, future=None):
-        result = {}, None
-        chunk = None
         if future is None:
-            data_files = parse_form_data(self.environ, charset, stream=stream)
-            if isinstance(chunk, Future):
+            data_files = parse_form_data(self.environ, stream=stream)
+            if isinstance(data_files, Future):
                 return chain_future(
-                    data_files, partial(self._data_and_files, data, files))
+                    data_files,
+                    partial(self._data_and_files, data, files, stream))
         else:
-            data_files = files
+            data_files = future
 
         self.cache.data_and_files = data_files
-        return self.data_and_files(data, files)
+        return self.data_and_files(data, files, stream)
 
     @cached_property
     def url_data(self):

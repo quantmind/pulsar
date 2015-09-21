@@ -1,5 +1,4 @@
 [run]
-concurrency = gevent
 source = pulsar,examples
 omit =
     *pulsar/utils/system/winservice.py

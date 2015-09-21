@@ -1,14 +1,16 @@
-import json
+import email.parser
+from http.client import HTTPMessage, _MAXLINE, _MAXHEADERS
 from io import BytesIO
-from asyncio import Future
+from asyncio import StreamReader, async
 from urllib.parse import parse_qs
+from base64 import b64encode
+from cgi import valid_boundary, parse_header
 
-from pulsar import HttpException
+from pulsar import HttpException, is_async
+from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict, mapping_iterator
-from pulsar.utils.httpurl import DEFAULT_CHARSET, ENCODE_BODY_METHODS
-from pulsar.utils.multipart import (MultipartError, MultipartParser,
-                                    parse_options_header)
-from pulsar.async.futures import chain_future
+from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
+                                  JSON_CONTENT_TYPES, parse_options_header)
 
 __all__ = ['parse_form_data']
 
@@ -19,6 +21,9 @@ DEFAULT_MAXSIZE = 10*ONEMB
 
 FORM_ENCODED_TYPES = ('application/x-www-form-urlencoded',
                       'application/x-url-encoded')
+BODY_DATA = 0
+BODY_FILES = 1
+LARGE_BODY_CODE = 403
 
 
 def http_protocol(parser):
@@ -26,94 +31,52 @@ def http_protocol(parser):
     return "HTTP/%s" % ".".join(('%s' % v for v in version))
 
 
-class HttpStreamReader:
+class HttpBodyReader():
     _expect_sent = None
     _waiting = None
 
-    def __init__(self, headers, parser, transport=None):
+    def __init__(self, headers, parser, transport, **kw):
         self.headers = headers
         self.parser = parser
-        self.transport = transport
-        self.buffer = b''
-        self.on_message_complete = Future()
-        self._streaming_callbacks = []
-
-    def __repr__(self):
-        if self.transport:
-            return repr(self.transport)
-        else:
-            return self.__class__.__name__
-    __str__ = __repr__
-
-    def data_received(self):
-        '''Called when new body data is received
-        '''
-        if self._streaming_callbacks:
-            body = self.parser.recv_body()
-            for callback in self._streaming_callbacks:
-                callback(body)
-
-    def set_streaming_callback(self, callback):
-        if hasattr(callback, '__call__'):
-            self._streaming_callbacks.append(callback)
-
-    def done(self):
-        '''``True`` when the full HTTP message has been read.
-        '''
-        return self.on_message_complete.done()
+        self.reader = StreamReader(**kw)
+        self.reader.set_transport(transport)
+        self.feed_data = self.reader.feed_data
+        self.feed_eof = self.reader.feed_eof
 
     def waiting_expect(self):
         '''``True`` when the client is waiting for 100 Continue.
         '''
         if self._expect_sent is None:
-            if (not self.parser.is_message_complete() and
+            if (not self.reader.at_eof() and
                     self.headers.has('expect', '100-continue')):
                 return True
             self._expect_sent = ''
         return False
 
-    def read(self, maxbuf=None):
-        '''Return bytes in the buffer.
-
-        If the stream is not yet ready, return a :class:`asyncio.Future`
-        which results in the bytes read unless a callback is given
-        '''
-        if not self._waiting:
-            body = self.recv()
-            if self.done():
-                return self._getvalue(body, maxbuf)
-            else:
-                self._waiting = chain_future(
-                    self.on_message_complete,
-                    lambda r: self._getvalue(body, maxbuf))
-                return self._waiting
-        else:
-            return self._waiting
-
-    def recv(self):
-        '''Read bytes in the buffer.
-        '''
+    def can_continue(self):
         if self.waiting_expect():
             if self.parser.get_version() < (1, 1):
                 raise HttpException(status=417)
             else:
                 msg = '%s 100 Continue\r\n\r\n' % http_protocol(self.parser)
                 self._expect_sent = msg
-                self.transport.write(msg.encode(DEFAULT_CHARSET))
-        return self.parser.recv_body()
+                self.reader._transport.write(msg.encode(DEFAULT_CHARSET))
 
     def fail(self):
         if self.waiting_expect():
             raise HttpException(status=417)
 
-    #    INTERNALS
-    def _getvalue(self, body, maxbuf):
-        if self.buffer:
-            body = self.buffer + body
-        body = body + self.recv()
-        if maxbuf and len(body) > maxbuf:
-            body, self.buffer = body[:maxbuf], body[maxbuf:]
-        return body
+    def read(self, n=-1):
+        self.can_continue()
+        return self.reader.read(n=n)
+
+    def readline(self):
+        self.can_continue()
+        return self.reader.readline()
+
+    def readexactly(self, n):
+        self.can_continue()
+        return self.reader.readexactly(n)
 
 
 def parse_form_data(environ, stream=None, **kw):
@@ -134,22 +97,22 @@ def parse_form_data(environ, stream=None, **kw):
     '''
     method = environ.get('REQUEST_METHOD', 'GET').upper()
     if method not in ENCODE_BODY_METHODS:
-        raise MultipartError("Request method not valid.")
+        raise HttpException(status=422)
 
     content_type = environ.get('CONTENT_TYPE')
     if not content_type:
-        raise MultipartError("Missing Content-Type header.")
+        raise HttpException("Missing Content-Type header", status=422)
     content_type, options = parse_options_header(content_type)
     options.update(kw)
 
     if content_type == 'multipart/form-data':
         decoder = MultipartDecoder(environ, options, stream)
     elif content_type in FORM_ENCODED_TYPES:
-        decoder = UrlEncoded(environ, options, stream)
+        decoder = UrlEncodedDecoder(environ, options, stream)
     elif content_type in JSON_CONTENT_TYPES:
         decoder = JsonDecoder(environ, options, stream)
     else:
-        raise MultipartError("Unsupported content type.")
+        raise HttpException("Unsupported content type", status=422)
 
     return decoder.parse()
 
@@ -160,6 +123,7 @@ class FormDecoder:
         self.environ = environ
         self.options = options
         self.stream = stream
+        self.result = (MultiValueDict(), MultiValueDict())
 
     @property
     def content_length(self):
@@ -167,7 +131,7 @@ class FormDecoder:
 
     @property
     def charset(self):
-        return int(self.options.get('charset', 'utf-8'))
+        return self.options.get('charset', 'utf-8')
 
     def parse(self):
         raise NotImplementedError
@@ -177,27 +141,58 @@ class MultipartDecoder(FormDecoder):
     boundary = None
 
     def parse(self):
-        self.boundary = self.options.get('boundary')
-        if not self.boundary:
-            raise MultipartError("No boundary for multipart/form-data.")
-        self.separator = '--{0}'.format(self.boundary).encode()
-        self.terminator = '--{0}--'.format(self.boundary).encode()
+        boundary = self.options.get('boundary', '')
+        if not valid_boundary(boundary):
+            raise HttpException("Invalid boundary for multipart/form-data",
+                                status=422)
         inp = self.environ.get('wsgi.input') or BytesIO()
 
-        if isinstance(inp, HttpStreamReader):
-            inp.set_streaming_callback(self._recv)
-            return self.read()
+        if isinstance(inp, HttpBodyReader):
+            return async(self._consume(inp, boundary), loop=inp.reader._loop)
         else:
-            data = inp.read()
-            
-        
-        if isinstance(data, Future):
-            return chain_future(data, self._recv)
-        else:
-            self.ready(data)
+            producer = BytesProducer(inp)
+            return producer(self._consume, boundary)
 
-    def _recv(self, data):
-        pass
+    def _consume(self, fp, boundary):
+        sep = b'--'
+        nextpart = ('--%s' % boundary).encode()
+        lastpart = ("--%s--" % boundary).encode()
+        terminator = b""
+
+        while terminator != lastpart:
+            nbytes = -1
+            data = None
+            current = None
+
+            if terminator:
+                headers = yield from parse_headers(fp)
+                current = MultipartPart(self, headers)
+
+                if nbytes > 0:
+                    data = yield from fp.read(nbytes)
+                else:
+                    data = b''
+
+                if current.name:
+                    current.feed_data(data)
+                else:
+                    current = None
+
+            while 1:
+                line = yield from fp.readline()
+                line = line or lastpart
+                if line.startswith(sep):
+                    terminator = line.rstrip()
+                    if terminator in (nextpart, lastpart):
+                        break
+                if current:
+                    current.feed_data(line)
+
+            # Done with part.
+            if current:
+                current.done()
+
+        return self.result
 
 
 class UrlEncodedDecoder(FormDecoder):
@@ -205,33 +200,171 @@ class UrlEncodedDecoder(FormDecoder):
     def parse(self, mem_limit=None, **kw):
         mem_limit = mem_limit or DEFAULT_MAXSIZE
         if self.content_length > mem_limit:
-            raise MultipartError("Request to big. Increase MAXMEM.")
-        data = inp.read(mem_limit)
+            raise HttpException("Request to big. Increase MAXMEM.",
+                                status=LARGE_BODY_CODE)
+        inp = self.environ.get('wsgi.input') or BytesIO()
+        data = inp.read()
 
-        if isinstance(data, Future):
-            return chain_future(data, self.ready)
+        if is_async(data):
+            return async(self._async(data))
         else:
-            self.ready(data)
+            return self._ready(data)
 
-    def ready(self, data):
-        charset = self.options['charset']
-        forms, files = MultiValueDict(), MultiValueDict()
+    def _async(self, chunk):
+        chunk = yield from chunk
+        return self._ready(chunk)
+
+    def _ready(self, data):
+        charset = self.charset
         data = parse_qs(data.decode(charset), keep_blank_values=True)
+        forms = self.result[0]
         for key, values in mapping_iterator(data):
             for value in values:
                 forms[key] = value
-        if self.stream:
-            self.stream((forms, files))
+        return self.result
+
+
+class JsonDecoder(UrlEncodedDecoder):
+
+    def _ready(self, data):
+        self.result = (json.loads(data.decode(self.charset)), None)
+        return self.result
+
+
+class MultipartPart:
+    filename = None
+    name = ''
+
+    def __init__(self, parser, headers):
+        self.parser = parser
+        self.headers = headers
+        self._bytes = []
+        self._done = False
+        length = headers.get('content-length')
+        content = headers.get('content-disposition')
+        if length:
+            try:
+                length = int(length)
+            except ValueError:
+                length = -1
         else:
-            return (forms, files)
+            length = -1
+        self.length = length
+        if content:
+            key, params = parse_header(content)
+            name = params.get('name')
+            if key == 'form-data' and name:
+                self.name = name
+                self.filename = params.get('filename')
 
+    def __repr__(self):
+        return self.name
 
-def JsonDecoder(UrlEncodedDecoder):
+    @property
+    def charset(self):
+        return self.parser.charset
 
-    def ready(self, data):
-        charset = self.options.get('charset', 'utf-8')
-        forms = json.loads(data.decode(charset))
-        if self.stream:
-            self.stream((forms, None))
+    @property
+    def content_type(self):
+        return self.headers.get('Content-Type')
+
+    def bytes(self):
+        '''Bytes'''
+        return b''.join(self._bytes)
+
+    def base64(self, charset=None):
+        '''Data encoded as base 64'''
+        return b64encode(self.bytes()).decode(charset or self.charset)
+
+    def string(self, charset=None):
+        '''Data decoded with the specified charset'''
+        return self.bytes().decode(charset or self.charset)
+
+    def complete(self):
+        return self._done
+
+    def feed_data(self, data):
+        if data:
+            self._bytes.append(data)
+            if self.parser.stream:
+                self.parser.stream(self)
+
+    def recv(self):
+        if self._done:
+            data = self._bytes
+            self._bytes = []
         else:
-            return (forms, None)
+            data = self._bytes[:-1]
+            self._bytes = self._bytes[-1:]
+        return b''.join(data)
+
+    def is_file(self):
+        return self.filename or self.content_type != 'text/plain'
+
+    def done(self):
+        if not self._done:
+
+            if self._bytes and self.length < 0:
+                # Strip final line terminator
+                line = self._bytes[-1]
+                if line[-2:] == b"\r\n":
+                    line = line[:-2]
+                elif line[-1:] == b"\n":
+                    line = line[:-1]
+                self._bytes[-1] = line
+
+            self._done = True
+            if self.parser.stream:
+                self.parser.stream(self)
+
+            if self.is_file():
+                self.parser.result[1][self.name] = self
+            else:
+                self.parser.result[0][self.name] = self.string()
+
+
+def parse_headers(fp, _class=HTTPMessage):
+    """Parses only RFC2822 headers from a file pointer.
+    email Parser wants to see strings rather than bytes.
+    But a TextIOWrapper around self.rfile would buffer too many bytes
+    from the stream, bytes which we later need to read as bytes.
+    So we read the correct bytes here, as bytes, for email Parser
+    to parse.
+    """
+    headers = []
+    while True:
+        line = yield from fp.readline()
+        if len(line) > _MAXLINE:
+            raise HttpException("header line")
+        headers.append(line)
+        if len(headers) > _MAXHEADERS:
+            raise HttpException("got more than %d headers" % _MAXHEADERS)
+        if line in (b'\r\n', b'\n', b''):
+            break
+    hstring = b''.join(headers).decode('iso-8859-1')
+    return email.parser.Parser(_class=_class).parsestr(hstring)
+
+
+class BytesProducer:
+
+    def __init__(self, bytes):
+        self.bytes = bytes
+
+    def readline(self):
+        yield None
+        return self.bytes.readline()
+
+    def read(self):
+        yield None
+        return self.bytes.read()
+
+    def __call__(self, consumer, *args):
+        value = None
+        coro = consumer(self, *args)
+        while True:
+            try:
+                value = coro.send(value)
+            except StopIteration as exc:
+                value = exc.value
+                break
+        return value
