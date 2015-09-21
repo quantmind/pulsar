@@ -1,7 +1,5 @@
 language: python
 
-sudo: false
-
 python:
   - "3.4"
 
@@ -18,6 +16,7 @@ services:
 script:
   - flake8
   - rm -rf pulsar
+  - rm -rf build
   - python -m runtests --coverage
   - python -m runtests --coveralls
 
