@@ -15,8 +15,7 @@ COVERALLS_URL = 'https://coveralls.io/api/v1/jobs'
 
 class CoverallsReporter(Reporter):
 
-    def report(self, morfs, **kw):
-        self.config.from_args(**kw)
+    def report(self, morfs):
         self.ret = []
         self.report_files(self._coverall, morfs)
         return self.ret
@@ -29,8 +28,17 @@ class CoverallsReporter(Reporter):
             if not self.config.ignore_errors:
                 raise
 
+        if self.config.strip_dirs:
+            filename = fr.filename
+            for dir in self.config.strip_dirs:
+                if filename.startswith(dir):
+                    filename = filename.replace(dir, '').lstrip('/')
+                    break
+        else:
+            filename = fr.relname
+
         self.ret.append({
-            'name': fr.relname,
+            'name': filename,
             'source': ''.join(source).rstrip(),
             'coverage': list(self._coverage_list(source, analysis)),
         })
@@ -45,14 +53,16 @@ class CoverallsReporter(Reporter):
 
 class Coverage(coverage):
 
-    def coveralls(self, morfs=None, **kw):
+    def coveralls(self, morfs=None, strip_dirs=None, **kw):
+        self.config.from_args(**kw)
+        self.config.strip_dirs = strip_dirs
         reporter = CoverallsReporter(self, self.config)
         return reporter.report(morfs)
 
 
 def coveralls(http=None, url=None, data_file=None, repo_token=None,
               git=None, service_name=None, service_job_id=None,
-              ignore_errors=False, stream=None):
+              strip_dirs=None, ignore_errors=False, stream=None):
     '''Send a coverage report to coveralls.io.
 
     :param http: optional http client
@@ -76,7 +86,8 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None,
         except Exception:   # pragma    nocover
             pass
 
-    data = {'source_files': coverage.coveralls(ignore_errors=ignore_errors)}
+    data = {'source_files': coverage.coveralls(strip_dirs=strip_dirs,
+                                               ignore_errors=ignore_errors)}
 
     if git:
         data['git'] = git
