@@ -48,7 +48,7 @@ class Coverage(coverage):
 
     def coveralls(self, strip_dirs, ignore_errors=False):
         reporter = CoverallsReporter(self, self.config)
-        # reporter.find_code_units(None)
+        reporter.find_file_reporters(None)
         return reporter.report(strip_dirs, ignore_errors=ignore_errors)
 
 
