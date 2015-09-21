@@ -14,9 +14,9 @@ activities in different threads and/or processes.
     socket, wsgi, websocket, redis, json-rpc
 
 
-.. |master-build| image:: https://img.shields.io/travis/quantmind/pulsar/master.svg
+.. |master-build| image:: https://travis-ci.org/quantmind/pulsar.svg?branch=master
 .. _master-build: http://travis-ci.org/quantmind/pulsar
-.. |dev-build| image:: https://img.shields.io/travis/quantmind/pulsar/dev.svg
+.. |dev-build| image:: https://travis-ci.org/quantmind/pulsar.svg?branch=dev
 .. _dev-build: http://travis-ci.org/quantmind/pulsar
 .. |coverage-master| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master
   :target: https://coveralls.io/github/quantmind/pulsar?branch=master

@@ -5,7 +5,7 @@ import os
 from .utils.version import get_version
 
 
-VERSION = (1, 0, 4, 'beta', 0)
+VERSION = (1, 1, 0, 'beta', 0)
 
 __version__ = version = get_version(VERSION)
 __license__ = "BSD"
