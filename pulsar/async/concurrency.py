@@ -209,7 +209,7 @@ class Concurrency(object):
             min(next, MAX_NOTIFY), self.periodic_task, actor)
         return ack
 
-    def stop(self, actor, exc=None, exit_code=0):
+    def stop(self, actor, exc=None, exit_code=None):
         '''Gracefully stop the ``actor``.
         '''
         if actor.state <= ACTOR_STATES.RUN:
@@ -229,6 +229,9 @@ class Concurrency(object):
                     actor.logger.error(str(exc))
                 elif exit_code:
                     actor.stream.writeln(str(exc))
+            else:
+                if not exit_code:
+                    exit_code = getattr(actor._loop, 'exit_code', 0)
             #
             actor.exit_code = exit_code
             stopping = actor.fire_event('stopping')
@@ -321,7 +324,7 @@ class ProcessMixin(object):
 
     def handle_exit_signal(self, actor, sig):
         actor.logger.warning("Got %s. Stopping.", system.SIG_NAMES.get(sig))
-        actor._loop.exit_signal = sig
+        actor._loop.exit_code = sig
         actor._loop.stop()
 
 

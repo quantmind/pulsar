@@ -37,7 +37,7 @@ Pulsar is written for python 3.4 or above, Twisted is python 2. Pulsar is writte
 on top of asyncio_ and the multiprocessing_ module, twisted uses its own
 implementations. In pulsar each actor has its own event loop, twisted as a global
 event loop (reactor) in the main process. Apart from all this, the underlying
-philosophy is very similar, to use an event-lopp to register file descriptors
+philosophy is very similar, to use an event-loop to register file descriptors
 and wait for events.
 
 How is pulsar different from Tornado?
@@ -47,15 +47,16 @@ This sounds like a big bonus for Tornado, however python 2 & 3 compatibility
 means Tornado cannot use some of the best features of python 3.
 Tornado is mainly a web framework, pulsar is not, with pulsar one can write
 asynchronous multiprocessing applications not just for the web.
-Like Twisted and Pulsar, Tornado uses an event-loop to listen for events on file descriptors.
+In addition Tornado does not provide multiprocessing out of the box.
+Like Twisted and Pulsar, Tornado uses an event-loop to listen for events on
+file descriptors and therefore its core implementation is not too dissimilar.
 
 Socket Servers
 --------------------
 
 Can I run a web-server with multiple process?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Yes you can, in posix always, in windows only for python 3.2 or above.
-Check :ref:`wsgi in multi process <multi-wsgi>`.
+Yes you can, both posix and windows, Check :ref:`wsgi in multi process <multi-wsgi>`.
 
 
 WSGI Server

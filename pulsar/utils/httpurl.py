@@ -448,6 +448,35 @@ def parse_dict_header(value):
     return result
 
 
+_special = re.escape('()<>@,;:\\"/[]?={} \t')
+_re_special = re.compile('[%s]' % _special)
+_qstr = '"(?:\\\\.|[^"])*"'  # Quoted string
+_value = '(?:[^%s]+|%s)' % (_special, _qstr)  # Save or quoted string
+_option = '(?:;|^)\s*([^%s]+)\s*=\s*(%s)' % (_special, _value)
+_re_option = re.compile(_option)  # key=value part of an Content-Type header
+
+
+def header_unquote(val, filename=False):
+    if val[0] == val[-1] == '"':
+        val = val[1:-1]
+        if val[1:3] == ':\\' or val[:2] == '\\\\':
+            val = val.split('\\')[-1]  # fix ie6 bug: full path --> filename
+        return val.replace('\\\\', '\\').replace('\\"', '"')
+    return val
+
+
+def parse_options_header(header, options=None):
+    if ';' not in header:
+        return header.lower().strip(), {}
+    ctype, tail = header.split(';', 1)
+    options = options or {}
+    for match in _re_option.finditer(tail):
+        key = match.group(1).lower()
+        value = header_unquote(match.group(2), key == 'filename')
+        options[key] = value
+    return ctype, options
+
+
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
 

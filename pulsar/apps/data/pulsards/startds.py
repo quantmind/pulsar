@@ -1,6 +1,6 @@
 import asyncio
 
-from pulsar import when_monitor_start, get_application, task, send
+from pulsar import when_monitor_start, get_application, send
 from pulsar.apps.data import create_store
 from pulsar.apps.ds import PulsarDS
 
@@ -22,7 +22,6 @@ def start_pulsar_ds(arbiter, host, workers=0):
         lock.release()
 
 
-@task
 def start_store(app, url, workers=0, **kw):
     '''Equivalent to :func:`.create_store` for most cases excepts when the
     ``url`` is for a pulsar store not yet started.
@@ -56,6 +55,6 @@ def localhost(host):
 def _start_store(monitor):
     app = monitor.app
     if not isinstance(app, PulsarDS) and app.cfg.data_store:
-        start_store(app, app.cfg.data_store)
+        return start_store(app, app.cfg.data_store)
 
 when_monitor_start.append(_start_store)

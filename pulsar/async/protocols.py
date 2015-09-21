@@ -680,13 +680,13 @@ class TcpServer(Producer):
         all = []
         if connection:
             all.append(connection.event('connection_lost'))
-            connection.transport.close()
+            connection.close()
         else:
             connections = list(self._concurrent_connections)
             self._concurrent_connections = set()
             for connection in connections:
                 all.append(connection.event('connection_lost'))
-                connection.transport.close()
+                connection.close()
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
             return multi_async(all)

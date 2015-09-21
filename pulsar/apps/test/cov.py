@@ -15,46 +15,54 @@ COVERALLS_URL = 'https://coveralls.io/api/v1/jobs'
 
 class CoverallsReporter(Reporter):
 
-    def report(self, strip_dirs, ignore_errors=False):
-        ret = []
-        strip_dirs = strip_dirs or []
-        for cu in self.code_units:
-            try:
-                with open(cu.filename) as fp:
-                    source = fp.readlines()
-            except IOError:
-                if not ignore_errors:
-                    raise
-            analysis = self.coverage._analyze(cu)
-            coverage_list = [None for _ in source]
-            for lineno, line in enumerate(source):
-                if lineno + 1 in analysis.statements:
-                    coverage_list[lineno] = int(lineno + 1
-                                                not in analysis.missing)
-            filename = cu.filename
-            for dir in strip_dirs:
+    def report(self, morfs):
+        self.ret = []
+        self.report_files(self._coverall, morfs)
+        return self.ret
+
+    def _coverall(self, fr, analysis):
+        try:
+            with open(fr.filename) as fp:
+                source = fp.readlines()
+        except IOError:
+            if not self.config.ignore_errors:
+                raise
+
+        if self.config.strip_dirs:
+            filename = fr.filename
+            for dir in self.config.strip_dirs:
                 if filename.startswith(dir):
                     filename = filename.replace(dir, '').lstrip('/')
                     break
-            ret.append({
-                'name': filename,
-                'source': ''.join(source).rstrip(),
-                'coverage': coverage_list,
-            })
-        return ret
+        else:
+            filename = fr.relname
+
+        self.ret.append({
+            'name': filename,
+            'source': ''.join(source).rstrip(),
+            'coverage': list(self._coverage_list(source, analysis)),
+        })
+
+    def _coverage_list(self, source, analysis):
+        for lineno, line in enumerate(source, 1):
+            if lineno in analysis.statements:
+                yield int(lineno not in analysis.missing)
+            else:
+                yield None
 
 
 class Coverage(coverage):
 
-    def coveralls(self, strip_dirs, ignore_errors=False):
+    def coveralls(self, morfs=None, strip_dirs=None, **kw):
+        self.config.from_args(**kw)
+        self.config.strip_dirs = strip_dirs
         reporter = CoverallsReporter(self, self.config)
-        reporter.find_code_units(None)
-        return reporter.report(strip_dirs, ignore_errors=ignore_errors)
+        return reporter.report(morfs)
 
 
-def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
-              service_name=None, service_job_id=None, strip_dirs=None,
-              ignore_errors=False, stream=None):
+def coveralls(http=None, url=None, data_file=None, repo_token=None,
+              git=None, service_name=None, service_job_id=None,
+              strip_dirs=None, ignore_errors=False, stream=None):
     '''Send a coverage report to coveralls.io.
 
     :param http: optional http client
@@ -78,7 +86,8 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
         except Exception:   # pragma    nocover
             pass
 
-    data = {'source_files': coverage.coveralls(strip_dirs, ignore_errors)}
+    data = {'source_files': coverage.coveralls(strip_dirs=strip_dirs,
+                                               ignore_errors=ignore_errors)}
 
     if git:
         data['git'] = git
