@@ -22,7 +22,8 @@ class Site(wsgi.LazyWsgi):
     def setup(self, environ=None):
         app = FlaskApp()
         return wsgi.WsgiHandler((wsgi.wait_for_body_middleware,
-                                 wsgi.middleware_in_executor(app)))
+                                 wsgi.middleware_in_executor(app)),
+                                async=True)
 
 
 def server(**kwargs):

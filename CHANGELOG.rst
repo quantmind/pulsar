@@ -2,6 +2,9 @@ Development
 ===========================
 * Added the :ref:`Twitter Streaming <tutorials-tweets>` tutorial
 * Added Javascript directory in examples and a gruntfile for compiling and linting scripts
+* Better handling of Ctrl-C in the test application
+* Data streaming for ``multipart/form-data`` content type uploads
+* Write EOF before closing connections
 * Documentation fixes
 
 Ver. 1.0.3 - 2015-Jul-21

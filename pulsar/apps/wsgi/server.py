@@ -22,8 +22,7 @@ from wsgiref.handlers import format_date_time
 from urllib.parse import urlparse, unquote
 
 import pulsar
-from pulsar import (reraise, HttpException, ProtocolError, Future, task,
-                    isfuture, chain_future)
+from pulsar import reraise, HttpException, ProtocolError, task, isfuture
 from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, has_empty_content,
                                   host_and_port_default, http_parser,
@@ -34,7 +33,7 @@ from pulsar.async.protocols import ProtocolConsumer
 
 from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
                     log_wsgi_info, LOGGER)
-from .multipart import http_protocol, HttpStreamReader
+from .formdata import http_protocol, HttpBodyReader
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 
@@ -214,7 +213,7 @@ class HttpServerResponse(ProtocolConsumer):
     '''
     _status = None
     _headers_sent = None
-    _stream = None
+    _body_reader = None
     _buffer = None
     _logger = LOGGER
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
@@ -247,18 +246,18 @@ class HttpServerResponse(ProtocolConsumer):
         parser = self.parser
         processed = parser.execute(data, len(data))
         if parser.is_headers_complete():
-            if not self._stream:
+            if not self._body_reader:
                 headers = Headers(parser.get_headers(), kind='client')
-                self._stream = HttpStreamReader(headers, parser,
-                                                self.transport)
+                self._body_reader = HttpBodyReader(headers,
+                                                   parser,
+                                                   self.transport,
+                                                   loop=self._loop)
                 self._response(self.wsgi_environ())
-            self._stream.data_received()
+            self._body_reader.feed_data(parser.recv_body())
         #
         if parser.is_message_complete():
             #
-            # Stream has the whole body
-            if not self._stream.on_message_complete.done():
-                self._stream.on_message_complete.set_result(None)
+            self._body_reader.feed_eof()
 
             if processed < len(data):
                 if not self._buffer:
@@ -489,11 +488,12 @@ class HttpServerResponse(ProtocolConsumer):
         transport = self.transport
         https = True if is_tls(transport.get_extra_info('socket')) else False
         multiprocess = (self.cfg.concurrency == 'process')
-        environ = wsgi_environ(self._stream,
+        environ = wsgi_environ(self._body_reader,
                                self.parser,
-                               self._stream.headers,
+                               self._body_reader.headers,
                                transport.get_extra_info('sockname'),
-                               self.address, self.headers,
+                               self.address,
+                               self.headers,
                                self.SERVER_SOFTWARE,
                                https=https,
                                extra={'pulsar.connection': self.connection,

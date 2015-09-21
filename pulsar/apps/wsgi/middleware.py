@@ -52,7 +52,7 @@ import re
 from functools import wraps
 
 import pulsar
-from pulsar import isfuture, chain_future, get_event_loop
+from pulsar import is_async, task, get_event_loop
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -91,6 +91,7 @@ def authorization_middleware(environ, start_response=None):
             environ[key] = parse_authorization_header(environ[code])
 
 
+@task
 def wait_for_body_middleware(environ, start_response=None):
     '''Use this middleware to wait for the full body.
 
@@ -99,16 +100,12 @@ def wait_for_body_middleware(environ, start_response=None):
 
     Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
-    def _wsgi_input(value):
-        environ['wsgi.input'] = BytesIO(value)
-
     if environ['wsgi.input']:
         stream = environ['wsgi.input']
         chunk = stream.read()
-        if isfuture(chunk):
-            return chain_future(chunk, callback=_wsgi_input)
-        else:
-            _wsgi_input(chunk)
+        if is_async(chunk):
+            chunk = yield from chunk
+        environ['wsgi.input'] = BytesIO(chunk)
 
 
 def middleware_in_executor(middleware):
