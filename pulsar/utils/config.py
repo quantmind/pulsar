@@ -30,7 +30,6 @@ from pulsar import __version__, SERVER_NAME
 from . import system
 from .internet import parse_address
 from .importer import import_system_file
-from .httpurl import HttpParser as PyHttpParser
 from .log import configured_logger
 from .pep import to_bytes
 
@@ -777,21 +776,6 @@ class HttpProxyServer(Global):
             os.environ['wss_proxy'] = self.value
 
 
-class HttpParser(Global):
-    name = "http_py_parser"
-    flags = ["--http-py-parser"]
-    action = "store_true"
-    default = False
-    desc = '''\
-        Set the python parser as default HTTP parser
-    '''
-
-    def on_start(self):
-        if self.value:  # pragma    nocover
-            from pulsar.utils.httpurl import setDefaultHttpParser
-            setDefaultHttpParser(PyHttpParser)
-
-
 class Debug(Global):
     name = "debug"
     flags = ["--debug"]
@@ -1012,20 +996,6 @@ class UseGreenlet(Global):
     const = 100
     desc = '''\
     Use greenlet whenever possible.
-    '''
-
-
-class PyCares(Global):
-    name = 'no_pycares'
-    flags = ['--no-pycares']
-    validator = validate_bool
-    action = "store_true"
-    default = False
-    desc = '''\
-    Switch off pycares DNS lookup.
-
-    By default, pulsar uses pycares for its DNS lookups (if it is available).
-    Use this flag to revert to the standard library dns resolver.
     '''
 
 ############################################################################
