@@ -16,7 +16,7 @@ def expand_star(mod_name):
     return expanded
 
 
-def import_modules(modules):
+def import_modules(modules, safe=True):
     '''Safely import a list of *modules*
     '''
     all = []
@@ -29,7 +29,8 @@ def import_modules(modules):
             try:
                 all.append(import_module(module))
             except ImportError:
-                pass
+                if not safe:
+                    raise
     return all
 
 

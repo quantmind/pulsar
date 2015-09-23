@@ -13,8 +13,6 @@ htmlcov
 htmlprof
 .coverage
 .coveralls-repo-token
-.project
-.pydevproject
 MANIFEST
 .settings
 .python-version
@@ -24,6 +22,11 @@ examples/tweets/settings.py
 # Javascript
 examples/node_modules
 examples/.grunt
+
+# IDE
+.project
+.pydevproject
+.idea
 
 # Extensions
 *~
