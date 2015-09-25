@@ -25,7 +25,6 @@ __all__ = ['get_event_loop',
            'SELECTORS',
            'Future',
            'reraise',
-           'get_io_loop',
            'coroutine',
            'is_async',
            'CANCELLED_ERRORS']
@@ -87,13 +86,6 @@ if default_selector:
             """
 
 get_event_loop = asyncio.get_event_loop
-
-
-def get_io_loop(loop=None):
-    if not isinstance(loop, _EVENT_LOOP_CLASSES):
-        actor = get_actor()
-        return actor._loop if actor else new_event_loop()
-    return loop
 
 
 def new_event_loop(**kwargs):

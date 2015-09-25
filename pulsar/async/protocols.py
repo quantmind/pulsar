@@ -1,4 +1,5 @@
 import sys
+import asyncio
 
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
@@ -6,7 +7,6 @@ from pulsar.utils.internet import nice_address, format_address
 from .futures import multi_async, task, Future
 from .events import EventHandler
 from .mixins import FlowControl, Timeout
-from .access import asyncio, get_io_loop
 
 
 __all__ = ['ProtocolConsumer',
@@ -285,7 +285,10 @@ class PulsarProtocol(EventHandler, FlowControl):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
             if self._transport.can_write_eof():
-                self._transport.write_eof()
+                try:
+                    self._transport.write_eof()
+                except AttributeError:
+                    pass
             self._transport.close()
 
     def abort(self):
@@ -477,9 +480,9 @@ class Producer(EventHandler):
         protocol_factory(session, producer, **params)
     '''
 
-    def __init__(self, loop, protocol_factory=None, name=None,
+    def __init__(self, loop=None, protocol_factory=None, name=None,
                  max_requests=None, logger=None):
-        super().__init__(get_io_loop(loop))
+        super().__init__(loop or asyncio.get_event_loop())
         self.protocol_factory = protocol_factory or self.protocol_factory
         self._name = name or self.__class__.__name__
         self._requests_processed = 0

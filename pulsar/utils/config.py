@@ -78,12 +78,27 @@ def ordered_settings():
         yield KNOWN_SETTINGS[name]
 
 
+_pass = False
+
+
+class CircularError(Exception):
+    pass
+
+
 def valid_config_value(val):
+    global _pass
     try:
+        if _pass:
+            raise CircularError
+        _pass = True
         pickle.loads(pickle.dumps(val))
         return True
+    except CircularError:
+        raise Exception
     except Exception:
         return False
+    finally:
+        _pass = False
 
 
 class Config(object):
@@ -241,11 +256,8 @@ class Config(object):
 
         :rtype: an instance of :class:`ArgumentParser`.
         '''
-        kwargs = {
-            "description": self.description,
-            "epilog": self.epilog
-        }
-        parser = argparse.ArgumentParser(**kwargs)
+        parser = argparse.ArgumentParser(description=self.description,
+                                         epilog=self.epilog)
         parser.add_argument('--version',
                             action='version',
                             version=self.version)
@@ -290,15 +302,17 @@ class Config(object):
     def parse_command_line(self, argv=None):
         '''Parse the command line
         '''
+        if self.config:
+            parser = argparse.ArgumentParser(add_help=False)
+            self.settings['config'].add_argument(parser)
+            opts, _ = parser.parse_known_args(argv)
+            if opts.config is not None:
+                self.set('config', opts.config)
+
+            self.params.update(self.import_from_module())
+
         parser = self.parser()
         opts = parser.parse_args(argv)
-        config = getattr(opts, 'config', None)
-        # set the config only if config is part of the settings
-        if config is not None and self.config:
-            self.set('config', config)
-
-        self.params.update(self.import_from_module())
-
         for k, v in opts.__dict__.items():
             if v is None:
                 continue
