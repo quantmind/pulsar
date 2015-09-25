@@ -279,10 +279,9 @@ class Configurator(object):
         return self.__repr__()
 
     def python_path(self, script):
-        '''Called during initialisation to obtain the ``script`` name and
-        to add the :attr:`script` directory to the python path if not in the
-        path already.
-        If ``script`` does not evalueate to ``True`` it is evaluated from
+        '''Called during initialisation to obtain the ``script`` name.
+
+        If ``script`` does not evaluate to ``True`` it is evaluated from
         the ``__main__`` import. Returns the real path of the python
         script which runs the application.
         '''
@@ -293,9 +292,10 @@ class Configurator(object):
             except Exception:  # pragma    nocover
                 return
         script = os.path.realpath(script)
-        path = os.path.dirname(script)
-        if path not in sys.path:
-            sys.path.insert(0, path)
+        if self.cfg.get('python_path', True):
+            path = os.path.dirname(script)
+            if path not in sys.path:
+                sys.path.insert(0, path)
         return script
 
     def on_config(self, arbiter):
