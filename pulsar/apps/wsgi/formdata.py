@@ -146,6 +146,7 @@ class MultipartDecoder(FormDecoder):
             raise HttpException("Invalid boundary for multipart/form-data",
                                 status=422)
         inp = self.environ.get('wsgi.input') or BytesIO()
+        self.buffer = bytearray()
 
         if isinstance(inp, HttpBodyReader):
             return async(self._consume(inp, boundary), loop=inp.reader._loop)
@@ -192,6 +193,7 @@ class MultipartDecoder(FormDecoder):
             if current:
                 current.done()
 
+        self.environ['wsgi.input'] = BytesIO(self.buffer)
         return self.result
 
 
@@ -215,6 +217,7 @@ class UrlEncodedDecoder(FormDecoder):
         return self._ready(chunk)
 
     def _ready(self, data):
+        self.environ['wsgi.input'] = BytesIO(data)
         charset = self.charset
         data = parse_qs(data.decode(charset), keep_blank_values=True)
         forms = self.result[0]
@@ -227,6 +230,7 @@ class UrlEncodedDecoder(FormDecoder):
 class JsonDecoder(UrlEncodedDecoder):
 
     def _ready(self, data):
+        self.environ['wsgi.input'] = BytesIO(data)
         self.result = (json.loads(data.decode(self.charset)), None)
         return self.result
 
@@ -288,6 +292,8 @@ class MultipartPart:
             self._bytes.append(data)
             if self.parser.stream:
                 self.parser.stream(self)
+            else:
+                self.parser.buffer.extend(data)
 
     def recv(self):
         if self._done:

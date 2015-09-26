@@ -25,6 +25,7 @@ import os
 import textwrap
 import logging
 import pickle
+import types
 
 from pulsar import __version__, SERVER_NAME
 from . import system
@@ -78,27 +79,17 @@ def ordered_settings():
         yield KNOWN_SETTINGS[name]
 
 
-_pass = False
-
-
-class CircularError(Exception):
-    pass
+simple_values = (list, tuple, float, int, dict, str, types.FunctionType)
 
 
 def valid_config_value(val):
-    global _pass
-    try:
-        if _pass:
-            raise CircularError
-        _pass = True
-        pickle.loads(pickle.dumps(val))
-        return True
-    except CircularError:
-        raise Exception
-    except Exception:
-        return False
-    finally:
-        _pass = False
+    if isinstance(val, simple_values):
+        try:
+            pickle.loads(pickle.dumps(val))
+            return True
+        except Exception:
+            pass
+    return False
 
 
 class Config(object):

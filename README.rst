@@ -185,7 +185,6 @@ file in the top distribution directory for the full license text.
 .. _`google user group`: https://groups.google.com/forum/?fromgroups#!forum/python-pulsar
 .. _flake8: https://pypi.python.org/pypi/flake8
 .. _ujson: https://pypi.python.org/pypi/ujson
-.. _trollius: https://pypi.python.org/pypi/trollius
 .. _rebase: https://help.github.com/articles/about-git-rebase
 .. _unidecode: https://pypi.python.org/pypi/Unidecode
 .. _`Luca Sbardella`: http://lucasbardella.com
