@@ -531,17 +531,18 @@ class MediaMixin(object):
         :param mtime: the modification time of the item in question.
         :param size: the size of the item.
         '''
-        header_mtime = self.modified_since(header)
+        header_mtime = self.modified_since(header, size)
         if header_mtime and header_mtime <= mtime:
             return False
         return True
 
-    def modified_since(self, header):
+    def modified_since(self, header, size=0):
         try:
             if header is None:
                 raise ValueError
-            matches = re.match(r"^([^;]+)(; length=([0-9]+))?$", header,
-                                   re.IGNORECASE)
+            matches = re.match(r"^([^;]+)(; length=([0-9]+))?$",
+                               header,
+                               re.IGNORECASE)
             header_mtime = mktime_tz(parsedate_tz(matches.group(1)))
             header_len = matches.group(3)
             if header_len and int(header_len) != size:
