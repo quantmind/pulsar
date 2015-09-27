@@ -85,7 +85,7 @@ def cached_property(method):
 
 def wsgi_encoder(gen, encoding):
     for data in gen:
-        if not isinstance(data, bytes):
+        if isinstance(data, str):
             yield data.encode(encoding)
         else:
             yield data

@@ -39,7 +39,7 @@ __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 
 
 MAX_CHUNK_SIZE = 65536
-MAX_TIME_IN_LOOP = 0.5
+MAX_TIME_IN_LOOP = 0.2
 
 
 def test_wsgi_environ(path=None, method=None, headers=None, extra=None,

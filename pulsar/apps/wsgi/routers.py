@@ -531,20 +531,24 @@ class MediaMixin(object):
         :param mtime: the modification time of the item in question.
         :param size: the size of the item.
         '''
+        header_mtime = self.modified_since(header)
+        if header_mtime and header_mtime < mtime:
+            return False
+        return True
+
+    def modified_since(self, header):
         try:
             if header is None:
                 raise ValueError
             matches = re.match(r"^([^;]+)(; length=([0-9]+))?$", header,
-                               re.IGNORECASE)
+                                   re.IGNORECASE)
             header_mtime = mktime_tz(parsedate_tz(matches.group(1)))
             header_len = matches.group(3)
             if header_len and int(header_len) != size:
-                raise ValueError()
-            if mtime > header_mtime:
-                raise ValueError()
+                raise ValueError
+            return header_mtime
         except (AttributeError, ValueError, OverflowError):
-            return True
-        return False
+            return None
 
     def directory_index(self, request, fullpath):
         names = [Html('a', '../', href='../', cn='folder')]
