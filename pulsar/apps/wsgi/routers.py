@@ -532,7 +532,7 @@ class MediaMixin(object):
         :param size: the size of the item.
         '''
         header_mtime = self.modified_since(header)
-        if header_mtime and header_mtime < mtime:
+        if header_mtime and header_mtime <= mtime:
             return False
         return True
 
@@ -548,7 +548,7 @@ class MediaMixin(object):
                 raise ValueError
             return header_mtime
         except (AttributeError, ValueError, OverflowError):
-            return None
+            pass
 
     def directory_index(self, request, fullpath):
         names = [Html('a', '../', href='../', cn='folder')]
