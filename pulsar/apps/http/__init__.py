@@ -275,7 +275,6 @@ import os
 import platform
 from functools import partial
 from collections import namedtuple
-from base64 import b64encode
 from asyncio import wait_for
 from io import StringIO, BytesIO
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
@@ -287,7 +286,7 @@ from pulsar.utils import websocket
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.websocket import SUPPORTED_VERSIONS
+from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
 from pulsar.utils.internet import CERT_NONE, SSLContext
 from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata,
@@ -296,8 +295,7 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   is_succesful, HTTPError, URLError,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port,
-                                  parse_options_header, DEFAULT_CHARSET,
-                                  JSON_CONTENT_TYPES)
+                                  parse_options_header, JSON_CONTENT_TYPES)
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
@@ -1020,8 +1018,7 @@ class HttpClient(AbstractClient):
     @property
     def websocket_key(self):
         if not hasattr(self, '_websocket_key'):
-            self._websocket_key = native_str(b64encode(os.urandom(16)),
-                                             DEFAULT_CHARSET)
+            self._websocket_key = websocket_key()
         return self._websocket_key
 
     def connect(self, address):

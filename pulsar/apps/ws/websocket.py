@@ -144,7 +144,7 @@ class WebSocket(wsgi.Router):
         response.status_code = 101
         response.content = b''
         response.headers.update(headers)
-        connection = request.environ.get('pulsar.connection')
+        connection = request.get('pulsar.connection')
         if not connection:
             raise HttpException(status=404)
         factory = partial(self.protocol_class, request, self.handle, parser)

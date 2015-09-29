@@ -36,9 +36,11 @@ parse_close
 import os
 from struct import pack, unpack
 from array import array
+from base64 import b64encode
 
 from .pep import to_bytes
 from .exceptions import ProtocolError
+from .httpurl import DEFAULT_CHARSET
 
 try:
     from .lib import FrameParser as CFrameParser
@@ -77,6 +79,10 @@ def get_version(version):
     if version not in SUPPORTED_VERSIONS:
         raise ProtocolError('Version %s not supported.' % version)
     return version
+
+
+def websocket_key():
+    return b64encode(os.urandom(16)).decode(DEFAULT_CHARSET)
 
 
 class Extension(object):

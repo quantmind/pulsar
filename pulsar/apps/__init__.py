@@ -470,6 +470,17 @@ class Application(Configurator):
                 return
         raise ImproperlyConfigured('Already started or not in arbiter domain')
 
+    def stop(self, actor=None):
+        '''Stop the application
+        '''
+        if actor is None:
+            actor = get_actor()
+        if actor and actor.is_arbiter():
+            monitor = actor.get_actor(self.name)
+            if monitor:
+                return monitor.stop()
+        raise RuntimeError('Cannot stop application')
+
     # WORKERS CALLBACKS
     def worker_start(self, worker, exc=None):
         '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
