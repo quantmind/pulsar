@@ -1,14 +1,16 @@
 from pulsar import HAS_C_EXTENSIONS
 from pulsar.apps.test import check_server
+from pulsar.apps.data import RedisScript
 
 from .pulsards import unittest, RedisCommands, create_store
+from .lock import RedisLockTests
 
 
 OK = check_server('redis')
 
 
 @unittest.skipUnless(OK, 'Requires a running Redis server')
-class RedisDbTest(RedisCommands):
+class RedisDbTest(RedisCommands, RedisLockTests):
     pass
 
 
@@ -24,6 +26,17 @@ class TestRedisStore(RedisDbTest, unittest.TestCase):
         namespace = cls.__name__.lower()
         cls.store = create_store(addr, pool_size=3, namespace=namespace)
         cls.client = cls.store.client()
+
+    def test_script(self):
+        script = RedisScript("return 1")
+        self.assertFalse(script.sha)
+        self.assertTrue(script.script)
+        result = yield from script(self.client)
+        self.assertEqual(result, 1)
+        self.assertTrue(script.sha)
+        self.assertTrue(script.sha in self.client.store.loaded_scripts)
+        result = yield from script(self.client)
+        self.assertEqual(result, 1)
 
     def test_eval(self):
         result = yield from self.client.eval('return "Hello"')

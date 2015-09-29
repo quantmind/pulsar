@@ -32,10 +32,12 @@ from pulsar.apps.ds import RedisError, NoScriptError, redis_parser
 
 from .store import RedisStore, RedisStoreConnection
 from .client import ResponseError, Consumer, Pipeline
+from .lock import RedisScript, LockError
 
 
 __all__ = ['RedisStore', 'RedisError', 'NoScriptError', 'redis_parser',
-           'RedisStoreConnection', 'Consumer', 'Pipeline', 'ResponseError']
+           'RedisStoreConnection', 'Consumer', 'Pipeline', 'ResponseError',
+           'RedisScript', 'LockError']
 
 
 class RedisServer(Global):

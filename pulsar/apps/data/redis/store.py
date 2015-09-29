@@ -52,7 +52,7 @@ class RedisStore(RemoteStore):
         if self._database is None:
             self._database = 0
         self._database = int(self._database)
-        self.loaded_scripts = {}
+        self.loaded_scripts = set()
 
     @property
     def pool(self):

@@ -7,6 +7,7 @@ from pulsar.utils.structures import mapping_iterator, Zset
 from pulsar.apps.ds import COMMANDS_INFO, CommandError
 
 from .pubsub import RedisPubSub
+from .lock import Lock
 
 str_or_bytes = (bytes, str)
 
@@ -207,6 +208,10 @@ class RedisClient(object):
         return '%s(%s)' % (self.__class__.__name__, self.store)
     __str__ = __repr__
 
+    @property
+    def _loop(self):
+        return self.store._loop
+
     def pubsub(self, **kw):
         return RedisPubSub(self.store, **kw)
 
@@ -218,6 +223,7 @@ class RedisClient(object):
     def execute(self, command, *args, **options):
         return self.store.execute(command, *args, **options)
     execute_command = execute
+    immediate_execute = execute
 
     # special commands
 
@@ -467,6 +473,9 @@ class RedisClient(object):
         options = {'groups': len(get) if groups else None}
         return self.execute_command('SORT', *pieces, **options)
 
+    def lock(self, name, **kw):
+        return Lock(self, name, **kw)
+
     def __getattr__(self, name):
         command = INVERSE_COMMANDS_INFO.get(name)
         if command:
@@ -504,3 +513,6 @@ class Pipeline(RedisClient):
                           self.command_stack, [(('exec',), {})]))
         self.reset()
         return self.store.execute_pipeline(cmds, raise_on_error)
+
+    def immediate_execute(self, command, *args, **options):
+        return self.store.execute(command, *args, **options)
