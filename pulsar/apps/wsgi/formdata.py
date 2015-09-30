@@ -4,6 +4,7 @@ from io import BytesIO
 from asyncio import StreamReader, async
 from urllib.parse import parse_qs
 from base64 import b64encode
+from functools import reduce
 from cgi import valid_boundary, parse_header
 
 from pulsar import HttpException, is_async
@@ -271,6 +272,10 @@ class MultipartPart:
     @property
     def content_type(self):
         return self.headers.get('Content-Type')
+
+    @property
+    def size(self):
+        return reduce(lambda x, y: x+len(y), self._bytes, 0)
 
     def bytes(self):
         '''Bytes'''
