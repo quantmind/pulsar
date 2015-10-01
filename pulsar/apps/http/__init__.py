@@ -8,10 +8,6 @@ To get started, one builds a client::
 
 and than makes requests, in a coroutine::
 
-    response = yield http.get('http://www.bbc.co.uk')
-
-or (only in python 3)::
-
     response = yield from http.get('http://www.bbc.co.uk')
 
 Making requests
@@ -20,7 +16,7 @@ Pulsar HTTP client has no dependencies and an API similar to requests_::
 
     from pulsar.apps import http
     client = http.HttpClient()
-    response = yield client.get('https://github.com/timeline.json')
+    response = yield from client.get('https://github.com/timeline.json')
 
 ``response`` is a :class:`HttpResponse` object which contains all the
 information about the request and the result:
@@ -45,9 +41,9 @@ Posting data and Parameters
 You can attach parameters to the ``url`` by passing the
 ``urlparams`` dictionary:
 
-    request = http.get('http://bla.com',
-                       urlparams={'page': 2, 'key': 'foo'})
-    request.full_url == 'http://bla.com?page=2&key=foo'
+    response = yield from http.get('http://bla.com',
+                                   urlparams={'page': 2, 'key': 'foo'})
+    response.request.full_url == 'http://bla.com?page=2&key=foo'
 
 
 .. _http-cookie:
@@ -61,13 +57,13 @@ To disable cookie one can pass ``store_cookies=False`` during
 
 If a response contains some Cookies, you can get quick access to them::
 
-    >>> response = yield client.get(...)
+    >>> response = yield from client.get(...)
     >>> type(response.cookies)
     <type 'dict'>
 
 To send your own cookies to the server, you can use the cookies parameter::
 
-    response = client.get(..., cookies={'sessionid': 'test'})
+    response = yield from client.get(..., cookies={'sessionid': 'test'})
 
 
 .. _http-authentication:
@@ -88,7 +84,6 @@ TLS/SSL
 =================
 Supported out of the box::
 
-    client = HttpClient()
     client.get('https://github.com/timeline.json')
 
 you can include certificate file and key too, either
@@ -139,7 +134,7 @@ websocket handler::
 
 The websocket response is obtained by::
 
-    ws = yield http.get('ws://...', websocket_handler=Echo())
+    ws = yield from http.get('ws://...', websocket_handler=Echo())
 
 .. _http-redirects:
 
