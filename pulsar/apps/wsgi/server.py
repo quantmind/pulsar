@@ -155,7 +155,7 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
         host = format_address(address)
     if host:
         h = host_and_port_default(url_scheme, host)
-        environ['SERVER_NAME'] = socket.getfqdn(h[0]) if h[0] else '0.0.0.0'
+        environ['SERVER_NAME'] = socket.getfqdn(address[0])
         environ['SERVER_PORT'] = h[1]
     path_info = request_uri.path
     if path_info is not None:

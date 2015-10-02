@@ -688,3 +688,15 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield from http.get(
             self.httpbin(''), headers=[('accept', 'application/json')])
         self.assertEqual(response.status_code, 415)
+
+    def test_servername(self):
+        http = self.client()
+        http.headers.remove_header('host')
+        self.assertNotIn('host', http.headers)
+        http.headers['host'] = 'fakehost'
+
+        response = yield from http.get(self.httpbin('servername'))
+        self.assertEqual(response.status_code, 200)
+
+        result = response.decode_content().strip()
+        self.assertIn(result, ['localhost', ])
