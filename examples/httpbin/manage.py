@@ -35,7 +35,7 @@ from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import (route, Html, Json, HtmlDocument, GZipMiddleware,
-                              AsyncString)
+                              String)
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.system import json
 
@@ -291,6 +291,12 @@ class HttpBin(BaseRouter):
         response.content = data
         return response
 
+    @route('servername',
+           title='display the server name')
+    def servername(self, request):
+        name = request.get('SERVER_NAME')
+        return String(name, '\n').http_response(request)
+
     ########################################################################
     #    BENCHMARK ROUTES
     @route()
@@ -299,7 +305,7 @@ class HttpBin(BaseRouter):
 
     @route()
     def plaintext(self, request):
-        return AsyncString('Hello, World!').http_response(request)
+        return String('Hello, World!').http_response(request)
 
 
 class Upload(BaseRouter):
