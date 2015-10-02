@@ -294,7 +294,7 @@ class HttpBin(BaseRouter):
     @route('servername',
            title='display the server name')
     def servername(self, request):
-        name =request.get('SERVER_NAME')
+        name = request.get('SERVER_NAME')
         return String(name, '\n').http_response(request)
 
     ########################################################################
