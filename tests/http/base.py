@@ -699,5 +699,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.decode_content().strip()
         # result should resolve to loopback address
-        ips = {sockaddr[0] for _, _, _, _, sockaddr in socket.getaddrinfo(result, None)}
+        ips = {sockaddr[0] for _, _, _, _, sockaddr in
+               socket.getaddrinfo(result, None)}
         self.assertTrue({'127.0.0.1', '::1'} & ips)
