@@ -1,5 +1,6 @@
 import os
 from base64 import b64decode
+import socket
 import unittest
 
 import examples
@@ -694,9 +695,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http.headers.remove_header('host')
         self.assertNotIn('host', http.headers)
         http.headers['host'] = 'fakehost'
-
         response = yield from http.get(self.httpbin('servername'))
         self.assertEqual(response.status_code, 200)
-
         result = response.decode_content().strip()
-        self.assertIn(result, ['localhost', ])
+        # result should resolve to loopback address
+        ips = {sockaddr[0] for _, _, _, _, sockaddr in socket.getaddrinfo(result, None)}
+        self.assertTrue({'127.0.0.1', '::1'} & ips)
