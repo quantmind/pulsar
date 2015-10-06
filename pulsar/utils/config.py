@@ -287,7 +287,7 @@ class Config(object):
                     if valid_config_value(val):
                         unknowns.append((k, val))
                 else:
-                    self.set(kl, val)
+                    self.set(kl, val, True)
         return unknowns
 
     def parse_command_line(self, argv=None):
