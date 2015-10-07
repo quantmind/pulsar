@@ -281,6 +281,9 @@ class MultipartPart:
         '''Bytes'''
         return b''.join(self._bytes)
 
+    def bytesio(self):
+        return BytesIO(self.recv())
+
     def base64(self, charset=None):
         '''Data encoded as base 64'''
         return b64encode(self.bytes()).decode(charset or self.charset)
@@ -300,7 +303,7 @@ class MultipartPart:
             else:
                 self.parser.buffer.extend(data)
 
-    def recv(self):
+    def recv(self, size=-1):
         if self._done:
             data = self._bytes
             self._bytes = []
@@ -310,7 +313,7 @@ class MultipartPart:
         return b''.join(data)
 
     def is_file(self):
-        return self.filename or self.content_type != 'text/plain'
+        return self.filename or self.content_type not in (None, 'text/plain')
 
     def done(self):
         if not self._done:

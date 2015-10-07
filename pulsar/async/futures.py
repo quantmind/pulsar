@@ -37,7 +37,8 @@ def chain_future(future, callback=None, errback=None, next=None):
         If not provided a new future is created
     :return: the future ``next``
     '''
-    future = async(future)
+    loop = next._loop if next else None
+    future = async(future, loop=loop)
     if next is None:
         next = Future(loop=future._loop)
 
