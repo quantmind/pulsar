@@ -238,8 +238,8 @@ def handle_wsgi_error(environ, exc):
     path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
     if status >= 500:
-        LOGGER.critical('Unhandled exception during HTTP response %s.\n%s',
-                        path, dump_environ(environ), exc_info=exc_info)
+        LOGGER.critical('%s - %s.\n%s', exc, path,
+                        dump_environ(environ), exc_info=exc_info)
     else:
         log_wsgi_info(LOGGER.warning, environ, response.status, exc)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:

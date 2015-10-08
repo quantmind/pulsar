@@ -61,7 +61,8 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     parsed = urlparse(path)
     if 'host' not in request_headers:
         if not parsed.netloc:
-            path = '%s://127.0.0.1' % ('https' if secure else 'http')
+            scheme = ('https' if secure else 'http')
+            path = '%s://127.0.0.1%s' % (scheme, path)
         else:
             request_headers['host'] = parsed.netloc
     #
