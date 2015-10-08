@@ -22,13 +22,13 @@ from wsgiref.handlers import format_date_time
 from urllib.parse import urlparse, unquote
 
 import pulsar
-from pulsar import reraise, HttpException, ProtocolError, task, isfuture
+from pulsar import (reraise, HttpException, ProtocolError, task, isfuture,
+                    BadRequest)
 from pulsar.utils.pep import native_str
-from pulsar.utils.httpurl import (Headers, has_empty_content,
-                                  host_and_port_default, http_parser,
+from pulsar.utils.httpurl import (Headers, has_empty_content, http_parser,
                                   iri_to_uri)
 
-from pulsar.utils.internet import format_address, is_tls
+from pulsar.utils.internet import is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
 from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
@@ -61,7 +61,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     parsed = urlparse(path)
     if 'host' not in request_headers:
         if not parsed.netloc:
-            path = '%s%s' % ('https://:443' if secure else 'http://:80', path)
+            path = '%s://127.0.0.1' % ('https' if secure else 'http')
         else:
             request_headers['host'] = parsed.netloc
     #
@@ -151,12 +151,8 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
         remote = forward
     environ['REMOTE_ADDR'] = remote[0]
     environ['REMOTE_PORT'] = str(remote[1])
-    if not host and protocol == 'HTTP/1.0':
-        host = format_address(address)
-    if host:
-        h = host_and_port_default(url_scheme, host)
-        environ['SERVER_NAME'] = socket.getfqdn(address[0])
-        environ['SERVER_PORT'] = h[1]
+    environ['SERVER_NAME'] = socket.getfqdn(address[0])
+    environ['SERVER_PORT'] = address[1]
     path_info = request_uri.path
     if path_info is not None:
         if script_name:
@@ -388,8 +384,9 @@ class HttpServerResponse(ProtocolConsumer):
             done = True
             try:
                 if exc_info is None:
-                    if 'SERVER_NAME' not in environ:
-                        raise HttpException(status=400)
+                    if (not environ.get('HTTP_HOST') and
+                            environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
+                        raise BadRequest
                     response = self.wsgi_callable(environ, self.start_response)
                     if isfuture(response):
                         response = yield from wait_for(response, alive)

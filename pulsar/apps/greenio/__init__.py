@@ -209,6 +209,7 @@ class GreenPool(AsyncObject):
         self._waiter = None
         self._logger = logging.getLogger('pulsar.greenpool')
         self._shutdown_lock = threading.Lock()
+        self.wait = wait
 
     @property
     def max_workers(self):
