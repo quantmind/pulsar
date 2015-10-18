@@ -536,13 +536,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
         response = yield from http.get(self.httpbin(),
                                        pre_request=remove_host)
-        if self.with_proxy and not self.tunneling:
-            # When using a proxy, The proxy server obtains the host from
-            # the absolute URI which part of the request.
-            self.assertEqual(response.status_code, 200)
-        else:
-            # In any other request, this should cause a 400 error
-            self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 400)
 
     def test_missing_host_10(self):
         http = self.client(version='HTTP/1.0')
