@@ -67,7 +67,8 @@ class TestHttpClientBase:
             yield from send('arbiter', 'kill_actor', cls.proxy_app.name)
 
     @classmethod
-    def client(cls, loop=None, parser=None, pool_size=2, **kwargs):
+    def client(cls, loop=None, parser=None, pool_size=2, verify=False,
+               **kwargs):
         parser = cls.parser()
         if cls.with_proxy:
             kwargs['proxy_info'] = {'http': cls.proxy_uri,
@@ -75,7 +76,7 @@ class TestHttpClientBase:
                                     'ws': cls.proxy_uri,
                                     'wss': cls.proxy_uri}
         return HttpClient(loop=loop, parser=parser, pool_size=pool_size,
-                          **kwargs)
+                          verify=verify, **kwargs)
 
     @classmethod
     def parser(cls):
