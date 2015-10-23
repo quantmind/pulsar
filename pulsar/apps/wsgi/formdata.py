@@ -101,10 +101,11 @@ def parse_form_data(environ, stream=None, **kw):
         raise HttpException(status=422)
 
     content_type = environ.get('CONTENT_TYPE')
-    if not content_type:
-        raise HttpException("Missing Content-Type header", status=422)
-    content_type, options = parse_options_header(content_type)
-    options.update(kw)
+    if content_type:
+        content_type, options = parse_options_header(content_type)
+        options.update(kw)
+    else:
+        options = kw
 
     if content_type == 'multipart/form-data':
         decoder = MultipartDecoder(environ, options, stream)
@@ -113,7 +114,7 @@ def parse_form_data(environ, stream=None, **kw):
     elif content_type in JSON_CONTENT_TYPES:
         decoder = JsonDecoder(environ, options, stream)
     else:
-        raise HttpException("Unsupported content type", status=422)
+        decoder = BytesDecoder(environ, options, stream)
 
     return decoder.parse()
 
@@ -198,7 +199,7 @@ class MultipartDecoder(FormDecoder):
         return self.result
 
 
-class UrlEncodedDecoder(FormDecoder):
+class BytesDecoder(FormDecoder):
 
     def parse(self, mem_limit=None, **kw):
         mem_limit = mem_limit or DEFAULT_MAXSIZE
@@ -219,6 +220,13 @@ class UrlEncodedDecoder(FormDecoder):
 
     def _ready(self, data):
         self.environ['wsgi.input'] = BytesIO(data)
+        return self.result
+
+
+class UrlEncodedDecoder(BytesDecoder):
+
+    def _ready(self, data):
+        self.environ['wsgi.input'] = BytesIO(data)
         charset = self.charset
         data = parse_qs(data.decode(charset), keep_blank_values=True)
         forms = self.result[0]
@@ -228,7 +236,7 @@ class UrlEncodedDecoder(FormDecoder):
         return self.result
 
 
-class JsonDecoder(UrlEncodedDecoder):
+class JsonDecoder(BytesDecoder):
 
     def _ready(self, data):
         self.environ['wsgi.input'] = BytesIO(data)

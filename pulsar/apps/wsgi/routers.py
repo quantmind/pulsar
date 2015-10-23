@@ -408,7 +408,7 @@ class Router(metaclass=RouterType):
             return response_wrapper(callable, request)
         return callable(request)
 
-    def add_child(self, router):
+    def add_child(self, router, index=None):
         '''Add a new :class:`Router` to the :attr:`routes` list.
         '''
         assert isinstance(router, Router), 'Not a valid Router'
@@ -425,7 +425,10 @@ class Router(metaclass=RouterType):
         if router.parent:
             router.parent.remove_child(router)
         router._parent = self
-        self.routes.append(router)
+        if index is None:
+            self.routes.append(router)
+        else:
+            self.routes.insert(index, router)
         return router
 
     def remove_child(self, router):
