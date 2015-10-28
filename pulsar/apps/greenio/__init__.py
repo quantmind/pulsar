@@ -304,6 +304,8 @@ class GreenPool(AsyncObject):
                 except Exception as exc:
                     future.set_exception(exc)
                 else:
+                    if is_async(result):
+                        result = parent.switch(result)
                     future.set_result(result)
             else:  # Greenlet cleanup
                 self._greenlets.remove(green)
