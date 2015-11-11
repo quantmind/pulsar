@@ -51,8 +51,8 @@ class Lock(object):
         self.timeout = timeout
         self.blocking = blocking
         self.sleep = sleep
-        if self.timeout and self.sleep > self.timeout:
-            raise LockError("'sleep' must be less than 'timeout'")
+        if self.blocking and self.sleep > self.blocking:
+            raise LockError("'sleep' must be less than 'blocking'")
 
     @property
     def _loop(self):
@@ -64,23 +64,28 @@ class Lock(object):
         '''
         return self._local.token
 
-    def acquire(self):
+    def _acquire(self):
         token = uuid.uuid1().hex.encode('utf-8')
         timeout = self.timeout and int(self.timeout * 1000) or ''
         acquired = yield from self.lua_acquire(self.client,
                                                keys=[self.name],
                                                args=[token, timeout])
-        if not acquired:
-            loop = self._loop
-            start = loop.time()
-            while 1:
-                if (self.blocking is not None and
-                        loop.time() - start >= self.blocking):
-                    return False
-                yield from sleep(self.sleep)
-        else:
+        if acquired:
             self._local.token = token
-            return True
+
+        return acquired
+
+    def acquire(self):
+        loop = self._loop
+        start = loop.time()
+        acquired = yield from self._acquire()
+        while self.blocking is not None and not acquired:
+            if loop.time() - start >= self.blocking:
+                break
+            sleep(self.sleep)
+            acquired = yield from self._acquire()
+
+        return acquired
 
     def release(self):
         expected_token = self.token

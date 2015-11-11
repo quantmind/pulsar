@@ -1,3 +1,5 @@
+import asyncio
+
 from pulsar.apps.data import LockError
 
 
@@ -58,10 +60,26 @@ class RedisLockTests:
         self.assertTrue(lock1._loop.time() - start > 0.5)
         yield from eq(lock1.release(), True)
 
+    def test_blocking_timeout_acquire(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        lock1 = self.client.lock(key)
+        lock2 = self.client.lock(key, blocking=1)
+        yield from eq(lock1.acquire(), True)
+        asyncio.async(self._release(lock1, 0.5))
+        start = lock2._loop.time()
+        yield from eq(lock2.acquire(), True)
+        self.assertTrue(1 > lock2._loop.time() - start > 0.5)
+        yield from eq(lock2.release(), True)
+
+    def _release(self, lock, time):
+        yield from asyncio.sleep(time)
+        yield from self.async.assertEqual(lock.release(), True)
+
     def test_high_sleep_raises_error(self):
         "If sleep is higher than timeout, it should raise an error"
         self.assertRaises(LockError, self.client.lock, 'foo',
-                          timeout=1, sleep=2)
+                          blocking=1, sleep=2)
 
     def test_releasing_lock_no_longer_owned_raises_error(self):
         key = self.randomkey()
