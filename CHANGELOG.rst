@@ -1,4 +1,4 @@
-Development
+Ver. 1.0.5 - 2015-Nov-12
 ===========================
 * Asynchronous Redis locking primitive for distributing computing
 * Added the :ref:`Twitter Streaming <tutorials-tweets>` tutorial

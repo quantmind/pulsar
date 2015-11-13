@@ -1,5 +1,4 @@
 import socket
-from functools import partial
 from urllib.parse import urlsplit, parse_qsl, urlencode
 
 try:
@@ -11,22 +10,8 @@ except ImportError:  # pragma    nocover
     except ImportError:  # pragma    nocover
         select = False
 
-try:
-    _SSLContext = None
-    HAS_SNI = False
-    ssl = None
-    CERT_NONE = 0
-    PROTOCOL_SSLv23 = None
-    import ssl
-    from ssl import wrap_socket, PROTOCOL_SSLv23, CERT_NONE
-    from ssl import SSLContext as _SSLContext
-    from ssl import HAS_SNI  # Has SNI?
-except ImportError:  # pragma: no cover
-    pass
-
 
 from .string import native_str
-from .exceptions import SSLError
 
 
 def parse_address(netloc, default_port=8000):
@@ -167,64 +152,11 @@ def format_address(address):
         return str(address)
 
 
-class SSLContext:
-    '''A picklable SSLContext class
-    '''
-    def __init__(self, keyfile=None, certfile=None, cert_reqs=CERT_NONE,
-                 ca_certs=None, server_hostname=None,
-                 protocol=PROTOCOL_SSLv23):
-        self.keyfile = keyfile
-        self.certfile = certfile
-        self.cert_reqs = cert_reqs
-        self.ca_certs = ca_certs
-        self.server_hostname = server_hostname
-        self.protocol = protocol
-
-    @property
-    def verify_mode(self):
-        return self.cert_reqs
-
-    def wrap_socket(self, sock, server_side=False,
-                    do_handshake_on_connect=True,
-                    suppress_ragged_eofs=True, server_hostname=None):
-        if not ssl:
-            raise NotImplementedError
-        server_hostname = self.server_hostname or server_hostname
-        if not HAS_SNI:     # pragma    nocover
-            server_hostname = None
-
-        if _SSLContext:
-            wrap = self._wrap3k(sock, server_hostname)
-        else:   # pragma    nocover
-            wrap = partial(wrap_socket, sock, keyfile=self.keyfile,
-                           certfile=self.certfile, ca_certs=self.ca_certs,
-                           cert_reqs=self.cert_reqs, ssl_version=self.protocol)
-        return wrap(server_side=server_side,
-                    do_handshake_on_connect=do_handshake_on_connect,
-                    suppress_ragged_eofs=suppress_ragged_eofs)
-
-    def _wrap3k(self, sock, server_hostname):
-        context = _SSLContext(self.protocol)
-        if self.cert_reqs:
-            context.verify_mode = self.cert_reqs
-        if self.ca_certs:
-            try:
-                context.load_verify_locations(self.ca_certs)
-            # Py32 raises IOError
-            # Py33 raises FileNotFoundError
-            except Exception as e:  # Re-raise as SSLError
-                raise SSLError(e)
-        if self.certfile:
-            # FIXME: This block needs a test.
-            context.load_cert_chain(self.certfile, self.keyfile)
-        if HAS_SNI:  # Platform-specific: OpenSSL with enabled SNI
-            return partial(context.wrap_socket, sock,
-                           server_hostname=server_hostname)
-        else:   # pragma    nocover
-            return partial(context.wrap_socket, sock)
-
-
 def is_tls(sock):
     '''Check if ``sock`` is a socket over transport layer security
     '''
-    return ssl and isinstance(sock, ssl.SSLSocket)
+    try:
+        import ssl
+        return isinstance(sock, ssl.SSLSocket)
+    except ImportError:
+        return False

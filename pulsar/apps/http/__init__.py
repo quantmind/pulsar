@@ -274,6 +274,10 @@ from asyncio import wait_for
 from io import StringIO, BytesIO
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from http.client import responses
+try:
+    import ssl
+except ImportError:
+    ssl = None
 
 import pulsar
 from pulsar import AbstractClient, Pool, Connection, ProtocolConsumer
@@ -282,7 +286,6 @@ from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
-from pulsar.utils.internet import CERT_NONE, SSLContext
 from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata,
                                   Headers, get_environ_proxies,
@@ -964,14 +967,14 @@ class HttpClient(AbstractClient):
         kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
                           'allow_redirects', 'multipart_boundary', 'version',
-                          'websocket_handler')
+                          'websocket_handler', 'verify')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', platform.node()))
 
     def __init__(self, proxy_info=None, cache=None, headers=None,
                  encode_multipart=True, multipart_boundary=None,
-                 keyfile=None, certfile=None, cert_reqs=CERT_NONE,
+                 keyfile=None, certfile=None, verify=True,
                  ca_certs=None, cookies=None, store_cookies=True,
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
@@ -988,6 +991,7 @@ class HttpClient(AbstractClient):
         self.cookies = cookiejar_from_dict(cookies)
         self.decompress = decompress
         self.version = version or self.version
+        self.verify = verify
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
@@ -1002,10 +1006,6 @@ class HttpClient(AbstractClient):
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
         self.websocket_handler = websocket_handler
-        self.https_defaults = {'keyfile': keyfile,
-                               'certfile': certfile,
-                               'cert_reqs': cert_reqs,
-                               'ca_certs': ca_certs}
         self.http_parser = parser or http_parser
         self.frame_parser = frame_parser or websocket.frame_parser
         # Add hooks
@@ -1184,12 +1184,19 @@ class HttpClient(AbstractClient):
             d.override(headers)
         return d
 
-    def ssl_context(self, **kwargs):
-        params = self.https_defaults.copy()
-        for name in kwargs:
-            if name in params:
-                params[name] = kwargs[name]
-        return SSLContext(**params)
+    def ssl_context(self, verify=True, cert_reqs=None,
+                    check_hostname=False, certfile=None, keyfile=None,
+                    cafile=None, capath=None, cadata=None, **kw):
+        assert ssl, 'SSL not supported'
+        if verify:
+            cert_reqs = ssl.CERT_REQUIRED
+            check_hostname = True
+        return ssl._create_unverified_context(cert_reqs=cert_reqs,
+                                              check_hostname=check_hostname,
+                                              certfile=certfile,
+                                              keyfile=keyfile,
+                                              cafile=cafile, capath=capath,
+                                              cadata=cadata)
 
     def set_proxy(self, request):
         if request.scheme in self.proxy_info:

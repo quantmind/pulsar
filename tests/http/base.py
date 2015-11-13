@@ -67,7 +67,8 @@ class TestHttpClientBase:
             yield from send('arbiter', 'kill_actor', cls.proxy_app.name)
 
     @classmethod
-    def client(cls, loop=None, parser=None, pool_size=2, **kwargs):
+    def client(cls, loop=None, parser=None, pool_size=2, verify=False,
+               **kwargs):
         parser = cls.parser()
         if cls.with_proxy:
             kwargs['proxy_info'] = {'http': cls.proxy_uri,
@@ -75,7 +76,7 @@ class TestHttpClientBase:
                                     'ws': cls.proxy_uri,
                                     'wss': cls.proxy_uri}
         return HttpClient(loop=loop, parser=parser, pool_size=pool_size,
-                          **kwargs)
+                          verify=verify, **kwargs)
 
     @classmethod
     def parser(cls):
@@ -536,13 +537,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
         response = yield from http.get(self.httpbin(),
                                        pre_request=remove_host)
-        if self.with_proxy and not self.tunneling:
-            # When using a proxy, The proxy server obtains the host from
-            # the absolute URI which part of the request.
-            self.assertEqual(response.status_code, 200)
-        else:
-            # In any other request, this should cause a 400 error
-            self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 400)
 
     def test_missing_host_10(self):
         http = self.client(version='HTTP/1.0')

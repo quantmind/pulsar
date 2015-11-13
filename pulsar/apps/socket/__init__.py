@@ -100,11 +100,15 @@ import socket
 from math import log
 from random import lognormvariate
 from functools import partial
+try:
+    import ssl
+except ImportError:     # pragma    nocover
+    ssl = None
 
 import pulsar
 from pulsar import (asyncio, TcpServer, DatagramServer, Connection,
                     ImproperlyConfigured)
-from pulsar.utils.internet import parse_address, SSLContext
+from pulsar.utils.internet import parse_address
 from pulsar.utils.config import pass_through
 
 
@@ -224,16 +228,16 @@ class SocketServer(pulsar.Application):
         if not cfg.address:
             raise ImproperlyConfigured('Could not open a socket. '
                                        'No address to bind to')
-        ssl = None
+        address = parse_address(self.cfg.address)
         if cfg.cert_file or cfg.key_file:
+            if not ssl:
+                raise RuntimeError('No support for ssl')
             if cfg.cert_file and not os.path.exists(cfg.cert_file):
                 raise ImproperlyConfigured('cert_file "%s" does not exist' %
                                            cfg.cert_file)
             if cfg.key_file and not os.path.exists(cfg.key_file):
                 raise ImproperlyConfigured('key_file "%s" does not exist' %
                                            cfg.key_file)
-            ssl = SSLContext(keyfile=cfg.key_file, certfile=cfg.cert_file)
-        address = parse_address(self.cfg.address)
         # First create the sockets
         try:
             server = yield from loop.create_server(asyncio.Protocol, *address)
@@ -247,11 +251,10 @@ class SocketServer(pulsar.Application):
                 sockets.append(sock)
                 loop.remove_reader(sock.fileno())
             monitor.sockets = sockets
-            monitor.ssl = ssl
             cfg.addresses = addresses
 
     def actorparams(self, monitor, params):
-        params.update({'sockets': monitor.sockets, 'ssl': monitor.ssl})
+        params.update({'sockets': monitor.sockets})
 
     def worker_start(self, worker, exc=None):
         '''Start the worker by invoking the :meth:`create_server` method.
@@ -300,8 +303,15 @@ class SocketServer(pulsar.Application):
             callback = getattr(cfg, event)
             if callback != pass_through:
                 server.bind_event(event, callback)
-        server.start_serving(cfg.backlog, sslcontext=worker.ssl)
+        server.start_serving(cfg.backlog, sslcontext=self.sslcontext())
         return server
+
+    def sslcontext(self):
+        cfg = self.cfg
+        if cfg.cert_file and cfg.key_file:
+            ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            ctx.load_cert_chain(certfile=cfg.cert_file, keyfile=cfg.key_file)
+            return ctx
 
 
 class UdpSocketServer(SocketServer):

@@ -159,7 +159,7 @@ def task(function):
     else:
         def wrapper(*args, **kw):
             res = function(*args, **kw)
-            if res:
+            if is_async(res):
                 res = yield from res
             return res
 

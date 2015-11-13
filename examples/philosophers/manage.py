@@ -145,8 +145,8 @@ class DiningPhilosophers(pulsar.Application):
     def take_action(self, philosopher):
         '''The ``philosopher`` performs one of these two actions:
 
-        * eat, if it has both forks and than :meth:`release_forks`.
-        * try to :meth:`pickup_fork`, if he has less than 2 forks.
+        * eat, if he has both forks and then :meth:`release_forks`.
+        * try to :meth:`pickup_fork`, if he has fewer than 2 forks.
         '''
         loop = philosopher._loop
         forks = self.forks
@@ -162,7 +162,7 @@ class DiningPhilosophers(pulsar.Application):
                 return loop.call_later(eat_time, self.release_forks,
                                        philosopher)
             #
-            # One fork only! release fork or try to pick one up one
+            # One fork only! release fork or try to pick one up
             elif len(forks) == 1:
                 waiting_period = 2*self.cfg.waiting_period*random.random()
                 if self.started_waiting == 0:
@@ -183,7 +183,7 @@ class DiningPhilosophers(pulsar.Application):
 
     @task
     def pickup_fork(self, philosopher):
-        '''The philosopher has less than two forks.
+        '''The philosopher has fewer than two forks.
 
         Check if forks are available.
         '''
@@ -203,7 +203,7 @@ class DiningPhilosophers(pulsar.Application):
         '''The ``philosopher`` has just eaten and is ready to release both
         forks.
 
-        This method release them, one by one, by sending the ``put_down``
+        This method releases them, one by one, by sending the ``put_down``
         action to the monitor.
         '''
         forks = self.forks
