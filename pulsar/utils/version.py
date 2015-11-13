@@ -34,9 +34,7 @@ def get_git_changeset(filename=None):
     so it's sufficient for generating the development version numbers.
     """
     filename = filename or __file__
-    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(filename)))
-    git_show = sh('git show --pretty=format:%ct --quiet HEAD',
-                  cwd=repo_dir)
+    git_show = sh('git show --pretty=format:%ct --quiet HEAD')
     timestamp = git_show.partition('\n')[0]
     try:
         timestamp = datetime.datetime.utcfromtimestamp(int(timestamp))

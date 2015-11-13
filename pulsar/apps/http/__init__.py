@@ -432,7 +432,7 @@ class HttpRequest(RequestBase):
     _tunnel = None
 
     def __init__(self, client, url, method, inp_params=None, headers=None,
-                 data=None, files=None, history=None,
+                 data=None, files=None, history=None, auth=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
@@ -463,6 +463,11 @@ class HttpRequest(RequestBase):
         self.new_parser()
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
+        if auth:
+            headers = headers or []
+            auth = HTTPBasicAuth(*auth)
+            headers.append(('Authorization', auth.header()))
+
         self.headers = client.get_headers(self, headers)
         cookies = cookiejar_from_dict(client.cookies, cookies)
         if cookies:
