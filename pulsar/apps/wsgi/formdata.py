@@ -91,10 +91,10 @@ def parse_form_data(environ, stream=None, **kw):
     into memory limits.
 
     :parameter environ: A WSGI environment dict.
-    :parameter charset: The charset to use if unsure. (default: utf8)
-    :parameter strict: If True, raise :exc:`MultipartError` on any parsing
-        errors. These are silently ignored by default.
-    :parameter stream_callback: a callback when the content is streamed
+    :parameter stream: Optional callable accepting one parameter only, the
+        instance of :class:`FormDecoder` being parsed. If provided, the
+        callable is invoked when data or partial data has been successfully
+        parsed.
     '''
     method = environ.get('REQUEST_METHOD', 'GET').upper()
     if method not in ENCODE_BODY_METHODS:
