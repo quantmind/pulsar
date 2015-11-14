@@ -280,7 +280,7 @@ class PulsarProtocol(EventHandler, FlowControl):
     def closed(self):
         '''``True`` if the :attr:`transport` is closed.'''
         if self._transport:
-            return getattr(self._transport, '_closing', False)
+            return self._transport.get_extra_info('socket') is not None
         return True
 
     def close(self):
@@ -576,6 +576,7 @@ class TcpServer(Producer):
         :param sslcontext: optional SSLContext object.
         :return: a :class:`.Future` called back when the server is
             serving the socket.'''
+        assert not self._server
         if hasattr(self, '_params'):
             address = self._params['address']
             sockets = self._params['sockets']
