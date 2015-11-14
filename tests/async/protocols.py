@@ -14,4 +14,3 @@ class TestPulsarProtocols(unittest.TestCase):
         transport = asyncio.Transport()
         proto.connection_made(transport)
         self.assertEqual(proto.transport, transport)
-
