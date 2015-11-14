@@ -477,7 +477,7 @@ def parse_options_header(header, options=None):
     return ctype, options
 
 
-class Headers(object):
+class Headers:
     '''Utility for managing HTTP headers for both clients and servers.
 
     It has a dictionary like interface with few extra functions to facilitate
@@ -511,6 +511,12 @@ class Headers(object):
     The strict parameter is rarely used and it forces the omission on
     non-standard header fields.
     '''
+    @classmethod
+    def make(cls, headers):
+        if not isinstance(headers, cls):
+            headers = cls(headers=headers)
+        return headers
+
     def __init__(self, headers=None, kind='server', strict=False):
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
