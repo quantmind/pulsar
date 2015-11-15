@@ -178,9 +178,11 @@ class Tunneling:
             if tunnel:
                 if getattr(request, '_apply_tunnel', False):
                     # if transport is not SSL already
-                    if not is_tls(response.transport.get_extra_info('socket')):
-                        response._request = tunnel
-                        response.bind_event('on_headers', self.on_headers)
+                    transport = response.transport
+                    if not transport.get_extra_info('sslcontext'):
+                        if not is_tls(transport.get_extra_info('socket')):
+                            response._request = tunnel
+                            response.bind_event('on_headers', self.on_headers)
                 else:
                     # Append self again as pre_request
                     request._apply_tunnel = True
@@ -206,7 +208,7 @@ class Tunneling:
         request = prev_response._request.request
         connection = prev_response._connection
         loop = connection._loop
-        sock = connection._transport._sock
+        sock = connection.sock
         # set a new connection_made event
         connection.events['connection_made'] = OneTime(loop=loop)
         connection._processed -= 1

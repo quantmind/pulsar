@@ -128,7 +128,8 @@ class Concurrency(object):
         '''Start running the ``actor``.
         '''
         set_actor(actor)
-        actor.mailbox.start_serving()
+        if not actor.mailbox.address:
+            actor.mailbox.start_serving()
         actor._loop.run_forever()
 
     def add_monitor(self, actor, monitor_name, **params):
@@ -324,8 +325,7 @@ class ProcessMixin(object):
 
     def handle_exit_signal(self, actor, sig):
         actor.logger.warning("Got %s. Stopping.", system.SIG_NAMES.get(sig))
-        actor._loop.exit_code = sig
-        actor._loop.stop()
+        self.stop(actor, exit_code=int(sig))
 
 
 class MonitorMixin(object):
@@ -714,7 +714,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         if exit_code == autoreload.EXIT_CODE:
             actor.logger.info("Code changed, reloading server")
         else:
-            actor.logger.info("Bye (exit code = %s)", exit_code)
+            # actor.logger.info("Bye (exit code = %s)", exit_code)
             actor.stream.writeln("\nBye (exit code = %s)" % exit_code)
         try:
             actor.cfg.when_exit(actor)

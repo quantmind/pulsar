@@ -280,7 +280,9 @@ class PulsarProtocol(EventHandler, FlowControl):
     def closed(self):
         '''``True`` if the :attr:`transport` is closed.'''
         if self._transport:
-            return self._transport.get_extra_info('socket') is not None
+            if not getattr(self._transport, '_closing', False):
+                return False
+            return True
         return True
 
     def close(self):
@@ -609,7 +611,7 @@ class TcpServer(Producer):
                     address = sock.getsockname()
                     self.logger.info('%s serving on %s', self._name,
                                      format_address(address))
-                self.fire_event('start')
+                self._loop.call_soon(self.fire_event, 'start')
             except Exception as exc:
                 self.fire_event('start', exc=exc)
 
