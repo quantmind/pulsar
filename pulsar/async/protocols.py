@@ -291,7 +291,7 @@ class PulsarProtocol(EventHandler, FlowControl):
             if self._transport.can_write_eof():
                 try:
                     self._transport.write_eof()
-                except AttributeError:
+                except Exception:
                     pass
             self._transport.close()
 
@@ -615,26 +615,14 @@ class TcpServer(Producer):
             except Exception as exc:
                 self.fire_event('start', exc=exc)
 
-    def stop_serving(self):
+    def close(self):
         '''Stop serving the :attr:`.Server.sockets`.
         '''
         if self._server:
             server, self._server = self._server, None
-            server.close()
-
-    @task
-    def close(self):
-        '''Stop serving the :attr:`.Server.sockets` and close all
-        concurrent connections.
-        '''
-        if not self.fired_event('stop'):
-            if self._server:
-                server, self._server = self._server, None
-                server.close()
-                coro = self._close_connections()
-                if coro:
-                    yield from coro
-            self.fire_event('stop')
+            return self._close(server)
+        elif not self.fired_event('stop'):
+            return self.fire_event('stop')
 
     def info(self):
         sockets = []
@@ -696,6 +684,17 @@ class TcpServer(Producer):
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
             return multi_async(all)
+
+    @task
+    def _close(self, server):
+        '''Stop serving the :attr:`.Server.sockets` and close all
+        concurrent connections.
+        '''
+        server.close()
+        coro = self._close_connections()
+        if coro:
+            yield from coro
+        self.fire_event('stop')
 
 
 class DatagramServer(Producer):
