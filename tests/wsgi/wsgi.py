@@ -9,7 +9,6 @@ from urllib.parse import urlparse
 import pulsar
 from pulsar.apps import wsgi
 from pulsar.apps import http
-from pulsar.utils.multipart import parse_form_data, MultipartError
 from pulsar.apps.wsgi.utils import cookie_date
 
 
@@ -31,14 +30,6 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertTrue(request.is_secure)
         self.assertEqual(request.environ['HTTPS'], 'on')
         self.assertEqual(request.environ['wsgi.url_scheme'], 'https')
-
-    def test_parse_form_data(self):
-        environ = wsgi.test_wsgi_environ()
-        self.assertRaises(MultipartError, parse_form_data, environ,
-                          strict=True)
-        environ = wsgi.test_wsgi_environ(method='POST')
-        self.assertRaises(MultipartError, parse_form_data, environ,
-                          strict=True)
 
     def test_get_host(self):
         request = self.request(headers=[('host', 'blaa.com')])

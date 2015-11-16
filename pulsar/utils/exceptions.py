@@ -3,6 +3,9 @@ A list of all Exception specific to pulsar library.
 '''
 import traceback
 
+from .httpurl import Headers
+
+
 __all__ = ['PulsarException',
            'MonitorStarted',
            'ImproperlyConfigured',
@@ -121,13 +124,13 @@ class HttpException(HTTPError):
         self.code = self.status  # for compatibility with HTTPError
         self.handler = handler
         self.strict = strict
-        self.headers = headers
         self.content_type = content_type
+        self._headers = Headers.make(headers)
         super().__init__(msg)
 
     @property
-    def hdrs(self):
-        return self.headers
+    def headers(self):
+        return list(self._headers)
 
 
 class HttpRedirect(HttpException):
@@ -138,17 +141,15 @@ class HttpRedirect(HttpException):
     status = 302
 
     def __init__(self, location, status=None, headers=None, **kw):
-        headers = [] if headers is None else headers
-        headers.append(('location', location))
+        headers = Headers.make(headers)
+        headers['location'] = location
         super().__init__(status=status or self.status, headers=headers, **kw)
 
     @property
     def location(self):
         '''The value in the ``Location`` header entry.
-
-        Equivalent to ``self.headers['location']``.
         '''
-        return self.headers['location']
+        return self._headers['location']
 
 
 class BadRequest(HttpException):

@@ -14,9 +14,9 @@ greenlets, check out the :greenlet:`greenlet documentation <>` first.
 
 This application **does not use monkey patching** and therefore it
 works quite differently from implicit asynchronous libraries such as
-gevent_. All it does, it provides the user with a set
+gevent_. This module provides the user with a set
 of utilities for **explicitly** transferring execution from one greenlet
-to a another which executes the blocking call in a greenlet-friendly way.
+to another which executes the blocking call in a greenlet-friendly way.
 
 The caller has the responsibility that the blocking call is greenlet-friendly,
 i.e. it transfers the control of execution back to the parent greenlet when

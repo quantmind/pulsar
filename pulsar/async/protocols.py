@@ -224,7 +224,7 @@ class PulsarProtocol(EventHandler, FlowControl):
     _address = None
     _type = 'server'
 
-    def __init__(self, loop=None, session=1, producer=None, **kw):
+    def __init__(self, loop, session=1, producer=None, **kw):
         super().__init__(loop)
         FlowControl.__init__(self, **kw)
         self._session = session
@@ -279,7 +279,11 @@ class PulsarProtocol(EventHandler, FlowControl):
     @property
     def closed(self):
         '''``True`` if the :attr:`transport` is closed.'''
-        return self._transport._closing if self._transport else True
+        if self._transport:
+            if not getattr(self._transport, '_closing', False):
+                return False
+            return True
+        return True
 
     def close(self):
         '''Close by closing the :attr:`transport`.'''
@@ -287,7 +291,7 @@ class PulsarProtocol(EventHandler, FlowControl):
             if self._transport.can_write_eof():
                 try:
                     self._transport.write_eof()
-                except AttributeError:
+                except Exception:
                     pass
             self._transport.close()
 
@@ -337,8 +341,6 @@ class Protocol(PulsarProtocol, asyncio.Protocol):
         '''
         t = self._transport
         if t:
-            if t._closing:  # Uses private variable.
-                raise ConnectionResetError('Connection lost')
             if self._paused:
                 # # Uses private variable once again!
                 # This occurs when the protocol is paused from writing
@@ -576,6 +578,7 @@ class TcpServer(Producer):
         :param sslcontext: optional SSLContext object.
         :return: a :class:`.Future` called back when the server is
             serving the socket.'''
+        assert not self._server
         if hasattr(self, '_params'):
             address = self._params['address']
             sockets = self._params['sockets']
@@ -608,30 +611,18 @@ class TcpServer(Producer):
                     address = sock.getsockname()
                     self.logger.info('%s serving on %s', self._name,
                                      format_address(address))
-                self.fire_event('start')
+                self._loop.call_soon(self.fire_event, 'start')
             except Exception as exc:
                 self.fire_event('start', exc=exc)
 
-    def stop_serving(self):
+    def close(self):
         '''Stop serving the :attr:`.Server.sockets`.
         '''
         if self._server:
             server, self._server = self._server, None
-            server.close()
-
-    @task
-    def close(self):
-        '''Stop serving the :attr:`.Server.sockets` and close all
-        concurrent connections.
-        '''
-        if not self.fired_event('stop'):
-            if self._server:
-                server, self._server = self._server, None
-                server.close()
-                coro = self._close_connections()
-                if coro:
-                    yield from coro
-            self.fire_event('stop')
+            return self._close(server)
+        elif not self.fired_event('stop'):
+            return self.fire_event('stop')
 
     def info(self):
         sockets = []
@@ -693,6 +684,17 @@ class TcpServer(Producer):
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
             return multi_async(all)
+
+    @task
+    def _close(self, server):
+        '''Stop serving the :attr:`.Server.sockets` and close all
+        concurrent connections.
+        '''
+        server.close()
+        coro = self._close_connections()
+        if coro:
+            yield from coro
+        self.fire_event('stop')
 
 
 class DatagramServer(Producer):
