@@ -784,10 +784,9 @@ class HttpProxyServer(Global):
 class Debug(Global):
     name = "debug"
     flags = ["--debug"]
-    nargs = '?'
-    type = int
-    default = 0
-    const = 1
+    validator = validate_bool
+    action = "store_true"
+    default = False
     desc = """\
         Turn on debugging in the server.
 

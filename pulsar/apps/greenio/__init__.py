@@ -380,17 +380,3 @@ class GreenLock:
 
     def __exit__(self, type, value, traceback):
         self.release()
-
-
-class GreenWSGI:
-    '''Wraps a WSGI application to be executed on a :class:`.GreenPool`
-    '''
-    def __init__(self, wsgi, pool):
-        self.wsgi = wsgi
-        self.pool = pool
-
-    def __call__(self, environ, start_response):
-        return self.pool.submit(self._green_handler, environ, start_response)
-
-    def _green_handler(self, environ, start_response):
-        return wait(self.wsgi(environ, start_response))

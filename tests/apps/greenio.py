@@ -1,6 +1,8 @@
 import unittest
+from unittest import mock
 
 from pulsar import Future, send, multi_async, get_event_loop
+from pulsar.apps import wsgi
 
 from examples.echo.manage import server, Echo
 
@@ -45,6 +47,10 @@ class TestGreenIO(unittest.TestCase):
     def tearDownClass(cls):
         if cls.server_cfg:
             return send('arbiter', 'kill_actor', cls.server_cfg.name)
+
+    def request(self, **kwargs):
+        environ = wsgi.test_wsgi_environ(**kwargs)
+        return wsgi.WsgiRequest(environ)
 
     def test_pool(self):
         pool = greenio.GreenPool()
@@ -111,9 +117,12 @@ class TestGreenIO(unittest.TestCase):
         lock = greenio.GreenLock()
         self.assertTrue(lock.acquire())
         self.assertEqual(lock.locked(), green)
+
+        def _test_lock(l):
+            return l.acquire()
         #
         # create a new greenlet
-        child = greenio.greenlet(self._test_lock)
+        child = greenio.greenlet(_test_lock)
         future = child.switch(lock)
 
         self.assertIsInstance(future, Future)
@@ -126,5 +135,10 @@ class TestGreenIO(unittest.TestCase):
         #
         # self.assertEqual(lock.locked(), child)
 
-    def _test_lock(self, lock):
-        return lock.acquire()
+    def test_greenwsgi(self):
+        from pulsar.apps.greenio.wsgi import GreenWSGI
+        wsgi = mock.MagicMock()
+        pool = greenio.GreenPool()
+        green = GreenWSGI(wsgi, pool)
+        self.assertEqual(green.wsgi, wsgi)
+        self.assertEqual(green.pool, pool)

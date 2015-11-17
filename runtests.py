@@ -27,7 +27,7 @@ def run(**params):
     runtests(**params)
 
 
-def runtests(debug=True, test_timeout=None, **params):
+def runtests(test_timeout=None, **params):
     from pulsar.apps.test import TestSuite
     from pulsar.apps.test.plugins import bench, profile
     import pulsar.utils.settings.backend    # noqa
@@ -45,7 +45,6 @@ def runtests(debug=True, test_timeout=None, **params):
                        profile.Profile()),
               pidfile='test.pid',
               test_timeout=test_timeout or 10,
-              debug=debug,
               **params).start()
 
 
