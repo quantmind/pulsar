@@ -1,5 +1,4 @@
 import os
-import sys
 import threading
 import logging
 from collections import OrderedDict
@@ -29,9 +28,6 @@ __all__ = ['get_event_loop',
            'is_async',
            'CANCELLED_ERRORS']
 
-
-if '--debug' in sys.argv:   # pragma    nocover
-    os.environ['PYTHONASYNCIODEBUG'] = 'debug'
 
 _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,)
 CANCELLED_ERRORS = (asyncio.CancelledError,)

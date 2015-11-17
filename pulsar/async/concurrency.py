@@ -140,6 +140,8 @@ class Concurrency(object):
         '''
         actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
         loop = asyncio.SelectorEventLoop(self.selector())
+        if self.cfg.debug:
+            loop.set_debug(True)
         executor = ThreadPoolExecutor(self.cfg.thread_workers)
         loop.set_default_executor(executor)
         loop.logger = actor._logger

@@ -3,7 +3,7 @@ from collections import namedtuple
 from copy import copy
 from urllib.parse import urlparse, urljoin
 
-from pulsar import OneTime, Future, task
+from pulsar import OneTime, task
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.internet import is_tls
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
@@ -213,11 +213,10 @@ class Tunneling:
         connection.events['connection_made'] = OneTime(loop=loop)
         connection._processed -= 1
         connection.producer._requests_processed -= 1
-        waiter = Future(loop=loop)
+
         loop._make_ssl_transport(sock, connection, request._ssl,
-                                 waiter, server_side=False,
                                  server_hostname=request._netloc)
-        yield from waiter
+        yield from connection.event('connection_made')
         response = connection.current_consumer()
         response.start(request)
         yield from response.on_finished
