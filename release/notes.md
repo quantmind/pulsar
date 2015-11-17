@@ -2,6 +2,7 @@
 
 * Pulsar Protocol requires loop as first parameter during initialisation
 * Actor uses event loop ``set_debug`` method when running with the ``--debug`` flag
+* ``GreenWSGI`` handler moved to ``pulsar.apps.greenio.wsgi``
 
 ## Internals
 
