@@ -39,10 +39,13 @@ class ChangeVersion(ReleaseSetting):
         Change the version number in the code
         """
 
+exclude = set(pulsar.Config().settings)
+exclude.difference_update(('config', 'loglevel'))
+
 
 class ReleaseManager(pulsar.Application):
     name = 'release'
-    cfg = pulsar.Config(apps=['release'])
+    cfg = pulsar.Config(apps=['release'], exclude=exclude)
 
     def monitor_start(self, monitor, exc=None):
         cfg = self.cfg
