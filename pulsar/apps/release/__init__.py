@@ -44,7 +44,7 @@ class ChangeVersion(ReleaseSetting):
         """
 
 exclude = set(pulsar.Config().settings)
-exclude.difference_update(('config', 'loglevel'))
+exclude.difference_update(('config', 'loglevel', 'debug'))
 
 
 class ReleaseManager(pulsar.Application):
