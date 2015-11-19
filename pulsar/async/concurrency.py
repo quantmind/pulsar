@@ -278,16 +278,18 @@ class Concurrency(object):
                     actor._loop.remove_signal_handler(sig)
                 except Exception:
                     pass
+        if actor._loop.is_running():  # pragma nocover
+            actor.logger.critical('Event loop still running when stopping')
+            actor._loop.stop()
+        else:
+            actor.logger.debug('Close event loop')
+            actor._loop.close()
 
     def _stop_actor(self, actor, finished=False):
-        '''Exit from the :class:`.Actor` domain.'''
+        # Stop the actor if finished is True
+        # otherwise starts the stopping process
         if finished:
             self._remove_signals(actor)
-            if actor._loop.is_running():  # pragma nocover
-                actor.logger.critical('Event loop still running when stopping')
-                actor._loop.stop()
-            else:
-                actor._loop.close()
             return True
         #
         actor.state = ACTOR_STATES.CLOSE
@@ -535,6 +537,7 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
                 interval, self.periodic_task, monitor)
 
     def _stop_actor(self, actor, finished=False):
+        # remove all workers from this monitor
         if finished:
             return
 
@@ -655,8 +658,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             actor.stop(exit_code=autoreload.EXIT_CODE)
 
     def _stop_actor(self, actor, finished=False):
-        '''Stop the pools the message queue and remaining actors
-        '''
+        # remove all actors and monitors
         if finished:
             self._stop_arbiter(actor)
         elif actor._loop.is_running():

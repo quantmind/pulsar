@@ -1141,7 +1141,9 @@ class HttpClient(AbstractClient):
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
                     consumer.status_code == 101):
-                conn.detach()
+                conn = conn.detach()
+                if consumer.status_code != 101:
+                    conn.close()
         if isinstance(consumer.request_again, tuple):
             method, url, params = consumer.request_again
             consumer = yield from self._request(method, url, **params)
@@ -1208,7 +1210,7 @@ class HttpClient(AbstractClient):
         yield from connection.event('connection_made')
         return connection
 
-    def _close(self, async=True):
+    def _close(self, _, exc=None, async=True):
         '''Close all connections.
         '''
         for p in self.connection_pools.values():
