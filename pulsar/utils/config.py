@@ -321,7 +321,10 @@ class Config(object):
 
     @property
     def workers(self):
-        return self.settings['workers'].get()
+        '''Number of workers
+        '''
+        workers = self.settings.get('workers')
+        return workers.get() if workers else 0
 
     @property
     def address(self):

@@ -1,7 +1,11 @@
+'''Pulsar app for creating releases. Used by pulsar.
+'''
 import os
 import json
+from asyncio import async
 
 import pulsar
+from pulsar import ImproperlyConfigured
 
 from .git import Git
 from .utils import change_version
@@ -52,18 +56,25 @@ class ReleaseManager(pulsar.Application):
         cfg.set('workers', 0)
 
     def worker_start(self, worker, exc=None):
+        if not exc:
+            worker._loop.call_soon(async, self._start_release(worker))
+
+    def _start_release(self, worker):
+        exit_code = 1
         try:
-            yield from self.release()
+            yield from self._release()
+        except ImproperlyConfigured as exc:
+            self.logger.error(str(exc))
         except Exception as exc:
             self.logger.exception(str(exc))
-            worker._loop.call_soon(self._exit, 1)
         else:
-            worker._loop.call_soon(self._exit, None)
+            exit_code = None
+        worker._loop.call_soon(self._exit, exit_code)
 
     def _exit(self, exit_code):
         pulsar.arbiter().stop(exit_code=exit_code)
 
-    def release(self):
+    def _release(self):
         git = yield from Git.create(self.cfg)
         path = yield from git.toplevel()
         self.logger.info('Repository directory %s', path)
@@ -74,6 +85,7 @@ class ReleaseManager(pulsar.Application):
         # Validate new tag and write the new version
         tag_name = release['tag_name']
         version = yield from git.validate_tag(tag_name)
+        self.logger.info('Bump to version %s', version)
         self.cfg.change_version(self, tuple(version))
         #
         if not self.cfg.dry_run:

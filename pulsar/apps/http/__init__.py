@@ -1009,6 +1009,7 @@ class HttpClient(AbstractClient):
         self.http_parser = parser or http_parser
         self.frame_parser = frame_parser or websocket.frame_parser
         # Add hooks
+        self.bind_event('finish', self._close)
         self.bind_event('pre_request', Tunneling(self._loop))
         self.bind_event('on_headers', handle_101)
         self.bind_event('on_headers', handle_100)
@@ -1146,16 +1147,6 @@ class HttpClient(AbstractClient):
             consumer = yield from self._request(method, url, **params)
         return consumer
 
-    def close(self, async=True):
-        '''Close all connections.
-
-        Fire the ``finish`` :ref:`one time event <one-time-event>` once done.
-        Return the :class:`.Future` fired by the ``finish`` event.
-        '''
-        for p in self.connection_pools.values():
-            p.close()
-        self.connection_pools.clear()
-
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
         '''
@@ -1216,3 +1207,10 @@ class HttpClient(AbstractClient):
         # Wait for the connection made event
         yield from connection.event('connection_made')
         return connection
+
+    def _close(self, async=True):
+        '''Close all connections.
+        '''
+        for p in self.connection_pools.values():
+            p.close(async=async)
+        self.connection_pools.clear()

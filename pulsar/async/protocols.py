@@ -293,7 +293,10 @@ class PulsarProtocol(EventHandler, FlowControl):
                     self._transport.write_eof()
                 except Exception:
                     pass
-            self._transport.close()
+            try:
+                self._transport.close()
+            except Exception:
+                pass
 
     def abort(self):
         '''Abort by aborting the :attr:`transport`.'''

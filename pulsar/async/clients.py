@@ -89,16 +89,16 @@ class Pool(AsyncObject):
         connection = yield from self._get()
         return PoolConnection(self, connection)
 
-    def close(self, in_use=True):
+    def close(self, async=True):
         '''Close all :attr:`available` connections and
         :attr:`in_use` connections only when ``in_use`` is ``True``.
         '''
-        self._closed = True
-        queue = self._queue
-        while queue.qsize():
-            connection = queue.get_nowait()
-            connection.close()
-        if in_use:
+        if not self._closed:
+            self._closed = True
+            queue = self._queue
+            while queue.qsize():
+                connection = queue.get_nowait()
+                connection.close()
             in_use = self._in_use_connections
             self._in_use_connections = set()
             for connection in in_use:
