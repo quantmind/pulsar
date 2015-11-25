@@ -8,7 +8,6 @@
 * Use ``actor_stop`` rather than ``loop.stop`` when handling OS signals which
   kill an actor.
 * Better ``close`` method for ``TCPServer``
-* Close the http connection when keep-alive is not available and status code is not 101. Previously the connection was detached only.
 
 ## Bug Fixes
 
