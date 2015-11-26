@@ -138,7 +138,7 @@ class ReleaseManager(pulsar.Application):
             self.logger.info('Commit changes')
             result = yield from git.commit(msg='Release %s' % tag_name)
             self.logger.info(result)
-            if self.push:
+            if self.cfg.push:
                 self.logger.info('Push changes changes')
                 result = yield from git.push()
                 self.logger.info(result)
