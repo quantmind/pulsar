@@ -89,16 +89,16 @@ class Pool(AsyncObject):
         connection = yield from self._get()
         return PoolConnection(self, connection)
 
-    def close(self, in_use=True):
-        '''Close all :attr:`available` connections and
-        :attr:`in_use` connections only when ``in_use`` is ``True``.
+    def close(self, async=True):
+        '''Close all :attr:`available` connections
         '''
-        self._closed = True
-        queue = self._queue
-        while queue.qsize():
-            connection = queue.get_nowait()
-            connection.close()
-        if in_use:
+        if not self._closed:
+            self._closed = True
+            queue = self._queue
+            while queue.qsize():
+                connection = queue.get_nowait()
+                if connection:
+                    connection.close()
             in_use = self._in_use_connections
             self._in_use_connections = set()
             for connection in in_use:
@@ -181,13 +181,14 @@ class PoolConnection(object):
         if self.pool is not None:
             self.pool._put(self.connection, discard)
             self.pool = None
-            self.connection = None
+            conn, self.connection = self.connection, None
+            return conn
 
     def detach(self):
         '''Remove the underlying :attr:`connection` from the connection
         :attr:`pool`.
         '''
-        self.close(True)
+        return self.close(True)
 
     def __enter__(self):
         return self

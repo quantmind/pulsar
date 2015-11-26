@@ -126,8 +126,16 @@ class Github(Git):
         self.logger.info('Check current Github release from %s', url)
         response = yield from self.http.get(url, auth=self.auth)
         if response.status_code == 200:
-            current = response.json()['tag_name']
+            data = response.json()
+            current = data['tag_name']
+            self.logger.info('Current Github release %s created %s by %s',
+                             current, data['created_at'],
+                             data['author']['login'])
             return self.semantic_version(current)
+        elif response.status_code == 404:
+            self.logger.warning('No Github releases')
+        else:
+            response.raise_for_status()
 
     def validate_tag(self, tag_name):
         new_version = self.semantic_version(tag_name)
