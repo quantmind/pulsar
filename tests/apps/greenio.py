@@ -142,3 +142,9 @@ class TestGreenIO(unittest.TestCase):
         green = GreenWSGI(wsgi, pool)
         self.assertEqual(green.wsgi, wsgi)
         self.assertEqual(green.pool, pool)
+
+    def test_uncatched_stopiteration(self):
+        pool = greenio.GreenPool()
+        with self.assertRaises(RuntimeError) as cm:
+            yield from pool.submit(lambda: next(iter([])))
+        self.assertIsInstance(cm.exception.__cause__, StopIteration)
