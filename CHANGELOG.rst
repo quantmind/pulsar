@@ -1,3 +1,23 @@
+Ver. 1.0.6 - 2015-Nov-26
+============================
+Api
+-------------
+* Pulsar Protocol requires loop as first parameter during initialisation
+* Actor uses event loop ``set_debug`` method when running with the ``--debug`` flag
+* ``GreenWSGI`` handler moved to ``pulsar.apps.greenio.wsgi``
+* Added the release application for making releases. Used by pulsar and other packages.
+
+Internals
+-------------
+* Use ``actor_stop`` rather than ``loop.stop`` when handling OS signals which kill an actor.
+* Better ``close`` method for ``TCPServer``
+* sudoless testing in travis
+
+Bug Fixes
+-------------
+* Bug fix in ``HttpRedirect.location`` attribute
+
+
 Ver. 1.0.5 - 2015-Nov-12
 ===========================
 * Asynchronous Redis locking primitive for distributing computing
