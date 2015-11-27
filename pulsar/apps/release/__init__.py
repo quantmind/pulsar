@@ -5,7 +5,7 @@ import json
 from asyncio import async
 
 import pulsar
-from pulsar import ImproperlyConfigured
+from pulsar import ImproperlyConfigured, as_coroutine
 
 from .git import Git
 from .utils import passthrough, change_version, write_notes
@@ -112,12 +112,19 @@ class ReleaseManager(pulsar.Application):
         pulsar.arbiter().stop(exit_code=exit_code)
 
     def _release(self):
-        git = yield from Git.create(self.cfg)
+        self.git = git = yield from Git.create(self.cfg)
         path = yield from git.toplevel()
         self.logger.info('Repository directory %s', path)
 
         with open(os.path.join(path, 'release', 'release.json'), 'r') as file:
             release = json.load(file)
+
+        # Read the release note file
+        note_file = self.cfg.note_file
+        with open(os.path.join(path, 'release', note_file), 'r') as file:
+            release['body'] = file.read().strip()
+
+        yield from as_coroutine(self.cfg.before_commit(self, release))
 
         # Validate new tag and write the new version
         tag_name = release['tag_name']
@@ -125,16 +132,11 @@ class ReleaseManager(pulsar.Application):
         self.logger.info('Bump to version %s', version)
         self.cfg.change_version(self, tuple(version))
         #
-        note_file = self.cfg.note_file
-        with open(os.path.join(path, 'release', note_file), 'r') as file:
-            release['body'] = file.read().strip()
-
-        #
         if self.cfg.commit or self.cfg.push:
             #
             # Add release note to the changelog
-            self.cfg.before_commit(self, release)
-            self.cfg.write_notes(self, path, version, release)
+            yield from as_coroutine(self.cfg.write_notes(self, path,
+                                                         version, release))
             self.logger.info('Commit changes')
             result = yield from git.commit(msg='Release %s' % tag_name)
             self.logger.info(result)

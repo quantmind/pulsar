@@ -37,7 +37,7 @@ def write_notes(manager, path, version, release):
 
     if os.path.isfile(filename):
         with open(filename, 'r') as file:
-            body.append('\n\n')
+            body.append('\n')
             body.append(file.read())
 
     with open(filename, 'w') as file:

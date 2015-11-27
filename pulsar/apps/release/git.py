@@ -121,8 +121,9 @@ class Github(Git):
     def api_url(self):
         return 'https://api.github.com'
 
-    def latest_release(self):
-        url = '%s/repos/%s/releases/latest' % (self.api_url, self.repo_path)
+    def latest_release(self, repo_path=None):
+        repo_path = repo_path or self.repo_path
+        url = '%s/repos/%s/releases/latest' % (self.api_url, repo_path)
         self.logger.info('Check current Github release from %s', url)
         response = yield from self.http.get(url, auth=self.auth)
         if response.status_code == 200:
