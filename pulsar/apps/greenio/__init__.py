@@ -300,7 +300,10 @@ class GreenPool(AsyncObject):
             if task:
                 future, func, args, kwargs = task
                 try:
-                    result = func(*args, **kwargs)
+                    try:
+                        result = func(*args, **kwargs)
+                    except StopIteration as exc:  # See PEP 479
+                        raise RuntimeError('Unhandled StopIteration') from exc
                 except Exception as exc:
                     future.set_exception(exc)
                 else:
