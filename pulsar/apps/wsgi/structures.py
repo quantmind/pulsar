@@ -129,8 +129,8 @@ class Accept(tuple):
         if matches:
             best_quality = -1
             result = default
-            for server_item in matches:
-                for client_item, quality in self:
+            for client_item, quality in self:
+                for server_item in matches:
                     if quality <= best_quality:
                         break
                     if self._value_matches(server_item, client_item):
