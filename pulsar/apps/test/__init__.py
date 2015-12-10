@@ -514,6 +514,9 @@ class TestSuite(pulsar.Application):
         cfg.set('workers', workers)
         loader = self.loader
 
+        if self.cfg.callable:
+            app = self.cfg.callable()
+
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
         if self.cfg.show_leaks:
