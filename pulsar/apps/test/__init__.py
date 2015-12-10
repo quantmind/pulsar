@@ -515,7 +515,7 @@ class TestSuite(pulsar.Application):
         loader = self.loader
 
         if self.cfg.callable:
-            app = self.cfg.callable()
+            self.cfg.callable()
 
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
