@@ -81,6 +81,11 @@ class Git:
                                        '--abbrev-ref', 'HEAD')
         return name
 
+    def add(self, *files):
+        if files:
+            result = yield from self.execute('git', 'add', *files)
+            return result
+
     def commit(self, *files, msg=None):
         if not files:
             files = ('-a',)

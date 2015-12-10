@@ -1,3 +1,11 @@
+Ver. 1.0.7 - 2015-Dec-10
+============================
+Api
+-------------
+* Improvements in the ``release`` application
+* Handle ``StopIteration`` in green pool [[182](https://github.com/quantmind/pulsar/pull/182)]
+
+
 Ver. 1.0.6 - 2015-Nov-26
 ============================
 Api

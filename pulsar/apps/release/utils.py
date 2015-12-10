@@ -35,7 +35,11 @@ def write_notes(manager, path, version, release):
             '\n',
             release['body']]
 
+    add_file = True
+
     if os.path.isfile(filename):
+        # We need to add the file
+        add_file = False
         with open(filename, 'r') as file:
             body.append('\n')
             body.append(file.read())
@@ -44,3 +48,6 @@ def write_notes(manager, path, version, release):
         file.write('\n'.join(body))
 
     manager.logger.info('Added notes to changelog')
+
+    if add_file:
+        yield from manager.git.add(filename)
