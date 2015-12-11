@@ -7,7 +7,7 @@ from base64 import b64encode
 from functools import reduce
 from cgi import valid_boundary, parse_header
 
-from pulsar import HttpException, is_async
+from pulsar import HttpException, BadRequest, is_async
 from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict, mapping_iterator
 from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
@@ -240,7 +240,10 @@ class JsonDecoder(BytesDecoder):
 
     def _ready(self, data):
         self.environ['wsgi.input'] = BytesIO(data)
-        self.result = (json.loads(data.decode(self.charset)), None)
+        try:
+            self.result = (json.loads(data.decode(self.charset)), None)
+        except Exception as exc:
+            raise BadRequest('Could not decode JSON') from exc
         return self.result
 
 
