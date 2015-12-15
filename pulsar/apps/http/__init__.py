@@ -300,6 +300,7 @@ from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
+from .stream import HttpStream
 
 
 __all__ = ['HttpRequest', 'HttpResponse', 'HttpClient',
@@ -427,6 +428,10 @@ class HttpRequest(RequestBase):
 
         if ``True``, the :class:`HttpRequest` includes the
         ``Expect: 100-Continue`` header.
+
+    .. attribute:: stream
+
+        Allow for streaming body
 
     '''
     CONNECT = 'CONNECT'
@@ -806,6 +811,11 @@ class HttpResponse(ProtocolConsumer):
     def content(self):
         '''Content of the response, in bytes'''
         return self.get_content()
+
+    @property
+    def raw(self):
+        '''A raw asynchronous Http response'''
+        return HttpStream(self)
 
     def recv_body(self):
         '''Flush the response body and return it.'''

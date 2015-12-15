@@ -697,3 +697,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         ips = {sockaddr[0] for _, _, _, _, sockaddr in
                socket.getaddrinfo(result, None)}
         self.assertTrue({'127.0.0.1', '::1'} & ips)
+
+    def test_raw_property(self):
+        http = self._client
+        response = yield from http.get(self.httpbin('plaintext'))
+        raw = response.raw
+        self.assertEqual(raw._response, response)
+        yield from self.async.assertEqual(raw.read(), b'')
