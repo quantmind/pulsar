@@ -440,7 +440,7 @@ class HttpRequest(RequestBase):
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
                  websocket_handler=None, cookies=None, urlparams=None,
-                 **ignored):
+                 stream=False, **ignored):
         self.client = client
         self._data = None
         self.files = files
@@ -464,6 +464,7 @@ class HttpRequest(RequestBase):
         self.websocket_handler = websocket_handler
         self.source_address = source_address
         self.new_parser()
+        self.stream = stream
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
         if auth:
@@ -801,6 +802,11 @@ class HttpResponse(ProtocolConsumer):
         '''
         return self._cookies
 
+    @property
+    def content(self):
+        '''Content of the response, in bytes'''
+        return self.get_content()
+
     def recv_body(self):
         '''Flush the response body and return it.'''
         return self.parser.recv_body()
@@ -1129,7 +1135,10 @@ class HttpClient(AbstractClient):
             # bind request-specific events
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
-            response = yield from consumer.on_finished
+            if request.stream:
+                response = yield from consumer.events['on_headers']
+            else:
+                response = yield from consumer.on_finished
             if response is not None:
                 consumer = response
             if consumer.request_again:
