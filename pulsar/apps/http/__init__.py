@@ -1147,13 +1147,15 @@ class HttpClient(AbstractClient):
             consumer = conn.current_consumer()
             # bind request-specific events
             consumer.bind_events(**request.inp_params)
+            if request.stream:
+                consumer.bind_event('data_processed', consumer.raw)
+
             consumer.start(request)
             if request.stream:
-                raw = consumer.raw
-                consumer.bind_event('data_processed', raw)
                 response = yield from consumer.events['on_headers']
             else:
                 response = yield from consumer.on_finished
+
             if response is not None:
                 consumer = response
             if consumer.request_again:

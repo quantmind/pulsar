@@ -26,6 +26,13 @@ class HttpStream:
             buffer.append(body)
         return b''.join(buffer)
 
+    def __content(self):
+        '''Read and store content
+        '''
+        if self._response._content is None:
+            self._response._content = yield from self.read()
+        return self._response.content
+
     def close(self):
         pass
 
@@ -39,9 +46,8 @@ class HttpStream:
                 except asyncio.QueueEmpty:
                     break
             else:
-                yield asyncio.async(self._queue.get())
+                yield self._queue.get()
 
     def __call__(self, response, exc=None, **kw):
         body = response.recv_body()
-        if body:
-            self._queue.put_nowait(body)
+        self._queue.put_nowait(body)
