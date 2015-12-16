@@ -1,5 +1,6 @@
 import os
 from base64 import b64decode
+from functools import wraps
 import socket
 import unittest
 
@@ -8,7 +9,6 @@ import examples
 from pulsar import send, SERVER_SOFTWARE, get_event_loop
 from pulsar.utils.path import Path
 from pulsar.utils.httpurl import iri_to_uri
-from pulsar.utils.pep import pypy
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
 
@@ -17,6 +17,17 @@ __test__ = False
 
 def dodgyhook(response, exc=None):
     raise ValueError('Dodgy header hook')
+
+
+def no_tls(f):
+    # Don't do the test when tunneling, it causes timeout at times
+
+    @wraps(f)
+    def _(self):
+        if not self.with_tls:
+            return f(self)
+
+    return _
 
 
 class TestHttpClientBase:
@@ -375,9 +386,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.connection._processed, 7)
 
     def test_large_response(self):
-        if pypy:
-            # TODO: this fails in pypy randomnly
-            return
         http = self._client
         response = yield from http.get(self.httpbin('getsize/600000'))
         self.assertEqual(response.status_code, 200)
@@ -453,10 +461,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_stream_response(self):
         return self._test_stream_response()
 
+    @no_tls
     def test_stream_response_large_chunk(self):
-        # Don't do the test when tunniling, it causes timeout at times
-        if not self.with_tls:
-            return self._test_stream_response(100000, 3)
+        return self._test_stream_response(100000, 3)
 
     def test_expect(self):
         http = self._client
@@ -714,6 +721,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(raw.done)
         yield from self.async.assertEqual(raw.read(), b'')
 
+    @no_tls
     def test_raw_stream_large(self):
         http = self._client
         url = self.httpbin('stream/100000/3')
