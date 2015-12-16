@@ -752,6 +752,7 @@ class HttpResponse(ProtocolConsumer):
     _data_sent = None
     _status_code = None
     _cookies = None
+    _raw = None
     request_again = None
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
@@ -815,7 +816,9 @@ class HttpResponse(ProtocolConsumer):
     @property
     def raw(self):
         '''A raw asynchronous Http response'''
-        return HttpStream(self)
+        if self._raw is None:
+            self._raw = HttpStream(self)
+        return self._raw
 
     def recv_body(self):
         '''Flush the response body and return it.'''
@@ -1146,6 +1149,8 @@ class HttpClient(AbstractClient):
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
             if request.stream:
+                raw = consumer.raw
+                consumer.bind_event('data_processed', raw)
                 response = yield from consumer.events['on_headers']
             else:
                 response = yield from consumer.on_finished

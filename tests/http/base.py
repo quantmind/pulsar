@@ -704,3 +704,12 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         raw = response.raw
         self.assertEqual(raw._response, response)
         yield from self.async.assertEqual(raw.read(), b'')
+
+    def test_raw_stream(self):
+        http = self._client
+        response = yield from http.get(self.httpbin('plaintext'), stream=True)
+        raw = response.raw
+        self.assertEqual(raw._response, response)
+        yield from self.async.assertEqual(raw.read(), b'Hello, World!')
+        self.assertTrue(raw.done)
+        yield from self.async.assertEqual(raw.read(), b'')
