@@ -713,3 +713,12 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         yield from self.async.assertEqual(raw.read(), b'Hello, World!')
         self.assertTrue(raw.done)
         yield from self.async.assertEqual(raw.read(), b'')
+
+    def test_raw_stream_large(self):
+        http = self._client
+        url = self.httpbin('stream/100000/3')
+        response = yield from http.get(url, stream=True)
+        raw = response.raw
+        self.assertEqual(raw._response, response)
+        data = yield from raw.read()
+        self.assertTrue(len(data), 300000)

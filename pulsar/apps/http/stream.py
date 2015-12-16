@@ -17,7 +17,7 @@ class HttpStream:
     def done(self):
         return self._response.on_finished.fired()
 
-    def read(self):
+    def read(self, n=None):
         '''Read all content'''
         buffer = []
         for body in self:
@@ -25,6 +25,9 @@ class HttpStream:
                 body = yield from body
             buffer.append(body)
         return b''.join(buffer)
+
+    def close(self):
+        pass
 
     def __iter__(self):
         '''Iterator over bytes or Futures resulting in bytes
@@ -36,7 +39,7 @@ class HttpStream:
                 except asyncio.QueueEmpty:
                     break
             else:
-                yield asyncio.async(self.queue.get())
+                yield asyncio.async(self._queue.get())
 
     def __call__(self, response, exc=None, **kw):
         body = response.recv_body()
