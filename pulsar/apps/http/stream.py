@@ -2,10 +2,16 @@ import asyncio
 from pulsar import isfuture
 
 
+class StreamConsumedError(Exception):
+    '''Same name as request error'''
+    pass
+
+
 class HttpStream:
     '''A streaming body for an HTTP response
     '''
     def __init__(self, response):
+        self._streamed = False
         self._response = response
         self._queue = asyncio.Queue()
 
@@ -19,6 +25,8 @@ class HttpStream:
 
     def read(self, n=None):
         '''Read all content'''
+        if self._streamed:
+            return b''
         buffer = []
         for body in self:
             if isfuture(body):
@@ -39,6 +47,9 @@ class HttpStream:
     def __iter__(self):
         '''Iterator over bytes or Futures resulting in bytes
         '''
+        if self._streamed:
+            raise StreamConsumedError
+        self._streamed = True
         while True:
             if self.done:
                 try:
@@ -49,5 +60,5 @@ class HttpStream:
                 yield self._queue.get()
 
     def __call__(self, response, exc=None, **kw):
-        body = response.recv_body()
-        self._queue.put_nowait(body)
+        if self._streamed:
+            self._queue.put_nowait(response.recv_body())

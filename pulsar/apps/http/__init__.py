@@ -300,11 +300,12 @@ from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
-from .stream import HttpStream
+from .stream import HttpStream, StreamConsumedError
 
 
 __all__ = ['HttpRequest', 'HttpResponse', 'HttpClient',
-           'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2']
+           'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2',
+           'HttpStream', 'StreamConsumedError']
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
