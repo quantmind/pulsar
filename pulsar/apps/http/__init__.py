@@ -804,6 +804,10 @@ class HttpResponse(ProtocolConsumer):
             return False
 
     @property
+    def ok(self):
+        return not self.is_error
+
+    @property
     def cookies(self):
         '''Dictionary of cookies set by the server or ``None``.
         '''
@@ -812,7 +816,7 @@ class HttpResponse(ProtocolConsumer):
     @property
     def content(self):
         '''Content of the response, in bytes'''
-        return self.get_content()
+        return self._content or b''
 
     @property
     def raw(self):
@@ -830,18 +834,12 @@ class HttpResponse(ProtocolConsumer):
         if code:
             return '%d %s' % (code, responses.get(code, 'Unknown'))
 
-    def get_content(self):
-        '''Retrieve the body without flushing'''
-        b = self.parser.recv_body()
-        if b or self._content is None:
-            self._content = self._content + b if self._content else b
-        return self._content
-
-    def content_string(self, charset=None, errors=None):
+    def text(self, charset=None, errors=None):
         '''Decode content as a string.'''
-        data = self.get_content()
+        data = self.content
         if data is not None:
             return data.decode(charset or 'utf-8', errors or 'strict')
+    content_string = text
 
     def json(self, charset=None):
         '''Decode content as a JSON object.'''
@@ -987,7 +985,7 @@ class HttpClient(AbstractClient):
         kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
                           'allow_redirects', 'multipart_boundary', 'version',
-                          'websocket_handler', 'verify')
+                          'websocket_handler', 'verify', 'stream')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', platform.node()))
@@ -998,7 +996,7 @@ class HttpClient(AbstractClient):
                  ca_certs=None, cookies=None, store_cookies=True,
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
-                 loop=None, client_version=None, timeout=None,
+                 loop=None, client_version=None, timeout=None, stream=False,
                  pool_size=10, frame_parser=None):
         super().__init__(loop)
         self.client_version = client_version or self.client_version
@@ -1012,6 +1010,7 @@ class HttpClient(AbstractClient):
         self.decompress = decompress
         self.version = version or self.version
         self.verify = verify
+        self.stream = stream
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
@@ -1150,11 +1149,11 @@ class HttpClient(AbstractClient):
             consumer.bind_events(**request.inp_params)
             if request.stream:
                 consumer.bind_event('data_processed', consumer.raw)
-
-            consumer.start(request)
-            if request.stream:
+                consumer.start(request)
                 response = yield from consumer.events['on_headers']
             else:
+                consumer.bind_event('data_processed', response_content)
+                consumer.start(request)
                 response = yield from consumer.on_finished
 
             if response is not None:
@@ -1241,3 +1240,9 @@ class HttpClient(AbstractClient):
         for p in self.connection_pools.values():
             p.close(async=async)
         self.connection_pools.clear()
+
+
+def response_content(resp, exc=None, **kw):
+    b = resp.parser.recv_body()
+    if b or resp._content is None:
+        resp._content = resp._content + b if resp._content else b

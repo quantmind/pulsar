@@ -106,7 +106,8 @@ class ProxyServerWsgiHandler(LocalMixin):
         request = self.http_client.request(method, uri, data=data,
                                            headers=request_headers,
                                            version=environ['SERVER_PROTOCOL'],
-                                           pre_request=response.pre_request)
+                                           pre_request=response.pre_request,
+                                           stream=True)
         add_errback(async(request), response.error)
         return response
 

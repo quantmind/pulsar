@@ -197,7 +197,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             self.httpbin('stream/%d/%d' % (siz, rep)))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.parser.is_chunked())
-        body = response.recv_body()
+        body = response.content
         self.assertEqual(len(body), siz*rep)
 
     def test_HttpResponse(self):
@@ -223,7 +223,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield from http.get(self.httpbin())
         self.assertEqual(str(response), '200')
         self.assertTrue('content-length' in response.headers)
-        content = response.get_content()
+        content = response.content
         size = response.headers['content-length']
         self.assertEqual(len(content), int(size))
         self.assertEqual(response.headers['connection'], 'Keep-Alive')
@@ -242,7 +242,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(repr(response), 'HttpResponse(200)')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_status(), '200 OK')
-        self.assertTrue(response.get_content())
+        self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
         self._check_pool(http, response)
         response = yield from http.get(self.httpbin('get'))
@@ -333,7 +333,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_status(), '400 Bad Request')
-        self.assertTrue(response.get_content())
+        self.assertTrue(response.content)
         self.assertRaises(HTTPError, response.raise_for_status)
         # Make sure we only have one connection after a valid request
         response = yield from http.get(self.httpbin('get'))
@@ -348,7 +348,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertTrue(response.headers.has('connection', 'close'))
         self.assertTrue('content-type' in response.headers)
-        self.assertTrue(response.get_content())
+        self.assertTrue(response.content)
         self.assertRaises(HTTPError, response.raise_for_status)
 
     def test_dodgy_on_header_event(self):
