@@ -440,6 +440,7 @@ class HttpRequest(RequestBase):
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
                  websocket_handler=None, cookies=None, urlparams=None,
+                 proxy_tuple=None,
                  **ignored):
         self.client = client
         self._data = None
@@ -477,7 +478,11 @@ class HttpRequest(RequestBase):
             cookies.add_cookie_header(self)
         self.unredirected_headers['host'] = host_no_default_port(self._scheme,
                                                                  self._netloc)
-        client.set_proxy(self)
+        if proxy_tuple:
+            self.set_proxy(*proxy_tuple)
+        else:
+            client.set_proxy(self)
+
         self.data = data
 
     @property
@@ -543,11 +548,14 @@ class HttpRequest(RequestBase):
         self._data = self._encode_data(data)
 
     def first_line(self):
-        if not self._proxy and self.method != self.CONNECT:
+        if self._proxy:
+            if self.method == self.CONNECT:
+                url = self._netloc
+            else:
+                url = self.full_url
+        else:
             url = urlunparse(('', '', self.path or '/', self.params,
                               self.query, self.fragment))
-        else:
-            url = self.full_url
         return '%s %s %s' % (self.method, url, self.version)
 
     def new_parser(self):
