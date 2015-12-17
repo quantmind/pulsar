@@ -296,7 +296,8 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   parse_options_header, JSON_CONTENT_TYPES)
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
-                      Tunneling, TooManyRedirects)
+                      Tunneling, TooManyRedirects, start_request,
+                      response_content)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
@@ -843,7 +844,7 @@ class HttpResponse(ProtocolConsumer):
 
     def json(self, charset=None):
         '''Decode content as a JSON object.'''
-        return json.loads(self.content_string(charset))
+        return json.loads(self.text(charset))
 
     def decode_content(self):
         '''Return the best possible representation of the response body.
@@ -864,7 +865,7 @@ class HttpResponse(ProtocolConsumer):
         if self.is_error:
             if self.status_code:
                 raise HTTPError(self.url, self.status_code,
-                                self.content_string(), self.headers, None)
+                                self.text(), self.headers, None)
             else:
                 raise URLError(self.on_finished.result.error)
 
@@ -1144,30 +1145,12 @@ class HttpClient(AbstractClient):
             self.connection_pools[request.key] = pool
         conn = yield from pool.connect()
         with conn:
-            consumer = conn.current_consumer()
-            # bind request-specific events
-            consumer.bind_events(**request.inp_params)
-            if request.stream:
-                consumer.bind_event('data_processed', consumer.raw)
-                consumer.start(request)
-                response = yield from consumer.events['on_headers']
-            else:
-                consumer.bind_event('data_processed', response_content)
-                consumer.start(request)
-                response = yield from consumer.on_finished
-
-            if response is not None:
-                consumer = response
-            if consumer.request_again:
-                if isinstance(consumer.request_again, Exception):
-                    raise consumer.request_again
-                elif isinstance(consumer.request_again, ProtocolConsumer):
-                    consumer = consumer.request_again
+            consumer = yield from start_request(request, conn)
             headers = consumer.headers
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
                     consumer.status_code == 101):
-                conn = conn.detach()
+                conn.detach()
         if isinstance(consumer.request_again, tuple):
             method, url, params = consumer.request_again
             consumer = yield from self._request(method, url, **params)
@@ -1240,10 +1223,3 @@ class HttpClient(AbstractClient):
         for p in self.connection_pools.values():
             p.close(async=async)
         self.connection_pools.clear()
-
-
-def response_content(resp, exc=None, **kw):
-    b = resp.parser.recv_body()
-    if b or resp._content is None:
-        resp._content = resp._content + b if resp._content else b
-    return resp._content

@@ -54,6 +54,6 @@ class HttpStream:
                 yield asyncio.async(self._queue.get())
 
     def __call__(self, response, exc=None, **kw):
-        if self._streamed:
+        if self._streamed and response.parser.is_headers_complete():
             assert response is self._response
             self._queue.put_nowait(response.recv_body())

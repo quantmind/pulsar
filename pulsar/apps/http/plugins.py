@@ -3,7 +3,7 @@ from collections import namedtuple
 from copy import copy
 from urllib.parse import urlparse, urljoin
 
-from pulsar import OneTime, task
+from pulsar import OneTime, task, ProtocolConsumer
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.internet import is_tls
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
@@ -20,6 +20,44 @@ def noerror(callback):
             return callback(*response)
 
     return _
+
+
+def response_content(resp, exc=None, **kw):
+    b = resp.parser.recv_body()
+    if b or resp._content is None:
+        resp._content = resp._content + b if resp._content else b
+    return resp._content
+
+
+def _consumer(response, consumer):
+    if response is not None:
+        consumer = response
+    return consumer
+
+
+def start_request(request, conn):
+    consumer = conn.current_consumer()
+    # bind request-specific events
+    consumer.bind_events(**request.inp_params)
+    if request.stream:
+        consumer.bind_event('data_processed', consumer.raw)
+        consumer.start(request)
+        response = yield from consumer.events['on_headers']
+    else:
+        consumer.bind_event('data_processed', response_content)
+        consumer.start(request)
+        response = yield from consumer.on_finished
+
+    consumer = _consumer(response, consumer)
+
+    if consumer.request_again:
+        response = yield from consumer.on_finished
+        consumer = _consumer(response, consumer)
+        if isinstance(consumer.request_again, Exception):
+            raise consumer.request_again
+        elif isinstance(consumer.request_again, ProtocolConsumer):
+            consumer = consumer.request_again
+    return consumer
 
 
 class request_again(namedtuple('request_again', 'method url params')):
@@ -192,6 +230,7 @@ class Tunneling:
     def on_headers(self, response, exc=None):
         '''Called back once the headers have arrived.'''
         if response.status_code == 200:
+            response.request_again = True
             response.bind_event('post_request', self._tunnel_consumer)
             response.finished()
 
@@ -204,7 +243,8 @@ class Tunneling:
 
     @task
     def switch_to_ssl(self, prev_response):
-        '''Wrap the transport for SSL communication.'''
+        '''Wrap the transport for SSL communication.
+        '''
         request = prev_response._request.request
         connection = prev_response._connection
         loop = connection._loop
@@ -217,9 +257,5 @@ class Tunneling:
         loop._make_ssl_transport(sock, connection, request._ssl,
                                  server_hostname=request._netloc)
         yield from connection.event('connection_made')
-        response = connection.current_consumer()
-        response.start(request)
-        yield from response.on_finished
-        if response.request_again:
-            response = response.request_again
+        response = yield from start_request(request, connection)
         prev_response.request_again = response

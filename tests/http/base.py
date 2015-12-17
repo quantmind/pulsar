@@ -139,7 +139,7 @@ class TestHttpClientBase:
 
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-
+    
     def test_json_post(self):
         data = {'bla': 'foo',
                 'unz': 'whatz',
