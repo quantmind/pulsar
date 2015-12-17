@@ -43,7 +43,7 @@ class Proxy(LocalMixin):
             version=request.get('SERVER_PROTOCOL'))
         response.raise_for_status()
         start_response(response.get_status(), list(response.headers))
-        return [response.get_content()]
+        return [response.content]
 
     def request_headers(self, environ):
         '''Fill request headers from the environ dictionary and

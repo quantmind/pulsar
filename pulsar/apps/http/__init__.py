@@ -816,7 +816,7 @@ class HttpResponse(ProtocolConsumer):
     @property
     def content(self):
         '''Content of the response, in bytes'''
-        return self._content or b''
+        return response_content(self)
 
     @property
     def raw(self):
@@ -855,8 +855,8 @@ class HttpResponse(ProtocolConsumer):
             if ct in JSON_CONTENT_TYPES:
                 return self.json(charset)
             elif ct.startswith('text/'):
-                return self.content_string(charset)
-        return self.get_content()
+                return self.text(charset)
+        return self.content
 
     def raise_for_status(self):
         '''Raises stored :class:`HTTPError` or :class:`URLError`, if occured.
@@ -1246,3 +1246,4 @@ def response_content(resp, exc=None, **kw):
     b = resp.parser.recv_body()
     if b or resp._content is None:
         resp._content = resp._content + b if resp._content else b
+    return resp._content

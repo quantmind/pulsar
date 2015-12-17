@@ -34,7 +34,7 @@ class TestFlaskThread(unittest.TestCase):
         c = self.client
         response = yield from c.get(self.uri)
         self.assertEqual(response.status_code, 200)
-        content = response.get_content()
+        content = response.content
         self.assertEqual(content, b'Flask Example')
         headers = response.headers
         self.assertTrue(headers)
@@ -44,7 +44,7 @@ class TestFlaskThread(unittest.TestCase):
         c = self.client
         response = yield from c.get('%s/bh' % self.uri)
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.get_content(), b'404 Page')
+        self.assertEqual(response.content, b'404 Page')
 
 
 @dont_run_with_thread
