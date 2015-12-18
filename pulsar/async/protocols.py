@@ -5,7 +5,7 @@ import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
 from .futures import multi_async, task, Future
-from .events import EventHandler
+from .events import EventHandler, AbortEvent
 from .mixins import FlowControl, Timeout
 
 
@@ -453,7 +453,7 @@ class Connection(Protocol, Timeout):
         return info
 
     def _build_consumer(self, _, exc=None):
-        if not exc:
+        if not exc or isinstance(exc, AbortEvent):
             consumer = self._producer.build_consumer(self._consumer_factory)
             assert self._current_consumer is None, 'Consumer is not None'
             self._current_consumer = consumer

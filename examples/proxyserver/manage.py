@@ -208,6 +208,7 @@ class ProxyResponse(object):
 class ProxyTunnel(ProxyResponse):
     '''Asynchronous wsgi response for https requests
     '''
+    @task
     def pre_request(self, response, exc=None):
         '''Start the tunnel.
 
@@ -222,13 +223,12 @@ class ProxyTunnel(ProxyResponse):
         # set the request to None so that start_request is not called
         assert response._request.method == 'CONNECT'
         self._started = True
-        response._request = None
-        upstream = response._connection
+        upstream = response.connection
         dostream = self.environ['pulsar.connection']
         #
         dostream.upgrade(partial(StreamTunnel, upstream))
         upstream.upgrade(partial(StreamTunnel, dostream))
-        response.finished()
+        yield from response.abort_request()
         self.start_response('200 Connection established', [])
         # send empty byte so that headers are sent
         self.queue.put_nowait(b'')

@@ -3,12 +3,16 @@ from collections import namedtuple
 from copy import copy
 from urllib.parse import urlparse, urljoin
 
-from pulsar import OneTime, task, ProtocolConsumer
+from pulsar import OneTime, task, ProtocolConsumer, AbortEvent
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.internet import is_tls
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
 
 from pulsar import PulsarException
+
+
+class AbortRequest(AbortEvent):
+    pass
 
 
 def noerror(callback):
@@ -43,6 +47,7 @@ def start_request(request, conn):
         consumer.bind_event('data_processed', consumer.raw)
         consumer.start(request)
         response = yield from consumer.events['on_headers']
+
     else:
         consumer.bind_event('data_processed', response_content)
         consumer.start(request)
@@ -230,23 +235,19 @@ class Tunneling:
     def on_headers(self, response, exc=None):
         '''Called back once the headers have arrived.'''
         if response.status_code == 200:
+            # Flag request_again as True, in case the request
+            # is a streaming one
             response.request_again = True
-            response.bind_event('post_request', self._tunnel_consumer)
-            response.finished()
-
-    @noerror
-    def _tunnel_consumer(self, response, exc=None):
-        response.transport.pause_reading()
-        # Return a coroutine which wraps the socket
-        # at the next iteration loop. Important!
-        return self.switch_to_ssl(response)
+            response.bind_event('post_request', self._switch_to_ssl)
+            response._loop.call_soon(response.finished)
 
     @task
-    def switch_to_ssl(self, prev_response):
+    def _switch_to_ssl(self, response, exc=None, **kw):
         '''Wrap the transport for SSL communication.
         '''
-        request = prev_response._request.request
-        connection = prev_response._connection
+        response.transport.pause_reading()
+        request = response._request.request
+        connection = response._connection
         loop = connection._loop
         sock = connection.sock
         # set a new connection_made event
@@ -257,5 +258,5 @@ class Tunneling:
         loop._make_ssl_transport(sock, connection, request._ssl,
                                  server_hostname=request._netloc)
         yield from connection.event('connection_made')
-        response = yield from start_request(request, connection)
-        prev_response.request_again = response
+        consumer = yield from start_request(request, connection)
+        response.request_again = consumer

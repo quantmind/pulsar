@@ -297,7 +297,7 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects, start_request,
-                      response_content)
+                      response_content, AbortRequest)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
@@ -875,6 +875,19 @@ class HttpResponse(ProtocolConsumer):
         Return :attr:`headers`.'''
         return self.headers
 
+    def abort_request(self):
+        '''Abort the request.
+
+        This method can be called during the pre-request stage
+        '''
+        self._request = None
+        for event in ('pre_request', 'on_headers', 'post_request'):
+            if not self.event(event).fired():
+                try:
+                    yield from self.fire_event(event, exc=AbortRequest())
+                except AbortRequest:
+                    pass
+
     # #####################################################################
     # #    PROTOCOL IMPLEMENTATION
     def start_request(self):
@@ -1151,6 +1164,7 @@ class HttpClient(AbstractClient):
                     not headers.has('connection', 'keep-alive') or
                     consumer.status_code == 101):
                 conn.detach()
+        # Handle a possible redirect
         if isinstance(consumer.request_again, tuple):
             method, url, params = consumer.request_again
             consumer = yield from self._request(method, url, **params)

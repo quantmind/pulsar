@@ -137,60 +137,6 @@ class TestHttpClientBase:
     def _check_server(self, response):
         self.assertEqual(response.headers['server'], SERVER_SOFTWARE)
 
-
-class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-    
-    def test_json_post(self):
-        data = {'bla': 'foo',
-                'unz': 'whatz',
-                'numero': [1, 2]}
-        http = self._client
-        ct = 'application/json'
-        response = yield from http.post(self.httpbin('post'),
-                                        headers=[('content-type', ct)],
-                                        data=data)
-        self.assertEqual(response.request.headers['content-type'], ct)
-        self.assertEqual(response.status_code, 200)
-        result = response.json()
-        self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'], [1, 2])
-
-    def test_upload_images(self):
-        path = Path(examples.__file__).parent.parent
-        path = path.join('docs', 'source', '_static')
-        files = []
-        sent = []
-        for name in ('pulsar.png', 'favicon.ico'):
-            with open(path.join(name), 'rb') as file:
-                image = file.read()
-            sent.append(image)
-            files.append(('images', (name, image)))
-        client = self._client
-        response = yield from client.put(self.httpbin('upload'), files=files)
-        self.assertEqual(response.status_code, 200)
-        ct = response.request.headers['content-type']
-        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
-        data = response.json()
-        images = data['files']['images']
-        self.assertEqual(len(images), 2)
-        for image, s in zip(images, sent):
-            image = b64decode(image.encode('utf-8'))
-            self.assertEqual(image, s)
-
-    def test_upload_files(self):
-        client = self._client
-        files = {'test': 'simple file'}
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        response = yield from client.put(self.httpbin('upload'), data=data,
-                                         files=files)
-        self.assertEqual(response.status_code, 200)
-        ct = response.request.headers['content-type']
-        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
-        data = response.json()
-        self.assertEqual(data['files'], {'test': ['simple file']})
-        self.assertEqual(data['args']['numero'], ['1', '2'])
-
     def _test_stream_response(self, siz=3000, rep=10):
         http = self._client
         response = yield from http.get(
@@ -200,23 +146,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         body = response.content
         self.assertEqual(len(body), siz*rep)
 
-    def test_HttpResponse(self):
-        r = HttpResponse(loop=get_event_loop())
-        self.assertEqual(r.request, None)
-        self.assertEqual(str(r), '<None>')
-        self.assertEqual(r.headers, None)
 
-    def test_client(self):
-        http = self.client(max_redirects=5, timeout=33)
-        self.assertTrue('accept-encoding' in http.headers)
-        self.assertEqual(http.timeout, 33)
-        self.assertEqual(http.version, 'HTTP/1.1')
-        self.assertEqual(http.max_redirects, 5)
-        if self.with_proxy:
-            self.assertEqual(http.proxy_info, {'http': self.proxy_uri,
-                                               'https': self.proxy_uri,
-                                               'ws': self.proxy_uri,
-                                               'wss': self.proxy_uri})
+class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_home_page(self):
         http = self.client()
@@ -235,6 +166,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
+class d:
     def test_200_get(self):
         http = self.client()
         response = yield from http.get(self.httpbin())
@@ -248,6 +180,98 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield from http.get(self.httpbin('get'))
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
+
+    def test_200_get_data(self):
+        http = self.client()
+        response = yield from http.get(self.httpbin('get'),
+                                       data={'bla': 'foo'})
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'],
+                         'application/json; charset=utf-8')
+        self.assertEqual(result['args'], {'bla': 'foo'})
+        self.assertEqual(response.url,
+                         self.httpbin(iri_to_uri('get', {'bla': 'foo'})))
+        self._check_pool(http, response)
+
+    def test_200_gzip(self):
+        http = self._client
+        response = yield from http.get(self.httpbin('gzip'))
+        self.assertEqual(response.status_code, 200)
+        content = response.json()
+        self.assertTrue(content['gzipped'])
+        if 'content-encoding' in response.headers:
+            self.assertTrue(response.headers['content-encoding'], 'gzip')
+
+    def test_json_post(self):
+        http = self._client
+        data = {'bla': 'foo',
+                'unz': 'whatz',
+                'numero': [1, 2]}
+        ct = 'application/json'
+        response = yield from http.post(self.httpbin('post'),
+                                        headers=[('content-type', ct)],
+                                        data=data)
+        self.assertEqual(response.request.headers['content-type'], ct)
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'], [1, 2])
+
+    def test_upload_images(self):
+        http = self._client
+        path = Path(examples.__file__).parent.parent
+        path = path.join('docs', 'source', '_static')
+        files = []
+        sent = []
+        for name in ('pulsar.png', 'favicon.ico'):
+            with open(path.join(name), 'rb') as file:
+                image = file.read()
+            sent.append(image)
+            files.append(('images', (name, image)))
+        response = yield from http.put(self.httpbin('upload'), files=files)
+        self.assertEqual(response.status_code, 200)
+        ct = response.request.headers['content-type']
+        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
+        data = response.json()
+        images = data['files']['images']
+        self.assertEqual(len(images), 2)
+        for image, s in zip(images, sent):
+            image = b64decode(image.encode('utf-8'))
+            self.assertEqual(image, s)
+
+    def test_upload_files(self):
+        http = self._client
+        files = {'test': 'simple file'}
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = yield from http.put(self.httpbin('upload'), data=data,
+                                         files=files)
+        self.assertEqual(response.status_code, 200)
+        ct = response.request.headers['content-type']
+        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
+        data = response.json()
+        self.assertEqual(data['files'], {'test': ['simple file']})
+        self.assertEqual(data['args']['numero'], ['1', '2'])
+
+class d:
+    def test_HttpResponse(self):
+        r = HttpResponse(loop=get_event_loop())
+        self.assertEqual(r.request, None)
+        self.assertEqual(str(r), '<None>')
+        self.assertEqual(r.headers, None)
+
+    def test_client(self):
+        http = self.client(max_redirects=5, timeout=33)
+        self.assertTrue('accept-encoding' in http.headers)
+        self.assertEqual(http.timeout, 33)
+        self.assertEqual(http.version, 'HTTP/1.1')
+        self.assertEqual(http.max_redirects, 5)
+        if self.with_proxy:
+            self.assertEqual(http.proxy_info, {'http': self.proxy_uri,
+                                               'https': self.proxy_uri,
+                                               'ws': self.proxy_uri,
+                                               'wss': self.proxy_uri})
 
     def test_request_object(self):
         http = self._client
@@ -292,28 +316,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
 
-    def test_200_get_data(self):
-        http = self.client()
-        response = yield from http.get(self.httpbin('get'),
-                                       data={'bla': 'foo'})
-        result = response.json()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['content-type'],
-                         'application/json; charset=utf-8')
-        self.assertEqual(result['args'], {'bla': 'foo'})
-        self.assertEqual(response.url,
-                         self.httpbin(iri_to_uri('get', {'bla': 'foo'})))
-        self._check_pool(http, response)
-
-    def test_200_gzip(self):
-        http = self._client
-        response = yield from http.get(self.httpbin('gzip'))
-        self.assertEqual(response.status_code, 200)
-        content = response.json()
-        self.assertTrue(content['gzipped'])
-        if 'content-encoding' in response.headers:
-            self.assertTrue(response.headers['content-encoding'], 'gzip')
-
     def test_post(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -327,7 +329,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_400_and_get(self):
-        '''Bad request 400'''
         http = self.client()
         response = yield from http.get(self.httpbin('status', '400'))
         self._check_pool(http, response, available=0)
@@ -342,7 +343,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_pool(http, response, sessions=2, processed=2)
 
     def test_404_get(self):
-        '''Not Found 404'''
         http = self._client
         response = yield from http.get(self.httpbin('status', '404'))
         self.assertEqual(response.status_code, 404)
