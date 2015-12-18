@@ -98,17 +98,16 @@ class ProxyServerWsgiHandler(LocalMixin):
             data = None
         request_headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
-
         if method == 'CONNECT':
             response = ProxyTunnel(environ, start_response)
         else:
             response = ProxyResponse(environ, start_response)
-        request = self.http_client.request(method, uri, data=data,
-                                           headers=request_headers,
-                                           version=environ['SERVER_PROTOCOL'],
-                                           pre_request=response.pre_request,
-                                           stream=True)
-        add_errback(async(request), response.error)
+        res = self.http_client.request(method, uri, data=data,
+                                       headers=request_headers,
+                                       version=environ['SERVER_PROTOCOL'],
+                                       pre_request=response.pre_request,
+                                       stream=True)
+        add_errback(async(res), response.error)
         return response
 
     def request_headers(self, environ):
@@ -133,9 +132,8 @@ class ProxyServerWsgiHandler(LocalMixin):
 
 ############################################################################
 #    RESPONSE OBJECTS
-class ProxyResponse(object):
-    '''Asynchronous wsgi response for http requests
-    '''
+class ServerResponse:
+
     _started = False
     _headers = None
     _done = False
@@ -144,6 +142,9 @@ class ProxyResponse(object):
         self.environ = environ
         self.start_response = start_response
         self.queue = asyncio.Queue()
+
+    '''Asynchronous wsgi response for http requests
+    '''
 
     def __iter__(self):
         while True:
@@ -155,12 +156,9 @@ class ProxyResponse(object):
             else:
                 yield async(self.queue.get())
 
-    def pre_request(self, response, exc=None):
-        self._started = True
-        response.bind_event('data_processed', self.data_processed)
-
     def error(self, exc):
         if not self._started:
+            logger.error(str(exc))
             request = wsgi.WsgiRequest(self.environ)
             content_type = request.content_types.best_match(
                 ('text/html', 'text/plain'))
@@ -179,6 +177,13 @@ class ProxyResponse(object):
             self.start_response(resp.status, resp.get_headers())
             self._done = True
             self.queue.put_nowait(resp.content[0])
+
+
+class ProxyResponse(ServerResponse):
+
+    def pre_request(self, response, exc=None):
+        self._started = True
+        response.bind_event('data_processed', self.data_processed)
 
     @task
     def data_processed(self, response, exc=None, **kw):
@@ -205,10 +210,9 @@ class ProxyResponse(object):
                 yield header, value
 
 
-class ProxyTunnel(ProxyResponse):
+class ProxyTunnel(ServerResponse):
     '''Asynchronous wsgi response for https requests
     '''
-    @task
     def pre_request(self, response, exc=None):
         '''Start the tunnel.
 
@@ -221,19 +225,20 @@ class ProxyTunnel(ProxyResponse):
         '''
         # Upgrade downstream protocol consumer
         # set the request to None so that start_request is not called
-        assert response._request.method == 'CONNECT'
+        if not response.request:
+            return
+        assert response.request.method == 'CONNECT'
         self._started = True
         upstream = response.connection
         dostream = self.environ['pulsar.connection']
         #
         dostream.upgrade(partial(StreamTunnel, upstream))
         upstream.upgrade(partial(StreamTunnel, dostream))
-        yield from response.abort_request()
         self.start_response('200 Connection established', [])
         # send empty byte so that headers are sent
         self.queue.put_nowait(b'')
         self._done = True
-        return response
+        response.abort_request()
 
 
 class StreamTunnel(pulsar.ProtocolConsumer):
@@ -251,7 +256,7 @@ class StreamTunnel(pulsar.ProtocolConsumer):
     status_code = None
 
     def __init__(self, tunnel, loop=None):
-        super(StreamTunnel, self).__init__(loop)
+        super().__init__(loop)
         self.tunnel = tunnel
 
     def connection_made(self, connection):

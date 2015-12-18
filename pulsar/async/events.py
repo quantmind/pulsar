@@ -152,6 +152,8 @@ class OneTime(Future, AbstractEvent):
             hnd = self._handlers.popleft()
             try:
                 result = hnd(arg, exc=exc, **kwargs)
+            except AbortEvent as e:
+                exc = e
             except Exception:
                 self.logger.exception('Exception while firing onetime event')
             else:

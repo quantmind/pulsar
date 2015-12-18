@@ -166,7 +166,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
-class d:
     def test_200_get(self):
         http = self.client()
         response = yield from http.get(self.httpbin())
@@ -246,7 +245,7 @@ class d:
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         response = yield from http.put(self.httpbin('upload'), data=data,
-                                         files=files)
+                                       files=files)
         self.assertEqual(response.status_code, 200)
         ct = response.request.headers['content-type']
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
@@ -254,7 +253,6 @@ class d:
         self.assertEqual(data['files'], {'test': ['simple file']})
         self.assertEqual(data['args']['numero'], ['1', '2'])
 
-class d:
     def test_HttpResponse(self):
         r = HttpResponse(loop=get_event_loop())
         self.assertEqual(r.request, None)

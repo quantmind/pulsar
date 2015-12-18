@@ -15,7 +15,12 @@ __all__ = ['ProtocolConsumer',
            'Connection',
            'Producer',
            'TcpServer',
-           'DatagramServer']
+           'DatagramServer',
+           'AbortRequest']
+
+
+class AbortRequest(AbortEvent):
+    pass
 
 
 class ProtocolConsumer(EventHandler):
@@ -153,12 +158,30 @@ class ProtocolConsumer(EventHandler):
             conn._producer._requests_processed = p + 1
         self.bind_event('post_request', self._finished)
         self._request = request
-        self.fire_event('pre_request')
-        if self._request is not None:
-            try:
-                self.start_request()
-            except Exception as exc:
-                self.finished(exc=exc)
+        return asyncio.async(self._start(), loop=self._loop)
+
+    def abort_request(self):
+        '''Abort the request.
+
+        This method can be called during the pre-request stage
+        '''
+        future = self.events['pre_request']
+        if future.done():
+            raise RuntimeError('Request already sent')
+        future.add_done_callback(self._abort_request)
+        raise AbortRequest
+
+    def _start(self):
+        try:
+            yield from self.fire_event('pre_request')
+        except AbortEvent:
+            self.logger.debug('Abort request')
+        else:
+            if self._request is not None:
+                try:
+                    self.start_request()
+                except Exception as exc:
+                    self.finished(exc=exc)
 
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
@@ -204,6 +227,16 @@ class ProtocolConsumer(EventHandler):
         c = self._connection
         if c and c._current_consumer is self:
             c._current_consumer = None
+
+    @task
+    def _abort_request(self, fut):
+        exc = fut.exception()
+        for event in self.ONE_TIME_EVENTS:
+            if not self.event(event).fired():
+                try:
+                    yield from self.fire_event(event, exc=exc)
+                except AbortRequest:
+                    pass
 
 
 class PulsarProtocol(EventHandler, FlowControl):

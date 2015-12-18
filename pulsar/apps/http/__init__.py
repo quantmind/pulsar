@@ -280,7 +280,8 @@ except ImportError:
     ssl = None
 
 import pulsar
-from pulsar import AbstractClient, Pool, Connection, ProtocolConsumer
+from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
+                    ProtocolConsumer)
 from pulsar.utils import websocket
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
@@ -297,7 +298,7 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects, start_request,
-                      response_content, AbortRequest)
+                      response_content)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
@@ -756,7 +757,7 @@ class HttpResponse(ProtocolConsumer):
     _cookies = None
     _raw = None
     request_again = None
-    ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
+    ONE_TIME_EVENTS = ('pre_request', 'on_headers', 'post_request')
 
     @property
     def parser(self):
@@ -874,19 +875,6 @@ class HttpResponse(ProtocolConsumer):
 
         Return :attr:`headers`.'''
         return self.headers
-
-    def abort_request(self):
-        '''Abort the request.
-
-        This method can be called during the pre-request stage
-        '''
-        self._request = None
-        for event in ('pre_request', 'on_headers', 'post_request'):
-            if not self.event(event).fired():
-                try:
-                    yield from self.fire_event(event, exc=AbortRequest())
-                except AbortRequest:
-                    pass
 
     # #####################################################################
     # #    PROTOCOL IMPLEMENTATION
@@ -1158,8 +1146,12 @@ class HttpClient(AbstractClient):
             self.connection_pools[request.key] = pool
         conn = yield from pool.connect()
         with conn:
-            consumer = yield from start_request(request, conn)
-            headers = consumer.headers
+            try:
+                consumer = yield from start_request(request, conn)
+            except AbortRequest:
+                headers = None
+            else:
+                headers = consumer.headers
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
                     consumer.status_code == 101):
