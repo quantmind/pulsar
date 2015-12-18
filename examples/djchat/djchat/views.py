@@ -9,10 +9,9 @@ from pulsar.utils.string import random_string
 
 def home(request):
     from django.shortcuts import render_to_response
-    from django.template import RequestContext
     return render_to_response('home.html', {
         'HOST': request.get_host()
-        }, RequestContext(request))
+        })
 
 
 class ChatClient(PubSubClient):
