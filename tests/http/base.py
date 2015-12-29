@@ -82,10 +82,10 @@ class TestHttpClientBase:
                **kwargs):
         parser = cls.parser()
         if cls.with_proxy:
-            kwargs['proxy_info'] = {'http': cls.proxy_uri,
-                                    'https': cls.proxy_uri,
-                                    'ws': cls.proxy_uri,
-                                    'wss': cls.proxy_uri}
+            kwargs['proxies'] = {'http': cls.proxy_uri,
+                                 'https': cls.proxy_uri,
+                                 'ws': cls.proxy_uri,
+                                 'wss': cls.proxy_uri}
         return HttpClient(loop=loop, parser=parser, pool_size=pool_size,
                           verify=verify, **kwargs)
 
@@ -166,6 +166,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
+class d:
     def test_200_get(self):
         http = self.client()
         response = yield from http.get(self.httpbin())
@@ -266,10 +267,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(http.version, 'HTTP/1.1')
         self.assertEqual(http.max_redirects, 5)
         if self.with_proxy:
-            self.assertEqual(http.proxy_info, {'http': self.proxy_uri,
-                                               'https': self.proxy_uri,
-                                               'ws': self.proxy_uri,
-                                               'wss': self.proxy_uri})
+            self.assertEqual(http.proxies, {'http': self.proxy_uri,
+                                            'https': self.proxy_uri,
+                                            'ws': self.proxy_uri,
+                                            'wss': self.proxy_uri})
 
     def test_request_object(self):
         http = self._client

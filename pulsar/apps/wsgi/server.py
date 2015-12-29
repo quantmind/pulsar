@@ -435,10 +435,12 @@ class HttpServerResponse(ProtocolConsumer):
                     done = False
                     exc_info = sys.exc_info()
             else:
-                if not self.keep_alive:
-                    self.connection.close()
-                self.finished()
                 log_wsgi_info(self.logger.info, environ, self.status)
+                self.finished()
+                if not self.keep_alive:
+                    self.logger.debug('No keep alive, closing connection %s',
+                                      self.connection)
+                    self.connection.close()
             finally:
                 if hasattr(response, 'close'):
                     try:

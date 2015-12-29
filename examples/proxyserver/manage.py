@@ -59,15 +59,6 @@ def x_forwarded_for(environ, headers):
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
 
 
-class user_agent:
-    '''Override user-agent header'''
-    def __init__(self, agent):
-        self.agent = agent
-
-    def __call__(self, environ, headers):
-        headers['user-agent'] = self.agent
-
-
 class ProxyServerWsgiHandler(LocalMixin):
     '''WSGI middleware for an asynchronous proxy server.
 
@@ -133,6 +124,8 @@ class ProxyServerWsgiHandler(LocalMixin):
 ############################################################################
 #    RESPONSE OBJECTS
 class ServerResponse:
+    '''Base WSGI Response Iterator for the Proxy server
+    '''
 
     _started = False
     _headers = None
@@ -223,12 +216,9 @@ class ProxyTunnel(ServerResponse):
         After this the downstream connection consumer will upgrade to the
         DownStreamTunnel.
         '''
-        # Upgrade downstream protocol consumer
-        # set the request to None so that start_request is not called
-        if not response.request:
-            return
         assert response.request.method == 'CONNECT'
         self._started = True
+        #
         upstream = response.connection
         dostream = self.environ['pulsar.connection']
         #
@@ -260,6 +250,7 @@ class StreamTunnel(pulsar.ProtocolConsumer):
         self.tunnel = tunnel
 
     def connection_made(self, connection):
+        self.logger.debug('Tunnel connection %s made', connection)
         connection.bind_event('connection_lost', self._close_tunnel)
 
     def data_received(self, data):
@@ -278,7 +269,6 @@ def server(name='proxy-server', headers_middleware=None,
            server_software=None, **kwargs):
     '''Function to Create a WSGI Proxy Server.'''
     if headers_middleware is None:
-        # headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
         headers_middleware = [x_forwarded_for]
     wsgi_proxy = ProxyServerWsgiHandler(headers_middleware)
     kwargs['server_software'] = server_software or SERVER_SOFTWARE

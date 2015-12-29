@@ -1,4 +1,4 @@
-'''Pulsar ships with a thread safe, fully featured, :class:`.HttpClient`
+'''Pulsar ships with a fully featured, :class:`.HttpClient`
 class for multiple asynchronous HTTP requests.
 
 To get started, one builds a client::
@@ -268,6 +268,7 @@ OAuth2
 '''
 import os
 import platform
+import logging
 from functools import partial
 from collections import namedtuple
 from asyncio import wait_for
@@ -313,6 +314,7 @@ __all__ = ['HttpRequest', 'HttpResponse', 'HttpClient',
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
 tls_schemes = ('https', 'wss')
 
+LOGGER = logging.getLogger('pulsar.http')
 FORM_URL_ENCODED = 'application/x-www-form-urlencoded'
 MULTIPART_FORM_DATA = 'multipart/form-data'
 
@@ -448,7 +450,7 @@ class HttpRequest(RequestBase):
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
                  websocket_handler=None, cookies=None, urlparams=None,
-                 stream=False, **ignored):
+                 stream=False, proxies=None, **ignored):
         self.client = client
         self._data = None
         self.files = files
@@ -459,7 +461,6 @@ class HttpRequest(RequestBase):
         self.full_url = url
         if urlparams:
             self._encode_url(urlparams)
-        self.set_proxy(None)
         self.history = history
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
@@ -471,8 +472,8 @@ class HttpRequest(RequestBase):
         self.multipart_boundary = multipart_boundary
         self.websocket_handler = websocket_handler
         self.source_address = source_address
-        self.new_parser()
         self.stream = stream
+        self.new_parser()
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
         if auth:
@@ -486,8 +487,8 @@ class HttpRequest(RequestBase):
             cookies.add_cookie_header(self)
         self.unredirected_headers['host'] = host_no_default_port(self._scheme,
                                                                  self._netloc)
-        client.set_proxy(self)
         self.data = data
+        self._set_proxy(proxies)
 
     @property
     def address(self):
@@ -552,39 +553,20 @@ class HttpRequest(RequestBase):
         self._data = self._encode_data(data)
 
     def first_line(self):
-        if not self._proxy and self.method != self.CONNECT:
+        if self._proxy:
+            if self.method == self.CONNECT:
+                url = self._netloc
+            else:
+                url = self.full_url
+        else:
             url = urlunparse(('', '', self.path or '/', self.params,
                               self.query, self.fragment))
-        else:
-            url = self.full_url
         return '%s %s %s' % (self.method, url, self.version)
 
     def new_parser(self):
         self.parser = self.client.http_parser(kind=1,
                                               decompress=self.decompress,
                                               method=self.method)
-
-    def set_proxy(self, scheme, *host):
-        if not host and scheme is None:
-            self.scheme = self._scheme
-            self._set_hostport(self._scheme, self._netloc)
-        else:
-            le = 2 + len(host)
-            if not le == 3:
-                raise TypeError(
-                    'set_proxy() takes exactly three arguments (%s given)'
-                    % le)
-            if not self._ssl:
-                self.scheme = scheme
-                self._set_hostport(scheme, host[0])
-                self._proxy = scheme_host(scheme, host[0])
-            else:
-                self._tunnel = HttpTunnel(self, scheme, host[0])
-
-    def _set_hostport(self, scheme, host):
-        self._tunnel = None
-        self._proxy = None
-        self.host, self.port = get_hostport(scheme, host)
 
     def encode(self):
         '''The bytes representation of this :class:`HttpRequest`.
@@ -730,6 +712,38 @@ class HttpRequest(RequestBase):
             raise ValueError("Don't know how to encode body for %s" %
                              content_type)
         return body, content_type
+
+    # PROXY INTERNALS
+    def _set_proxy(self, proxies):
+        request_proxies = self.client.proxies.copy()
+        if proxies:
+            request_proxies.update(proxies)
+        self.proxies = request_proxies
+        self.scheme = self._scheme
+        self._set_hostport(self._scheme, self._netloc)
+        #
+        if self.scheme in request_proxies:
+            hostonly = self.host
+            no_proxy = [n for n in request_proxies.get('no', '').split(',')
+                        if n]
+            if not any(map(hostonly.endswith, no_proxy)):
+                url = request_proxies[self.scheme]
+                p = urlparse(url)
+                if not p.scheme:
+                    raise ValueError('Could not understand proxy %s' % url)
+                scheme = p.scheme
+                host = p.netloc
+                if not self._ssl:
+                    self.scheme = scheme
+                    self._set_hostport(scheme, host)
+                    self._proxy = scheme_host(scheme, host)
+                else:
+                    self._tunnel = HttpTunnel(self, scheme, host)
+
+    def _set_hostport(self, scheme, host):
+        self._tunnel = None
+        self._proxy = None
+        self.host, self.port = get_hostport(scheme, host)
 
 
 class HttpResponse(ProtocolConsumer):
@@ -941,7 +955,7 @@ class HttpClient(AbstractClient):
 
         Default: ``True``
 
-    .. attribute:: proxy_info
+    .. attribute:: proxies
 
         Dictionary of proxy servers for this client.
 
@@ -989,18 +1003,19 @@ class HttpClient(AbstractClient):
                           'allow_redirects', 'multipart_boundary', 'version',
                           'websocket_handler', 'verify', 'stream')
     # Default hosts not affected by proxy settings. This can be overwritten
-    # by specifying the "no" key in the proxy_info dictionary
+    # by specifying the "no" key in the proxies dictionary
     no_proxy = set(('localhost', platform.node()))
 
-    def __init__(self, proxy_info=None, cache=None, headers=None,
+    def __init__(self, proxies=None, cache=None, headers=None,
                  encode_multipart=True, multipart_boundary=None,
                  keyfile=None, certfile=None, verify=True,
                  ca_certs=None, cookies=None, store_cookies=True,
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None, stream=False,
-                 pool_size=10, frame_parser=None):
+                 pool_size=10, frame_parser=None, logger=None):
         super().__init__(loop)
+        self._logger = logger or LOGGER
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
         self.pool_size = pool_size
@@ -1019,11 +1034,11 @@ class HttpClient(AbstractClient):
             dheaders.override(headers)
         self.headers = dheaders
         self.tunnel_headers = self.DEFAULT_TUNNEL_HEADERS.copy()
-        self.proxy_info = dict(proxy_info or ())
-        if not self.proxy_info and self.trust_env:
-            self.proxy_info = get_environ_proxies()
-            if 'no' not in self.proxy_info:
-                self.proxy_info['no'] = ','.join(self.no_proxy)
+        self.proxies = dict(proxies or ())
+        if not self.proxies and self.trust_env:
+            self.proxies = get_environ_proxies()
+            if 'no' not in self.proxies:
+                self.proxies['no'] = ','.join(self.no_proxy)
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
         self.websocket_handler = websocket_handler
@@ -1203,18 +1218,6 @@ class HttpClient(AbstractClient):
                                               keyfile=keyfile,
                                               cafile=cafile, capath=capath,
                                               cadata=cadata)
-
-    def set_proxy(self, request):
-        if request.scheme in self.proxy_info:
-            hostonly = request.host
-            no_proxy = [n for n in self.proxy_info.get('no', '').split(',')
-                        if n]
-            if not any(map(hostonly.endswith, no_proxy)):
-                url = self.proxy_info[request.scheme]
-                p = urlparse(url)
-                if not p.scheme:
-                    raise ValueError('Could not understand proxy %s' % url)
-                request.set_proxy(p.scheme, p.netloc)
 
     def _connect(self, host, port, ssl):
         _, connection = yield from self._loop.create_connection(
