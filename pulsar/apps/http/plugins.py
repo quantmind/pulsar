@@ -1,11 +1,11 @@
+import asyncio
 from functools import partial
 from collections import namedtuple
 from copy import copy
 from urllib.parse import urlparse, urljoin
 
-from pulsar import OneTime, task, ProtocolConsumer
+from pulsar import OneTime, task
 from pulsar.apps.ws import WebSocketProtocol, WS
-from pulsar.utils.internet import is_tls
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
 
 from pulsar import PulsarException
@@ -36,24 +36,23 @@ def _consumer(response, consumer):
 
 
 def start_request(request, conn):
-    consumer = conn.current_consumer()
+    response = conn.current_consumer()
     # bind request-specific events
-    consumer.bind_events(**request.inp_params)
-    if request.stream:
-        consumer.bind_event('data_processed', consumer.raw)
-        consumer.start(request)
-        yield from consumer.events['on_headers']
-    else:
-        consumer.bind_event('data_processed', response_content)
-        consumer.start(request)
-        yield from consumer.on_finished
+    response.bind_events(**request.inp_params)
 
-    if consumer.request_again:
-        if isinstance(consumer.request_again, Exception):
-            raise consumer.request_again
-        elif isinstance(consumer.request_again, ProtocolConsumer):
-            consumer = consumer.request_again
-    return consumer
+    if request.stream:
+        response.bind_event('data_processed', response.raw)
+        response.start(request)
+        yield from response.events['on_headers']
+    else:
+        response.bind_event('data_processed', response_content)
+        response.start(request)
+        yield from response.on_finished
+
+    if hasattr(response.request_again, '__call__'):
+        response = yield from response.request_again(response)
+
+    return response
 
 
 class request_again(namedtuple('request_again', 'method url params')):
@@ -179,7 +178,7 @@ def handle_101(response, exc=None):
 
     if response.status_code == 101:
         connection = response.connection
-        request = response._request
+        request = response.request
         handler = request.websocket_handler
         if not handler:
             handler = WS()
@@ -206,21 +205,9 @@ class Tunneling:
     @noerror
     def __call__(self, response, exc=None):
         # the pre_request handler
-        request = response._request
-        if request:
-            tunnel = request._tunnel
-            if tunnel:
-                if getattr(request, '_apply_tunnel', False):
-                    # if transport is not SSL already
-                    transport = response.transport
-                    if not transport.get_extra_info('sslcontext'):
-                        if not is_tls(transport.get_extra_info('socket')):
-                            response._request = tunnel
-                            response.bind_event('on_headers', self.on_headers)
-                else:
-                    # Append self again as pre_request
-                    request._apply_tunnel = True
-                    response.bind_event('pre_request', self)
+        request = response.request
+        if request and request._tunnel:
+            request._tunnel.apply(response, self)
 
     @noerror
     def on_headers(self, response, exc=None):
@@ -229,25 +216,38 @@ class Tunneling:
             response.bind_event('post_request', self._switch_to_ssl)
             response.finished()
 
-    @task
-    def _switch_to_ssl(self, response, exc=None, **kw):
+    @noerror
+    def _switch_to_ssl(self, response, exc=None):
         '''Wrap the transport for SSL communication.
         '''
-        if exc:
-            return
-        response.transport.pause_reading()
-        yield None
-        request = response._request.request
-        connection = response._connection
+        response.request_again = self._tunnel_request
+
+    @task
+    def _tunnel_request(self, response):
+        request = response.request.request
+        connection = response.connection
         loop = connection._loop
         sock = connection.sock
+        connection.transport.pause_reading()
+        yield None
         # set a new connection_made event
         connection.events['connection_made'] = OneTime(loop=loop)
         connection._processed -= 1
         connection.producer._requests_processed -= 1
-
-        loop._make_ssl_transport(sock, connection, request._ssl,
-                                 server_hostname=request._netloc)
+        #
+        # For some reason when using the code below, it fails in python 3.5
+        # _, connection = yield from loop._create_connection_transport(
+        #         sock, lambda: connection,
+        #         request._ssl,
+        #         server_hostname=request._netloc)
+        #
+        # Therefore use legacy SSL transport
+        waiter = asyncio.Future(loop=loop)
+        loop._make_legacy_ssl_transport(sock, connection, request._ssl,
+                                        waiter,
+                                        server_hostname=request._netloc)
+        yield from waiter
+        #
         yield from connection.event('connection_made')
-        consumer = yield from start_request(request, connection)
-        response.request_again = consumer
+        response = yield from start_request(request, connection)
+        return response

@@ -360,6 +360,7 @@ class HttpTunnel(RequestBase):
     first_line = None
 
     def __init__(self, request, scheme, host):
+        self.status = 0
         self.request = request
         self.scheme = scheme
         self.host, self.port = get_hostport(scheme, host)
@@ -374,7 +375,6 @@ class HttpTunnel(RequestBase):
 
     @property
     def key(self):
-
         return self.request.key
 
     @property
@@ -400,6 +400,19 @@ class HttpTunnel(RequestBase):
 
     def remove_header(self, header_name):
         self.headers.pop(header_name, None)
+
+    def apply(self, response, handler):
+        '''Tunnel the connection if needed
+        '''
+        connection = response.connection
+        tunnel_status = getattr(connection, '_tunnel_status', 0)
+        if not tunnel_status:
+            connection._tunnel_status = 1
+            response.bind_event('pre_request', handler)
+        elif tunnel_status == 1:
+            connection._tunnel_status = 2
+            response._request = self
+            response.bind_event('on_headers', handler.on_headers)
 
 
 class HttpRequest(RequestBase):
@@ -511,12 +524,18 @@ class HttpRequest(RequestBase):
 
     @property
     def key(self):
-        return (self.scheme, self.host, self.port)
+        tunnel = self._tunnel.full_url if self._tunnel else None
+        return (self.scheme, self.host, self.port, tunnel)
 
     @property
     def proxy(self):
         '''Proxy server for this request.'''
         return self._proxy
+
+    @property
+    def tunnel(self):
+        '''Tunnel for this request.'''
+        return self._tunnel
 
     @property
     def netloc(self):
@@ -779,11 +798,9 @@ class HttpResponse(ProtocolConsumer):
         if request:
             return request.parser
 
-    def __str__(self):
-        return '%s' % (self.status_code or '<None>')
-
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self)
+        return '<Response [%s]>' % (self.status_code or '<None>')
+    __str__ = __repr__
 
     @property
     def status_code(self):
@@ -896,7 +913,7 @@ class HttpResponse(ProtocolConsumer):
         self.transport.write(self._request.encode())
 
     def data_received(self, data):
-        request = self._request
+        request = self.request
         # request.parser my change (100-continue)
         # Always invoke it via request
         try:
@@ -1164,18 +1181,22 @@ class HttpClient(AbstractClient):
             try:
                 consumer = yield from start_request(request, conn)
             except AbortRequest:
+                response = None
                 headers = None
             else:
-                headers = consumer.headers
+                response = consumer.request_again or consumer
+                headers = response.headers
+
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
-                    consumer.status_code == 101):
+                    response.status_code == 101):
                 conn.detach()
+
         # Handle a possible redirect
-        if isinstance(consumer.request_again, tuple):
-            method, url, params = consumer.request_again
-            consumer = yield from self._request(method, url, **params)
-        return consumer
+        if response and isinstance(response.request_again, tuple):
+            method, url, params = response.request_again
+            response = yield from self._request(method, url, **params)
+        return response
 
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.

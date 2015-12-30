@@ -68,6 +68,7 @@ class TestHttpClientBase:
             cfg = yield from send('arbiter', 'run', s)
             cls.proxy_app = cfg.app()
             cls.proxy_uri = 'http://{0}:{1}'.format(*cfg.addresses[0])
+            # cls.proxy_uri = 'http://127.0.0.1:8080'
         cls._client = cls.client()
 
     @classmethod
@@ -152,7 +153,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_home_page(self):
         http = self.client()
         response = yield from http.get(self.httpbin())
-        self.assertEqual(str(response), '200')
+        self.assertEqual(str(response), '<Response [200]>')
         self.assertTrue('content-length' in response.headers)
         content = response.content
         size = response.headers['content-length']
@@ -162,15 +163,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.after_test_home_page(response)
         # Try again
         response = yield from http.get(self.httpbin())
-        self.assertEqual(str(response), '200')
+        self.assertEqual(str(response), '<Response [200]>')
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
     def test_200_get(self):
         http = self.client()
         response = yield from http.get(self.httpbin())
-        self.assertEqual(str(response), '200')
-        self.assertEqual(repr(response), 'HttpResponse(200)')
+        self.assertEqual(str(response), '<Response [200]>')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_status(), '200 OK')
         self.assertTrue(response.content)
@@ -180,6 +180,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
 
+class d:
     def test_200_get_data(self):
         http = self.client()
         response = yield from http.get(self.httpbin('get'),

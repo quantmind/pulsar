@@ -90,7 +90,7 @@ class ProxyServerWsgiHandler(LocalMixin):
         request_headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
         if method == 'CONNECT':
-            response = ProxyTunnel(environ, start_response)
+            response = TunnelResponse(environ, start_response)
         else:
             response = ProxyResponse(environ, start_response)
         res = self.http_client.request(method, uri, data=data,
@@ -203,7 +203,7 @@ class ProxyResponse(ServerResponse):
                 yield header, value
 
 
-class ProxyTunnel(ServerResponse):
+class TunnelResponse(ServerResponse):
     '''Asynchronous wsgi response for https requests
     '''
     def pre_request(self, response, exc=None):
@@ -227,6 +227,8 @@ class ProxyTunnel(ServerResponse):
         self.start_response('200 Connection established', [])
         # send empty byte so that headers are sent
         self.queue.put_nowait(b'')
+        # Done with this wsgi response, the rest of the communication is done
+        # by the StreamTunnel consumer
         self._done = True
         response.abort_request()
 

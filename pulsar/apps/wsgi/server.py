@@ -177,7 +177,7 @@ def chunk_encoding(chunk):
     return head + chunk + b'\r\n'
 
 
-def keep_alive(headers, version):
+def keep_alive(headers, version, method):
     """ return True if the connection should be kept alive"""
     conn = set((v.lower() for v in headers.get_all('connection', ())))
     if "close" in conn:
@@ -189,6 +189,8 @@ def keep_alive(headers, version):
         return True
     elif version == (1, 1):
         headers['connection'] = 'keep-alive'
+        return True
+    elif method == 'CONNECT':
         return True
     else:
         return False
@@ -499,7 +501,8 @@ class HttpServerResponse(ProtocolConsumer):
                                extra={'pulsar.connection': self.connection,
                                       'pulsar.cfg': self.cfg,
                                       'wsgi.multiprocess': multiprocess})
-        self.keep_alive = keep_alive(self.headers, self.parser.get_version())
+        self.keep_alive = keep_alive(self.headers, self.parser.get_version(),
+                                     environ['REQUEST_METHOD'])
         self.headers.update([('Server', self.SERVER_SOFTWARE),
                              ('Date', format_date_time(time.time()))])
         return environ
