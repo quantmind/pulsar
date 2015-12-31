@@ -5,5 +5,5 @@ class TestTlsHttpClient(base.TestHttpClient):
     with_tls = True
 
     def test_large_response(self):
-        # TODO: This fails on python 2.7 (sometimes)
+        # TODO: This times out (sometimes)
         pass

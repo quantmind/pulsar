@@ -635,8 +635,9 @@ class HttpRequest(RequestBase):
     def remove_header(self, header_name):
         '''Remove ``header_name`` from this request.
         '''
-        self.headers.pop(header_name, None)
-        self.unredirected_headers.pop(header_name, None)
+        val1 = self.headers.pop(header_name, None)
+        val2 = self.unredirected_headers.pop(header_name, None)
+        return val1 or val2
 
     def add_unredirected_header(self, header_name, header_value):
         self.unredirected_headers[header_name] = header_value

@@ -185,7 +185,7 @@ class WebSocket:
     @noerror
     def __call__(self, response, exc=None):
         request = response.request
-        if request.scheme in ('ws', 'wss'):
+        if request and request.scheme in ('ws', 'wss'):
             headers = request.headers
             headers['connection'] = 'Upgrade'
             headers['upgrade'] = 'websocket'
@@ -230,8 +230,8 @@ class Tunneling:
     def __call__(self, response, exc=None):
         # the pre_request handler
         request = response.request
-        if request and request._tunnel:
-            request._tunnel.apply(response, self)
+        if request and request.tunnel:
+            request.tunnel.apply(response, self)
 
     @noerror
     def on_headers(self, response, exc=None):

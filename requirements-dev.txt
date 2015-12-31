@@ -8,3 +8,4 @@ psutil
 unidecode
 flask
 oauthlib
+requests

@@ -548,15 +548,16 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client(version='HTTP/1.0')
 
         def remove_host(response, exc=None):
-            r = response.request
-            self.assertTrue(r.has_header('host'))
-            r.remove_header('host')
-            self.assertFalse(r.has_header('host'))
-            return response
+            request = response.request
+            if not hasattr(request, '_test_host'):
+                request._test_host = request.remove_header('host')
 
         response = yield from http.get(self.httpbin(),
                                        pre_request=remove_host)
         self.assertEqual(response.status_code, 200)
+        request = response.request
+        self.assertFalse(request.has_header('host'))
+        self.assertTrue(request._test_host)
 
     def test_expect_fail(self):
         '''This is an important test for the proxy server example.
