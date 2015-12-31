@@ -101,7 +101,17 @@ Streaming
 
 This is an event-driven client, therefore streaming support is native.
 
-To stream data received from the client one uses the
+The easyiest way to use streaming is to pass the ``stream=True`` parameter
+during a request and access the :attr:`HttpResponse.raw` attribute.
+For example::
+
+    response = yield from http.get(..., stream=True)
+    for data in response.raw:
+        # data can be a future or bytes
+
+The ``raw`` attribute is an iterable over bytes or Futures resulting in bytes.
+
+Another approach to streaming is to use the
 :ref:`data_processed <http-many-time-events>` event handler.
 For example::
 
