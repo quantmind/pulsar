@@ -287,7 +287,6 @@ from pulsar.utils import websocket
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
 from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata,
                                   Headers, get_environ_proxies,
@@ -297,7 +296,7 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   host_no_default_port,
                                   parse_options_header, JSON_CONTENT_TYPES)
 
-from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
+from .plugins import (handle_cookies, handle_100, WebSocket, Redirect,
                       Tunneling, TooManyRedirects, start_request,
                       response_content)
 
@@ -799,7 +798,7 @@ class HttpResponse(ProtocolConsumer):
             return request.parser
 
     def __repr__(self):
-        return '<Response [%s]>' % (self.status_code or '<None>')
+        return '<Response [%s]>' % (self.status_code or 'None')
     __str__ = __repr__
 
     @property
@@ -1064,16 +1063,10 @@ class HttpClient(AbstractClient):
         # Add hooks
         self.bind_event('finish', self._close)
         self.bind_event('pre_request', Tunneling(self._loop))
-        self.bind_event('on_headers', handle_101)
+        self.bind_event('pre_request', WebSocket())
         self.bind_event('on_headers', handle_100)
         self.bind_event('on_headers', handle_cookies)
-        self.bind_event('post_request', handle_redirect)
-
-    @property
-    def websocket_key(self):
-        if not hasattr(self, '_websocket_key'):
-            self._websocket_key = websocket_key()
-        return self._websocket_key
+        self.bind_event('post_request', Redirect())
 
     def connect(self, address):
         if isinstance(address, tuple):
@@ -1179,13 +1172,11 @@ class HttpClient(AbstractClient):
         conn = yield from pool.connect()
         with conn:
             try:
-                consumer = yield from start_request(request, conn)
+                response = yield from start_request(request, conn)
+                headers = response.headers
             except AbortRequest:
                 response = None
                 headers = None
-            else:
-                response = consumer.request_again or consumer
-                headers = response.headers
 
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
@@ -1212,16 +1203,7 @@ class HttpClient(AbstractClient):
     def get_headers(self, request, headers=None):
         # Returns a :class:`Header` obtained from combining
         # :attr:`headers` with *headers*. Can handle websocket requests.
-        if request.scheme in ('ws', 'wss'):
-            d = Headers((
-                ('Connection', 'Upgrade'),
-                ('Upgrade', 'websocket'),
-                ('Sec-WebSocket-Version', str(max(SUPPORTED_VERSIONS))),
-                ('Sec-WebSocket-Key', self.websocket_key),
-                ('user-agent', self.client_version)
-                ), kind='client')
-        else:
-            d = self.headers.copy()
+        d = self.headers.copy()
         if headers:
             d.override(headers)
         return d

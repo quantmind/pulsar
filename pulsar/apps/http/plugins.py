@@ -4,10 +4,10 @@ from collections import namedtuple
 from copy import copy
 from urllib.parse import urlparse, urljoin
 
-from pulsar import OneTime, task
+from pulsar import OneTime, is_async
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
-
+from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
 from pulsar import PulsarException
 
 
@@ -50,7 +50,9 @@ def start_request(request, conn):
         yield from response.on_finished
 
     if hasattr(response.request_again, '__call__'):
-        response = yield from response.request_again(response)
+        response = response.request_again(response)
+        if is_async(response):
+            response = yield from response
 
     return response
 
@@ -91,36 +93,35 @@ class WebSocketClient(WebSocketProtocol):
                                  (self.__class__.__name__, name))
 
 
-@noerror
-def handle_redirect(response, exc=None):
-    if (response.status_code in REDIRECT_CODES and
-            'location' in response.headers and
-            response._request.allow_redirects):
-        # put at the end of the pile
-        response.bind_event('post_request', _do_redirect)
+class Redirect:
 
+    @noerror
+    def __call__(self, response, exc=None):
+        if (response.status_code in REDIRECT_CODES and
+                'location' in response.headers and
+                response.request.allow_redirects):
+            response.request_again = self._do_redirect
 
-@noerror
-def _do_redirect(response, exc=None):
-    request = response.request
-    # done with current response
-    url = response.headers.get('location')
-    # Handle redirection without scheme (see: RFC 1808 Section 4)
-    if url.startswith('//'):
-        parsed_rurl = urlparse(request.full_url)
-        url = '%s:%s' % (parsed_rurl.scheme, url)
-    # Facilitate non-RFC2616-compliant 'location' headers
-    # (e.g. '/path/to/resource' instead of
-    # 'http://domain.tld/path/to/resource')
-    if not urlparse(url).netloc:
-        url = urljoin(request.full_url,
-                      # Compliant with RFC3986, we percent
-                      # encode the url.
-                      requote_uri(url))
-    history = request.history
-    if history and len(history) >= request.max_redirects:
-        response.request_again = TooManyRedirects(response)
-    else:
+    def _do_redirect(self, response):
+        request = response.request
+        # done with current response
+        url = response.headers.get('location')
+        # Handle redirection without scheme (see: RFC 1808 Section 4)
+        if url.startswith('//'):
+            parsed_rurl = urlparse(request.full_url)
+            url = '%s:%s' % (parsed_rurl.scheme, url)
+        # Facilitate non-RFC2616-compliant 'location' headers
+        # (e.g. '/path/to/resource' instead of
+        # 'http://domain.tld/path/to/resource')
+        if not urlparse(url).netloc:
+            url = urljoin(request.full_url,
+                          # Compliant with RFC3986, we percent
+                          # encode the url.
+                          requote_uri(url))
+        history = request.history
+        if history and len(history) >= request.max_redirects:
+            raise TooManyRedirects(response)
+
         params = request.inp_params.copy()
         params['history'] = copy(history) if history else []
         params['history'].append(response)
@@ -131,6 +132,7 @@ def _do_redirect(response, exc=None):
         else:
             method = request.method
         response.request_again = request_again(method, url, params)
+        return response
 
 
 @noerror
@@ -172,23 +174,45 @@ def _write_body(response, exc=None):
             response.write(response.request.data)
 
 
-@noerror
-def handle_101(response, exc=None):
-    '''Websocket upgrade as ``on_headers`` event.'''
+class WebSocket:
 
-    if response.status_code == 101:
-        connection = response.connection
+    @property
+    def websocket_key(self):
+        if not hasattr(self, '_websocket_key'):
+            self._websocket_key = websocket_key()
+        return self._websocket_key
+
+    @noerror
+    def __call__(self, response, exc=None):
         request = response.request
-        handler = request.websocket_handler
-        if not handler:
-            handler = WS()
-        parser = request.client.frame_parser(kind=1)
-        body = response.recv_body()
-        connection.upgrade(partial(WebSocketClient, response, handler, parser))
-        response.finished()
-        consumer = connection.current_consumer()
-        consumer.data_received(body)
-        response.request_again = consumer
+        if request.scheme in ('ws', 'wss'):
+            headers = request.headers
+            headers['connection'] = 'Upgrade'
+            headers['upgrade'] = 'websocket'
+            if 'Sec-WebSocket-Version' not in headers:
+                headers['Sec-WebSocket-Version'] = str(max(SUPPORTED_VERSIONS))
+            if 'Sec-WebSocket-Key' not in headers:
+                headers['Sec-WebSocket-Key'] = self.websocket_key
+            response.bind_event('on_headers', self.on_headers)
+
+    @noerror
+    def on_headers(self, response, exc=None):
+        '''Websocket upgrade as ``on_headers`` event.'''
+
+        if response.status_code == 101:
+            connection = response.connection
+            request = response.request
+            handler = request.websocket_handler
+            if not handler:
+                handler = WS()
+            parser = request.client.frame_parser(kind=1)
+            consumer = partial(WebSocketClient, response, handler, parser)
+            connection.upgrade(consumer)
+            body = response.recv_body()
+            response.finished()
+            websocket = connection.current_consumer()
+            websocket.data_received(body)
+            response.request_again = lambda r: websocket
 
 
 class Tunneling:
@@ -213,16 +237,9 @@ class Tunneling:
     def on_headers(self, response, exc=None):
         '''Called back once the headers have arrived.'''
         if response.status_code == 200:
-            response.bind_event('post_request', self._switch_to_ssl)
+            response.request_again = self._tunnel_request
             response.finished()
 
-    @noerror
-    def _switch_to_ssl(self, response, exc=None):
-        '''Wrap the transport for SSL communication.
-        '''
-        response.request_again = self._tunnel_request
-
-    @task
     def _tunnel_request(self, response):
         request = response.request.request
         connection = response.connection

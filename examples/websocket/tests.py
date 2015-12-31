@@ -60,12 +60,12 @@ class TestWebSocketThread(unittest.TestCase):
         params['frame_parser'] = self._frame_parser
         return HttpClient(**params)
 
-    def testHyBiKey(self):
+    def test_hybikey(self):
         w = WebSocket('/', None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
         self.assertEqual(v, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
 
-    def testBadRequests(self):
+    def test_bad_requests(self):
         c = self.http()
         response = yield from c.post(self.ws_uri)
         self.assertEqual(response.status_code, 405)

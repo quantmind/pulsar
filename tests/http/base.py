@@ -180,7 +180,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
 
-class d:
     def test_200_get_data(self):
         http = self.client()
         response = yield from http.get(self.httpbin('get'),
@@ -257,7 +256,7 @@ class d:
     def test_HttpResponse(self):
         r = HttpResponse(loop=get_event_loop())
         self.assertEqual(r.request, None)
-        self.assertEqual(str(r), '<None>')
+        self.assertEqual(str(r), '<Response [None]>')
         self.assertEqual(r.headers, None)
 
     def test_client(self):
@@ -293,7 +292,7 @@ class d:
         self.assertEqual(http.version, 'HTTP/1.0')
         response = yield from http.get(self.httpbin())
         self.assertEqual(response.headers['connection'], 'close')
-        self.assertEqual(str(response), '200')
+        self.assertEqual(str(response), '<Response [200]>')
         self._check_pool(http, response, available=0)
 
     def test_http11(self):
@@ -516,8 +515,8 @@ class d:
         r = yield from http.get(self.httpbin('basic-auth/bla/foo'))
         # The response MUST include a WWW-Authenticate header field
         self.assertEqual(r.status_code, 401)
-        http.add_basic_authentication('bla', 'foo')
-        r = yield from http.get(self.httpbin('basic-auth/bla/foo'))
+        r = yield from http.get(self.httpbin('basic-auth/bla/foo'),
+                                auth=('bla', 'foo'))
         self.assertEqual(r.status_code, 200)
 
     def test_digest_authentication(self):
@@ -663,7 +662,7 @@ class d:
         bench = yield from http.timeit('get', N, self.httpbin())
         self.assertEqual(len(bench.result), N)
         for response in bench.result:
-            self.assertEqual(str(response), '200')
+            self.assertEqual(str(response), '<Response [200]>')
             self.assertTrue('content-length' in response.headers)
         self.assertEqual(len(http.connection_pools), 1)
         pool = tuple(http.connection_pools.values())[0]
@@ -677,7 +676,7 @@ class d:
         bench = yield from http.timeit('get', N, self.httpbin('status', '400'))
         self.assertEqual(len(bench.result), N)
         for response in bench.result:
-            self.assertEqual(str(response), '400')
+            self.assertEqual(str(response), '<Response [400]>')
             self.assertTrue('content-length' in response.headers)
         self.assertEqual(len(http.connection_pools), 1)
         pool = tuple(http.connection_pools.values())[0]

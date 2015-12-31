@@ -1,5 +1,5 @@
 from pulsar.apps import http
-import requests
+import requests     # noqa
 
 if __name__ == '__main__':
     session = http.HttpClient()
