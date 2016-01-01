@@ -64,12 +64,12 @@ class RedisLockTests:
         key = self.randomkey()
         eq = self.async.assertEqual
         lock1 = self.client.lock(key)
-        lock2 = self.client.lock(key, blocking=1)
+        lock2 = self.client.lock(key, blocking=5)
         yield from eq(lock1.acquire(), True)
         asyncio.async(self._release(lock1, 0.5))
         start = lock2._loop.time()
         yield from eq(lock2.acquire(), True)
-        self.assertTrue(1 > lock2._loop.time() - start > 0.5)
+        self.assertTrue(5 > lock2._loop.time() - start > 0.5)
         yield from eq(lock2.release(), True)
 
     def _release(self, lock, time):
