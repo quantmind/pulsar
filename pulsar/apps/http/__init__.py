@@ -315,7 +315,7 @@ from .oauth import OAuth1, OAuth2
 from .stream import HttpStream, StreamConsumedError
 
 
-__all__ = ['HttpRequest', 'HttpResponse', 'HttpClient',
+__all__ = ['HttpRequest', 'HttpResponse', 'HttpClient', 'HTTPDigestAuth',
            'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2',
            'HttpStream', 'StreamConsumedError']
 
@@ -498,11 +498,9 @@ class HttpRequest(RequestBase):
         self.new_parser()
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
-        if auth:
-            headers = headers or []
+        if auth and not isinstance(auth, Auth):
             auth = HTTPBasicAuth(*auth)
-            headers.append(('Authorization', auth.header()))
-
+        self.auth = auth
         self.headers = client.get_headers(self, headers)
         cookies = cookiejar_from_dict(client.cookies, cookies)
         if cookies:

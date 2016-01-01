@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
                                   to_string, DEFAULT_CHARSET)
 
-from .plugins import request_again
+from .plugins import request_again, noerror
 
 
 __all__ = ['Auth',
@@ -125,9 +125,10 @@ class HTTPDigestAuth(Auth):
             base += ', qop=%s, nc=%s, cnonce="%s"' % (qop, ncvalue, cnonce)
         return 'Digest %s' % (base)
 
+    @noerror
     def handle_401(self, response, exc=None):
         """Takes the given response and tries digest-auth, if needed."""
-        if not exc and response.status_code == 401:
+        if response.status_code == 401:
             request = response.request
             response._handle_401 = getattr(response, '_handle_401', 0) + 1
             s_auth = response.headers.get('www-authenticate', '')

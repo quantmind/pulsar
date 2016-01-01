@@ -9,10 +9,14 @@ import examples
 from pulsar import send, SERVER_SOFTWARE, get_event_loop
 from pulsar.utils.path import Path
 from pulsar.utils.httpurl import iri_to_uri
+from pulsar.utils.system import platform
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
 
 __test__ = False
+
+
+linux = platform.name == 'posix' and not platform.isMacOSX
 
 
 def dodgyhook(response, exc=None):
@@ -499,6 +503,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         result = r.json()
         self.assertTrue(result['cookies'])
         self.assertEqual(result['cookies']['bla'], 'foo')
+
+    def test_cookie_no_store(self):
         # Try without saving cookies
         http = self.client(store_cookies=False)
         r = yield from http.get(self.httpbin('cookies', 'set', 'bla', 'foo'))
@@ -520,16 +526,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(r.status_code, 200)
 
     def test_digest_authentication(self):
-        # TODO fix this test. Issue #94
-        if not self.tunneling:
-            http = self.client()
-            r = yield from http.get(self.httpbin(
-                'digest-auth/luca/bla/auth'))
-            self.assertEqual(r.status_code, 401)
-            http.add_digest_authentication('luca', 'bla')
-            r = yield from http.get(self.httpbin(
-                'digest-auth/luca/bla/auth'))
-            self.assertEqual(r.status_code, 200)
+        http = self.client()
+        r = yield from http.get(self.httpbin(
+            'digest-auth/luca/bla/auth'))
+        self.assertEqual(r.status_code, 401)
+        http.add_digest_authentication('luca', 'bla')
+        r = yield from http.get(self.httpbin(
+            'digest-auth/luca/bla/auth'))
+        self.assertEqual(r.status_code, 200)
 
     def test_missing_host_400(self):
         http = self._client
@@ -691,6 +695,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             self.httpbin(''), headers=[('accept', 'application/json')])
         self.assertEqual(response.status_code, 415)
 
+    @unittest.skipUnless(linux, 'Test in lunux platform only')
     def test_servername(self):
         http = self.client()
         http.headers.remove_header('host')

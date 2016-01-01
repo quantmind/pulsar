@@ -39,6 +39,8 @@ def start_request(request, conn):
     response = conn.current_consumer()
     # bind request-specific events
     response.bind_events(**request.inp_params)
+    if request.auth:
+        response.bind_event('pre_request', request.auth)
 
     if request.stream:
         response.bind_event('data_processed', response.raw)
