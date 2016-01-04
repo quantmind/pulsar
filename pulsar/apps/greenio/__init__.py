@@ -127,7 +127,7 @@ Green Lock
 Green WSGI
 ----------------
 
-.. autoclass:: GreenWSGI
+.. autoclass:: pulsar.apps.greenio.wsgi.GreenWSGI
    :members:
    :member-order: bysource
 
