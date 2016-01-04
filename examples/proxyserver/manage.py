@@ -44,7 +44,7 @@ import asyncio
 import pulsar
 from pulsar import HttpException, task, async, add_errback, as_coroutine
 from pulsar.apps import wsgi, http
-from pulsar.utils.httpurl import Headers
+from pulsar.utils.httpurl import Headers, ENCODE_BODY_METHODS
 from pulsar.utils.log import LocalMixin, local_property
 
 
@@ -76,24 +76,20 @@ class ProxyServerWsgiHandler(LocalMixin):
         accessing upstream resources'''
         return http.HttpClient(decompress=False, store_cookies=False)
 
-    @task
     def __call__(self, environ, start_response):
         uri = environ['RAW_URI']
         logger.debug('new request for %r' % uri)
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
-        if environ.get('HTTP_EXPECT') != '100-continue':
-            stream = environ.get('wsgi.input') or io.BytesIO()
-            data = yield from as_coroutine(stream.read())
-        else:
-            data = None
         request_headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
-        if method == 'CONNECT':
-            response = TunnelResponse(environ, start_response)
-        else:
-            response = ProxyResponse(environ, start_response)
-        res = self.http_client.request(method, uri, data=data,
+        data = None
+        response = TunnelResponse(environ, start_response)
+        if method in ENCODE_BODY_METHODS:
+            data = DataIterator(response)
+        res = self.http_client.request(method,
+                                       uri,
+                                       data=data,
                                        headers=request_headers,
                                        version=environ['SERVER_PROTOCOL'],
                                        pre_request=response.pre_request,
@@ -121,9 +117,19 @@ class ProxyServerWsgiHandler(LocalMixin):
         return headers
 
 
+class DataIterator:
+
+    def __init__(self, response):
+        self.response = response
+        self.stream = response.environ.get('wsgi.input')
+
+    def __iter__(self):
+        yield self.stream.reader.read()
+
+
 ############################################################################
 #    RESPONSE OBJECTS
-class ServerResponse:
+class TunnelResponse:
     '''Base WSGI Response Iterator for the Proxy server
     '''
 
@@ -171,41 +177,6 @@ class ServerResponse:
             self._done = True
             self.queue.put_nowait(resp.content[0])
 
-
-class ProxyResponse(ServerResponse):
-
-    def pre_request(self, response, exc=None):
-        self._started = True
-        response.bind_event('data_processed', self.data_processed)
-
-    @task
-    def data_processed(self, response, exc=None, **kw):
-        '''Receive data from the requesting HTTP client.'''
-        status = response.get_status()
-        if status == '100 Continue':
-            stream = self.environ.get('wsgi.input') or io.BytesIO()
-            body = yield from stream.read()
-            response.transport.write(body)
-        if response.parser.is_headers_complete():
-            if self._headers is None:
-                headers = self.remove_hop_headers(response.headers)
-                self._headers = Headers(headers, kind='server')
-                # start the response
-                self.start_response(status, list(self._headers))
-            body = response.recv_body()
-            if response.parser.is_message_complete():
-                self._done = True
-            self.queue.put_nowait(body)
-
-    def remove_hop_headers(self, headers):
-        for header, value in headers:
-            if header.lower() not in wsgi.HOP_HEADERS:
-                yield header, value
-
-
-class TunnelResponse(ServerResponse):
-    '''Asynchronous wsgi response for https requests
-    '''
     def pre_request(self, response, exc=None):
         '''Start the tunnel.
 
@@ -216,7 +187,6 @@ class TunnelResponse(ServerResponse):
         After this the downstream connection consumer will upgrade to the
         DownStreamTunnel.
         '''
-        assert response.request.method == 'CONNECT'
         self._started = True
         #
         upstream = response.connection

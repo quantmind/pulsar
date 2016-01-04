@@ -3,6 +3,7 @@ from base64 import b64decode
 from functools import wraps
 import socket
 import unittest
+import asyncio
 
 import examples
 
@@ -153,6 +154,22 @@ class TestHttpClientBase:
 
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
+
+    def test_post_iterator(self):
+        http = self._client
+        fut = asyncio.Future()
+        def gen():
+            yield b'a'*100
+            yield fut
+            yield b'z'*100
+
+        result = b'f'*100
+        fut._loop.call_later(0.5, fut.set_result, result)
+        response = yield from http.post(self.httpbin('post_bytes'),
+                                        data=gen())
+        self.assertEqual(response.status_code, 200)
+
+class d:
 
     def test_home_page(self):
         http = self.client()

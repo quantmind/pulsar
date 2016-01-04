@@ -148,6 +148,11 @@ class HttpBin(BaseRouter):
     def post_post(self, request):
         return self.info_data_response(request)
 
+    @route(title='Returns Post bytes data')
+    def post_post_bytes(self, request):
+        args, _ = request.data_and_files()
+        return [args]
+
     @route(title='Returns PATCH data')
     def patch_patch(self, request):
         return self.info_data_response(request)

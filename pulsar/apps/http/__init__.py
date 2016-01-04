@@ -279,9 +279,9 @@ OAuth2
 import os
 import platform
 import logging
+import asyncio
 from functools import partial
 from collections import namedtuple
-from asyncio import wait_for
 from io import StringIO, BytesIO
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from http.client import responses
@@ -291,7 +291,7 @@ except ImportError:
     ssl = None
 
 import pulsar
-from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
+from pulsar import (AbortRequest, AbstractClient, Pool, Connection, is_async,
                     ProtocolConsumer)
 from pulsar.utils import websocket
 from pulsar.utils.system import json
@@ -333,6 +333,14 @@ def guess_filename(obj):
     name = getattr(obj, 'name', None)
     if name and name[0] != '<' and name[-1] != '>':
         return os.path.basename(name)
+
+
+def is_streamed(data):
+    try:
+        len(data)
+    except TypeError:
+        return True
+    return False
 
 
 class RequestBase(object):
@@ -602,17 +610,13 @@ class HttpRequest(RequestBase):
         '''
         # Call body before fist_line in case the query is changes.
         first_line = self.first_line()
-        body = self.data
-        if body and self.wait_continue:
+        if self.data and self.wait_continue:
             self.headers['expect'] = '100-continue'
-            body = None
         headers = self.headers
         if self.unredirected_headers:
             headers = self.unredirected_headers.copy()
             headers.update(self.headers)
         buffer = [first_line.encode('ascii'), b'\r\n',  bytes(headers)]
-        if body:
-            buffer.append(body)
         return b''.join(buffer)
 
     def add_header(self, key, value):
@@ -654,6 +658,12 @@ class HttpRequest(RequestBase):
             assert self.files is None, ('data cannot be string when files are '
                                         'present')
             body = to_bytes(data, self.charset)
+        elif data and is_streamed(data):
+            assert self.files is None, ('data cannot be an iterator when '
+                                        'files are present')
+            if 'content-type' not in self.headers:
+                self.headers['content-type'] = 'application/octet-stream'
+            return data
         elif data or self.files:
             if self.files:
                 body, content_type = self._encode_files(data)
@@ -918,7 +928,14 @@ class HttpResponse(ProtocolConsumer):
     # #####################################################################
     # #    PROTOCOL IMPLEMENTATION
     def start_request(self):
-        self.transport.write(self._request.encode())
+        request = self._request
+        self.transport.write(request.encode())
+        if request.data and request.headers.get('expect') != '100-continue':
+            if is_streamed(request.data):
+                asyncio.async(self._write_streamed_data(request.data),
+                              loop=self._loop)
+            else:
+                self.transport.write(request.data)
 
     def data_received(self, data):
         request = self.request
@@ -937,6 +954,12 @@ class HttpResponse(ProtocolConsumer):
                 raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
         except Exception as exc:
             self.finished(exc=exc)
+
+    def _write_streamed_data(self, gen):
+        for data in gen:
+            if is_async(data):
+                data = yield from data
+            self.transport.write(data)
 
 
 class HttpClient(AbstractClient):
@@ -1160,7 +1183,7 @@ class HttpClient(AbstractClient):
         if timeout is None:
             timeout = self.timeout
         if timeout:
-            response = wait_for(response, timeout, loop=self._loop)
+            response = asyncio.wait_for(response, timeout, loop=self._loop)
         if not self._loop.is_running():
             return self._loop.run_until_complete(response)
         else:
