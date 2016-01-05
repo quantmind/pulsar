@@ -468,17 +468,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_stream_response_large_chunk(self):
         return self._test_stream_response(100000, 3)
 
-    def test_expect(self):
-        http = self._client
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        response = yield from http.post(self.httpbin('post'), data=data,
-                                        wait_continue=True)
-        self.assertEqual(response.status_code, 200)
-        result = response.json()
-        self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'], ['1', '2'])
-
     def test_send_cookie(self):
         http = self._client
         cookies = {'sessionid': 't1', 'cookies_are': 'working'}
@@ -563,6 +552,17 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         request = response.request
         self.assertFalse(request.has_header('host'))
         self.assertTrue(request._test_host)
+
+    def test_expect(self):
+        http = self._client
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = yield from http.post(self.httpbin('post'), data=data,
+                                        wait_continue=True)
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_expect_fail(self):
         '''This is an important test for the proxy server example.
