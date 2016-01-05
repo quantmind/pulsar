@@ -1054,7 +1054,6 @@ class HttpClient(AbstractClient):
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'on_headers',
                          'post_request', 'connection_lost')
     protocol_factory = partial(Connection, HttpResponse)
-    allow_redirects = False
     max_redirects = 10
     '''Maximum number of redirects.
 
@@ -1079,8 +1078,8 @@ class HttpClient(AbstractClient):
         ('Proxy-Connection', 'Keep-Alive')],
         kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
-                          'allow_redirects', 'multipart_boundary', 'version',
-                          'websocket_handler', 'verify', 'stream')
+                          'websocket_handler', 'multipart_boundary', 'version',
+                          'verify', 'stream')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxies dictionary
     no_proxy = set(('localhost', platform.node()))
