@@ -116,8 +116,7 @@ class TunnelResponse:
                                     data=data,
                                     headers=request_headers,
                                     version=environ['SERVER_PROTOCOL'],
-                                    pre_request=self.pre_request,
-                                    stream=True)
+                                    pre_request=self.pre_request)
         except Exception as exc:
             self.error(exc)
 
@@ -171,11 +170,9 @@ class TunnelResponse:
             response.bind_event('post_request', self.post_request)
 
     def data_processed(self, response, data=None, **kw):
-        if data:
-            self.environ['pulsar.connection'].write(data)
+        self.environ['pulsar.connection'].write(data)
 
     def post_request(self, _, exc=None):
-        print('%s - %s' % (_, _.request))
         self.future.set_exception(wsgi.AbortWsgi())
 
 

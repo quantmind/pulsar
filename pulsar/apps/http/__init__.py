@@ -1242,7 +1242,10 @@ class HttpClient(AbstractClient):
 
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
-                    response.status_code == 101):
+                    response.status_code == 101 or
+                    # Streaming responses return before the response
+                    # is finished - therefore we detach the connection
+                    response.request.stream):
                 conn.detach()
 
         # Handle a possible redirect
