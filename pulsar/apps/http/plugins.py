@@ -44,11 +44,11 @@ def start_request(request, conn):
 
     if request.stream:
         response.bind_event('data_processed', response.raw)
-        response.start(request)
+        yield from response.start(request)
         yield from response.events['on_headers']
     else:
         response.bind_event('data_processed', response_content)
-        response.start(request)
+        yield from response.start(request)
         yield from response.on_finished
 
     if hasattr(response.request_again, '__call__'):
