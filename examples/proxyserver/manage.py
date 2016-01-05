@@ -83,7 +83,9 @@ class ProxyServerWsgiHandler(LocalMixin):
         logger.debug('new request for %r' % uri)
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
-        return TunnelResponse(self, environ, start_response)
+        response = TunnelResponse(self, environ, start_response)
+        response.request()
+        return response.future
 
 
 ############################################################################
@@ -96,11 +98,6 @@ class TunnelResponse:
         self.environ = environ
         self.start_response = start_response
         self.future = asyncio.Future()
-
-    def __iter__(self):
-        if not self.future.done():
-            self.request()
-            yield self.future
 
     @task
     def request(self):
@@ -167,22 +164,19 @@ class TunnelResponse:
             upstream.upgrade(partial(StreamTunnel, dostream))
             self.start_response('200 Connection established', [])
             # send empty byte so that headers are sent
-            self.future.set_result(b'')
+            self.future.set_result([b''])
             response.abort_request()
         else:
             response.bind_event('data_processed', self.data_processed)
             response.bind_event('post_request', self.post_request)
 
     def data_processed(self, response, data=None, **kw):
-        try:
+        if data:
             self.environ['pulsar.connection'].write(data)
-        except Exception:
-            pass
 
     def post_request(self, _, exc=None):
-        if not self.future.done():
-            print('%s - %s' % (_, _.request))
-            self.future.set_exception(wsgi.AbortWsgi())
+        print('%s - %s' % (_, _.request))
+        self.future.set_exception(wsgi.AbortWsgi())
 
 
 class DataIterator:
