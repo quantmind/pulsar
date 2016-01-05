@@ -195,8 +195,8 @@ class TunnelResponse:
             pass
 
     def post_request(self, _, exc=None):
-        if not self.future.done():
-            self.future.set_exception(wsgi.AbortWsgi())
+        print('done done')
+        self.future.set_exception(wsgi.AbortWsgi())
 
 
 class DataIterator:
