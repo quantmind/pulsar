@@ -144,25 +144,9 @@ class TunnelResponse:
 
     def error(self, exc):
         if self.future.done():
-            return
-        logger.error(str(exc))
-        request = wsgi.WsgiRequest(self.environ)
-        content_type = request.content_types.best_match(
-            ('text/html', 'text/plain'))
-        uri = self.environ['RAW_URI']
-        msg = 'Could not find %s' % uri
-        logger.info(msg=msg)
-        if content_type == 'text/html':
-            html = wsgi.HtmlDocument(title=msg)
-            html.body.append('<h1>%s</h1>' % msg)
-            data = html.render()
-            resp = wsgi.WsgiResponse(504, data, content_type='text/html')
-        elif content_type == 'text/plain':
-            resp = wsgi.WsgiResponse(504, msg, content_type='text/html')
+            self.future.set_exception(exc)
         else:
-            resp = wsgi.WsgiResponse(504, '')
-        self.start_response(resp.status, resp.get_headers())
-        self.future.set_result(b''.join(resp.content))
+            logger.error(str(exc))
 
     @noerror
     def pre_request(self, response, exc=None):
@@ -195,8 +179,9 @@ class TunnelResponse:
             pass
 
     def post_request(self, _, exc=None):
-        print('done done')
-        self.future.set_exception(wsgi.AbortWsgi())
+        if not self.future.done():
+            print('%s - %s' % (_, _.request))
+            self.future.set_exception(wsgi.AbortWsgi())
 
 
 class DataIterator:
