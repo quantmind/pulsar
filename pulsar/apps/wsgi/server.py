@@ -243,7 +243,9 @@ class HttpServerResponse(ProtocolConsumer):
                                                    self.transport,
                                                    loop=self._loop)
                 self._response(self.wsgi_environ())
-            self._body_reader.feed_data(parser.recv_body())
+            body = parser.recv_body()
+            if body:
+                self._body_reader.feed_data(body)
         #
         if parser.is_message_complete():
             #
