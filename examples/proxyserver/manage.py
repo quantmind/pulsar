@@ -189,10 +189,14 @@ class TunnelResponse:
             response.bind_event('post_request', self.post_request)
 
     def data_processed(self, response, data=None, **kw):
-        self.environ['pulsar.connection'].write(data)
+        try:
+            self.environ['pulsar.connection'].write(data)
+        except Exception:
+            pass
 
     def post_request(self, _, exc=None):
-        self.future.set_exception(wsgi.AbortWsgi())
+        if not self.future.done():
+            self.future.set_exception(wsgi.AbortWsgi())
 
 
 class DataIterator:
