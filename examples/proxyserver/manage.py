@@ -74,7 +74,9 @@ class ProxyServerWsgiHandler(LocalMixin):
     def http_client(self):
         '''The :class:`.HttpClient` used by this proxy middleware for
         accessing upstream resources'''
-        return http.HttpClient(decompress=False, store_cookies=False)
+        client = http.HttpClient(decompress=False, store_cookies=False)
+        client.headers.clear()
+        return client
 
     def __call__(self, environ, start_response):
         uri = environ['RAW_URI']
@@ -169,13 +171,13 @@ class TunnelResponse:
         This is a callback fired once a connection with upstream server is
         established.
         '''
-        # proxy - server connection
-        upstream = response.connection
-        # client - proxy connection
-        dostream = self.environ['pulsar.connection']
-        # Upgrade downstream connection
-        dostream.upgrade(partial(StreamTunnel, upstream))
         if response.request.method == 'CONNECT':
+            # proxy - server connection
+            upstream = response.connection
+            # client - proxy connection
+            dostream = self.environ['pulsar.connection']
+            # Upgrade downstream connection
+            dostream.upgrade(partial(StreamTunnel, upstream))
             # Upgrade upstream connection
             upstream.upgrade(partial(StreamTunnel, dostream))
             self.start_response('200 Connection established', [])
@@ -183,12 +185,14 @@ class TunnelResponse:
             self.future.set_result(b'')
             response.abort_request()
         else:
-            response.bind_event('data_received', self.data_received)
-            self.future.set_exception(wsgi.AbortWsgi())
+            response.bind_event('data_processed', self.data_processed)
+            response.bind_event('post_request', self.post_request)
 
-    def data_received(self, response, data=None, **kw):
-        dostream = self.environ['pulsar.connection']
-        dostream.write(data)
+    def data_processed(self, response, data=None, **kw):
+        self.environ['pulsar.connection'].write(data)
+
+    def post_request(self, _, exc=None):
+        self.future.set_exception(wsgi.AbortWsgi())
 
 
 class DataIterator:

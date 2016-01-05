@@ -172,8 +172,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
-
-class d:
     def test_200_get(self):
         http = self.client()
         response = yield from http.get(self.httpbin())
