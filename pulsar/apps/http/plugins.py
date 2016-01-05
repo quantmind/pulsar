@@ -172,8 +172,7 @@ def handle_100(response, exc=None):
 def _write_body(response, exc=None):
     if response.status_code == 100:
         response.request.new_parser()
-        if response.request.data:
-            response.write(response.request.data)
+        response.write_body()
 
 
 class WebSocket:

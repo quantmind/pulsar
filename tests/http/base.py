@@ -155,22 +155,6 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
-    def test_post_iterator(self):
-        http = self._client
-        fut = asyncio.Future()
-        def gen():
-            yield b'a'*100
-            yield fut
-            yield b'z'*100
-
-        result = b'f'*100
-        fut._loop.call_later(0.5, fut.set_result, result)
-        response = yield from http.post(self.httpbin('post_bytes'),
-                                        data=gen())
-        self.assertEqual(response.status_code, 200)
-
-class d:
-
     def test_home_page(self):
         http = self.client()
         response = yield from http.get(self.httpbin())
@@ -188,6 +172,8 @@ class d:
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
+
+class d:
     def test_200_get(self):
         http = self.client()
         response = yield from http.get(self.httpbin())
@@ -757,3 +743,21 @@ class d:
         self.assertEqual(raw._response, response)
         data = yield from raw.read()
         self.assertTrue(len(data), 300000)
+
+    def test_post_iterator(self):
+        http = self._client
+        fut = asyncio.Future()
+
+        def gen():
+            yield b'a'*100
+            yield fut
+            yield b'z'*100
+
+        result = b'f'*100
+        fut._loop.call_later(0.5, fut.set_result, result)
+        response = yield from http.post(self.httpbin('post_chunks'),
+                                        data=gen())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.content), 300)
+        self.assertEqual(response.headers['content-type'],
+                         response.request.headers['content-type'])

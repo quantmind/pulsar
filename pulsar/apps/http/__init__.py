@@ -303,7 +303,7 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   choose_boundary, request_host,
                                   is_succesful, HTTPError, URLError,
                                   get_hostport, cookiejar_from_dict,
-                                  host_no_default_port,
+                                  host_no_default_port, http_chunks,
                                   parse_options_header, JSON_CONTENT_TYPES)
 
 from .plugins import (handle_cookies, handle_100, WebSocket, Redirect,
@@ -372,9 +372,13 @@ class RequestBase(object):
     def get_full_url(self):
         return self.full_url
 
+    def write_body(self, transport):
+        pass
+
 
 class HttpTunnel(RequestBase):
     first_line = None
+    data = None
 
     def __init__(self, request, scheme, host):
         self.status = 0
@@ -473,6 +477,7 @@ class HttpRequest(RequestBase):
     _proxy = None
     _ssl = None
     _tunnel = None
+    _write_done = False
 
     def __init__(self, client, url, method, inp_params=None, headers=None,
                  data=None, files=None, history=None, auth=None,
@@ -602,6 +607,9 @@ class HttpRequest(RequestBase):
                                               decompress=self.decompress,
                                               method=self.method)
 
+    def is_chunked(self):
+        return self.data and 'content-length' not in self.headers
+
     def encode(self):
         '''The bytes representation of this :class:`HttpRequest`.
 
@@ -644,6 +652,17 @@ class HttpRequest(RequestBase):
     def add_unredirected_header(self, header_name, header_value):
         self.unredirected_headers[header_name] = header_value
 
+    def write_body(self, transport):
+        assert not self._write_done, 'Body already sent'
+        self._write_done = True
+        if not self.data:
+            return
+        if is_streamed(self.data):
+            asyncio.async(self._write_streamed_data(transport),
+                          loop=transport._loop)
+        else:
+            self._write_body_data(transport, self.data, True)
+
     # INTERNAL ENCODING METHODS
     def _encode_data(self, data):
         body = None
@@ -663,6 +682,8 @@ class HttpRequest(RequestBase):
                                         'files are present')
             if 'content-type' not in self.headers:
                 self.headers['content-type'] = 'application/octet-stream'
+            if 'content-length' not in self.headers:
+                self.headers['transfer-encoding'] = 'chunked'
             return data
         elif data or self.files:
             if self.files:
@@ -749,6 +770,23 @@ class HttpRequest(RequestBase):
             raise ValueError("Don't know how to encode body for %s" %
                              content_type)
         return body, content_type
+
+    def _write_body_data(self, transport, data, finish=False):
+        if self.is_chunked():
+            data = http_chunks(data, finish)
+        elif data:
+            data = (data,)
+        else:
+            return
+        for chunk in data:
+            transport.write(chunk)
+
+    def _write_streamed_data(self, transport):
+        for data in self.data:
+            if is_async(data):
+                data = yield from data
+            self._write_body_data(transport, data)
+        self._write_body_data(transport, b'', True)
 
     # PROXY INTERNALS
     def _set_proxy(self, proxies):
@@ -930,12 +968,8 @@ class HttpResponse(ProtocolConsumer):
     def start_request(self):
         request = self._request
         self.transport.write(request.encode())
-        if request.data and request.headers.get('expect') != '100-continue':
-            if is_streamed(request.data):
-                asyncio.async(self._write_streamed_data(request.data),
-                              loop=self._loop)
-            else:
-                self.transport.write(request.data)
+        if request.headers.get('expect') != '100-continue':
+            self.write_body()
 
     def data_received(self, data):
         request = self.request
@@ -955,11 +989,8 @@ class HttpResponse(ProtocolConsumer):
         except Exception as exc:
             self.finished(exc=exc)
 
-    def _write_streamed_data(self, gen):
-        for data in gen:
-            if is_async(data):
-                data = yield from data
-            self.transport.write(data)
+    def write_body(self):
+        self.request.write_body(self.transport)
 
 
 class HttpClient(AbstractClient):

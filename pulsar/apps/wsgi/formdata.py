@@ -220,6 +220,7 @@ class BytesDecoder(FormDecoder):
 
     def _ready(self, data):
         self.environ['wsgi.input'] = BytesIO(data)
+        self.result = (data, None)
         return self.result
 
 

@@ -451,10 +451,11 @@ class Connection(Protocol, Timeout):
         '''
         self._data_received_count = self._data_received_count + 1
         self.fire_event('data_received', data=data)
-        while data:
+        toprocess = data
+        while toprocess:
             consumer = self.current_consumer()
-            data = consumer._data_received(data)
-            if isinstance(data, Future):
+            toprocess = consumer._data_received(toprocess)
+            if isinstance(toprocess, Future):
                 break
         self.fire_event('data_processed', data=data)
 

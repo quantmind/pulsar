@@ -26,7 +26,7 @@ from pulsar import (reraise, HttpException, ProtocolError, task, isfuture,
                     BadRequest)
 from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, has_empty_content, http_parser,
-                                  iri_to_uri)
+                                  iri_to_uri, http_chunks)
 
 from pulsar.utils.internet import is_tls
 from pulsar.async.protocols import ProtocolConsumer
@@ -35,11 +35,14 @@ from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
                     log_wsgi_info, LOGGER)
 from .formdata import http_protocol, HttpBodyReader
 
-__all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
+__all__ = ['HttpServerResponse', 'test_wsgi_environ', 'AbortWsgi']
 
 
-MAX_CHUNK_SIZE = 65536
 MAX_TIME_IN_LOOP = 0.2
+
+
+class AbortWsgi(Exception):
+    pass
 
 
 def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
@@ -163,18 +166,6 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
     if extra:
         environ.update(extra)
     return environ
-
-
-def chunk_encoding(chunk):
-    '''Write a chunk::
-
-        chunk-size(hex) CRLF
-        chunk-data CRLF
-
-    If the size is 0, this is the last chunk, and an extra CRLF is appended.
-    '''
-    head = ("%X\r\n" % len(chunk)).encode('utf-8')
-    return head + chunk + b'\r\n'
 
 
 def keep_alive(headers, version, method):
@@ -363,15 +354,11 @@ class HttpServerResponse(ProtocolConsumer):
             chunks.append(self._headers_sent)
         if data:
             if self.chunked:
-                while len(data) >= MAX_CHUNK_SIZE:
-                    chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
-                    chunks.append(chunk_encoding(chunk))
-                if data:
-                    chunks.append(chunk_encoding(data))
+                chunks.extend(http_chunks(data))
             else:
                 chunks.append(data)
         elif force and self.chunked:
-            chunks.append(chunk_encoding(data))
+            chunks.extend(http_chunks(data, True))
         if chunks:
             return write(b''.join(chunks))
 
@@ -425,7 +412,8 @@ class HttpServerResponse(ProtocolConsumer):
                 # make sure we write headers and last chunk if needed
                 self.write(b'', True)
 
-            except IOError:     # client disconnected, end this connection
+            # client disconnected, end this connection
+            except (IOError, AbortWsgi):
                 self.finished()
             except Exception:
                 if wsgi_request(environ).cache.handle_wsgi_error:
