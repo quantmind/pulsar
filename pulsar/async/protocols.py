@@ -146,7 +146,8 @@ class ProtocolConsumer(EventHandler):
         For server side consumer, this method simply fires the ``pre_request``
         event.'''
         if hasattr(self, '_request'):
-            raise RuntimeError('Consumer already started')
+            raise RuntimeError('%s already requested %s' %
+                               (self, self._request))
         conn = self._connection
         if not conn:
             raise RuntimeError('Cannot start new request. No connection.')
