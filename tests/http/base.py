@@ -66,6 +66,7 @@ class TestHttpClientBase:
             cfg = yield from send('arbiter', 'run', s)
             cls.app = cfg.app()
             bits = ('https' if cls.with_tls else 'http',) + cfg.addresses[0]
+            # bits = (bits[0], 'dynquant.com', '8070')
             cls.uri = '%s://%s:%s/' % bits
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
@@ -84,14 +85,18 @@ class TestHttpClientBase:
             yield from send('arbiter', 'kill_actor', cls.proxy_app.name)
 
     @classmethod
+    def proxies(cls):
+        if cls.with_proxy:
+            return {'http': cls.proxy_uri,
+                    'https': cls.proxy_uri,
+                    'ws': cls.proxy_uri,
+                    'wss': cls.proxy_uri}
+
+    @classmethod
     def client(cls, loop=None, parser=None, pool_size=2, verify=False,
                **kwargs):
         parser = cls.parser()
-        if cls.with_proxy:
-            kwargs['proxies'] = {'http': cls.proxy_uri,
-                                 'https': cls.proxy_uri,
-                                 'ws': cls.proxy_uri,
-                                 'wss': cls.proxy_uri}
+        kwargs['proxies'] = cls.proxies()
         return HttpClient(loop=loop, parser=parser, pool_size=pool_size,
                           verify=verify, **kwargs)
 
@@ -163,7 +168,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         content = response.content
         size = response.headers['content-length']
         self.assertEqual(len(content), int(size))
-        self.assertEqual(response.headers['connection'], 'Keep-Alive')
+        self.assertEqual(response.headers['connection'].lower(), 'keep-alive')
         self._check_server(response)
         self.after_test_home_page(response)
         # Try again
