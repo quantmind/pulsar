@@ -98,8 +98,9 @@ class TunnelResponse:
         self.future = asyncio.Future()
 
     def __iter__(self):
-        self.request()
-        yield self.future
+        if not self.future.done():
+            self.request()
+            yield self.future
 
     @task
     def request(self):
