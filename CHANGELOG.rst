@@ -1,4 +1,4 @@
-Ver. 1.1.0 - 2016-Jan-06
+Ver. 1.1.1 - 2016-Jan-06
 ============================
 * Full support for python 3.5
 * Pulsar **1.1.x** is the last minor release ("major.minor.micro") to support python 3.4
