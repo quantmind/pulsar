@@ -36,15 +36,15 @@ Implemenation
 
 .. _`HTTP proxy server`: http://en.wikipedia.org/wiki/Proxy_server
 '''
-import io
 import logging
 from functools import partial
 import asyncio
 
 import pulsar
-from pulsar import HttpException, task, async, add_errback, as_coroutine
+from pulsar import HttpException, task
 from pulsar.apps import wsgi, http
-from pulsar.utils.httpurl import Headers
+from pulsar.apps.http.plugins import noerror
+from pulsar.utils.httpurl import Headers, ENCODE_BODY_METHODS
 from pulsar.utils.log import LocalMixin, local_property
 
 
@@ -57,15 +57,6 @@ logger = logging.getLogger('pulsar.proxyserver')
 def x_forwarded_for(environ, headers):
     '''Add *x-forwarded-for* header'''
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
-
-
-class user_agent:
-    '''Override user-agent header'''
-    def __init__(self, agent):
-        self.agent = agent
-
-    def __call__(self, environ, headers):
-        headers['user-agent'] = self.agent
 
 
 class ProxyServerWsgiHandler(LocalMixin):
@@ -83,156 +74,116 @@ class ProxyServerWsgiHandler(LocalMixin):
     def http_client(self):
         '''The :class:`.HttpClient` used by this proxy middleware for
         accessing upstream resources'''
-        return http.HttpClient(decompress=False, store_cookies=False)
+        client = http.HttpClient(decompress=False, store_cookies=False)
+        client.headers.clear()
+        return client
 
-    @task
     def __call__(self, environ, start_response):
         uri = environ['RAW_URI']
         logger.debug('new request for %r' % uri)
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
-        if environ.get('HTTP_EXPECT') != '100-continue':
-            stream = environ.get('wsgi.input') or io.BytesIO()
-            data = yield from as_coroutine(stream.read())
-        else:
-            data = None
-        request_headers = self.request_headers(environ)
+        response = TunnelResponse(self, environ, start_response)
+        response.request()
+        return response.future
+
+
+############################################################################
+#    RESPONSE OBJECTS
+class TunnelResponse:
+    '''Base WSGI Response Iterator for the Proxy server
+    '''
+    def __init__(self, wsgi, environ, start_response):
+        self.wsgi = wsgi
+        self.environ = environ
+        self.start_response = start_response
+        self.future = asyncio.Future()
+
+    @task
+    def request(self):
+        '''Perform the Http request to the upstream server
+        '''
+        request_headers = self.request_headers()
+        environ = self.environ
         method = environ['REQUEST_METHOD']
+        data = None
+        if method in ENCODE_BODY_METHODS:
+            data = DataIterator(self)
+        http = self.wsgi.http_client
+        try:
+            yield from http.request(method,
+                                    environ['RAW_URI'],
+                                    data=data,
+                                    headers=request_headers,
+                                    version=environ['SERVER_PROTOCOL'],
+                                    pre_request=self.pre_request)
+        except Exception as exc:
+            self.error(exc)
 
-        if method == 'CONNECT':
-            response = ProxyTunnel(environ, start_response)
-        else:
-            response = ProxyResponse(environ, start_response)
-        request = self.http_client.request(method, uri, data=data,
-                                           headers=request_headers,
-                                           version=environ['SERVER_PROTOCOL'],
-                                           pre_request=response.pre_request)
-        add_errback(async(request), response.error)
-        return response
-
-    def request_headers(self, environ):
+    def request_headers(self):
         '''Fill request headers from the environ dictionary and
         modify them via the list of :attr:`headers_middleware`.
         The returned headers will be sent to the target uri.
         '''
         headers = Headers(kind='client')
-        for k in environ:
+        for k in self.environ:
             if k.startswith('HTTP_'):
                 head = k[5:].replace('_', '-')
-                headers[head] = environ[k]
+                headers[head] = self.environ[k]
         for head in ENVIRON_HEADERS:
             k = head.replace('-', '_').upper()
-            v = environ.get(k)
+            v = self.environ.get(k)
             if v:
                 headers[head] = v
-        for middleware in self.headers_middleware:
-            middleware(environ, headers)
+        for middleware in self.wsgi.headers_middleware:
+            middleware(self.environ, headers)
         return headers
 
-
-############################################################################
-#    RESPONSE OBJECTS
-class ProxyResponse(object):
-    '''Asynchronous wsgi response for http requests
-    '''
-    _started = False
-    _headers = None
-    _done = False
-
-    def __init__(self, environ, start_response):
-        self.environ = environ
-        self.start_response = start_response
-        self.queue = asyncio.Queue()
-
-    def __iter__(self):
-        while True:
-            if self._done:
-                try:
-                    yield self.queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    break
-            else:
-                yield async(self.queue.get())
-
-    def pre_request(self, response, exc=None):
-        self._started = True
-        response.bind_event('data_processed', self.data_processed)
-
     def error(self, exc):
-        if not self._started:
-            request = wsgi.WsgiRequest(self.environ)
-            content_type = request.content_types.best_match(
-                ('text/html', 'text/plain'))
-            uri = self.environ['RAW_URI']
-            msg = 'Could not find %s' % uri
-            logger.info(msg=msg)
-            if content_type == 'text/html':
-                html = wsgi.HtmlDocument(title=msg)
-                html.body.append('<h1>%s</h1>' % msg)
-                data = html.render()
-                resp = wsgi.WsgiResponse(504, data, content_type='text/html')
-            elif content_type == 'text/plain':
-                resp = wsgi.WsgiResponse(504, msg, content_type='text/html')
-            else:
-                resp = wsgi.WsgiResponse(504, '')
-            self.start_response(resp.status, resp.get_headers())
-            self._done = True
-            self.queue.put_nowait(resp.content[0])
+        if self.future.done():
+            self.future.set_exception(exc)
+        else:
+            logger.error(str(exc))
 
-    @task
-    def data_processed(self, response, exc=None, **kw):
-        '''Receive data from the requesting HTTP client.'''
-        status = response.get_status()
-        if status == '100 Continue':
-            stream = self.environ.get('wsgi.input') or io.BytesIO()
-            body = yield from stream.read()
-            response.transport.write(body)
-        if response.parser.is_headers_complete():
-            if self._headers is None:
-                headers = self.remove_hop_headers(response.headers)
-                self._headers = Headers(headers, kind='server')
-                # start the response
-                self.start_response(status, list(self._headers))
-            body = response.recv_body()
-            if response.parser.is_message_complete():
-                self._done = True
-            self.queue.put_nowait(body)
-
-    def remove_hop_headers(self, headers):
-        for header, value in headers:
-            if header.lower() not in wsgi.HOP_HEADERS:
-                yield header, value
-
-
-class ProxyTunnel(ProxyResponse):
-    '''Asynchronous wsgi response for https requests
-    '''
+    @noerror
     def pre_request(self, response, exc=None):
         '''Start the tunnel.
 
         This is a callback fired once a connection with upstream server is
         established.
-
-        Write back to the client the 200 Connection established message.
-        After this the downstream connection consumer will upgrade to the
-        DownStreamTunnel.
         '''
-        # Upgrade downstream protocol consumer
-        # set the request to None so that start_request is not called
-        assert response._request.method == 'CONNECT'
-        self._started = True
-        response._request = None
-        upstream = response._connection
-        dostream = self.environ['pulsar.connection']
-        #
-        dostream.upgrade(partial(StreamTunnel, upstream))
-        upstream.upgrade(partial(StreamTunnel, dostream))
-        response.finished()
-        self.start_response('200 Connection established', [])
-        # send empty byte so that headers are sent
-        self.queue.put_nowait(b'')
-        self._done = True
-        return response
+        if response.request.method == 'CONNECT':
+            # proxy - server connection
+            upstream = response.connection
+            # client - proxy connection
+            dostream = self.environ['pulsar.connection']
+            # Upgrade downstream connection
+            dostream.upgrade(partial(StreamTunnel, upstream))
+            # Upgrade upstream connection
+            upstream.upgrade(partial(StreamTunnel, dostream))
+            self.start_response('200 Connection established', [])
+            # send empty byte so that headers are sent
+            self.future.set_result([b''])
+            response.abort_request()
+        else:
+            response.bind_event('data_processed', self.data_processed)
+            response.bind_event('post_request', self.post_request)
+
+    def data_processed(self, response, data=None, **kw):
+        self.environ['pulsar.connection'].write(data)
+
+    def post_request(self, _, exc=None):
+        self.future.set_exception(wsgi.AbortWsgi())
+
+
+class DataIterator:
+
+    def __init__(self, response):
+        self.response = response
+        self.stream = response.environ.get('wsgi.input')
+
+    def __iter__(self):
+        yield self.stream.reader.read()
 
 
 class StreamTunnel(pulsar.ProtocolConsumer):
@@ -248,13 +199,17 @@ class StreamTunnel(pulsar.ProtocolConsumer):
     '''
     headers = None
     status_code = None
+    http_request = None
 
     def __init__(self, tunnel, loop=None):
-        super(StreamTunnel, self).__init__(loop)
+        super().__init__(loop)
         self.tunnel = tunnel
 
     def connection_made(self, connection):
+        self.logger.debug('Tunnel connection %s made', connection)
         connection.bind_event('connection_lost', self._close_tunnel)
+        if self.http_request:
+            self.start(self.http_request)
 
     def data_received(self, data):
         try:
@@ -272,7 +227,6 @@ def server(name='proxy-server', headers_middleware=None,
            server_software=None, **kwargs):
     '''Function to Create a WSGI Proxy Server.'''
     if headers_middleware is None:
-        # headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
         headers_middleware = [x_forwarded_for]
     wsgi_proxy = ProxyServerWsgiHandler(headers_middleware)
     kwargs['server_software'] = server_software or SERVER_SOFTWARE

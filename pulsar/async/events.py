@@ -8,7 +8,13 @@ from .access import _EVENT_LOOP_CLASSES
 from .futures import future_result_exc, AsyncObject
 
 
-__all__ = ['EventHandler', 'Event', 'OneTime']
+__all__ = ['EventHandler', 'Event', 'OneTime', 'AbortEvent']
+
+
+class AbortEvent(Exception):
+    '''Use this exception to abort events
+    '''
+    pass
 
 
 class AbstractEvent(AsyncObject):
@@ -146,9 +152,12 @@ class OneTime(Future, AbstractEvent):
             hnd = self._handlers.popleft()
             try:
                 result = hnd(arg, exc=exc, **kwargs)
+            except AbortEvent as e:
+                exc = e
             except Exception:
                 self.logger.exception('Exception while firing onetime event')
             else:
+                # If result is a future, resume process once done
                 if isinstance(result, Future):
                     result.add_done_callback(
                         partial(self._process, arg, exc, kwargs))

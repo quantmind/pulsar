@@ -22,6 +22,9 @@ __all__ = ['maybe_async',
            'AsyncObject']
 
 
+return_false = lambda: False
+
+
 def chain_future(future, callback=None, errback=None, next=None):
     '''Chain a :class:`~asyncio.Future` to an existing ``future``.
 
@@ -284,6 +287,12 @@ class AsyncObject(object):
         It is either the :attr:`_logger` or the logger of the :attr:`_loop`
         '''
         return self._logger or getattr(self._loop, 'logger', LOGGER)
+
+    @property
+    def debug(self):
+        '''True when in debug mode
+        '''
+        return getattr(self._loop, 'get_debug', return_false)()
 
     def timeit(self, method, times, *args, **kwargs):
         '''Useful utility for benchmarking an asynchronous ``method``.

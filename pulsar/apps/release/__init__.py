@@ -20,9 +20,9 @@ class ReleaseSetting(pulsar.Setting):
 class NoteFile(ReleaseSetting):
     name = "note_file"
     flags = ["--note-file"]
-    default = 'notes.md'
+    default = 'releases/notes.md'
     desc = """\
-        File with release notes inside the relase directory
+        File with release notes
         """
 
 
@@ -115,13 +115,22 @@ class ReleaseManager(pulsar.Application):
         self.git = git = yield from Git.create(self.cfg)
         path = yield from git.toplevel()
         self.logger.info('Repository directory %s', path)
+        # Read the release note file
+        note_file = os.path.join(path, self.cfg.note_file)
+        if not os.path.isfile(note_file):
+            raise ImproperlyConfigured('%s file not available' % note_file)
 
-        with open(os.path.join(path, 'release', 'release.json'), 'r') as file:
+        self.releases_path = os.path.dirname(note_file)
+        release_json = os.path.join(self.releases_path, 'release.json')
+
+        if not os.path.isfile(release_json):
+            raise ImproperlyConfigured('%s file not available' % release_json)
+
+        # Load release config and notes
+        with open(release_json, 'r') as file:
             release = json.load(file)
 
-        # Read the release note file
-        note_file = self.cfg.note_file
-        with open(os.path.join(path, 'release', note_file), 'r') as file:
+        with open(note_file, 'r') as file:
             release['body'] = file.read().strip()
 
         yield from as_coroutine(self.cfg.before_commit(self, release))
@@ -135,8 +144,7 @@ class ReleaseManager(pulsar.Application):
         if self.cfg.commit or self.cfg.push:
             #
             # Add release note to the changelog
-            yield from as_coroutine(self.cfg.write_notes(self, path,
-                                                         version, release))
+            yield from as_coroutine(self.cfg.write_notes(self, release))
             self.logger.info('Commit changes')
             result = yield from git.commit(msg='Release %s' % tag_name)
             self.logger.info(result)

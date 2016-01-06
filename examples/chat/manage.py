@@ -40,7 +40,7 @@ Implementation
 import os
 import time
 
-from pulsar import get_actor, Future, async
+from pulsar import Future, async
 from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,
                               GZipMiddleware)
 from pulsar.apps.ws import WS, WebSocket
@@ -168,11 +168,7 @@ def AsyncResponseMiddleware(environ, resp):
 
 def server(callable=None, name=None, data_store=None, **params):
     name = name or 'wsgi'
-    if not data_store:
-        actor = get_actor()
-        if actor:
-            data_store = actor.cfg.data_store
-        data_store = pulsards_url(data_store)
+    data_store = pulsards_url(data_store)
     return WSGIServer(callable=WebChat(name), name=name,
                       data_store=data_store, **params)
 

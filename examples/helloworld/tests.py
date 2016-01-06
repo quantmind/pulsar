@@ -42,7 +42,7 @@ class TestHelloWorldThread(unittest.TestCase):
         c = self.client
         response = yield from c.get(self.uri)
         self.assertEqual(response.status_code, 200)
-        content = response.get_content()
+        content = response.content
         self.assertEqual(content, b'Hello World!\n')
         headers = response.headers
         self.assertTrue(headers)

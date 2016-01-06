@@ -1,4 +1,4 @@
-'''Pulsar ships with a thread safe, fully featured, :class:`.HttpClient`
+'''Pulsar ships with a fully featured, :class:`.HttpClient`
 class for multiple asynchronous HTTP requests.
 
 To get started, one builds a client::
@@ -101,7 +101,17 @@ Streaming
 
 This is an event-driven client, therefore streaming support is native.
 
-To stream data received from the client one uses the
+The easyiest way to use streaming is to pass the ``stream=True`` parameter
+during a request and access the :attr:`HttpResponse.raw` attribute.
+For example::
+
+    response = yield from http.get(..., stream=True)
+    for data in response.raw:
+        # data can be a future or bytes
+
+The ``raw`` attribute is an iterable over bytes or Futures resulting in bytes.
+
+Another approach to streaming is to use the
 :ref:`data_processed <http-many-time-events>` event handler.
 For example::
 
@@ -268,9 +278,10 @@ OAuth2
 '''
 import os
 import platform
+import logging
+import asyncio
 from functools import partial
 from collections import namedtuple
-from asyncio import wait_for
 from io import StringIO, BytesIO
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from http.client import responses
@@ -280,35 +291,39 @@ except ImportError:
     ssl = None
 
 import pulsar
-from pulsar import AbstractClient, Pool, Connection, ProtocolConsumer
+from pulsar import (AbortRequest, AbstractClient, Pool, Connection, is_async,
+                    ProtocolConsumer)
 from pulsar.utils import websocket
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
 from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata,
                                   Headers, get_environ_proxies,
                                   choose_boundary, request_host,
                                   is_succesful, HTTPError, URLError,
                                   get_hostport, cookiejar_from_dict,
-                                  host_no_default_port,
+                                  host_no_default_port, http_chunks,
                                   parse_options_header, JSON_CONTENT_TYPES)
 
-from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
-                      Tunneling, TooManyRedirects)
+from .plugins import (handle_cookies, handle_100, WebSocket, Redirect,
+                      Tunneling, TooManyRedirects, start_request,
+                      response_content)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
+from .stream import HttpStream, StreamConsumedError
 
 
-__all__ = ['HttpRequest', 'HttpResponse', 'HttpClient',
-           'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2']
+__all__ = ['HttpRequest', 'HttpResponse', 'HttpClient', 'HTTPDigestAuth',
+           'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2',
+           'HttpStream', 'StreamConsumedError']
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
 tls_schemes = ('https', 'wss')
 
+LOGGER = logging.getLogger('pulsar.http')
 FORM_URL_ENCODED = 'application/x-www-form-urlencoded'
 MULTIPART_FORM_DATA = 'multipart/form-data'
 
@@ -318,6 +333,14 @@ def guess_filename(obj):
     name = getattr(obj, 'name', None)
     if name and name[0] != '<' and name[-1] != '>':
         return os.path.basename(name)
+
+
+def is_streamed(data):
+    try:
+        len(data)
+    except TypeError:
+        return True
+    return False
 
 
 class RequestBase(object):
@@ -349,11 +372,16 @@ class RequestBase(object):
     def get_full_url(self):
         return self.full_url
 
+    def write_body(self, transport):
+        pass
+
 
 class HttpTunnel(RequestBase):
     first_line = None
+    data = None
 
     def __init__(self, request, scheme, host):
+        self.status = 0
         self.request = request
         self.scheme = scheme
         self.host, self.port = get_hostport(scheme, host)
@@ -368,7 +396,6 @@ class HttpTunnel(RequestBase):
 
     @property
     def key(self):
-
         return self.request.key
 
     @property
@@ -394,6 +421,19 @@ class HttpTunnel(RequestBase):
 
     def remove_header(self, header_name):
         self.headers.pop(header_name, None)
+
+    def apply(self, response, handler):
+        '''Tunnel the connection if needed
+        '''
+        connection = response.connection
+        tunnel_status = getattr(connection, '_tunnel_status', 0)
+        if not tunnel_status:
+            connection._tunnel_status = 1
+            response.bind_event('pre_request', handler)
+        elif tunnel_status == 1:
+            connection._tunnel_status = 2
+            response._request = self
+            response.bind_event('on_headers', handler.on_headers)
 
 
 class HttpRequest(RequestBase):
@@ -428,11 +468,16 @@ class HttpRequest(RequestBase):
         if ``True``, the :class:`HttpRequest` includes the
         ``Expect: 100-Continue`` header.
 
+    .. attribute:: stream
+
+        Allow for streaming body
+
     '''
     CONNECT = 'CONNECT'
     _proxy = None
     _ssl = None
     _tunnel = None
+    _write_done = False
 
     def __init__(self, client, url, method, inp_params=None, headers=None,
                  data=None, files=None, history=None, auth=None,
@@ -440,7 +485,7 @@ class HttpRequest(RequestBase):
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
                  websocket_handler=None, cookies=None, urlparams=None,
-                 **ignored):
+                 stream=False, proxies=None, **ignored):
         self.client = client
         self._data = None
         self.files = files
@@ -451,7 +496,6 @@ class HttpRequest(RequestBase):
         self.full_url = url
         if urlparams:
             self._encode_url(urlparams)
-        self.set_proxy(None)
         self.history = history
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
@@ -463,22 +507,21 @@ class HttpRequest(RequestBase):
         self.multipart_boundary = multipart_boundary
         self.websocket_handler = websocket_handler
         self.source_address = source_address
+        self.stream = stream
         self.new_parser()
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
-        if auth:
-            headers = headers or []
+        if auth and not isinstance(auth, Auth):
             auth = HTTPBasicAuth(*auth)
-            headers.append(('Authorization', auth.header()))
-
+        self.auth = auth
         self.headers = client.get_headers(self, headers)
         cookies = cookiejar_from_dict(client.cookies, cookies)
         if cookies:
             cookies.add_cookie_header(self)
         self.unredirected_headers['host'] = host_no_default_port(self._scheme,
                                                                  self._netloc)
-        client.set_proxy(self)
         self.data = data
+        self._set_proxy(proxies)
 
     @property
     def address(self):
@@ -501,12 +544,18 @@ class HttpRequest(RequestBase):
 
     @property
     def key(self):
-        return (self.scheme, self.host, self.port)
+        tunnel = self._tunnel.full_url if self._tunnel else None
+        return (self.scheme, self.host, self.port, tunnel)
 
     @property
     def proxy(self):
         '''Proxy server for this request.'''
         return self._proxy
+
+    @property
+    def tunnel(self):
+        '''Tunnel for this request.'''
+        return self._tunnel
 
     @property
     def netloc(self):
@@ -543,11 +592,14 @@ class HttpRequest(RequestBase):
         self._data = self._encode_data(data)
 
     def first_line(self):
-        if not self._proxy and self.method != self.CONNECT:
+        if self._proxy:
+            if self.method == self.CONNECT:
+                url = self._netloc
+            else:
+                url = self.full_url
+        else:
             url = urlunparse(('', '', self.path or '/', self.params,
                               self.query, self.fragment))
-        else:
-            url = self.full_url
         return '%s %s %s' % (self.method, url, self.version)
 
     def new_parser(self):
@@ -555,27 +607,8 @@ class HttpRequest(RequestBase):
                                               decompress=self.decompress,
                                               method=self.method)
 
-    def set_proxy(self, scheme, *host):
-        if not host and scheme is None:
-            self.scheme = self._scheme
-            self._set_hostport(self._scheme, self._netloc)
-        else:
-            le = 2 + len(host)
-            if not le == 3:
-                raise TypeError(
-                    'set_proxy() takes exactly three arguments (%s given)'
-                    % le)
-            if not self._ssl:
-                self.scheme = scheme
-                self._set_hostport(scheme, host[0])
-                self._proxy = scheme_host(scheme, host[0])
-            else:
-                self._tunnel = HttpTunnel(self, scheme, host[0])
-
-    def _set_hostport(self, scheme, host):
-        self._tunnel = None
-        self._proxy = None
-        self.host, self.port = get_hostport(scheme, host)
+    def is_chunked(self):
+        return self.data and 'content-length' not in self.headers
 
     def encode(self):
         '''The bytes representation of this :class:`HttpRequest`.
@@ -585,17 +618,13 @@ class HttpRequest(RequestBase):
         '''
         # Call body before fist_line in case the query is changes.
         first_line = self.first_line()
-        body = self.data
-        if body and self.wait_continue:
+        if self.data and self.wait_continue:
             self.headers['expect'] = '100-continue'
-            body = None
         headers = self.headers
         if self.unredirected_headers:
             headers = self.unredirected_headers.copy()
             headers.update(self.headers)
         buffer = [first_line.encode('ascii'), b'\r\n',  bytes(headers)]
-        if body:
-            buffer.append(body)
         return b''.join(buffer)
 
     def add_header(self, key, value):
@@ -616,11 +645,23 @@ class HttpRequest(RequestBase):
     def remove_header(self, header_name):
         '''Remove ``header_name`` from this request.
         '''
-        self.headers.pop(header_name, None)
-        self.unredirected_headers.pop(header_name, None)
+        val1 = self.headers.pop(header_name, None)
+        val2 = self.unredirected_headers.pop(header_name, None)
+        return val1 or val2
 
     def add_unredirected_header(self, header_name, header_value):
         self.unredirected_headers[header_name] = header_value
+
+    def write_body(self, transport):
+        assert not self._write_done, 'Body already sent'
+        self._write_done = True
+        if not self.data:
+            return
+        if is_streamed(self.data):
+            asyncio.async(self._write_streamed_data(transport),
+                          loop=transport._loop)
+        else:
+            self._write_body_data(transport, self.data, True)
 
     # INTERNAL ENCODING METHODS
     def _encode_data(self, data):
@@ -636,6 +677,14 @@ class HttpRequest(RequestBase):
             assert self.files is None, ('data cannot be string when files are '
                                         'present')
             body = to_bytes(data, self.charset)
+        elif data and is_streamed(data):
+            assert self.files is None, ('data cannot be an iterator when '
+                                        'files are present')
+            if 'content-type' not in self.headers:
+                self.headers['content-type'] = 'application/octet-stream'
+            if 'content-length' not in self.headers:
+                self.headers['transfer-encoding'] = 'chunked'
+            return data
         elif data or self.files:
             if self.files:
                 body, content_type = self._encode_files(data)
@@ -722,6 +771,55 @@ class HttpRequest(RequestBase):
                              content_type)
         return body, content_type
 
+    def _write_body_data(self, transport, data, finish=False):
+        if self.is_chunked():
+            data = http_chunks(data, finish)
+        elif data:
+            data = (data,)
+        else:
+            return
+        for chunk in data:
+            transport.write(chunk)
+
+    def _write_streamed_data(self, transport):
+        for data in self.data:
+            if is_async(data):
+                data = yield from data
+            self._write_body_data(transport, data)
+        self._write_body_data(transport, b'', True)
+
+    # PROXY INTERNALS
+    def _set_proxy(self, proxies):
+        request_proxies = self.client.proxies.copy()
+        if proxies:
+            request_proxies.update(proxies)
+        self.proxies = request_proxies
+        self.scheme = self._scheme
+        self._set_hostport(self._scheme, self._netloc)
+        #
+        if self.scheme in request_proxies:
+            hostonly = self.host
+            no_proxy = [n for n in request_proxies.get('no', '').split(',')
+                        if n]
+            if not any(map(hostonly.endswith, no_proxy)):
+                url = request_proxies[self.scheme]
+                p = urlparse(url)
+                if not p.scheme:
+                    raise ValueError('Could not understand proxy %s' % url)
+                scheme = p.scheme
+                host = p.netloc
+                if not self._ssl:
+                    self.scheme = scheme
+                    self._set_hostport(scheme, host)
+                    self._proxy = scheme_host(scheme, host)
+                else:
+                    self._tunnel = HttpTunnel(self, scheme, host)
+
+    def _set_hostport(self, scheme, host):
+        self._tunnel = None
+        self._proxy = None
+        self.host, self.port = get_hostport(scheme, host)
+
 
 class HttpResponse(ProtocolConsumer):
     '''A :class:`.ProtocolConsumer` for the HTTP client protocol.
@@ -746,8 +844,9 @@ class HttpResponse(ProtocolConsumer):
     _data_sent = None
     _status_code = None
     _cookies = None
+    _raw = None
     request_again = None
-    ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
+    ONE_TIME_EVENTS = ('pre_request', 'on_headers', 'post_request')
 
     @property
     def parser(self):
@@ -755,11 +854,9 @@ class HttpResponse(ProtocolConsumer):
         if request:
             return request.parser
 
-    def __str__(self):
-        return '%s' % (self.status_code or '<None>')
-
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self)
+        return '<Response [%s]>' % (self.status_code or 'None')
+    __str__ = __repr__
 
     @property
     def status_code(self):
@@ -796,10 +893,26 @@ class HttpResponse(ProtocolConsumer):
             return False
 
     @property
+    def ok(self):
+        return not self.is_error
+
+    @property
     def cookies(self):
         '''Dictionary of cookies set by the server or ``None``.
         '''
         return self._cookies
+
+    @property
+    def content(self):
+        '''Content of the response, in bytes'''
+        return response_content(self)
+
+    @property
+    def raw(self):
+        '''A raw asynchronous Http response'''
+        if self._raw is None:
+            self._raw = HttpStream(self)
+        return self._raw
 
     def recv_body(self):
         '''Flush the response body and return it.'''
@@ -810,22 +923,16 @@ class HttpResponse(ProtocolConsumer):
         if code:
             return '%d %s' % (code, responses.get(code, 'Unknown'))
 
-    def get_content(self):
-        '''Retrieve the body without flushing'''
-        b = self.parser.recv_body()
-        if b or self._content is None:
-            self._content = self._content + b if self._content else b
-        return self._content
-
-    def content_string(self, charset=None, errors=None):
+    def text(self, charset=None, errors=None):
         '''Decode content as a string.'''
-        data = self.get_content()
+        data = self.content
         if data is not None:
             return data.decode(charset or 'utf-8', errors or 'strict')
+    content_string = text
 
     def json(self, charset=None):
         '''Decode content as a JSON object.'''
-        return json.loads(self.content_string(charset))
+        return json.loads(self.text(charset))
 
     def decode_content(self):
         '''Return the best possible representation of the response body.
@@ -837,8 +944,8 @@ class HttpResponse(ProtocolConsumer):
             if ct in JSON_CONTENT_TYPES:
                 return self.json(charset)
             elif ct.startswith('text/'):
-                return self.content_string(charset)
-        return self.get_content()
+                return self.text(charset)
+        return self.content
 
     def raise_for_status(self):
         '''Raises stored :class:`HTTPError` or :class:`URLError`, if occured.
@@ -846,7 +953,7 @@ class HttpResponse(ProtocolConsumer):
         if self.is_error:
             if self.status_code:
                 raise HTTPError(self.url, self.status_code,
-                                self.content_string(), self.headers, None)
+                                self.text(), self.headers, None)
             else:
                 raise URLError(self.on_finished.result.error)
 
@@ -859,10 +966,13 @@ class HttpResponse(ProtocolConsumer):
     # #####################################################################
     # #    PROTOCOL IMPLEMENTATION
     def start_request(self):
-        self.transport.write(self._request.encode())
+        request = self._request
+        self.transport.write(request.encode())
+        if request.headers.get('expect') != '100-continue':
+            self.write_body()
 
     def data_received(self, data):
-        request = self._request
+        request = self.request
         # request.parser my change (100-continue)
         # Always invoke it via request
         try:
@@ -878,6 +988,9 @@ class HttpResponse(ProtocolConsumer):
                 raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
         except Exception as exc:
             self.finished(exc=exc)
+
+    def write_body(self):
+        self.request.write_body(self.transport)
 
 
 class HttpClient(AbstractClient):
@@ -921,7 +1034,7 @@ class HttpClient(AbstractClient):
 
         Default: ``True``
 
-    .. attribute:: proxy_info
+    .. attribute:: proxies
 
         Dictionary of proxy servers for this client.
 
@@ -941,7 +1054,6 @@ class HttpClient(AbstractClient):
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'on_headers',
                          'post_request', 'connection_lost')
     protocol_factory = partial(Connection, HttpResponse)
-    allow_redirects = False
     max_redirects = 10
     '''Maximum number of redirects.
 
@@ -966,21 +1078,22 @@ class HttpClient(AbstractClient):
         ('Proxy-Connection', 'Keep-Alive')],
         kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
-                          'allow_redirects', 'multipart_boundary', 'version',
-                          'websocket_handler', 'verify')
+                          'websocket_handler', 'multipart_boundary', 'version',
+                          'verify', 'stream')
     # Default hosts not affected by proxy settings. This can be overwritten
-    # by specifying the "no" key in the proxy_info dictionary
+    # by specifying the "no" key in the proxies dictionary
     no_proxy = set(('localhost', platform.node()))
 
-    def __init__(self, proxy_info=None, cache=None, headers=None,
+    def __init__(self, proxies=None, cache=None, headers=None,
                  encode_multipart=True, multipart_boundary=None,
                  keyfile=None, certfile=None, verify=True,
                  ca_certs=None, cookies=None, store_cookies=True,
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
-                 loop=None, client_version=None, timeout=None,
-                 pool_size=10, frame_parser=None):
+                 loop=None, client_version=None, timeout=None, stream=False,
+                 pool_size=10, frame_parser=None, logger=None):
         super().__init__(loop)
+        self._logger = logger or LOGGER
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
         self.pool_size = pool_size
@@ -992,17 +1105,18 @@ class HttpClient(AbstractClient):
         self.decompress = decompress
         self.version = version or self.version
         self.verify = verify
+        self.stream = stream
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
             dheaders.override(headers)
         self.headers = dheaders
         self.tunnel_headers = self.DEFAULT_TUNNEL_HEADERS.copy()
-        self.proxy_info = dict(proxy_info or ())
-        if not self.proxy_info and self.trust_env:
-            self.proxy_info = get_environ_proxies()
-            if 'no' not in self.proxy_info:
-                self.proxy_info['no'] = ','.join(self.no_proxy)
+        self.proxies = dict(proxies or ())
+        if not self.proxies and self.trust_env:
+            self.proxies = get_environ_proxies()
+            if 'no' not in self.proxies:
+                self.proxies['no'] = ','.join(self.no_proxy)
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
         self.websocket_handler = websocket_handler
@@ -1011,16 +1125,10 @@ class HttpClient(AbstractClient):
         # Add hooks
         self.bind_event('finish', self._close)
         self.bind_event('pre_request', Tunneling(self._loop))
-        self.bind_event('on_headers', handle_101)
+        self.bind_event('pre_request', WebSocket())
         self.bind_event('on_headers', handle_100)
         self.bind_event('on_headers', handle_cookies)
-        self.bind_event('post_request', handle_redirect)
-
-    @property
-    def websocket_key(self):
-        if not hasattr(self, '_websocket_key'):
-            self._websocket_key = websocket_key()
-        return self._websocket_key
+        self.bind_event('post_request', Redirect())
 
     def connect(self, address):
         if isinstance(address, tuple):
@@ -1105,7 +1213,7 @@ class HttpClient(AbstractClient):
         if timeout is None:
             timeout = self.timeout
         if timeout:
-            response = wait_for(response, timeout, loop=self._loop)
+            response = asyncio.wait_for(response, timeout, loop=self._loop)
         if not self._loop.is_running():
             return self._loop.run_until_complete(response)
         else:
@@ -1125,27 +1233,26 @@ class HttpClient(AbstractClient):
             self.connection_pools[request.key] = pool
         conn = yield from pool.connect()
         with conn:
-            consumer = conn.current_consumer()
-            # bind request-specific events
-            consumer.bind_events(**request.inp_params)
-            consumer.start(request)
-            response = yield from consumer.on_finished
-            if response is not None:
-                consumer = response
-            if consumer.request_again:
-                if isinstance(consumer.request_again, Exception):
-                    raise consumer.request_again
-                elif isinstance(consumer.request_again, ProtocolConsumer):
-                    consumer = consumer.request_again
-            headers = consumer.headers
+            try:
+                response = yield from start_request(request, conn)
+                headers = response.headers
+            except AbortRequest:
+                response = None
+                headers = None
+
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
-                    consumer.status_code == 101):
-                conn = conn.detach()
-        if isinstance(consumer.request_again, tuple):
-            method, url, params = consumer.request_again
-            consumer = yield from self._request(method, url, **params)
-        return consumer
+                    response.status_code == 101 or
+                    # Streaming responses return before the response
+                    # is finished - therefore we detach the connection
+                    response.request.stream):
+                conn.detach()
+
+        # Handle a possible redirect
+        if response and isinstance(response.request_again, tuple):
+            method, url, params = response.request_again
+            response = yield from self._request(method, url, **params)
+        return response
 
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
@@ -1161,16 +1268,7 @@ class HttpClient(AbstractClient):
     def get_headers(self, request, headers=None):
         # Returns a :class:`Header` obtained from combining
         # :attr:`headers` with *headers*. Can handle websocket requests.
-        if request.scheme in ('ws', 'wss'):
-            d = Headers((
-                ('Connection', 'Upgrade'),
-                ('Upgrade', 'websocket'),
-                ('Sec-WebSocket-Version', str(max(SUPPORTED_VERSIONS))),
-                ('Sec-WebSocket-Key', self.websocket_key),
-                ('user-agent', self.client_version)
-                ), kind='client')
-        else:
-            d = self.headers.copy()
+        d = self.headers.copy()
         if headers:
             d.override(headers)
         return d
@@ -1188,18 +1286,6 @@ class HttpClient(AbstractClient):
                                               keyfile=keyfile,
                                               cafile=cafile, capath=capath,
                                               cadata=cadata)
-
-    def set_proxy(self, request):
-        if request.scheme in self.proxy_info:
-            hostonly = request.host
-            no_proxy = [n for n in self.proxy_info.get('no', '').split(',')
-                        if n]
-            if not any(map(hostonly.endswith, no_proxy)):
-                url = self.proxy_info[request.scheme]
-                p = urlparse(url)
-                if not p.scheme:
-                    raise ValueError('Could not understand proxy %s' % url)
-                request.set_proxy(p.scheme, p.netloc)
 
     def _connect(self, host, port, ssl):
         _, connection = yield from self._loop.create_connection(

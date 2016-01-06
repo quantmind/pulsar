@@ -148,6 +148,14 @@ class HttpBin(BaseRouter):
     def post_post(self, request):
         return self.info_data_response(request)
 
+    @route(title='Returns Post bytes data')
+    def post_post_chunks(self, request):
+        data, _ = request.data_and_files()
+        content_type = request.get('CONTENT_TYPE')
+        request.response.content_type = content_type
+        request.response.content = data
+        return request.response
+
     @route(title='Returns PATCH data')
     def patch_patch(self, request):
         return self.info_data_response(request)
@@ -202,7 +210,8 @@ class HttpBin(BaseRouter):
            defaults={'status': 418})
     def status(self, request):
         request.response.content_type = 'text/html'
-        raise HttpException(status=request.urlargs['status'])
+        msg = request.url_data.get('message', 'test error')
+        raise HttpException(msg, status=request.urlargs['status'])
 
     @route(title='Returns response headers')
     def response_headers(self, request):

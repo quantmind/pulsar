@@ -66,6 +66,10 @@ DEFAULT_PULSAR_STORE_ADDRESS = '127.0.0.1:6410'
 
 
 def pulsards_url(address=None):
+    if not address:
+        actor = pulsar.get_actor()
+        if actor:
+            address = actor.cfg.data_store
     address = address or DEFAULT_PULSAR_STORE_ADDRESS
     if not address.startswith('pulsar://'):
         address = 'pulsar://%s' % address
@@ -129,7 +133,8 @@ class KeyValuePassword(PulsarDsSetting):
 
 class KeyValueSave(PulsarDsSetting):
     name = "key_value_save"
-    default = [(900, 1), (300, 10), (60, 10000)]
+    # default = [(900, 1), (300, 10), (60, 10000)]
+    default = []
     validator = validate_list_of_pairs
     desc = '''\
         List of pairs controlling data store persistence.
@@ -2422,7 +2427,7 @@ class Storage(object):
 
     def _loaddb(self):
         filename = self._filename
-        if os.path.isfile(filename):
+        if self.cfg.key_value_save and os.path.isfile(filename):
             self.logger.info('loading data from "%s"', filename)
             with open(filename, 'rb') as file:
                 data = pickle.load(file)

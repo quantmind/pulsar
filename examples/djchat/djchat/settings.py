@@ -10,7 +10,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+APP_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(APP_DIR)
 
 
 # Quick-start development settings - unsuitable for production
@@ -21,8 +22,6 @@ SECRET_KEY = 'fux9z2i)6ab$b_5*^z@96hdtqfj5=ct7b)m6_6cfrr5g%x#=81'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -39,6 +38,21 @@ INSTALLED_APPS = (
     'pulsar.apps.pulse',
     'djchat'
 )
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(APP_DIR, 'templates')],
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages'
+            ]
+        }
+    }
+]
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

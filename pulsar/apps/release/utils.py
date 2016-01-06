@@ -23,13 +23,13 @@ def change_version(manager, version):
         file.write(text)
 
 
-def write_notes(manager, path, version, release):
-    history = os.path.join(path, 'release', 'history')
+def write_notes(manager, release):
+    history = os.path.join(manager.release_path, 'history')
     if not os.path.isdir(history):
         return False
     dt = date.today()
     dt = dt.strftime('%Y-%b-%d')
-    vv = '.'.join((str(s) for s in version[:2]))
+    vv = release['tag_name']
     filename = os.path.join(history, '%s.md' % vv)
     body = ['# Ver. %s - %s' % (release['tag_name'], dt),
             '\n',

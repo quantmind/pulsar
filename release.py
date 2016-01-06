@@ -4,11 +4,11 @@ from datetime import date
 from pulsar.apps.release import ReleaseManager
 version_file = os.path.join(os.path.dirname(__file__), 'pulsar', '__init__.py')
 
-note_file = 'notes.rst'
+note_file = 'releases/notes.rst'
 
 
-def write_notes(manager, path, version, release):
-    filename = os.path.join(path, 'CHANGELOG.rst')
+def write_notes(manager, release):
+    filename = 'CHANGELOG.rst'
     dt = date.today()
     dt = dt.strftime('%Y-%b-%d')
     body = ['Ver. %s - %s' % (release['tag_name'], dt),

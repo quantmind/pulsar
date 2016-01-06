@@ -118,6 +118,7 @@ URI_UNRESERVED_SET = frozenset(ascii_letters + string.digits + '-._~')
 URI_SAFE_CHARS = URI_RESERVED_CHARS + '%~'
 HEADER_TOKEN_CHARS = frozenset("!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                '^_`abcdefghijklmnopqrstuvwxyz|~')
+MAX_CHUNK_SIZE = 65536
 
 
 def escape(s):
@@ -1364,3 +1365,25 @@ class CacheControl(object):
                 headers.add_header('cache-control', 'proxy-revalidate')
         else:
             headers['cache-control'] = 'no-cache'
+
+
+def chunk_encoding(chunk):
+    '''Write a chunk::
+
+        chunk-size(hex) CRLF
+        chunk-data CRLF
+
+    If the size is 0, this is the last chunk, and an extra CRLF is appended.
+    '''
+    head = ("%X\r\n" % len(chunk)).encode('utf-8')
+    return head + chunk + b'\r\n'
+
+
+def http_chunks(data, finish=False):
+    while len(data) >= MAX_CHUNK_SIZE:
+        chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
+        yield chunk_encoding(chunk)
+    if data:
+        yield chunk_encoding(data)
+    if finish:
+        yield chunk_encoding(data)

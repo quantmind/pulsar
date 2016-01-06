@@ -276,7 +276,7 @@ def render_error(request, exc):
     if debug:
         msg = render_error_debug(request, exc, is_html)
     else:
-        msg = error_messages.get(response.status_code) or str(exc)
+        msg = escape(error_messages.get(response.status_code) or exc)
         if is_html:
             msg = textwrap.dedent("""
                 <h1>{0[reason]}</h1>

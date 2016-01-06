@@ -26,7 +26,7 @@ from pulsar import (reraise, HttpException, ProtocolError, task, isfuture,
                     BadRequest)
 from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, has_empty_content, http_parser,
-                                  iri_to_uri)
+                                  iri_to_uri, http_chunks)
 
 from pulsar.utils.internet import is_tls
 from pulsar.async.protocols import ProtocolConsumer
@@ -35,11 +35,14 @@ from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
                     log_wsgi_info, LOGGER)
 from .formdata import http_protocol, HttpBodyReader
 
-__all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
+__all__ = ['HttpServerResponse', 'test_wsgi_environ', 'AbortWsgi']
 
 
-MAX_CHUNK_SIZE = 65536
 MAX_TIME_IN_LOOP = 0.2
+
+
+class AbortWsgi(Exception):
+    pass
 
 
 def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
@@ -165,19 +168,7 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
     return environ
 
 
-def chunk_encoding(chunk):
-    '''Write a chunk::
-
-        chunk-size(hex) CRLF
-        chunk-data CRLF
-
-    If the size is 0, this is the last chunk, and an extra CRLF is appended.
-    '''
-    head = ("%X\r\n" % len(chunk)).encode('utf-8')
-    return head + chunk + b'\r\n'
-
-
-def keep_alive(headers, version):
+def keep_alive(headers, version, method):
     """ return True if the connection should be kept alive"""
     conn = set((v.lower() for v in headers.get_all('connection', ())))
     if "close" in conn:
@@ -189,6 +180,8 @@ def keep_alive(headers, version):
         return True
     elif version == (1, 1):
         headers['connection'] = 'keep-alive'
+        return True
+    elif method == 'CONNECT':
         return True
     else:
         return False
@@ -250,7 +243,9 @@ class HttpServerResponse(ProtocolConsumer):
                                                    self.transport,
                                                    loop=self._loop)
                 self._response(self.wsgi_environ())
-            self._body_reader.feed_data(parser.recv_body())
+            body = parser.recv_body()
+            if body:
+                self._body_reader.feed_data(body)
         #
         if parser.is_message_complete():
             #
@@ -361,15 +356,11 @@ class HttpServerResponse(ProtocolConsumer):
             chunks.append(self._headers_sent)
         if data:
             if self.chunked:
-                while len(data) >= MAX_CHUNK_SIZE:
-                    chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
-                    chunks.append(chunk_encoding(chunk))
-                if data:
-                    chunks.append(chunk_encoding(data))
+                chunks.extend(http_chunks(data))
             else:
                 chunks.append(data)
         elif force and self.chunked:
-            chunks.append(chunk_encoding(data))
+            chunks.extend(http_chunks(data, True))
         if chunks:
             return write(b''.join(chunks))
 
@@ -423,7 +414,8 @@ class HttpServerResponse(ProtocolConsumer):
                 # make sure we write headers and last chunk if needed
                 self.write(b'', True)
 
-            except IOError:     # client disconnected, end this connection
+            # client disconnected, end this connection
+            except (IOError, AbortWsgi):
                 self.finished()
             except Exception:
                 if wsgi_request(environ).cache.handle_wsgi_error:
@@ -435,10 +427,12 @@ class HttpServerResponse(ProtocolConsumer):
                     done = False
                     exc_info = sys.exc_info()
             else:
-                if not self.keep_alive:
-                    self.connection.close()
-                self.finished()
                 log_wsgi_info(self.logger.info, environ, self.status)
+                self.finished()
+                if not self.keep_alive:
+                    self.logger.debug('No keep alive, closing connection %s',
+                                      self.connection)
+                    self.connection.close()
             finally:
                 if hasattr(response, 'close'):
                     try:
@@ -497,7 +491,8 @@ class HttpServerResponse(ProtocolConsumer):
                                extra={'pulsar.connection': self.connection,
                                       'pulsar.cfg': self.cfg,
                                       'wsgi.multiprocess': multiprocess})
-        self.keep_alive = keep_alive(self.headers, self.parser.get_version())
+        self.keep_alive = keep_alive(self.headers, self.parser.get_version(),
+                                     environ['REQUEST_METHOD'])
         self.headers.update([('Server', self.SERVER_SOFTWARE),
                              ('Date', format_date_time(time.time()))])
         return environ

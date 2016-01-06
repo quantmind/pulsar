@@ -4,6 +4,7 @@ sudo: false
 
 python:
   - 3.4.3
+  - 3.5.1
 
 services:
   - redis-server
@@ -17,10 +18,9 @@ services:
 
 script:
   - flake8
-  - ls -la
   - rm -rf pulsar build pulsar.egg-info dist
   - python -m runtests --coverage
-  - python -m runtests --coveralls
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python -m runtests --coveralls; fi
 
 notifications:
   email: false

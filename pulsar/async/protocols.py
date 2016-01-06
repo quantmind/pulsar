@@ -5,7 +5,7 @@ import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
 from .futures import multi_async, task, Future
-from .events import EventHandler
+from .events import EventHandler, AbortEvent
 from .mixins import FlowControl, Timeout
 
 
@@ -15,7 +15,12 @@ __all__ = ['ProtocolConsumer',
            'Connection',
            'Producer',
            'TcpServer',
-           'DatagramServer']
+           'DatagramServer',
+           'AbortRequest']
+
+
+class AbortRequest(AbortEvent):
+    pass
 
 
 class ProtocolConsumer(EventHandler):
@@ -141,7 +146,8 @@ class ProtocolConsumer(EventHandler):
         For server side consumer, this method simply fires the ``pre_request``
         event.'''
         if hasattr(self, '_request'):
-            raise RuntimeError('Consumer already started')
+            raise RuntimeError('%s already requested %s' %
+                               (self, self._request))
         conn = self._connection
         if not conn:
             raise RuntimeError('Cannot start new request. No connection.')
@@ -153,12 +159,30 @@ class ProtocolConsumer(EventHandler):
             conn._producer._requests_processed = p + 1
         self.bind_event('post_request', self._finished)
         self._request = request
-        self.fire_event('pre_request')
-        if self._request is not None:
-            try:
-                self.start_request()
-            except Exception as exc:
-                self.finished(exc=exc)
+        return asyncio.async(self._start(), loop=self._loop)
+
+    def abort_request(self):
+        '''Abort the request.
+
+        This method can be called during the pre-request stage
+        '''
+        future = self.events['pre_request']
+        if future.done():
+            raise RuntimeError('Request already sent')
+        future.add_done_callback(self._abort_request)
+        raise AbortRequest
+
+    def _start(self):
+        try:
+            yield from self.fire_event('pre_request')
+        except AbortEvent:
+            self.logger.debug('Abort request %s', self.request)
+        else:
+            if self._request is not None:
+                try:
+                    self.start_request()
+                except Exception as exc:
+                    self.finished(exc=exc)
 
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
@@ -205,6 +229,16 @@ class ProtocolConsumer(EventHandler):
         if c and c._current_consumer is self:
             c._current_consumer = None
 
+    @task
+    def _abort_request(self, fut):
+        exc = fut.exception()
+        for event in self.ONE_TIME_EVENTS:
+            if not self.event(event).fired():
+                try:
+                    yield from self.fire_event(event, exc=exc)
+                except AbortRequest:
+                    pass
+
 
 class PulsarProtocol(EventHandler, FlowControl):
     '''A mixin class for both :class:`.Protocol` and
@@ -222,19 +256,18 @@ class PulsarProtocol(EventHandler, FlowControl):
 
     _transport = None
     _address = None
-    _type = 'server'
 
-    def __init__(self, loop, session=1, producer=None, **kw):
+    def __init__(self, loop, session=1, producer=None, logger=None, **kw):
         super().__init__(loop)
         FlowControl.__init__(self, **kw)
+        self._logger = logger
         self._session = session
         self._producer = producer
 
     def __repr__(self):
         address = self._address
         if address:
-            return '%s %s session %s' % (self._type, nice_address(address),
-                                         self._session)
+            return '%s session %s' % (nice_address(address), self._session)
         else:
             return '<pending> session %s' % self._session
     __str__ = __repr__
@@ -288,6 +321,8 @@ class PulsarProtocol(EventHandler, FlowControl):
     def close(self):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
+            if self.debug:
+                self.logger.debug('Closing connection %s', self)
             if self._transport.can_write_eof():
                 try:
                     self._transport.write_eof()
@@ -310,7 +345,6 @@ class PulsarProtocol(EventHandler, FlowControl):
         self._transport = transport
         addr = self._transport.get_extra_info('peername')
         if not addr:
-            self._type = 'client'
             addr = self._transport.get_extra_info('sockname')
         self._address = addr
         # let everyone know we have a connection with endpoint
@@ -319,10 +353,13 @@ class PulsarProtocol(EventHandler, FlowControl):
     def connection_lost(self, exc=None):
         '''Fires the ``connection_lost`` event.
         '''
+        if self.debug and not exc:
+            self.logger.debug('Lost connection %s', self)
         self.fire_event('connection_lost')
 
     def eof_received(self):
-        '''The socket was closed from the remote end'''
+        '''The socket was closed from the remote end
+        '''
 
     def info(self):
         info = {'connection': {'session': self._session}}
@@ -415,10 +452,11 @@ class Connection(Protocol, Timeout):
         '''
         self._data_received_count = self._data_received_count + 1
         self.fire_event('data_received', data=data)
-        while data:
+        toprocess = data
+        while toprocess:
             consumer = self.current_consumer()
-            data = consumer._data_received(data)
-            if isinstance(data, Future):
+            toprocess = consumer._data_received(toprocess)
+            if isinstance(toprocess, Future):
                 break
         self.fire_event('data_processed', data=data)
 
@@ -453,7 +491,7 @@ class Connection(Protocol, Timeout):
         return info
 
     def _build_consumer(self, _, exc=None):
-        if not exc:
+        if not exc or isinstance(exc, AbortEvent):
             consumer = self._producer.build_consumer(self._consumer_factory)
             assert self._current_consumer is None, 'Consumer is not None'
             self._current_consumer = consumer
@@ -517,6 +555,7 @@ class Producer(EventHandler):
         kw['session'] = self.sessions
         kw['producer'] = self
         kw['loop'] = self._loop
+        kw['logger'] = self._logger
         return self.protocol_factory(**kw)
 
     def build_consumer(self, consumer_factory):
@@ -528,6 +567,7 @@ class Producer(EventHandler):
         :param consumer_factory: consumer factory to use.
         '''
         consumer = consumer_factory(loop=self._loop)
+        consumer._logger = self._logger
         consumer.copy_many_times_events(self)
         return consumer
 
