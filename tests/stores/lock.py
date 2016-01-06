@@ -37,7 +37,7 @@ class RedisLockTests:
         lock = self.client.lock(key, timeout=10)
         yield from eq(lock.acquire(), True)
         ttl = yield from self.client.ttl(lock.name)
-        self.assertTrue(8 < ttl <= 10)
+        self.assertTrue(2 < ttl <= 10)
         yield from eq(lock.release(), True)
 
     def test_float_timeout(self):
@@ -46,7 +46,7 @@ class RedisLockTests:
         lock = self.client.lock(key, timeout=9.5)
         yield from eq(lock.acquire(), True)
         ttl = yield from self.client.pttl(lock.name)
-        self.assertTrue(8000 < ttl <= 9500)
+        self.assertTrue(4000 < ttl <= 9500)
         yield from eq(lock.release(), True)
 
     def test_blocking_timeout(self):
