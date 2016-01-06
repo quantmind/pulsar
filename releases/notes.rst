@@ -1,5 +1,11 @@
+* Full support for Python 3.5.
+* Pulsar **1.1.x** is the last minor release ("major.minor.micro") to support python 3.4
+* From Pulsar **1.2.x** support for python 3.4 will be dropped and the new
+  async-await_ syntax will be used in the whole codebase.
+
 Core
 -----------------
+* Full support for python 3.5 including CI
 * Added ``debug`` properties to all ``AsyncObject``. The property returns the event loop
   debug mode flag
 
@@ -34,3 +40,4 @@ Examples
 * Updated django chat example so that warning are no longer issued
 
 .. _requests: http://docs.python-requests.org/
+.. _async-await: https://www.python.org/dev/peps/pep-0492/#specification
