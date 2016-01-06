@@ -1,3 +1,8 @@
+Core
+-----------------
+* Added ``debug`` properties to all ``AsyncObject``. The property returns the event loop
+  debug mode flag
+
 HttpClient
 ----------------
 * Backward incompatible changes with API much closer to resquests_ and far better support for streaming both uploads and downloads
@@ -9,13 +14,21 @@ HttpClient
 * You can now pass ``proxies`` dictionary during a request
 * Stream uploads by passing a generator as ``data`` parameter
 * Better websocket upgrade process
+* Tidy up ``CONNECT`` request url (for tunneling)
+* Added tests for proxyserver example using requests_
 
-Protocols
------------------
-* Added ``debug`` properties to all ``AsyncObject``. The property returns the event loop
-  debug mode flag
+WSGI
+------
+* Both ``wsgi`` and ``http`` apps use the same ``pulsar.utils.httpurl.http_chunks``
+  function for transfer-encoding ``chunked``
+* `` render_error`` escape the Exception message to prevent [XSS](https://en.wikipedia.org/wiki/Cross-site_scripting)
 
-Other
+Data Store
+-----------
+* Better ``pulsards_url`` function, default value form ``cfg.data_store``
+* ``key_value_save`` set to empty list by default (no persistence)
+
+Examples
 -------------
 * Refactored proxy server example
 * Updated django chat example so that warning are no longer issued

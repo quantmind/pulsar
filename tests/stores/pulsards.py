@@ -155,7 +155,7 @@ class RedisCommands(StoreMixin):
         yield from eq(c.move(key, db), False)
         yield from eq(c.exists(key), True)
 
-    def __test_randomkey(self):
+    def test_randomkey(self):
         key = self.randomkey()
         c = self.client
         eq = self.async.assertEqual

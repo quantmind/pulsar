@@ -210,7 +210,8 @@ class HttpBin(BaseRouter):
            defaults={'status': 418})
     def status(self, request):
         request.response.content_type = 'text/html'
-        raise HttpException(status=request.urlargs['status'])
+        msg = request.url_data.get('message', 'test error')
+        raise HttpException(msg, status=request.urlargs['status'])
 
     @route(title='Returns response headers')
     def response_headers(self, request):
