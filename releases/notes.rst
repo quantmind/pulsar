@@ -5,7 +5,7 @@ Core
 
 HttpClient
 ----------------
-* Backward incompatible changes with API much closer to resquests_ and far better support for streaming both uploads and downloads
+* Backward incompatible changes with API much closer to requests_ and far better support for streaming both uploads and downloads
 * Added ``content`` attribute to ``HttpResponse``, in line with requests_
 * Ability to pass ``stream=True`` during a request, same API as python requests_
 * Added the ``raw`` property to the Http Response, it can be used in conjunction with
@@ -21,7 +21,7 @@ WSGI
 ------
 * Both ``wsgi`` and ``http`` apps use the same ``pulsar.utils.httpurl.http_chunks``
   function for transfer-encoding ``chunked``
-* `` render_error`` escape the Exception message to prevent [XSS](https://en.wikipedia.org/wiki/Cross-site_scripting)
+* ``render_error`` escapes the Exception message to prevent XSS_
 
 Data Store
 -----------
@@ -34,3 +34,4 @@ Examples
 * Updated django chat example so that warning are no longer issued
 
 .. _requests: http://docs.python-requests.org/
+.. _XSS: https://en.wikipedia.org/wiki/Cross-site_scripting
