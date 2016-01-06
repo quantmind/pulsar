@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.httpurl &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>pulsar.utils.httpurl &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,27 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -175,6 +162,7 @@
 <span class="n">URI_SAFE_CHARS</span> <span class="o">=</span> <span class="n">URI_RESERVED_CHARS</span> <span class="o">+</span> <span class="s">&#39;%~&#39;</span>
 <span class="n">HEADER_TOKEN_CHARS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="s">&quot;!#$%&amp;&#39;*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;</span>
                                <span class="s">&#39;^_`abcdefghijklmnopqrstuvwxyz|~&#39;</span><span class="p">)</span>
+<span class="n">MAX_CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
 
 
 <span class="k">def</span> <span class="nf">escape</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
@@ -505,7 +493,36 @@
     <span class="k">return</span> <span class="n">result</span>
 
 
-<div class="viewcode-block" id="Headers"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers">[docs]</a><span class="k">class</span> <span class="nc">Headers</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="n">_special</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="s">&#39;()&lt;&gt;@,;:</span><span class="se">\\</span><span class="s">&quot;/[]?={} </span><span class="se">\t</span><span class="s">&#39;</span><span class="p">)</span>
+<span class="n">_re_special</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;[</span><span class="si">%s</span><span class="s">]&#39;</span> <span class="o">%</span> <span class="n">_special</span><span class="p">)</span>
+<span class="n">_qstr</span> <span class="o">=</span> <span class="s">&#39;&quot;(?:</span><span class="se">\\\\</span><span class="s">.|[^&quot;])*&quot;&#39;</span>  <span class="c"># Quoted string</span>
+<span class="n">_value</span> <span class="o">=</span> <span class="s">&#39;(?:[^</span><span class="si">%s</span><span class="s">]+|</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_special</span><span class="p">,</span> <span class="n">_qstr</span><span class="p">)</span>  <span class="c"># Save or quoted string</span>
+<span class="n">_option</span> <span class="o">=</span> <span class="s">&#39;(?:;|^)\s*([^</span><span class="si">%s</span><span class="s">]+)\s*=\s*(</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_special</span><span class="p">,</span> <span class="n">_value</span><span class="p">)</span>
+<span class="n">_re_option</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">_option</span><span class="p">)</span>  <span class="c"># key=value part of an Content-Type header</span>
+
+
+<span class="k">def</span> <span class="nf">header_unquote</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">val</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&quot;&#39;</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;:</span><span class="se">\\</span><span class="s">&#39;</span> <span class="ow">or</span> <span class="n">val</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;</span><span class="se">\\\\</span><span class="s">&#39;</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c"># fix ie6 bug: full path --&gt; filename</span>
+        <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\\\\</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\\</span><span class="s">&quot;&#39;</span><span class="p">,</span> <span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">val</span>
+
+
+<span class="k">def</span> <span class="nf">parse_options_header</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s">&#39;;&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">header</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="p">{}</span>
+    <span class="n">ctype</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">_re_option</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">tail</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">header_unquote</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;filename&#39;</span><span class="p">)</span>
+        <span class="n">options</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">ctype</span><span class="p">,</span> <span class="n">options</span>
+
+
+<div class="viewcode-block" id="Headers"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers">[docs]</a><span class="k">class</span> <span class="nc">Headers</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;Utility for managing HTTP headers for both clients and servers.</span>
 
 <span class="sd">    It has a dictionary like interface with few extra functions to facilitate</span>
@@ -539,6 +556,12 @@
 <span class="sd">    The strict parameter is rarely used and it forces the omission on</span>
 <span class="sd">    non-standard header fields.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span><span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">headers</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;server&#39;</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">kind</span> <span class="o">=</span> <span class="n">header_type</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="s">&#39;both&#39;</span><span class="p">)</span>
@@ -576,8 +599,8 @@
 <span class="sd">        :param iterable: a dictionary or an iterable over keys, vaues tuples.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping_iterator</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-</div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Headers.override"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.override">[docs]</a>    <span class="k">def</span> <span class="nf">override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Extend headers by overriding fields form iterable.</span>
 
@@ -590,8 +613,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-                <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-</div>
+                <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
     <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">)</span>
 
@@ -634,8 +657,8 @@
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">default</span>
-</div>
+            <span class="k">return</span> <span class="n">default</span></div>
+
 <div class="viewcode-block" id="Headers.get_all"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.get_all">[docs]</a>    <span class="k">def</span> <span class="nf">get_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get the values at header ``key`` as a list rather than a</span>
 <span class="sd">        string separated by comma (which is returned by the</span>
@@ -653,31 +676,31 @@
 
 <span class="sd">            [&#39;gzip&#39;, &#39;deflate&#39;]</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">default</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">default</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Headers.has"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.has">[docs]</a>    <span class="k">def</span> <span class="nf">has</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Check if ``value`` is avialble in header ``field``.&#39;&#39;&#39;</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="p">()):</span>
             <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">True</span>
-        <span class="k">return</span> <span class="bp">False</span>
-</div>
+        <span class="k">return</span> <span class="bp">False</span></div>
+
     <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Headers.clear"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Same as :meth:`dict.clear`, it removes all headers.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
 <div class="viewcode-block" id="Headers.getheaders"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.getheaders">[docs]</a>    <span class="k">def</span> <span class="nf">getheaders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
         <span class="sd">&#39;&#39;&#39;Required by cookielib in python 2.</span>
 
 <span class="sd">        If the key is not available, it returns an empty list.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="p">[])</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="p">[])</span></div>
+
 <div class="viewcode-block" id="Headers.add_header"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.add_header">[docs]</a>    <span class="k">def</span> <span class="nf">add_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add ``values`` to ``key`` header.</span>
 
@@ -695,8 +718,8 @@
             <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current</span><span class="p">:</span>
                     <span class="n">current</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">current</span>
-</div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">current</span></div>
+
 <div class="viewcode-block" id="Headers.remove_header"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.remove_header">[docs]</a>    <span class="k">def</span> <span class="nf">remove_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Remove the header at ``key``.</span>
 
@@ -715,13 +738,13 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span>
                 <span class="k">return</span> <span class="n">removed</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-</div>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Headers.flat"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.flat">[docs]</a>    <span class="k">def</span> <span class="nf">flat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Full headers bytes representation&#39;&#39;&#39;</span>
         <span class="n">vs</span> <span class="o">=</span> <span class="n">version</span> <span class="o">+</span> <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="s">&#39;HTTP/</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="se">\r\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">vs</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="p">(</span><span class="s">&#39;HTTP/</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="se">\r\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">vs</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">DEFAULT_CHARSET</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">dj</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -755,12 +778,12 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">yield</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">joiner</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">headers</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
         <span class="k">yield</span> <span class="s">&#39;&#39;</span>
-        <span class="k">yield</span> <span class="s">&#39;&#39;</span>
+        <span class="k">yield</span> <span class="s">&#39;&#39;</span></div>
 
 
 <span class="c">###############################################################################</span>
 <span class="c">#    HTTP PARSER</span>
-<span class="c">###############################################################################</span></div>
+<span class="c">###############################################################################</span>
 <span class="n">METHOD_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&quot;[A-Z0-9$-_.]{3,20}&quot;</span><span class="p">)</span>
 <span class="n">VERSION_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&quot;HTTP/(\d+).(\d+)&quot;</span><span class="p">)</span>
 <span class="n">STATUS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&quot;(\d{3})\s*(\w*)&quot;</span><span class="p">)</span>
@@ -857,28 +880,28 @@
         <span class="n">body</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_body</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_body</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="k">return</span> <span class="n">body</span>
-</div>
+        <span class="k">return</span> <span class="n">body</span></div>
+
 <div class="viewcode-block" id="HttpParser.is_headers_complete"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_headers_complete">[docs]</a>    <span class="k">def</span> <span class="nf">is_headers_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if all headers have been parsed. &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span></div>
+
 <div class="viewcode-block" id="HttpParser.is_partial_body"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_partial_body">[docs]</a>    <span class="k">def</span> <span class="nf">is_partial_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if a chunk of body have been parsed &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span></div>
+
 <div class="viewcode-block" id="HttpParser.is_message_begin"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_message_begin">[docs]</a>    <span class="k">def</span> <span class="nf">is_message_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if the parsing start &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span></div>
+
 <div class="viewcode-block" id="HttpParser.is_message_complete"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_message_complete">[docs]</a>    <span class="k">def</span> <span class="nf">is_message_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if the parsing is done (we get EOF) &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span></div>
+
 <div class="viewcode-block" id="HttpParser.is_chunked"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_chunked">[docs]</a>    <span class="k">def</span> <span class="nf">is_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if Transfer-Encoding header value is chunked&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span></div>
+
     <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
         <span class="c"># end of body can be passed manually by putting a length of 0</span>
         <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -1145,9 +1168,9 @@
                     <span class="n">deco</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span>
                     <span class="n">data</span> <span class="o">=</span> <span class="n">deco</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="k">return</span> <span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span></div>
 
-</div>
+
 <span class="k">if</span> <span class="ow">not</span> <span class="n">hasextensions</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
     <span class="n">setDefaultHttpParser</span><span class="p">(</span><span class="n">HttpParser</span><span class="p">)</span>
 
@@ -1386,6 +1409,28 @@
                 <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;cache-control&#39;</span><span class="p">,</span> <span class="s">&#39;proxy-revalidate&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">headers</span><span class="p">[</span><span class="s">&#39;cache-control&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;no-cache&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">chunk_encoding</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Write a chunk::</span>
+
+<span class="sd">        chunk-size(hex) CRLF</span>
+<span class="sd">        chunk-data CRLF</span>
+
+<span class="sd">    If the size is 0, this is the last chunk, and an extra CRLF is appended.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%X</span><span class="se">\r\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">head</span> <span class="o">+</span> <span class="n">chunk</span> <span class="o">+</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">http_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">finish</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MAX_CHUNK_SIZE</span><span class="p">:</span>
+        <span class="n">chunk</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">:]</span>
+        <span class="k">yield</span> <span class="n">chunk_encoding</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">finish</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 
           </div>
@@ -1459,11 +1504,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

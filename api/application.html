@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Application API &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>Application API &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Tools" href="utilities.html" />
     <link rel="prev" title="Protocols/Transports API" href="protocols.html" />
@@ -36,26 +36,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="utilities.html" title="Tools"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="protocols.html" title="Protocols/Transports API"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">API</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -157,10 +138,8 @@ Evaluated during initialization via the <a class="reference internal" href="#pul
 <dl class="method">
 <dt id="pulsar.apps.Configurator.python_path">
 <code class="descname">python_path</code><span class="sig-paren">(</span><em>script</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.python_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.python_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called during initialisation to obtain the <code class="docutils literal"><span class="pre">script</span></code> name and
-to add the <a class="reference internal" href="#pulsar.apps.Configurator.script" title="pulsar.apps.Configurator.script"><code class="xref py py-attr docutils literal"><span class="pre">script</span></code></a> directory to the python path if not in the
-path already.
-If <code class="docutils literal"><span class="pre">script</span></code> does not evalueate to <code class="docutils literal"><span class="pre">True</span></code> it is evaluated from
+<dd><p>Called during initialisation to obtain the <code class="docutils literal"><span class="pre">script</span></code> name.</p>
+<p>If <code class="docutils literal"><span class="pre">script</span></code> does not evaluate to <code class="docutils literal"><span class="pre">True</span></code> it is evaluated from
 the <code class="docutils literal"><span class="pre">__main__</span></code> import. Returns the real path of the python
 script which runs the application.</p>
 </dd></dl>
@@ -283,6 +262,12 @@ has fired it.</td>
 <dt id="pulsar.apps.Application.stream">
 <code class="descname">stream</code><a class="headerlink" href="#pulsar.apps.Application.stream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Actor stream handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Application.stop">
+<code class="descname">stop</code><span class="sig-paren">(</span><em>actor=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the application</p>
 </dd></dl>
 
 <dl class="method">
@@ -511,15 +496,15 @@ every time a new application starts. A hook is registered by:</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
       |
       <a href="../sources/api/application.txt"
-          rel="nofollow">Page source</a></li>
+          rel="nofollow">Page source</a>
     </div>
 
     

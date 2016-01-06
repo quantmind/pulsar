@@ -15,9 +15,6 @@
 
 
 
-
-
-
 @import url("basic.css");
 
 /* -- page layout ----------------------------------------------------------- */
@@ -71,9 +68,11 @@ div.footer a {
     color: #888;
 }
 
-div.related {
+
+div.relations {
     display: none;
 }
+
 
 div.sphinxsidebar a {
     color: #444;
@@ -387,8 +386,8 @@ pre {
 }
 
 dl pre, blockquote pre, li pre {
-    margin-left: -60px;
-    padding-left: 60px;
+    margin-left: 0;
+    padding-left: 30px;
 }
 
 dl dl pre {
@@ -525,18 +524,6 @@ a:hover tt, a:hover code {
     div.document {
         width: 100%;
         margin: 0;
-    }
-
-    div.related {
-        display: block;
-        margin: 0;
-        padding: 10px 0 20px 0;
-    }
-
-    div.related ul,
-    div.related ul li {
-        margin: 0;
-        padding: 0;
     }
 
     div.footer {

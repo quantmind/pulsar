@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.chat.manage &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>examples.chat.manage &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,27 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -97,7 +84,7 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">async</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">async</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Router</span><span class="p">,</span> <span class="n">WsgiHandler</span><span class="p">,</span> <span class="n">LazyWsgi</span><span class="p">,</span> <span class="n">WSGIServer</span><span class="p">,</span>
                               <span class="n">GZipMiddleware</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.ws</span> <span class="kn">import</span> <span class="n">WS</span><span class="p">,</span> <span class="n">WebSocket</span>
@@ -152,8 +139,8 @@
         <span class="sd">&#39;&#39;&#39;When a new websocket connection is established it creates a</span>
 <span class="sd">        new :class:`ChatClient` and adds it to the set of clients of the</span>
 <span class="sd">        :attr:`pubsub` handler.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">ChatClient</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">))</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">ChatClient</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">))</span></div>
+
 <div class="viewcode-block" id="Chat.on_message"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Chat.on_message">[docs]</a>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When a new message arrives, it publishes to all listening clients.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -165,23 +152,23 @@
                     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div></div>
 
 
-<span class="c">#    RPC MIDDLEWARE To publish messages</span></div></div>
-<div class="viewcode-block" id="Rpc"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Rpc">[docs]</a><span class="k">class</span> <span class="nc">Rpc</span><span class="p">(</span><span class="n">PulsarServerCommands</span><span class="p">):</span>
+<span class="c">#    RPC MIDDLEWARE To publish messages</span>
+<div class="viewcode-block" id="Rpc"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Rpc">[docs]</a><span class="k">class</span> <span class="nc">Rpc</span><span class="p">(</span><span class="n">PulsarServerCommands</span><span class="p">):</span></div>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pubsub</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span> <span class="o">=</span> <span class="n">pubsub</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Rpc</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Rpc.rpc_message"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Rpc.rpc_message">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">rpc_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Publish a message via JSON-RPC&#39;&#39;&#39;</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
         <span class="k">return</span> <span class="s">&#39;OK&#39;</span>
 
-</div></div>
+
 <div class="viewcode-block" id="WebChat"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.WebChat">[docs]</a><span class="k">class</span> <span class="nc">WebChat</span><span class="p">(</span><span class="n">LazyWsgi</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;This is the :ref:`wsgi application &lt;wsgi-handlers&gt;` for this</span>
 <span class="sd">    web-chat example.&#39;&#39;&#39;</span>
@@ -206,15 +193,15 @@
                                    <span class="n">response_content_types</span><span class="o">=</span><span class="n">JSON_CONTENT_TYPES</span><span class="p">)],</span>
                            <span class="p">[</span><span class="n">AsyncResponseMiddleware</span><span class="p">,</span>
                             <span class="n">GZipMiddleware</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">20</span><span class="p">)],</span>
-                           <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-</div>
+                           <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">home_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CHAT_DIR</span><span class="p">,</span> <span class="s">&#39;chat.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;text/html&#39;</span>
         <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">data</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span></div>
 
-</div>
+
 <span class="k">def</span> <span class="nf">AsyncResponseMiddleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">resp</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;This is just for testing the asynchronous response middleware</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -225,11 +212,7 @@
 
 <span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">data_store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="s">&#39;wsgi&#39;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">data_store</span><span class="p">:</span>
-        <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
-            <span class="n">data_store</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_store</span>
-        <span class="n">data_store</span> <span class="o">=</span> <span class="n">pulsards_url</span><span class="p">(</span><span class="n">data_store</span><span class="p">)</span>
+    <span class="n">data_store</span> <span class="o">=</span> <span class="n">pulsards_url</span><span class="p">(</span><span class="n">data_store</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">WebChat</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
                       <span class="n">data_store</span><span class="o">=</span><span class="n">data_store</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
@@ -309,11 +292,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

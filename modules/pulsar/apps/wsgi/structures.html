@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.structures &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>pulsar.apps.wsgi.structures &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,29 +27,14 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
-          <li class="nav-item nav-item-3"><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -120,8 +105,8 @@
         <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">quality</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_matches</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">quality</span>
-        <span class="k">return</span> <span class="mi">0</span>
-</div>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
     <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">quality</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_matches</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
@@ -148,8 +133,8 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_matches</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">idx</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="nb">list</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Accept.find"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.Accept.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the position of an entry or return -1.</span>
 
@@ -158,13 +143,13 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
-</div>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div>
+
 <div class="viewcode-block" id="Accept.values"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.Accept.values">[docs]</a>    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Iterate over all values.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</div>
+            <span class="k">yield</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
 <div class="viewcode-block" id="Accept.to_header"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.Accept.to_header">[docs]</a>    <span class="k">def</span> <span class="nf">to_header</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Convert the header set into an HTTP header string.&quot;&quot;&quot;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
@@ -172,8 +157,8 @@
             <span class="k">if</span> <span class="n">quality</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">;q=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">quality</span><span class="p">)</span>
             <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_header</span><span class="p">()</span>
 
@@ -188,8 +173,8 @@
         <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
             <span class="n">best_quality</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">default</span>
-            <span class="k">for</span> <span class="n">server_item</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">client_item</span><span class="p">,</span> <span class="n">quality</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">client_item</span><span class="p">,</span> <span class="n">quality</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">server_item</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">quality</span> <span class="o">&lt;=</span> <span class="n">best_quality</span><span class="p">:</span>
                         <span class="k">break</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_matches</span><span class="p">(</span><span class="n">server_item</span><span class="p">,</span> <span class="n">client_item</span><span class="p">):</span>
@@ -197,15 +182,15 @@
                         <span class="n">result</span> <span class="o">=</span> <span class="n">server_item</span>
             <span class="k">return</span> <span class="n">result</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">best</span>
-</div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">best</span></div>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">best</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The best match as value.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></div>
 
-</div>
+
 <div class="viewcode-block" id="ContentAccept"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.ContentAccept">[docs]</a><span class="k">class</span> <span class="nc">ContentAccept</span><span class="p">(</span><span class="n">Accept</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Like :class:`Accept` but with special methods and behaviour for</span>
 <span class="sd">    content types.</span>
@@ -257,18 +242,18 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">accept_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;True if this object accepts JSON.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s">&#39;application/json&#39;</span> <span class="ow">in</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="s">&#39;application/json&#39;</span> <span class="ow">in</span> <span class="bp">self</span></div>
 
-</div>
+
 <div class="viewcode-block" id="LanguageAccept"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.LanguageAccept">[docs]</a><span class="k">class</span> <span class="nc">LanguageAccept</span><span class="p">(</span><span class="n">Accept</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Like :class:`Accept` but with normalisation for languages.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_value_matches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">language</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_locale_delim_re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">language</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="CharsetAccept"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.CharsetAccept">[docs]</a><span class="k">class</span> <span class="nc">CharsetAccept</span><span class="p">(</span><span class="n">Accept</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Like :class:`Accept` but with normalisation for charsets.&quot;&quot;&quot;</span>
 
@@ -278,9 +263,9 @@
                 <span class="k">return</span> <span class="n">codecs</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
             <span class="k">except</span> <span class="ne">LookupError</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
-</div>
+
 <span class="k">class</span> <span class="nc">RequestCacheControl</span><span class="p">(</span><span class="n">FrozenDict</span><span class="p">):</span>
     <span class="k">pass</span>
 </pre></div>
@@ -356,11 +341,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

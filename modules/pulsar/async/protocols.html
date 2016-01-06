@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.protocols &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>pulsar.async.protocols &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,27 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -56,14 +43,14 @@
             
   <h1>Source code for pulsar.async.protocols</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">nice_address</span><span class="p">,</span> <span class="n">format_address</span>
 
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">Future</span>
-<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">EventHandler</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">AbortEvent</span>
 <span class="kn">from</span> <span class="nn">.mixins</span> <span class="kn">import</span> <span class="n">FlowControl</span><span class="p">,</span> <span class="n">Timeout</span>
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">get_io_loop</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;ProtocolConsumer&#39;</span><span class="p">,</span>
@@ -72,7 +59,12 @@
            <span class="s">&#39;Connection&#39;</span><span class="p">,</span>
            <span class="s">&#39;Producer&#39;</span><span class="p">,</span>
            <span class="s">&#39;TcpServer&#39;</span><span class="p">,</span>
-           <span class="s">&#39;DatagramServer&#39;</span><span class="p">]</span>
+           <span class="s">&#39;DatagramServer&#39;</span><span class="p">,</span>
+           <span class="s">&#39;AbortRequest&#39;</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">AbortRequest</span><span class="p">(</span><span class="n">AbortEvent</span><span class="p">):</span>
+    <span class="k">pass</span>
 
 
 <div class="viewcode-block" id="ProtocolConsumer"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer">[docs]</a><span class="k">class</span> <span class="nc">ProtocolConsumer</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
@@ -159,8 +151,8 @@
         <span class="sd">&#39;&#39;&#39;Called by a :class:`Connection` when it starts using this consumer.</span>
 
 <span class="sd">        By default it does nothing.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-</div>
+<span class="sd">        &#39;&#39;&#39;</span></div>
+
 <div class="viewcode-block" id="ProtocolConsumer.data_received"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called when some data is received.</span>
 
@@ -168,8 +160,8 @@
 <span class="sd">        client consumers.</span>
 
 <span class="sd">        The argument is a bytes object.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-</div>
+<span class="sd">        &#39;&#39;&#39;</span></div>
+
 <div class="viewcode-block" id="ProtocolConsumer.start_request"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.start_request">[docs]</a>    <span class="k">def</span> <span class="nf">start_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Starts a new request.</span>
 
@@ -185,8 +177,8 @@
 
 <span class="sd">            self.transport.write(self.request.encode())</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</div>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
 <div class="viewcode-block" id="ProtocolConsumer.start"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Starts processing the request for this protocol consumer.</span>
 
@@ -198,7 +190,8 @@
 <span class="sd">        For server side consumer, this method simply fires the ``pre_request``</span>
 <span class="sd">        event.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_request&#39;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Consumer already started&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> already requested </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
+                               <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">))</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">conn</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Cannot start new request. No connection.&#39;</span><span class="p">)</span>
@@ -210,13 +203,31 @@
             <span class="n">conn</span><span class="o">.</span><span class="n">_producer</span><span class="o">.</span><span class="n">_requests_processed</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finished</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_request</span> <span class="o">=</span> <span class="n">request</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;pre_request&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">start_request</span><span class="p">()</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">(),</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ProtocolConsumer.abort_request"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.abort_request">[docs]</a>    <span class="k">def</span> <span class="nf">abort_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Abort the request.</span>
+
+<span class="sd">        This method can be called during the pre-request stage</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="s">&#39;pre_request&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">future</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Request already sent&#39;</span><span class="p">)</span>
+        <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_abort_request</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">AbortRequest</span></div>
+
+    <span class="k">def</span> <span class="nf">_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;pre_request&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">AbortEvent</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Abort request </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">start_request</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
+
 <div class="viewcode-block" id="ProtocolConsumer.connection_lost"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.connection_lost">[docs]</a>    <span class="k">def</span> <span class="nf">connection_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called by the :attr:`connection` when the transport is closed.</span>
 
@@ -226,14 +237,14 @@
         <span class="c"># Set the first positional parameter to None so that if the</span>
         <span class="c"># connection was dropped without exception it returns None</span>
         <span class="c"># rather than the protocol consumer</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="ProtocolConsumer.finished"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.finished">[docs]</a>    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Fire the ``post_request`` event if it wasn&#39;t already fired.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fired</span><span class="p">():</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-</div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="ProtocolConsumer.write"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Delegate writing to the underlying :class:`.Connection`</span>
 
@@ -243,8 +254,8 @@
         <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;No connection&#39;</span><span class="p">)</span>
-</div>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;No connection&#39;</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">_data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="c"># Called by Connection, it updates the counters and invoke</span>
         <span class="c"># the high level data_received method which must be implemented</span>
@@ -262,7 +273,17 @@
         <span class="k">if</span> <span class="n">c</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">_current_consumer</span> <span class="ow">is</span> <span class="bp">self</span><span class="p">:</span>
             <span class="n">c</span><span class="o">.</span><span class="n">_current_consumer</span> <span class="o">=</span> <span class="bp">None</span>
 
-</div>
+    <span class="nd">@task</span>
+    <span class="k">def</span> <span class="nf">_abort_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fut</span><span class="p">):</span>
+        <span class="n">exc</span> <span class="o">=</span> <span class="n">fut</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span><span class="o">.</span><span class="n">fired</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">AbortRequest</span><span class="p">:</span>
+                    <span class="k">pass</span></div>
+
+
 <div class="viewcode-block" id="PulsarProtocol"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol">[docs]</a><span class="k">class</span> <span class="nc">PulsarProtocol</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">,</span> <span class="n">FlowControl</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A mixin class for both :class:`.Protocol` and</span>
 <span class="sd">    :class:`.DatagramProtocol`.</span>
@@ -279,19 +300,18 @@
 
     <span class="n">_transport</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_address</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_type</span> <span class="o">=</span> <span class="s">&#39;server&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">producer</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">producer</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
         <span class="n">FlowControl</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_producer</span> <span class="o">=</span> <span class="n">producer</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_address</span>
         <span class="k">if</span> <span class="n">address</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> session </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">,</span> <span class="n">nice_address</span><span class="p">(</span><span class="n">address</span><span class="p">),</span>
-                                         <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> session </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nice_address</span><span class="p">(</span><span class="n">address</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;&lt;pending&gt; session </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span>
     <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
@@ -336,18 +356,32 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;``True`` if the :attr:`transport` is closed.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">_closing</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span> <span class="k">else</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="p">,</span> <span class="s">&#39;_closing&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="bp">True</span>
 
 <div class="viewcode-block" id="PulsarProtocol.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close by closing the :attr:`transport`.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</div>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Closing connection </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">can_write_eof</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">write_eof</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span></div>
+
 <div class="viewcode-block" id="PulsarProtocol.abort"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.abort">[docs]</a>    <span class="k">def</span> <span class="nf">abort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Abort by aborting the :attr:`transport`.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">abort</span><span class="p">()</span>
-</div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">abort</span><span class="p">()</span></div>
+
 <div class="viewcode-block" id="PulsarProtocol.connection_made"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.connection_made">[docs]</a>    <span class="k">def</span> <span class="nf">connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Sets the :attr:`transport`, fire the ``connection_made`` event</span>
 <span class="sd">        and adds a :attr:`timeout` for idle connections.</span>
@@ -355,27 +389,29 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span> <span class="o">=</span> <span class="n">transport</span>
         <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;peername&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">addr</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="s">&#39;client&#39;</span>
             <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;sockname&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_address</span> <span class="o">=</span> <span class="n">addr</span>
         <span class="c"># let everyone know we have a connection with endpoint</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">)</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="PulsarProtocol.connection_lost"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.connection_lost">[docs]</a>    <span class="k">def</span> <span class="nf">connection_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Fires the ``connection_lost`` event.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">)</span>
-</div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Lost connection </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="PulsarProtocol.eof_received"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.eof_received">[docs]</a>    <span class="k">def</span> <span class="nf">eof_received</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The socket was closed from the remote end&#39;&#39;&#39;</span>
-</div>
+        <span class="sd">&#39;&#39;&#39;The socket was closed from the remote end</span>
+<span class="sd">        &#39;&#39;&#39;</span></div>
+
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">info</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;connection&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;session&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="p">}}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_producer</span><span class="p">:</span>
             <span class="n">info</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_producer</span><span class="o">.</span><span class="n">info</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">info</span>
+        <span class="k">return</span> <span class="n">info</span></div>
 
-</div>
+
 <div class="viewcode-block" id="Protocol"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol">[docs]</a><span class="k">class</span> <span class="nc">Protocol</span><span class="p">(</span><span class="n">PulsarProtocol</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Protocol</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`asyncio.Protocol` with :ref:`events &lt;event-handling&gt;`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -389,8 +425,6 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span>
         <span class="k">if</span> <span class="n">t</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">_closing</span><span class="p">:</span>  <span class="c"># Uses private variable.</span>
-                <span class="k">raise</span> <span class="n">ConnectionResetError</span><span class="p">(</span><span class="s">&#39;Connection lost&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span><span class="p">:</span>
                 <span class="c"># # Uses private variable once again!</span>
                 <span class="c"># This occurs when the protocol is paused from writing</span>
@@ -405,13 +439,13 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;after_write&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_waiter</span> <span class="ow">or</span> <span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ConnectionResetError</span><span class="p">(</span><span class="s">&#39;No Transport&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ConnectionResetError</span><span class="p">(</span><span class="s">&#39;No Transport&#39;</span><span class="p">)</span></div></div>
 
-</div></div>
+
 <div class="viewcode-block" id="DatagramProtocol"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.DatagramProtocol">[docs]</a><span class="k">class</span> <span class="nc">DatagramProtocol</span><span class="p">(</span><span class="n">PulsarProtocol</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">DatagramProtocol</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An ``asyncio.DatagramProtocol`` with events`&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;An ``asyncio.DatagramProtocol`` with events`&#39;&#39;&#39;</span></div>
 
-</div>
+
 <div class="viewcode-block" id="Connection"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection">[docs]</a><span class="k">class</span> <span class="nc">Connection</span><span class="p">(</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">Timeout</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`.FlowControl` to handle multiple TCP requests/responses.</span>
 
@@ -452,8 +486,8 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_build_consumer</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span></div>
+
 <div class="viewcode-block" id="Connection.data_received"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Delegates handling of data to the :meth:`current_consumer`.</span>
 
@@ -462,13 +496,14 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data_received_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_received_count</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;data_received&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">while</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">toprocess</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">while</span> <span class="n">toprocess</span><span class="p">:</span>
             <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">_data_received</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+            <span class="n">toprocess</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">_data_received</span><span class="p">(</span><span class="n">toprocess</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">toprocess</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
                 <span class="k">break</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;data_processed&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;data_processed&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Connection.upgrade"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection.upgrade">[docs]</a>    <span class="k">def</span> <span class="nf">upgrade</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer_factory</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Upgrade the :func:`_consumer_factory` callable.</span>
 
@@ -489,8 +524,8 @@
         <span class="k">if</span> <span class="n">consumer</span><span class="p">:</span>
             <span class="n">consumer</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_consumer</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_build_consumer</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
-</div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_consumer</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">info</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;connection&#39;</span><span class="p">]</span>
@@ -500,7 +535,7 @@
         <span class="k">return</span> <span class="n">info</span>
 
     <span class="k">def</span> <span class="nf">_build_consumer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">AbortEvent</span><span class="p">):</span>
             <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_producer</span><span class="o">.</span><span class="n">build_consumer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_consumer_factory</span><span class="p">)</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">,</span> <span class="s">&#39;Consumer is not None&#39;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span> <span class="o">=</span> <span class="n">consumer</span>
@@ -517,9 +552,9 @@
 <span class="sd">          :meth:`current_consumer`.</span>
 <span class="sd">          &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span><span class="o">.</span><span class="n">connection_lost</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span><span class="o">.</span><span class="n">connection_lost</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="Producer"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Producer">[docs]</a><span class="k">class</span> <span class="nc">Producer</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An Abstract :class:`.EventHandler` class for all producers of</span>
 <span class="sd">    socket (client and servers)</span>
@@ -532,9 +567,9 @@
 <span class="sd">        protocol_factory(session, producer, **params)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">max_requests</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">get_io_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span> <span class="ow">or</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">protocol_factory</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_requests_processed</span> <span class="o">=</span> <span class="mi">0</span>
@@ -564,8 +599,9 @@
         <span class="n">kw</span><span class="p">[</span><span class="s">&#39;session&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span>
         <span class="n">kw</span><span class="p">[</span><span class="s">&#39;producer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="n">kw</span><span class="p">[</span><span class="s">&#39;loop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-</div>
+        <span class="n">kw</span><span class="p">[</span><span class="s">&#39;logger&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Producer.build_consumer"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Producer.build_consumer">[docs]</a>    <span class="k">def</span> <span class="nf">build_consumer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer_factory</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Build a consumer for a protocol.</span>
 
@@ -575,10 +611,11 @@
 <span class="sd">        :param consumer_factory: consumer factory to use.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">consumer</span> <span class="o">=</span> <span class="n">consumer_factory</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+        <span class="n">consumer</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span>
         <span class="n">consumer</span><span class="o">.</span><span class="n">copy_many_times_events</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">consumer</span>
+        <span class="k">return</span> <span class="n">consumer</span></div></div>
 
-</div></div>
+
 <div class="viewcode-block" id="TcpServer"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.TcpServer">[docs]</a><span class="k">class</span> <span class="nc">TcpServer</span><span class="p">(</span><span class="n">Producer</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`.Producer` of server :class:`Connection` for TCP servers.</span>
 
@@ -628,6 +665,7 @@
 <span class="sd">        :param sslcontext: optional SSLContext object.</span>
 <span class="sd">        :return: a :class:`.Future` called back when the server is</span>
 <span class="sd">            serving the socket.&#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_params&#39;</span><span class="p">):</span>
             <span class="n">address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="s">&#39;address&#39;</span><span class="p">]</span>
             <span class="n">sockets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="s">&#39;sockets&#39;</span><span class="p">]</span>
@@ -660,31 +698,19 @@
                     <span class="n">address</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">getsockname</span><span class="p">()</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> serving on </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span>
                                      <span class="n">format_address</span><span class="p">(</span><span class="n">address</span><span class="p">))</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">,</span> <span class="s">&#39;start&#39;</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="TcpServer.stop_serving"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.TcpServer.stop_serving">[docs]</a>    <span class="k">def</span> <span class="nf">stop_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TcpServer.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.TcpServer.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Stop serving the :attr:`.Server.sockets`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">:</span>
             <span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">,</span> <span class="bp">None</span>
-            <span class="n">server</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</div>
-    <span class="nd">@task</span>
-<div class="viewcode-block" id="TcpServer.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.TcpServer.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Stop serving the :attr:`.Server.sockets` and close all</span>
-<span class="sd">        concurrent connections.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fired_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">:</span>
-                <span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">,</span> <span class="bp">None</span>
-                <span class="n">server</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                <span class="n">coro</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_close_connections</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">coro</span><span class="p">:</span>
-                    <span class="k">yield from</span> <span class="n">coro</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span>
-</div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_close</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fired_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">sockets</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">up</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="k">else</span> <span class="mi">0</span>
@@ -716,9 +742,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Reached maximum number of connections </span><span class="si">%s</span><span class="s">. &#39;</span>
                              <span class="s">&#39;Stop serving.&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_requests</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">protocol</span>
+        <span class="k">return</span> <span class="n">protocol</span></div>
 
-    <span class="c">#    INTERNALS</span></div>
+    <span class="c">#    INTERNALS</span>
     <span class="k">def</span> <span class="nf">_connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_connections</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
@@ -735,18 +761,29 @@
         <span class="nb">all</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">connection</span><span class="p">:</span>
             <span class="nb">all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">))</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">connections</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_connections</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_concurrent_connections</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">connection</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
                 <span class="nb">all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">))</span>
-                <span class="n">connection</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> closing </span><span class="si">%d</span><span class="s"> connections&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">all</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="nb">all</span><span class="p">)</span>
 
-</div>
+    <span class="nd">@task</span>
+    <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Stop serving the :attr:`.Server.sockets` and close all</span>
+<span class="sd">        concurrent connections.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">server</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">coro</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_close_connections</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">coro</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">coro</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="DatagramServer"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.DatagramServer">[docs]</a><span class="k">class</span> <span class="nc">DatagramServer</span><span class="p">(</span><span class="n">Producer</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`.Producer` for serving UDP sockets.</span>
 
@@ -801,8 +838,8 @@
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Error while starting UDP server&#39;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span>
-</div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span></div>
+
     <span class="nd">@task</span>
 <div class="viewcode-block" id="DatagramServer.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.DatagramServer.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Stop serving the :attr:`.Server.sockets` and close all</span>
@@ -813,8 +850,8 @@
             <span class="k">if</span> <span class="n">transports</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">transport</span> <span class="ow">in</span> <span class="n">transports</span><span class="p">:</span>
                     <span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span>
-</div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">sockets</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">up</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="k">else</span> <span class="mi">0</span>
@@ -903,11 +940,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.greenio &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>pulsar.apps.greenio &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,28 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -72,9 +58,9 @@
 
 <span class="sd">This application **does not use monkey patching** and therefore it</span>
 <span class="sd">works quite differently from implicit asynchronous libraries such as</span>
-<span class="sd">gevent_. All it does, it provides the user with a set</span>
+<span class="sd">gevent_. This module provides the user with a set</span>
 <span class="sd">of utilities for **explicitly** transferring execution from one greenlet</span>
-<span class="sd">to a another which executes the blocking call in a greenlet-friendly way.</span>
+<span class="sd">to another which executes the blocking call in a greenlet-friendly way.</span>
 
 <span class="sd">The caller has the responsibility that the blocking call is greenlet-friendly,</span>
 <span class="sd">i.e. it transfers the control of execution back to the parent greenlet when</span>
@@ -185,7 +171,7 @@
 <span class="sd">Green WSGI</span>
 <span class="sd">----------------</span>
 
-<span class="sd">.. autoclass:: GreenWSGI</span>
+<span class="sd">.. autoclass:: pulsar.apps.greenio.wsgi.GreenWSGI</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
@@ -223,9 +209,9 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">current</span> <span class="o">=</span> <span class="n">getcurrent</span><span class="p">()</span>
     <span class="n">parent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
-    <span class="k">return</span> <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">parent</span> <span class="k">else</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">parent</span> <span class="k">else</span> <span class="n">value</span></div>
 
-</div>
+
 <div class="viewcode-block" id="run_in_greenlet"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.run_in_greenlet">[docs]</a><span class="k">def</span> <span class="nf">run_in_greenlet</span><span class="p">(</span><span class="nb">callable</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Decorator to run a ``callable`` on a new greenlet.</span>
 
@@ -246,9 +232,9 @@
 
         <span class="k">return</span> <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">_</span>
+    <span class="k">return</span> <span class="n">_</span></div>
 
-</div>
+
 <div class="viewcode-block" id="GreenPool"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenPool">[docs]</a><span class="k">class</span> <span class="nc">GreenPool</span><span class="p">(</span><span class="n">AsyncObject</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A pool of running greenlets.</span>
 
@@ -267,6 +253,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.greenpool&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait</span> <span class="o">=</span> <span class="n">wait</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">max_workers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -292,8 +279,8 @@
                     <span class="s">&#39;cannot schedule new futures after shutdown&#39;</span><span class="p">)</span>
             <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_put</span><span class="p">((</span><span class="n">future</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">future</span>
-</div>
+            <span class="k">return</span> <span class="n">future</span></div>
+
     <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
@@ -357,7 +344,10 @@
             <span class="k">if</span> <span class="n">task</span><span class="p">:</span>
                 <span class="n">future</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">task</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">StopIteration</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c"># See PEP 479</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Unhandled StopIteration&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                     <span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -369,9 +359,9 @@
                 <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span> <span class="o">=</span> <span class="bp">None</span>
-                <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">_DONE</span><span class="p">)</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">_DONE</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="GreenLock"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenLock">[docs]</a><span class="k">class</span> <span class="nc">GreenLock</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;A Locking primitive that is owned by a particular greenlet</span>
 <span class="sd">    when locked.The main greenlet cannot acquire the lock.</span>
@@ -395,8 +385,8 @@
 <div class="viewcode-block" id="GreenLock.locked"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenLock.locked">[docs]</a>    <span class="k">def</span> <span class="nf">locked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;&#39;Return the greenlet that acquire the lock or None.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span></div>
+
 <div class="viewcode-block" id="GreenLock.acquire"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenLock.acquire">[docs]</a>    <span class="k">def</span> <span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Acquires the lock if in the unlocked state otherwise switch</span>
 <span class="sd">        back to the parent coroutine.</span>
@@ -412,8 +402,8 @@
             <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="n">green</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">locked</span><span class="p">()</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">locked</span><span class="p">()</span></div>
+
 <div class="viewcode-block" id="GreenLock.release"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenLock.release">[docs]</a>    <span class="k">def</span> <span class="nf">release</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Release the lock.</span>
 
@@ -429,28 +419,14 @@
                     <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;release unlocked lock&#39;</span><span class="p">)</span>
-</div>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;release unlocked lock&#39;</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-
-</div>
-<div class="viewcode-block" id="GreenWSGI"><a class="viewcode-back" href="../../../apps/greenio.html#pulsar.apps.greenio.GreenWSGI">[docs]</a><span class="k">class</span> <span class="nc">GreenWSGI</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;Wraps a WSGI application to be executed on a :class:`.GreenPool`</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">wsgi</span> <span class="o">=</span> <span class="n">wsgi</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">pool</span>
-
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_green_handler</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_green_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wsgi</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">))</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">()</span></div>
 </pre></div>
 
           </div>
@@ -524,11 +500,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

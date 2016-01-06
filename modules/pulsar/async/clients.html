@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.clients &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>pulsar.async.clients &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,27 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -144,23 +131,23 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span>
         <span class="n">connection</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">PoolConnection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="Pool.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.Pool.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_use</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Close all :attr:`available` connections and</span>
-<span class="sd">        :attr:`in_use` connections only when ``in_use`` is ``True``.</span>
+        <span class="k">return</span> <span class="n">PoolConnection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pool.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.Pool.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Close all :attr:`available` connections</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="n">queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span>
-        <span class="k">while</span> <span class="n">queue</span><span class="o">.</span><span class="n">qsize</span><span class="p">():</span>
-            <span class="n">connection</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">get_nowait</span><span class="p">()</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">in_use</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span>
+            <span class="k">while</span> <span class="n">queue</span><span class="o">.</span><span class="n">qsize</span><span class="p">():</span>
+                <span class="n">connection</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">get_nowait</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">connection</span><span class="p">:</span>
+                    <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="n">in_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_in_use_connections</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">connection</span> <span class="ow">in</span> <span class="n">in_use</span><span class="p">:</span>
-                <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</div>
+                <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
     <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span>
         <span class="c"># grab the connection without waiting, important!</span>
@@ -211,9 +198,9 @@
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">_maxsize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_count_connections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="PoolConnection"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.PoolConnection">[docs]</a><span class="k">class</span> <span class="nc">PoolConnection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A wrapper for a :class:`Connection` in a connection :class:`Pool`.</span>
 
@@ -238,14 +225,15 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">_put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span> <span class="n">discard</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="bp">None</span>
-</div>
+            <span class="n">conn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span> <span class="bp">None</span>
+            <span class="k">return</span> <span class="n">conn</span></div>
+
 <div class="viewcode-block" id="PoolConnection.detach"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.PoolConnection.detach">[docs]</a>    <span class="k">def</span> <span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Remove the underlying :attr:`connection` from the connection</span>
 <span class="sd">        :attr:`pool`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span>
 
@@ -256,9 +244,9 @@
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-</div>
+
 <div class="viewcode-block" id="AbstractClient"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractClient">[docs]</a><span class="k">class</span> <span class="nc">AbstractClient</span><span class="p">(</span><span class="n">Producer</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`.Producer` for a client connections.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -271,8 +259,8 @@
 <div class="viewcode-block" id="AbstractClient.connect"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractClient.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Abstract method for creating a connection.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</div>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
 <div class="viewcode-block" id="AbstractClient.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractClient.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close all idle connections.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -290,9 +278,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Could not connect to </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
                                       <span class="nb">str</span><span class="p">(</span><span class="n">address</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">protocol</span>
+        <span class="k">return</span> <span class="n">protocol</span></div></div>
 
-</div></div>
+
 <div class="viewcode-block" id="AbstractUdpClient"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractUdpClient">[docs]</a><span class="k">class</span> <span class="nc">AbstractUdpClient</span><span class="p">(</span><span class="n">Producer</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`.Producer` for a client udp connections.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -305,8 +293,8 @@
 <div class="viewcode-block" id="AbstractUdpClient.create_endpoint"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractUdpClient.create_endpoint">[docs]</a>    <span class="k">def</span> <span class="nf">create_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Abstract method for creating the endpoint</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</div>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
 <div class="viewcode-block" id="AbstractUdpClient.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractUdpClient.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close all idle connections.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -394,11 +382,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

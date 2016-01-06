@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Release Notes &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>Release Notes &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" />
    
@@ -35,25 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="settings.html" title="Settings"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="api/exceptions.html" title="Exceptions"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -62,12 +44,107 @@
             
   <div class="section" id="release-notes">
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="development">
-<h2>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-1-1-1-2016-jan-06">
+<h2>Ver. 1.1.1 - 2016-Jan-06<a class="headerlink" href="#ver-1-1-1-2016-jan-06" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>Full support for python 3.5</li>
+<li>Pulsar <strong>1.1.x</strong> is the last minor release (&#8220;major.minor.micro&#8221;) to support python 3.4</li>
+<li>From pulsar <strong>1.2.x</strong>, support for python 3.4 will be dropped and the new
+<a class="reference external" href="https://www.python.org/dev/peps/pep-0492/#specification">async-await</a> syntax will be used in the whole codebase</li>
+</ul>
+<div class="section" id="core">
+<h3>Core<a class="headerlink" href="#core" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added CI for python 3.5</li>
+<li>Added <code class="docutils literal"><span class="pre">debug</span></code> properties to all <code class="docutils literal"><span class="pre">AsyncObject</span></code>. The property returns the event loop
+debug mode flag</li>
+</ul>
+</div>
+<div class="section" id="httpclient">
+<h3>HttpClient<a class="headerlink" href="#httpclient" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Backward incompatible changes with API much closer to <a class="reference external" href="http://docs.python-requests.org/">requests</a> and far better support for streaming both uploads and downloads</li>
+<li>Added <code class="docutils literal"><span class="pre">content</span></code> attribute to <code class="docutils literal"><span class="pre">HttpResponse</span></code>, in line with <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+<li>Ability to pass <code class="docutils literal"><span class="pre">stream=True</span></code> during a request, same API as python <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+<li>Added the <code class="docutils literal"><span class="pre">raw</span></code> property to the Http Response, it can be used in conjunction with
+<code class="docutils literal"><span class="pre">stream</span></code> to stream http data. Similar API to <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+<li>Renamed <code class="docutils literal"><span class="pre">proxy_info</span></code> to <code class="docutils literal"><span class="pre">proxies</span></code>, same API as python <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+<li>You can now pass <code class="docutils literal"><span class="pre">proxies</span></code> dictionary during a request</li>
+<li>Stream uploads by passing a generator as <code class="docutils literal"><span class="pre">data</span></code> parameter</li>
+<li>Better websocket upgrade process</li>
+<li>Tidy up <code class="docutils literal"><span class="pre">CONNECT</span></code> request url (for tunneling)</li>
+<li>Added tests for proxyserver example using <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+</ul>
+</div>
+<div class="section" id="wsgi">
+<h3>WSGI<a class="headerlink" href="#wsgi" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Both <code class="docutils literal"><span class="pre">wsgi</span></code> and <code class="docutils literal"><span class="pre">http</span></code> apps use the same <code class="docutils literal"><span class="pre">pulsar.utils.httpurl.http_chunks</span></code>
+function for transfer-encoding <code class="docutils literal"><span class="pre">chunked</span></code></li>
+<li><code class="docutils literal"><span class="pre">render_error</span></code> escapes the Exception message to prevent <a class="reference external" href="https://en.wikipedia.org/wiki/Cross-site_scripting">XSS</a></li>
+</ul>
+</div>
+<div class="section" id="data-store">
+<h3>Data Store<a class="headerlink" href="#data-store" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Better <code class="docutils literal"><span class="pre">pulsards_url</span></code> function, default value form <code class="docutils literal"><span class="pre">cfg.data_store</span></code></li>
+<li><code class="docutils literal"><span class="pre">key_value_save</span></code> set to empty list by default (no persistence)</li>
+</ul>
+</div>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Refactored proxy server example</li>
+<li>Updated django chat example so that warning are no longer issued</li>
+</ul>
+</div>
+</div>
+<div class="section" id="ver-1-0-7-2015-dec-10">
+<h2>Ver. 1.0.7 - 2015-Dec-10<a class="headerlink" href="#ver-1-0-7-2015-dec-10" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="api">
+<h3>Api<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Improvements in the <code class="docutils literal"><span class="pre">release</span></code> application</li>
+<li>Handle <code class="docutils literal"><span class="pre">StopIteration</span></code> in green pool [[182](<a class="reference external" href="https://github.com/quantmind/pulsar/pull/182">https://github.com/quantmind/pulsar/pull/182</a>)]</li>
+</ul>
+</div>
+</div>
+<div class="section" id="ver-1-0-6-2015-nov-26">
+<h2>Ver. 1.0.6 - 2015-Nov-26<a class="headerlink" href="#ver-1-0-6-2015-nov-26" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Api<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Pulsar Protocol requires loop as first parameter during initialisation</li>
+<li>Actor uses event loop <code class="docutils literal"><span class="pre">set_debug</span></code> method when running with the <code class="docutils literal"><span class="pre">--debug</span></code> flag</li>
+<li><code class="docutils literal"><span class="pre">GreenWSGI</span></code> handler moved to <code class="docutils literal"><span class="pre">pulsar.apps.greenio.wsgi</span></code></li>
+<li>Added the release application for making releases. Used by pulsar and other packages.</li>
+</ul>
+</div>
+<div class="section" id="internals">
+<h3>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Use <code class="docutils literal"><span class="pre">actor_stop</span></code> rather than <code class="docutils literal"><span class="pre">loop.stop</span></code> when handling OS signals which kill an actor.</li>
+<li>Better <code class="docutils literal"><span class="pre">close</span></code> method for <code class="docutils literal"><span class="pre">TCPServer</span></code></li>
+<li>sudoless testing in travis</li>
+</ul>
+</div>
+<div class="section" id="bug-fixes">
+<h3>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Bug fix in <code class="docutils literal"><span class="pre">HttpRedirect.location</span></code> attribute</li>
+</ul>
+</div>
+</div>
+<div class="section" id="ver-1-0-5-2015-nov-12">
+<h2>Ver. 1.0.5 - 2015-Nov-12<a class="headerlink" href="#ver-1-0-5-2015-nov-12" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Asynchronous Redis locking primitive for distributing computing</li>
 <li>Added the <a class="reference internal" href="tutorials/tweets.html#tutorials-tweets"><span>Twitter Streaming</span></a> tutorial</li>
 <li>Added Javascript directory in examples and a gruntfile for compiling and linting scripts</li>
-<li>Documentation fixes</li>
+<li>Better handling of Ctrl-C in the test application</li>
+<li>Data streaming for <code class="docutils literal"><span class="pre">multipart/form-data</span></code> content type</li>
+<li>Write EOF before closing connections</li>
+<li>Documentation and bug fixes</li>
 </ul>
 </div>
 <div class="section" id="ver-1-0-3-2015-jul-21">
@@ -193,15 +270,15 @@ greenlets in a greenlet pool.</li>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
       |
       <a href="sources/changelog.txt"
-          rel="nofollow">Page source</a></li>
+          rel="nofollow">Page source</a>
     </div>
 
     

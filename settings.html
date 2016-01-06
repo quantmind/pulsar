@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>Settings &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="index.html" />
     <link rel="next" title="Pics" href="pics.html" />
     <link rel="prev" title="Release Notes" href="changelog.html" />
    
@@ -35,25 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="pics.html" title="Pics"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="changelog.html" title="Release Notes"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -88,18 +70,11 @@ paramaters can be specified.</p>
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">''</span></code></p>
 <p>The HTTP proxy server to use with HttpClient.</p>
 </div>
-<div class="section" id="http-py-parser">
-<span id="setting-http-py-parser"></span><h3>http_py_parser<a class="headerlink" href="#http-py-parser" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <code class="docutils literal"><span class="pre">http_py_parser</span></code></p>
-<p><em>Command line</em>: <code class="docutils literal"><span class="pre">--http-py-parser</span></code></p>
-<p><em>Default</em>: <code class="docutils literal"><span class="pre">False</span></code></p>
-<p>Set the python parser as default HTTP parser</p>
-</div>
 <div class="section" id="debug">
 <span id="setting-debug"></span><h3>debug<a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h3>
 <p><em>Config name</em>: <code class="docutils literal"><span class="pre">debug</span></code></p>
 <p><em>Command line</em>: <code class="docutils literal"><span class="pre">--debug</span></code></p>
-<p><em>Default</em>: <code class="docutils literal"><span class="pre">0</span></code></p>
+<p><em>Default</em>: <code class="docutils literal"><span class="pre">False</span></code></p>
 <p>Turn on debugging in the server.</p>
 <p>Set the log level to debug, limits the number of worker processes
 to 1, set asyncio debug flag.</p>
@@ -247,15 +222,6 @@ If not provided, a value will be assigned by pulsar.</p>
 <p><em>Command line</em>: <code class="docutils literal"><span class="pre">--greenlet</span></code></p>
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">0</span></code></p>
 <p>Use greenlet whenever possible.</p>
-</div>
-<div class="section" id="no-pycares">
-<span id="setting-no-pycares"></span><h3>no_pycares<a class="headerlink" href="#no-pycares" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <code class="docutils literal"><span class="pre">no_pycares</span></code></p>
-<p><em>Command line</em>: <code class="docutils literal"><span class="pre">--no-pycares</span></code></p>
-<p><em>Default</em>: <code class="docutils literal"><span class="pre">False</span></code></p>
-<p>Switch off pycares DNS lookup.</p>
-<p>By default, pulsar uses pycares for its DNS lookups (if it is available).
-Use this flag to revert to the standard library dns resolver.</p>
 </div>
 <div class="section" id="selector">
 <span id="setting-selector"></span><h3>selector<a class="headerlink" href="#selector" title="Permalink to this headline">¶</a></h3>
@@ -476,7 +442,7 @@ Must be a positive integer. Generally set in the 64-2048 range.</p>
 <span id="setting-key-value-save"></span><h3>key_value_save<a class="headerlink" href="#key-value-save" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <code class="docutils literal"><span class="pre">pulsards</span></code></p>
 <p><em>Config name</em>: <code class="docutils literal"><span class="pre">key_value_save</span></code></p>
-<p><em>Default</em>: <code class="docutils literal"><span class="pre">[(900,</span> <span class="pre">1),</span> <span class="pre">(300,</span> <span class="pre">10),</span> <span class="pre">(60,</span> <span class="pre">10000)]</span></code></p>
+<p><em>Default</em>: <code class="docutils literal"><span class="pre">[]</span></code></p>
 <p>List of pairs controlling data store persistence.</p>
 <p>Will save the DB if both the given number of seconds and the given
 number of write operations against the DB occurred.</p>
@@ -654,15 +620,15 @@ the memory leak report.</div></blockquote>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
       |
       <a href="sources/settings.txt"
-          rel="nofollow">Page source</a></li>
+          rel="nofollow">Page source</a>
     </div>
 
     

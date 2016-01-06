@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>Overview &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" />
    
@@ -35,25 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="design.html" title="Design"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="index.html" title="Pulsar"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -69,9 +51,9 @@ activities in different threads and/or processes.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://img.shields.io/travis/quantmind/pulsar/master.svg" /></a> <a class="reference external" href="https://coveralls.io/github/quantmind/pulsar?branch=master"><img alt="coverage-master" src="https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master" /></a></td>
+<tr class="field-odd field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://travis-ci.org/quantmind/pulsar.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/quantmind/pulsar?branch=master"><img alt="coverage-master" src="https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master" /></a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://img.shields.io/travis/quantmind/pulsar/dev.svg" /></a> <a class="reference external" href="https://coveralls.io/github/quantmind/pulsar?branch=dev"><img alt="coverage-dev" src="https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=dev" /></a></td>
+<tr class="field-even field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://travis-ci.org/quantmind/pulsar.svg?branch=dev" /></a> <a class="reference external" href="https://coveralls.io/github/quantmind/pulsar?branch=dev"><img alt="coverage-dev" src="https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=dev" /></a></td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://pythonhosted.org/pulsar/">http://pythonhosted.org/pulsar/</a></td>
 </tr>
@@ -192,8 +174,8 @@ returned by Actor info method.</li>
 <div class="highlight-python"><div class="highlight"><pre>python runtests.py -h
 </pre></div>
 </div>
-<p><a class="reference external" href="http://www.python.org/dev/peps/pep-0008/">pep8</a> check (requires pep8 package):</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">pep8</span>
+<p><a class="reference external" href="https://pypi.python.org/pypi/flake8">flake8</a> check (requires flake8 package):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">flake8</span>
 </pre></div>
 </div>
 </div>
@@ -214,7 +196,7 @@ pull request for the <strong>dev branch</strong>.</li>
 <li>Include tests to cover the new code (inside the <code class="docutils literal"><span class="pre">tests</span></code> directory)</li>
 <li>Preferably have one commit only (you can use <a class="reference external" href="https://help.github.com/articles/about-git-rebase">rebase</a> to combine several
 commits into one)</li>
-<li>Make sure <code class="docutils literal"><span class="pre">pep8</span></code> tests pass</li>
+<li>Make sure <code class="docutils literal"><span class="pre">flake8</span></code> tests pass</li>
 </ul>
 </div>
 <div class="section" id="license">
@@ -296,15 +278,15 @@ file in the top distribution directory for the full license text.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
       |
       <a href="sources/overview.txt"
-          rel="nofollow">Page source</a></li>
+          rel="nofollow">Page source</a>
     </div>
 
     

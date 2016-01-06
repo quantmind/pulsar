@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Greenlet Support &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>Greenlet Support &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../index.html" />
     <link rel="next" title="Test Suite" href="test.html" />
     <link rel="prev" title="Django Application" href="pulse.html" />
    
@@ -35,25 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="test.html" title="Test Suite"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="pulse.html" title="Django Application"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -75,9 +57,9 @@ pulsar, which provides asynchronous object data mapping with
 </div>
 <p>This application <strong>does not use monkey patching</strong> and therefore it
 works quite differently from implicit asynchronous libraries such as
-<a class="reference external" href="http://www.gevent.org/">gevent</a>. All it does, it provides the user with a set
+<a class="reference external" href="http://www.gevent.org/">gevent</a>. This module provides the user with a set
 of utilities for <strong>explicitly</strong> transferring execution from one greenlet
-to a another which executes the blocking call in a greenlet-friendly way.</p>
+to another which executes the blocking call in a greenlet-friendly way.</p>
 <p>The caller has the responsibility that the blocking call is greenlet-friendly,
 i.e. it transfers the control of execution back to the parent greenlet when
 needed.</p>
@@ -97,7 +79,7 @@ your client code can be used on other frameworks just as well.</li>
 <span id="id1"></span><h3>Green WSGI<a class="headerlink" href="#green-wsgi" title="Permalink to this headline">¶</a></h3>
 <p>Assume you are using pulsar web server and would like to write your application
 in an implicit asynchronous mode, i.e. without dealing with futures nor
-coroutines, then you can wrap your WSGI <code class="docutils literal"><span class="pre">app</span></code> with the <a class="reference internal" href="#pulsar.apps.greenio.GreenWSGI" title="pulsar.apps.greenio.GreenWSGI"><code class="xref py py-class docutils literal"><span class="pre">GreenWSGI</span></code></a>
+coroutines, then you can wrap your WSGI <code class="docutils literal"><span class="pre">app</span></code> with the <a class="reference internal" href="#pulsar.apps.greenio.wsgi.GreenWSGI" title="pulsar.apps.greenio.wsgi.GreenWSGI"><code class="xref py py-class docutils literal"><span class="pre">GreenWSGI</span></code></a>
 utility:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">greenio</span>
 
@@ -228,8 +210,8 @@ a RuntimeError will be raised.</p>
 <div class="section" id="id3">
 <h3>Green WSGI<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.apps.greenio.GreenWSGI">
-<em class="property">class </em><code class="descclassname">pulsar.apps.greenio.</code><code class="descname">GreenWSGI</code><span class="sig-paren">(</span><em>wsgi</em>, <em>pool</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio.html#GreenWSGI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.GreenWSGI" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.apps.greenio.wsgi.GreenWSGI">
+<em class="property">class </em><code class="descclassname">pulsar.apps.greenio.wsgi.</code><code class="descname">GreenWSGI</code><span class="sig-paren">(</span><em>wsgi</em>, <em>pool</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/greenio/wsgi.html#GreenWSGI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.greenio.wsgi.GreenWSGI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wraps a WSGI application to be executed on a <a class="reference internal" href="#pulsar.apps.greenio.GreenPool" title="pulsar.apps.greenio.GreenPool"><code class="xref py py-class docutils literal"><span class="pre">GreenPool</span></code></a></p>
 </dd></dl>
 
@@ -309,15 +291,15 @@ a RuntimeError will be raised.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
       |
       <a href="../sources/apps/greenio.txt"
-          rel="nofollow">Page source</a></li>
+          rel="nofollow">Page source</a>
     </div>
 
     

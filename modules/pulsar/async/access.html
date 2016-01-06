@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.access &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>pulsar.async.access &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,27 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -56,7 +43,6 @@
             
   <h1>Source code for pulsar.async.access</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
@@ -82,14 +68,10 @@
            <span class="s">&#39;SELECTORS&#39;</span><span class="p">,</span>
            <span class="s">&#39;Future&#39;</span><span class="p">,</span>
            <span class="s">&#39;reraise&#39;</span><span class="p">,</span>
-           <span class="s">&#39;get_io_loop&#39;</span><span class="p">,</span>
            <span class="s">&#39;coroutine&#39;</span><span class="p">,</span>
            <span class="s">&#39;is_async&#39;</span><span class="p">,</span>
            <span class="s">&#39;CANCELLED_ERRORS&#39;</span><span class="p">]</span>
 
-
-<span class="k">if</span> <span class="s">&#39;--debug&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;PYTHONASYNCIODEBUG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;debug&#39;</span>
 
 <span class="n">_EVENT_LOOP_CLASSES</span> <span class="o">=</span> <span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">AbstractEventLoop</span><span class="p">,)</span>
 <span class="n">CANCELLED_ERRORS</span> <span class="o">=</span> <span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">,)</span>
@@ -144,13 +126,6 @@
 <span class="s">            &quot;&quot;&quot;</span>
 
 <span class="n">get_event_loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span>
-
-
-<span class="k">def</span> <span class="nf">get_io_loop</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">_EVENT_LOOP_CLASSES</span><span class="p">):</span>
-        <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span> <span class="k">if</span> <span class="n">actor</span> <span class="k">else</span> <span class="n">new_event_loop</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">loop</span>
 
 
 <span class="k">def</span> <span class="nf">new_event_loop</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -211,9 +186,9 @@
 
 
 <div class="viewcode-block" id="get_actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.get_actor">[docs]</a><span class="k">def</span> <span class="nf">get_actor</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">thread_data</span><span class="p">(</span><span class="s">&#39;actor&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">thread_data</span><span class="p">(</span><span class="s">&#39;actor&#39;</span><span class="p">)</span></div>
 
-</div>
+
 <span class="k">def</span> <span class="nf">set_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">thread_data</span><span class="p">(</span><span class="s">&#39;actor&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
 </pre></div>
@@ -289,11 +264,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.httpbin.manage &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>examples.httpbin.manage &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,27 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -80,8 +67,11 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">string</span>
 <span class="kn">import</span> <span class="nn">mimetypes</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">repeat</span><span class="p">,</span> <span class="n">chain</span>
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">async</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpRedirect</span><span class="p">,</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">JAPANESE</span><span class="p">,</span> <span class="n">CHINESE</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span>
@@ -89,7 +79,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.html</span> <span class="kn">import</span> <span class="n">escape</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">ws</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">Html</span><span class="p">,</span> <span class="n">Json</span><span class="p">,</span> <span class="n">HtmlDocument</span><span class="p">,</span> <span class="n">GZipMiddleware</span><span class="p">,</span>
-                              <span class="n">AsyncString</span><span class="p">)</span>
+                              <span class="n">String</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">MultiValueDict</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 
@@ -141,14 +131,18 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">args</span><span class="p">,</span> <span class="n">files</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">()</span>
             <span class="n">jfiles</span> <span class="o">=</span> <span class="n">MultiValueDict</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">parts</span> <span class="ow">in</span> <span class="n">files</span><span class="o">.</span><span class="n">lists</span><span class="p">():</span>
-                <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">part</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">string</span><span class="p">()</span>
-                    <span class="k">except</span> <span class="ne">UnicodeError</span><span class="p">:</span>
-                        <span class="n">part</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">base64</span><span class="p">()</span>
-                    <span class="n">jfiles</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">part</span>
-            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(((</span><span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">args</span><span class="p">)),</span>
+            <span class="k">if</span> <span class="n">files</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">parts</span> <span class="ow">in</span> <span class="n">files</span><span class="o">.</span><span class="n">lists</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">part</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">string</span><span class="p">()</span>
+                        <span class="k">except</span> <span class="ne">UnicodeError</span><span class="p">:</span>
+                            <span class="n">part</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">base64</span><span class="p">()</span>
+                        <span class="n">jfiles</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">part</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">MultiValueDict</span><span class="p">):</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(((</span><span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="n">args</span><span class="p">),</span>
                          <span class="p">(</span><span class="s">&#39;files&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">jfiles</span><span class="p">))))</span>
         <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
@@ -188,8 +182,8 @@
         <span class="n">templ</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">asset</span><span class="p">(</span><span class="s">&#39;template.html&#39;</span><span class="p">)</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">templ</span> <span class="o">%</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">JAPANESE</span><span class="p">,</span> <span class="n">CHINESE</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">pyversion</span><span class="p">,</span> <span class="n">ul</span><span class="p">)</span>
         <span class="n">html</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">html</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="n">html</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
+
     <span class="nd">@route</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Returns GET data&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">get_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_data_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
@@ -197,6 +191,14 @@
     <span class="nd">@route</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Returns POST data&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">post_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_data_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Returns Post bytes data&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">post_post_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">()</span>
+        <span class="n">content_type</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;CONTENT_TYPE&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
 
     <span class="nd">@route</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Returns PATCH data&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">patch_patch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
@@ -252,7 +254,8 @@
            <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;status&#39;</span><span class="p">:</span> <span class="mi">418</span><span class="p">})</span>
     <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;text/html&#39;</span>
-        <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">urlargs</span><span class="p">[</span><span class="s">&#39;status&#39;</span><span class="p">])</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">url_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">,</span> <span class="s">&#39;test error&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">urlargs</span><span class="p">[</span><span class="s">&#39;status&#39;</span><span class="p">])</span>
 
     <span class="nd">@route</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Returns response headers&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">response_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
@@ -327,8 +330,8 @@
         <span class="c"># address = &#39;%s://%s/stats&#39; % (scheme, host)</span>
         <span class="n">doc</span> <span class="o">=</span> <span class="n">HtmlDocument</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Live server stats&#39;</span><span class="p">,</span> <span class="n">media_path</span><span class="o">=</span><span class="s">&#39;/assets/&#39;</span><span class="p">)</span>
         <span class="c"># docs.head.scripts</span>
-        <span class="k">return</span> <span class="n">doc</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="n">doc</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
+
     <span class="nd">@route</span><span class="p">(</span><span class="s">&#39;clip/&lt;int(min=256,max=16777216):chunk_size&gt;&#39;</span><span class="p">,</span>
            <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;chunk_size&#39;</span><span class="p">:</span> <span class="mi">4096</span><span class="p">},</span>
            <span class="n">title</span><span class="o">=</span><span class="s">&#39;Show a video clip&#39;</span><span class="p">)</span>
@@ -341,6 +344,12 @@
         <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">data</span>
         <span class="k">return</span> <span class="n">response</span>
 
+    <span class="nd">@route</span><span class="p">(</span><span class="s">&#39;servername&#39;</span><span class="p">,</span>
+           <span class="n">title</span><span class="o">=</span><span class="s">&#39;display the server name&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">servername</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;SERVER_NAME&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">String</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
     <span class="c">########################################################################</span>
     <span class="c">#    BENCHMARK ROUTES</span>
     <span class="nd">@route</span><span class="p">()</span>
@@ -349,17 +358,53 @@
 
     <span class="nd">@route</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">plaintext</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">AsyncString</span><span class="p">(</span><span class="s">&#39;Hello, World!&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">String</span><span class="p">(</span><span class="s">&#39;Hello, World!&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
 
-</div>
+
+<span class="k">class</span> <span class="nc">Upload</span><span class="p">(</span><span class="n">BaseRouter</span><span class="p">):</span>
+    <span class="n">response_content_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;multipart/form-data&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_async_put</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_async_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getheaders</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;method&#39;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+                <span class="s">&#39;headers&#39;</span><span class="p">:</span> <span class="n">headers</span><span class="p">,</span>
+                <span class="s">&#39;pulsar&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulsar_info</span><span class="p">(</span><span class="n">request</span><span class="p">),</span>
+                <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="n">MultiValueDict</span><span class="p">(),</span>
+                <span class="s">&#39;files&#39;</span><span class="p">:</span> <span class="n">MultiValueDict</span><span class="p">()}</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">response_data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">yield from</span> <span class="n">request</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="p">,</span> <span class="n">request</span><span class="p">))</span>
+        <span class="n">data</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">])</span>
+        <span class="n">data</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">Json</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">part</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">current_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">part</span><span class="p">:</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">current_data</span> <span class="o">=</span> <span class="n">part</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">current_data_buffer</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">current_data_buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">recv</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">complete</span><span class="p">():</span>
+            <span class="n">data_store</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">response_data</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">current_data_buffer</span><span class="p">)</span>
+            <span class="n">store</span> <span class="o">=</span> <span class="n">data_store</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">store</span> <span class="o">=</span> <span class="n">data_store</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">UnicodeError</span><span class="p">:</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">b64encode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+            <span class="n">store</span><span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+
 <span class="k">class</span> <span class="nc">ExpectFail</span><span class="p">(</span><span class="n">BaseRouter</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="n">chunk</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
-            <span class="n">chunk</span><span class="o">.</span><span class="n">fail</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_data_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fail</span><span class="p">()</span>
 
 
 <span class="k">class</span> <span class="nc">Graph</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
@@ -373,6 +418,7 @@
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
         <span class="n">router</span> <span class="o">=</span> <span class="n">HttpBin</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">ExpectFail</span><span class="p">(</span><span class="s">&#39;expect&#39;</span><span class="p">),</span>
+                                 <span class="n">Upload</span><span class="p">(</span><span class="s">&#39;upload&#39;</span><span class="p">),</span>
                                  <span class="n">wsgi</span><span class="o">.</span><span class="n">wait_for_body_middleware</span><span class="p">,</span>
                                  <span class="n">wsgi</span><span class="o">.</span><span class="n">clean_path_middleware</span><span class="p">,</span>
                                  <span class="n">wsgi</span><span class="o">.</span><span class="n">authorization_middleware</span><span class="p">,</span>
@@ -463,11 +509,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

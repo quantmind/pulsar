@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,29 +27,14 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
-          <li class="nav-item nav-item-3"><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -100,23 +85,21 @@
 <span class="sd">.. _TLS: http://en.wikipedia.org/wiki/Transport_Layer_Security</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span><span class="p">,</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 <span class="kn">from</span> <span class="nn">http.client</span> <span class="kn">import</span> <span class="n">responses</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">chain_future</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.multipart</span> <span class="kn">import</span> <span class="n">parse_form_data</span><span class="p">,</span> <span class="n">parse_options_header</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">SimpleCookie</span><span class="p">,</span>
                                   <span class="n">has_empty_content</span><span class="p">,</span> <span class="n">REDIRECT_CODES</span><span class="p">,</span>
                                   <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">,</span>
                                   <span class="n">remove_double_slash</span><span class="p">,</span> <span class="n">iri_to_uri</span><span class="p">,</span>
-                                  <span class="n">is_absolute_uri</span><span class="p">)</span>
+                                  <span class="n">is_absolute_uri</span><span class="p">,</span> <span class="n">parse_options_header</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="n">HtmlDocument</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span><span class="n">set_wsgi_request_class</span><span class="p">,</span> <span class="n">set_cookie</span><span class="p">,</span> <span class="n">query_dict</span><span class="p">,</span>
                     <span class="n">parse_accept_header</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">ContentAccept</span><span class="p">,</span> <span class="n">CharsetAccept</span><span class="p">,</span> <span class="n">LanguageAccept</span>
+<span class="kn">from</span> <span class="nn">.formdata</span> <span class="kn">import</span> <span class="n">parse_form_data</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;EnvironMixin&#39;</span><span class="p">,</span> <span class="s">&#39;WsgiResponse&#39;</span><span class="p">,</span>
@@ -146,7 +129,7 @@
 
 <span class="k">def</span> <span class="nf">wsgi_encoder</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
     <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">gen</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">yield</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">data</span>
@@ -321,8 +304,8 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_streamed</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
 <div class="viewcode-block" id="WsgiResponse.set_cookie"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse.set_cookie">[docs]</a>    <span class="k">def</span> <span class="nf">set_cookie</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sets a cookie.</span>
@@ -331,8 +314,8 @@
 <span class="sd">        ``datetime.datetime`` object in UTC. If ``expires`` is a datetime</span>
 <span class="sd">        object then ``max_age`` will be calculated.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">set_cookie</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</div>
+        <span class="n">set_cookie</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">delete_cookie</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">set_cookie</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
                    <span class="n">expires</span><span class="o">=</span><span class="s">&#39;Thu, 01-Jan-1970 00:00:00 GMT&#39;</span><span class="p">)</span>
@@ -365,8 +348,8 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_set_cookies</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                 <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;Set-Cookie&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">OutputString</span><span class="p">())</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">has_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">header</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span>
     <span class="n">__contains__</span> <span class="o">=</span> <span class="n">has_header</span>
@@ -375,9 +358,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="n">header</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="n">header</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="n">header</span><span class="p">]</span></div>
 
-</div>
+
 <div class="viewcode-block" id="EnvironMixin"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.EnvironMixin">[docs]</a><span class="k">class</span> <span class="nc">EnvironMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A wrapper around a WSGI_ environ.</span>
 
@@ -430,9 +413,9 @@
 
 <div class="viewcode-block" id="EnvironMixin.get"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.EnvironMixin.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Shortcut to the :attr:`environ` get method.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span></div></div>
 
-</div></div>
+
 <div class="viewcode-block" id="WsgiRequest"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest">[docs]</a><span class="k">class</span> <span class="nc">WsgiRequest</span><span class="p">(</span><span class="n">EnvironMixin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`EnvironMixin` for wsgi requests.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">app_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">urlargs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -567,7 +550,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="p">{}</span>
 
-<div class="viewcode-block" id="WsgiRequest.data_and_files"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files">[docs]</a>    <span class="k">def</span> <span class="nf">data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="WsgiRequest.data_and_files"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files">[docs]</a>    <span class="k">def</span> <span class="nf">data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Retrieve body data.</span>
 
 <span class="sd">        Returns a two-elements tuple of a</span>
@@ -579,9 +562,13 @@
 
 <span class="sd">        The result is cached.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">data_and_files</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">in</span> <span class="n">ENCODE_URL_METHODS</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="p">{},</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">data_and_files</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_and_files</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_and_files</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">data</span> <span class="ow">and</span> <span class="n">files</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">value</span>
         <span class="k">elif</span> <span class="n">data</span><span class="p">:</span>
@@ -589,37 +576,25 @@
         <span class="k">elif</span> <span class="n">files</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-</div>
+            <span class="k">return</span> <span class="bp">None</span></div>
+
 <div class="viewcode-block" id="WsgiRequest.body_data"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data">[docs]</a>    <span class="k">def</span> <span class="nf">body_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;A :class:`~.MultiValueDict` containing data from the request body.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-</div>
-    <span class="k">def</span> <span class="nf">_data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="p">{},</span> <span class="bp">None</span>
-        <span class="n">chunk</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">future</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">stream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ENCODE_URL_METHODS</span> <span class="ow">and</span> <span class="n">stream</span><span class="p">:</span>
-                <span class="n">chunk</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
-                    <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span>
-                        <span class="n">chunk</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_and_files</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">))</span>
+            <span class="n">data_files</span> <span class="o">=</span> <span class="n">parse_form_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_files</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span>
+                    <span class="n">data_files</span><span class="p">,</span>
+                    <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_and_files</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">stream</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">chunk</span> <span class="o">=</span> <span class="n">future</span>
-        <span class="k">if</span> <span class="n">chunk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">content_type</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type_options</span>
-            <span class="n">charset</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;charset&#39;</span><span class="p">,</span> <span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">content_type</span> <span class="ow">in</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">charset</span><span class="p">)),</span> <span class="bp">None</span>
-            <span class="k">elif</span> <span class="n">content_type</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">parse_form_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">charset</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">,</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">data_and_files</span> <span class="o">=</span> <span class="n">result</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">)</span>
+            <span class="n">data_files</span> <span class="o">=</span> <span class="n">future</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">data_and_files</span> <span class="o">=</span> <span class="n">data_files</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">url_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -647,8 +622,8 @@
             <span class="n">server_port</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_PORT&#39;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">server_port</span> <span class="o">!=</span> <span class="p">(</span><span class="s">&#39;443&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span> <span class="k">else</span> <span class="s">&#39;80&#39;</span><span class="p">):</span>
                 <span class="n">host</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">server_port</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">host</span>
-</div>
+        <span class="k">return</span> <span class="n">host</span></div>
+
 <div class="viewcode-block" id="WsgiRequest.get_client_address"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.get_client_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_client_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_x_forwarded</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Obtain the client IP address</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -656,8 +631,8 @@
         <span class="k">if</span> <span class="n">use_x_forwarded</span> <span class="ow">and</span> <span class="n">xfor</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">xfor</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span>
-</div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span></div>
+
 <div class="viewcode-block" id="WsgiRequest.full_path"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path">[docs]</a>    <span class="k">def</span> <span class="nf">full_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">query</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a full path&#39;&#39;&#39;</span>
         <span class="n">path</span> <span class="o">=</span> <span class="bp">None</span>
@@ -670,8 +645,8 @@
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">remove_double_slash</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="WsgiRequest.absolute_uri"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri">[docs]</a>    <span class="k">def</span> <span class="nf">absolute_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Builds an absolute URI from ``location`` and variables</span>
 <span class="sd">        available in this request.</span>
@@ -688,14 +663,14 @@
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">scheme</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Absolute location with scheme not valid&#39;</span><span class="p">)</span>
-</div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Absolute location with scheme not valid&#39;</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="WsgiRequest.redirect"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect">[docs]</a>    <span class="k">def</span> <span class="nf">redirect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Redirect to a different ``path``</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div></div>
 
-</div></div>
+
 <span class="n">set_wsgi_request_class</span><span class="p">(</span><span class="n">WsgiRequest</span><span class="p">)</span>
 </pre></div>
 
@@ -770,11 +745,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 

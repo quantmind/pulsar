@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.concurrency &mdash; pulsar 1.0.4beta0 documentation</title>
+    <title>pulsar.async.concurrency &mdash; pulsar 1.1.2beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.0.4beta0',
+        VERSION:     '1.1.2beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,27 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.0.4beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">pulsar 1.0.4beta0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
-      </ul>
-    </div>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -100,9 +87,9 @@
         <span class="c"># Create the arbiter</span>
         <span class="k">return</span> <span class="n">set_actor</span><span class="p">(</span><span class="n">_spawn_actor</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>
     <span class="k">elif</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
-        <span class="k">return</span> <span class="n">arbiter</span>
+        <span class="k">return</span> <span class="n">arbiter</span></div>
 
-</div>
+
 <div class="viewcode-block" id="Concurrency"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency">[docs]</a><span class="k">class</span> <span class="nc">Concurrency</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Actor :class:`.Concurrency`.</span>
 
@@ -166,8 +153,8 @@
 <span class="sd">        By default it return nothing so that the best handler for the</span>
 <span class="sd">        system is chosen.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">SELECTORS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">selector</span><span class="p">]()</span>
-</div>
+        <span class="k">return</span> <span class="n">SELECTORS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">selector</span><span class="p">]()</span></div>
+
     <span class="k">def</span> <span class="nf">get_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">aid</span><span class="p">,</span> <span class="n">check_monitor</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">aid</span> <span class="o">==</span> <span class="n">actor</span><span class="o">.</span><span class="n">aid</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">actor</span>
@@ -179,15 +166,16 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">aid</span> <span class="o">=</span> <span class="n">aid</span> <span class="ow">or</span> <span class="n">create_aid</span><span class="p">()</span>
         <span class="n">future</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;spawn&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="o">=</span><span class="n">aid</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">actor_proxy_future</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="n">actor_proxy_future</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Concurrency.run_actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency.run_actor">[docs]</a>    <span class="k">def</span> <span class="nf">run_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Start running the ``actor``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">set_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
-        <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span><span class="o">.</span><span class="n">start_serving</span><span class="p">()</span>
-        <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">run_forever</span><span class="p">()</span>
-</div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span><span class="o">.</span><span class="n">address</span><span class="p">:</span>
+            <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span><span class="o">.</span><span class="n">start_serving</span><span class="p">()</span>
+        <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">run_forever</span><span class="p">()</span></div>
+
     <span class="k">def</span> <span class="nf">add_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">monitor_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Cannot add monitors to </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">actor</span><span class="p">)</span>
 
@@ -196,13 +184,15 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">configured_logger</span><span class="p">(</span><span class="s">&#39;pulsar.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">actor</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">SelectorEventLoop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selector</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="n">loop</span><span class="o">.</span><span class="n">set_debug</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
         <span class="n">executor</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">thread_workers</span><span class="p">)</span>
         <span class="n">loop</span><span class="o">.</span><span class="n">set_default_executor</span><span class="p">(</span><span class="n">executor</span><span class="p">)</span>
         <span class="n">loop</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">_logger</span>
         <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_mailbox</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">loop</span>
-</div>
+        <span class="k">return</span> <span class="n">loop</span></div>
+
 <div class="viewcode-block" id="Concurrency.hand_shake"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency.hand_shake">[docs]</a>    <span class="k">def</span> <span class="nf">hand_shake</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Perform the hand shake for ``actor``</span>
 
@@ -228,8 +218,8 @@
             <span class="n">actor</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acknowledge_start</span><span class="p">)</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">actor</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-</div>
+            <span class="n">actor</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">create_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;monitor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_proxy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;monitor&#39;</span><span class="p">])</span>
@@ -240,8 +230,8 @@
         <span class="n">client</span> <span class="o">=</span> <span class="n">MailboxClient</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
         <span class="n">loop</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hand_shake</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
         <span class="n">client</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;finish&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">loop</span><span class="o">.</span><span class="n">stop</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">client</span>
-</div>
+        <span class="k">return</span> <span class="n">client</span></div>
+
 <div class="viewcode-block" id="Concurrency.periodic_task"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency.periodic_task">[docs]</a>    <span class="k">def</span> <span class="nf">periodic_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Implement the :ref:`actor period task &lt;actor-periodic-task&gt;`.</span>
 
@@ -264,9 +254,9 @@
             <span class="nb">next</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">next_periodic_task</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span>
             <span class="nb">min</span><span class="p">(</span><span class="nb">next</span><span class="p">,</span> <span class="n">MAX_NOTIFY</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic_task</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">ack</span>
-</div>
-<div class="viewcode-block" id="Concurrency.stop"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ack</span></div>
+
+<div class="viewcode-block" id="Concurrency.stop"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.Concurrency.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Gracefully stop the ``actor``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">state</span> <span class="o">&lt;=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span><span class="p">:</span>
@@ -286,6 +276,9 @@
                     <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
                 <span class="k">elif</span> <span class="n">exit_code</span><span class="p">:</span>
                     <span class="n">actor</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">exit_code</span><span class="p">:</span>
+                    <span class="n">exit_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="s">&#39;exit_code&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
             <span class="c">#</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">=</span> <span class="n">exit_code</span>
             <span class="n">stopping</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">)</span>
@@ -301,8 +294,8 @@
                     <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">actor</span><span class="o">.</span><span class="n">stopped</span><span class="p">():</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-</div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">_install_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="n">proc_name</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">proc_name</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
@@ -329,16 +322,18 @@
                     <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">remove_signal_handler</span><span class="p">(</span><span class="n">sig</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>  <span class="c"># pragma nocover</span>
+            <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Event loop still running when stopping&#39;</span><span class="p">)</span>
+            <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Close event loop&#39;</span><span class="p">)</span>
+            <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_stop_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">finished</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Exit from the :class:`.Actor` domain.&#39;&#39;&#39;</span>
+        <span class="c"># Stop the actor if finished is True</span>
+        <span class="c"># otherwise starts the stopping process</span>
         <span class="k">if</span> <span class="n">finished</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_remove_signals</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>  <span class="c"># pragma nocover</span>
-                <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Event loop still running when stopping&#39;</span><span class="p">)</span>
-                <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">return</span> <span class="bp">True</span>
         <span class="c">#</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">CLOSE</span>
@@ -364,9 +359,9 @@
             <span class="n">actor</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_remove_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Cannot remove actor&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Cannot remove actor&#39;</span><span class="p">)</span></div>
 
-</div>
+
 <span class="k">class</span> <span class="nc">ProcessMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">is_process</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -378,8 +373,7 @@
 
     <span class="k">def</span> <span class="nf">handle_exit_signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">sig</span><span class="p">):</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Got </span><span class="si">%s</span><span class="s">. Stopping.&quot;</span><span class="p">,</span> <span class="n">system</span><span class="o">.</span><span class="n">SIG_NAMES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sig</span><span class="p">))</span>
-        <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">exit_signal</span> <span class="o">=</span> <span class="n">sig</span>
-        <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">sig</span><span class="p">))</span>
 
 
 <span class="k">class</span> <span class="nc">MonitorMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -584,9 +578,10 @@
         <span class="c">#</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">monitor</span><span class="o">.</span><span class="n">closed</span><span class="p">():</span>
             <span class="n">monitor</span><span class="o">.</span><span class="n">next_periodic_task</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span>
-                <span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic_task</span><span class="p">,</span> <span class="n">monitor</span><span class="p">)</span>
-</div>
+                <span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic_task</span><span class="p">,</span> <span class="n">monitor</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">_stop_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">finished</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="c"># remove all workers from this monitor</span>
         <span class="k">if</span> <span class="n">finished</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -599,9 +594,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_close_actors</span><span class="p">(</span><span class="n">actor</span><span class="p">),</span> <span class="n">callback</span><span class="o">=</span><span class="n">_cleanup</span><span class="p">,</span>
-                            <span class="n">errback</span><span class="o">=</span><span class="n">_cleanup</span><span class="p">)</span>
+                            <span class="n">errback</span><span class="o">=</span><span class="n">_cleanup</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="ArbiterConcurrency"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.ArbiterConcurrency">[docs]</a><span class="k">class</span> <span class="nc">ArbiterConcurrency</span><span class="p">(</span><span class="n">MonitorMixin</span><span class="p">,</span> <span class="n">ProcessMixin</span><span class="p">,</span> <span class="n">Concurrency</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Concurrency implementation for the ``arbiter``</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -639,8 +634,8 @@
                     <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                         <span class="k">return</span> <span class="n">a</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">a</span>
-</div>
+            <span class="k">return</span> <span class="n">a</span></div>
+
 <div class="viewcode-block" id="ArbiterConcurrency.add_monitor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.ArbiterConcurrency.add_monitor">[docs]</a>    <span class="k">def</span> <span class="nf">add_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">monitor_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add a new ``monitor``.</span>
 
@@ -654,8 +649,8 @@
         <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">actorparams</span><span class="p">())</span>
         <span class="n">params</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monitor_name</span>
         <span class="n">params</span><span class="p">[</span><span class="s">&#39;kind&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;monitor&#39;</span>
-        <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="ArbiterConcurrency.before_start"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.ArbiterConcurrency.before_start">[docs]</a>    <span class="k">def</span> <span class="nf">before_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
         <span class="sd">&#39;&#39;&#39;Daemonise the system if required.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -665,8 +660,8 @@
             <span class="k">if</span> <span class="n">autoreload</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
                 <span class="k">return</span>
         <span class="n">actor</span><span class="o">.</span><span class="n">start_coverage</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_install_signals</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_install_signals</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="ArbiterConcurrency.create_mailbox"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.ArbiterConcurrency.create_mailbox">[docs]</a>    <span class="k">def</span> <span class="nf">create_mailbox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Override :meth:`.Concurrency.create_mailbox` to create the</span>
 <span class="sd">        mailbox server.</span>
@@ -678,8 +673,8 @@
         <span class="n">mailbox</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span>
             <span class="s">&#39;start&#39;</span><span class="p">,</span>
             <span class="k">lambda</span> <span class="n">_</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hand_shake</span><span class="p">,</span> <span class="n">actor</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">mailbox</span>
-</div>
+        <span class="k">return</span> <span class="n">mailbox</span></div>
+
 <div class="viewcode-block" id="ArbiterConcurrency.periodic_task"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.concurrency.ArbiterConcurrency.periodic_task">[docs]</a>    <span class="k">def</span> <span class="nf">periodic_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Override the :meth:`.Concurrency.periodic_task` to implement</span>
 <span class="sd">        the :class:`.Arbiter` :ref:`periodic task &lt;actor-periodic-task&gt;`.&#39;&#39;&#39;</span>
@@ -704,11 +699,10 @@
                 <span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic_task</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">reload</span> <span class="ow">and</span> <span class="n">autoreload</span><span class="o">.</span><span class="n">check_changes</span><span class="p">():</span>
-            <span class="n">actor</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exit_code</span><span class="o">=</span><span class="n">autoreload</span><span class="o">.</span><span class="n">EXIT_CODE</span><span class="p">)</span>
-</div>
+            <span class="n">actor</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exit_code</span><span class="o">=</span><span class="n">autoreload</span><span class="o">.</span><span class="n">EXIT_CODE</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">_stop_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">finished</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Stop the pools the message queue and remaining actors</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c"># remove all actors and monitors</span>
         <span class="k">if</span> <span class="n">finished</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_stop_arbiter</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
@@ -768,7 +762,7 @@
         <span class="k">if</span> <span class="n">exit_code</span> <span class="o">==</span> <span class="n">autoreload</span><span class="o">.</span><span class="n">EXIT_CODE</span><span class="p">:</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Code changed, reloading server&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Bye (exit code = </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span> <span class="n">exit_code</span><span class="p">)</span>
+            <span class="c"># actor.logger.info(&quot;Bye (exit code = %s)&quot;, exit_code)</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Bye (exit code = </span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="n">exit_code</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">when_exit</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
@@ -817,9 +811,9 @@
     <span class="k">def</span> <span class="nf">_register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="n">aid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">registered</span><span class="p">[</span><span class="n">aid</span><span class="p">]</span> <span class="o">=</span> <span class="n">actor</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">monitors</span><span class="p">[</span><span class="n">aid</span><span class="p">]</span> <span class="o">=</span> <span class="n">actor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">monitors</span><span class="p">[</span><span class="n">aid</span><span class="p">]</span> <span class="o">=</span> <span class="n">actor</span></div>
 
-</div>
+
 <span class="k">def</span> <span class="nf">run_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_actor</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actor_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
@@ -986,11 +980,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2011-2015, Luca Sbardella.
+      &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
       
     </div>
 
