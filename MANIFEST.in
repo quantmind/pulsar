@@ -7,3 +7,4 @@ recursive-include examples *.py *.js *.css *.html
 recursive-include pulsar/apps/test/plugins/htmlfiles *
 recursive-include docs/source *
 recursive-include extensions *.py *.pxd *.pyx *.h
+recursive-exclude examples/node_modules *
