@@ -46,7 +46,7 @@ class BeforeCommit(ReleaseSetting):
 
 class WriteNotes(ReleaseSetting):
     name = "write_notes"
-    validator = pulsar.validate_callable(4)
+    validator = pulsar.validate_callable(2)
     type = "callable"
     default = staticmethod(write_notes)
     desc = """\
