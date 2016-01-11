@@ -24,7 +24,7 @@ def change_version(manager, version):
 
 
 def write_notes(manager, release):
-    history = os.path.join(manager.release_path, 'history')
+    history = os.path.join(manager.releases_path, 'history')
     if not os.path.isdir(history):
         return False
     dt = date.today()
