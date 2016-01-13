@@ -22,7 +22,8 @@ __all__ = ['maybe_async',
            'AsyncObject']
 
 
-return_false = lambda: False
+def return_false():
+    return False
 
 
 def chain_future(future, callback=None, errback=None, next=None):
