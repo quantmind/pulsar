@@ -254,12 +254,13 @@ class Concurrency(object):
 
     def _install_signals(self, actor):
         proc_name = actor.cfg.proc_name
-        if not self.is_arbiter():
-            name = actor.name.split('.')[0]
-            proc_name = "%s-%s" % (proc_name, name)
-        if system.set_proctitle(proc_name):
-            actor.logger.debug('Set process title to %s',
-                               system.get_proctitle())
+        if proc_name:
+            if not self.is_arbiter():
+                name = actor.name.split('.')[0]
+                proc_name = "%s-%s" % (proc_name, name)
+            if system.set_proctitle(proc_name):
+                actor.logger.debug('Set process title to %s',
+                                   system.get_proctitle())
         system.set_owner_process(actor.cfg.uid, actor.cfg.gid)
         if signal:
             actor.logger.debug('Installing signals')
