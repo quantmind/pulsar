@@ -1,7 +1,7 @@
 import os
 from datetime import date
 
-from pulsar.apps.release import ReleaseManager
+from agile.release import ReleaseManager
 version_file = os.path.join(os.path.dirname(__file__), 'pulsar', '__init__.py')
 
 note_file = 'releases/notes.rst'
