@@ -1,4 +1,4 @@
-'''
+"""
 Pulsar :mod:`~greenio` facilitates the integration of synchronous
 third-party libraries into pulsar asynchronous framework.
 It requires the :greenlet:`greenlet <>` library.
@@ -136,7 +136,7 @@ Green WSGI
 .. _pulsar-odm: https://github.com/quantmind/pulsar-odm
 .. _sqlalchemy: http://www.sqlalchemy.org/
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
-'''
+"""
 import threading
 import logging
 from collections import deque
@@ -156,23 +156,30 @@ class _DONE:
     pass
 
 
+class MustBeInChildGreenlet(RuntimeError):
+    """Raised when an operation must be performed in a child greenlet
+    """
+
+
 class GreenletWorker(greenlet):
     pass
 
 
-def wait(value):
+def wait(value, must_be_child=False):
     '''Wait for a possible asynchronous value to complete.
     '''
     current = getcurrent()
     parent = current.parent
+    if must_be_child and not parent:
+        raise MustBeInChildGreenlet('Cannot wait on main greenlet')
     return parent.switch(value) if parent else value
 
 
 def run_in_greenlet(callable):
-    '''Decorator to run a ``callable`` on a new greenlet.
+    """Decorator to run a ``callable`` on a new greenlet.
 
     A ``callable`` decorated with this decorator returns a coroutine
-    '''
+    """
     @wraps(callable)
     def _(*args, **kwargs):
         green = GreenletWorker(callable)
@@ -192,11 +199,11 @@ def run_in_greenlet(callable):
 
 
 class GreenPool(AsyncObject):
-    '''A pool of running greenlets.
+    """A pool of running greenlets.
 
     This pool maintains a group of greenlets to perform asynchronous
     tasks via the :meth:`submit` method.
-    '''
+    """
     worker_name = 'exec'
 
     def __init__(self, max_workers=None, loop=None):
@@ -222,13 +229,13 @@ class GreenPool(AsyncObject):
         self._max_workers = value
 
     def submit(self, func, *args, **kwargs):
-        '''Equivalent to ``func(*args, **kwargs)``.
+        """Equivalent to ``func(*args, **kwargs)``.
 
         This method create a new task for function ``func`` and adds it to
         the queue.
         Return a :class:`~asyncio.Future` called back once the task
         has finished.
-        '''
+        """
         with self._shutdown_lock:
             if self._shutdown:
                 raise RuntimeError(
@@ -319,7 +326,7 @@ class GreenPool(AsyncObject):
 
 
 class GreenLock:
-    '''A Locking primitive that is owned by a particular greenlet
+    """A Locking primitive that is owned by a particular greenlet
     when locked.The main greenlet cannot acquire the lock.
 
     A primitive lock is in one of two states, 'locked' or 'unlocked'.
@@ -331,7 +338,7 @@ class GreenLock:
     When the state is locked, :meth:`.acquire` blocks the current greenlet
     until a call to :meth:`.release` changes it to unlocked,
     then the :meth:`.acquire` call resets it to locked and returns.
-    '''
+    """
     def __init__(self, loop=None):
         self._loop = loop or get_event_loop()
         self._local = threading.local()
@@ -339,18 +346,18 @@ class GreenLock:
         self._queue = deque()
 
     def locked(self):
-        ''''Return the greenlet that acquire the lock or None.
-        '''
+        """'Return the greenlet that acquire the lock or None.
+        """
         return self._local.locked
 
     def acquire(self, timeout=None):
-        '''Acquires the lock if in the unlocked state otherwise switch
+        """Acquires the lock if in the unlocked state otherwise switch
         back to the parent coroutine.
-        '''
+        """
         green = getcurrent()
         parent = green.parent
         if parent is None:
-            raise RuntimeError('acquire in main greenlet')
+            raise MustBeInChildGreenlet('GreenLock.acquire in main greenlet')
 
         if self._local.locked:
             future = Future(loop=self._loop)
@@ -361,13 +368,13 @@ class GreenLock:
         return self.locked()
 
     def release(self):
-        '''Release the lock.
+        """Release the lock.
 
         This method should only be called in the locked state;
         it changes the state to unlocked and returns immediately.
         If an attempt is made to release an unlocked lock,
         a RuntimeError will be raised.
-        '''
+        """
         if self._local.locked:
             while self._queue:
                 future = self._queue.popleft()
