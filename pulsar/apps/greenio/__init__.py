@@ -182,7 +182,7 @@ def run_in_greenlet(callable):
     """
     @wraps(callable)
     def _(*args, **kwargs):
-        green = GreenletWorker(callable)
+        green = greenlet(callable)
         # switch to the new greenlet
         result = green.switch(*args, **kwargs)
         # back to the parent
@@ -228,6 +228,12 @@ class GreenPool(AsyncObject):
         assert value > 0
         self._max_workers = value
 
+    @property
+    def in_green_worker(self):
+        """True if the current greenlet is a green pool worker
+        """
+        return isinstance(getcurrent(), GreenletWorker)
+
     def submit(self, func, *args, **kwargs):
         """Equivalent to ``func(*args, **kwargs)``.
 
@@ -251,6 +257,9 @@ class GreenPool(AsyncObject):
             if wait:
                 self._waiter = Future(loop=self._loop)
                 return self._waiter
+
+    def getcurrent(self):
+        return getcurrent()
 
     # INTERNALS
     def _adjust_greenlet_count(self):

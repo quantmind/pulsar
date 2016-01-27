@@ -64,6 +64,17 @@ class TestGreenIO(unittest.TestCase):
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
+    def test_greenlet_methods(self):
+        pool = greenio.GreenPool()
+        self.assertFalse(pool.in_green_worker)
+        self.assertFalse(pool.getcurrent().parent)
+
+        def _greenlet_methods():
+            self.assertTrue(pool.in_green_worker)
+            self.assertTrue(pool.getcurrent().parent)
+
+        yield from pool.submit(_greenlet_methods)
+
     def test_error_in_pool(self):
         # Test an error
         pool = greenio.GreenPool()
