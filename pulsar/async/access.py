@@ -10,6 +10,11 @@ from asyncio import iscoroutine, coroutine
 from pulsar.utils.config import Global
 from pulsar.utils.system import current_process
 
+try:
+    from asyncio import ensure_future
+except ImportError:     # pragma    nocover
+    ensure_future = asyncio.async
+
 
 __all__ = ['get_event_loop',
            'new_event_loop',
@@ -26,6 +31,7 @@ __all__ = ['get_event_loop',
            'reraise',
            'coroutine',
            'is_async',
+           'ensure_future',
            'CANCELLED_ERRORS']
 
 
