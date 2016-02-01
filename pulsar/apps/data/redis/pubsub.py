@@ -89,4 +89,5 @@ class RedisPubSub(PubSub):
             protocol_factory = partial(PubsubProtocol, self,
                                        producer=self.store)
             self._connection = yield from self.store.connect(protocol_factory)
-            yield from self._connection.execute(*args)
+        result = yield from self._connection.execute(*args)
+        return result
