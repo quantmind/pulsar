@@ -22,6 +22,10 @@ class InvalidRequest(HttpException):
     fault_code = -32600
     msg = 'Invalid RPC request'
 
+    def __init__(self, msg=None, data=None):
+        self.msg = msg or self.msg
+        self.data = data
+
 
 @rpc_exception
 class ParseExcetion(InvalidRequest):
