@@ -1,13 +1,13 @@
 import email.parser
 from http.client import HTTPMessage, _MAXLINE, _MAXHEADERS
 from io import BytesIO
-from asyncio import StreamReader, async
+from asyncio import StreamReader
 from urllib.parse import parse_qs
 from base64 import b64encode
 from functools import reduce
 from cgi import valid_boundary, parse_header
 
-from pulsar import HttpException, BadRequest, is_async
+from pulsar import HttpException, BadRequest, is_async, ensure_future
 from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict, mapping_iterator
 from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
@@ -151,7 +151,8 @@ class MultipartDecoder(FormDecoder):
         self.buffer = bytearray()
 
         if isinstance(inp, HttpBodyReader):
-            return async(self._consume(inp, boundary), loop=inp.reader._loop)
+            return ensure_future(self._consume(inp, boundary),
+                                 loop=inp.reader._loop)
         else:
             producer = BytesProducer(inp)
             return producer(self._consume, boundary)
@@ -210,7 +211,7 @@ class BytesDecoder(FormDecoder):
         data = inp.read()
 
         if is_async(data):
-            return async(self._async(data))
+            return ensure_future(self._async(data))
         else:
             return self._ready(data)
 

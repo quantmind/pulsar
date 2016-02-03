@@ -4,7 +4,7 @@ import asyncio
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, task, Future
+from .futures import multi_async, task, Future, ensure_future
 from .events import EventHandler, AbortEvent
 from .mixins import FlowControl, Timeout
 
@@ -159,7 +159,7 @@ class ProtocolConsumer(EventHandler):
             conn._producer._requests_processed = p + 1
         self.bind_event('post_request', self._finished)
         self._request = request
-        return asyncio.async(self._start(), loop=self._loop)
+        return ensure_future(self._start(), loop=self._loop)
 
     def abort_request(self):
         '''Abort the request.

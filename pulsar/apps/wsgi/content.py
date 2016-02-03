@@ -142,7 +142,6 @@ Html Factory
 .. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp
 '''
 import re
-
 from collections import Mapping
 from functools import partial
 
