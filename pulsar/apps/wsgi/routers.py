@@ -85,8 +85,12 @@ from .utils import wsgi_request
 from .content import Html
 
 
-__all__ = ['Router', 'MediaRouter', 'FileRouter', 'MediaMixin',
-           'RouterParam']
+__all__ = ['Router',
+           'MediaRouter',
+           'FileRouter',
+           'MediaMixin',
+           'RouterParam',
+           'file_response']
 
 
 def get_roule_methods(attrs):
@@ -503,6 +507,36 @@ class Router(metaclass=RouterType):
 
 class MediaMixin(object):
 
+    @classmethod
+    def modified_since(cls, header, size=0):
+        try:
+            if header is None:
+                raise ValueError
+            matches = re.match(r"^([^;]+)(; length=([0-9]+))?$",
+                               header,
+                               re.IGNORECASE)
+            header_mtime = mktime_tz(parsedate_tz(matches.group(1)))
+            header_len = matches.group(3)
+            if header_len and int(header_len) != size:
+                raise ValueError
+            return header_mtime
+        except (AttributeError, ValueError, OverflowError):
+            pass
+
+    @classmethod
+    def was_modified_since(cls, header=None, mtime=0, size=0):
+        '''Check if an item was modified since the user last downloaded it
+
+        :param header: the value of the ``If-Modified-Since`` header.
+            If this is ``None``, simply return ``True``
+        :param mtime: the modification time of the item in question.
+        :param size: the size of the item.
+        '''
+        header_mtime = cls.modified_since(header, size)
+        if header_mtime and header_mtime <= mtime:
+            return False
+        return True
+
     def serve_file(self, request, fullpath, status_code=None):
         # Respect the If-Modified-Since header.
         statobj = os.stat(fullpath)
@@ -525,34 +559,6 @@ class MediaMixin(object):
                 response.headers["Last-Modified"] = http_date(
                     statobj[stat.ST_MTIME])
         return response
-
-    def was_modified_since(self, header=None, mtime=0, size=0):
-        '''Check if an item was modified since the user last downloaded it
-
-        :param header: the value of the ``If-Modified-Since`` header.
-            If this is ``None``, simply return ``True``
-        :param mtime: the modification time of the item in question.
-        :param size: the size of the item.
-        '''
-        header_mtime = self.modified_since(header, size)
-        if header_mtime and header_mtime <= mtime:
-            return False
-        return True
-
-    def modified_since(self, header, size=0):
-        try:
-            if header is None:
-                raise ValueError
-            matches = re.match(r"^([^;]+)(; length=([0-9]+))?$",
-                               header,
-                               re.IGNORECASE)
-            header_mtime = mktime_tz(parsedate_tz(matches.group(1)))
-            header_len = matches.group(3)
-            if header_len and int(header_len) != size:
-                raise ValueError
-            return header_mtime
-        except (AttributeError, ValueError, OverflowError):
-            pass
 
     def directory_index(self, request, fullpath):
         names = [Html('a', '../', href='../', cn='folder')]
@@ -664,3 +670,35 @@ class FileRouter(Router, MediaMixin):
                                    status_code=self._status_code)
         elif self._raise_404:
             raise Http404
+
+
+def file_response(request, filepath, block=None, status_code=None):
+    """Utility for serving a local file
+
+    :param request: Wsgi request
+    :param filepath: full path of file to serve
+    :param block: Optional block
+    :return: a Wsgi Response object
+    """
+    file_wrapper = request.get('wsgi.file_wrapper')
+    if os.path.isfile(filepath):
+        response = request.response
+        info = os.stat(filepath)
+        size = info[stat.ST_SIZE]
+        modified = info[stat.ST_MTIME]
+        header = request.get('HTTP_IF_MODIFIED_SINCE')
+        if not MediaMixin.was_modified_since(header, modified, size):
+            response.status_code = 304
+        else:
+            content_type, encoding = mimetypes.guess_type(filepath)
+            file = open(filepath, 'rb')
+            response.headers['content-length'] = str(size)
+            response.content = file_wrapper(file, block)
+            response.content_type = content_type
+            response.encoding = encoding
+            if status_code:
+                response.status_code = status_code
+            else:
+                response.headers["Last-Modified"] = http_date(modified)
+        return response
+    raise Http404

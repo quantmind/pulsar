@@ -293,12 +293,8 @@ class HttpBin(BaseRouter):
            title='Show a video clip')
     def clip(self, request):
         c = request.urlargs['chunk_size']
-        data, ct, encoding = asset('clip.mp4', 'rb', chunk_size=c)
-        response = request.response
-        response.content_type = ct
-        response.encoding = encoding
-        response.content = data
-        return response
+        filepath = os.path.join(ASSET_DIR, 'clip.mp4')
+        return wsgi.file_response(request, filepath, c)
 
     @route('servername',
            title='display the server name')
