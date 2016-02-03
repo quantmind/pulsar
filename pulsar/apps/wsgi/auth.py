@@ -76,7 +76,8 @@ class HttpAuthenticate(HttpException):
         )))
 
 
-class BasicAuth(object):
+class BasicAuth:
+
     def __init__(self, username, password):
         self.username = username
         self.password = password
@@ -89,7 +90,8 @@ class BasicAuth(object):
     __str__ = __repr__
 
 
-class DigestAuth(object):
+class DigestAuth:
+
     def __init__(self, username, password=None, options=None):
         self.username = username
         self.password = password

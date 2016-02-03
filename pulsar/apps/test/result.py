@@ -21,7 +21,7 @@ def def_return_val(c):
     return None
 
 
-class Plugin(object):
+class Plugin:
     '''Interface for all classes which are part of the :class:`.TestRunner`.
 
     Most classes used by the test application are plugins, for

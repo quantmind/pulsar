@@ -194,7 +194,7 @@ class Consumer(pulsar.ProtocolConsumer):
             self.finished(exc=exc)
 
 
-class RedisClient(object):
+class RedisClient:
     '''Client for :class:`.RedisStore`.
 
     .. attribute:: store

@@ -176,7 +176,7 @@ def worker_start(self, exc=None):
     return app.worker_start(self, exc=exc)
 
 
-class Configurator(object):
+class Configurator:
     """A mixin for configuring and loading a pulsar application server.
 
     :parameter name: to override the class :attr:`name` attribute.

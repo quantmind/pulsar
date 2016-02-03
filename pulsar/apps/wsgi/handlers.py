@@ -108,7 +108,7 @@ from .wrappers import WsgiResponse
 __all__ = ['WsgiHandler', 'LazyWsgi']
 
 
-class WsgiHandler(object):
+class WsgiHandler:
     '''An handler for applications conforming to python WSGI_.
 
     .. attribute:: middleware

@@ -15,7 +15,7 @@ __all__ = ['Auth',
            'HTTPDigestAuth']
 
 
-class Auth(object):
+class Auth:
     '''Base class for managing authentication.
     '''
     type = None

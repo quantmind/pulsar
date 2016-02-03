@@ -198,7 +198,7 @@ class PulsarDS(SocketServer):
 pubsub_patterns = namedtuple('pubsub_patterns', 're clients')
 
 
-class Storage(object):
+class Storage:
     '''Implement redis commands.
     '''
     def __init__(self, server, cfg):
@@ -2510,7 +2510,7 @@ class Storage(object):
             self._monitors.difference_update(remove)
 
 
-class Db(object):
+class Db:
     '''A database.
     '''
     def __init__(self, num, store):

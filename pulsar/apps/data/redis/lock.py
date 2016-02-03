@@ -9,7 +9,7 @@ class LockError(Exception):
     pass
 
 
-class RedisScript(object):
+class RedisScript:
     '''An executable Lua script object
     '''
     def __init__(self, script):
@@ -31,7 +31,7 @@ class RedisScript(object):
         return result
 
 
-class Lock(object):
+class Lock:
     '''Asynchronous locking primitive for distributing computing
 
     A primitive lock is in one of two states, 'locked' or 'unlocked'.

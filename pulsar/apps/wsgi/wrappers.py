@@ -1,6 +1,10 @@
-"""This section introduces two classes used by pulsar
+"""This section introduces classes used by pulsar
 :ref:`wsgi application <apps-wsgi>` to pass a request/response state
 during an HTTP request.
+
+.. contents::
+    :local:
+
 The :class:`WsgiRequest` is a thin wrapper around a WSGI ``environ``
 dictionary.
 It contains only the ``environ`` as its private data.
@@ -35,6 +39,16 @@ Wsgi Response
 .. autoclass:: WsgiResponse
    :members:
    :member-order: bysource
+
+
+
+Wsgi File Wrapper
+=====================
+
+.. autoclass:: FileWrapper
+   :members:
+   :member-order: bysource
+
 
 .. _WSGI: http://www.wsgi.org
 .. _AJAX: http://en.wikipedia.org/wiki/Ajax_(programming)
@@ -93,7 +107,7 @@ def wsgi_encoder(gen, encoding):
             yield data
 
 
-class WsgiResponse(object):
+class WsgiResponse:
     """A WSGI response.
 
     Instances are callable using the standard WSGI call and, importantly,
@@ -319,7 +333,7 @@ class WsgiResponse(object):
         return self.headers[header]
 
 
-class EnvironMixin(object):
+class EnvironMixin:
     """A wrapper around a WSGI_ environ.
 
     Instances of this class have the :attr:`environ` attribute as their
@@ -641,7 +655,12 @@ def close_object(iterator):
 
 
 class FileWrapper:
+    """WSGI File wrapper class.
 
+    Available directly from the ``wsgi.file_wrapper`` key in the WSGI environ
+    dictionary. Alternatively one can use the :func:`~file_response`
+    high level function for serving local files.
+    """
     def __init__(self, file, block=None):
         self.file = file
         self.block = max(block or ONEMB, MAX_BUFFER_SIZE)

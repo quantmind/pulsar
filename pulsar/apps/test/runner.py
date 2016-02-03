@@ -11,7 +11,7 @@ class AbortTests(Exception):
     pass
 
 
-class Runner(object):
+class Runner:
 
     def __init__(self, monitor, runner, tests):
         self._loop = monitor._loop

@@ -157,7 +157,7 @@ class Pool(AsyncObject):
         return x + int(y is not None)
 
 
-class PoolConnection(object):
+class PoolConnection:
     '''A wrapper for a :class:`Connection` in a connection :class:`Pool`.
 
     .. attribute:: pool

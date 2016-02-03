@@ -1,4 +1,8 @@
 '''
+
+.. contents::
+    :local:
+
 Routing is the process of matching and parsing a URL to something we can use.
 Pulsar provides a flexible integrated
 routing system you can use for that. It works by creating a
@@ -58,6 +62,16 @@ files such ass ``css``, ``javascript``, images and so forth.
 .. autoclass:: MediaRouter
    :members:
    :member-order: bysource
+
+
+File Response
+=====================
+
+High level, battery included function for serving small and large files
+concurrently. Cavet, you app does not need to be asynchronous to use this
+method.
+
+.. autofunction:: file_response
 
 
 RouterParam
@@ -120,7 +134,7 @@ def _get_default(parent, name):
         raise AttributeError
 
 
-class RouterParam(object):
+class RouterParam:
     '''A :class:`RouterParam` is a way to flag a :class:`Router` parameter
     so that children can inherit the value if they don't define their own.
 
@@ -505,7 +519,7 @@ class Router(metaclass=RouterType):
             setattr(self, name, value)
 
 
-class MediaMixin(object):
+class MediaMixin:
 
     @classmethod
     def modified_since(cls, header, size=0):
@@ -675,10 +689,20 @@ class FileRouter(Router, MediaMixin):
 def file_response(request, filepath, block=None, status_code=None):
     """Utility for serving a local file
 
+    Typical usage::
+
+        from pulsar.apps import wsgi
+
+        class MyRouter(wsgi.Router):
+
+            def get(self, request):
+                return wsgi.file_response(request, "<filepath>")
+
     :param request: Wsgi request
     :param filepath: full path of file to serve
-    :param block: Optional block
-    :return: a Wsgi Response object
+    :param block: Optional block size (deafult 1MB)
+    :param status_code: Optional status code (default 200)
+    :return: a :class:`~.WsgiResponse` object
     """
     file_wrapper = request.get('wsgi.file_wrapper')
     if os.path.isfile(filepath):

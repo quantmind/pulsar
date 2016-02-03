@@ -41,7 +41,7 @@ class command:
         return f
 
 
-class ClientMixin(object):
+class ClientMixin:
 
     def __init__(self, store):
         self.store = store

@@ -343,7 +343,7 @@ def is_streamed(data):
     return False
 
 
-class RequestBase(object):
+class RequestBase:
     inp_params = None
     release_connection = True
     history = None

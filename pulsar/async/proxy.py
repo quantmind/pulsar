@@ -71,7 +71,7 @@ def actor_proxy_future(aid, future=None):
     return self
 
 
-class ActorProxy(object):
+class ActorProxy:
     '''A proxy for a remote :class:`.Actor`.
 
     This is a lightweight class which delegates function calls to the

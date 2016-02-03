@@ -129,7 +129,7 @@ def parse_rule(rule):
     return converter, data['args'] or None, data['variable']
 
 
-class route(object):
+class route:
     '''Decorator to create a child route from a :class:`.Router` method.
 
     Typical usage::
@@ -229,7 +229,7 @@ class route(object):
         return callable
 
 
-class Route(object):
+class Route:
     '''A Route is a class with a relative :attr:`path`.
 
     :parameter rule: a normal URL path with ``placeholders`` in the
@@ -430,7 +430,7 @@ class Route(object):
         return cls('%s/%s' % (self.rule, rule), defaults, is_re=is_re)
 
 
-class BaseConverter(object):
+class BaseConverter:
     """Base class for all converters."""
     regex = '[^/]+'
 

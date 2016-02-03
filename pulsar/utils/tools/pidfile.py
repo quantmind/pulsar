@@ -4,7 +4,7 @@ import tempfile
 __all__ = ['Pidfile']
 
 
-class Pidfile(object):
+class Pidfile:
     """\
     Manage a PID file. If a specific name is provided
     it and '"%s.oldpid" % name' will be used. Otherwise

@@ -106,7 +106,7 @@ class Chat(ws.WS):
         return self._pubsub.publish(channel, json.dumps(msg))
 
 
-class middleware(object):
+class middleware:
     '''Django middleware for serving the Chat websocket.'''
     def __init__(self):
         self._web_socket = ws.WebSocket('/message', Chat())

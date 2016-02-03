@@ -92,7 +92,7 @@ def valid_config_value(val):
     return False
 
 
-class Config(object):
+class Config:
     """A dictionary-like container of :class:`Setting` parameters for
     fine tuning pulsar servers.
 

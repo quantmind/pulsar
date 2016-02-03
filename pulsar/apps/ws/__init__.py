@@ -71,7 +71,7 @@ __all__ = ['WebSocket', 'WebSocketProtocol', 'WS']
 LOGGER = logging.getLogger('pulsar.ws')
 
 
-class WS(object):
+class WS:
     '''A web socket handler for both servers and clients.
 
     It implements the asynchronous message passing for a

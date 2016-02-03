@@ -11,7 +11,7 @@ def as_test_setting(setting):
     return setting
 
 
-class WrapTest(object):
+class WrapTest:
     '''Wrap an underlying test case'''
     def __init__(self, test):
         self.test = test

@@ -274,7 +274,7 @@ class Bench:
 
 
 # ############################################################## AsyncObject
-class AsyncObject(object):
+class AsyncObject:
     '''Interface for :ref:`async objects <async-object>`
 
     .. attribute:: _loop

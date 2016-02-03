@@ -85,7 +85,7 @@ def websocket_key():
     return b64encode(os.urandom(16)).decode(DEFAULT_CHARSET)
 
 
-class Extension(object):
+class Extension:
 
     def receive(self, data):
         return data
@@ -168,7 +168,7 @@ class Frame:
         return self._opcode == 10
 
 
-class FrameParser(object):
+class FrameParser:
     '''Decoder and encoder for the websocket protocol.
 
     .. attribute:: version

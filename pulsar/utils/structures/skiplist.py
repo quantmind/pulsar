@@ -6,7 +6,7 @@ from math import log
 from collections import Sequence
 
 
-class Node(object):
+class Node:
     __slots__ = ('score', 'value', 'next', 'width')
 
     def __init__(self, score, value, next, width):
@@ -305,7 +305,7 @@ class Skiplist(Sequence):
         self._size -= 1
 
 
-class SkipListSlice(object):
+class SkipListSlice:
     __slots__ = ('sl', 'slice')
 
     def __init__(self, sl, slice):

@@ -46,7 +46,7 @@ def arbiter(**params):
         return arbiter
 
 
-class Concurrency(object):
+class Concurrency:
     '''Actor :class:`.Concurrency`.
 
     Responsible for the actual spawning of actors according to a
@@ -319,7 +319,7 @@ class Concurrency(object):
         raise RuntimeError('Cannot remove actor')
 
 
-class ProcessMixin(object):
+class ProcessMixin:
 
     def is_process(self):
         return True
@@ -333,7 +333,7 @@ class ProcessMixin(object):
         self.stop(actor, exit_code=int(sig))
 
 
-class MonitorMixin(object):
+class MonitorMixin:
 
     def identity(self, actor):
         return actor.name

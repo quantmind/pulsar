@@ -110,7 +110,7 @@ def get_test_timeout(o, timeout):
     return max(val, timeout)
 
 
-class AsyncAssert(object):
+class AsyncAssert:
     '''A `descriptor`_ added by the test application to all python
     :class:`~unittest.TestCase` loaded.
 
@@ -162,7 +162,7 @@ class AsyncAssert(object):
                                              % (error, callable))
 
 
-class ActorTestMixin(object):
+class ActorTestMixin:
     '''A mixin for :class:`~unittest.TestCase`.
 
     Useful for classes testing spawning of actors.
