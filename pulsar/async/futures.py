@@ -2,7 +2,7 @@ from collections import Mapping
 from inspect import isgeneratorfunction
 from functools import wraps, partial
 
-from asyncio import Future, CancelledError, TimeoutError, sleep
+from asyncio import Future, CancelledError, TimeoutError, sleep, gather
 
 from .consts import MAX_ASYNC_WHILE
 from .access import get_event_loop, LOGGER, isfuture, is_async, ensure_future
@@ -15,6 +15,7 @@ __all__ = ['maybe_async',
            'task_callback',
            'multi_async',
            'as_coroutine',
+           'as_gather',
            'task',
            'async_while',
            'chain_future',
@@ -147,6 +148,12 @@ def as_coroutine(value):
     if is_async(value):
         value = yield from value
     return value
+
+
+def as_gather(*args):
+    """Same as :func:`~.asyncio.gather` but allows sync values
+    """
+    return gather(*[as_coroutine(arg) for arg in args])
 
 
 def task(function):
