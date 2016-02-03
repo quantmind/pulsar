@@ -1,4 +1,4 @@
-'''
+"""
 This module implements the main classes for pulsar application framework. The
 framework is built on top of pulsar asynchronous engine and allows to
 implement servers with very little effort. The main classes here are:
@@ -57,16 +57,16 @@ every time a new application starts. A hook is registered by::
 
 By default, the list of hooks only contains a callback to start the
 :ref:`default data store <setting-data_store>` if it needs to.
-'''
+"""
 import os
 import sys
 from inspect import getfile
 from functools import partial
 from collections import namedtuple, OrderedDict
+import asyncio
 
 import pulsar
-from pulsar import (get_actor, Config, task,
-                    multi_async, Future, ImproperlyConfigured)
+from pulsar import get_actor, Config, task, Future, ImproperlyConfigured
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
@@ -76,12 +76,12 @@ new_app = namedtuple('new_app', 'prefix params')
 
 
 def get_application(name):
-    '''Fetch an :class:`Application` associated with ``name`` if available.
+    """Fetch an :class:`Application` associated with ``name`` if available.
 
     This function may return an :ref:`asynchronous component <coroutine>`.
     The application name is set during initialisation. Check the
     :attr:`Configurator.name` attribute for more information.
-    '''
+    """
     actor = get_actor()
 
     if actor:
@@ -177,7 +177,7 @@ def worker_start(self, exc=None):
 
 
 class Configurator(object):
-    '''A mixin for configuring and loading a pulsar application server.
+    """A mixin for configuring and loading a pulsar application server.
 
     :parameter name: to override the class :attr:`name` attribute.
     :parameter description: to override the class :attr:`cfg.description`
@@ -224,7 +224,7 @@ class Configurator(object):
 
         Full path of the script which starts the application or ``None``.
         Evaluated during initialization via the :meth:`python_path` method.
-    '''
+    """
     argv = None
     name = None
     cfg = Config()
@@ -260,15 +260,15 @@ class Configurator(object):
 
     @property
     def version(self):
-        '''Version of this :class:`Application`'''
+        """Version of this :class:`Application`"""
         return self.cfg.version
 
     @property
     def root_dir(self):
-        '''Root directory of this :class:`Configurator`.
+        """Root directory of this :class:`Configurator`.
 
         Evaluated from the :attr:`script` attribute.
-        '''
+        """
         if self.cfg.script:
             return os.path.dirname(self.cfg.script)
 
@@ -279,12 +279,12 @@ class Configurator(object):
         return self.__repr__()
 
     def python_path(self, script):
-        '''Called during initialisation to obtain the ``script`` name.
+        """Called during initialisation to obtain the ``script`` name.
 
         If ``script`` does not evaluate to ``True`` it is evaluated from
         the ``__main__`` import. Returns the real path of the python
         script which runs the application.
-        '''
+        """
         if not script:
             try:
                 import __main__
@@ -299,17 +299,17 @@ class Configurator(object):
         return script
 
     def on_config(self, arbiter):
-        '''Callback when configuration is loaded.
+        """Callback when configuration is loaded.
 
         This is a chance to do applications specific checks before the
         concurrent machinery is put into place.
 
         If it returns ``False`` the application will abort.
-        '''
+        """
         pass
 
     def load_config(self):
-        '''Load the application configuration from a file and/or
+        """Load the application configuration from a file and/or
         from the command line.
 
         Called during application initialisation. The parameters
@@ -319,7 +319,7 @@ class Configurator(object):
         * the key-valued params passed in the initialisation.
         * the parameters in the optional configuration file
         * the parameters passed in the command line.
-        '''
+        """
         # get the actor if available and override default cfg values with those
         # from the actor
         actor = get_actor()
@@ -343,13 +343,13 @@ class Configurator(object):
             self.cfg.params.update(self.cfg.import_from_module())
 
     def start(self):
-        '''Invoked the application callable method and start
+        """Invoked the application callable method and start
         the ``arbiter`` if it wasn't already started.
 
         It returns a :class:`~asyncio.Future` called back once the
         application/applications are running. It returns ``None`` if
         called more than once.
-        '''
+        """
         on_start = self()
         arbiter = pulsar.arbiter()
         if arbiter and on_start:
@@ -358,12 +358,12 @@ class Configurator(object):
 
     @classmethod
     def create_config(cls, params, prefix=None, name=None):
-        '''Create a new :class:`.Config` container.
+        """Create a new :class:`.Config` container.
 
         Invoked during initialisation, it overrides defaults
         with ``params`` and apply the ``prefix`` to non global
         settings.
-        '''
+        """
         if isinstance(cls.cfg, Config):
             cfg = cls.cfg.copy(name=name, prefix=prefix)
         else:
@@ -429,12 +429,12 @@ class Application(Configurator):
 
     @property
     def stream(self):
-        '''Actor stream handler.
-        '''
+        """Actor stream handler.
+        """
         return get_actor().stream
 
     def __call__(self, actor=None):
-        '''Register this application with the (optional) calling ``actor``.
+        """Register this application with the (optional) calling ``actor``.
 
         If an ``actor`` is available (either via the function argument or via
         the :func:`~pulsar.async.actor.get_actor` function) it must be
@@ -447,7 +447,7 @@ class Application(Configurator):
 
         :return: the ``start`` one time event fired once this application
             has fired it.
-        '''
+        """
         if actor is None:
             actor = get_actor()
         monitor = None
@@ -471,8 +471,8 @@ class Application(Configurator):
         raise ImproperlyConfigured('Already started or not in arbiter domain')
 
     def stop(self, actor=None):
-        '''Stop the application
-        '''
+        """Stop the application
+        """
         if actor is None:
             actor = get_actor()
         if actor and actor.is_arbiter():
@@ -483,42 +483,42 @@ class Application(Configurator):
 
     # WORKERS CALLBACKS
     def worker_start(self, worker, exc=None):
-        '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
+        """Added to the ``start`` :ref:`worker hook <actor-hooks>`."""
         pass
 
     def worker_info(self, worker, info):
-        '''Hook to add additional entries to the worker ``info`` dictionary.
-        '''
+        """Hook to add additional entries to the worker ``info`` dictionary.
+        """
         pass
 
     def worker_stopping(self, worker, exc=None):
-        '''Added to the ``stopping`` :ref:`worker hook <actor-hooks>`.'''
+        """Added to the ``stopping`` :ref:`worker hook <actor-hooks>`."""
         pass
 
     # MONITOR CALLBACKS
     def actorparams(self, monitor, params=None):
-        '''Hook to add additional entries when the monitor spawn new actors.
-        '''
+        """Hook to add additional entries when the monitor spawn new actors.
+        """
         pass
 
     def monitor_start(self, monitor):
-        '''Callback by the monitor when starting.
-        '''
+        """Callback by the monitor when starting.
+        """
         pass
 
     def monitor_info(self, monitor, info):
-        '''Hook to add additional entries to the monitor ``info`` dictionary.
-        '''
+        """Hook to add additional entries to the monitor ``info`` dictionary.
+        """
         pass
 
     def monitor_stopping(self, monitor):
-        '''Callback by the monitor before stopping.
-        '''
+        """Callback by the monitor before stopping.
+        """
         pass
 
     def monitor_task(self, monitor):
-        '''Executed by the :class:`.Monitor` serving this application
-        at each event loop.'''
+        """Executed by the :class:`.Monitor` serving this application
+        at each event loop."""
         pass
 
     def update_arbiter_params(self, arbiter):
@@ -538,7 +538,7 @@ class Application(Configurator):
 
 
 class MultiApp(Configurator):
-    '''A :class:`MultiApp` is a tool for creating several :class:`Application`
+    """A :class:`MultiApp` is a tool for creating several :class:`Application`
     and starting them at once.
 
     It makes sure all :ref:`settings <settings>` for the
@@ -559,21 +559,21 @@ class MultiApp(Configurator):
                 yield self.new_app(TaskQueue)
                 yield self.new_app(WSGIserver, prefix="rpc", callable=..., ...)
                 yield self.new_app(WSGIserver, prefix="web", callable=..., ...)
-    '''
+    """
     _apps = None
 
     def build(self):
-        '''Virtual method, must be implemented by subclasses and return an
+        """Virtual method, must be implemented by subclasses and return an
         iterable over results obtained from calls to the
         :meth:`new_app` method.
-        '''
+        """
         raise NotImplementedError
 
     def apps(self):
-        '''List of :class:`Application` for this :class:`MultiApp`.
+        """List of :class:`Application` for this :class:`MultiApp`.
 
         The list is lazily loaded from the :meth:`build` method.
-        '''
+        """
         if self._apps is None:
             # Add modified settings values to the list of cfg params
             self.cfg.params.update(((s.name, s.value) for s in
@@ -607,7 +607,7 @@ class MultiApp(Configurator):
         return self._apps
 
     def new_app(self, App, prefix=None, callable=None, **params):
-        '''Invoke this method in the :meth:`build` method as many times
+        """Invoke this method in the :meth:`build` method as many times
         as the number of :class:`Application` required by this
         :class:`MultiApp`.
 
@@ -622,7 +622,7 @@ class MultiApp(Configurator):
         :param params: additional key-valued parameters used when creating
             an instance of *App*.
         :return: a tuple used by the :meth:`apps` method.
-        '''
+        """
         params.update(self.cfg.params.copy())
         params.pop('name', None)    # remove the name
         prefix = prefix or ''
@@ -642,7 +642,7 @@ class MultiApp(Configurator):
 
     def __call__(self, actor=None):
         apps = [app(actor) for app in self.apps()]
-        return multi_async(apps, loop=get_actor()._loop)
+        return asyncio.gather(*apps, loop=get_actor()._loop)
 
     #    INTERNALS
     def _build(self):

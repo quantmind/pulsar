@@ -1,4 +1,4 @@
-from pulsar import arbiter, spawn, send, async, Config, command
+from pulsar import arbiter, spawn, send, ensure_future, Config, command
 
 
 PREFIX = 'remote_'
@@ -94,7 +94,7 @@ class Calculator(Remote):
 
 
 def start(arbiter, **kw):
-    async(app(arbiter))
+    ensure_future(app(arbiter))
 
 
 def app(arbiter):

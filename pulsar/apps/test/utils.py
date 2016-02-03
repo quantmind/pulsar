@@ -29,10 +29,11 @@ check server
 '''
 import logging
 import unittest
+from asyncio import gather, Future
 
 import pulsar
-from pulsar import (get_actor, send, multi_async, new_event_loop,
-                    is_async, format_traceback, ImproperlyConfigured, Future)
+from pulsar import (get_actor, send, new_event_loop,
+                    is_async, format_traceback, ImproperlyConfigured)
 from pulsar.apps.data import create_store
 
 
@@ -140,7 +141,7 @@ class AsyncAssert(object):
     def __getattr__(self, name):
 
         def _(*args, **kwargs):
-            args = yield from multi_async(args)
+            args = yield from gather(*args)
             result = getattr(self.test, name)(*args, **kwargs)
             if is_async(result):
                 result = yield from result
@@ -197,7 +198,7 @@ class ActorTestMixin(object):
 
     def stop_actors(self, *args):
         all = args or self.all_spawned
-        return multi_async([send(a, 'stop') for a in all])
+        return gather(*[send(a, 'stop') for a in all])
 
     def tearDown(self):
         return self.stop_actors()

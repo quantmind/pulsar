@@ -1,5 +1,6 @@
 import asyncio
-from pulsar import isfuture
+
+from pulsar import isfuture, ensure_future
 
 
 class StreamConsumedError(Exception):
@@ -51,7 +52,7 @@ class HttpStream:
                 except asyncio.QueueEmpty:
                     break
             else:
-                yield asyncio.async(self._queue.get())
+                yield ensure_future(self._queue.get())
 
     def __call__(self, response, exc=None, **kw):
         if self._streamed and response.parser.is_headers_complete():

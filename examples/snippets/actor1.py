@@ -1,10 +1,10 @@
 '''Simple actor message passing
 '''
-from pulsar import arbiter, spawn, send, async, Config
+from pulsar import arbiter, spawn, send, ensure_future, Config
 
 
 def start(arbiter, **kw):
-    async(app(arbiter))
+    ensure_future(app(arbiter))
 
 
 def app(arbiter):

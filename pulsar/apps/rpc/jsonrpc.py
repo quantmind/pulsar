@@ -2,8 +2,9 @@ import sys
 import json
 import logging
 from collections import namedtuple
+from asyncio import gather
 
-from pulsar import AsyncObject, task, as_coroutine, new_event_loop, multi_async
+from pulsar import AsyncObject, task, as_coroutine, new_event_loop
 from pulsar.utils.string import gen_unique_id
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
@@ -52,8 +53,7 @@ class JSONRPC(RpcHandler):
                 status = 200
 
                 tasks = [self._call(request, each) for each in data]
-                yield from multi_async(tasks, raise_on_error=False)
-                res = [each.result()[0] for each in tasks]
+                res = yield from gather(tasks, return_exceptions=True)
             else:
                 res, status = yield from self._call(request, data)
 
