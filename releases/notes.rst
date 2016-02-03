@@ -1,4 +1,4 @@
-* Removed release application and created a new repository for it (https://github.com/quantmind/agile)
+* Removed ``release`` application and created a new repository for it (https://github.com/quantmind/agile)
 * ``wait`` method in ``greenio`` app accepts an extra parameter for checking if in child greenlet
 * Specialised ``MustBeInChildGreenlet`` error for functions which should be called on a child greenlet
 * Critical bug fix in ``pubsub`` subscribe method for Redis backend

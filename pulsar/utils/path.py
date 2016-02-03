@@ -12,7 +12,7 @@ class Path(str):
     def __new__(cls, path=None):
         path = path or ''
         abspath = os.path.abspath(path)
-        return super(Path, cls).__new__(cls, abspath)
+        return super().__new__(cls, abspath)
 
     @classmethod
     def cwd(cls):

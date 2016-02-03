@@ -45,7 +45,7 @@ class Accept(tuple):
     """
     def __new__(cls, values=None):
         values = order(values) if values else ()
-        return super(Accept, cls).__new__(cls, values)
+        return super().__new__(cls, values)
 
     def _value_matches(self, value, item):
         """Check if a value matches a given accept item."""

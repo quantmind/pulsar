@@ -176,7 +176,7 @@ class Echo(AbstractClient):
     protocol_factory = partial(Connection, EchoProtocol)
 
     def __init__(self, address, full_response=False, pool_size=10, loop=None):
-        super(Echo, self).__init__(loop)
+        super().__init__(loop)
         self.address = address
         self.full_response = full_response
         self.pool = Pool(self.connect, pool_size, self._loop)

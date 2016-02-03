@@ -156,7 +156,7 @@ class Echo(pulsar.AbstractUdpClient):
     protocol_factory = EchoUdpClientProtocol
 
     def __init__(self, address, pool_size=5, loop=None):
-        super(Echo, self).__init__(loop)
+        super().__init__(loop)
         self.address = address
         self.pool = Pool(self.create_endpoint, pool_size, self._loop)
 

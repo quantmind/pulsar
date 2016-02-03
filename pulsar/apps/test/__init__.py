@@ -547,7 +547,7 @@ class TestSuite(pulsar.Application):
 
     @classmethod
     def create_config(cls, *args, **kwargs):
-        cfg = super(TestSuite, cls).create_config(*args, **kwargs)
+        cfg = super().create_config(*args, **kwargs)
         if cfg.params.get('plugins') is None:
             cfg.params['plugins'] = ()
         for plugin in cfg.params['plugins']:

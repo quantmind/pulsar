@@ -187,7 +187,7 @@ class RouterType(type):
                                   key=lambda x: x[1].order)
         attrs['rule_methods'] = OrderedDict(rule_methods)
         attrs['defaults'] = defaults
-        return super(RouterType, cls).__new__(cls, name, bases, attrs)
+        return super().__new__(cls, name, bases, attrs)
 
 
 class Router(metaclass=RouterType):

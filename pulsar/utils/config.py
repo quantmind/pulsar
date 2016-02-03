@@ -455,7 +455,7 @@ class SettingMeta(type):
     in the global ``KNOWN_SETTINGS`` list.
     """
     def __new__(cls, name, bases, attrs):
-        super_new = super(SettingMeta, cls).__new__
+        super_new = super().__new__
         # parents = [b for b in bases if isinstance(b, SettingMeta)]
         val = attrs.get("validator")
         attrs["validator"] = wrap_method(val) if val else None

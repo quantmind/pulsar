@@ -117,7 +117,7 @@ class Rpc(PulsarServerCommands):
     def __init__(self, pubsub, channel, **kwargs):
         self.pubsub = pubsub
         self.channel = channel
-        super(Rpc, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def rpc_message(self, request, message):
         '''Publish a message via JSON-RPC'''

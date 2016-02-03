@@ -39,7 +39,7 @@ class RemoteType(type):
                 remotes.update(base.remote_methods)
 
         attrs['remote_methods'] = frozenset(remotes)
-        return super(RemoteType, cls).__new__(cls, name, bases, attrs)
+        return super().__new__(cls, name, bases, attrs)
 
 
 class RemoteCall:
