@@ -1,12 +1,15 @@
 include MANIFEST.in
 include LICENSE
 include README.rst
+include runtests.py
+include release.py
 include docs/make.bat
 include docs/Makefile
 recursive-exclude * __pycache__
 recursive-exclude * *.pyc
 recursive-exclude * *.pyo
 recursive-exclude * *.orig
+recursive-include releases *.md *.rst *.json
 recursive-include examples *.py *.js *.css *.html *.json
 recursive-include tests *.py *.txt
 recursive-include pulsar/apps/test/plugins/htmlfiles *.js *.css *.html
