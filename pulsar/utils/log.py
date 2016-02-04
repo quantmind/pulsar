@@ -128,7 +128,7 @@ class LazyString:
     __repr__ = __str__
 
 
-class WritelnDecorator(object):
+class WritelnDecorator:
     """Used to decorate file-like objects with a handy 'writeln' method.
     taken from python.
     """
@@ -146,7 +146,7 @@ class WritelnDecorator(object):
         self.write('\n')  # text-mode streams translate to \r\n if needed
 
 
-class LocalMixin(object):
+class LocalMixin:
     '''Defines the :attr:`local` attribute.
 
     Classes derived from a :class:`LocalMixin` can use the

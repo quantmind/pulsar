@@ -28,7 +28,7 @@ _timeFunctions = {
     }
 
 
-class Platform(object):
+class Platform:
     """Gives us information about the platform we're running on"""
 
     name = os.name

@@ -1,7 +1,7 @@
 from .skiplist import Skiplist
 
 
-class Zset(object):
+class Zset:
     '''Ordered-set equivalent of redis zset.
     '''
     def __init__(self, data=None):

@@ -23,7 +23,7 @@ def issubclass_safe(cls, base_cls):
         return False
 
 
-class TestLoader(object):
+class TestLoader:
     '''Classes used by the :class:`.TestSuite` to aggregate tests
     from a list of paths.
 

@@ -11,7 +11,7 @@ REPLAY_TYPE = frozenset((b'$',   # REDIS_REPLY_STRING,
                          b'-'))  # REDIS_REPLY_ERROR
 
 
-class String(object):
+class String:
     __slots__ = ('_length', 'next')
 
     def __init__(self, length, next):
@@ -34,7 +34,7 @@ class String(object):
                 return False
 
 
-class ArrayTask(object):
+class ArrayTask:
     __slots__ = ('_length', '_response', 'next')
 
     def __init__(self, length, next):
@@ -62,7 +62,7 @@ class ArrayTask(object):
             return False
 
 
-class Parser(object):
+class Parser:
     '''A python parser for redis.'''
     encoding = None
 

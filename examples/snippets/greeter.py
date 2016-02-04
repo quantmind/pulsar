@@ -18,7 +18,7 @@ class Greeter:
         a = pulsar.arbiter(cfg=cfg)
         self.cfg = a.cfg
         self._loop = a._loop
-        self._loop.call_later(1, pulsar.async, self())
+        self._loop.call_later(1, pulsar.ensure_future, self())
         a.start()
 
     def __call__(self, a=None):
@@ -28,7 +28,7 @@ class Greeter:
             name = names.pop()
             self._loop.logger.info("Hi! I'm %s" % name)
             yield from pulsar.send(a, 'greetme', {'name': name})
-            self._loop.call_later(1, pulsar.async, self(a))
+            self._loop.call_later(1, pulsar.ensure_future, self(a))
         else:
             pulsar.arbiter().stop()
 

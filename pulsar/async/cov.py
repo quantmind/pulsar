@@ -6,7 +6,7 @@ except ImportError:
     coverage = None
 
 
-class Coverage(object):
+class Coverage:
     '''Coverage mixin for actors.
     '''
     @property

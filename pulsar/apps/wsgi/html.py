@@ -19,7 +19,7 @@ class HtmlType(type):
 
     def __new__(cls, name, bases, attrs):
         abstract = attrs.pop('abstract', False)
-        new_class = super(HtmlType, cls).__new__(cls, name, bases, attrs)
+        new_class = super().__new__(cls, name, bases, attrs)
         if not abstract:
             HTML_VISITORS[name.lower()] = new_class()
         return new_class

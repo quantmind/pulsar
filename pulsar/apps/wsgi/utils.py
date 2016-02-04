@@ -198,7 +198,7 @@ error_messages = {
 }
 
 
-class dump_environ(object):
+class dump_environ:
     __slots__ = ('environ',)
 
     def __init__(self, environ):

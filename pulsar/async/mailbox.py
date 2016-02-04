@@ -84,7 +84,7 @@ def command_in_context(command, caller, target, args, kwargs, connection=None):
     return result
 
 
-class ProxyMailbox(object):
+class ProxyMailbox:
     '''A proxy for the arbiter :class:`Mailbox`.
     '''
     active_connections = 0
@@ -111,7 +111,7 @@ class ProxyMailbox(object):
         pass
 
 
-class Message(object):
+class Message:
     '''A message which travels from actor to actor.
     '''
     def __init__(self, data, waiter=None):

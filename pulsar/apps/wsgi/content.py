@@ -142,7 +142,6 @@ Html Factory
 .. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp
 '''
 import re
-
 from collections import Mapping
 from functools import partial
 
@@ -194,7 +193,7 @@ def attr_iter(attrs):
             yield " %s='%s'" % (k, escape(v, force=True))
 
 
-class String(object):
+class String:
     '''An asynchronous string which can be used with pulsar WSGI servers.
     '''
     _default_content_type = 'text/plain'

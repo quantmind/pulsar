@@ -100,14 +100,14 @@ import socket
 from math import log
 from random import lognormvariate
 from functools import partial
+import asyncio
 try:
     import ssl
 except ImportError:     # pragma    nocover
     ssl = None
 
 import pulsar
-from pulsar import (asyncio, TcpServer, DatagramServer, Connection,
-                    ImproperlyConfigured)
+from pulsar import TcpServer, DatagramServer, Connection, ImproperlyConfigured
 from pulsar.utils.internet import parse_address
 from pulsar.utils.config import pass_through
 

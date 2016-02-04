@@ -1,7 +1,8 @@
-'''Classes for testing WSGI servers using the HttpClient'''
+"""Classes for testing WSGI servers using the HttpClient
+"""
+import asyncio
 from functools import partial
 
-from pulsar import asyncio
 from pulsar.apps import http
 from pulsar.apps.wsgi import HttpServerResponse
 
@@ -9,23 +10,24 @@ __all__ = ['HttpTestClient']
 
 
 class DummyTransport(asyncio.Transport):
-    '''A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
+    """A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
 
-.. attribute:: client
+    .. attribute:: client
 
-    The :class:`pulsar.Client` using this :class:`DummyTransport`
+        The :class:`pulsar.Client` using this :class:`DummyTransport`
 
-.. attribute:: connection
+    .. attribute:: connection
 
-    The *server* connection for this :attr:`client`
-'''
+        The *server* connection for this :attr:`client`
+    """
     def __init__(self, client, connnection):
         self.client = client
         self.connection = connnection
 
     def write(self, data):
-        '''Writing data means calling ``data_received`` on the
-server :attr:`connection`.'''
+        """Writing data means calling ``data_received`` on the
+        server :attr:`connection`
+        """
         self.connection.data_received(data)
 
     @property
@@ -34,7 +36,8 @@ server :attr:`connection`.'''
 
 
 class DummyConnectionPool:
-    '''A class for simulating a client connection with a server'''
+    """A class for simulating a client connection with a server
+    """
     def get_or_create_connection(self, producer):
         client = self.connection_factory(self.address, 1, 0,
                                          producer.consumer_factory,
@@ -48,13 +51,13 @@ class DummyConnectionPool:
 
 
 class HttpTestClient(http.HttpClient):
-    '''Useful :class:`pulsar.apps.http.HttpClient` for wsgi server
-handlers.
+    """Useful :class:`pulsar.apps.http.HttpClient` for wsgi server
+    handlers.
 
-.. attribute:: wsgi_handler
+    .. attribute:: wsgi_handler
 
-    The WSGI server handler to test
-'''
+        The WSGI server handler to test
+    """
     client_version = 'Pulsar-Http-Test-Client'
     connection_pool = DummyConnectionPool
 

@@ -1,6 +1,7 @@
 import unittest
+from asyncio import gather
 
-from pulsar import (send, multi_async, new_event_loop, get_application,
+from pulsar import (send, new_event_loop, get_application,
                     run_in_loop, get_event_loop)
 from pulsar.apps.test import dont_run_with_thread
 
@@ -49,9 +50,9 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(result, msg)
 
     def test_multi(self):
-        result = yield from multi_async((self.client(b'ciao'),
-                                         self.client(b'pippo'),
-                                         self.client(b'foo')))
+        result = yield from gather(self.client(b'ciao'),
+                                   self.client(b'pippo'),
+                                   self.client(b'foo'))
         self.assertEqual(len(result), 3)
         self.assertTrue(b'ciao' in result)
         self.assertTrue(b'pippo' in result)
@@ -101,9 +102,9 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.sessions, 1)
         self.assertEqual(client._requests_processed, 2)
         #
-        result = yield from multi_async((client(b'ciao'),
-                                         client(b'pippo'),
-                                         client(b'foo')))
+        result = yield from gather(client(b'ciao'),
+                                   client(b'pippo'),
+                                   client(b'foo'))
         self.assertEqual(len(result), 3)
         self.assertTrue(b'ciao' in result)
         self.assertTrue(b'pippo' in result)
@@ -116,9 +117,9 @@ class TestEchoServerThread(unittest.TestCase):
         # drop a connection
         yield from run_in_loop(client._loop, self._drop_conection, client)
         #
-        result = yield from multi_async((client(b'ciao'),
-                                         client(b'pippo'),
-                                         client(b'foo')))
+        result = yield from gather(client(b'ciao'),
+                                   client(b'pippo'),
+                                   client(b'foo'))
         self.assertEqual(len(result), 3)
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 2)

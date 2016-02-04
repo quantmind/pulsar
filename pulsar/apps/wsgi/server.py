@@ -34,6 +34,7 @@ from pulsar.async.protocols import ProtocolConsumer
 from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
                     log_wsgi_info, LOGGER)
 from .formdata import http_protocol, HttpBodyReader
+from .wrappers import FileWrapper, close_object
 
 __all__ = ['HttpServerResponse', 'test_wsgi_environ', 'AbortWsgi']
 
@@ -106,6 +107,7 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
     #
     environ = {"wsgi.input": stream,
                "wsgi.errors": sys.stderr,
+               "wsgi.file_wrapper": FileWrapper,
                "wsgi.version": (1, 0),
                "wsgi.run_once": False,
                "wsgi.multithread": False,
@@ -434,12 +436,7 @@ class HttpServerResponse(ProtocolConsumer):
                                       self.connection)
                     self.connection.close()
             finally:
-                if hasattr(response, 'close'):
-                    try:
-                        response.close()
-                    except Exception:
-                        self.logger.exception(
-                            'Error while closing wsgi iterator')
+                close_object(response)
 
     def is_chunked(self):
         '''Check if the response uses chunked transfer encoding.

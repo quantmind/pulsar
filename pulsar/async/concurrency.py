@@ -17,7 +17,7 @@ from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, SELECTORS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
-from .futures import async, add_errback, chain_future, Future
+from .futures import ensure_future, add_errback, chain_future, Future
 from .protocols import TcpServer
 from .actor import Actor
 from .consts import *   # noqa
@@ -46,7 +46,7 @@ def arbiter(**params):
         return arbiter
 
 
-class Concurrency(object):
+class Concurrency:
     '''Actor :class:`.Concurrency`.
 
     Responsible for the actual spawning of actors according to a
@@ -319,7 +319,7 @@ class Concurrency(object):
         raise RuntimeError('Cannot remove actor')
 
 
-class ProcessMixin(object):
+class ProcessMixin:
 
     def is_process(self):
         return True
@@ -333,7 +333,7 @@ class ProcessMixin(object):
         self.stop(actor, exit_code=int(sig))
 
 
-class MonitorMixin(object):
+class MonitorMixin:
 
     def identity(self, actor):
         return actor.name
@@ -680,7 +680,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             if monitors or managed:
                 actor.logger.debug('Closing %d monitors and %d actors',
                                    monitors, managed)
-                async(self._close_all(actor))
+                ensure_future(self._close_all(actor))
             else:
                 self._exit_arbiter(actor, True)
 

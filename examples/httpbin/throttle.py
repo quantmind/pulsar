@@ -3,7 +3,7 @@
 from pulsar import Future
 
 
-class Throttling(object):
+class Throttling:
     _types = ('read', 'write')
 
     def __init__(self, protocol, read_limit=None, write_limit=None):

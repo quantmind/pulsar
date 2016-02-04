@@ -1,7 +1,7 @@
 from .futures import Future
 
 
-class FlowControl(object):
+class FlowControl:
     """A protocol mixin for flow control logic.
 
     This implements the protocol methods :meth:`pause_writing`,
@@ -68,7 +68,7 @@ class FlowControl(object):
             self._write_waiter = waiter
 
 
-class Timeout(object):
+class Timeout:
     '''Adds a timeout for idle connections to protocols
     '''
     _timeout = None

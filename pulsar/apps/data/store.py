@@ -34,7 +34,7 @@ class NoSuchStore(ImproperlyConfigured):
     pass
 
 
-class Command(object):
+class Command:
     '''A command executed during a in a :meth:`~.Store.execute_transaction`
 
     .. attribute:: action
@@ -254,7 +254,7 @@ class RemoteStore(Producer, Store):
         return data
 
 
-class PubSubClient(object):
+class PubSubClient:
     '''Interface for a client of :class:`PubSub` handler.
 
     Instances of this :class:`Client` are callable object and are
@@ -268,7 +268,7 @@ class PubSubClient(object):
         raise NotImplementedError
 
 
-class PubSub(object):
+class PubSub:
     '''A Publish/Subscriber interface.
 
     A :class:`PubSub` handler is never initialised directly, instead,

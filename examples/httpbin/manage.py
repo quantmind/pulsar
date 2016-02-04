@@ -27,9 +27,9 @@ from functools import partial
 from itertools import repeat, chain
 from random import random
 from base64 import b64encode
-from asyncio import async
 
-from pulsar import HttpRedirect, HttpException, version, JAPANESE, CHINESE
+from pulsar import (HttpRedirect, HttpException, version, JAPANESE, CHINESE,
+                    ensure_future)
 from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
                                   ENCODE_BODY_METHODS)
 from pulsar.utils.html import escape
@@ -293,12 +293,8 @@ class HttpBin(BaseRouter):
            title='Show a video clip')
     def clip(self, request):
         c = request.urlargs['chunk_size']
-        data, ct, encoding = asset('clip.mp4', 'rb', chunk_size=c)
-        response = request.response
-        response.content_type = ct
-        response.encoding = encoding
-        response.content = data
-        return response
+        filepath = os.path.join(ASSET_DIR, 'clip.mp4')
+        return wsgi.file_response(request, filepath, c)
 
     @route('servername',
            title='display the server name')
@@ -321,7 +317,7 @@ class Upload(BaseRouter):
     response_content_types = ['multipart/form-data']
 
     def put(self, request):
-        return async(self._async_put(request))
+        return ensure_future(self._async_put(request))
 
     def _async_put(self, request):
         headers = self.getheaders(request)

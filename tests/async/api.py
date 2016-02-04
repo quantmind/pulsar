@@ -3,7 +3,7 @@ import unittest
 import pulsar
 
 
-class Context(object):
+class Context:
 
     def __enter__(self):
         return self

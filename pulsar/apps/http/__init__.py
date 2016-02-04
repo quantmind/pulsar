@@ -292,7 +292,7 @@ except ImportError:
 
 import pulsar
 from pulsar import (AbortRequest, AbstractClient, Pool, Connection, is_async,
-                    ProtocolConsumer)
+                    ProtocolConsumer, ensure_future)
 from pulsar.utils import websocket
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
@@ -343,7 +343,7 @@ def is_streamed(data):
     return False
 
 
-class RequestBase(object):
+class RequestBase:
     inp_params = None
     release_connection = True
     history = None
@@ -658,7 +658,7 @@ class HttpRequest(RequestBase):
         if not self.data:
             return
         if is_streamed(self.data):
-            asyncio.async(self._write_streamed_data(transport),
+            ensure_future(self._write_streamed_data(transport),
                           loop=transport._loop)
         else:
             self._write_body_data(transport, self.data, True)

@@ -132,7 +132,7 @@ class RedisStore(RemoteStore):
         return data
 
 
-class CompiledQuery(object):
+class CompiledQuery:
 
     def __init__(self, pipe, query):
         self.pipe = pipe

@@ -11,7 +11,7 @@ def as_test_setting(setting):
     return setting
 
 
-class WrapTest(object):
+class WrapTest:
     '''Wrap an underlying test case'''
     def __init__(self, test):
         self.test = test
@@ -81,7 +81,7 @@ class TestPluginMeta(type):
                                          nargs=nargs)
                 settings[setting.name] = as_test_setting(setting)
         attrs['config'] = pulsar.Config(settings=settings)
-        return super(TestPluginMeta, cls).__new__(cls, name, bases, attrs)
+        return super().__new__(cls, name, bases, attrs)
 
 
 class TestPlugin(Plugin, metaclass=TestPluginMeta):
@@ -133,7 +133,7 @@ class TestPlugin(Plugin, metaclass=TestPluginMeta):
     virtual = True
 
     def __new__(cls):
-        o = super(TestPlugin, cls).__new__(cls)
+        o = super().__new__(cls)
         o.config = cls.config.copy()
         return o
 

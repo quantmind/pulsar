@@ -32,7 +32,7 @@ class StringProtocol:
         return message.decode('utf-8')
 
 
-class StoreMixin(object):
+class StoreMixin:
     redis_py_parser = False
 
     @classmethod

@@ -1,7 +1,7 @@
 import asyncio
 from unittest import SkipTest
 
-from pulsar import async, is_async, HaltServer
+from pulsar import ensure_future, is_async, HaltServer
 
 from .utils import (TestFailure, skip_test, skip_reason,
                     expecting_failure, AsyncAssert, get_test_timeout)
@@ -11,7 +11,7 @@ class AbortTests(Exception):
     pass
 
 
-class Runner(object):
+class Runner:
 
     def __init__(self, monitor, runner, tests):
         self._loop = monitor._loop
@@ -51,7 +51,8 @@ class Runner(object):
             if run:
                 self.logger.info('Running Tests from %s', testcls)
                 runner.startTestClass(testcls)
-                async(self._run_testcls(testcls, all_tests), loop=self._loop)
+                ensure_future(self._run_testcls(testcls, all_tests),
+                              loop=self._loop)
             else:
                 self._loop.call_soon(self._next)
         else:

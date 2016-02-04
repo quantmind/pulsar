@@ -95,7 +95,7 @@ class MetaRpcHandler(type):
     Add a limited ammount of magic to RPC handlers.
     '''
     def __new__(cls, name, bases, attrs):
-        make = super(MetaRpcHandler, cls).__new__
+        make = super().__new__
         if attrs.pop('virtual', None):
             return make(cls, name, bases, attrs)
         funcprefix = attrs.get('serve_as')

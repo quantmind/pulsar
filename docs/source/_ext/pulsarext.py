@@ -1,5 +1,5 @@
-'''Sphinx extension for displaying Setting information
-'''
+"""Sphinx extension for displaying Setting information
+"""
 from inspect import isfunction
 
 from sphinx.util.compat import Directive

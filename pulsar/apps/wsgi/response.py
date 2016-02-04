@@ -40,7 +40,7 @@ re_media_type = re.compile(r'^(image|audio|video)/.+')
 __all__ = ['AccessControl', 'GZipMiddleware']
 
 
-class ResponseMiddleware(object):
+class ResponseMiddleware:
     '''Base class for response middlewares.
 
     A response middleware is used by a :ref:`WsgiHandler <wsgi-handler>`,

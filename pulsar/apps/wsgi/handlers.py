@@ -98,7 +98,7 @@ via the ``_loop`` attribute::
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
-from pulsar import Http404, async, isfuture
+from pulsar import Http404, ensure_future, isfuture
 from pulsar.utils.log import LocalMixin, local_method
 
 from .utils import handle_wsgi_error
@@ -108,7 +108,7 @@ from .wrappers import WsgiResponse
 __all__ = ['WsgiHandler', 'LazyWsgi']
 
 
-class WsgiHandler(object):
+class WsgiHandler:
     '''An handler for applications conforming to python WSGI_.
 
     .. attribute:: middleware
@@ -141,7 +141,7 @@ class WsgiHandler(object):
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
         if self.async:
-            return async(self._async(environ, start_response))
+            return ensure_future(self._async(environ, start_response))
         response = None
         try:
             for middleware in self.middleware:

@@ -2,8 +2,9 @@ import sys
 import json
 import logging
 from collections import namedtuple
+from asyncio import gather
 
-from pulsar import AsyncObject, task, as_coroutine, new_event_loop, multi_async
+from pulsar import AsyncObject, as_coroutine, new_event_loop, ensure_future
 from pulsar.utils.string import gen_unique_id
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
@@ -35,9 +36,8 @@ class JSONRPC(RpcHandler):
     version = '2.0'
 
     def __call__(self, request):
-        return Json(self._execute_request(request)).http_response(request)
+        return ensure_future(self._execute_request(request))
 
-    @task
     def _execute_request(self, request):
         response = request.response
 
@@ -52,18 +52,17 @@ class JSONRPC(RpcHandler):
                 status = 200
 
                 tasks = [self._call(request, each) for each in data]
-                yield from multi_async(tasks, raise_on_error=False)
-                res = [each.result()[0] for each in tasks]
+                result = yield from gather(*tasks)
+                res = [r[0] for r in result]
             else:
                 res, status = yield from self._call(request, data)
 
         response.status_code = status
-        return res
+        return Json(res).http_response(request)
 
-    @task
     def _call(self, request, data):
         exc_info = None
-        procedure = None
+        proc = None
         try:
             if (not isinstance(data, dict) or
                     data.get('jsonrpc') != self.version or
@@ -78,9 +77,8 @@ class JSONRPC(RpcHandler):
             else:
                 args, kwargs = tuple(params or ()), {}
             #
-            procedure = self.get_handler(data.get('method'))
-            result = yield from as_coroutine(
-                procedure(request, *args, **kwargs))
+            proc = self.get_handler(data.get('method'))
+            result = yield from as_coroutine(proc(request, *args, **kwargs))
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
@@ -92,8 +90,8 @@ class JSONRPC(RpcHandler):
                 exc_info = sys.exc_info()
         #
         if exc_info:
-            if isinstance(result, TypeError) and procedure:
-                msg = checkarity(procedure, args, kwargs, discount=1)
+            if isinstance(result, TypeError) and proc:
+                msg = checkarity(proc, args, kwargs, discount=1)
             else:
                 msg = None
 

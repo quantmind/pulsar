@@ -1,4 +1,4 @@
-from pulsar import arbiter, spawn, send, async, Config, command
+from pulsar import arbiter, spawn, send, ensure_future, Config, command
 
 
 PREFIX = 'remote_'
@@ -39,7 +39,7 @@ class RemoteType(type):
                 remotes.update(base.remote_methods)
 
         attrs['remote_methods'] = frozenset(remotes)
-        return super(RemoteType, cls).__new__(cls, name, bases, attrs)
+        return super().__new__(cls, name, bases, attrs)
 
 
 class RemoteCall:
@@ -94,7 +94,7 @@ class Calculator(Remote):
 
 
 def start(arbiter, **kw):
-    async(app(arbiter))
+    ensure_future(app(arbiter))
 
 
 def app(arbiter):

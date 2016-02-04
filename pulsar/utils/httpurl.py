@@ -763,7 +763,7 @@ class InvalidChunkSize(Exception):
     """ error raised when we parse an invalid chunk size """
 
 
-class HttpParser(object):
+class HttpParser:
     '''A python HTTP parser.
 
     Original code from https://github.com/benoitc/http-parser
@@ -1331,7 +1331,7 @@ def has_vary_header(response, header_query):
     return header_query.lower() in existing_headers
 
 
-class CacheControl(object):
+class CacheControl:
     '''
     http://www.mnot.net/cache_docs/
 

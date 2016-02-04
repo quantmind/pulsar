@@ -27,7 +27,7 @@ def spawn_actor_from_actor(actor, name):
     return actor2.aid
 
 
-class create_echo_server(object):
+class create_echo_server:
     '''partial is not picklable in python 2.6'''
     def __init__(self, address):
         self.address = address

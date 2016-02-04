@@ -1,4 +1,4 @@
-'''Configuration utilities which provides pulsar with configuration parameters
+"""Configuration utilities which provides pulsar with configuration parameters
 which can be parsed from the command line. Parsing is implemented using
 the python argparser_ standard library module.
 
@@ -18,7 +18,7 @@ Setting
 
 
 .. _argparser: http://docs.python.org/dev/library/argparse.html
-'''
+"""
 import inspect
 import argparse
 import os
@@ -55,11 +55,11 @@ KNOWN_SETTINGS_ORDER = []
 
 
 def pass_through(arg):
-    '''A dummy function accepting one parameter only.
+    """A dummy function accepting one parameter only.
 
     It does nothing and it is used as default by
     :ref:`Application Hooks <setting-section-application-hooks>`.
-    '''
+    """
     pass
 
 
@@ -92,8 +92,8 @@ def valid_config_value(val):
     return False
 
 
-class Config(object):
-    '''A dictionary-like container of :class:`Setting` parameters for
+class Config:
+    """A dictionary-like container of :class:`Setting` parameters for
     fine tuning pulsar servers.
 
     It provides easy access to :attr:`Setting.value`
@@ -126,7 +126,7 @@ class Config(object):
 
         Dictionary of additional parameters which cannot be parsed on the
         command line
-    '''
+    """
     script = None
     application = None
     exclude_from_config = set(('config',))
@@ -186,23 +186,23 @@ class Config(object):
         super().__setattr__(name, value)
 
     def update(self, data, default=False):
-        '''Update this :attr:`Config` with ``data``.
+        """Update this :attr:`Config` with ``data``.
 
         :param data: must be a ``Mapping`` like object exposing the ``item``
             method for iterating through key-value pairs.
         :param default: if ``True`` the updated :attr:`settings` will also
             set their :attr:`~Setting.default` attribute with the
             updating value (provided it is a valid one).
-        '''
+        """
         for name, value in data.items():
             if value is not None:
                 self.set(name, value, default)
 
     def copy_globals(self, cfg):
-        '''Copy global settings from ``cfg`` to this config.
+        """Copy global settings from ``cfg`` to this config.
 
         The settings are copied only if they were not already modified.
-        '''
+        """
         for name, setting in cfg.settings.items():
             csetting = self.settings.get(name)
             if (setting.is_global and csetting is not None and
@@ -210,7 +210,7 @@ class Config(object):
                 csetting.set(setting.get())
 
     def get(self, name, default=None):
-        '''Get the value at ``name`` for this :class:`Config` container
+        """Get the value at ``name`` for this :class:`Config` container
 
         The returned value is obtained from:
 
@@ -218,17 +218,17 @@ class Config(object):
           if available.
         * the value at ``name`` in the :attr:`params` dictionary if available.
         * the ``default`` value.
-        '''
+        """
         try:
             return self._get(name, default)
         except KeyError:
             return default
 
     def set(self, name, value, default=False):
-        '''Set the :class:`Setting` at ``name`` with a new ``value``.
+        """Set the :class:`Setting` at ``name`` with a new ``value``.
 
         If ``default`` is ``True``, the :attr:`Setting.default` is also set.
-        '''
+        """
         if name in self.__dict__:
             self.__dict__[name] = value
         elif name not in self.settings:
@@ -242,11 +242,11 @@ class Config(object):
             self.settings[name].set(value, default=default)
 
     def parser(self):
-        '''Create the argparser_ for this configuration by adding all
+        """Create the argparser_ for this configuration by adding all
         settings via the :meth:`Setting.add_argument` method.
 
         :rtype: an instance of :class:`ArgumentParser`.
-        '''
+        """
         parser = argparse.ArgumentParser(description=self.description,
                                          epilog=self.epilog)
         parser.add_argument('--version',
@@ -255,8 +255,8 @@ class Config(object):
         return self.add_to_parser(parser)
 
     def add_to_parser(self, parser):
-        '''Add this container :attr:`settings` to an existing ``parser``.
-        '''
+        """Add this container :attr:`settings` to an existing ``parser``.
+        """
         setts = self.settings
 
         def sorter(x):
@@ -291,8 +291,8 @@ class Config(object):
         return unknowns
 
     def parse_command_line(self, argv=None):
-        '''Parse the command line
-        '''
+        """Parse the command line
+        """
         if self.config:
             parser = argparse.ArgumentParser(add_help=False)
             self.settings['config'].add_argument(parser)
@@ -310,8 +310,8 @@ class Config(object):
             self.set(k.lower(), v)
 
     def on_start(self):
-        '''Invoked by a :class:`.Application` just before starting.
-        '''
+        """Invoked by a :class:`.Application` just before starting.
+        """
         for sett in self.settings.values():
             sett.on_start()
 
@@ -321,17 +321,17 @@ class Config(object):
 
     @property
     def workers(self):
-        '''Number of workers
-        '''
+        """Number of workers
+        """
         workers = self.settings.get('workers')
         return workers.get() if workers else 0
 
     @property
     def address(self):
-        '''An address to bind to, only available if a
+        """An address to bind to, only available if a
         :ref:`bind <setting-bind>` setting has been added to this
         :class:`Config` container.
-        '''
+        """
         bind = self.settings.get('bind')
         if bind:
             return parse_address(to_bytes(bind.get()))
@@ -361,12 +361,12 @@ class Config(object):
                 return pn.get()
 
     def copy(self, name=None, prefix=None):
-        '''A copy of this :class:`Config` container.
+        """A copy of this :class:`Config` container.
 
         If ``prefix`` is given, it prefixes all non
         :ref:`global settings <setting-section-global-server-settings>`
         with it. Used when multiple applications are loaded.
-        '''
+        """
         cls = self.__class__
         me = cls.__new__(cls)
         me.__dict__.update(self.__dict__)
@@ -384,8 +384,8 @@ class Config(object):
         return pickle.loads(pickle.dumps(self))
 
     def configured_logger(self, name=None):
-        '''Configured logger.
-        '''
+        """Configured logger.
+        """
         loghandlers = self.loghandlers
         # logname
         if not name:
@@ -451,10 +451,11 @@ class Config(object):
 
 
 class SettingMeta(type):
-    '''A metaclass which collects all setting classes and put them
-    in the global ``KNOWN_SETTINGS`` list.'''
+    """A metaclass which collects all setting classes and put them
+    in the global ``KNOWN_SETTINGS`` list.
+    """
     def __new__(cls, name, bases, attrs):
-        super_new = super(SettingMeta, cls).__new__
+        super_new = super().__new__
         # parents = [b for b in bases if isinstance(b, SettingMeta)]
         val = attrs.get("validator")
         attrs["validator"] = wrap_method(val) if val else None
@@ -483,55 +484,55 @@ class SettingMeta(type):
 
 
 class Setting(metaclass=SettingMeta):
-    '''Class for creating :ref:`pulsar settings <settings>`.
+    """Class for creating :ref:`pulsar settings <settings>`.
 
     Most parameters can be specified on the command line,
     all of them on a ``config`` file.
-    '''
+    """
     creation_count = 0
     virtual = True
-    '''If set to ``True`` the settings won't be loaded.
+    """If set to ``True`` the settings won't be loaded.
 
-    It can be only used as base class for other settings.'''
+    It can be only used as base class for other settings."""
     name = None
-    '''The key to access this setting in a :class:`Config` container.'''
+    """The key to access this setting in a :class:`Config` container."""
     validator = None
-    '''A validating function for this setting.
+    """A validating function for this setting.
 
     It provided it must be a function accepting one positional argument,
-    the value to validate.'''
+    the value to validate."""
     value = None
-    '''The actual value for this setting.'''
+    """The actual value for this setting."""
     default = None
-    '''The default value for this setting.'''
+    """The default value for this setting."""
     nargs = None
-    '''The number of command-line arguments that should be consumed'''
+    """The number of command-line arguments that should be consumed"""
     const = None
-    '''A constant value required by some action and nargs selections'''
+    """A constant value required by some action and nargs selections"""
     app = None
-    '''Setting for a specific :class:`Application`.'''
+    """Setting for a specific :class:`Application`."""
     section = None
-    '''Setting section, used for creating the
-    :ref:`settings documentation <settings>`.'''
+    """Setting section, used for creating the
+    :ref:`settings documentation <settings>`."""
     flags = None
-    '''List of options strings, e.g. ``[-f, --foo]``.'''
+    """List of options strings, e.g. ``[-f, --foo]``."""
     choices = None
-    '''Restrict the argument to the choices provided.'''
+    """Restrict the argument to the choices provided."""
     type = None
-    '''The type to which the command-line argument should be converted'''
+    """The type to which the command-line argument should be converted"""
     meta = None
-    '''Same usage as ``metavar`` in the python :mod:`argparse` module. It is
-    the name for the argument in usage message.'''
+    """Same usage as ``metavar`` in the python :mod:`argparse` module. It is
+    the name for the argument in usage message."""
     action = None
-    '''The basic type of action to be taken when this argument is encountered
-    at the command line'''
+    """The basic type of action to be taken when this argument is encountered
+    at the command line"""
     short = None
-    '''Optional shot description string'''
+    """Optional shot description string"""
     desc = None
-    '''Description string'''
+    """Description string"""
     is_global = False
-    '''``True`` only for
-    :ref:`global settings <setting-section-global-server-settings>`.'''
+    """``True`` only for
+    :ref:`global settings <setting-section-global-server-settings>`."""
     orig_name = None
 
     def __init__(self, name=None, flags=None, action=None, type=None,
@@ -570,22 +571,22 @@ class Setting(metaclass=SettingMeta):
     __repr__ = __str__
 
     def on_start(self):
-        '''Called when pulsar server starts.
+        """Called when pulsar server starts.
 
         It can be used to perform custom initialization for this
         :class:`Setting`.
-        '''
+        """
         pass
 
     def get(self):
-        '''Returns :attr:`value`'''
+        """Returns :attr:`value`"""
         return self.value
 
     def set(self, val, default=False):
-        '''Set ``val`` as the :attr:`value` for this :class:`Setting`.
+        """Set ``val`` as the :attr:`value` for this :class:`Setting`.
 
         If ``default`` is ``True`` set also the :attr:`default` value.
-        '''
+        """
         if hasattr(self.validator, '__call__'):
             val = self.validator(val)
         self.value = val
@@ -594,11 +595,11 @@ class Setting(metaclass=SettingMeta):
         self.modified = True
 
     def add_argument(self, parser, set_default=False):
-        '''Add this :class:`Setting` to the ``parser``.
+        """Add this :class:`Setting` to the ``parser``.
 
         The operation is carried out only if :attr:`flags` or
         :attr:`nargs` and :attr:`name` are defined.
-        '''
+        """
         default = self.default if set_default else None
         kwargs = {'nargs': self.nargs}
         kwargs.update(self.extra)
@@ -623,7 +624,7 @@ class Setting(metaclass=SettingMeta):
         parser.add_argument(*args, **kwargs)
 
     def copy(self, name=None, prefix=None):
-        '''Copy this :class:`SettingBase`'''
+        """Copy this :class:`SettingBase`"""
         setting = self.__class__.__new__(self.__class__)
         setting.__dict__.update(self.__dict__)
         # Keep the modified flag?
@@ -726,7 +727,7 @@ def validate_callable(arity):
 
 
 def make_optparse_options(apps=None, exclude=None, include=None, **override):
-    '''Create a tuple of optparse options.'''
+    """Create a tuple of optparse options."""
     from optparse import make_option
 
     class AddOptParser(list):
@@ -744,10 +745,10 @@ def make_optparse_options(apps=None, exclude=None, include=None, **override):
 
 ############################################################################
 #    Global Server Settings
-section_docs['Global Server Settings'] = '''
+section_docs['Global Server Settings'] = """
 These settings are global in the sense that they are used by the arbiter
 as well as all pulsar workers. They are server configuration parameters.
-'''
+"""
 
 
 class Global(Setting):
@@ -896,7 +897,7 @@ class Loglevel(Global):
     nargs = '+'
     default = ['info']
     validator = validate_list
-    desc = '''
+    desc = """
         The granularity of log outputs.
 
         This setting controls loggers with ``pulsar`` namespace
@@ -909,7 +910,7 @@ class Loglevel(Global):
         * error
         * critical
         * none
-        '''
+        """
 
 
 class LogHandlers(Global):
@@ -918,19 +919,19 @@ class LogHandlers(Global):
     nargs = '+'
     default = ['console']
     validator = validate_list
-    desc = '''Log handlers for pulsar server'''
+    desc = """Log handlers for pulsar server"""
 
 
 class LogConfig(Global):
     name = "logconfig"
     default = {}
     validator = validate_dict
-    desc = '''
+    desc = """
     The logging configuration dictionary.
 
     This settings can only be specified on a config file and therefore
     no command-line parameter is available.
-    '''
+    """
 
 
 class Procname(Global):
@@ -974,24 +975,24 @@ class DataStore(Global):
     flags = ['--data-store']
     meta = "CONNECTION STRING"
     default = ''
-    desc = '''\
+    desc = """\
     Default data store.
 
     Use this setting to specify a datastore used by pulsar applications.
     By default no datastore is used.
-    '''
+    """
 
 
 class ExecutionId(Global):
     name = 'exc_id'
     flags = ['--exc-id']
     default = ''
-    desc = '''\
+    desc = """\
     Execution ID.
 
     Use this setting to specify an execution ID.
     If not provided, a value will be assigned by pulsar.
-    '''
+    """
 
 
 class UseGreenlet(Global):
@@ -1001,20 +1002,20 @@ class UseGreenlet(Global):
     type = int
     default = 0
     const = 100
-    desc = '''\
+    desc = """\
     Use greenlet whenever possible.
-    '''
+    """
 
 ############################################################################
 #    Worker Processes
-section_docs['Worker Processes'] = '''
+section_docs['Worker Processes'] = """
 This group of configuration parameters control the number of actors
 for a given :class:`.Monitor`, the type of concurreny of the server and
 other actor-specific parameters.
 
 They are available to all applications and, unlike global settings,
 each application can specify different values.
-'''
+"""
 
 
 class Workers(Setting):
@@ -1092,7 +1093,7 @@ class ThreadWorkers(Setting):
 
 ############################################################################
 #    APPLICATION HOOKS
-section_docs['Application Hooks'] = '''
+section_docs['Application Hooks'] = """
 Application hooks are functions which can be specified in a
 :ref:`config <setting-config>` file to perform custom tasks in a pulsar server.
 These tasks can be scheduled when events occurs or at every event loop of
@@ -1105,7 +1106,7 @@ parameter and one key-valued parameter ``exc`` when an exception occurs::
         ...
 
 Like worker process settings, each application can specify their own.
-'''
+"""
 
 
 class Postfork(Setting):
