@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.proxy &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.async.proxy &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -46,13 +46,13 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">default_timer</span>
 
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">chain_future</span>
-<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="o">*</span>   <span class="c"># noqa</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="o">*</span>   <span class="c1"># noqa</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;ActorProxy&#39;</span><span class="p">,</span>
-           <span class="s">&#39;ActorProxyMonitor&#39;</span><span class="p">,</span>
-           <span class="s">&#39;get_proxy&#39;</span><span class="p">,</span>
-           <span class="s">&#39;command&#39;</span><span class="p">,</span>
-           <span class="s">&#39;get_command&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ActorProxy&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ActorProxyMonitor&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;get_proxy&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;command&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;get_command&#39;</span><span class="p">]</span>
 
 <span class="n">global_commands_table</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -60,17 +60,17 @@
 <span class="k">def</span> <span class="nf">get_proxy</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ActorProxy</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">obj</span>
-    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;proxy&#39;</span><span class="p">):</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;proxy&#39;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">get_proxy</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">proxy</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">safe</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;&quot;</span><span class="si">%s</span><span class="s">&quot; is not an actor or actor proxy.&#39;</span> <span class="o">%</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot; is not an actor or actor proxy.&#39;</span> <span class="o">%</span> <span class="n">obj</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">actor_identity</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">aid</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="s">&#39;aid&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">actor</span>
+    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">aid</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="s1">&#39;aid&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">actor</span>
 
 
 <span class="k">def</span> <span class="nf">get_command</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
@@ -100,9 +100,9 @@
         <span class="n">command_function</span><span class="o">.</span><span class="n">__name__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="n">command_function</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">__doc__</span>
         <span class="n">global_commands_table</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">command_function</span>
-        <span class="k">return</span> <span class="n">command_function</span>
+        <span class="k">return</span> <span class="n">command_function</span></div>
 
-</div>
+
 <span class="k">def</span> <span class="nf">actor_proxy_future</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="bp">self</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">):</span>
@@ -115,7 +115,7 @@
     <span class="k">return</span> <span class="bp">self</span>
 
 
-<div class="viewcode-block" id="ActorProxy"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxy">[docs]</a><span class="k">class</span> <span class="nc">ActorProxy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ActorProxy"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxy">[docs]</a><span class="k">class</span> <span class="nc">ActorProxy</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;A proxy for a remote :class:`.Actor`.</span>
 
 <span class="sd">    This is a lightweight class which delegates function calls to the</span>
@@ -146,10 +146,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">aid</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">aid</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">cfg</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">impl</span><span class="p">,</span> <span class="s">&#39;address&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">impl</span><span class="p">,</span> <span class="s1">&#39;address&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">(</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
     <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
 
     <span class="nd">@property</span>
@@ -161,9 +161,9 @@
         <span class="k">return</span> <span class="n">o</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span> <span class="o">==</span> <span class="n">o</span><span class="o">.</span><span class="n">aid</span>
 
     <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
-        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">o</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="ActorProxyMonitor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor">[docs]</a><span class="k">class</span> <span class="nc">ActorProxyMonitor</span><span class="p">(</span><span class="n">ActorProxy</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A specialised :class:`.ActorProxy` class.</span>
 
@@ -208,7 +208,7 @@
     <span class="k">def</span> <span class="nf">notified</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Last time this :class:`.ActorProxyMonitor` was notified by the</span>
 <span class="sd">        remote actor.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;last_notified&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;last_notified&#39;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -221,27 +221,27 @@
 <div class="viewcode-block" id="ActorProxyMonitor.is_alive"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor.is_alive">[docs]</a>    <span class="k">def</span> <span class="nf">is_alive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;``True`` if underlying actor is alive.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">is_alive</span><span class="p">()</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">is_alive</span><span class="p">()</span></div>
+
 <div class="viewcode-block" id="ActorProxyMonitor.terminate"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor.terminate">[docs]</a>    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Terminate life of underlying actor.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span></div>
+
 <div class="viewcode-block" id="ActorProxyMonitor.join"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor.join">[docs]</a>    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Wait until the underlying actor terminates.</span>
 
 <span class="sd">        If ``timeout`` is provided, it raises an exception if the timeout</span>
 <span class="sd">        is reached.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="ActorProxyMonitor.start"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Start the remote actor.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">spawning_start</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+
     <span class="k">def</span> <span class="nf">should_be_alive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">mailbox</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">default_timer</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">spawning_start</span> <span class="o">&gt;</span> <span class="n">ACTOR_ACTION_TIMEOUT</span>
@@ -279,6 +279,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -331,8 +333,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

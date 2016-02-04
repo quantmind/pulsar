@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous HTTP client &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>Asynchronous HTTP client &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,12 +27,12 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
     <link rel="next" title="Django Application" href="pulse.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -52,7 +52,7 @@ class for multiple asynchronous HTTP requests.</p>
 </pre></div>
 </div>
 <p>and than makes requests, in a coroutine:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">http</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;http://www.bbc.co.uk&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">http</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;http://www.bbc.co.uk&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="section" id="making-requests">
@@ -60,7 +60,7 @@ class for multiple asynchronous HTTP requests.</p>
 <p>Pulsar HTTP client has no dependencies and an API similar to <a class="reference external" href="http://docs.python-requests.org/">requests</a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">http</span>
 <span class="n">client</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">()</span>
-<span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><code class="docutils literal"><span class="pre">response</span></code> is a <a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><code class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></code></a> object which contains all the
@@ -104,7 +104,7 @@ To disable cookie one can pass <code class="docutils literal"><span class="pre">
 </pre></div>
 </div>
 <p>To send your own cookies to the server, you can use the cookies parameter:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">cookies</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;sessionid&#39;</span><span class="p">:</span> <span class="s">&#39;test&#39;</span><span class="p">})</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">cookies</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;sessionid&#39;</span><span class="p">:</span> <span class="s1">&#39;test&#39;</span><span class="p">})</span>
 </pre></div>
 </div>
 </div>
@@ -122,15 +122,15 @@ to your requests.</p>
 <div class="section" id="tls-ssl">
 <h2>TLS/SSL<a class="headerlink" href="#tls-ssl" title="Permalink to this headline">¶</a></h2>
 <p>Supported out of the box:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>you can include certificate file and key too, either
 to a <a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a> or to a specific request:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">client</span> <span class="o">=</span> <span class="n">HttpClient</span><span class="p">(</span><span class="n">certkey</span><span class="o">=</span><span class="s">&#39;public.key&#39;</span><span class="p">)</span>
-<span class="n">res1</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span>
-<span class="n">res2</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;https://github.com/timeline.json&#39;</span><span class="p">,</span>
-                  <span class="n">certkey</span><span class="o">=</span><span class="s">&#39;another.key&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">client</span> <span class="o">=</span> <span class="n">HttpClient</span><span class="p">(</span><span class="n">certkey</span><span class="o">=</span><span class="s1">&#39;public.key&#39;</span><span class="p">)</span>
+<span class="n">res1</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span>
+<span class="n">res2</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://github.com/timeline.json&#39;</span><span class="p">,</span>
+                  <span class="n">certkey</span><span class="o">=</span><span class="s1">&#39;another.key&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -152,7 +152,7 @@ For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">new_data</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">recv_body</span><span class="p">()</span>
-        <span class="c"># do something with this data</span>
+        <span class="c1"># do something with this data</span>
 
 <span class="n">response</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">data_processed</span><span class="o">=</span><span class="n">new_data</span><span class="p">)</span>
 </pre></div>
@@ -175,7 +175,7 @@ websocket handler:</p>
 </pre></div>
 </div>
 <p>The websocket response is obtained by:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">ws</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">http</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;ws://...&#39;</span><span class="p">,</span> <span class="n">websocket_handler</span><span class="o">=</span><span class="n">Echo</span><span class="p">())</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ws</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">http</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ws://...&#39;</span><span class="p">,</span> <span class="n">websocket_handler</span><span class="o">=</span><span class="n">Echo</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -213,9 +213,9 @@ receive the <em>response</em> argument.</li>
 <p>Adding event handlers can be done at client level:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">myheader_handler</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">&#39;got headers!&#39;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;got headers!&#39;</span><span class="p">)</span>
 
-<span class="n">client</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_headers&#39;</span><span class="p">,</span> <span class="n">myheader_handler</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;on_headers&#39;</span><span class="p">,</span> <span class="n">myheader_handler</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>or at request level:</p>
@@ -343,7 +343,7 @@ encoding.</p>
 
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpClient.client_version">
-<code class="descname">client_version</code><em class="property"> = 'pulsar/1.1.2beta0'</em><a class="headerlink" href="#pulsar.apps.http.HttpClient.client_version" title="Permalink to this definition">¶</a></dt>
+<code class="descname">client_version</code><em class="property"> = 'pulsar/1.1.3beta0'</em><a class="headerlink" href="#pulsar.apps.http.HttpClient.client_version" title="Permalink to this definition">¶</a></dt>
 <dd><p>String for the <code class="docutils literal"><span class="pre">User-Agent</span></code> header.</p>
 </dd></dl>
 
@@ -786,6 +786,8 @@ established, it returns <code class="docutils literal"><span class="pre">None</s
 </p>
 
 
+
+
 <h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
@@ -836,8 +838,8 @@ established, it returns <code class="docutils literal"><span class="pre">None</s
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/apps/http.txt"

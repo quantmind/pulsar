@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.proxyserver.manage &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>examples.proxyserver.manage &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -92,15 +92,15 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_property</span>
 
 
-<span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="s">&#39;Pulsar-proxy-server/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">version</span>
-<span class="n">ENVIRON_HEADERS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="s">&#39;content-length&#39;</span><span class="p">)</span>
+<span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="s1">&#39;Pulsar-proxy-server/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">version</span>
+<span class="n">ENVIRON_HEADERS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;content-type&#39;</span><span class="p">,</span> <span class="s1">&#39;content-length&#39;</span><span class="p">)</span>
 <span class="n">USER_AGENT</span> <span class="o">=</span> <span class="n">SERVER_SOFTWARE</span>
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.proxyserver&#39;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;pulsar.proxyserver&#39;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="x_forwarded_for"><a class="viewcode-back" href="../../../tutorials/proxy.html#examples.proxyserver.manage.x_forwarded_for">[docs]</a><span class="k">def</span> <span class="nf">x_forwarded_for</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Add *x-forwarded-for* header&#39;&#39;&#39;</span>
-    <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;x-forwarded-for&#39;</span><span class="p">,</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REMOTE_ADDR&#39;</span><span class="p">])</span></div>
+    <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;x-forwarded-for&#39;</span><span class="p">,</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">])</span></div>
 
 
 <div class="viewcode-block" id="ProxyServerWsgiHandler"><a class="viewcode-back" href="../../../tutorials/proxy.html#examples.proxyserver.manage.ProxyServerWsgiHandler">[docs]</a><span class="k">class</span> <span class="nc">ProxyServerWsgiHandler</span><span class="p">(</span><span class="n">LocalMixin</span><span class="p">):</span>
@@ -123,17 +123,17 @@
         <span class="k">return</span> <span class="n">client</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="n">uri</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;RAW_URI&#39;</span><span class="p">]</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;new request for </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">uri</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">uri</span> <span class="ow">or</span> <span class="n">uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>  <span class="c"># No proper uri, raise 404</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;RAW_URI&#39;</span><span class="p">]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;new request for </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">uri</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">uri</span> <span class="ow">or</span> <span class="n">uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>  <span class="c1"># No proper uri, raise 404</span>
             <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">TunnelResponse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
         <span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">future</span></div>
 
 
-<span class="c">############################################################################</span>
-<span class="c">#    RESPONSE OBJECTS</span>
+<span class="c1">############################################################################</span>
+<span class="c1">#    RESPONSE OBJECTS</span>
 <span class="k">class</span> <span class="nc">TunnelResponse</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;Base WSGI Response Iterator for the Proxy server</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -149,17 +149,17 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">request_headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">()</span>
         <span class="n">environ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span>
-        <span class="n">method</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REQUEST_METHOD&#39;</span><span class="p">]</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REQUEST_METHOD&#39;</span><span class="p">]</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">ENCODE_BODY_METHODS</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">DataIterator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">http</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi</span><span class="o">.</span><span class="n">http_client</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">yield from</span> <span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span>
-                                    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;RAW_URI&#39;</span><span class="p">],</span>
+                                    <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;RAW_URI&#39;</span><span class="p">],</span>
                                     <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
                                     <span class="n">headers</span><span class="o">=</span><span class="n">request_headers</span><span class="p">,</span>
-                                    <span class="n">version</span><span class="o">=</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_PROTOCOL&#39;</span><span class="p">],</span>
+                                    <span class="n">version</span><span class="o">=</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SERVER_PROTOCOL&#39;</span><span class="p">],</span>
                                     <span class="n">pre_request</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pre_request</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
@@ -169,13 +169,13 @@
 <span class="sd">        modify them via the list of :attr:`headers_middleware`.</span>
 <span class="sd">        The returned headers will be sent to the target uri.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;HTTP_&#39;</span><span class="p">):</span>
-                <span class="n">head</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="mi">5</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="s">&#39;-&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;HTTP_&#39;</span><span class="p">):</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="mi">5</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">)</span>
                 <span class="n">headers</span><span class="p">[</span><span class="n">head</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">head</span> <span class="ow">in</span> <span class="n">ENVIRON_HEADERS</span><span class="p">:</span>
-            <span class="n">k</span> <span class="o">=</span> <span class="n">head</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">head</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
             <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">v</span><span class="p">:</span>
                 <span class="n">headers</span><span class="p">[</span><span class="n">head</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
@@ -196,25 +196,25 @@
 <span class="sd">        This is a callback fired once a connection with upstream server is</span>
 <span class="sd">        established.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;CONNECT&#39;</span><span class="p">:</span>
-            <span class="c"># proxy - server connection</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;CONNECT&#39;</span><span class="p">:</span>
+            <span class="c1"># proxy - server connection</span>
             <span class="n">upstream</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">connection</span>
-            <span class="c"># client - proxy connection</span>
-            <span class="n">dostream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">]</span>
-            <span class="c"># Upgrade downstream connection</span>
+            <span class="c1"># client - proxy connection</span>
+            <span class="n">dostream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.connection&#39;</span><span class="p">]</span>
+            <span class="c1"># Upgrade downstream connection</span>
             <span class="n">dostream</span><span class="o">.</span><span class="n">upgrade</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">StreamTunnel</span><span class="p">,</span> <span class="n">upstream</span><span class="p">))</span>
-            <span class="c"># Upgrade upstream connection</span>
+            <span class="c1"># Upgrade upstream connection</span>
             <span class="n">upstream</span><span class="o">.</span><span class="n">upgrade</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">StreamTunnel</span><span class="p">,</span> <span class="n">dostream</span><span class="p">))</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 Connection established&#39;</span><span class="p">,</span> <span class="p">[])</span>
-            <span class="c"># send empty byte so that headers are sent</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">([</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 Connection established&#39;</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="c1"># send empty byte so that headers are sent</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">([</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">])</span>
             <span class="n">response</span><span class="o">.</span><span class="n">abort_request</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;data_processed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_processed</span><span class="p">)</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_request</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;data_processed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_processed</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_request</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">data_processed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.connection&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">post_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">AbortWsgi</span><span class="p">())</span>
@@ -224,7 +224,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -250,8 +250,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span> <span class="o">=</span> <span class="n">tunnel</span>
 
     <span class="k">def</span> <span class="nf">connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Tunnel connection </span><span class="si">%s</span><span class="s"> made&#39;</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
-        <span class="n">connection</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_close_tunnel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Tunnel connection </span><span class="si">%s</span><span class="s1"> made&#39;</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_close_tunnel</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">http_request</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">http_request</span><span class="p">)</span>
 
@@ -267,17 +267,17 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;proxy-server&#39;</span><span class="p">,</span> <span class="n">headers_middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+<span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;proxy-server&#39;</span><span class="p">,</span> <span class="n">headers_middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
            <span class="n">server_software</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Function to Create a WSGI Proxy Server.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">headers_middleware</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">headers_middleware</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_forwarded_for</span><span class="p">]</span>
     <span class="n">wsgi_proxy</span> <span class="o">=</span> <span class="n">ProxyServerWsgiHandler</span><span class="p">(</span><span class="n">headers_middleware</span><span class="p">)</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;server_software&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">server_software</span> <span class="ow">or</span> <span class="n">SERVER_SOFTWARE</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;server_software&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">server_software</span> <span class="ow">or</span> <span class="n">SERVER_SOFTWARE</span>
     <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">wsgi_proxy</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">server</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 
@@ -303,6 +303,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -355,8 +357,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

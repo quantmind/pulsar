@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Events &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>Events &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,13 +27,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Signal Handling" href="signal.html" />
     <link rel="prev" title="Actor messages" href="messages.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -57,7 +57,7 @@ be used to attach events to a class. Event are implemented in the
 </div>
 <p>You can bind callbacks to an event:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">say_hello</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&#39;Hello </span><span class="si">%s</span><span class="s">!&#39;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Hello </span><span class="si">%s</span><span class="s1">!&#39;</span><span class="p">)</span>
 
 <span class="n">event</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">say_hello</span><span class="p">)</span>
 </pre></div>
@@ -65,7 +65,7 @@ be used to attach events to a class. Event are implemented in the
 <p>and you can fire it:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">event</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
 <span class="go">Hello None!</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">event</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="s">&#39;luca&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">event</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="s1">&#39;luca&#39;</span><span class="p">)</span>
 <span class="go">Hello luca!</span>
 </pre></div>
 </div>
@@ -86,8 +86,8 @@ therefore you can yield it in a coroutine to wait until it get fired.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pulsar</span>
 
 <span class="k">class</span> <span class="nc">Events</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">EventHandler</span><span class="p">):</span>
-    <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="s">&#39;finish&#39;</span><span class="p">)</span>
-    <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;data&#39;</span><span class="p">)</span>
+    <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;finish&#39;</span><span class="p">)</span>
+    <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>To fire an event, one uses the <a class="reference internal" href="../api/events.html#pulsar.async.events.EventHandler.fire_event" title="pulsar.async.events.EventHandler.fire_event"><code class="xref py py-meth docutils literal"><span class="pre">fire_event()</span></code></a> method with
@@ -108,7 +108,7 @@ method mentioned above:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">start_handler</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
     <span class="o">...</span>
 
-<span class="n">o</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">start_handler</span><span class="p">)</span>
+<span class="n">o</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="n">start_handler</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -137,6 +137,8 @@ method mentioned above:</p>
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -189,8 +191,8 @@ method mentioned above:</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/tutorials/events.txt"

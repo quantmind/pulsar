@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.utils &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.apps.test.utils &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -73,37 +73,38 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Future</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span>
-                    <span class="n">is_async</span><span class="p">,</span> <span class="n">format_traceback</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">,</span> <span class="n">Future</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span> <span class="n">as_gather</span><span class="p">,</span>
+                    <span class="n">is_async</span><span class="p">,</span> <span class="n">format_traceback</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;sequential&#39;</span><span class="p">,</span>
-           <span class="s">&#39;NOT_TEST_METHODS&#39;</span><span class="p">,</span>
-           <span class="s">&#39;ActorTestMixin&#39;</span><span class="p">,</span>
-           <span class="s">&#39;AsyncAssert&#39;</span><span class="p">,</span>
-           <span class="s">&#39;check_server&#39;</span><span class="p">,</span>
-           <span class="s">&#39;test_timeout&#39;</span><span class="p">,</span>
-           <span class="s">&#39;dont_run_with_thread&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sequential&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;NOT_TEST_METHODS&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ActorTestMixin&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;AsyncAssert&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;check_server&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;test_timeout&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;dont_run_with_thread&#39;</span><span class="p">]</span>
 
 
-<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.test&#39;</span><span class="p">)</span>
-<span class="n">NOT_TEST_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;setUp&#39;</span><span class="p">,</span> <span class="s">&#39;tearDown&#39;</span><span class="p">,</span> <span class="s">&#39;_pre_setup&#39;</span><span class="p">,</span> <span class="s">&#39;_post_teardown&#39;</span><span class="p">,</span>
-                    <span class="s">&#39;setUpClass&#39;</span><span class="p">,</span> <span class="s">&#39;tearDownClass&#39;</span><span class="p">)</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;pulsar.test&#39;</span><span class="p">)</span>
+<span class="n">NOT_TEST_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;setUp&#39;</span><span class="p">,</span> <span class="s1">&#39;tearDown&#39;</span><span class="p">,</span> <span class="s1">&#39;_pre_setup&#39;</span><span class="p">,</span> <span class="s1">&#39;_post_teardown&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;setUpClass&#39;</span><span class="p">,</span> <span class="s1">&#39;tearDownClass&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">skip_test</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;__unittest_skip__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s1">&#39;__unittest_skip__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">skip_reason</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;__unittest_skip_why__&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s1">&#39;__unittest_skip_why__&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">expecting_failure</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;__unittest_expecting_failure__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s1">&#39;__unittest_expecting_failure__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">TestFailure</span><span class="p">:</span>
@@ -113,7 +114,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">format_traceback</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="sequential"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.sequential">[docs]</a><span class="k">def</span> <span class="nf">sequential</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
@@ -135,9 +136,9 @@
 <span class="sd">    :ref:`sequential &lt;apps-test-sequential&gt;` flag in the command line.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">cls</span><span class="o">.</span><span class="n">_sequential_execution</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="k">return</span> <span class="n">cls</span>
+    <span class="k">return</span> <span class="n">cls</span></div>
 
-</div>
+
 <span class="k">class</span> <span class="nc">test_timeout</span><span class="p">:</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
@@ -149,11 +150,11 @@
 
 
 <span class="k">def</span> <span class="nf">get_test_timeout</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
-    <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;_test_timeout&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s1">&#39;_test_timeout&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="AsyncAssert"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.AsyncAssert">[docs]</a><span class="k">class</span> <span class="nc">AsyncAssert</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="AsyncAssert"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.AsyncAssert">[docs]</a><span class="k">class</span> <span class="nc">AsyncAssert</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;A `descriptor`_ added by the test application to all python</span>
 <span class="sd">    :class:`~unittest.TestCase` loaded.</span>
 
@@ -184,7 +185,7 @@
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 
         <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">as_gather</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">is_async</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">result</span>
@@ -197,15 +198,15 @@
             <span class="k">yield from</span> <span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">error</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> not raised by </span><span class="si">%s</span><span class="s">&#39;</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c1"># pragma    nocover</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> not raised by </span><span class="si">%s</span><span class="s1">&#39;</span>
                                              <span class="o">%</span> <span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> not raised by </span><span class="si">%s</span><span class="s">&#39;</span>
-                                             <span class="o">%</span> <span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>   <span class="c1"># pragma    nocover</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> not raised by </span><span class="si">%s</span><span class="s1">&#39;</span>
+                                             <span class="o">%</span> <span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">))</span></div>
 
-</div>
-<div class="viewcode-block" id="ActorTestMixin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin">[docs]</a><span class="k">class</span> <span class="nc">ActorTestMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ActorTestMixin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin">[docs]</a><span class="k">class</span> <span class="nc">ActorTestMixin</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;A mixin for :class:`~unittest.TestCase`.</span>
 
 <span class="sd">    Useful for classes testing spawning of actors.</span>
@@ -217,11 +218,11 @@
 <span class="sd">        The concurrency model used to spawn actors via the :meth:`spawn`</span>
 <span class="sd">        method.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">concurrency</span> <span class="o">=</span> <span class="s">&#39;thread&#39;</span>
+    <span class="n">concurrency</span> <span class="o">=</span> <span class="s1">&#39;thread&#39;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">all_spawned</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_spawned&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_spawned&#39;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span>
 
@@ -237,16 +238,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span> <span class="n">ad</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="n">proxy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">proxy</span>
-</div>
+        <span class="k">return</span> <span class="n">proxy</span></div>
+
     <span class="k">def</span> <span class="nf">stop_actors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="nb">all</span> <span class="o">=</span> <span class="n">args</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_spawned</span>
-        <span class="k">return</span> <span class="n">multi_async</span><span class="p">([</span><span class="n">send</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">all</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">as_gather</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">send</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s1">&#39;stop&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">all</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_actors</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_actors</span><span class="p">()</span></div>
 
-</div>
+
 <div class="viewcode-block" id="check_server"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.check_server">[docs]</a><span class="k">def</span> <span class="nf">check_server</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Check if server ``name`` is available at the address specified</span>
 <span class="sd">    ``&lt;name&gt;_server`` config value.</span>
@@ -254,10 +255,10 @@
 <span class="sd">    :rtype: boolean</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">cfg</span>
-    <span class="n">addr</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_server&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">addr</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_server&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">addr</span><span class="p">:</span>
-        <span class="k">if</span> <span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">://&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">addr</span><span class="p">:</span>
-            <span class="n">addr</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">://</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">://&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">addr</span><span class="p">:</span>
+            <span class="n">addr</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">://</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">sync_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">new_event_loop</span><span class="p">())</span>
         <span class="k">except</span> <span class="n">ImproperlyConfigured</span><span class="p">:</span>
@@ -268,17 +269,17 @@
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">False</span></div>
 
-</div>
+
 <span class="k">def</span> <span class="nf">dont_run_with_thread</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Decorator for disabling process based test cases when the test suite</span>
 <span class="sd">    runs in threading, rather than processing, mode.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">unittest</span><span class="o">.</span><span class="n">skipUnless</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">,</span>
-                                <span class="s">&#39;Run only when concurrency is process&#39;</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">unittest</span><span class="o">.</span><span class="n">skipUnless</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s1">&#39;process&#39;</span><span class="p">,</span>
+                                <span class="s1">&#39;Run only when concurrency is process&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">d</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">obj</span>
@@ -306,6 +307,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -358,8 +361,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

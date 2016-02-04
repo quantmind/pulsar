@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.apps.wsgi &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -104,25 +104,25 @@
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span><span class="p">,</span> <span class="n">Connection</span>
 
-<span class="kn">from</span> <span class="nn">.html</span> <span class="kn">import</span> <span class="o">*</span>         <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="o">*</span>      <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="o">*</span>        <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.middleware</span> <span class="kn">import</span> <span class="o">*</span>   <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.response</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.wrappers</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.server</span> <span class="kn">import</span> <span class="o">*</span>       <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.route</span> <span class="kn">import</span> <span class="o">*</span>        <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.handlers</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.routers</span> <span class="kn">import</span> <span class="o">*</span>      <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="o">*</span>         <span class="c"># noqa</span>
-<span class="kn">from</span> <span class="nn">.formdata</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c"># noqa</span>
+<span class="kn">from</span> <span class="nn">.html</span> <span class="kn">import</span> <span class="o">*</span>         <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="o">*</span>      <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="o">*</span>        <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.middleware</span> <span class="kn">import</span> <span class="o">*</span>   <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.response</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.wrappers</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.server</span> <span class="kn">import</span> <span class="o">*</span>       <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.route</span> <span class="kn">import</span> <span class="o">*</span>        <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.handlers</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.routers</span> <span class="kn">import</span> <span class="o">*</span>      <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="o">*</span>         <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.formdata</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c1"># noqa</span>
 
 
 <div class="viewcode-block" id="WSGIServer"><a class="viewcode-back" href="../../../apps/wsgi/intro.html#pulsar.apps.wsgi.WSGIServer">[docs]</a><span class="k">class</span> <span class="nc">WSGIServer</span><span class="p">(</span><span class="n">SocketServer</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A WSGI :class:`.SocketServer`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;wsgi&#39;</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">],</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;wsgi&#39;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;socket&#39;</span><span class="p">],</span>
                         <span class="n">server_software</span><span class="o">=</span><span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">protocol_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -154,6 +154,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -206,8 +208,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tools &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>Tools &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,13 +27,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Exceptions" href="exceptions.html" />
     <link rel="prev" title="Application API" href="application.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -72,11 +72,11 @@ Several opensource efforts have been used as source of snippets:</p>
 the insertion of multiple header values. Header fields are
 <strong>case insensitive</strong>, therefore doing:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="p">[</span><span class="s">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;1050&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="p">[</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1050&#39;</span>
 </pre></div>
 </div>
 <p>is equivalent to</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="p">[</span><span class="s">&#39;content-length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;1050&#39;</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="p">[</span><span class="s1">&#39;content-length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1050&#39;</span>
 </pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -138,14 +138,14 @@ non-standard header fields.</p>
 <dd><p>Get the field value at <code class="docutils literal"><span class="pre">key</span></code> as comma separated values.</p>
 <p>For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s">&#39;gzip&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s">&#39;deflate&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;accept-encoding&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;gzip&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;deflate&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>results in:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="s">&#39;gzip, deflate&#39;</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="s1">&#39;gzip, deflate&#39;</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -158,14 +158,14 @@ string separated by comma (which is returned by the
 <a class="reference internal" href="#pulsar.utils.httpurl.Headers.get" title="pulsar.utils.httpurl.Headers.get"><code class="xref py py-meth docutils literal"><span class="pre">get()</span></code></a> method).</p>
 <p>For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s">&#39;gzip&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s">&#39;deflate&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">get_all</span><span class="p">(</span><span class="s">&#39;accept-encoding&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;gzip&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;deflate&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">get_all</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>results in:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="s">&#39;gzip&#39;</span><span class="p">,</span> <span class="s">&#39;deflate&#39;</span><span class="p">]</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="s1">&#39;gzip&#39;</span><span class="p">,</span> <span class="s1">&#39;deflate&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -750,12 +750,12 @@ be a string or a two elements tuple (for a tcp address) and <code class="docutil
 dictionary of parameters. The <code class="docutils literal"><span class="pre">default_port</span></code> parameter can be used to
 set the port if a port is not available in the <code class="docutils literal"><span class="pre">connection_string</span></code>.</p>
 <p>For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_connection_string</span><span class="p">(</span><span class="s">&#39;http://127.0.0.1:9080&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_connection_string</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9080&#39;</span><span class="p">)</span>
 <span class="go">(&#39;http&#39;, (&#39;127.0.0.1&#39;, 9080), {})</span>
 </pre></div>
 </div>
 <p>and this example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_connection_string</span><span class="p">(</span><span class="s">&#39;redis://127.0.0.1:6379?db=3&amp;password=bla&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_connection_string</span><span class="p">(</span><span class="s1">&#39;redis://127.0.0.1:6379?db=3&amp;password=bla&#39;</span><span class="p">)</span>
 <span class="go">(&#39;redis&#39;, (&#39;127.0.0.1&#39;, 6379), {&#39;db&#39;: &#39;3&#39;, &#39;password&#39;: &#39;bla&#39;})</span>
 </pre></div>
 </div>
@@ -1230,6 +1230,8 @@ path at the front of <code class="docutils literal"><span class="pre">sys.path</
 </p>
 
 
+
+
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
@@ -1280,8 +1282,8 @@ path at the front of <code class="docutils literal"><span class="pre">sys.path</
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/api/utilities.txt"

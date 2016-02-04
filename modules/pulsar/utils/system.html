@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.system &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.utils.system &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -47,29 +47,29 @@
 <span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">from</span> <span class="nn">.runtime</span> <span class="kn">import</span> <span class="n">Platform</span>
-<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c"># noqa</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c1"># noqa</span>
 
 <span class="n">platform</span> <span class="o">=</span> <span class="n">Platform</span><span class="p">()</span>
 <span class="n">seconds</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">seconds</span>
 
-<span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;win&#39;</span><span class="p">:</span>    <span class="c"># pragma nocover</span>
-    <span class="kn">from</span> <span class="nn">.windowssystem</span> <span class="kn">import</span> <span class="o">*</span>    <span class="c"># noqa</span>
+<span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;win&#39;</span><span class="p">:</span>    <span class="c1"># pragma nocover</span>
+    <span class="kn">from</span> <span class="nn">.windowssystem</span> <span class="kn">import</span> <span class="o">*</span>    <span class="c1"># noqa</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.posixsystem</span> <span class="kn">import</span> <span class="o">*</span>      <span class="c"># noqa</span>
+    <span class="kn">from</span> <span class="nn">.posixsystem</span> <span class="kn">import</span> <span class="o">*</span>      <span class="c1"># noqa</span>
 
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">psutil</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>    <span class="c1"># pragma    nocover</span>
     <span class="n">psutil</span> <span class="o">=</span> <span class="bp">None</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">ujson</span> <span class="kn">as</span> <span class="nn">json</span>    <span class="c"># noqa</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>         <span class="c"># pragma    nocover</span>
-    <span class="kn">import</span> <span class="nn">json</span>             <span class="c"># noqa</span>
+    <span class="kn">import</span> <span class="nn">ujson</span> <span class="kn">as</span> <span class="nn">json</span>    <span class="c1"># noqa</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>         <span class="c1"># pragma    nocover</span>
+    <span class="kn">import</span> <span class="nn">json</span>             <span class="c1"># noqa</span>
 
 
-<span class="n">memory_symbols</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;K&#39;</span><span class="p">,</span> <span class="s">&#39;M&#39;</span><span class="p">,</span> <span class="s">&#39;G&#39;</span><span class="p">,</span> <span class="s">&#39;T&#39;</span><span class="p">,</span> <span class="s">&#39;P&#39;</span><span class="p">,</span> <span class="s">&#39;E&#39;</span><span class="p">,</span> <span class="s">&#39;Z&#39;</span><span class="p">,</span> <span class="s">&#39;Y&#39;</span><span class="p">)</span>
+<span class="n">memory_symbols</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">)</span>
 <span class="n">memory_size</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">s</span><span class="p">,</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">10</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">memory_symbols</span><span class="p">)))</span>
 
 
@@ -77,12 +77,12 @@
     <span class="sd">&#39;&#39;&#39;Convert a number of bytes into a human readable memory usage, bytes,</span>
 <span class="sd">kilo, mega, giga, tera, peta, exa, zetta, yotta&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s">&#39;#NA&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;#NA&#39;</span>
     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">memory_symbols</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">b</span> <span class="o">&gt;=</span> <span class="n">memory_size</span><span class="p">[</span><span class="n">s</span><span class="p">]:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">memory_size</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
-            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%.1f%s</span><span class="s">B&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">B&quot;</span> <span class="o">%</span> <span class="n">b</span>
+            <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%.1f%s</span><span class="s1">B&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">B&quot;</span> <span class="o">%</span> <span class="n">b</span>
 
 
 <div class="viewcode-block" id="process_info"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.system.process_info">[docs]</a><span class="k">def</span> <span class="nf">process_info</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -93,21 +93,21 @@
 
 <span class="sd">    .. _psutil: http://code.google.com/p/psutil/</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
+    <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="c1"># pragma    nocover</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
-    <span class="c"># this fails on platforms which don&#39;t allow multiprocessing</span>
-    <span class="k">except</span> <span class="n">psutil</span><span class="o">.</span><span class="n">NoSuchProcess</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
+    <span class="c1"># this fails on platforms which don&#39;t allow multiprocessing</span>
+    <span class="k">except</span> <span class="n">psutil</span><span class="o">.</span><span class="n">NoSuchProcess</span><span class="p">:</span>  <span class="c1"># pragma    nocover</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">mem</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">memory_info</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;memory&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span>
-                <span class="s">&#39;memory_virtual&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">,</span>
-                <span class="s">&#39;cpu_percent&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(),</span>
-                <span class="s">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">nice</span><span class="p">(),</span>
-                <span class="s">&#39;num_threads&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">num_threads</span><span class="p">()}</span></div>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;memory&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span>
+                <span class="s1">&#39;memory_virtual&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">,</span>
+                <span class="s1">&#39;cpu_percent&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(),</span>
+                <span class="s1">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">nice</span><span class="p">(),</span>
+                <span class="s1">&#39;num_threads&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">num_threads</span><span class="p">()}</span></div>
 </pre></div>
 
           </div>
@@ -132,6 +132,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -184,8 +186,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

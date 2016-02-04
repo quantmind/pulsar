@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.exceptions &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.utils.exceptions &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -50,26 +50,26 @@
 <span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;PulsarException&#39;</span><span class="p">,</span>
-           <span class="s">&#39;MonitorStarted&#39;</span><span class="p">,</span>
-           <span class="s">&#39;ImproperlyConfigured&#39;</span><span class="p">,</span>
-           <span class="s">&#39;CommandError&#39;</span><span class="p">,</span>
-           <span class="s">&#39;CommandNotFound&#39;</span><span class="p">,</span>
-           <span class="s">&#39;ProtocolError&#39;</span><span class="p">,</span>
-           <span class="s">&#39;EventAlreadyRegistered&#39;</span><span class="p">,</span>
-           <span class="s">&#39;InvalidOperation&#39;</span><span class="p">,</span>
-           <span class="s">&#39;HaltServer&#39;</span><span class="p">,</span>
-           <span class="s">&#39;HTTPError&#39;</span><span class="p">,</span>
-           <span class="s">&#39;SSLError&#39;</span><span class="p">,</span>
-           <span class="c"># HTTP Exceptions</span>
-           <span class="s">&#39;HttpException&#39;</span><span class="p">,</span>
-           <span class="s">&#39;HttpRedirect&#39;</span><span class="p">,</span>
-           <span class="s">&#39;BadRequest&#39;</span><span class="p">,</span>
-           <span class="s">&#39;PermissionDenied&#39;</span><span class="p">,</span>
-           <span class="s">&#39;MethodNotAllowed&#39;</span><span class="p">,</span>
-           <span class="s">&#39;Http404&#39;</span><span class="p">,</span>
-           <span class="c">#</span>
-           <span class="s">&#39;format_traceback&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;PulsarException&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;MonitorStarted&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ImproperlyConfigured&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;CommandError&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;CommandNotFound&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ProtocolError&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;EventAlreadyRegistered&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;InvalidOperation&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HaltServer&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HTTPError&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;SSLError&#39;</span><span class="p">,</span>
+           <span class="c1"># HTTP Exceptions</span>
+           <span class="s1">&#39;HttpException&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HttpRedirect&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;BadRequest&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;PermissionDenied&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;MethodNotAllowed&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Http404&#39;</span><span class="p">,</span>
+           <span class="c1">#</span>
+           <span class="s1">&#39;format_traceback&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="PulsarException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.PulsarException">[docs]</a><span class="k">class</span> <span class="nc">PulsarException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -99,7 +99,7 @@
 <span class="k">class</span> <span class="nc">CommandNotFound</span><span class="p">(</span><span class="n">CommandError</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s">&#39;Command &quot;</span><span class="si">%s</span><span class="s">&quot; not available&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s1">&#39;Command &quot;</span><span class="si">%s</span><span class="s1">&quot; not available&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ProtocolError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.ProtocolError">[docs]</a><span class="k">class</span> <span class="nc">ProtocolError</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
@@ -129,19 +129,19 @@
 
 <span class="sd">    When ``exit_code`` is greater than 1, it is considered an expected</span>
 <span class="sd">    failure and therefore the full stack trace is not logged.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s">&#39;Exiting server.&#39;</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Exiting server.&#39;</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">=</span> <span class="n">exit_code</span></div>
 
 
-<span class="c"># #################################################################### HTTP</span>
+<span class="c1"># #################################################################### HTTP</span>
 <div class="viewcode-block" id="HTTPError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HTTPError">[docs]</a><span class="k">class</span> <span class="nc">HTTPError</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="s">&quot;Base for all HTTP related errors.&quot;</span>
+    <span class="s2">&quot;Base for all HTTP related errors.&quot;</span>
     <span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="SSLError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.SSLError">[docs]</a><span class="k">class</span> <span class="nc">SSLError</span><span class="p">(</span><span class="n">HTTPError</span><span class="p">):</span>
-    <span class="s">&quot;Raised when SSL certificate fails in an HTTPS connection.&quot;</span>
+    <span class="s2">&quot;Raised when SSL certificate fails in an HTTPS connection.&quot;</span>
     <span class="k">pass</span></div>
 
 
@@ -162,10 +162,10 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">500</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                  <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span>  <span class="c"># for compatibility with HTTPError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span>  <span class="c1"># for compatibility with HTTPError</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="n">handler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strict</span> <span class="o">=</span> <span class="n">strict</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span>
@@ -186,14 +186,14 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
-        <span class="n">headers</span><span class="p">[</span><span class="s">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">location</span>
+        <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">location</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">status</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The value in the ``Location`` header entry.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s">&#39;location&#39;</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span></div>
 
 
 <span class="k">class</span> <span class="nc">BadRequest</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
@@ -241,6 +241,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -293,8 +295,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

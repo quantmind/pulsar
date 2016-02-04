@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.structures &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.apps.wsgi.structures &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -48,7 +48,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">FrozenDict</span>
 
 
-<span class="n">_locale_delim_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;[_-]&#39;</span><span class="p">)</span>
+<span class="n">_locale_delim_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;[_-]&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">order</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
@@ -89,11 +89,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">values</span> <span class="o">=</span> <span class="n">order</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="k">if</span> <span class="n">values</span> <span class="k">else</span> <span class="p">()</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Accept</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_value_matches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Check if a value matches a given accept item.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">item</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">item</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Accept.quality"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.Accept.quality">[docs]</a>    <span class="k">def</span> <span class="nf">quality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the quality of the key.</span>
@@ -114,9 +114,9 @@
         <span class="k">return</span> <span class="bp">False</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">([</span><span class="si">%s</span><span class="s">])&#39;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">([</span><span class="si">%s</span><span class="s1">])&#39;</span> <span class="o">%</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
-            <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;(</span><span class="si">%r</span><span class="s">, </span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;(</span><span class="si">%r</span><span class="s1">, </span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="Accept.index"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.Accept.index">[docs]</a>    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
@@ -155,9 +155,9 @@
         <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">quality</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">quality</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">;q=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">quality</span><span class="p">)</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">;q=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">quality</span><span class="p">)</span>
             <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_header</span><span class="p">()</span>
@@ -199,26 +199,26 @@
     <span class="k">def</span> <span class="nf">_value_matches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">x</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">and</span> <span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">x</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="c"># this is from the application which is trusted.  to avoid developer</span>
-        <span class="c"># frustration we actually check these for valid values</span>
-        <span class="k">if</span> <span class="s">&#39;/&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;invalid mimetype </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
+        <span class="c1"># this is from the application which is trusted.  to avoid developer</span>
+        <span class="c1"># frustration we actually check these for valid values</span>
+        <span class="k">if</span> <span class="s1">&#39;/&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid mimetype </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
         <span class="n">value_type</span><span class="p">,</span> <span class="n">value_subtype</span> <span class="o">=</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">value_type</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">and</span> <span class="n">value_subtype</span> <span class="o">!=</span> <span class="s">&#39;*&#39;</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;invalid mimetype </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="n">value_subtype</span> <span class="o">!=</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid mimetype </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="s">&#39;/&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;/&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
         <span class="n">item_type</span><span class="p">,</span> <span class="n">item_subtype</span> <span class="o">=</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">item_type</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">and</span> <span class="n">item_subtype</span> <span class="o">!=</span> <span class="s">&#39;*&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item_type</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="n">item_subtype</span> <span class="o">!=</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">item_type</span> <span class="o">==</span> <span class="n">item_subtype</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span>
-             <span class="n">value_type</span> <span class="o">==</span> <span class="n">value_subtype</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="ow">or</span>
-            <span class="p">(</span><span class="n">item_type</span> <span class="o">==</span> <span class="n">value_type</span> <span class="ow">and</span> <span class="p">(</span><span class="n">item_subtype</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span>
-                                          <span class="n">value_subtype</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="n">item_type</span> <span class="o">==</span> <span class="n">item_subtype</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">or</span>
+             <span class="n">value_type</span> <span class="o">==</span> <span class="n">value_subtype</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="n">item_type</span> <span class="o">==</span> <span class="n">value_type</span> <span class="ow">and</span> <span class="p">(</span><span class="n">item_subtype</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">or</span>
+                                          <span class="n">value_subtype</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">or</span>
                                           <span class="n">item_subtype</span> <span class="o">==</span> <span class="n">value_subtype</span><span class="p">))</span>
         <span class="p">)</span>
 
@@ -226,8 +226,8 @@
     <span class="k">def</span> <span class="nf">accept_html</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;True if this object accepts HTML.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="s">&#39;text/html&#39;</span> <span class="ow">in</span> <span class="bp">self</span> <span class="ow">or</span>
-            <span class="s">&#39;application/xhtml+xml&#39;</span> <span class="ow">in</span> <span class="bp">self</span> <span class="ow">or</span>
+            <span class="s1">&#39;text/html&#39;</span> <span class="ow">in</span> <span class="bp">self</span> <span class="ow">or</span>
+            <span class="s1">&#39;application/xhtml+xml&#39;</span> <span class="ow">in</span> <span class="bp">self</span> <span class="ow">or</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">accept_xhtml</span>
         <span class="p">)</span>
 
@@ -235,14 +235,14 @@
     <span class="k">def</span> <span class="nf">accept_xhtml</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;True if this object accepts XHTML.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="s">&#39;application/xhtml+xml&#39;</span> <span class="ow">in</span> <span class="bp">self</span> <span class="ow">or</span>
-            <span class="s">&#39;application/xml&#39;</span> <span class="ow">in</span> <span class="bp">self</span>
+            <span class="s1">&#39;application/xhtml+xml&#39;</span> <span class="ow">in</span> <span class="bp">self</span> <span class="ow">or</span>
+            <span class="s1">&#39;application/xml&#39;</span> <span class="ow">in</span> <span class="bp">self</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">accept_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;True if this object accepts JSON.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s">&#39;application/json&#39;</span> <span class="ow">in</span> <span class="bp">self</span></div>
+        <span class="k">return</span> <span class="s1">&#39;application/json&#39;</span> <span class="ow">in</span> <span class="bp">self</span></div>
 
 
 <div class="viewcode-block" id="LanguageAccept"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.LanguageAccept">[docs]</a><span class="k">class</span> <span class="nc">LanguageAccept</span><span class="p">(</span><span class="n">Accept</span><span class="p">):</span>
@@ -251,7 +251,7 @@
     <span class="k">def</span> <span class="nf">_value_matches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">language</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_locale_delim_re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">language</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CharsetAccept"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.CharsetAccept">[docs]</a><span class="k">class</span> <span class="nc">CharsetAccept</span><span class="p">(</span><span class="n">Accept</span><span class="p">):</span>
@@ -263,7 +263,7 @@
                 <span class="k">return</span> <span class="n">codecs</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
             <span class="k">except</span> <span class="ne">LookupError</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
 
 <span class="k">class</span> <span class="nc">RequestCacheControl</span><span class="p">(</span><span class="n">FrozenDict</span><span class="p">):</span>
@@ -292,6 +292,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -344,8 +346,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

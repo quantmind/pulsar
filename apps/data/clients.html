@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Datastore Clients &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>Datastore Clients &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,13 +27,13 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="next" title="Available Clients" href="stores.html" />
     <link rel="prev" title="Data Stores" href="index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -53,7 +53,7 @@ asynchronous commands on remote servers.</p>
 <p>To create a data <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> client one uses the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><code class="xref py py-func docutils literal"><span class="pre">create_store()</span></code></a>
 function with a valid <a class="reference internal" href="#connection-string"><span>connection string</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s1">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">name</span>
 <span class="go">&#39;redis&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">database</span>
@@ -64,7 +64,7 @@ function with a valid <a class="reference internal" href="#connection-string"><s
 </div>
 <p>Additional parameters can be passed via the connection string or as key-valued
 parameters. For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">,</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s1">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">,</span>
 <span class="go">                         namespace=&#39;test_&#39;)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">dns</span>
 <span class="go">&#39;redis://user:password@127.0.0.1:6500/11?namespace=test_&#39;</span>
@@ -258,14 +258,14 @@ is used.</p>
 
 <span class="n">pubsub</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
 <span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">do_somethind</span><span class="p">)</span>
-<span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s">&#39;mychannel&#39;</span><span class="p">)</span>
+<span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s1">&#39;mychannel&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You can add as many listening clients as you like. Clients are functions
 which receive two parameters only, the <code class="docutils literal"><span class="pre">channel</span></code> sending the message
 and the <code class="docutils literal"><span class="pre">message</span></code>.</p>
 <p>A <a class="reference internal" href="#pulsar.apps.data.store.PubSub" title="pulsar.apps.data.store.PubSub"><code class="xref py py-class docutils literal"><span class="pre">PubSub</span></code></a> handler can be used to publish messages too:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s">&#39;mychannel&#39;</span><span class="p">,</span> <span class="s">&#39;Hello&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;mychannel&#39;</span><span class="p">,</span> <span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>An additional <code class="docutils literal"><span class="pre">protocol</span></code> object can be supplied. The protocol must
@@ -377,6 +377,8 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.data.st
 </p>
 
 
+
+
 <h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
@@ -427,8 +429,8 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.data.st
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../../sources/apps/data/clients.txt"

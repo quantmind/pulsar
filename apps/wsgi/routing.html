@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Routing &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>Routing &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,13 +27,13 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -45,36 +45,49 @@
             
   <div class="section" id="module-pulsar.apps.wsgi.routers">
 <span id="routing"></span><span id="wsgi-routing"></span><h1>Routing<a class="headerlink" href="#module-pulsar.apps.wsgi.routers" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#router" id="id2">Router</a></li>
+<li><a class="reference internal" href="#media-router" id="id3">Media Router</a></li>
+<li><a class="reference internal" href="#file-response" id="id4">File Response</a></li>
+<li><a class="reference internal" href="#routerparam" id="id5">RouterParam</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.wsgi.route" id="id6">Route rules</a><ul>
+<li><a class="reference internal" href="#route-decorator" id="id7">Route decorator</a></li>
+<li><a class="reference internal" href="#route" id="id8">Route</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <p>Routing is the process of matching and parsing a URL to something we can use.
 Pulsar provides a flexible integrated
 routing system you can use for that. It works by creating a
 <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> instance with its own <code class="docutils literal"><span class="pre">rule</span></code> and, optionally, additional
 sub-routers for handling additional urls:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Page</span><span class="p">(</span><span class="n">Router</span><span class="p">):</span>
-    <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">((</span><span class="s">&#39;text/html&#39;</span><span class="p">,</span>
-                                          <span class="s">&#39;text/plain&#39;</span><span class="p">,</span>
-                                          <span class="s">&#39;application/json&#39;</span><span class="p">))</span>
+    <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">((</span><span class="s1">&#39;text/html&#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;text/plain&#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;application/json&#39;</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="s">&quot;This method handle requests with get-method&quot;</span>
+        <span class="s2">&quot;This method handle requests with get-method&quot;</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="s">&quot;This method handle requests with post-method&quot;</span>
+        <span class="s2">&quot;This method handle requests with post-method&quot;</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="s">&quot;This method handle requests with delete-method&quot;</span>
+        <span class="s2">&quot;This method handle requests with delete-method&quot;</span>
         <span class="o">...</span>
 
     <span class="o">...</span>
 
 
-<span class="n">middleware</span> <span class="o">=</span> <span class="n">Page</span><span class="p">(</span><span class="s">&#39;/bla&#39;</span><span class="p">)</span>
+<span class="n">middleware</span> <span class="o">=</span> <span class="n">Page</span><span class="p">(</span><span class="s1">&#39;/bla&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="section" id="router">
-<span id="wsgi-router"></span><h2>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
+<span id="wsgi-router"></span><h2><a class="toc-backref" href="#id2">Router</a><a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="middleware.html#wsgi-middleware"><span>middleware</span></a> constructed in the snippet above
 handles <code class="docutils literal"><span class="pre">get</span></code> and <code class="docutils literal"><span class="pre">post</span></code> methods at the <code class="docutils literal"><span class="pre">/bla</span></code> url.
 The <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> introduces a new element into pulsar WSGI handlers, the
@@ -267,7 +280,7 @@ Routers from the <a class="reference internal" href="#pulsar.apps.wsgi.routers.R
 
 </div>
 <div class="section" id="media-router">
-<span id="wsgi-media-router"></span><h2>Media Router<a class="headerlink" href="#media-router" title="Permalink to this headline">¶</a></h2>
+<span id="wsgi-media-router"></span><h2><a class="toc-backref" href="#id3">Media Router</a><a class="headerlink" href="#media-router" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="#pulsar.apps.wsgi.routers.MediaRouter" title="pulsar.apps.wsgi.routers.MediaRouter"><code class="xref py py-class docutils literal"><span class="pre">MediaRouter</span></code></a> is a specialised <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> for serving static
 files such ass <code class="docutils literal"><span class="pre">css</span></code>, <code class="docutils literal"><span class="pre">javascript</span></code>, images and so forth.</p>
 <dl class="class">
@@ -311,8 +324,46 @@ well as media files.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="file-response">
+<h2><a class="toc-backref" href="#id4">File Response</a><a class="headerlink" href="#file-response" title="Permalink to this headline">¶</a></h2>
+<p>High level, battery included function for serving small and large files
+concurrently. Cavet, you app does not need to be asynchronous to use this
+method.</p>
+<dl class="function">
+<dt id="pulsar.apps.wsgi.routers.file_response">
+<code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">file_response</code><span class="sig-paren">(</span><em>request</em>, <em>filepath</em>, <em>block=None</em>, <em>status_code=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#file_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.file_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility for serving a local file</p>
+<p>Typical usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+
+<span class="k">class</span> <span class="nc">MyRouter</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">file_response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s2">&quot;&lt;filepath&gt;&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>request</strong> &#8211; Wsgi request</li>
+<li><strong>filepath</strong> &#8211; full path of file to serve</li>
+<li><strong>block</strong> &#8211; Optional block size (deafult 1MB)</li>
+<li><strong>status_code</strong> &#8211; Optional status code (default 200)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><code class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></code></a> object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
 <div class="section" id="routerparam">
-<h2>RouterParam<a class="headerlink" href="#routerparam" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id5">RouterParam</a><a class="headerlink" href="#routerparam" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.routers.RouterParam">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">RouterParam</code><span class="sig-paren">(</span><em>value=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#RouterParam"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.RouterParam" title="Permalink to this definition">¶</a></dt>
@@ -333,7 +384,7 @@ the class attribute specified in the class definition.</p>
 
 </div>
 <div class="section" id="module-pulsar.apps.wsgi.route">
-<span id="route-rules"></span><h2>Route rules<a class="headerlink" href="#module-pulsar.apps.wsgi.route" title="Permalink to this headline">¶</a></h2>
+<span id="route-rules"></span><h2><a class="toc-backref" href="#id6">Route rules</a><a class="headerlink" href="#module-pulsar.apps.wsgi.route" title="Permalink to this headline">¶</a></h2>
 <p>Routing classes for matching and parsing urls.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -342,25 +393,25 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <p class="last">copyright (c) 2011 by the Werkzeug Team. License BSD</p>
 </div>
 <p>A <a class="reference internal" href="#pulsar.apps.wsgi.route.Route" title="pulsar.apps.wsgi.route.Route"><code class="xref py py-class docutils literal"><span class="pre">Route</span></code></a> is a class for relative url paths:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">r1</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="s">&#39;bla&#39;</span><span class="p">)</span>
-<span class="n">r2</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="s">&#39;bla/foo&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">r1</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;bla&#39;</span><span class="p">)</span>
+<span class="n">r2</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;bla/foo&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Integers:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># accept any integer</span>
-<span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;int:size&gt;&#39;</span><span class="p">)</span>
-<span class="c"># accept an integer between 1 and 200 only</span>
-<span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;int(min=1,max=200):size&gt;&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="c1"># accept any integer</span>
+<span class="n">Route</span><span class="p">(</span><span class="s1">&#39;&lt;int:size&gt;&#39;</span><span class="p">)</span>
+<span class="c1"># accept an integer between 1 and 200 only</span>
+<span class="n">Route</span><span class="p">(</span><span class="s1">&#39;&lt;int(min=1,max=200):size&gt;&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Paths:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># accept any path (including slashes)</span>
-<span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;path:pages&gt;&#39;</span><span class="p">)</span>
-<span class="n">Route</span><span class="p">(</span><span class="s">&#39;&lt;path:pages&gt;/edit&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="c1"># accept any path (including slashes)</span>
+<span class="n">Route</span><span class="p">(</span><span class="s1">&#39;&lt;path:pages&gt;&#39;</span><span class="p">)</span>
+<span class="n">Route</span><span class="p">(</span><span class="s1">&#39;&lt;path:pages&gt;/edit&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="section" id="route-decorator">
-<span id="wsgi-route-decorator"></span><h3>Route decorator<a class="headerlink" href="#route-decorator" title="Permalink to this headline">¶</a></h3>
+<span id="wsgi-route-decorator"></span><h3><a class="toc-backref" href="#id7">Route decorator</a><a class="headerlink" href="#route-decorator" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.route.route">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.route.</code><code class="descname">route</code><span class="sig-paren">(</span><em>rule=None</em>, <em>method=None</em>, <em>defaults=None</em>, <em>position=None</em>, <em>re=False</em>, <em>**parameters</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.route" title="Permalink to this definition">¶</a></dt>
@@ -377,7 +428,7 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
     <span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="o">...</span>
 
-    <span class="nd">@route</span><span class="p">(</span><span class="s">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;post&#39;</span><span class="p">)</span>
+    <span class="nd">@route</span><span class="p">(</span><span class="s1">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">handle2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="o">...</span>
 </pre></div>
@@ -397,13 +448,13 @@ the order will be given by the position of each method in the
 attribute.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">)</span>
 <span class="go">2</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rule</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s1">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rule</span>
 <span class="go">/foo</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">method</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s1">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">method</span>
 <span class="go">&#39;get&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;handle2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rule</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s1">&#39;handle2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rule</span>
 <span class="go">/bla</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s">&#39;handle2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">method</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s1">&#39;handle2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">method</span>
 <span class="go">&#39;post&#39;</span>
 </pre></div>
 </div>
@@ -432,7 +483,7 @@ the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title=
 
 </div>
 <div class="section" id="route">
-<span id="apps-wsgi-route"></span><h3>Route<a class="headerlink" href="#route" title="Permalink to this headline">¶</a></h3>
+<span id="apps-wsgi-route"></span><h3><a class="toc-backref" href="#id8">Route</a><a class="headerlink" href="#route" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.route.Route">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.route.</code><code class="descname">Route</code><span class="sig-paren">(</span><em>rule</em>, <em>defaults=None</em>, <em>is_re=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#Route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.Route" title="Permalink to this definition">¶</a></dt>
@@ -547,6 +598,8 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
 </p>
 
 
+
+
 <h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
@@ -597,8 +650,8 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../../sources/apps/wsgi/routing.txt"

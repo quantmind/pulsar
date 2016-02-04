@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actors API &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>Actors API &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,13 +27,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Event API" href="events.html" />
     <link rel="prev" title="Asynchonous API" href="async.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -118,7 +118,7 @@ caller or <cite>None</cite>.</p>
 </tbody>
 </table>
 <p>Typical example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">send</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="s">&#39;ping&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">send</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="s1">&#39;ping&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 <span class="go">&#39;pong&#39;</span>
 </pre></div>
@@ -415,7 +415,7 @@ underlying remote object.</p>
 <p>For example, lets say we have a proxy <code class="docutils literal"><span class="pre">a</span></code>, to send a message to it:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">send</span>
 
-<span class="n">send</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&#39;echo&#39;</span><span class="p">,</span> <span class="s">&#39;hello there!&#39;</span><span class="p">)</span>
+<span class="n">send</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s1">&#39;echo&#39;</span><span class="p">,</span> <span class="s1">&#39;hello there!&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>will send the <a class="reference internal" href="../design.html#actor-commands"><span>command</span></a> <code class="docutils literal"><span class="pre">echo</span></code> to actor <code class="docutils literal"><span class="pre">a</span></code> with
@@ -521,12 +521,12 @@ which uses the via <a class="reference internal" href="#pulsar.async.actor.Actor
 current context. When an actor communicate with
 another remote actor it does so by <em>sending</em> an <strong>action</strong> to it
 with positional and/or key-valued arguments. For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s">&#39;ping&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s1">&#39;ping&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>will <a class="reference internal" href="#send-function"><span>send</span></a> the <em>ping</em> action to <em>target</em> from the actor
 in the current context of execution. The above is equivalent to:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s">&#39;ping&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s1">&#39;ping&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Each action is implemented via the <code class="xref py py-func docutils literal"><span class="pre">command()</span></code> decorator implemented
@@ -738,7 +738,7 @@ the <code class="xref py py-class docutils literal"><span class="pre">Arbiter</s
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'INITIAL': 0, 'CLOSE': 5, 'STARTING': 2, 'INACTIVE': 1, 'TERMINATE': 6, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'STOPPING': 4, 'RUN': 3}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'INACTIVE': 1, 'CLOSE': 5, 'STOPPING': 4, 'STARTING': 2, 'TERMINATE': 6, 'RUN': 3}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>
@@ -798,6 +798,8 @@ periodic task.</p>
 </p>
 
 
+
+
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
@@ -848,8 +850,8 @@ periodic task.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/api/actor.txt"

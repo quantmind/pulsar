@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.response &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.apps.wsgi.response &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -77,14 +77,14 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
 
-<span class="n">re_accepts_gzip</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\bgzip\b&#39;</span><span class="p">)</span>
-<span class="n">re_media_type</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^(image|audio|video)/.+&#39;</span><span class="p">)</span>
+<span class="n">re_accepts_gzip</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;\bgzip\b&#39;</span><span class="p">)</span>
+<span class="n">re_media_type</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;^(image|audio|video)/.+&#39;</span><span class="p">)</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;AccessControl&#39;</span><span class="p">,</span> <span class="s">&#39;GZipMiddleware&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;AccessControl&#39;</span><span class="p">,</span> <span class="s1">&#39;GZipMiddleware&#39;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="ResponseMiddleware"><a class="viewcode-back" href="../../../../apps/wsgi/response.html#pulsar.apps.wsgi.response.ResponseMiddleware">[docs]</a><span class="k">class</span> <span class="nc">ResponseMiddleware</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ResponseMiddleware"><a class="viewcode-back" href="../../../../apps/wsgi/response.html#pulsar.apps.wsgi.response.ResponseMiddleware">[docs]</a><span class="k">class</span> <span class="nc">ResponseMiddleware</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;Base class for response middlewares.</span>
 
 <span class="sd">    A response middleware is used by a :ref:`WsgiHandler &lt;wsgi-handler&gt;`,</span>
@@ -94,7 +94,7 @@
 <span class="sd">    the middleware logic is implemented.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;wsgi.version&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wsgi.version&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ResponseMiddleware.available"><a class="viewcode-back" href="../../../../apps/wsgi/response.html#pulsar.apps.wsgi.response.ResponseMiddleware.available">[docs]</a>    <span class="k">def</span> <span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Check if this :class:`ResponseMiddleware` can be applied to</span>
@@ -104,8 +104,8 @@
 <span class="sd">        :param response: a :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`</span>
 <span class="sd">        :return: ``True`` or ``False``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">True</span>
-</div>
+        <span class="k">return</span> <span class="bp">True</span></div>
+
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">response</span>
@@ -115,14 +115,14 @@
 <div class="viewcode-block" id="ResponseMiddleware.execute"><a class="viewcode-back" href="../../../../apps/wsgi/response.html#pulsar.apps.wsgi.response.ResponseMiddleware.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Manipulate *response*, called only if the :meth:`available`</span>
 <span class="sd">method returns ``True``.&#39;&#39;&#39;</span>
-        <span class="k">pass</span>
+        <span class="k">pass</span></div></div>
 
-</div></div>
+
 <div class="viewcode-block" id="AccessControl"><a class="viewcode-back" href="../../../../apps/wsgi/response.html#pulsar.apps.wsgi.response.AccessControl">[docs]</a><span class="k">class</span> <span class="nc">AccessControl</span><span class="p">(</span><span class="n">ResponseMiddleware</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A response middleware which add the ``Access-Control-Allow-Origin``</span>
 <span class="sd">    response header.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="n">origin</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">methods</span> <span class="o">=</span> <span class="n">methods</span>
 
@@ -130,11 +130,11 @@
         <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
 
     <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Access-Control-Allow-Origin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Access-Control-Allow-Origin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Access-Control-Allow-Methods&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Access-Control-Allow-Methods&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span></div>
 
-</div>
+
 <div class="viewcode-block" id="GZipMiddleware"><a class="viewcode-back" href="../../../../apps/wsgi/response.html#pulsar.apps.wsgi.response.GZipMiddleware">[docs]</a><span class="k">class</span> <span class="nc">GZipMiddleware</span><span class="p">(</span><span class="n">ResponseMiddleware</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A :class:`ResponseMiddleware` for compressing content if the request</span>
 <span class="sd">allows gzip compression. It sets the Vary header accordingly.</span>
@@ -146,22 +146,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span> <span class="o">=</span> <span class="n">min_length</span>
 
     <span class="k">def</span> <span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
-        <span class="c"># It&#39;s not worth compressing non-OK or really short responses</span>
+        <span class="c1"># It&#39;s not worth compressing non-OK or really short responses</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">is_streamed</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">length</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span><span class="p">:</span>
                     <span class="k">return</span> <span class="bp">False</span>
                 <span class="n">headers</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span>
-                <span class="n">ctype</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-                <span class="c"># Avoid gzipping if we&#39;ve already got a content-encoding.</span>
-                <span class="k">if</span> <span class="s">&#39;Content-Encoding&#39;</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+                <span class="n">ctype</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="c1"># Avoid gzipping if we&#39;ve already got a content-encoding.</span>
+                <span class="k">if</span> <span class="s1">&#39;Content-Encoding&#39;</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
                     <span class="k">return</span> <span class="bp">False</span>
-                <span class="c"># MSIE have issues with gzipped response of various</span>
-                <span class="c"># content types.</span>
-                <span class="k">if</span> <span class="s">&quot;msie&quot;</span> <span class="ow">in</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_USER_AGENT&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">ctype</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&quot;text/&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&quot;javascript&quot;</span> <span class="ow">in</span> <span class="n">ctype</span><span class="p">:</span>
+                <span class="c1"># MSIE have issues with gzipped response of various</span>
+                <span class="c1"># content types.</span>
+                <span class="k">if</span> <span class="s2">&quot;msie&quot;</span> <span class="ow">in</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_USER_AGENT&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">ctype</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;text/&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;javascript&quot;</span> <span class="ow">in</span> <span class="n">ctype</span><span class="p">:</span>
                         <span class="k">return</span> <span class="bp">False</span>
-                <span class="n">ae</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_ENCODING&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+                <span class="n">ae</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_ACCEPT_ENCODING&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">re_accepts_gzip</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">ae</span><span class="p">):</span>
                     <span class="k">return</span> <span class="bp">False</span>
                 <span class="k">if</span> <span class="n">re_media_type</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">ctype</span><span class="p">):</span>
@@ -172,14 +172,14 @@
 
     <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span>
-        <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;Vary&#39;</span><span class="p">,</span> <span class="s">&#39;Accept-Encoding&#39;</span><span class="p">)</span>
-        <span class="n">content</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Vary&#39;</span><span class="p">,</span> <span class="s1">&#39;Accept-Encoding&#39;</span><span class="p">)</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
         <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compress_string</span><span class="p">(</span><span class="n">content</span><span class="p">),)</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Encoding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;gzip&#39;</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Encoding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;gzip&#39;</span>
 
     <span class="k">def</span> <span class="nf">compress_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
         <span class="n">zbuf</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
-        <span class="n">zfile</span> <span class="o">=</span> <span class="n">GzipFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s">&#39;wb&#39;</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="n">zbuf</span><span class="p">)</span>
+        <span class="n">zfile</span> <span class="o">=</span> <span class="n">GzipFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;wb&#39;</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="n">zbuf</span><span class="p">)</span>
         <span class="n">zfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
         <span class="n">zfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">zbuf</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
@@ -207,6 +207,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -259,8 +261,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

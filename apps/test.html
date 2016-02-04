@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Test Suite &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>Test Suite &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,12 +27,12 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
     <link rel="next" title="Pulsar Data Store Server" href="ds.html" />
     <link rel="prev" title="Greenlet Support" href="greenio.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -56,10 +56,10 @@ do is to create a python <code class="docutils literal"><span class="pre">script
 let&#8217;s call it <code class="docutils literal"><span class="pre">runtests.py</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">TestSuite</span>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">TestSuite</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s">&#39;Test suite for my library&#39;</span><span class="p">,</span>
-              <span class="n">modules</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;regression&#39;</span><span class="p">,</span>
-                       <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span> <span class="s">&#39;tests&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">TestSuite</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Test suite for my library&#39;</span><span class="p">,</span>
+              <span class="n">modules</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;regression&#39;</span><span class="p">,</span>
+                       <span class="p">(</span><span class="s1">&#39;examples&#39;</span><span class="p">,</span> <span class="s1">&#39;tests&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">modules</span></code> is a tuple/list which specifies where to
@@ -122,9 +122,9 @@ if available, is run just after all tests functions are run.</p>
 initialising the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><code class="xref py py-class docutils literal"><span class="pre">TestSuite</span></code></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">TestSuite</span>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">TestSuite</span><span class="p">(</span><span class="n">modules</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tests&#39;</span><span class="p">,</span>
-                      <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span><span class="s">&#39;tests&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">TestSuite</span><span class="p">(</span><span class="n">modules</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;tests&#39;</span><span class="p">,</span>
+                      <span class="p">(</span><span class="s1">&#39;examples&#39;</span><span class="p">,</span><span class="s1">&#39;tests&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>The <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><code class="xref py py-class docutils literal"><span class="pre">TestSuite</span></code></a> loads tests via the <a class="reference internal" href="#pulsar.apps.test.loader.TestLoader" title="pulsar.apps.test.loader.TestLoader"><code class="xref py py-class docutils literal"><span class="pre">TestLoader</span></code></a> class.</p>
@@ -151,7 +151,7 @@ it contains.</li>
 <li><p class="first">If the <code class="docutils literal"><span class="pre">entry</span></code> is a string, it indicates the <strong>dotted path</strong> relative
 to the <strong>root</strong> directory (the directory of the script running the tests).
 For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;tests&#39;</span><span class="p">,</span> <span class="s">&#39;moretests.here&#39;</span><span class="p">]</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tests&#39;</span><span class="p">,</span> <span class="s1">&#39;moretests.here&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </li>
@@ -160,7 +160,7 @@ a <strong>dotted path</strong> relative to the <strong>root</strong> directory a
 second element a <strong>pattern</strong> which modules (files or directories) must match
 in order to be included in the search. For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">,</span>
-           <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span> <span class="s">&#39;test*&#39;</span><span class="p">)</span>
+           <span class="p">(</span><span class="s1">&#39;examples&#39;</span><span class="p">,</span> <span class="s1">&#39;test*&#39;</span><span class="p">)</span>
            <span class="p">]</span>
 </pre></div>
 </div>
@@ -170,14 +170,14 @@ in order to be included in the search. For example:</p>
 tuple</em> rule with the third element which specifies the top level <strong>tag</strong>
 for all tests in this entry. For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">,</span>
-            <span class="p">(</span><span class="s">&#39;bla&#39;</span><span class="p">,</span> <span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="s">&#39;foo&#39;</span><span class="p">)</span>
+            <span class="p">(</span><span class="s1">&#39;bla&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;foo&#39;</span><span class="p">)</span>
           <span class="p">]</span>
 </pre></div>
 </div>
 </li>
 </ul>
 <p>For example, the following:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;test&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;bla&#39;</span><span class="p">,</span> <span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="s">&#39;foo&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span><span class="s">&#39;test*&#39;</span><span class="p">)]</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;bla&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;foo&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;examples&#39;</span><span class="p">,</span><span class="s1">&#39;test*&#39;</span><span class="p">)]</span>
 </pre></div>
 </div>
 <p>loads</p>
@@ -348,9 +348,9 @@ It uses the <a class="reference external" href="http://python.readthedocs.org/en
 <li><strong>modules</strong> &#8211; <p>An iterable over modules where to look for tests.
 Alternatively it can be a callable returning the iterable over modules.
 For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">suite</span> <span class="o">=</span> <span class="n">TestSuite</span><span class="p">(</span><span class="n">modules</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;regression&#39;</span><span class="p">,</span>
-                           <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span><span class="s">&#39;tests&#39;</span><span class="p">),</span>
-                           <span class="p">(</span><span class="s">&#39;apps&#39;</span><span class="p">,</span><span class="s">&#39;test_*&#39;</span><span class="p">)))</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">suite</span> <span class="o">=</span> <span class="n">TestSuite</span><span class="p">(</span><span class="n">modules</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;regression&#39;</span><span class="p">,</span>
+                           <span class="p">(</span><span class="s1">&#39;examples&#39;</span><span class="p">,</span><span class="s1">&#39;tests&#39;</span><span class="p">),</span>
+                           <span class="p">(</span><span class="s1">&#39;apps&#39;</span><span class="p">,</span><span class="s1">&#39;test_*&#39;</span><span class="p">)))</span>
 
 <span class="k">def</span> <span class="nf">get_modules</span><span class="p">(</span><span class="n">suite</span><span class="p">):</span>
     <span class="o">...</span>
@@ -689,7 +689,7 @@ for controlling the number of repetitions:</p>
     <span class="n">repeat</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
                         <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                         <span class="n">validator</span><span class="o">=</span><span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_int</span><span class="p">,</span>
-                        <span class="n">desc</span><span class="o">=</span><span class="s">&quot;Default number of repetition&quot;</span><span class="p">)</span>
+                        <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Default number of repetition&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="attribute">
@@ -733,7 +733,7 @@ as class attributes.</p>
 <p>A useful function for populating random data:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">populate</span>
 
-<span class="n">data</span> <span class="o">=</span> <span class="n">populate</span><span class="p">(</span><span class="s">&#39;string&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">populate</span><span class="p">(</span><span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>gives you a list of 100 random strings</p>
@@ -747,7 +747,7 @@ as class attributes.</p>
 <li><dl class="first docutils">
 <dt><em>string</em></dt>
 <dd><p class="first">For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s">&#39;string&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="last">create a 100 elements list with random strings
@@ -759,7 +759,7 @@ with random length between 3 and 10</p>
 <dt><em>date</em></dt>
 <dd><p class="first">For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
-<span class="n">populate</span><span class="p">(</span><span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">1997</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())</span>
+<span class="n">populate</span><span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">1997</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())</span>
 </pre></div>
 </div>
 <p class="last">create a 200 elements list with random datetime.date objects
@@ -770,7 +770,7 @@ between <em>start</em> and <em>end</em></p>
 <li><dl class="first docutils">
 <dt><em>integer</em></dt>
 <dd><p class="first">For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s">&#39;integer&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="last">create a 200 elements list with random integers between <code class="docutils literal"><span class="pre">start</span></code>
@@ -781,7 +781,7 @@ and <code class="docutils literal"><span class="pre">end</span></code></p>
 <li><dl class="first docutils">
 <dt><em>float</em></dt>
 <dd><p class="first">For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s">&#39;float&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="last">create a 200 elements list with random floats between <code class="docutils literal"><span class="pre">start</span></code> and
@@ -792,7 +792,7 @@ and <code class="docutils literal"><span class="pre">end</span></code></p>
 <li><dl class="first docutils">
 <dt><em>choice</em> (elements of an iterable)</dt>
 <dd><p class="first">For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s">&#39;choice&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">choice_from</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;pippo&#39;</span><span class="p">,</span><span class="s">&#39;pluto&#39;</span><span class="p">,</span><span class="s">&#39;blob&#39;</span><span class="p">])</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">populate</span><span class="p">(</span><span class="s1">&#39;choice&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">choice_from</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pippo&#39;</span><span class="p">,</span><span class="s1">&#39;pluto&#39;</span><span class="p">,</span><span class="s1">&#39;blob&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p class="last">create a 200 elements list with random elements from <code class="docutils literal"><span class="pre">choice_from</span></code></p>
@@ -921,6 +921,8 @@ For example:</p>
 </p>
 
 
+
+
 <h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
@@ -971,8 +973,8 @@ For example:</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/apps/test.txt"

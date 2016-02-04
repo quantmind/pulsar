@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.middleware &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.apps.wsgi.middleware &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -102,22 +102,22 @@
 <span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">parse_authorization_header</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;clean_path_middleware&#39;</span><span class="p">,</span>
-           <span class="s">&#39;authorization_middleware&#39;</span><span class="p">,</span>
-           <span class="s">&#39;wait_for_body_middleware&#39;</span><span class="p">,</span>
-           <span class="s">&#39;middleware_in_executor&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;clean_path_middleware&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;authorization_middleware&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;wait_for_body_middleware&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;middleware_in_executor&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="clean_path_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.clean_path_middleware">[docs]</a><span class="k">def</span> <span class="nf">clean_path_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Clean url from double slashes and redirect if needed.&#39;&#39;&#39;</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="s">&#39;//&#39;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&quot;/+&quot;</span><span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
-            <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">url</span>
-        <span class="n">qs</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;QUERY_STRING&#39;</span><span class="p">]</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="s1">&#39;//&#39;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;/+&quot;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">url</span>
+        <span class="n">qs</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;QUERY_STRING&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">qs</span><span class="p">:</span>
-            <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">?</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">qs</span><span class="p">)</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">?</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">qs</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">HttpRedirect</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
 
 
@@ -127,10 +127,10 @@
 <span class="sd">    If available, set the ``http.authorization`` key in ``environ`` with</span>
 <span class="sd">    the result obtained from :func:`~.parse_authorization_header` function.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;http.authorization&#39;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;http.authorization&#39;</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">code</span> <span class="o">=</span> <span class="s">&#39;HTTP_AUTHORIZATION&#39;</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span>
         <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
             <span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">parse_authorization_header</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="n">code</span><span class="p">])</span></div>
 
@@ -144,12 +144,12 @@
 
 <span class="sd">    Useful when using synchronous web-frameworks such as :django:`django &lt;&gt;`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]:</span>
-        <span class="n">stream</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]:</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span>
         <span class="n">chunk</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">is_async</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
             <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">chunk</span>
-        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span></div>
+        <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="middleware_in_executor"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.middleware_in_executor">[docs]</a><span class="k">def</span> <span class="nf">middleware_in_executor</span><span class="p">(</span><span class="n">middleware</span><span class="p">):</span>
@@ -188,6 +188,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -240,8 +242,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

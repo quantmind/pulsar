@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Wrappers &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>WSGI Wrappers &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,13 +27,13 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous Middleware" href="middleware.html" />
     <link rel="prev" title="Routing" href="routing.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -45,17 +45,25 @@
             
   <div class="section" id="module-pulsar.apps.wsgi.wrappers">
 <span id="wsgi-wrappers"></span><span id="apps-wsgi-wrappers"></span><h1>WSGI Wrappers<a class="headerlink" href="#module-pulsar.apps.wsgi.wrappers" title="Permalink to this headline">¶</a></h1>
-<p>This section introduces two classes used by pulsar
+<p>This section introduces classes used by pulsar
 <a class="reference internal" href="index.html#apps-wsgi"><span>wsgi application</span></a> to pass a request/response state
-during an HTTP request.
-The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="pulsar.apps.wsgi.wrappers.WsgiRequest"><code class="xref py py-class docutils literal"><span class="pre">WsgiRequest</span></code></a> is a thin wrapper around a WSGI <code class="docutils literal"><span class="pre">environ</span></code>
+during an HTTP request.</p>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#environ-mixin" id="id2">Environ Mixin</a></li>
+<li><a class="reference internal" href="#wsgi-request" id="id3">Wsgi Request</a></li>
+<li><a class="reference internal" href="#wsgi-response" id="id4">Wsgi Response</a></li>
+<li><a class="reference internal" href="#wsgi-file-wrapper" id="id5">Wsgi File Wrapper</a></li>
+</ul>
+</div>
+<p>The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="pulsar.apps.wsgi.wrappers.WsgiRequest"><code class="xref py py-class docutils literal"><span class="pre">WsgiRequest</span></code></a> is a thin wrapper around a WSGI <code class="docutils literal"><span class="pre">environ</span></code>
 dictionary.
 It contains only the <code class="docutils literal"><span class="pre">environ</span></code> as its private data.
 The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><code class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></code></a>, which is available in the
 <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.response" title="pulsar.apps.wsgi.wrappers.WsgiRequest.response"><code class="xref py py-class docutils literal"><span class="pre">WsgiRequest.response</span></code></a> attribute, is an iterable over bytestring with
 several utility methods for manipulating headers and asynchronous content.</p>
 <div class="section" id="environ-mixin">
-<h2>Environ Mixin<a class="headerlink" href="#environ-mixin" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id2">Environ Mixin</a><a class="headerlink" href="#environ-mixin" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.EnvironMixin">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.wrappers.</code><code class="descname">EnvironMixin</code><span class="sig-paren">(</span><em>environ</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="Permalink to this definition">¶</a></dt>
@@ -93,7 +101,7 @@ the wsgi-extension key <code class="docutils literal"><span class="pre">pulsar.c
 
 </div>
 <div class="section" id="wsgi-request">
-<span id="app-wsgi-request"></span><h2>Wsgi Request<a class="headerlink" href="#wsgi-request" title="Permalink to this headline">¶</a></h2>
+<span id="app-wsgi-request"></span><h2><a class="toc-backref" href="#id3">Wsgi Request</a><a class="headerlink" href="#wsgi-request" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.wrappers.</code><code class="descname">WsgiRequest</code><span class="sig-paren">(</span><em>environ</em>, <em>app_handler=None</em>, <em>urlargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="Permalink to this definition">¶</a></dt>
@@ -257,7 +265,7 @@ available in this request.</p>
 
 </div>
 <div class="section" id="wsgi-response">
-<span id="id1"></span><h2>Wsgi Response<a class="headerlink" href="#wsgi-response" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2><a class="toc-backref" href="#id4">Wsgi Response</a><a class="headerlink" href="#wsgi-response" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.wrappers.</code><code class="descname">WsgiResponse</code><span class="sig-paren">(</span><em>status=None</em>, <em>content=None</em>, <em>response_headers=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>environ=None</em>, <em>can_store_cookies=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="Permalink to this definition">¶</a></dt>
@@ -346,6 +354,18 @@ object then <code class="docutils literal"><span class="pre">max_age</span></cod
 </dd></dl>
 
 </div>
+<div class="section" id="wsgi-file-wrapper">
+<h2><a class="toc-backref" href="#id5">Wsgi File Wrapper</a><a class="headerlink" href="#wsgi-file-wrapper" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.wrappers.FileWrapper">
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.wrappers.</code><code class="descname">FileWrapper</code><span class="sig-paren">(</span><em>file</em>, <em>block=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#FileWrapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.FileWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>WSGI File wrapper class.</p>
+<p>Available directly from the <code class="docutils literal"><span class="pre">wsgi.file_wrapper</span></code> key in the WSGI environ
+dictionary. Alternatively one can use the <code class="xref py py-func docutils literal"><span class="pre">file_response()</span></code>
+high level function for serving local files.</p>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -371,6 +391,8 @@ object then <code class="docutils literal"><span class="pre">max_age</span></cod
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -423,8 +445,8 @@ object then <code class="docutils literal"><span class="pre">max_age</span></cod
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../../sources/apps/wsgi/wrappers.txt"

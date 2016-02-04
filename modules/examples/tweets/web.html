@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.tweets.web &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>examples.tweets.web &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -57,16 +57,16 @@
 <span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">LazyWsgi</span><span class="p">,</span> <span class="n">WsgiHandler</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">MediaRouter</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.ws</span> <span class="kn">import</span> <span class="n">WebSocket</span><span class="p">,</span> <span class="n">PubSubWS</span>
 
-<span class="n">STATIC_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;assets&#39;</span><span class="p">)</span>
-<span class="n">DESCRIPTION</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;An example of using pulsar with two actor monitors, one &#39;</span>
-               <span class="s">&#39;for a WSGI server and one for a Twitter streaming server&#39;</span><span class="p">)</span>
+<span class="n">STATIC_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s1">&#39;assets&#39;</span><span class="p">)</span>
+<span class="n">DESCRIPTION</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;An example of using pulsar with two actor monitors, one &#39;</span>
+               <span class="s1">&#39;for a WSGI server and one for a Twitter streaming server&#39;</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">TweetsWsHandler</span><span class="p">(</span><span class="n">PubSubWS</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;WebSocket Handler for new tweets</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="n">message</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
 
 
@@ -85,15 +85,15 @@
 <span class="sd">        * The websocket route</span>
 <span class="sd">        * A route for static files</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">cfg</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;pulsar.cfg&#39;</span><span class="p">]</span>
-        <span class="c"># Create the store and the pubsub handler</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.cfg&#39;</span><span class="p">]</span>
+        <span class="c1"># Create the store and the pubsub handler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_store</span><span class="p">)</span>
         <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
-        <span class="c"># subscribe to channel</span>
+        <span class="c1"># subscribe to channel</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">pubsub</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">WsgiHandler</span><span class="p">([</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">home_page</span><span class="p">),</span>
-                            <span class="n">MediaRouter</span><span class="p">(</span><span class="s">&#39;/static&#39;</span><span class="p">,</span> <span class="n">STATIC_DIR</span><span class="p">),</span>
-                            <span class="n">WebSocket</span><span class="p">(</span><span class="s">&#39;/message&#39;</span><span class="p">,</span>
+        <span class="k">return</span> <span class="n">WsgiHandler</span><span class="p">([</span><span class="n">Router</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">home_page</span><span class="p">),</span>
+                            <span class="n">MediaRouter</span><span class="p">(</span><span class="s1">&#39;/static&#39;</span><span class="p">,</span> <span class="n">STATIC_DIR</span><span class="p">),</span>
+                            <span class="n">WebSocket</span><span class="p">(</span><span class="s1">&#39;/message&#39;</span><span class="p">,</span>
                                       <span class="n">TweetsWsHandler</span><span class="p">(</span><span class="n">pubsub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">))])</span>
 </div>
 <div class="viewcode-block" id="TwitterSite.home_page"><a class="viewcode-back" href="../../../tutorials/tweets.html#examples.tweets.web.TwitterSite.home_page">[docs]</a>    <span class="k">def</span> <span class="nf">home_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
@@ -101,10 +101,10 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">doc</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">html_document</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">doc_head</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-        <span class="n">html</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">STATIC_DIR</span><span class="p">,</span> <span class="s">&#39;home.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-        <span class="n">scheme</span> <span class="o">=</span> <span class="s">&#39;wss&#39;</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">is_secure</span> <span class="k">else</span> <span class="s">&#39;ws&#39;</span>
-        <span class="n">ws</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">absolute_uri</span><span class="p">(</span><span class="s">&#39;/message&#39;</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="n">scheme</span><span class="p">)</span>
-        <span class="n">html</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">safe_substitute</span><span class="p">({</span><span class="s">&#39;twitter&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="n">ws</span><span class="p">})})</span>
+        <span class="n">html</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">STATIC_DIR</span><span class="p">,</span> <span class="s1">&#39;home.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">scheme</span> <span class="o">=</span> <span class="s1">&#39;wss&#39;</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">is_secure</span> <span class="k">else</span> <span class="s1">&#39;ws&#39;</span>
+        <span class="n">ws</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">absolute_uri</span><span class="p">(</span><span class="s1">&#39;/message&#39;</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="n">scheme</span><span class="p">)</span>
+        <span class="n">html</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">safe_substitute</span><span class="p">({</span><span class="s1">&#39;twitter&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">ws</span><span class="p">})})</span>
         <span class="n">doc</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">doc</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 </div>
@@ -113,13 +113,13 @@
         <span class="n">description</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="n">DESCRIPTION</span>
 
         <span class="n">head</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">html_document</span><span class="o">.</span><span class="n">head</span>
-        <span class="n">head</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span> <span class="ow">or</span> <span class="s">&#39;Pulsar Twitter Stream&#39;</span>
-        <span class="n">head</span><span class="o">.</span><span class="n">add_meta</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;description&#39;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">description</span><span class="p">)</span>
-        <span class="n">head</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;/static/favicon.ico&#39;</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="s">&quot;icon&quot;</span><span class="p">,</span>
-                          <span class="nb">type</span><span class="o">=</span><span class="s">&#39;image/x-icon&#39;</span><span class="p">)</span>
+        <span class="n">head</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span> <span class="ow">or</span> <span class="s1">&#39;Pulsar Twitter Stream&#39;</span>
+        <span class="n">head</span><span class="o">.</span><span class="n">add_meta</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">description</span><span class="p">)</span>
+        <span class="n">head</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/static/favicon.ico&#39;</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="s2">&quot;icon&quot;</span><span class="p">,</span>
+                          <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;image/x-icon&#39;</span><span class="p">)</span>
         <span class="n">head</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">BOOTSTRAP</span><span class="p">)</span>
         <span class="n">head</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">REQUIRE_JS</span><span class="p">)</span>
-        <span class="n">head</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;/static/tweets.js&#39;</span><span class="p">)</span>
+        <span class="n">head</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/static/tweets.js&#39;</span><span class="p">)</span>
 
     <span class="nd">@task</span>
 <div class="viewcode-block" id="TwitterSite.subscribe"><a class="viewcode-back" href="../../../tutorials/tweets.html#examples.tweets.web.TwitterSite.subscribe">[docs]</a>    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pubsub</span><span class="p">):</span>
@@ -150,6 +150,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -202,8 +204,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

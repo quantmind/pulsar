@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.philosophers.manage &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>examples.philosophers.manage &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -102,14 +102,14 @@
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">task</span>
 
-<span class="c"># WEB INTERFACE</span>
+<span class="c1"># WEB INTERFACE</span>
 <span class="n">media_libraries</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s">&quot;d3&quot;</span><span class="p">:</span> <span class="s">&quot;//cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3&quot;</span><span class="p">,</span>
-    <span class="s">&quot;jquery&quot;</span><span class="p">:</span> <span class="s">&quot;//code.jquery.com/jquery-1.11.0&quot;</span><span class="p">,</span>
-    <span class="s">&quot;require&quot;</span><span class="p">:</span> <span class="s">&quot;//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require&quot;</span>
+    <span class="s2">&quot;d3&quot;</span><span class="p">:</span> <span class="s2">&quot;//cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;jquery&quot;</span><span class="p">:</span> <span class="s2">&quot;//code.jquery.com/jquery-1.11.0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;require&quot;</span><span class="p">:</span> <span class="s2">&quot;//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require&quot;</span>
     <span class="p">}</span>
-<span class="n">ASSET_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;assets&#39;</span><span class="p">)</span>
-<span class="n">FAVICON</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ASSET_DIR</span><span class="p">,</span> <span class="s">&#39;favicon.ico&#39;</span><span class="p">)</span>
+<span class="n">ASSET_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span> <span class="s1">&#39;assets&#39;</span><span class="p">)</span>
+<span class="n">FAVICON</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ASSET_DIR</span><span class="p">,</span> <span class="s1">&#39;favicon.ico&#39;</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">WsProtocol</span><span class="p">:</span>
@@ -121,31 +121,31 @@
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
 
-<span class="c">###########################################################################</span>
-<span class="c">#    EXTRA COMMAND LINE PARAMETERS</span>
+<span class="c1">###########################################################################</span>
+<span class="c1">#    EXTRA COMMAND LINE PARAMETERS</span>
 <span class="k">class</span> <span class="nc">Eating_Period</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--eating-period&quot;</span><span class="p">]</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--eating-period&quot;</span><span class="p">]</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_float</span>
     <span class="n">default</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;The average period of eating for a philosopher.&quot;&quot;&quot;</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;The average period of eating for a philosopher.&quot;&quot;&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">Waiting_Period</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--waiting-period&quot;</span><span class="p">]</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--waiting-period&quot;</span><span class="p">]</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_float</span>
     <span class="n">default</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;The average period of waiting for a missing fork.&quot;&quot;&quot;</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;The average period of waiting for a missing fork.&quot;&quot;&quot;</span>
 
 
-<span class="c">###########################################################################</span>
-<span class="c">#    PULSAR COMMANDS FOR DINING PHILOSOPHERS</span>
+<span class="c1">###########################################################################</span>
+<span class="c1">#    PULSAR COMMANDS FOR DINING PHILOSOPHERS</span>
 <span class="nd">@command</span><span class="p">(</span><span class="n">ack</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">putdown_fork</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fork</span><span class="p">):</span>
     <span class="bp">self</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">actor</span><span class="o">.</span><span class="n">app</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">not_available_forks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">fork</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Putting down a fork which was already available&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Putting down a fork which was already available&#39;</span><span class="p">)</span>
 
 
 <span class="nd">@command</span><span class="p">()</span>
@@ -157,16 +157,16 @@
         <span class="n">fork_left</span> <span class="o">=</span> <span class="n">num_philosophers</span>
     <span class="k">for</span> <span class="n">fork</span> <span class="ow">in</span> <span class="p">(</span><span class="n">fork_right</span><span class="p">,</span> <span class="n">fork_left</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">fork</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">not_available_forks</span><span class="p">:</span>
-            <span class="c"># Fork is available, send it to the philosopher</span>
+            <span class="c1"># Fork is available, send it to the philosopher</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">not_available_forks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">fork</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">fork</span>
 
 
-<span class="c">############################################################################</span>
-<span class="c">#    DINING PHILOSOPHERS APP</span>
+<span class="c1">############################################################################</span>
+<span class="c1">#    DINING PHILOSOPHERS APP</span>
 <div class="viewcode-block" id="DiningPhilosophers"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers">[docs]</a><span class="k">class</span> <span class="nc">DiningPhilosophers</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
-    <span class="n">description</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Dining philosophers sit at a table around a bowl of &#39;</span>
-                   <span class="s">&#39;spaghetti and waits for available forks.&#39;</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Dining philosophers sit at a table around a bowl of &#39;</span>
+                   <span class="s1">&#39;spaghetti and waits for available forks.&#39;</span><span class="p">)</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">workers</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
@@ -183,8 +183,8 @@
 <div class="viewcode-block" id="DiningPhilosophers.worker_info"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers.worker_info">[docs]</a>    <span class="k">def</span> <span class="nf">worker_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">philosopher</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Override :meth:`~.Application.worker_info` to provide</span>
 <span class="sd">        information about the philosopher.&#39;&#39;&#39;</span>
-        <span class="n">info</span><span class="p">[</span><span class="s">&#39;philosopher&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;number&#39;</span><span class="p">:</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
-                               <span class="s">&#39;eaten&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">eaten</span><span class="p">}</span></div>
+        <span class="n">info</span><span class="p">[</span><span class="s1">&#39;philosopher&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
+                               <span class="s1">&#39;eaten&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">eaten</span><span class="p">}</span></div>
 
 <div class="viewcode-block" id="DiningPhilosophers.take_action"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers.take_action">[docs]</a>    <span class="k">def</span> <span class="nf">take_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">philosopher</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The ``philosopher`` performs one of these two actions:</span>
@@ -195,33 +195,33 @@
         <span class="n">loop</span> <span class="o">=</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">_loop</span>
         <span class="n">forks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forks</span>
         <span class="k">if</span> <span class="n">forks</span><span class="p">:</span>
-            <span class="c">#</span>
-            <span class="c"># Two forks. Eat!</span>
+            <span class="c1">#</span>
+            <span class="c1"># Two forks. Eat!</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">forks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">thinking</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">eaten</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;eating... So far </span><span class="si">%s</span><span class="s"> times&quot;</span><span class="p">,</span>
+                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;eating... So far </span><span class="si">%s</span><span class="s2"> times&quot;</span><span class="p">,</span>
                                         <span class="bp">self</span><span class="o">.</span><span class="n">eaten</span><span class="p">)</span>
                 <span class="n">eat_time</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">eating_period</span><span class="o">*</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
                 <span class="k">return</span> <span class="n">loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="n">eat_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_forks</span><span class="p">,</span>
                                        <span class="n">philosopher</span><span class="p">)</span>
-            <span class="c">#</span>
-            <span class="c"># One fork only! release fork or try to pick one up</span>
+            <span class="c1">#</span>
+            <span class="c1"># One fork only! release fork or try to pick one up</span>
             <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">forks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">waiting_period</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">waiting_period</span><span class="o">*</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_waiting</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">started_waiting</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="k">elif</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_waiting</span> <span class="o">&gt;</span> <span class="n">waiting_period</span><span class="p">:</span>
-                    <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;tired of waiting&quot;</span><span class="p">)</span>
+                    <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;tired of waiting&quot;</span><span class="p">)</span>
                     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_forks</span><span class="p">(</span><span class="n">philosopher</span><span class="p">)</span>
-            <span class="c">#</span>
-            <span class="c"># this should never happen</span>
-            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">forks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
-                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;more than 2 forks!!!&#39;</span><span class="p">)</span>
+            <span class="c1">#</span>
+            <span class="c1"># this should never happen</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">forks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>    <span class="c1"># pragma    nocover</span>
+                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;more than 2 forks!!!&#39;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_forks</span><span class="p">(</span><span class="n">philosopher</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking</span><span class="p">:</span>
-                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> thinking...&#39;</span><span class="p">,</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> thinking...&#39;</span><span class="p">,</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">thinking</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pickup_fork</span><span class="p">(</span><span class="n">philosopher</span><span class="p">)</span></div>
 
@@ -231,15 +231,15 @@
 
 <span class="sd">        Check if forks are available.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">fork</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">philosopher</span><span class="o">.</span><span class="n">monitor</span><span class="p">,</span> <span class="s">&#39;pickup_fork&#39;</span><span class="p">,</span>
+        <span class="n">fork</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">philosopher</span><span class="o">.</span><span class="n">monitor</span><span class="p">,</span> <span class="s1">&#39;pickup_fork&#39;</span><span class="p">,</span>
                                            <span class="n">philosopher</span><span class="o">.</span><span class="n">number</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">fork</span><span class="p">:</span>
             <span class="n">forks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forks</span>
             <span class="k">if</span> <span class="n">fork</span> <span class="ow">in</span> <span class="n">forks</span><span class="p">:</span>
-                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Got fork </span><span class="si">%s</span><span class="s">. I already have it&#39;</span><span class="p">,</span>
+                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Got fork </span><span class="si">%s</span><span class="s1">. I already have it&#39;</span><span class="p">,</span>
                                          <span class="n">fork</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Got fork </span><span class="si">%s</span><span class="s">.&#39;</span><span class="p">,</span> <span class="n">fork</span><span class="p">)</span>
+                <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Got fork </span><span class="si">%s</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="n">fork</span><span class="p">)</span>
                 <span class="n">forks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fork</span><span class="p">)</span>
         <span class="n">philosopher</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">take_action</span><span class="p">,</span> <span class="n">philosopher</span><span class="p">)</span></div>
 
@@ -254,8 +254,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">forks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">started_waiting</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">fork</span> <span class="ow">in</span> <span class="n">forks</span><span class="p">:</span>
-            <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Putting down fork </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">fork</span><span class="p">)</span>
-            <span class="n">philosopher</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;monitor&#39;</span><span class="p">,</span> <span class="s">&#39;putdown_fork&#39;</span><span class="p">,</span> <span class="n">fork</span><span class="p">)</span>
+            <span class="n">philosopher</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Putting down fork </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">fork</span><span class="p">)</span>
+            <span class="n">philosopher</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;monitor&#39;</span><span class="p">,</span> <span class="s1">&#39;putdown_fork&#39;</span><span class="p">,</span> <span class="n">fork</span><span class="p">)</span>
         <span class="n">philosopher</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">waiting_period</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">take_action</span><span class="p">,</span>
                                      <span class="n">philosopher</span><span class="p">)</span></div>
 
@@ -264,15 +264,15 @@
         <span class="k">for</span> <span class="n">philosopher</span> <span class="ow">in</span> <span class="n">monitor</span><span class="o">.</span><span class="n">managed_actors</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">info</span> <span class="o">=</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">info</span>
             <span class="k">if</span> <span class="n">info</span><span class="p">:</span>
-                <span class="n">avail</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;philosopher&#39;</span><span class="p">][</span><span class="s">&#39;number&#39;</span><span class="p">])</span>
+                <span class="n">avail</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;philosopher&#39;</span><span class="p">][</span><span class="s1">&#39;number&#39;</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">avail</span> <span class="o">=</span> <span class="bp">None</span>
                 <span class="k">break</span>
         <span class="n">number</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">avail</span><span class="p">)</span> <span class="k">if</span> <span class="n">avail</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Philosopher </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">number</span><span class="p">,</span> <span class="s">&#39;number&#39;</span><span class="p">:</span> <span class="n">number</span><span class="p">})</span></div>
+        <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Philosopher </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">number</span><span class="p">,</span> <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">number</span><span class="p">})</span></div>
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">DiningPhilosophers</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 
@@ -298,6 +298,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -350,8 +352,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

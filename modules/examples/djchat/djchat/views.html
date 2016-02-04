@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.djchat.djchat.views &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>examples.djchat.djchat.views &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="Module code" href="../../../index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -53,8 +53,8 @@
 
 <span class="k">def</span> <span class="nf">home</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
     <span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render_to_response</span>
-    <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;home.html&#39;</span><span class="p">,</span> <span class="p">{</span>
-        <span class="s">&#39;HOST&#39;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">get_host</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s1">&#39;home.html&#39;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s1">&#39;HOST&#39;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">get_host</span><span class="p">()</span>
         <span class="p">})</span>
 
 
@@ -66,7 +66,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">_chat_client</span> <span class="o">=</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="c"># The message is an encoded JSON string</span>
+        <span class="c1"># The message is an encoded JSON string</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 
@@ -83,8 +83,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_store</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">client</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
-            <span class="n">webchat</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:webchat&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
-            <span class="n">chatuser</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:chatuser&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
+            <span class="n">webchat</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">:webchat&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
+            <span class="n">chatuser</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">:chatuser&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
             <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">webchat</span><span class="p">,</span> <span class="n">chatuser</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span></div>
 
@@ -96,22 +96,22 @@
         <span class="n">pubsub</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pubsub</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
         <span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">ChatClient</span><span class="p">(</span><span class="n">websocket</span><span class="p">))</span>
         <span class="n">user</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
-        <span class="n">users_key</span> <span class="o">=</span> <span class="s">&#39;webchatusers:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
-        <span class="c"># add counter to users</span>
+        <span class="n">users_key</span> <span class="o">=</span> <span class="s1">&#39;webchatusers:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
+        <span class="c1"># add counter to users</span>
         <span class="n">registered</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">hincrby</span><span class="p">(</span><span class="n">users_key</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">registered</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s">&#39;chatuser&#39;</span><span class="p">,</span> <span class="s">&#39;joined&#39;</span><span class="p">)</span></div>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s1">&#39;chatuser&#39;</span><span class="p">,</span> <span class="s1">&#39;joined&#39;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Chat.on_close"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djchat.djchat.views.Chat.on_close">[docs]</a>    <span class="k">def</span> <span class="nf">on_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Leave the chat room</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">user</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
-        <span class="n">users_key</span> <span class="o">=</span> <span class="s">&#39;webchatusers:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
+        <span class="n">users_key</span> <span class="o">=</span> <span class="s1">&#39;webchatusers:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
         <span class="n">registered</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">hincrby</span><span class="p">(</span><span class="n">users_key</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">pubsub</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pubsub</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
         <span class="n">pubsub</span><span class="o">.</span><span class="n">remove_client</span><span class="p">(</span><span class="n">websocket</span><span class="o">.</span><span class="n">_chat_client</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">registered</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s">&#39;chatuser&#39;</span><span class="p">,</span> <span class="s">&#39;gone&#39;</span><span class="p">)</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s1">&#39;chatuser&#39;</span><span class="p">,</span> <span class="s1">&#39;gone&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">registered</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">hdel</span><span class="p">(</span><span class="n">users_key</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span></div>
 
@@ -120,61 +120,61 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
             <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">msg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">msg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
                 <span class="n">l</span> <span class="o">=</span> <span class="n">l</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">l</span><span class="p">:</span>
                     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s">&#39;webchat&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s1">&#39;webchat&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
-        <span class="n">user</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">handshake</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;django.user&#39;</span><span class="p">)</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">handshake</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;django.user&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">session</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">handshake</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;django.session&#39;</span><span class="p">)</span>
-            <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;chatuser&#39;</span><span class="p">)</span>
+            <span class="n">session</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">handshake</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;django.session&#39;</span><span class="p">)</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;chatuser&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
-                <span class="n">user</span> <span class="o">=</span> <span class="s">&#39;an_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">random_string</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-                <span class="n">session</span><span class="p">[</span><span class="s">&#39;chatuser&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="s1">&#39;an_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">random_string</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="n">session</span><span class="p">[</span><span class="s1">&#39;chatuser&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span>
             <span class="k">return</span> <span class="n">user</span><span class="p">,</span> <span class="bp">False</span>
 
-    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
         <span class="n">user</span><span class="p">,</span> <span class="n">authenticated</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">message</span><span class="p">,</span>
-               <span class="s">&#39;user&#39;</span><span class="p">:</span> <span class="n">user</span><span class="p">,</span>
-               <span class="s">&#39;authenticated&#39;</span><span class="p">:</span> <span class="n">authenticated</span><span class="p">,</span>
-               <span class="s">&#39;channel&#39;</span><span class="p">:</span> <span class="n">channel</span><span class="p">}</span>
-        <span class="n">channel</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="n">message</span><span class="p">,</span>
+               <span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="n">user</span><span class="p">,</span>
+               <span class="s1">&#39;authenticated&#39;</span><span class="p">:</span> <span class="n">authenticated</span><span class="p">,</span>
+               <span class="s1">&#39;channel&#39;</span><span class="p">:</span> <span class="n">channel</span><span class="p">}</span>
+        <span class="n">channel</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="middleware"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djchat.djchat.views.middleware">[docs]</a><span class="k">class</span> <span class="nc">middleware</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="middleware"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djchat.djchat.views.middleware">[docs]</a><span class="k">class</span> <span class="nc">middleware</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;Django middleware for serving the Chat websocket.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_web_socket</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s">&#39;/message&#39;</span><span class="p">,</span> <span class="n">Chat</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_web_socket</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s1">&#39;/message&#39;</span><span class="p">,</span> <span class="n">Chat</span><span class="p">())</span>
 
     <span class="k">def</span> <span class="nf">process_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
         <span class="n">environ</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span>
-        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;django.user&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
-        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;django.session&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;django.user&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;django.session&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_web_socket</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">HttpException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c"># we have a response, this is the websocket upgrade.</span>
-            <span class="c"># Convert to django response</span>
+            <span class="c1"># we have a response, this is the websocket upgrade.</span>
+            <span class="c1"># Convert to django response</span>
             <span class="n">resp</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
                                 <span class="n">content_type</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">content_type</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">header</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
                 <span class="n">resp</span><span class="p">[</span><span class="n">header</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">return</span> <span class="n">resp</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;django.user&#39;</span><span class="p">)</span>
-            <span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;django.session&#39;</span><span class="p">)</span></div>
+            <span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;django.user&#39;</span><span class="p">)</span>
+            <span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;django.session&#39;</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -199,6 +199,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -251,8 +253,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

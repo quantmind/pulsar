@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.plugins.profile &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.apps.test.plugins.profile &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../../test.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -77,27 +77,27 @@
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">test</span>
 
-<span class="n">other_filename</span> <span class="o">=</span> <span class="s">&#39;unknown&#39;</span>
-<span class="n">line_func</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;(?P&lt;line&gt;\d+)\((?P&lt;func&gt;\w+)\)&#39;</span><span class="p">)</span>
+<span class="n">other_filename</span> <span class="o">=</span> <span class="s1">&#39;unknown&#39;</span>
+<span class="n">line_func</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;(?P&lt;line&gt;\d+)\((?P&lt;func&gt;\w+)\)&#39;</span><span class="p">)</span>
 <span class="n">template_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span>
-                             <span class="s">&#39;htmlfiles&#39;</span><span class="p">,</span> <span class="s">&#39;profile&#39;</span><span class="p">)</span>
+                             <span class="s1">&#39;htmlfiles&#39;</span><span class="p">,</span> <span class="s1">&#39;profile&#39;</span><span class="p">)</span>
 <span class="n">headers</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="p">(</span><span class="s">&#39;ncalls&#39;</span><span class="p">,</span>
-     <span class="s">&#39;total number of calls&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s">&#39;primitive calls&#39;</span><span class="p">,</span>
-     <span class="s">&#39;Number primitive calls (calls not induced via recursion)&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s">&#39;tottime&#39;</span><span class="p">,</span>
-     <span class="s">&#39;Total time spent in the given function (excluding time spent &#39;</span>
-     <span class="s">&#39;in calls to sub-functions&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s">&#39;percall&#39;</span><span class="p">,</span>
-     <span class="s">&#39;tottime over ncalls, the time spent by each call&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s">&#39;cumtime&#39;</span><span class="p">,</span>
-     <span class="s">&#39;Total time spent in the given function including all subfunctions&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s">&#39;percall&#39;</span><span class="p">,</span>
-     <span class="s">&#39;cumtime over primitive calls&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s">&#39;function&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s">&#39;lineno&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s">&#39;filename&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="p">(</span><span class="s1">&#39;ncalls&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;total number of calls&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;primitive calls&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;Number primitive calls (calls not induced via recursion)&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;tottime&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;Total time spent in the given function (excluding time spent &#39;</span>
+     <span class="s1">&#39;in calls to sub-functions&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;percall&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;tottime over ncalls, the time spent by each call&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cumtime&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;Total time spent in the given function including all subfunctions&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;percall&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;cumtime over primitive calls&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;function&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;lineno&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;filename&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
     <span class="p">)</span>
 
 
@@ -107,16 +107,16 @@
 
 
 <span class="k">def</span> <span class="nf">make_stat_table</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-    <span class="k">yield</span> <span class="s">&quot;&lt;thead&gt;</span><span class="se">\n</span><span class="s">&lt;tr&gt;</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="k">yield</span> <span class="s2">&quot;&lt;thead&gt;</span><span class="se">\n</span><span class="s2">&lt;tr&gt;</span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="k">for</span> <span class="n">head</span><span class="p">,</span> <span class="n">description</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="s">&#39;&lt;th title=&quot;{1}&quot;&gt;{0}&lt;/th&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&lt;/tr&gt;</span><span class="se">\n</span><span class="s">&lt;/thead&gt;</span><span class="se">\n</span><span class="s">&lt;tbody&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="k">yield</span> <span class="s1">&#39;&lt;th title=&quot;{1}&quot;&gt;{0}&lt;/th&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&lt;/tr&gt;</span><span class="se">\n</span><span class="s1">&lt;/thead&gt;</span><span class="se">\n</span><span class="s1">&lt;tbody&gt;</span><span class="se">\n</span><span class="s1">&#39;</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="s">&#39;&lt;tr&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="k">yield</span> <span class="s1">&#39;&lt;tr&gt;</span><span class="se">\n</span><span class="s1">&#39;</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="s">&#39;&lt;td&gt;{0}&lt;/td&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&lt;/tr&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
-    <span class="k">yield</span> <span class="s">&#39;&lt;/tbody&gt;&#39;</span>
+            <span class="k">yield</span> <span class="s1">&#39;&lt;td&gt;{0}&lt;/td&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&lt;/tr&gt;</span><span class="se">\n</span><span class="s1">&#39;</span>
+    <span class="k">yield</span> <span class="s1">&#39;&lt;/tbody&gt;&#39;</span>
 
 
 <span class="k">def</span> <span class="nf">data_stream</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -125,10 +125,10 @@
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s">&#39;&#39;</span><span class="p">]</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
             <span class="n">valid</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="n">new_fields</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+            <span class="n">new_fields</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">new_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_fields</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
@@ -140,46 +140,46 @@
                 <span class="n">new_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">filenames</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">)</span>
+            <span class="n">filenames</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
             <span class="n">linefunc</span> <span class="o">=</span> <span class="n">filenames</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
             <span class="n">match</span> <span class="o">=</span> <span class="n">line_func</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">linefunc</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
                 <span class="n">lineno</span><span class="p">,</span> <span class="n">func</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-                <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
-                <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">)</span>
                 <span class="n">new_fields</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">func</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">new_fields</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">other_filename</span><span class="p">))</span>
+                <span class="n">new_fields</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">other_filename</span><span class="p">))</span>
             <span class="k">yield</span> <span class="n">new_fields</span>
 
 
 <span class="k">def</span> <span class="nf">copy_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">template_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="nb">file</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">template_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="nb">file</span><span class="p">:</span>
         <span class="n">stream</span> <span class="o">=</span> <span class="nb">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">context</span><span class="p">:</span>
         <span class="n">stream</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="nb">file</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="nb">file</span><span class="p">:</span>
         <span class="nb">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Profile"><a class="viewcode-back" href="../../../../../apps/test.html#pulsar.apps.test.plugins.profile.Profile">[docs]</a><span class="k">class</span> <span class="nc">Profile</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">TestPlugin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;:class:`pulsar.apps.test.TestPlugin` for profiling test cases.&#39;&#39;&#39;</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;Profile tests using the cProfile module&#39;&#39;&#39;</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;Profile tests using the cProfile module&#39;&#39;&#39;</span>
     <span class="n">profile_stats_path</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">(</span>
-        <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;--profile-stats-path&#39;</span><span class="p">],</span>
-        <span class="n">default</span><span class="o">=</span><span class="s">&#39;htmlprof&#39;</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s">&#39;location of profile directory.&#39;</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--profile-stats-path&#39;</span><span class="p">],</span>
+        <span class="n">default</span><span class="o">=</span><span class="s1">&#39;htmlprof&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;location of profile directory.&#39;</span><span class="p">,</span>
         <span class="n">validator</span><span class="o">=</span><span class="n">absolute_file</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">cfg</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">profile_stats_path</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">profile_stats_path</span>
         <span class="nb">dir</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_stats_path</span><span class="p">)</span>
-        <span class="n">fname</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">+</span><span class="n">name</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">profile_temp_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">before_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span>
-        <span class="c"># If active return a TestProfile instance wrapping the real test case.</span>
+        <span class="c1"># If active return a TestProfile instance wrapping the real test case.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">profile</span><span class="p">:</span>
             <span class="n">local</span><span class="o">.</span><span class="n">prof</span> <span class="o">=</span> <span class="n">profiler</span><span class="o">.</span><span class="n">Profile</span><span class="p">()</span>
             <span class="n">local</span><span class="o">.</span><span class="n">tmp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mktemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_temp_path</span><span class="p">)</span>
@@ -209,36 +209,36 @@
                      <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_temp_path</span><span class="p">)]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
                 <span class="k">return</span>
-            <span class="n">stats</span> <span class="o">=</span> <span class="n">pstats</span><span class="o">.</span><span class="n">Stats</span><span class="p">(</span><span class="o">*</span><span class="n">files</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s">&#39;stream&#39;</span><span class="p">:</span> <span class="n">Stream</span><span class="p">()})</span>
-            <span class="n">stats</span><span class="o">.</span><span class="n">sort_stats</span><span class="p">(</span><span class="s">&#39;time&#39;</span><span class="p">,</span> <span class="s">&#39;calls&#39;</span><span class="p">)</span>
+            <span class="n">stats</span> <span class="o">=</span> <span class="n">pstats</span><span class="o">.</span><span class="n">Stats</span><span class="p">(</span><span class="o">*</span><span class="n">files</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s1">&#39;stream&#39;</span><span class="p">:</span> <span class="n">Stream</span><span class="p">()})</span>
+            <span class="n">stats</span><span class="o">.</span><span class="n">sort_stats</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;calls&#39;</span><span class="p">)</span>
             <span class="n">stats</span><span class="o">.</span><span class="n">print_stats</span><span class="p">()</span>
             <span class="n">stats_str</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">remove_dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_temp_path</span><span class="p">)</span>
-            <span class="n">stats_str</span> <span class="o">=</span> <span class="n">stats_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
-            <span class="n">run_info</span> <span class="o">=</span> <span class="s">&#39;Executed </span><span class="si">%s</span><span class="s">.&#39;</span> <span class="o">%</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">stats_str</span> <span class="o">=</span> <span class="n">stats_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">run_info</span> <span class="o">=</span> <span class="s1">&#39;Executed </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stats_str</span><span class="p">):</span>
                 <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="k">while</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="ow">and</span> <span class="n">line</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39; &#39;</span><span class="p">:</span>
+                <span class="k">while</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="ow">and</span> <span class="n">line</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39; &#39;</span><span class="p">:</span>
                     <span class="n">b</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="n">b</span><span class="p">:]</span>
                 <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;ncalls&#39;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ncalls&#39;</span><span class="p">):</span>
                         <span class="k">break</span>
-                    <span class="n">bits</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+                    <span class="n">bits</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="nb">int</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
                     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                         <span class="k">continue</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">run_info</span> <span class="o">+=</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">line</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">make_stat_table</span><span class="p">(</span><span class="n">data_stream</span><span class="p">(</span><span class="n">stats_str</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">100</span><span class="p">)))</span>
+                        <span class="n">run_info</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">line</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">make_stat_table</span><span class="p">(</span><span class="n">data_stream</span><span class="p">(</span><span class="n">stats_str</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">100</span><span class="p">)))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">remove_dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_stats_path</span><span class="p">,</span> <span class="n">build</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="k">for</span> <span class="nb">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">template_path</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">file</span> <span class="o">==</span> <span class="s">&#39;index.html&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">file</span> <span class="o">==</span> <span class="s1">&#39;index.html&#39;</span><span class="p">:</span>
                     <span class="n">copy_file</span><span class="p">(</span><span class="nb">file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_stats_path</span><span class="p">,</span>
-                              <span class="p">{</span><span class="s">&#39;table&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">,</span>
-                               <span class="s">&#39;run_info&#39;</span><span class="p">:</span> <span class="n">run_info</span><span class="p">,</span>
-                               <span class="s">&#39;version&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">__version__</span><span class="p">})</span>
+                              <span class="p">{</span><span class="s1">&#39;table&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">,</span>
+                               <span class="s1">&#39;run_info&#39;</span><span class="p">:</span> <span class="n">run_info</span><span class="p">,</span>
+                               <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">__version__</span><span class="p">})</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">copy_file</span><span class="p">(</span><span class="nb">file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_stats_path</span><span class="p">)</span></div>
 </pre></div>
@@ -265,6 +265,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -317,8 +319,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

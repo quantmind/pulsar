@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.ws.websocket &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.apps.ws.websocket &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.ws" href="../ws.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -52,9 +52,9 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.websocket</span> <span class="kn">import</span> <span class="n">frame_parser</span><span class="p">,</span> <span class="n">parse_close</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">extensions</span> <span class="k">as</span> <span class="n">ext</span>    <span class="c"># noqa</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">extensions</span> <span class="k">as</span> <span class="n">ext</span>    <span class="c1"># noqa</span>
 
-<span class="n">WEBSOCKET_GUID</span> <span class="o">=</span> <span class="s">&#39;258EAFA5-E914-47DA-95CA-C5AB0DC85B11&#39;</span>
+<span class="n">WEBSOCKET_GUID</span> <span class="o">=</span> <span class="s1">&#39;258EAFA5-E914-47DA-95CA-C5AB0DC85B11&#39;</span>
 
 
 <div class="viewcode-block" id="WebSocketProtocol"><a class="viewcode-back" href="../../../../apps/websockets.html#pulsar.apps.ws.websocket.WebSocketProtocol">[docs]</a><span class="k">class</span> <span class="nc">WebSocketProtocol</span><span class="p">(</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
@@ -82,7 +82,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handshake</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shut_down</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shut_down</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handshake</span> <span class="o">=</span> <span class="n">handshake</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="n">handler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="n">parser</span>
@@ -186,9 +186,9 @@
         <span class="n">headers</span><span class="p">,</span> <span class="n">parser</span> <span class="o">=</span> <span class="n">headers_parser</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
         <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="mi">101</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;&#39;</span>
         <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">)</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pulsar.connection&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
         <span class="n">factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol_class</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
@@ -198,50 +198,50 @@
     <span class="k">def</span> <span class="nf">handle_handshake</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">environ</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span>
         <span class="n">connections</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s">&quot;HTTP_CONNECTION&quot;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HTTP_UPGRADE&quot;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s">&quot;websocket&quot;</span> <span class="ow">or</span> \
-           <span class="s">&#39;upgrade&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
+            <span class="s2">&quot;HTTP_CONNECTION&quot;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;HTTP_UPGRADE&quot;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;websocket&quot;</span> <span class="ow">or</span> \
+           <span class="s1">&#39;upgrade&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_SEC_WEBSOCKET_KEY&#39;</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_SEC_WEBSOCKET_KEY&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">ws_key</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">DEFAULT_CHARSET</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">ws_key</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+                <span class="n">ws_key</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ws_key</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">16</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&quot;WebSocket key&#39;s length is invalid&quot;</span><span class="p">,</span>
+                <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;WebSocket key&#39;s length is invalid&quot;</span><span class="p">,</span>
                                     <span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&#39;Not a valid HyBi WebSocket request. &#39;</span>
-                                    <span class="s">&#39;Missing Sec-Websocket-Key header.&#39;</span><span class="p">,</span>
+            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s1">&#39;Not a valid HyBi WebSocket request. &#39;</span>
+                                    <span class="s1">&#39;Missing Sec-Websocket-Key header.&#39;</span><span class="p">,</span>
                                 <span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
-        <span class="c"># Collect supported subprotocols</span>
-        <span class="n">subprotocols</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_SEC_WEBSOCKET_PROTOCOL&#39;</span><span class="p">)</span>
+        <span class="c1"># Collect supported subprotocols</span>
+        <span class="n">subprotocols</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_SEC_WEBSOCKET_PROTOCOL&#39;</span><span class="p">)</span>
         <span class="n">ws_protocols</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">subprotocols</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">subprotocols</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">subprotocols</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
                 <span class="n">ws_protocols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-        <span class="c"># Collect supported extensions</span>
+        <span class="c1"># Collect supported extensions</span>
         <span class="n">ws_extensions</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">extensions</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_SEC_WEBSOCKET_EXTENSIONS&#39;</span><span class="p">)</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_SEC_WEBSOCKET_EXTENSIONS&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">extensions</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extensions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extensions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
                 <span class="n">ws_extensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-        <span class="c"># Build the frame parser</span>
-        <span class="n">version</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_SEC_WEBSOCKET_VERSION&#39;</span><span class="p">)</span>
+        <span class="c1"># Build the frame parser</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_SEC_WEBSOCKET_VERSION&#39;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser_factory</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
                                          <span class="n">protocols</span><span class="o">=</span><span class="n">ws_protocols</span><span class="p">,</span>
                                          <span class="n">extensions</span><span class="o">=</span><span class="n">ws_extensions</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">ProtocolError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
-        <span class="n">headers</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;Sec-WebSocket-Accept&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge_response</span><span class="p">(</span><span class="n">key</span><span class="p">))]</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;Sec-WebSocket-Accept&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge_response</span><span class="p">(</span><span class="n">key</span><span class="p">))]</span>
         <span class="k">if</span> <span class="n">parser</span><span class="o">.</span><span class="n">protocols</span><span class="p">:</span>
-            <span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Sec-WebSocket-Protocol&#39;</span><span class="p">,</span>
-                            <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">protocols</span><span class="p">)))</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;Sec-WebSocket-Protocol&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">protocols</span><span class="p">)))</span>
         <span class="k">if</span> <span class="n">parser</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
-            <span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;Sec-WebSocket-Extensions&#39;</span><span class="p">,</span>
-                            <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">extensions</span><span class="p">)))</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;Sec-WebSocket-Extensions&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">extensions</span><span class="p">)))</span>
         <span class="k">return</span> <span class="n">headers</span><span class="p">,</span> <span class="n">parser</span>
 
     <span class="k">def</span> <span class="nf">challenge_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
@@ -271,6 +271,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -323,8 +325,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

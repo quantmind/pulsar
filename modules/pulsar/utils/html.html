@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.html &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.utils.html &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -48,26 +48,26 @@
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
 
 
-<span class="n">NOTHING</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+<span class="n">NOTHING</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 <span class="sd">&#39;&#39;&#39;Tuple of elements considered as null.&#39;&#39;&#39;</span>
-<span class="n">INLINE_TAGS</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="s">&#39;input&#39;</span><span class="p">,</span> <span class="s">&#39;link&#39;</span><span class="p">,</span> <span class="s">&#39;meta&#39;</span><span class="p">,</span> <span class="s">&#39;hr&#39;</span><span class="p">))</span>
-<span class="n">HTML_CHILDREN_TAG</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;ul&#39;</span><span class="p">:</span> <span class="s">&#39;li&#39;</span><span class="p">,</span>
-                     <span class="s">&#39;ol&#39;</span><span class="p">:</span> <span class="s">&#39;li&#39;</span><span class="p">}</span>
+<span class="n">INLINE_TAGS</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="s1">&#39;link&#39;</span><span class="p">,</span> <span class="s1">&#39;meta&#39;</span><span class="p">,</span> <span class="s1">&#39;hr&#39;</span><span class="p">))</span>
+<span class="n">HTML_CHILDREN_TAG</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ul&#39;</span><span class="p">:</span> <span class="s1">&#39;li&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;ol&#39;</span><span class="p">:</span> <span class="s1">&#39;li&#39;</span><span class="p">}</span>
 
-<span class="c"># COMMON HTML ENTITIES</span>
-<span class="c"># Check http://www.w3schools.com/tags/ref_symbols.asp for more</span>
-<span class="c">############################################################################</span>
-<span class="n">HTML_NON_BREACKING_SPACE</span> <span class="o">=</span> <span class="s">&#39;&amp;nbsp;&#39;</span>
+<span class="c1"># COMMON HTML ENTITIES</span>
+<span class="c1"># Check http://www.w3schools.com/tags/ref_symbols.asp for more</span>
+<span class="c1">############################################################################</span>
+<span class="n">HTML_NON_BREACKING_SPACE</span> <span class="o">=</span> <span class="s1">&#39;&amp;nbsp;&#39;</span>
 <span class="sd">&#39;&#39;&#39;HTML non breaking space symbol.&#39;&#39;&#39;</span>
-<span class="n">HTML_LESS_THEN</span> <span class="o">=</span> <span class="s">&#39;&amp;lt;&#39;</span>
+<span class="n">HTML_LESS_THEN</span> <span class="o">=</span> <span class="s1">&#39;&amp;lt;&#39;</span>
 <span class="sd">&#39;&#39;&#39;HTML &lt; symbol.&#39;&#39;&#39;</span>
-<span class="n">HTML_GREATER_THEN</span> <span class="o">=</span> <span class="s">&#39;&amp;gt;&#39;</span>
+<span class="n">HTML_GREATER_THEN</span> <span class="o">=</span> <span class="s1">&#39;&amp;gt;&#39;</span>
 <span class="sd">&#39;&#39;&#39;HTML &gt; symbol.&#39;&#39;&#39;</span>
-<span class="n">HTML_AMPERSAND</span> <span class="o">=</span> <span class="s">&#39;&amp;amp;&#39;</span>
+<span class="n">HTML_AMPERSAND</span> <span class="o">=</span> <span class="s1">&#39;&amp;amp;&#39;</span>
 <span class="sd">&#39;&#39;&#39;HTML &amp; symbol.&#39;&#39;&#39;</span>
-<span class="n">HTML_ENDASH</span> <span class="o">=</span> <span class="s">&#39;&amp;ndash;&#39;</span>
+<span class="n">HTML_ENDASH</span> <span class="o">=</span> <span class="s1">&#39;&amp;ndash;&#39;</span>
 <span class="sd">&#39;&#39;&#39;HTML - symbol.&#39;&#39;&#39;</span>
-<span class="n">HTML_EMDASH</span> <span class="o">=</span> <span class="s">&#39;&amp;mdash;&#39;</span>
+<span class="n">HTML_EMDASH</span> <span class="o">=</span> <span class="s1">&#39;&amp;mdash;&#39;</span>
 <span class="sd">&#39;&#39;&#39;HTML -- symbol.&#39;&#39;&#39;</span>
 
 
@@ -83,26 +83,26 @@
 
 </div>
 <span class="k">def</span> <span class="nf">is_safe</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#39;__html__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s1">&#39;__html__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="escape"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.escape">[docs]</a><span class="k">def</span> <span class="nf">escape</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the given HTML with ampersands,</span>
 <span class="sd">    quotes and angle brackets encoded.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s">&#39;__html__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s1">&#39;__html__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">html</span>
     <span class="k">if</span> <span class="n">html</span> <span class="ow">in</span> <span class="n">NOTHING</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="n">html</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&amp;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;amp;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
-            <span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;lt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s">&#39;&amp;#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
-            <span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;quot;&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="n">html</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;amp;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="s1">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;lt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&amp;#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;quot;&#39;</span><span class="p">)</span>
 
 </div>
 <span class="k">def</span> <span class="nf">dump_data_value</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
-            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">v</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mark_safe</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
@@ -130,13 +130,13 @@
 <span class="sd">    Capitalise the first letter and replace dash and underscores with a space</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">capfirst</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="n">capfirst</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
 
 </div>
 <span class="k">def</span> <span class="nf">plural</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">plural</span> <span class="ow">or</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">s&#39;</span> <span class="o">%</span> <span class="n">text</span>
-    <span class="k">return</span> <span class="s">&#39;</span><span class="si">%d</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">plural</span> <span class="ow">or</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="n">text</span>
+    <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">SafeString</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
@@ -153,7 +153,7 @@
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span>
     <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
 </pre></div>
@@ -180,6 +180,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -232,8 +234,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

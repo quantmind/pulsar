@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Websocket Chat Server &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>Websocket Chat Server &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,13 +27,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Django with Pulsar" href="django.html" />
     <link rel="prev" title="JSON-RPC Calculator" href="calculator.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -61,8 +61,8 @@ for exposing a <a class="reference internal" href="../apps/rpc.html#apps-rpc"><s
 <p>and open web browsers at <a class="reference external" href="http://localhost:8060">http://localhost:8060</a></p>
 <p>To send messages from the JSON RPC open a python shell and:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://127.0.0.1:8060/rpc&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">&#39;Hi from rpc&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:8060/rpc&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s1">&#39;Hi from rpc&#39;</span><span class="p">)</span>
 <span class="go">&#39;OK&#39;</span>
 </pre></div>
 </div>
@@ -102,7 +102,7 @@ new <code class="xref py py-class docutils literal"><span class="pre">ChatClient
 <em class="property">class </em><code class="descclassname">examples.chat.manage.</code><code class="descname">Rpc</code><span class="sig-paren">(</span><em>pubsub</em>, <em>channel</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/chat/manage.html#Rpc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Rpc" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="examples.chat.manage.Rpc.rpc_message">
-<code class="descname">rpc_message</code><span class="sig-paren">(</span><em>request</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#examples.chat.manage.Rpc.rpc_message" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rpc_message</code><span class="sig-paren">(</span><em>request</em>, <em>message</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/chat/manage.html#Rpc.rpc_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Rpc.rpc_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Publish a message via JSON-RPC</p>
 </dd></dl>
 
@@ -149,6 +149,8 @@ section for further information.</p>
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -201,8 +203,8 @@ section for further information.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/tutorials/chat.txt"

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.server &mdash; pulsar 1.1.2beta0 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar 1.1.3beta0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.2beta0',
+        VERSION:     '1.1.3beta0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,11 +27,11 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.2beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
   <body role="document">  
@@ -78,8 +78,9 @@
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span><span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">wsgi_request</span><span class="p">,</span> <span class="n">HOP_HEADERS</span><span class="p">,</span>
                     <span class="n">log_wsgi_info</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.formdata</span> <span class="kn">import</span> <span class="n">http_protocol</span><span class="p">,</span> <span class="n">HttpBodyReader</span>
+<span class="kn">from</span> <span class="nn">.wrappers</span> <span class="kn">import</span> <span class="n">FileWrapper</span><span class="p">,</span> <span class="n">close_object</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;HttpServerResponse&#39;</span><span class="p">,</span> <span class="s">&#39;test_wsgi_environ&#39;</span><span class="p">,</span> <span class="s">&#39;AbortWsgi&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;HttpServerResponse&#39;</span><span class="p">,</span> <span class="s1">&#39;test_wsgi_environ&#39;</span><span class="p">,</span> <span class="s1">&#39;AbortWsgi&#39;</span><span class="p">]</span>
 
 
 <span class="n">MAX_TIME_IN_LOOP</span> <span class="o">=</span> <span class="mf">0.2</span>
@@ -101,25 +102,25 @@
 <span class="sd">    :return: a valid WSGI environ dictionary.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">http_parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;GET&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">path</span> <span class="ow">or</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
-    <span class="n">request_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
-    <span class="c"># Add Host if not available</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="n">method</span> <span class="ow">or</span> <span class="s1">&#39;GET&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">path</span> <span class="ow">or</span> <span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="n">request_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span>
+    <span class="c1"># Add Host if not available</span>
     <span class="n">parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s">&#39;host&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s1">&#39;host&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span><span class="p">:</span>
-            <span class="n">scheme</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;https&#39;</span> <span class="k">if</span> <span class="n">secure</span> <span class="k">else</span> <span class="s">&#39;http&#39;</span><span class="p">)</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">://127.0.0.1</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+            <span class="n">scheme</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;https&#39;</span> <span class="k">if</span> <span class="n">secure</span> <span class="k">else</span> <span class="s1">&#39;http&#39;</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">://127.0.0.1</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">request_headers</span><span class="p">[</span><span class="s">&#39;host&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span>
-    <span class="c">#</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> HTTP/1.1</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;latin1&#39;</span><span class="p">)</span>
+            <span class="n">request_headers</span><span class="p">[</span><span class="s1">&#39;host&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span>
+    <span class="c1">#</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> HTTP/1.1</span><span class="se">\r\n\r\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;latin1&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-    <span class="c">#</span>
-    <span class="n">stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">body</span> <span class="ow">or</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="c1">#</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">body</span> <span class="ow">or</span> <span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">request_headers</span><span class="p">,</span>
-                        <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="s">&#39;255.0.1.2:8080&#39;</span><span class="p">,</span>
+                        <span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="s1">&#39;255.0.1.2:8080&#39;</span><span class="p">,</span>
                         <span class="n">Headers</span><span class="p">(),</span> <span class="n">https</span><span class="o">=</span><span class="n">secure</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span><span class="p">)</span></div>
 
 
@@ -137,76 +138,77 @@
     <span class="n">protocol</span> <span class="o">=</span> <span class="n">http_protocol</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
     <span class="n">raw_uri</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_url</span><span class="p">()</span>
     <span class="n">request_uri</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">raw_uri</span><span class="p">)</span>
-    <span class="c">#</span>
-    <span class="c"># http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2</span>
-    <span class="c"># If Request-URI is an absoluteURI, the host is part of the Request-URI.</span>
-    <span class="c"># Any Host header field value in the request MUST be ignored</span>
+    <span class="c1">#</span>
+    <span class="c1"># http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2</span>
+    <span class="c1"># If Request-URI is an absoluteURI, the host is part of the Request-URI.</span>
+    <span class="c1"># Any Host header field value in the request MUST be ignored</span>
     <span class="k">if</span> <span class="n">request_uri</span><span class="o">.</span><span class="n">scheme</span><span class="p">:</span>
         <span class="n">url_scheme</span> <span class="o">=</span> <span class="n">request_uri</span><span class="o">.</span><span class="n">scheme</span>
         <span class="n">host</span> <span class="o">=</span> <span class="n">request_uri</span><span class="o">.</span><span class="n">netloc</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">url_scheme</span> <span class="o">=</span> <span class="s">&#39;https&#39;</span> <span class="k">if</span> <span class="n">https</span> <span class="k">else</span> <span class="s">&#39;http&#39;</span>
+        <span class="n">url_scheme</span> <span class="o">=</span> <span class="s1">&#39;https&#39;</span> <span class="k">if</span> <span class="n">https</span> <span class="k">else</span> <span class="s1">&#39;http&#39;</span>
         <span class="n">host</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="c">#</span>
-    <span class="n">environ</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;wsgi.input&quot;</span><span class="p">:</span> <span class="n">stream</span><span class="p">,</span>
-               <span class="s">&quot;wsgi.errors&quot;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-               <span class="s">&quot;wsgi.version&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-               <span class="s">&quot;wsgi.run_once&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-               <span class="s">&quot;wsgi.multithread&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-               <span class="s">&quot;wsgi.multiprocess&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-               <span class="s">&quot;SERVER_SOFTWARE&quot;</span><span class="p">:</span> <span class="n">server_software</span> <span class="ow">or</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">,</span>
-               <span class="s">&quot;REQUEST_METHOD&quot;</span><span class="p">:</span> <span class="n">native_str</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get_method</span><span class="p">()),</span>
-               <span class="s">&quot;QUERY_STRING&quot;</span><span class="p">:</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_query_string</span><span class="p">(),</span>
-               <span class="s">&quot;RAW_URI&quot;</span><span class="p">:</span> <span class="n">raw_uri</span><span class="p">,</span>
-               <span class="s">&quot;SERVER_PROTOCOL&quot;</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span>
-               <span class="s">&quot;CONTENT_TYPE&quot;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">}</span>
+    <span class="c1">#</span>
+    <span class="n">environ</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;wsgi.input&quot;</span><span class="p">:</span> <span class="n">stream</span><span class="p">,</span>
+               <span class="s2">&quot;wsgi.errors&quot;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+               <span class="s2">&quot;wsgi.file_wrapper&quot;</span><span class="p">:</span> <span class="n">FileWrapper</span><span class="p">,</span>
+               <span class="s2">&quot;wsgi.version&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+               <span class="s2">&quot;wsgi.run_once&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+               <span class="s2">&quot;wsgi.multithread&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+               <span class="s2">&quot;wsgi.multiprocess&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+               <span class="s2">&quot;SERVER_SOFTWARE&quot;</span><span class="p">:</span> <span class="n">server_software</span> <span class="ow">or</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">,</span>
+               <span class="s2">&quot;REQUEST_METHOD&quot;</span><span class="p">:</span> <span class="n">native_str</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get_method</span><span class="p">()),</span>
+               <span class="s2">&quot;QUERY_STRING&quot;</span><span class="p">:</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_query_string</span><span class="p">(),</span>
+               <span class="s2">&quot;RAW_URI&quot;</span><span class="p">:</span> <span class="n">raw_uri</span><span class="p">,</span>
+               <span class="s2">&quot;SERVER_PROTOCOL&quot;</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span>
+               <span class="s2">&quot;CONTENT_TYPE&quot;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">}</span>
     <span class="n">forward</span> <span class="o">=</span> <span class="n">client_address</span>
-    <span class="n">script_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;SCRIPT_NAME&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">script_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SCRIPT_NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">header</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="p">:</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">HOP_HEADERS</span><span class="p">:</span>
             <span class="n">headers</span><span class="p">[</span><span class="n">header</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">if</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&#39;x-forwarded-for&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">header</span> <span class="o">==</span> <span class="s1">&#39;x-forwarded-for&#39;</span><span class="p">:</span>
             <span class="n">forward</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;x-forwarded-protocol&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="s">&quot;ssl&quot;</span><span class="p">:</span>
-            <span class="n">url_scheme</span> <span class="o">=</span> <span class="s">&quot;https&quot;</span>
-        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;x-forwarded-ssl&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="s">&quot;on&quot;</span><span class="p">:</span>
-            <span class="n">url_scheme</span> <span class="o">=</span> <span class="s">&quot;https&quot;</span>
-        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;host&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">host</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s2">&quot;x-forwarded-protocol&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;ssl&quot;</span><span class="p">:</span>
+            <span class="n">url_scheme</span> <span class="o">=</span> <span class="s2">&quot;https&quot;</span>
+        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s2">&quot;x-forwarded-ssl&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;on&quot;</span><span class="p">:</span>
+            <span class="n">url_scheme</span> <span class="o">=</span> <span class="s2">&quot;https&quot;</span>
+        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s2">&quot;host&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">host</span><span class="p">:</span>
             <span class="n">host</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;script_name&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s2">&quot;script_name&quot;</span><span class="p">:</span>
             <span class="n">script_name</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;content-type&quot;</span><span class="p">:</span>
-            <span class="n">environ</span><span class="p">[</span><span class="s">&#39;CONTENT_TYPE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s2">&quot;content-type&quot;</span><span class="p">:</span>
+            <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CONTENT_TYPE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">continue</span>
-        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;content-length&quot;</span><span class="p">:</span>
-            <span class="n">environ</span><span class="p">[</span><span class="s">&#39;CONTENT_LENGTH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s2">&quot;content-length&quot;</span><span class="p">:</span>
+            <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CONTENT_LENGTH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">continue</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;HTTP_&#39;</span> <span class="o">+</span> <span class="n">header</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;HTTP_&#39;</span> <span class="o">+</span> <span class="n">header</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
         <span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.url_scheme&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">url_scheme</span>
-    <span class="k">if</span> <span class="n">url_scheme</span> <span class="o">==</span> <span class="s">&#39;https&#39;</span><span class="p">:</span>
-        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;HTTPS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;on&#39;</span>
+    <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.url_scheme&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">url_scheme</span>
+    <span class="k">if</span> <span class="n">url_scheme</span> <span class="o">==</span> <span class="s1">&#39;https&#39;</span><span class="p">:</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;HTTPS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="c"># we only took the last one</span>
-        <span class="c"># http://en.wikipedia.org/wiki/X-Forwarded-For</span>
-        <span class="k">if</span> <span class="n">forward</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">forward</span> <span class="o">=</span> <span class="n">forward</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">remote</span> <span class="o">=</span> <span class="n">forward</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;:&quot;</span><span class="p">)</span>
+        <span class="c1"># we only took the last one</span>
+        <span class="c1"># http://en.wikipedia.org/wiki/X-Forwarded-For</span>
+        <span class="k">if</span> <span class="n">forward</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">forward</span> <span class="o">=</span> <span class="n">forward</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">remote</span> <span class="o">=</span> <span class="n">forward</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">remote</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">remote</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;80&#39;</span><span class="p">)</span>
+            <span class="n">remote</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;80&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">remote</span> <span class="o">=</span> <span class="n">forward</span>
-    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">remote</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REMOTE_PORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">remote</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">(</span><span class="n">address</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_PORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">address</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">remote</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REMOTE_PORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">remote</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SERVER_NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">(</span><span class="n">address</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SERVER_PORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">address</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">path_info</span> <span class="o">=</span> <span class="n">request_uri</span><span class="o">.</span><span class="n">path</span>
     <span class="k">if</span> <span class="n">path_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">script_name</span><span class="p">:</span>
             <span class="n">path_info</span> <span class="o">=</span> <span class="n">path_info</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">script_name</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">unquote</span><span class="p">(</span><span class="n">path_info</span><span class="p">)</span>
-    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;SCRIPT_NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">script_name</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">unquote</span><span class="p">(</span><span class="n">path_info</span><span class="p">)</span>
+    <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SCRIPT_NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">script_name</span>
     <span class="k">if</span> <span class="n">extra</span><span class="p">:</span>
         <span class="n">environ</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">environ</span>
@@ -214,18 +216,18 @@
 
 <span class="k">def</span> <span class="nf">keep_alive</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; return True if the connection should be kept alive&quot;&quot;&quot;</span>
-    <span class="n">conn</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="n">v</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">headers</span><span class="o">.</span><span class="n">get_all</span><span class="p">(</span><span class="s">&#39;connection&#39;</span><span class="p">,</span> <span class="p">())))</span>
-    <span class="k">if</span> <span class="s">&quot;close&quot;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="n">v</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">headers</span><span class="o">.</span><span class="n">get_all</span><span class="p">(</span><span class="s1">&#39;connection&#39;</span><span class="p">,</span> <span class="p">())))</span>
+    <span class="k">if</span> <span class="s2">&quot;close&quot;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">False</span>
-    <span class="k">elif</span> <span class="s">&#39;upgrade&#39;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
-        <span class="n">headers</span><span class="p">[</span><span class="s">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;upgrade&#39;</span>
+    <span class="k">elif</span> <span class="s1">&#39;upgrade&#39;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;upgrade&#39;</span>
         <span class="k">return</span> <span class="bp">True</span>
-    <span class="k">elif</span> <span class="s">&quot;keep-alive&quot;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="s2">&quot;keep-alive&quot;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">True</span>
     <span class="k">elif</span> <span class="n">version</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">headers</span><span class="p">[</span><span class="s">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;keep-alive&#39;</span>
+        <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;keep-alive&#39;</span>
         <span class="k">return</span> <span class="bp">True</span>
-    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;CONNECT&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;CONNECT&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">True</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">False</span>
@@ -251,7 +253,7 @@
     <span class="n">_buffer</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_logger</span> <span class="o">=</span> <span class="n">LOGGER</span>
     <span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span>
-    <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="n">ProtocolConsumer</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;on_headers&#39;</span><span class="p">,)</span>
+    <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="n">ProtocolConsumer</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span> <span class="o">+</span> <span class="p">(</span><span class="s1">&#39;on_headers&#39;</span><span class="p">,)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi_callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">server_software</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
@@ -281,7 +283,7 @@
         <span class="n">processed</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">parser</span><span class="o">.</span><span class="n">is_headers_complete</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_body_reader</span><span class="p">:</span>
-                <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
+                <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_body_reader</span> <span class="o">=</span> <span class="n">HttpBodyReader</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span>
                                                    <span class="n">parser</span><span class="p">,</span>
                                                    <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">,</span>
@@ -290,21 +292,21 @@
             <span class="n">body</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">recv_body</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">body</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_body_reader</span><span class="o">.</span><span class="n">feed_data</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-        <span class="c">#</span>
+        <span class="c1">#</span>
         <span class="k">if</span> <span class="n">parser</span><span class="o">.</span><span class="n">is_message_complete</span><span class="p">():</span>
-            <span class="c">#</span>
+            <span class="c1">#</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_body_reader</span><span class="o">.</span><span class="n">feed_eof</span><span class="p">()</span>
 
             <span class="k">if</span> <span class="n">processed</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">processed</span><span class="p">:]</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_request</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_request</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="n">processed</span><span class="p">:]</span>
-        <span class="c">#</span>
+        <span class="c1">#</span>
         <span class="k">elif</span> <span class="n">processed</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-            <span class="c"># This is a parsing error, the client must have sent</span>
-            <span class="c"># bogus data</span>
+            <span class="c1"># This is a parsing error, the client must have sent</span>
+            <span class="c1"># bogus data</span>
             <span class="k">raise</span> <span class="n">ProtocolError</span></div>
 
     <span class="nd">@property</span>
@@ -313,15 +315,15 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">upgrade</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;upgrade&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;upgrade&#39;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;Transfer-Encoding&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#39;chunked&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Transfer-Encoding&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;chunked&#39;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">content_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 
@@ -357,26 +359,26 @@
         <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">:</span>
-                    <span class="c"># if exc_info is provided, and the HTTP headers have</span>
-                    <span class="c"># already been sent, start_response must raise an error,</span>
-                    <span class="c"># and should re-raise using the exc_info tuple</span>
+                    <span class="c1"># if exc_info is provided, and the HTTP headers have</span>
+                    <span class="c1"># already been sent, start_response must raise an error,</span>
+                    <span class="c1"># and should re-raise using the exc_info tuple</span>
                     <span class="n">reraise</span><span class="p">(</span><span class="o">*</span><span class="n">exc_info</span><span class="p">)</span>
             <span class="k">finally</span><span class="p">:</span>
-                <span class="c"># Avoid circular reference</span>
+                <span class="c1"># Avoid circular reference</span>
                 <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">:</span>
-            <span class="c"># Headers already set. Raise error</span>
-            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="s">&quot;Response headers already set!&quot;</span><span class="p">)</span>
+            <span class="c1"># Headers already set. Raise error</span>
+            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="s2">&quot;Response headers already set!&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_status</span> <span class="o">=</span> <span class="n">status</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">response_headers</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;Headers must be a list of name/value tuples&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Headers must be a list of name/value tuples&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">header</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">response_headers</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">header</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">HOP_HEADERS</span><span class="p">:</span>
-                <span class="c"># These features are the exclusive province of this class,</span>
-                <span class="c"># this should be considered a fatal error for an application</span>
-                <span class="c"># to attempt sending them, but we don&#39;t raise an error,</span>
-                <span class="c"># just log a warning</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Application passing hop header &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span><span class="p">,</span>
+                <span class="c1"># These features are the exclusive province of this class,</span>
+                <span class="c1"># this should be considered a fatal error for an application</span>
+                <span class="c1"># to attempt sending them, but we don&#39;t raise an error,</span>
+                <span class="c1"># just log a warning</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Application passing hop header &quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
                                     <span class="n">header</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
@@ -396,7 +398,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">:</span>
             <span class="n">tosend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_headers</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span> <span class="o">=</span> <span class="n">tosend</span><span class="o">.</span><span class="n">flat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;on_headers&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s1">&#39;on_headers&#39;</span><span class="p">)</span>
             <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunked</span><span class="p">:</span>
@@ -406,10 +408,10 @@
         <span class="k">elif</span> <span class="n">force</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunked</span><span class="p">:</span>
             <span class="n">chunks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">http_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">True</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">chunks</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span></div>
+            <span class="k">return</span> <span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span></div>
 
-    <span class="c">########################################################################</span>
-    <span class="c">#    INTERNALS</span>
+    <span class="c1">########################################################################</span>
+    <span class="c1">#    INTERNALS</span>
     <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
         <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
@@ -420,8 +422,8 @@
             <span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">exc_info</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_HOST&#39;</span><span class="p">)</span> <span class="ow">and</span>
-                            <span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_PROTOCOL&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;HTTP/1.0&#39;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_HOST&#39;</span><span class="p">)</span> <span class="ow">and</span>
+                            <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SERVER_PROTOCOL&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;HTTP/1.0&#39;</span><span class="p">):</span>
                         <span class="k">raise</span> <span class="n">BadRequest</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
@@ -430,12 +432,12 @@
                     <span class="n">response</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc_info</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
                         <span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
-                <span class="c">#</span>
+                <span class="c1">#</span>
                 <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
                                         <span class="n">response</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span> <span class="n">exc_info</span><span class="p">)</span>
-                <span class="c">#</span>
-                <span class="c"># Do the actual writing</span>
+                <span class="c1">#</span>
+                <span class="c1"># Do the actual writing</span>
                 <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
                 <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
@@ -450,15 +452,15 @@
                         <span class="n">time_in_loop</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
                         <span class="k">if</span> <span class="n">time_in_loop</span> <span class="o">&gt;</span> <span class="n">MAX_TIME_IN_LOOP</span><span class="p">:</span>
                             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                                <span class="s">&#39;Released the event loop after </span><span class="si">%.3f</span><span class="s"> seconds&#39;</span><span class="p">,</span>
+                                <span class="s1">&#39;Released the event loop after </span><span class="si">%.3f</span><span class="s1"> seconds&#39;</span><span class="p">,</span>
                                 <span class="n">time_in_loop</span><span class="p">)</span>
                             <span class="k">yield</span> <span class="bp">None</span>
                             <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                <span class="c">#</span>
-                <span class="c"># make sure we write headers and last chunk if needed</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+                <span class="c1">#</span>
+                <span class="c1"># make sure we write headers and last chunk if needed</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
 
-            <span class="c"># client disconnected, end this connection</span>
+            <span class="c1"># client disconnected, end this connection</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="n">AbortWsgi</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -474,16 +476,11 @@
                 <span class="n">log_wsgi_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;No keep alive, closing connection </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;No keep alive, closing connection </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
                                       <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">finally</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">):</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">response</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
-                            <span class="s">&#39;Error while closing wsgi iterator&#39;</span><span class="p">)</span>
+                <span class="n">close_object</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HttpServerResponse.is_chunked"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.is_chunked">[docs]</a>    <span class="k">def</span> <span class="nf">is_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Check if the response uses chunked transfer encoding.</span>
@@ -492,10 +489,10 @@
 <span class="sd">        or newer and there was no Content-Length header set.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_status</span> <span class="o">==</span> <span class="s">&#39;200 Connection established&#39;</span> <span class="ow">or</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_status</span> <span class="o">==</span> <span class="s1">&#39;200 Connection established&#39;</span> <span class="ow">or</span>
                 <span class="n">has_empty_content</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">[:</span><span class="mi">3</span><span class="p">]))):</span>
             <span class="k">return</span> <span class="bp">False</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;Transfer-Encoding&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#39;chunked&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Transfer-Encoding&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;chunked&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_length</span> <span class="ow">is</span> <span class="bp">None</span></div>
@@ -504,41 +501,41 @@
         <span class="sd">&#39;&#39;&#39;Get the headers to send to the client.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">:</span>
-            <span class="c"># we are sending headers but the start_response was not called</span>
-            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="s">&#39;Headers not set.&#39;</span><span class="p">)</span>
+            <span class="c1"># we are sending headers but the start_response was not called</span>
+            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="s1">&#39;Headers not set.&#39;</span><span class="p">)</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span>
-        <span class="c"># Set chunked header if needed</span>
+        <span class="c1"># Set chunked header if needed</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_chunked</span><span class="p">():</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;Transfer-Encoding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;chunked&#39;</span>
-            <span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;content-length&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Transfer-Encoding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;chunked&#39;</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;content-length&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;Transfer-Encoding&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;Transfer-Encoding&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="n">keep_alive_with_status</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">:</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;close&#39;</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;close&#39;</span>
         <span class="k">return</span> <span class="n">headers</span></div>
 
     <span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c"># return a the WSGI environ dictionary</span>
+        <span class="c1"># return a the WSGI environ dictionary</span>
         <span class="n">transport</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span>
-        <span class="n">https</span> <span class="o">=</span> <span class="bp">True</span> <span class="k">if</span> <span class="n">is_tls</span><span class="p">(</span><span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;socket&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="bp">False</span>
-        <span class="n">multiprocess</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">)</span>
+        <span class="n">https</span> <span class="o">=</span> <span class="bp">True</span> <span class="k">if</span> <span class="n">is_tls</span><span class="p">(</span><span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s1">&#39;socket&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="bp">False</span>
+        <span class="n">multiprocess</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s1">&#39;process&#39;</span><span class="p">)</span>
         <span class="n">environ</span> <span class="o">=</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_body_reader</span><span class="p">,</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">,</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">_body_reader</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
-                               <span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;sockname&#39;</span><span class="p">),</span>
+                               <span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s1">&#39;sockname&#39;</span><span class="p">),</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">,</span>
                                <span class="n">https</span><span class="o">=</span><span class="n">https</span><span class="p">,</span>
-                               <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span>
-                                      <span class="s">&#39;pulsar.cfg&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span>
-                                      <span class="s">&#39;wsgi.multiprocess&#39;</span><span class="p">:</span> <span class="n">multiprocess</span><span class="p">})</span>
+                               <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;pulsar.connection&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span>
+                                      <span class="s1">&#39;pulsar.cfg&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span>
+                                      <span class="s1">&#39;wsgi.multiprocess&#39;</span><span class="p">:</span> <span class="n">multiprocess</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="n">keep_alive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">(),</span>
-                                     <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REQUEST_METHOD&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="s">&#39;Server&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">),</span>
-                             <span class="p">(</span><span class="s">&#39;Date&#39;</span><span class="p">,</span> <span class="n">format_date_time</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))])</span>
+                                     <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REQUEST_METHOD&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="s1">&#39;Server&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">),</span>
+                             <span class="p">(</span><span class="s1">&#39;Date&#39;</span><span class="p">,</span> <span class="n">format_date_time</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))])</span>
         <span class="k">return</span> <span class="n">environ</span>
 
     <span class="k">def</span> <span class="nf">_new_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -548,8 +545,8 @@
     <span class="k">def</span> <span class="nf">_write_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_length</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;0&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -574,6 +571,8 @@
 <iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
+
 
 
 <h3>Navigation</h3>
@@ -626,8 +625,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 
