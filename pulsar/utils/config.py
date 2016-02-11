@@ -176,9 +176,9 @@ class Config:
     def __getattr__(self, name):
         try:
             return self._get(name)
-        except KeyError:
+        except KeyError as exc:
             raise AttributeError("'%s' object has no attribute '%s'." %
-                                 (self.__class__.__name__, name))
+                                 (self.__class__.__name__, name)) from exc
 
     def __setattr__(self, name, value):
         if name != "settings" and name in self.settings:
@@ -792,7 +792,7 @@ class Debug(Global):
     action = "store_true"
     default = False
     desc = """\
-        Turn on debugging in the server.
+        Turn on debugging.
 
         Set the log level to debug, limits the number of worker processes
         to 1, set asyncio debug flag.

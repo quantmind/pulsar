@@ -319,7 +319,8 @@ class PulsarProtocol(EventHandler, FlowControl):
         return True
 
     def close(self):
-        '''Close by closing the :attr:`transport`.'''
+        '''Close by closing the :attr:`transport`
+        '''
         if self._transport:
             if self.debug:
                 self.logger.debug('Closing connection %s', self)
@@ -334,7 +335,8 @@ class PulsarProtocol(EventHandler, FlowControl):
                 pass
 
     def abort(self):
-        '''Abort by aborting the :attr:`transport`.'''
+        '''Abort by aborting the :attr:`transport`
+        '''
         if self._transport:
             self._transport.abort()
 

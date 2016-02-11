@@ -686,7 +686,8 @@ class FileRouter(Router, MediaMixin):
             raise Http404
 
 
-def file_response(request, filepath, block=None, status_code=None):
+def file_response(request, filepath, block=None, status_code=None,
+                  content_type=None, encoding=None):
     """Utility for serving a local file
 
     Typical usage::
@@ -714,7 +715,8 @@ def file_response(request, filepath, block=None, status_code=None):
         if not MediaMixin.was_modified_since(header, modified, size):
             response.status_code = 304
         else:
-            content_type, encoding = mimetypes.guess_type(filepath)
+            if not content_type:
+                content_type, encoding = mimetypes.guess_type(filepath)
             file = open(filepath, 'rb')
             response.headers['content-length'] = str(size)
             response.content = file_wrapper(file, block)

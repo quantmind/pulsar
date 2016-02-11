@@ -1,7 +1,9 @@
 '''Config and Setting classes'''
 import os
+import sys
 import pickle
 import tempfile
+import traceback
 import unittest
 
 import pulsar
@@ -28,7 +30,7 @@ class TestConfig(unittest.TestCase):
         cfg1 = pickle.loads(pickle.dumps(cfg))
         self.assertEqual(cfg1.post_fork(worker), worker)
 
-    def __testFunctionFromConfigFile(self):
+    def testFunctionFromConfigFile(self):
         # TODO, fails in pypy for some odd reasons
         worker = get_actor()
         cfg = Config()
@@ -132,3 +134,13 @@ class TestConfig(unittest.TestCase):
         cfg.set('debug', True, default=True)
         self.assertEqual(cfg.debug, True)
         self.assertEqual(cfg.settings['debug'].default, True)
+
+    def test_attribute_error(self):
+        cfg = Config()
+        self.assertRaises(AttributeError, lambda: cfg.wwwwww)
+        # Check KeyError not in stacktrace
+        try:
+            cfg.aaa
+        except AttributeError:
+            stack = '\n'.join(traceback.format_tb(sys.exc_info()[2]))
+        self.assertFalse('KeyError' in stack)
