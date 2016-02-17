@@ -2,7 +2,6 @@
 #
 import sys
 import os
-from datetime import date
 os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
 p = lambda x : os.path.split(x)[0]
 source_dir = p(os.path.abspath(__file__))
@@ -15,6 +14,14 @@ sys.path.insert(0, ext_dir)
 import pulsar
 import runtests # so that it import stdnet if available
 
+##################
+from recommonmark.parser import CommonMarkParser
+from datetime import date
+
+source_suffix = ['.rst', '.md']
+source_parsers = {
+    '.md': CommonMarkParser,
+}
 year = date.today().year
 version = pulsar.__version__
 release = version
@@ -57,8 +64,6 @@ else:
 
 html_theme_options['analytics_id'] = analytics_id
 html_context = {'release_version': pulsar.VERSION[3] == 'final'}
-# The suffix of source filenames.
-source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'

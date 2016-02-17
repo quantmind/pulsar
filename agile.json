@@ -1,0 +1,13 @@
+{
+    "github": {
+        "pulsar": {
+            "module": "pulsar"
+        }
+    },
+    "tasks": {
+        "release": {
+            "description": "make a new release to github",
+            "command": ["github"]
+        }
+    }
+}
