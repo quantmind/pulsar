@@ -66,6 +66,7 @@ class Runner:
                 exit_code = 0
             self._loop.call_soon(self._exit, exit_code)
 
+    @asyncio.coroutine
     def _run_testcls(self, testcls, all_tests):
         cfg = testcls.cfg
         seq = getattr(testcls, '_sequential_execution', cfg.sequential)
@@ -112,6 +113,7 @@ class Runner:
         self.logger.info('Finished Tests from %s', testcls)
         self._loop.call_soon(self._next)
 
+    @asyncio.coroutine
     def _run(self, method, test_timeout):
         self._check_abort()
         coro = method()
@@ -120,6 +122,7 @@ class Runner:
             test_timeout = get_test_timeout(method, test_timeout)
             yield from asyncio.wait_for(coro, test_timeout, loop=self._loop)
 
+    @asyncio.coroutine
     def _run_test(self, test, test_timeout):
         '''Run a ``test`` function using the following algorithm
 
@@ -149,6 +152,7 @@ class Runner:
         runner.stopTest(test)
         yield None  # release the loop
 
+    @asyncio.coroutine
     def _run_safe(self, test, method_name, test_timeout, error=None):
         self._check_abort()
         try:

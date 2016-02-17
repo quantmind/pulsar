@@ -1,8 +1,8 @@
 import sys
 import json
 import logging
+import asyncio
 from collections import namedtuple
-from asyncio import gather
 
 from pulsar import AsyncObject, as_coroutine, new_event_loop, ensure_future
 from pulsar.utils.string import gen_unique_id
@@ -38,6 +38,7 @@ class JSONRPC(RpcHandler):
     def __call__(self, request):
         return ensure_future(self._execute_request(request))
 
+    @asyncio.coroutine
     def _execute_request(self, request):
         response = request.response
 
@@ -52,7 +53,7 @@ class JSONRPC(RpcHandler):
                 status = 200
 
                 tasks = [self._call(request, each) for each in data]
-                result = yield from gather(*tasks)
+                result = yield from asyncio.gather(*tasks)
                 res = [r[0] for r in result]
             else:
                 res, status = yield from self._call(request, data)
@@ -60,6 +61,7 @@ class JSONRPC(RpcHandler):
         response.status_code = status
         return Json(res).http_response(request)
 
+    @asyncio.coroutine
     def _call(self, request, data):
         exc_info = None
         proc = None
@@ -328,6 +330,7 @@ class JsonBatchProxy(JsonProxy):
         self._batch.append(body)
         return data['id']
 
+    @asyncio.coroutine
     def __call__(self):
         if not self._batch:
             return

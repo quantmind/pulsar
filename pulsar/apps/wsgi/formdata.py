@@ -1,7 +1,7 @@
 import email.parser
+import asyncio
 from http.client import HTTPMessage, _MAXLINE, _MAXHEADERS
 from io import BytesIO
-from asyncio import StreamReader
 from urllib.parse import parse_qs
 from base64 import b64encode
 from functools import reduce
@@ -39,7 +39,7 @@ class HttpBodyReader():
     def __init__(self, headers, parser, transport, **kw):
         self.headers = headers
         self.parser = parser
-        self.reader = StreamReader(**kw)
+        self.reader = asyncio.StreamReader(**kw)
         self.reader.set_transport(transport)
         self.feed_data = self.reader.feed_data
         self.feed_eof = self.reader.feed_eof
@@ -157,6 +157,7 @@ class MultipartDecoder(FormDecoder):
             producer = BytesProducer(inp)
             return producer(self._consume, boundary)
 
+    @asyncio.coroutine
     def _consume(self, fp, boundary):
         sep = b'--'
         nextpart = ('--%s' % boundary).encode()
@@ -215,6 +216,7 @@ class BytesDecoder(FormDecoder):
         else:
             return self._ready(data)
 
+    @asyncio.coroutine
     def _async(self, chunk):
         chunk = yield from chunk
         return self._ready(chunk)
@@ -350,6 +352,7 @@ class MultipartPart:
                 self.parser.result[0][self.name] = self.string()
 
 
+@asyncio.coroutine
 def parse_headers(fp, _class=HTTPMessage):
     """Parses only RFC2822 headers from a file pointer.
     email Parser wants to see strings rather than bytes.

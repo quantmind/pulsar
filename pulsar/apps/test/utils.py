@@ -29,7 +29,7 @@ check server
 '''
 import logging
 import unittest
-from asyncio import Future
+import asyncio
 
 import pulsar
 from pulsar import (get_actor, send, new_event_loop, as_gather,
@@ -123,7 +123,7 @@ class AsyncAssert:
         class MyTest(unittest.TestCase):
 
             def test1(self):
-                yield self.async.assertEqual(3, Future().callback(3))
+                yield from self.async.assertEqual(3, Future().callback(3))
                 ...
 
 
@@ -140,6 +140,7 @@ class AsyncAssert:
 
     def __getattr__(self, name):
 
+        @asyncio.coroutine
         def _(*args, **kwargs):
             args = yield from as_gather(*args)
             result = getattr(self.test, name)(*args, **kwargs)
@@ -149,6 +150,7 @@ class AsyncAssert:
 
         return _
 
+    @asyncio.coroutine
     def assertRaises(self, error, callable, *args, **kwargs):
         try:
             yield from callable(*args, **kwargs)
@@ -182,13 +184,14 @@ class ActorTestMixin:
             self._spawned = []
         return self._spawned
 
+    @asyncio.coroutine
     def spawn_actor(self, concurrency=None, **kwargs):
         '''Spawn a new actor and perform some tests
         '''
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
-        self.assertIsInstance(ad, Future)
+        self.assertIsInstance(ad, asyncio.Future)
         proxy = yield from ad
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)

@@ -172,6 +172,7 @@ class ProtocolConsumer(EventHandler):
         future.add_done_callback(self._abort_request)
         raise AbortRequest
 
+    @asyncio.coroutine
     def _start(self):
         try:
             yield from self.fire_event('pre_request')

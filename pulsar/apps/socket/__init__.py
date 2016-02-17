@@ -214,6 +214,7 @@ class SocketServer(pulsar.Application):
         '''
         return partial(Connection, self.cfg.callable)
 
+    @asyncio.coroutine
     def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address.
 
@@ -332,6 +333,7 @@ class UdpSocketServer(SocketServer):
         '''
         return self.cfg.callable
 
+    @asyncio.coroutine
     def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address.
 

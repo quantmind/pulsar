@@ -781,6 +781,7 @@ class HttpRequest(RequestBase):
         for chunk in data:
             transport.write(chunk)
 
+    @asyncio.coroutine
     def _write_streamed_data(self, transport):
         for data in self.data:
             if is_async(data):
@@ -1288,6 +1289,7 @@ class HttpClient(AbstractClient):
                                               cafile=cafile, capath=capath,
                                               cadata=cadata)
 
+    @asyncio.coroutine
     def _connect(self, host, port, ssl):
         _, connection = yield from self._loop.create_connection(
             self.create_protocol, host, port, ssl=ssl)

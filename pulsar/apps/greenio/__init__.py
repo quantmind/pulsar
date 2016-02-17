@@ -139,8 +139,8 @@ Green WSGI
 """
 import threading
 import logging
+import asyncio
 from collections import deque
-from functools import wraps
 
 from greenlet import greenlet, getcurrent
 
@@ -180,7 +180,7 @@ def run_in_greenlet(callable):
 
     A ``callable`` decorated with this decorator returns a coroutine
     """
-    @wraps(callable)
+    @asyncio.coroutine
     def _(*args, **kwargs):
         green = greenlet(callable)
         # switch to the new greenlet
@@ -288,6 +288,7 @@ class GreenPool(AsyncObject):
         ensure_future(self._green_task(self._available.pop(), task),
                       loop=self._loop)
 
+    @asyncio.coroutine
     def _green_task(self, green, task):
         # Coroutine executing the in main greenlet
         # This coroutine is executed for every task put into the queue

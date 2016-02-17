@@ -24,6 +24,7 @@ class HttpStream:
     def done(self):
         return self._response.on_finished.fired()
 
+    @asyncio.coroutine
     def read(self, n=None):
         '''Read all content'''
         if self._streamed:

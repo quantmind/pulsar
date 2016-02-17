@@ -2,7 +2,8 @@ from collections import Mapping
 from inspect import isgeneratorfunction
 from functools import wraps, partial
 
-from asyncio import Future, CancelledError, TimeoutError, sleep, gather
+from asyncio import (Future, CancelledError, TimeoutError, sleep, gather,
+                     coroutine)
 
 from .consts import MAX_ASYNC_WHILE
 from .access import get_event_loop, LOGGER, isfuture, is_async, ensure_future
@@ -144,6 +145,7 @@ def maybe_async(value, loop=None):
         return value
 
 
+@coroutine
 def as_coroutine(value):
     if is_async(value):
         value = yield from value
@@ -208,6 +210,7 @@ def run_in_loop(_loop, callable, *args, **kwargs):
     return waiter
 
 
+@coroutine
 def async_while(timeout, while_clause, *args):
     '''The asynchronous equivalent of ``while while_clause(*args):``
 

@@ -52,6 +52,7 @@ Client
 '''
 import socket
 import pickle
+import asyncio
 from collections import namedtuple
 
 from pulsar import ProtocolError, CommandError
@@ -73,6 +74,7 @@ def create_aid():
     return gen_unique_id()[:8]
 
 
+@asyncio.coroutine
 def command_in_context(command, caller, target, args, kwargs, connection=None):
     cmnd = get_command(command)
     if not cmnd:

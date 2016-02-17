@@ -104,6 +104,7 @@ class Pool(AsyncObject):
             for connection in in_use:
                 connection.close()
 
+    @asyncio.coroutine
     def _get(self):
         queue = self._queue
         # grab the connection without waiting, important!
@@ -223,6 +224,7 @@ class AbstractClient(Producer):
         return self.fire_event('finish')
     abort = close
 
+    @asyncio.coroutine
     def create_connection(self, address, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
         '''
@@ -257,6 +259,7 @@ class AbstractUdpClient(Producer):
         return self.fire_event('finish')
     abort = close
 
+    @asyncio.coroutine
     def create_datagram_endpoint(self, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
         '''

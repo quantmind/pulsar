@@ -684,6 +684,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             else:
                 self._exit_arbiter(actor, True)
 
+    @asyncio.coroutine
     def _close_all(self, actor):
         # Close al monitors at once
         try:

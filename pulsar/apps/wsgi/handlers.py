@@ -1,4 +1,4 @@
-'''
+"""
 This section describes the asynchronous WSGI specification used by pulsar.
 It is a superset of the `WSGI 1.0.1`_ specification for synchronous
 server/middleware.
@@ -97,7 +97,9 @@ via the ``_loop`` attribute::
 
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
-'''
+"""
+import asyncio
+
 from pulsar import Http404, ensure_future, isfuture
 from pulsar.utils.log import LocalMixin, local_method
 
@@ -160,6 +162,7 @@ class WsgiHandler:
             response.start(start_response)
         return response
 
+    @asyncio.coroutine
     def _async(self, environ, start_response):
         response = None
         try:

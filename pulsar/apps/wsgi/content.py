@@ -142,6 +142,7 @@ Html Factory
 .. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp
 '''
 import re
+import asyncio
 from collections import Mapping
 from functools import partial
 
@@ -1141,6 +1142,7 @@ class HtmlDocument(Html):
         else:
             yield self._template % (self.flatatt(), head, body)
 
+    @asyncio.coroutine
     def _html(self, request, body, head=None):
         '''Asynchronous rendering
         '''

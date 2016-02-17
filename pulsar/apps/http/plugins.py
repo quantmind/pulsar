@@ -35,6 +35,7 @@ def _consumer(response, consumer):
     return consumer
 
 
+@asyncio.coroutine
 def start_request(request, conn):
     response = conn.current_consumer()
     # bind request-specific events
@@ -241,6 +242,7 @@ class Tunneling:
             response.request_again = self._tunnel_request
             response.finished()
 
+    @asyncio.coroutine
     def _tunnel_request(self, response):
         request = response.request.request
         connection = response.connection
