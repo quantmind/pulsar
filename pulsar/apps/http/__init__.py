@@ -304,7 +304,9 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   is_succesful, HTTPError, URLError,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, http_chunks,
-                                  parse_options_header, JSON_CONTENT_TYPES)
+                                  parse_options_header,
+                                  parse_header_links,
+                                  JSON_CONTENT_TYPES)
 
 from .plugins import (handle_cookies, handle_100, WebSocket, Redirect,
                       Tunneling, TooManyRedirects, start_request,
@@ -914,6 +916,20 @@ class HttpResponse(ProtocolConsumer):
         if self._raw is None:
             self._raw = HttpStream(self)
         return self._raw
+
+    @property
+    def links(self):
+        """Returns the parsed header links of the response, if any
+        """
+        headers = self.headers or {}
+        header = headers.get('link')
+        l = {}
+        if header:
+            links = parse_header_links(header)
+            for link in links:
+                key = link.get('rel') or link.get('url')
+                l[key] = link
+        return l
 
     def recv_body(self):
         '''Flush the response body and return it.'''

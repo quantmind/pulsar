@@ -16,6 +16,7 @@ htmlprof
 MANIFEST
 .settings
 .python-version
+release-notes.md
 extensions/lib/lib.c
 examples/tweets/settings.py
 

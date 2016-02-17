@@ -1,7 +1,8 @@
 {
     "github": {
         "pulsar": {
-            "module": "pulsar"
+            "python_module": "pulsar",
+            "version": "pulsar.__version__"
         }
     },
     "tasks": {
