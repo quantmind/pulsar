@@ -34,6 +34,9 @@ LOGGING_CONFIG = {
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
         'level_message': {'format': '%(levelname)s - %(message)s'},
+        'name_level_message': {
+            'format': '%(name)s.%(levelname)s - %(message)s'
+        },
         'message': {'format': '%(message)s'}
     },
     'handlers': {
@@ -52,6 +55,10 @@ LOGGING_CONFIG = {
         'console_level_message': {
             'class': 'pulsar.utils.log.ColoredStream',
             'formatter': 'level_message'
+        },
+        'console_name_level_message': {
+            'class': 'pulsar.utils.log.ColoredStream',
+            'formatter': 'name_level_message'
         }
     },
     'filters ': {},
@@ -331,7 +338,8 @@ class ColoredStream(logging.StreamHandler):   # pragma    nocover
     def color(self, record):
         text = self.format(record)
         file = self.stream
-        if hasattr(file, 'isatty') and file.isatty():
+        if (hasattr(file, 'isatty') and file.isatty() and
+                getattr(record, 'color', True)):
             colour = self.COLORS.get(record.levelname)
             code = COLOURS.get(colour, WHITE)
             if win32:

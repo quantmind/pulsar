@@ -1219,6 +1219,7 @@ class HttpClient(AbstractClient):
         else:
             return response
 
+    @asyncio.coroutine
     def _request(self, method, url, **params):
         nparams = params.copy()
         nparams.update(((name, getattr(self, name)) for name in

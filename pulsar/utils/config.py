@@ -826,20 +826,6 @@ class Reload(Global):
         """
 
 
-class Noisy(Global):
-    name = "noisy"
-    flags = ["--noisy"]
-    validator = validate_bool
-    action = "store_true"
-    default = False
-    desc = """\
-        Log Failures as soon as they occur.
-
-        This option is really needed during development when hunting
-        for hidden bugs
-        """
-
-
 class Pidfile(Global):
     name = "pidfile"
     flags = ["-p", "--pid"]
