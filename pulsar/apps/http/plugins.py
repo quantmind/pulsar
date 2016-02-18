@@ -22,6 +22,21 @@ def noerror(callback):
     return _
 
 
+HTTP11 = 'HTTP/1.1'
+
+
+def keep_alive(version, headers):
+    """Check if to keep alive an HTTP connection.
+
+    If the version is 1.1, we close the connection only if the ``connection``
+    header is available and set to ``close``
+    """
+    if version == HTTP11:
+        return not headers.has('connection', 'close')
+    else:
+        return headers.has('connection', 'keep-alive')
+
+
 def response_content(resp, exc=None, **kw):
     b = resp.parser.recv_body()
     if b or resp._content is None:

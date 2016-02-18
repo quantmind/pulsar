@@ -1,4 +1,4 @@
-'''Pulsar ships with a fully featured, :class:`.HttpClient`
+"""Pulsar ships with a fully featured, :class:`.HttpClient`
 class for multiple asynchronous HTTP requests.
 
 To get started, one builds a client::
@@ -275,7 +275,7 @@ OAuth2
 .. _requests: http://docs.python-requests.org/
 .. _`uri scheme`: http://en.wikipedia.org/wiki/URI_scheme
 .. _`HTTP tunneling`: http://en.wikipedia.org/wiki/HTTP_tunnel
-'''
+"""
 import os
 import platform
 import logging
@@ -310,7 +310,7 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
 
 from .plugins import (handle_cookies, handle_100, WebSocket, Redirect,
                       Tunneling, TooManyRedirects, start_request,
-                      response_content)
+                      response_content, keep_alive, HTTP11)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
@@ -354,10 +354,10 @@ class RequestBase:
 
     @property
     def unverifiable(self):
-        '''Unverifiable when a redirect.
+        """Unverifiable when a redirect.
 
         It is a redirect when :attr:`history` has past requests.
-        '''
+        """
         return bool(self.history)
 
     @property
@@ -425,8 +425,8 @@ class HttpTunnel(RequestBase):
         self.headers.pop(header_name, None)
 
     def apply(self, response, handler):
-        '''Tunnel the connection if needed
-        '''
+        """Tunnel the connection if needed
+        """
         connection = response.connection
         tunnel_status = getattr(connection, '_tunnel_status', 0)
         if not tunnel_status:
@@ -439,7 +439,7 @@ class HttpTunnel(RequestBase):
 
 
 class HttpRequest(RequestBase):
-    '''An :class:`HttpClient` request for an HTTP resource.
+    """An :class:`HttpClient` request for an HTTP resource.
 
     This class has a similar interface to :class:`urllib.request.Request`.
 
@@ -474,7 +474,7 @@ class HttpRequest(RequestBase):
 
         Allow for streaming body
 
-    '''
+    """
     CONNECT = 'CONNECT'
     _proxy = None
     _ssl = None
@@ -527,7 +527,8 @@ class HttpRequest(RequestBase):
 
     @property
     def address(self):
-        '''``(host, port)`` tuple of the HTTP resource'''
+        """``(host, port)`` tuple of the HTTP resource
+        """
         return self._tunnel.address if self._tunnel else (self.host, self.port)
 
     @property
@@ -536,11 +537,11 @@ class HttpRequest(RequestBase):
 
     @property
     def ssl(self):
-        '''Context for TLS connections.
+        """Context for TLS connections.
 
         If this is a tunneled request and the tunnel connection is not yet
         established, it returns ``None``.
-        '''
+        """
         if not self._tunnel:
             return self._ssl
 
@@ -551,12 +552,14 @@ class HttpRequest(RequestBase):
 
     @property
     def proxy(self):
-        '''Proxy server for this request.'''
+        """Proxy server for this request.
+        """
         return self._proxy
 
     @property
     def tunnel(self):
-        '''Tunnel for this request.'''
+        """Tunnel for this request.
+        """
         return self._tunnel
 
     @property
@@ -572,7 +575,8 @@ class HttpRequest(RequestBase):
 
     @property
     def full_url(self):
-        '''Full url of endpoint'''
+        """Full url of endpoint
+        """
         return urlunparse((self._scheme, self._netloc, self.path,
                            self.params, self.query, self.fragment))
 
@@ -586,7 +590,8 @@ class HttpRequest(RequestBase):
 
     @property
     def data(self):
-        '''Body of request'''
+        """Body of request
+        """
         return self._data
 
     @data.setter
@@ -613,11 +618,11 @@ class HttpRequest(RequestBase):
         return self.data and 'content-length' not in self.headers
 
     def encode(self):
-        '''The bytes representation of this :class:`HttpRequest`.
+        """The bytes representation of this :class:`HttpRequest`.
 
         Called by :class:`HttpResponse` when it needs to encode this
         :class:`HttpRequest` before sending it to the HTTP resource.
-        '''
+        """
         # Call body before fist_line in case the query is changes.
         first_line = self.first_line()
         if self.data and self.wait_continue:
@@ -633,20 +638,20 @@ class HttpRequest(RequestBase):
         self.headers[key] = value
 
     def has_header(self, header_name):
-        '''Check ``header_name`` is in this request headers.
-        '''
+        """Check ``header_name`` is in this request headers.
+        """
         return (header_name in self.headers or
                 header_name in self.unredirected_headers)
 
     def get_header(self, header_name, default=None):
-        '''Retrieve ``header_name`` from this request headers.
-        '''
+        """Retrieve ``header_name`` from this request headers.
+        """
         return self.headers.get(
             header_name, self.unredirected_headers.get(header_name, default))
 
     def remove_header(self, header_name):
-        '''Remove ``header_name`` from this request.
-        '''
+        """Remove ``header_name`` from this request.
+        """
         val1 = self.headers.pop(header_name, None)
         val2 = self.unredirected_headers.pop(header_name, None)
         return val1 or val2
@@ -825,7 +830,7 @@ class HttpRequest(RequestBase):
 
 
 class HttpResponse(ProtocolConsumer):
-    '''A :class:`.ProtocolConsumer` for the HTTP client protocol.
+    """A :class:`.ProtocolConsumer` for the HTTP client protocol.
 
     Initialised by a call to the :class:`HttpClient.request` method.
 
@@ -840,7 +845,7 @@ class HttpResponse(ProtocolConsumer):
         Fired once the whole request has finished
 
     Public API:
-    '''
+    """
     _tunnel_host = None
     _has_proxy = False
     _content = None
@@ -863,14 +868,16 @@ class HttpResponse(ProtocolConsumer):
 
     @property
     def status_code(self):
-        '''Numeric status code such as 200, 404 and so forth.
+        """Numeric status code such as 200, 404 and so forth.
 
-        Available once the :attr:`on_headers` has fired.'''
+        Available once the :attr:`on_headers` has fired.
+        """
         return self._status_code
 
     @property
     def url(self):
-        '''The request full url.'''
+        """The request full url.
+        """
         request = self.request
         if request:
             return request.full_url
@@ -901,18 +908,20 @@ class HttpResponse(ProtocolConsumer):
 
     @property
     def cookies(self):
-        '''Dictionary of cookies set by the server or ``None``.
-        '''
+        """Dictionary of cookies set by the server or ``None``.
+        """
         return self._cookies
 
     @property
     def content(self):
-        '''Content of the response, in bytes'''
+        """Content of the response, in bytes
+        """
         return response_content(self)
 
     @property
     def raw(self):
-        '''A raw asynchronous Http response'''
+        """A raw asynchronous Http response
+        """
         if self._raw is None:
             self._raw = HttpStream(self)
         return self._raw
@@ -932,7 +941,8 @@ class HttpResponse(ProtocolConsumer):
         return l
 
     def recv_body(self):
-        '''Flush the response body and return it.'''
+        """Flush the response body and return it.
+        """
         return self.parser.recv_body()
 
     def get_status(self):
@@ -941,19 +951,21 @@ class HttpResponse(ProtocolConsumer):
             return '%d %s' % (code, responses.get(code, 'Unknown'))
 
     def text(self, charset=None, errors=None):
-        '''Decode content as a string.'''
+        """Decode content as a string.
+        """
         data = self.content
         if data is not None:
             return data.decode(charset or 'utf-8', errors or 'strict')
     content_string = text
 
     def json(self, charset=None):
-        '''Decode content as a JSON object.'''
+        """Decode content as a JSON object.
+        """
         return json.loads(self.text(charset))
 
     def decode_content(self):
-        '''Return the best possible representation of the response body.
-        '''
+        """Return the best possible representation of the response body.
+        """
         ct = self.headers.get('content-type')
         if ct:
             ct, options = parse_options_header(ct)
@@ -965,8 +977,8 @@ class HttpResponse(ProtocolConsumer):
         return self.content
 
     def raise_for_status(self):
-        '''Raises stored :class:`HTTPError` or :class:`URLError`, if occured.
-        '''
+        """Raises stored :class:`HTTPError` or :class:`URLError`, if occured.
+        """
         if self.is_error:
             if self.status_code:
                 raise HTTPError(self.url, self.status_code,
@@ -975,9 +987,10 @@ class HttpResponse(ProtocolConsumer):
                 raise URLError(self.on_finished.result.error)
 
     def info(self):
-        '''Required by python CookieJar.
+        """Required by python CookieJar.
 
-        Return :attr:`headers`.'''
+        Return :attr:`headers`.
+        """
         return self.headers
 
     # #####################################################################
@@ -1011,7 +1024,7 @@ class HttpResponse(ProtocolConsumer):
 
 
 class HttpClient(AbstractClient):
-    '''A client for HTTP/HTTPS servers.
+    """A client for HTTP/HTTPS servers.
 
     It handles pool of asynchronous connections.
 
@@ -1067,23 +1080,26 @@ class HttpClient(AbstractClient):
 
         Default headers for this :class:`HttpClient`
 
-    '''
+    """
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'on_headers',
                          'post_request', 'connection_lost')
     protocol_factory = partial(Connection, HttpResponse)
     max_redirects = 10
-    '''Maximum number of redirects.
+    """Maximum number of redirects.
 
-    It can be overwritten on :meth:`request`.'''
+    It can be overwritten on :meth:`request`.
+    """
     connection_pool = Pool
-    '''Connection :class:`.Pool` factory
-    '''
+    """Connection :class:`.Pool` factory
+    """
     client_version = pulsar.SERVER_SOFTWARE
-    '''String for the ``User-Agent`` header.'''
-    version = 'HTTP/1.1'
-    '''Default HTTP request version for this :class:`HttpClient`.
+    """String for the ``User-Agent`` header.
+    """
+    version = HTTP11
+    """Default HTTP request version for this :class:`HttpClient`.
 
-    It can be overwritten on :meth:`request`.'''
+    It can be overwritten on :meth:`request`.
+    """
     DEFAULT_HTTP_HEADERS = Headers([
         ('Connection', 'Keep-Alive'),
         ('Accept', '*/*'),
@@ -1153,65 +1169,65 @@ class HttpClient(AbstractClient):
         return self.request('CONNECT', address)
 
     def get(self, url, **kwargs):
-        '''Sends a GET request and returns a :class:`HttpResponse` object.
+        """Sends a GET request and returns a :class:`HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
-        '''
+        """
         kwargs.setdefault('allow_redirects', True)
         return self.request('GET', url, **kwargs)
 
     def options(self, url, **kwargs):
-        '''Sends a OPTIONS request and returns a :class:`HttpResponse` object.
+        """Sends a OPTIONS request and returns a :class:`HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
-        '''
+        """
         kwargs.setdefault('allow_redirects', True)
         return self.request('OPTIONS', url, **kwargs)
 
     def head(self, url, **kwargs):
-        '''Sends a HEAD request and returns a :class:`HttpResponse` object.
+        """Sends a HEAD request and returns a :class:`HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
-        '''
+        """
         return self.request('HEAD', url, **kwargs)
 
     def post(self, url, **kwargs):
-        '''Sends a POST request and returns a :class:`HttpResponse` object.
+        """Sends a POST request and returns a :class:`HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
-        '''
+        """
         return self.request('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
-        '''Sends a PUT request and returns a :class:`HttpResponse` object.
+        """Sends a PUT request and returns a :class:`HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
-        '''
+        """
         return self.request('PUT', url, **kwargs)
 
     def patch(self, url, **kwargs):
-        '''Sends a PATCH request and returns a :class:`HttpResponse` object.
+        """Sends a PATCH request and returns a :class:`HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
-        '''
+        """
         return self.request('PATCH', url, **kwargs)
 
     def delete(self, url, **kwargs):
-        '''Sends a DELETE request and returns a :class:`HttpResponse` object.
+        """Sends a DELETE request and returns a :class:`HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
-        '''
+        """
         return self.request('DELETE', url, **kwargs)
 
     def request(self, method, url, timeout=None, **params):
-        '''Constructs and sends a request to a remote server.
+        """Constructs and sends a request to a remote server.
 
         It returns a :class:`.Future` which results in a
         :class:`HttpResponse` object.
@@ -1225,7 +1241,8 @@ class HttpClient(AbstractClient):
             initialisation.
 
         :rtype: a :class:`.Future`
-        '''
+        """
+        assert not self.event('finish').fired(), "Http session is closed"
         response = self._request(method, url, **params)
         if timeout is None:
             timeout = self.timeout
@@ -1236,6 +1253,17 @@ class HttpClient(AbstractClient):
         else:
             return response
 
+    def add_basic_authentication(self, username, password):
+        """Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
+        """
+        self.bind_event('pre_request', HTTPBasicAuth(username, password))
+
+    def add_digest_authentication(self, username, password):
+        """Add a :class:`HTTPDigestAuth` handler to the ``pre_requests`` hook.
+        """
+        self.bind_event('pre_request', HTTPDigestAuth(username, password))
+
+    # INTERNALS
     @asyncio.coroutine
     def _request(self, method, url, **params):
         nparams = params.copy()
@@ -1259,12 +1287,14 @@ class HttpClient(AbstractClient):
                 headers = None
 
             if (not headers or
-                    not headers.has('connection', 'keep-alive') or
+                    not keep_alive(response.request.version, headers) or
                     response.status_code == 101 or
                     # Streaming responses return before the response
                     # is finished - therefore we detach the connection
                     response.request.stream):
-                conn.detach()
+                conn = conn.detach()
+                if self.debug:
+                    self.logger.debug('Detached %s from pool', conn)
 
         # Handle a possible redirect
         if response and isinstance(response.request_again, tuple):
@@ -1272,17 +1302,6 @@ class HttpClient(AbstractClient):
             response = yield from self._request(method, url, **params)
         return response
 
-    def add_basic_authentication(self, username, password):
-        '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
-        '''
-        self.bind_event('pre_request', HTTPBasicAuth(username, password))
-
-    def add_digest_authentication(self, username, password):
-        '''Add a :class:`HTTPDigestAuth` handler to the ``pre_requests`` hook.
-        '''
-        self.bind_event('pre_request', HTTPDigestAuth(username, password))
-
-    #    INTERNALS
     def get_headers(self, request, headers=None):
         # Returns a :class:`Header` obtained from combining
         # :attr:`headers` with *headers*. Can handle websocket requests.
@@ -1305,9 +1324,12 @@ class HttpClient(AbstractClient):
                                               cafile=cafile, capath=capath,
                                               cadata=cadata)
 
-    def _close(self, _, exc=None, async=True):
-        '''Close all connections.
-        '''
+    def _close(self, _, exc=None):
+        # Internal method, use self.close()
+        # Close all connections.
+        # Returns a future which can be used to wait for complete closure
+        waiters = []
         for p in self.connection_pools.values():
-            p.close(async=async)
+            waiters.append(p.close())
         self.connection_pools.clear()
+        return asyncio.gather(*waiters, loop=self._loop)

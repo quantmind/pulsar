@@ -72,6 +72,12 @@ class Pool(AsyncObject):
         '''
         return reduce(self._count_connections, self._queue._queue, 0)
 
+    @property
+    def closed(self):
+        """True when this pool is closed
+        """
+        return bool(self._closed)
+
     def __contains__(self, connection):
         if connection not in self._in_use_connections:
             return connection in self._queue._queue
@@ -85,24 +91,30 @@ class Pool(AsyncObject):
 
         :return: a :class:`~asyncio.Future` resulting in the connection.
         '''
-        assert not self._closed
+        assert not self.closed
         connection = yield from self._get()
         return PoolConnection(self, connection)
 
-    def close(self, async=True):
-        '''Close all :attr:`available` connections
+    def close(self):
+        '''Close all connections
+
+        Return a :class:`~asyncio.Future` called once all connections
+        have closed
         '''
-        if not self._closed:
-            self._closed = True
+        if not self.closed:
+            waiters = []
             queue = self._queue
             while queue.qsize():
                 connection = queue.get_nowait()
                 if connection:
-                    connection.close()
+                    waiters.append(connection.close())
             in_use = self._in_use_connections
             self._in_use_connections = set()
             for connection in in_use:
-                connection.close()
+                if connection:
+                    waiters.append(connection.close())
+            self._closed = asyncio.gather(*waiters, loop=self._loop)
+        return self._closed
 
     @asyncio.coroutine
     def _get(self):
@@ -133,7 +145,7 @@ class Pool(AsyncObject):
         return connection
 
     def _put(self, conn, discard=False):
-        if not self._closed:
+        if not self.closed:
             try:
                 # None signal that a connection was removed form the queue
                 self._queue.put_nowait(None if discard else conn)
