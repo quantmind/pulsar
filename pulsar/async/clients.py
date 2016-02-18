@@ -233,6 +233,7 @@ class AbstractClient(Producer):
             host, port = address
             _, protocol = yield from self._loop.create_connection(
                 protocol_factory, host, port, **kw)
+            yield from protocol.event('connection_made')
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))

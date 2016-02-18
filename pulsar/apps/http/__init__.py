@@ -1246,7 +1246,7 @@ class HttpClient(AbstractClient):
         if pool is None:
             host, port = request.address
             pool = self.connection_pool(
-                partial(self._connect, host, port, request.ssl),
+                lambda: self.create_connection((host, port), ssl=request.ssl),
                 pool_size=self.pool_size, loop=self._loop)
             self.connection_pools[request.key] = pool
         conn = yield from pool.connect()
@@ -1304,14 +1304,6 @@ class HttpClient(AbstractClient):
                                               keyfile=keyfile,
                                               cafile=cafile, capath=capath,
                                               cadata=cadata)
-
-    @asyncio.coroutine
-    def _connect(self, host, port, ssl):
-        _, connection = yield from self._loop.create_connection(
-            self.create_protocol, host, port, ssl=ssl)
-        # Wait for the connection made event
-        yield from connection.event('connection_made')
-        return connection
 
     def _close(self, _, exc=None, async=True):
         '''Close all connections.
