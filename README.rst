@@ -75,6 +75,7 @@ Out of the box it is shipped with the the following:
 
 * Socket servers
 * WSGI server
+* HTTP client
 * JSON-RPC_
 * Web Sockets
 * Test suite

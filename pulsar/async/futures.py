@@ -12,7 +12,6 @@ from .access import get_event_loop, LOGGER, isfuture, is_async, ensure_future
 __all__ = ['maybe_async',
            'run_in_loop',
            'add_errback',
-           'add_callback',
            'task_callback',
            'multi_async',
            'as_coroutine',
@@ -91,18 +90,6 @@ def add_errback(future, callback, loop=None):
 
     future = ensure_future(future, loop=None)
     future.add_done_callback(_error_back)
-    return future
-
-
-def add_callback(future, callback, loop=None):
-    '''Add a ``callback`` to ``future`` executed only if an exception
-    has not occurred.'''
-    def _call_back(fut):
-        if not (fut._exception or fut.cancelled()):
-            callback(fut.result())
-
-    future = ensure_future(future, loop=None)
-    future.add_done_callback(_call_back)
     return future
 
 

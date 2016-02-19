@@ -2,13 +2,26 @@
     "github": {
         "pulsar": {
             "python_module": "pulsar",
-            "version": "pulsar.__version__"
+            "version": "pulsar.__version__",
+            "release-notes": "docs/source/history",
+            "dist": {
+                "shell": [
+                    "rm -rf dist",
+                    "{{ python }} setup.py sdist upload"
+                ],
+                "files": "dist/*.gz"
+            }
         }
+    },
+    "shell": {
+        "pulsar": {
+            "command": ["rm -rf dist",
+                        "{{ python }} setup.py sdist"]
     },
     "tasks": {
         "release": {
             "description": "make a new release to github",
-            "command": ["github"]
+            "command": ["github:pulsar"]
         }
     }
 }

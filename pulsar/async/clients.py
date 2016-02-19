@@ -156,7 +156,11 @@ class Pool(AsyncObject):
         self._in_use_connections.discard(conn)
 
     def is_connection_closed(self, connection):
-        if is_socket_closed(connection.sock):
+        try:
+            sock = connection.sock
+        except AttributeError:
+            return True
+        if is_socket_closed(sock):
             connection.close()
             return True
         return False
