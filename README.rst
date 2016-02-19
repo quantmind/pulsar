@@ -157,7 +157,7 @@ of course. To do so, simply follow these guidelines:
 * Create an issue at https://github.com/quantmind/pulsar/issues with
   pull request for the **dev branch**.
 * Alternatively, if you need to report a bug or an unexpected behaviour, make sure
-  you include a [mcve](http://stackoverflow.com/help/mcve) in your issue.
+  to include a mcve_ in your issue.
 
 A good ``pull`` request should:
 
@@ -193,3 +193,4 @@ file in the top distribution directory for the full license text.
 .. _`Luca Sbardella`: http://lucasbardella.com
 .. _`Quantmind`: http://quantmind.com
 .. _JSON-RPC: http://www.jsonrpc.org/
+.. _mcve: (http://stackoverflow.com/help/mcve)
