@@ -193,4 +193,4 @@ file in the top distribution directory for the full license text.
 .. _`Luca Sbardella`: http://lucasbardella.com
 .. _`Quantmind`: http://quantmind.com
 .. _JSON-RPC: http://www.jsonrpc.org/
-.. _mcve: (http://stackoverflow.com/help/mcve)
+.. _mcve: http://stackoverflow.com/help/mcve
