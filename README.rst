@@ -156,6 +156,8 @@ of course. To do so, simply follow these guidelines:
 * Push to your branch ``git push origin my_branch``
 * Create an issue at https://github.com/quantmind/pulsar/issues with
   pull request for the **dev branch**.
+* Alternatively, if you need to report a bug or an unexpected behaviour, make sure
+  you include a [mcve](http://stackoverflow.com/help/mcve) in your issue.
 
 A good ``pull`` request should:
 
