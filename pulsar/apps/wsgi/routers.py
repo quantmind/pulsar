@@ -609,7 +609,9 @@ class MediaRouter(Router, MediaMixin):
         self._file_path = path
 
     def filesystem_path(self, request):
-        path = request.urlargs['path']
+        return self.get_full_path(request.urlargs['path'])
+
+    def get_full_path(self, path):
         bits = [bit for bit in path.split('/') if bit]
         return os.path.join(self._file_path, *bits)
 
@@ -622,17 +624,28 @@ class MediaRouter(Router, MediaMixin):
                     return request.redirect('%s/' % request.path)
                 fullpath = file
         #
+        # Check for missing suffix
+        if self._default_suffix:
+            ext = '.%s' % self._default_suffix
+            if not fullpath.endswith(ext):
+                file = '%s%s' % (fullpath, ext)
+                if os.path.isfile(file):
+                    fullpath = file
+
         if os.path.isdir(fullpath):
             if self._show_indexes:
                 return self.directory_index(request, fullpath)
             else:
                 raise Http404
         #
-        filename = os.path.basename(fullpath)
-        if '.' not in filename and self._default_suffix:
-            fullpath = '%s.%s' % (fullpath, self._default_suffix)
-        #
-        return self.serve_file(request, fullpath)
+        try:
+            return self.serve_file(request, fullpath)
+        except Http404:
+            file404 = self.get_full_path('404.html')
+            if os.path.isfile(file404):
+                return self.serve_file(request, file404, status_code=404)
+            else:
+                raise
 
 
 FileRouter = MediaRouter
