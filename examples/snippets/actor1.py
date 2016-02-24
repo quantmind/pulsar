@@ -1,5 +1,7 @@
 '''Simple actor message passing
 '''
+import asyncio
+
 from pulsar import arbiter, spawn, send, ensure_future, Config
 
 
@@ -7,6 +9,7 @@ def start(arbiter, **kw):
     ensure_future(app(arbiter))
 
 
+@asyncio.coroutine
 def app(arbiter):
     # Spawn a new actor
     proxy = yield from spawn(name='actor1')

@@ -1,10 +1,12 @@
 import asyncio
 
+from pulsar import ensure_future
 from pulsar.apps.data import LockError
 
 
 class RedisLockTests:
 
+    @asyncio.coroutine
     def test_lock(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -19,6 +21,7 @@ class RedisLockTests:
         yield from eq(lock.release(), True)
         yield from eq(self.client.get(key), None)
 
+    @asyncio.coroutine
     def test_competing_locks(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -31,6 +34,7 @@ class RedisLockTests:
         yield from eq(lock1.acquire(), False)
         yield from eq(lock2.release(), True)
 
+    @asyncio.coroutine
     def test_timeout(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -40,6 +44,7 @@ class RedisLockTests:
         self.assertTrue(2 < ttl <= 10)
         yield from eq(lock.release(), True)
 
+    @asyncio.coroutine
     def test_float_timeout(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -49,6 +54,7 @@ class RedisLockTests:
         self.assertTrue(4000 < ttl <= 9500)
         yield from eq(lock.release(), True)
 
+    @asyncio.coroutine
     def test_blocking_timeout(self):
         key = self.randomkey()
         eq = self.async.assertEqual
@@ -60,18 +66,20 @@ class RedisLockTests:
         self.assertTrue(lock1._loop.time() - start > 0.5)
         yield from eq(lock1.release(), True)
 
+    @asyncio.coroutine
     def test_blocking_timeout_acquire(self):
         key = self.randomkey()
         eq = self.async.assertEqual
         lock1 = self.client.lock(key)
         lock2 = self.client.lock(key, blocking=5)
         yield from eq(lock1.acquire(), True)
-        asyncio.async(self._release(lock1, 0.5))
+        ensure_future(self._release(lock1, 0.5))
         start = lock2._loop.time()
         yield from eq(lock2.acquire(), True)
         self.assertTrue(5 > lock2._loop.time() - start > 0.5)
         yield from eq(lock2.release(), True)
 
+    @asyncio.coroutine
     def _release(self, lock, time):
         yield from asyncio.sleep(time)
         yield from self.async.assertEqual(lock.release(), True)
@@ -81,6 +89,7 @@ class RedisLockTests:
         self.assertRaises(LockError, self.client.lock, 'foo',
                           blocking=1, sleep=2)
 
+    @asyncio.coroutine
     def test_releasing_lock_no_longer_owned_raises_error(self):
         key = self.randomkey()
         eq = self.async.assertEqual

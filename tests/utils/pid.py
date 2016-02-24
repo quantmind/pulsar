@@ -1,5 +1,6 @@
 import os
 import unittest
+import asyncio
 
 from pulsar import send
 from pulsar.apps.test import ActorTestMixin
@@ -9,6 +10,7 @@ from pulsar.utils.tools import Pidfile
 class TestPidfile(ActorTestMixin, unittest.TestCase):
     concurrency = 'process'
 
+    @asyncio.coroutine
     def test_create_pid(self):
         proxy = yield from self.spawn_actor(name='pippo')
         info = yield from send(proxy, 'info')

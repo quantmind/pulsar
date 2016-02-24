@@ -18,6 +18,7 @@ class TestPhylosophers(unittest.TestCase):
         cls.app_cfg = yield from send('arbiter', 'run', app)
 
     @test_timeout(30)
+    @asyncio.coroutine
     def test_info(self):
         while True:
             yield from asyncio.sleep(0.5)

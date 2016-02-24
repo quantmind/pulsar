@@ -22,6 +22,7 @@ This example shows how to use
 import os
 import sys
 import string
+import asyncio
 import mimetypes
 from functools import partial
 from itertools import repeat, chain
@@ -319,6 +320,7 @@ class Upload(BaseRouter):
     def put(self, request):
         return ensure_future(self._async_put(request))
 
+    @asyncio.coroutine
     def _async_put(self, request):
         headers = self.getheaders(request)
         data = {'method': request.method,

@@ -1,6 +1,7 @@
 '''Tests the test suite loader.'''
 import os
 import unittest
+import asyncio
 
 from pulsar import get_application
 from pulsar.apps.test import TestLoader
@@ -8,6 +9,7 @@ from pulsar.apps.test import TestLoader
 
 class TestTestLoader(unittest.TestCase):
 
+    @asyncio.coroutine
     def test_testsuite(self):
         app = yield from get_application('test')
         self.assertTrue(app.cfg.script)
@@ -17,6 +19,7 @@ class TestTestLoader(unittest.TestCase):
                                            ('examples', 'tests'),
                                            ('examples', 'test_*')))
 
+    @asyncio.coroutine
     def test_load_pulsar_tests(self):
         app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
@@ -33,6 +36,7 @@ class TestTestLoader(unittest.TestCase):
         self.assertTrue('async' in modules)
         self.assertTrue('suite.single' in modules)
 
+    @asyncio.coroutine
     def test_sorted_tags(self):
         app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
@@ -41,12 +45,14 @@ class TestTestLoader(unittest.TestCase):
         tags = [m[0] for m in modules]
         self.assertEqual(tags, sorted(tags))
 
+    @asyncio.coroutine
     def test_load_tags1(self):
         app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('suite',)))
         self.assertEqual(len(modules), 6)
 
+    @asyncio.coroutine
     def test_load_exclude(self):
         app = yield from get_application('test')
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)

@@ -4,8 +4,10 @@
    :member-order: bysource
 
 '''
+import asyncio
+
 import pulsar
-from pulsar import task
+from pulsar import ensure_future
 from pulsar.utils.system import json
 from pulsar.apps.data import create_store
 from pulsar.apps.http import HttpClient, OAuth1
@@ -50,9 +52,8 @@ class Twitter(pulsar.Application):
                         resource_owner_secret=access_secret)
         self._http.bind_event('pre_request', oauth1)
         self.buffer = []
-        self.connect()
+        ensure_future(self.connect())
 
-    @task
     def connect(self):
         '''Connect to twitter streaming endpoint.
 
@@ -156,10 +157,13 @@ class PublishTweets:
     def __init__(self, channel):
         self.channel = channel
 
-    @task
     def __call__(self, twitter, messages):
         if not self.store:
             self.store = create_store(twitter.cfg.data_store)
             self.pubsub = self.store.pubsub()
+        ensure_future(self._publish(messages))
+
+    @asyncio.coroutine
+    def _publish(self, messages):
         for message in messages:
             yield from self.pubsub.publish(self.channel, json.dumps(message))

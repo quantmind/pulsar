@@ -28,6 +28,7 @@ class TestWebChat(unittest.TestCase):
     concurrency = 'thread'
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__.lower(),
                    concurrency=cls.concurrency)
@@ -42,12 +43,14 @@ class TestWebChat(unittest.TestCase):
         if cls.app_cfg is not None:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
+    @asyncio.coroutine
     def test_home(self):
         response = yield from self.http.get(self.uri)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
 
+    @asyncio.coroutine
     def test_handshake(self):
         ws = yield from self.http.get(self.ws)
         response = ws.handshake
@@ -61,6 +64,7 @@ class TestWebChat(unittest.TestCase):
         self.assertIsInstance(pool, self.http.connection_pool)
         self.assertFalse(ws.connection in pool)
 
+    @asyncio.coroutine
     def test_rpc(self):
         '''Send a message to the rpc'''
         loop = self.http._loop
@@ -76,6 +80,7 @@ class TestWebChat(unittest.TestCase):
         data = json.loads(data)
         self.assertEqual(data['message'], 'Hi!')
 
+    @asyncio.coroutine
     def test_invalid_method(self):
         p = rpc.JsonProxy(self.uri)
         try:

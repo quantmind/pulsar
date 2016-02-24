@@ -1,3 +1,5 @@
+import asyncio
+
 from pulsar import HAS_C_EXTENSIONS
 from pulsar.apps.test import check_server
 from pulsar.apps.data import RedisScript
@@ -27,6 +29,7 @@ class TestRedisStore(RedisDbTest, unittest.TestCase):
         cls.store = create_store(addr, pool_size=3, namespace=namespace)
         cls.client = cls.store.client()
 
+    @asyncio.coroutine
     def test_script(self):
         script = RedisScript("return 1")
         self.assertFalse(script.sha)
@@ -38,12 +41,14 @@ class TestRedisStore(RedisDbTest, unittest.TestCase):
         result = yield from script(self.client)
         self.assertEqual(result, 1)
 
+    @asyncio.coroutine
     def test_eval(self):
         result = yield from self.client.eval('return "Hello"')
         self.assertEqual(result, b'Hello')
         result = yield from self.client.eval("return {ok='OK'}")
         self.assertEqual(result, b'OK')
 
+    @asyncio.coroutine
     def test_eval_with_keys(self):
         result = yield from self.client.eval("return {KEYS, ARGV}",
                                              ('a', 'b'),

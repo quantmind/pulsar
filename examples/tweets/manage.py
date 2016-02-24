@@ -1,3 +1,5 @@
+import asyncio
+
 import pulsar
 from pulsar.apps.wsgi import WSGIServer
 from pulsar.apps.ds import pulsards_url
@@ -14,6 +16,7 @@ class Server(pulsar.MultiApp):
     # set the default data_store to be pulsar
     cfg = {'data_store': pulsards_url()}
 
+    @asyncio.coroutine
     def build(self):
         # the pubsub channel
         channel = '%s_tweets' % self.name
