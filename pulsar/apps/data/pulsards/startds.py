@@ -5,6 +5,7 @@ from pulsar.apps.data import create_store
 from pulsar.apps.ds import PulsarDS
 
 
+@asyncio.coroutine
 def start_pulsar_ds(arbiter, host, workers=0):
     lock = getattr(arbiter, 'lock', None)
     if lock is None:
@@ -22,6 +23,7 @@ def start_pulsar_ds(arbiter, host, workers=0):
         lock.release()
 
 
+@asyncio.coroutine
 def start_store(app, url, workers=0, **kw):
     '''Equivalent to :func:`.create_store` for most cases excepts when the
     ``url`` is for a pulsar store not yet started.

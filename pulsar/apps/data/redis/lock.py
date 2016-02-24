@@ -1,6 +1,6 @@
 import uuid
 import threading
-from asyncio import sleep
+from asyncio import sleep, coroutine
 
 from pulsar import is_async
 
@@ -16,6 +16,7 @@ class RedisScript:
         self.script = script
         self.sha = None
 
+    @coroutine
     def __call__(self, client, keys=None, args=None):
         '''Execute the script, passing any required ``args``
         '''
@@ -64,6 +65,7 @@ class Lock:
         '''
         return self._local.token
 
+    @coroutine
     def _acquire(self):
         token = uuid.uuid1().hex.encode('utf-8')
         timeout = self.timeout and int(self.timeout * 1000) or ''
@@ -75,6 +77,7 @@ class Lock:
 
         return acquired
 
+    @coroutine
     def acquire(self):
         loop = self._loop
         start = loop.time()
@@ -87,6 +90,7 @@ class Lock:
 
         return acquired
 
+    @coroutine
     def release(self):
         expected_token = self.token
         if not expected_token:

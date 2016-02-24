@@ -13,6 +13,7 @@ except ImportError:
     server = None
 
 
+@asyncio.coroutine
 def start_server(actor, name, argv):
     server(argv)
     yield None
@@ -39,6 +40,7 @@ class TestDjangoChat(unittest.TestCase):
     app_cfg = None
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         cls.exc_id = gen_unique_id()[:8]
         name = cls.__name__.lower()

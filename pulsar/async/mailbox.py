@@ -14,8 +14,8 @@ The implementation details are outlined below:
 
       from pulsar import send
 
-      def example():
-          result = yield from send('abc', 'ping')
+      async def example():
+          result = await send('abc', 'ping')
 
 * The :class:`.Arbiter` :attr:`~pulsar.Actor.mailbox` is a :class:`.TcpServer`
   accepting connections from remote actors.

@@ -1,3 +1,5 @@
+import asyncio
+
 from functools import partial
 
 from pulsar import Protocol
@@ -76,6 +78,7 @@ class RedisPubSub(PubSub):
         if self._connection:
             return self._connection.execute('UNSUBSCRIBE', *channels)
 
+    @asyncio.coroutine
     def close(self):
         '''Stop listening for messages.
         '''
@@ -84,6 +87,7 @@ class RedisPubSub(PubSub):
             yield from self._connection.execute('UNSUBSCRIBE')
 
     #    INTERNALS
+    @asyncio.coroutine
     def _subscribe(self, *args):
         if not self._connection:
             protocol_factory = partial(PubsubProtocol, self,

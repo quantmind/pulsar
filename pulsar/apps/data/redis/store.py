@@ -1,3 +1,4 @@
+import asyncio
 from functools import partial
 
 from pulsar import Connection, Pool, get_actor
@@ -15,6 +16,7 @@ class RedisStoreConnection(Connection):
         super().__init__(*args, **kw)
         self.parser = self._producer._parser_class()
 
+    @asyncio.coroutine
     def execute(self, *args, **options):
         consumer = self.current_consumer()
         consumer.start((args, options))
@@ -23,6 +25,7 @@ class RedisStoreConnection(Connection):
             raise result.exception
         return result
 
+    @asyncio.coroutine
     def execute_pipeline(self, commands, raise_on_error=True):
         consumer = self.current_consumer()
         consumer.start((commands, raise_on_error, []))
@@ -82,18 +85,21 @@ class RedisStore(RemoteStore):
     def ping(self):
         return self.client().ping()
 
+    @asyncio.coroutine
     def execute(self, *args, **options):
         connection = yield from self._pool.connect()
         with connection:
             result = yield from connection.execute(*args, **options)
             return result
 
+    @asyncio.coroutine
     def execute_pipeline(self, commands, raise_on_error=True):
         conn = yield from self._pool.connect()
         with conn:
             result = yield from conn.execute_pipeline(commands, raise_on_error)
             return result
 
+    @asyncio.coroutine
     def connect(self, protocol_factory=None):
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(self._host, tuple):
