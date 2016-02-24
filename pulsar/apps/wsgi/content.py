@@ -147,7 +147,7 @@ from collections import Mapping
 from functools import partial
 
 from pulsar import HttpException
-from pulsar import multi_async, chain_future, is_async
+from pulsar import multi_async, chain_future, isawaitable
 from pulsar.utils.slugify import slugify
 from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
 from pulsar.utils.pep import to_string
@@ -181,7 +181,7 @@ def stream_mapping(value, request):
     for key, value in value.items():
         if isinstance(value, String):
             value = value.render(request)
-        if is_async(value):
+        if isawaitable(value):
             async = True
         result[key] = value
     return multi_async(result) if async else result
@@ -415,7 +415,7 @@ class String:
         stream = []
         async = False
         for data in self.stream(request):
-            if is_async(data):
+            if isawaitable(data):
                 async = True
             stream.append(data)
 
@@ -1131,13 +1131,13 @@ class HtmlDocument(Html):
         body = self.body.render(request)
         # the body has asynchronous components
         # delay the header untl later
-        if is_async(body):
+        if isawaitable(body):
             yield self._html(request, body)
 
         head = self.head.render(request)
         #
         # header not ready (this should never occur really)
-        if is_async(head):
+        if isawaitable(head):
             yield self._html(request, body, head)
         else:
             yield self._template % (self.flatatt(), head, body)
@@ -1150,7 +1150,7 @@ class HtmlDocument(Html):
             body = yield from body
             head = self.head.render(request)
 
-        if is_async(head):
+        if isawaitable(head):
             head = yield from head
 
         return self._template % (self.flatatt(), head, body)

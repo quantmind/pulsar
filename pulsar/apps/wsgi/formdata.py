@@ -7,7 +7,7 @@ from base64 import b64encode
 from functools import reduce
 from cgi import valid_boundary, parse_header
 
-from pulsar import HttpException, BadRequest, is_async, ensure_future
+from pulsar import HttpException, BadRequest, isawaitable, ensure_future
 from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict, mapping_iterator
 from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
@@ -211,7 +211,7 @@ class BytesDecoder(FormDecoder):
         inp = self.environ.get('wsgi.input') or BytesIO()
         data = inp.read()
 
-        if is_async(data):
+        if isawaitable(data):
             return ensure_future(self._async(data))
         else:
             return self._ready(data)

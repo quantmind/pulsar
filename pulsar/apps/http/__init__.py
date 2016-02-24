@@ -291,8 +291,8 @@ except ImportError:
     ssl = None
 
 import pulsar
-from pulsar import (AbortRequest, AbstractClient, Pool, Connection, is_async,
-                    ProtocolConsumer, ensure_future)
+from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
+                    isawaitable, ProtocolConsumer, ensure_future)
 from pulsar.utils import websocket
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
@@ -791,7 +791,7 @@ class HttpRequest(RequestBase):
     @asyncio.coroutine
     def _write_streamed_data(self, transport):
         for data in self.data:
-            if is_async(data):
+            if isawaitable(data):
                 data = yield from data
             self._write_body_data(transport, data)
         self._write_body_data(transport, b'', True)

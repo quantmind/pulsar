@@ -1,5 +1,6 @@
 '''MultiFuture coverage'''
 import unittest
+import asyncio
 
 from pulsar import multi_async, Future
 
@@ -16,6 +17,7 @@ class TestMulti(unittest.TestCase):
         self.assertTrue(r.done())
         self.assertEqual(r.result(), {})
 
+    @asyncio.coroutine
     def test_multi(self):
         d1 = Future()
         d2 = Future()

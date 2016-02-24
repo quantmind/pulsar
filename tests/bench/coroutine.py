@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 
 from pulsar import async, new_event_loop, Future
 
@@ -12,12 +13,14 @@ def async_func(loop, value):
     return p
 
 
+@asyncio.coroutine
 def sub_sub(loop, num):
     a = yield from async_func(loop, num)
     b = yield from async_func(loop, num)
     return a+b
 
 
+@asyncio.coroutine
 def sub(loop, num):
     a = yield from async_func(loop, num)
     b = yield from async_func(loop, num)
@@ -25,6 +28,7 @@ def sub(loop, num):
     return a+b+c
 
 
+@asyncio.coroutine
 def main(loop, num):
     a = yield from async_func(loop, num)
     b = yield from sub(loop, num)

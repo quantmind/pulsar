@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 from unittest import mock
 
 from pulsar import Future, send, multi_async, get_event_loop
@@ -52,6 +53,7 @@ class TestGreenIO(unittest.TestCase):
         environ = wsgi.test_wsgi_environ(**kwargs)
         return wsgi.WsgiRequest(environ)
 
+    @asyncio.coroutine
     def test_pool(self):
         pool = greenio.GreenPool()
         self.assertTrue(pool._loop)
@@ -64,6 +66,7 @@ class TestGreenIO(unittest.TestCase):
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
+    @asyncio.coroutine
     def test_greenlet_methods(self):
         pool = greenio.GreenPool()
         self.assertFalse(pool.in_green_worker)
@@ -75,6 +78,7 @@ class TestGreenIO(unittest.TestCase):
 
         yield from pool.submit(_greenlet_methods)
 
+    @asyncio.coroutine
     def test_error_in_pool(self):
         # Test an error
         pool = greenio.GreenPool()
@@ -95,6 +99,7 @@ class TestGreenIO(unittest.TestCase):
         result = self.client(msg)
         self.assertEqual(result, msg)
 
+    @asyncio.coroutine
     def test_shutdown(self):
         # Test an error
         pool = greenio.GreenPool()
@@ -154,6 +159,7 @@ class TestGreenIO(unittest.TestCase):
         self.assertEqual(green.wsgi, wsgi)
         self.assertEqual(green.pool, pool)
 
+    @asyncio.coroutine
     def test_uncatched_stopiteration(self):
         pool = greenio.GreenPool()
         with self.assertRaises(RuntimeError) as cm:

@@ -4,7 +4,7 @@ from collections import namedtuple
 from copy import copy
 from urllib.parse import urlparse, urljoin
 
-from pulsar import OneTime, is_async
+from pulsar import OneTime, isawaitable
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
 from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
@@ -69,7 +69,7 @@ def start_request(request, conn):
 
     if hasattr(response.request_again, '__call__'):
         response = response.request_again(response)
-        if is_async(response):
+        if isawaitable(response):
             response = yield from response
 
     return response

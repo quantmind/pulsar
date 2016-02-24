@@ -1,5 +1,6 @@
 import socket
 import unittest
+import asyncio
 
 from pulsar import get_actor
 
@@ -12,6 +13,7 @@ class ExternalBase(TestHttpClientBase):
     def after_response(self, response):
         pass
 
+    @asyncio.coroutine
     def ___test_http_get_timeit(self):
         client = self.client()
         N = 20
@@ -32,12 +34,14 @@ class ExternalBase(TestHttpClientBase):
                 raise
             self.assertEqual(response.status_code, 200)
 
+    @asyncio.coroutine
     def __test_http_get(self):
         client = self.client()
         response = yield from client.get('http://www.bbc.co.uk/')
         self.assertEqual(response.status_code, 200)
         self.after_response(response)
 
+    @asyncio.coroutine
     def test_get_https(self):
         client = self.client()
         response = yield from client.get('https://github.com/trending')

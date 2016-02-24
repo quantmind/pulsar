@@ -81,6 +81,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue('test' in arbiter.registered)
 
     @test_timeout(2*ACTOR_ACTION_TIMEOUT)
+    @asyncio.coroutine
     def test_spawning_in_arbiter(self):
         arbiter = pulsar.get_actor()
         self.assertEqual(arbiter.name, 'arbiter')
@@ -108,6 +109,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         name = list(arbiter.monitors.values())[0].name
         self.assertRaises(KeyError, arbiter.add_monitor, name)
 
+    @asyncio.coroutine
     def testTimeout(self):
         '''Test a bogus actor for timeout.'''
         arbiter = pulsar.get_actor()
@@ -125,6 +127,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertFalse(proxy.aid in arbiter.managed_actors)
 
     @test_timeout(2*ACTOR_ACTION_TIMEOUT)
+    @asyncio.coroutine
     def test_terminate(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())

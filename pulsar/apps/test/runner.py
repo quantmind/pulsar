@@ -1,7 +1,7 @@
 import asyncio
 from unittest import SkipTest
 
-from pulsar import ensure_future, is_async, HaltServer
+from pulsar import ensure_future, isawaitable, HaltServer
 
 from .utils import (TestFailure, skip_test, skip_reason,
                     expecting_failure, AsyncAssert, get_test_timeout)
@@ -159,7 +159,7 @@ class Runner:
             method = getattr(test, method_name)
             coro = method()
             # a coroutine
-            if is_async(coro):
+            if isawaitable(coro):
                 test_timeout = get_test_timeout(method, test_timeout)
                 yield from asyncio.wait_for(coro, test_timeout,
                                             loop=self._loop)

@@ -2,7 +2,7 @@ import uuid
 import threading
 from asyncio import sleep, coroutine
 
-from pulsar import is_async
+from pulsar import isawaitable
 
 
 class LockError(Exception):
@@ -27,7 +27,7 @@ class RedisScript:
             client.store.loaded_scripts.add(self.sha)
 
         result = client.evalsha(self.sha, keys, args)
-        if is_async(result):
+        if isawaitable(result):
             result = yield from result
         return result
 

@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import task, is_async
+from pulsar import task, isawaitable
 
 from .jsonrpc import JSONRPC
 
@@ -28,7 +28,7 @@ class PulsarServerCommands(JSONRPC):
         '''
         info = yield from pulsar.send('arbiter', 'info')
         info = self.extra_server_info(request, info)
-        if is_async(info):
+        if isawaitable(info):
             info = yield from info
         return info
 
