@@ -60,7 +60,7 @@ from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.string import gen_unique_id
 
-from .access import get_actor, is_async
+from .access import get_actor, isawaitable
 from .futures import Future, task
 from .proxy import actor_identity, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
@@ -81,7 +81,7 @@ def command_in_context(command, caller, target, args, kwargs, connection=None):
         raise CommandError('unknown %s' % command)
     request = CommandRequest(target, caller, connection)
     result = cmnd(request, args, kwargs)
-    if is_async(result):
+    if isawaitable(result):
         result = yield from result
     return result
 

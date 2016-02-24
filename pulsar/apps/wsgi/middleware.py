@@ -52,7 +52,7 @@ import re
 from functools import wraps
 
 import pulsar
-from pulsar import is_async, task, get_event_loop
+from pulsar import isawaitable, task, get_event_loop
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -103,7 +103,7 @@ def wait_for_body_middleware(environ, start_response=None):
     if environ['wsgi.input']:
         stream = environ['wsgi.input']
         chunk = stream.read()
-        if is_async(chunk):
+        if isawaitable(chunk):
             chunk = yield from chunk
         environ['wsgi.input'] = BytesIO(chunk)
 
