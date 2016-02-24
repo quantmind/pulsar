@@ -145,7 +145,7 @@ from collections import deque
 from greenlet import greenlet, getcurrent
 
 from pulsar import ensure_future
-from pulsar import Future, get_event_loop, AsyncObject, is_async
+from pulsar import Future, get_event_loop, AsyncObject, isawaitable
 
 
 _DEFAULT_WORKERS = 100
@@ -186,7 +186,7 @@ def run_in_greenlet(callable):
         # switch to the new greenlet
         result = green.switch(*args, **kwargs)
         # back to the parent
-        while is_async(result):
+        while isawaitable(result):
             # keep on switching back to the greenlet if we get a Future
             try:
                 result = green.switch((yield from result))
@@ -298,7 +298,7 @@ class GreenPool(AsyncObject):
             task = green.switch(task)
 
             # if an asynchronous result is returned, yield from
-            while is_async(task):
+            while isawaitable(task):
                 try:
                     task = yield from task
                 except Exception as exc:

@@ -19,7 +19,7 @@ services:
 script:
   - flake8
   - rm -rf pulsar build pulsar.egg-info dist
-  - python -m runtests --coverage
+  - python -m runtests --log-level warning --coverage
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python -m runtests --coveralls; fi
 
 notifications:

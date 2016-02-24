@@ -50,7 +50,7 @@ def is_async(x):    # pragma    nocover
     # TODO: remove in pulsar 1.2
     warnings.warn("pulsar.is_async is deprecated and will be removed in "
                   "pulsar 1.2, use pulsar.isawaitable instead",
-                  SyntaxWarning)
+                  SyntaxWarning, stacklevel=2)
     return isawaitable(x)
 
 

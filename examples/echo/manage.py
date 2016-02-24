@@ -36,7 +36,7 @@ The :class:`EchoProtocol` is needed for two reasons:
 * It listens for incoming data from the remote server via the
   :meth:`~EchoProtocol.data_received` method.
 
-To wait for the response message one casn yield from the
+To wait for the response message one can ``await`` from the
 :attr:`.ProtocolConsumer.on_finished` event.
 
 
@@ -73,6 +73,7 @@ Echo Server
 .. autofunction:: server
 
 '''
+import asyncio
 from functools import partial
 
 import pulsar
@@ -195,6 +196,7 @@ class Echo(AbstractClient):
         else:
             return result
 
+    @asyncio.coroutine
     def _call(self, message):
         connection = yield from self.pool.connect()
         with connection:
