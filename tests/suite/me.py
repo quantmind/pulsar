@@ -13,6 +13,7 @@ def simple_function(actor):
     return actor.name
 
 
+@asyncio.coroutine
 def wait(actor, period=0.5):
     start = actor._loop.time()
     yield from asyncio.sleep(period)
