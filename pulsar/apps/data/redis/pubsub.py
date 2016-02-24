@@ -13,6 +13,7 @@ class PubsubProtocol(Protocol):
         self.parser = self._producer._parser_class()
         self.handler = handler
 
+    @asyncio.coroutine
     def execute(self, *args):
         chunk = self.parser.multi_bulk(args)
         self._transport.write(chunk)
