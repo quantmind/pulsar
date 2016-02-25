@@ -1,4 +1,3 @@
-import socket
 import unittest
 import asyncio
 
@@ -14,48 +13,10 @@ class ExternalBase(TestHttpClientBase):
         pass
 
     @asyncio.coroutine
-    def ___test_http_get_timeit(self):
-        client = self.client()
-        N = 20
-        responses = yield from client.timeit(N, 'get', 'http://www.bbc.co.uk/')
-        self.assertEqual(len(responses), N)
-        for n in range(N):
-            all = []
-
-            def save_data(r, data=None):
-                all.append(data)
-            try:
-                response = yield from client.get('http://www.theguardian.com/',
-                                                 data_received=save_data)
-            except Exception:
-                for n, d in enumerate(all):
-                    with open('data%s.dat' % n, 'wb') as f:
-                        f.write(d)
-                raise
-            self.assertEqual(response.status_code, 200)
-
-    @asyncio.coroutine
-    def __test_http_get(self):
-        client = self.client()
-        response = yield from client.get('http://www.bbc.co.uk/')
-        self.assertEqual(response.status_code, 200)
-        self.after_response(response)
-
-    @asyncio.coroutine
     def test_get_https(self):
         client = self.client()
         response = yield from client.get('https://github.com/trending')
         self.assertEqual(response.status_code, 200)
-
-    def __test_bad_host(self):
-        client = self.client()
-        try:
-            response = yield from client.get('http://xxxyyyxxxxyyy/blafoo')
-        except socket.error:
-            pass
-        else:
-            self.assertTrue(response.request.proxy)
-            self.assertTrue(response.status_code >= 400)
 
 
 class ProxyExternal(ExternalBase):
@@ -63,6 +24,7 @@ class ProxyExternal(ExternalBase):
     def after_response(self, response):
         self.assertTrue(response.request.proxy)
 
+    @asyncio.coroutine
     def test_get_https(self):
         client = self.client()
         response = yield from client.get('https://github.com/trending')

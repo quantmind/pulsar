@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 
 import pulsar
 
@@ -15,6 +16,7 @@ class Context:
 
 class TestApi(unittest.TestCase):
 
+    @asyncio.coroutine
     def test_with_statement(self):
         with Context() as c:
             yield None

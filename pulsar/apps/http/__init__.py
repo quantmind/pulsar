@@ -408,6 +408,10 @@ class HttpTunnel(RequestBase):
     def client(self):
         return self.request.client
 
+    @property
+    def version(self):
+        return self.request.version
+
     def encode(self):
         req = self.request
         self.headers['host'] = req.get_header('host')
@@ -475,7 +479,6 @@ class HttpRequest(RequestBase):
         Allow for streaming body
 
     """
-    CONNECT = 'CONNECT'
     _proxy = None
     _ssl = None
     _tunnel = None
@@ -600,7 +603,7 @@ class HttpRequest(RequestBase):
 
     def first_line(self):
         if self._proxy:
-            if self.method == self.CONNECT:
+            if self.method == 'CONNECT':
                 url = self._netloc
             else:
                 url = self.full_url
