@@ -148,6 +148,7 @@ class TestHttpClientBase:
     def _check_server(self, response):
         self.assertEqual(response.headers['server'], SERVER_SOFTWARE)
 
+    @asyncio.coroutine
     def _test_stream_response(self, siz=3000, rep=10):
         http = self._client
         response = yield from http.get(

@@ -1,5 +1,6 @@
 import asyncio
-from unittest import SkipTest
+from inspect import isgenerator
+from unittest import SkipTest, TestCase
 
 from pulsar import ensure_future, isawaitable, HaltServer
 
@@ -8,6 +9,10 @@ from .utils import (TestFailure, skip_test, skip_reason,
 
 
 class AbortTests(Exception):
+    pass
+
+
+class InvalidTestFunction(TestCase.failureException):
     pass
 
 
@@ -163,6 +168,8 @@ class Runner:
                 test_timeout = get_test_timeout(method, test_timeout)
                 yield from asyncio.wait_for(coro, test_timeout,
                                             loop=self._loop)
+            elif isgenerator(coro):
+                raise InvalidTestFunction('test function returns a generator')
         except SkipTest as exc:
             self.runner.addSkip(test, str(exc))
         except Exception as exc:
