@@ -3,12 +3,12 @@ class for multiple asynchronous HTTP requests.
 
 To get started, one builds a client::
 
-    >>> from pulsar.apps import http
-    >>> client = http.HttpClient()
+    from pulsar.apps import http
+    client = http.HttpClient()
 
 and than makes requests, in a coroutine::
 
-    response = yield from http.get('http://www.bbc.co.uk')
+    response = await http.get('http://www.bbc.co.uk')
 
 Making requests
 =================
@@ -16,7 +16,7 @@ Pulsar HTTP client has no dependencies and an API similar to requests_::
 
     from pulsar.apps import http
     client = http.HttpClient()
-    response = yield from client.get('https://github.com/timeline.json')
+    response = await client.get('https://github.com/timeline.json')
 
 ``response`` is a :class:`HttpResponse` object which contains all the
 information about the request and the result:
@@ -41,8 +41,8 @@ Posting data and Parameters
 You can attach parameters to the ``url`` by passing the
 ``urlparams`` dictionary:
 
-    response = yield from http.get('http://bla.com',
-                                   urlparams={'page': 2, 'key': 'foo'})
+    response = await http.get('http://bla.com',
+                              urlparams={'page': 2, 'key': 'foo'})
     response.request.full_url == 'http://bla.com?page=2&key=foo'
 
 
@@ -57,13 +57,13 @@ To disable cookie one can pass ``store_cookies=False`` during
 
 If a response contains some Cookies, you can get quick access to them::
 
-    >>> response = yield from client.get(...)
-    >>> type(response.cookies)
+    response = await client.get(...)
+    type(response.cookies)
     <type 'dict'>
 
 To send your own cookies to the server, you can use the cookies parameter::
 
-    response = yield from client.get(..., cookies={'sessionid': 'test'})
+    response = await client.get(..., cookies={'sessionid': 'test'})
 
 
 .. _http-authentication:
@@ -90,9 +90,9 @@ you can include certificate file and key too, either
 to a :class:`HttpClient` or to a specific request::
 
     client = HttpClient(certkey='public.key')
-    res1 = client.get('https://github.com/timeline.json')
-    res2 = client.get('https://github.com/timeline.json',
-                      certkey='another.key')
+    res1 = await client.get('https://github.com/timeline.json')
+    res2 = await client.get('https://github.com/timeline.json',
+                            certkey='another.key')
 
 .. _http-streaming:
 
@@ -105,7 +105,7 @@ The easyiest way to use streaming is to pass the ``stream=True`` parameter
 during a request and access the :attr:`HttpResponse.raw` attribute.
 For example::
 
-    response = yield from http.get(..., stream=True)
+    response = await http.get(..., stream=True)
     for data in response.raw:
         # data can be a future or bytes
 
@@ -144,7 +144,7 @@ websocket handler::
 
 The websocket response is obtained by::
 
-    ws = yield from http.get('ws://...', websocket_handler=Echo())
+    ws = await http.get('ws://...', websocket_handler=Echo())
 
 .. _http-redirects:
 

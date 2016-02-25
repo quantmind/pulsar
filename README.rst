@@ -52,8 +52,21 @@ Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.
 
 Pulsar uses the asyncio_ and multiprocessing_ modules from the standard python
-library and it can be configured to run in multi-processing mode,
-multi-threading mode or a combination of the two.
+library and it can be configured to run in multi-processing mode.
+
+Another example of pulsar framework is the asynchronous ``HttpClient``:
+
+.. code:: python
+
+    from pulsar.apps import http
+
+    session = http.HttpClient()
+
+and somewhere in a coroutine you can wait for responses:
+
+.. code:: python
+
+    response = await session.get('https://github.com/timeline.json')
 
 Installing
 ============
