@@ -52,7 +52,7 @@ The first method for achieving this is to write an
         @task
         def __call__(self, a=None):
             if a is None:
-                a = yield spawn(name='greeter')
+                a = yield from spawn(name='greeter')
             if names:
                 name = names.pop()
                 send(a, 'greetme', {'name': name})
