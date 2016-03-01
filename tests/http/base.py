@@ -46,6 +46,7 @@ class TestHttpClientBase:
     timeout = 10
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         # Create the HttpBin server by sending this request to the arbiter
         from examples.proxyserver.manage import server as pserver
@@ -78,6 +79,7 @@ class TestHttpClientBase:
         cls._client = cls.client()
 
     @classmethod
+    @asyncio.coroutine
     def tearDownClass(cls):
         if cls.app is not None:
             yield from send('arbiter', 'kill_actor', cls.app.name)

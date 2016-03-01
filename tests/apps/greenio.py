@@ -38,6 +38,7 @@ class EchoGreen(Echo):
 class TestGreenIO(unittest.TestCase):
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    concurrency=cls.cfg.concurrency)
