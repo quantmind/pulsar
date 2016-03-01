@@ -165,3 +165,18 @@ class TestGreenIO(unittest.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             yield from pool.submit(lambda: next(iter([])))
         self.assertIsInstance(cm.exception.__cause__, StopIteration)
+
+    @asyncio.coroutine
+    def test_async_in_greenlet(self):
+        pool = greenio.GreenPool()
+        result = yield from pool.submit(async_function, self)
+        self.assertEqual(result, True)
+
+
+@asyncio.coroutine
+def async_function(test):
+    future = asyncio.Future()
+    future._loop.call_later(1, future.set_result, True)
+    result = yield from future
+    test.assertEqual(result, True)
+    return result

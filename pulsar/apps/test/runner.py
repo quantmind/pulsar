@@ -111,9 +111,8 @@ class Runner:
             yield from self._run(testcls.tearDownClass, test_timeout)
         except AbortTests:
             return
-        except Exception as exc:
-            self.logger.exception('Failure in tearDownClass',
-                                  exc_info=True)
+        except Exception:
+            self.logger.exception('Failure in tearDownClass')
 
         self.logger.info('Finished Tests from %s', testcls)
         self._loop.call_soon(self._next)
@@ -123,9 +122,11 @@ class Runner:
         self._check_abort()
         coro = method()
         # a coroutine
-        if coro:
+        if isawaitable(coro):
             test_timeout = get_test_timeout(method, test_timeout)
             yield from asyncio.wait_for(coro, test_timeout, loop=self._loop)
+        elif isgenerator(coro):
+            raise InvalidTestFunction('test function returns a generator')
 
     @asyncio.coroutine
     def _run_test(self, test, test_timeout):
