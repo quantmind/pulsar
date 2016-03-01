@@ -12,6 +12,7 @@ class TestPhylosophers(unittest.TestCase):
     concurrency = 'thread'
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         app = DiningPhilosophers(name='plato',
                                  concurrency=cls.concurrency)
