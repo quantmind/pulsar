@@ -977,6 +977,9 @@ class HttpResponse(ProtocolConsumer):
                 return self.json(charset)
             elif ct.startswith('text/'):
                 return self.text(charset)
+            elif ct == FORM_URL_ENCODED:
+                return parse_qsl(self.content.decode(charset),
+                                 keep_blank_values=True)
         return self.content
 
     def raise_for_status(self):
