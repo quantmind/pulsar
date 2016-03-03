@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 
 from pulsar import Future
 from pulsar.apps import wsgi
@@ -36,6 +37,7 @@ class TestAsyncContent(unittest.TestCase):
                          'application/json; charset=utf-8')
         self.assertEqual(response.render(), json.dumps({'bla': 'ciao'}))
 
+    @asyncio.coroutine
     def test_json_with_async_string2(self):
         d = Future()
         astr = wsgi.AsyncString(d)

@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 
 from pulsar import send
 from pulsar.apps import greenio
@@ -20,6 +21,7 @@ class TestGreenIo(unittest.TestCase):
         cls.msg = b''.join((b'a' for x in range(2**13)))
         cls.pool = greenio.GreenPool()
 
+    @asyncio.coroutine
     def test_yield_io(self):
         result = yield from self.client(self.msg)
         self.assertEqual(result, self.msg)
@@ -29,6 +31,7 @@ class TestGreenIo(unittest.TestCase):
         result = self.green(self.msg)
         self.assertEqual(result, self.msg)
 
+    @asyncio.coroutine
     def test_green_pool(self):
         result = yield from self.pool.submit(self.green, self.msg)
         self.assertEqual(result, self.msg)

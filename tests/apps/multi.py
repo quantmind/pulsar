@@ -1,5 +1,6 @@
 '''Tests the rpc middleware and utilities. It uses the calculator example.'''
 import unittest
+import asyncio
 
 import pulsar
 from pulsar import Config, get_actor
@@ -70,6 +71,7 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(apps[0].name, 'bla')
         self.assertEqual(apps[1].name, 'rpc_bla')
 
+    @asyncio.coroutine
     def testInstall(self):
         arbiter = get_actor()
         app = self.create(name='pluto')

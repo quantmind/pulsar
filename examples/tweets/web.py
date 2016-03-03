@@ -8,7 +8,7 @@ import os
 import json
 from string import Template
 
-from pulsar import task
+from pulsar import ensure_future
 from pulsar.apps.data import create_store
 from pulsar.apps.wsgi import LazyWsgi, WsgiHandler, Router, MediaRouter
 from pulsar.apps.ws import WebSocket, PubSubWS
@@ -46,7 +46,7 @@ class TwitterSite(LazyWsgi):
         self.store = create_store(cfg.data_store)
         pubsub = self.store.pubsub()
         # subscribe to channel
-        self.subscribe(pubsub)
+        ensure_future(self.subscribe(pubsub))
         return WsgiHandler([Router('/', get=self.home_page),
                             MediaRouter('/static', STATIC_DIR),
                             WebSocket('/message',
@@ -77,7 +77,6 @@ class TwitterSite(LazyWsgi):
         head.scripts.append(cfg.REQUIRE_JS)
         head.scripts.append('/static/tweets.js')
 
-    @task
     def subscribe(self, pubsub):
         '''Subscribe to the channel for tweets
         '''

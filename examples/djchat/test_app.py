@@ -13,6 +13,7 @@ except ImportError:
     server = None
 
 
+@asyncio.coroutine
 def start_server(actor, name, argv):
     server(argv)
     yield None
@@ -39,6 +40,7 @@ class TestDjangoChat(unittest.TestCase):
     app_cfg = None
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         cls.exc_id = gen_unique_id()[:8]
         name = cls.__name__.lower()
@@ -61,14 +63,17 @@ class TestDjangoChat(unittest.TestCase):
         if cls.app_cfg:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
+    @asyncio.coroutine
     def test_home(self):
         result = yield from self.http.get(self.uri)
         self.assertEqual(result.status_code, 200)
 
+    @asyncio.coroutine
     def test_404(self):
         result = yield from self.http.get('%s/bsjdhcbjsdh' % self.uri)
         self.assertEqual(result.status_code, 404)
 
+    @asyncio.coroutine
     def test_websocket(self):
         # TODO: fix this test. Someties it timesout
         c = self.http
@@ -80,16 +85,6 @@ class TestDjangoChat(unittest.TestCase):
         self.assertEqual(response.connection, ws.connection)
         self.assertTrue(ws.connection)
         self.assertIsInstance(ws.handler, MessageHandler)
-        #
-        return
-        # data = yield from ws.handler.get()
-        # data = json.loads(data)
-        # self.assertEqual(data['message'], 'joined')
-        #
-        # ws.write('Hello there!')
-        # data = yield from ws.handler.get()
-        # data = json.loads(data)
-        # self.assertEqual(data['message'], 'Hello there!')
 
 
 @dont_run_with_thread

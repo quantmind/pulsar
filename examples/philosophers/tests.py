@@ -12,12 +12,14 @@ class TestPhylosophers(unittest.TestCase):
     concurrency = 'thread'
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         app = DiningPhilosophers(name='plato',
                                  concurrency=cls.concurrency)
         cls.app_cfg = yield from send('arbiter', 'run', app)
 
     @test_timeout(30)
+    @asyncio.coroutine
     def test_info(self):
         while True:
             yield from asyncio.sleep(0.5)

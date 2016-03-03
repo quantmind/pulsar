@@ -28,7 +28,6 @@ from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, has_empty_content, http_parser,
                                   iri_to_uri, http_chunks)
 
-from pulsar.utils.internet import is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
 from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
@@ -47,14 +46,15 @@ class AbortWsgi(Exception):
 
 
 def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
-                      secure=False, loop=None, body=None):
+                      https=False, loop=None, body=None, **params):
     '''An function to create a WSGI environment dictionary for testing.
 
     :param url: the resource in the ``PATH_INFO``.
     :param method: the ``REQUEST_METHOD``.
     :param headers: optional request headers
-    :params secure: a secure connection?
-    :param extra: additional dictionary of parameters to add.
+    :params https: a secure connection?
+    :param extra: additional dictionary of parameters to add to ``params``
+    :param params: key valued parameters
     :return: a valid WSGI environ dictionary.
     '''
     parser = http_parser(kind=0)
@@ -65,7 +65,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     parsed = urlparse(path)
     if 'host' not in request_headers:
         if not parsed.netloc:
-            scheme = ('https' if secure else 'http')
+            scheme = ('https' if https else 'http')
             path = '%s://127.0.0.1%s' % (scheme, path)
         else:
             request_headers['host'] = parsed.netloc
@@ -75,9 +75,11 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     parser.execute(data, len(data))
     #
     stream = io.BytesIO(body or b'')
+    if extra:
+        params.update(extra)
     return wsgi_environ(stream, parser, request_headers,
                         ('127.0.0.1', 8060), '255.0.1.2:8080',
-                        Headers(), https=secure, extra=extra)
+                        Headers(), https=https, extra=params)
 
 
 def wsgi_environ(stream, parser, request_headers, address, client_address,
@@ -102,8 +104,9 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
         url_scheme = request_uri.scheme
         host = request_uri.netloc
     else:
-        url_scheme = 'https' if https else 'http'
         host = None
+        url_scheme = 'https' if https else os.environ.get('wsgi.url_scheme',
+                                                          'http')
     #
     environ = {"wsgi.input": stream,
                "wsgi.errors": sys.stderr,
@@ -475,7 +478,7 @@ class HttpServerResponse(ProtocolConsumer):
     def wsgi_environ(self):
         # return a the WSGI environ dictionary
         transport = self.transport
-        https = True if is_tls(transport.get_extra_info('socket')) else False
+        https = True if transport.get_extra_info('sslcontext') else False
         multiprocess = (self.cfg.concurrency == 'process')
         environ = wsgi_environ(self._body_reader,
                                self.parser,

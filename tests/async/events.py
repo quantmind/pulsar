@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 
 from pulsar import EventHandler, get_event_loop
 
@@ -12,6 +13,7 @@ class Handler(EventHandler):
 
 class TestFailure(unittest.TestCase):
 
+    @asyncio.coroutine
     def test_one_time(self):
         h = Handler(one_time_events=('start', 'finish'))
         h.bind_event('finish', lambda f, exc=None: 'OK')
@@ -19,6 +21,7 @@ class TestFailure(unittest.TestCase):
         self.assertTrue(h.event('finish').done())
         self.assertEqual(result, 'foo')
 
+    @asyncio.coroutine
     def test_one_time_error(self):
         h = Handler(one_time_events=('start', 'finish'))
         h.bind_event('finish', lambda f, exc=None: 'OK'+4)
@@ -26,6 +29,7 @@ class TestFailure(unittest.TestCase):
         self.assertTrue(h.event('finish').done())
         self.assertEqual(result, 3)
 
+    @asyncio.coroutine
     def test_bind_events(self):
         h = Handler(one_time_events=('start', 'finish'))
         h.bind_events(foo=3, bla=6)

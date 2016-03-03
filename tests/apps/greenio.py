@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 from unittest import mock
 
 from pulsar import Future, send, multi_async, get_event_loop
@@ -37,6 +38,7 @@ class EchoGreen(Echo):
 class TestGreenIO(unittest.TestCase):
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    concurrency=cls.cfg.concurrency)
@@ -52,6 +54,7 @@ class TestGreenIO(unittest.TestCase):
         environ = wsgi.test_wsgi_environ(**kwargs)
         return wsgi.WsgiRequest(environ)
 
+    @asyncio.coroutine
     def test_pool(self):
         pool = greenio.GreenPool()
         self.assertTrue(pool._loop)
@@ -64,6 +67,7 @@ class TestGreenIO(unittest.TestCase):
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
+    @asyncio.coroutine
     def test_greenlet_methods(self):
         pool = greenio.GreenPool()
         self.assertFalse(pool.in_green_worker)
@@ -75,6 +79,7 @@ class TestGreenIO(unittest.TestCase):
 
         yield from pool.submit(_greenlet_methods)
 
+    @asyncio.coroutine
     def test_error_in_pool(self):
         # Test an error
         pool = greenio.GreenPool()
@@ -95,6 +100,7 @@ class TestGreenIO(unittest.TestCase):
         result = self.client(msg)
         self.assertEqual(result, msg)
 
+    @asyncio.coroutine
     def test_shutdown(self):
         # Test an error
         pool = greenio.GreenPool()
@@ -154,8 +160,24 @@ class TestGreenIO(unittest.TestCase):
         self.assertEqual(green.wsgi, wsgi)
         self.assertEqual(green.pool, pool)
 
+    @asyncio.coroutine
     def test_uncatched_stopiteration(self):
         pool = greenio.GreenPool()
         with self.assertRaises(RuntimeError) as cm:
             yield from pool.submit(lambda: next(iter([])))
         self.assertIsInstance(cm.exception.__cause__, StopIteration)
+
+    @asyncio.coroutine
+    def test_async_in_greenlet(self):
+        pool = greenio.GreenPool()
+        result = yield from pool.submit(async_function, self)
+        self.assertEqual(result, True)
+
+
+@asyncio.coroutine
+def async_function(test):
+    future = asyncio.Future()
+    future._loop.call_later(1, future.set_result, True)
+    result = yield from future
+    test.assertEqual(result, True)
+    return result

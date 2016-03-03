@@ -1,8 +1,9 @@
 '''Tests the test suite and pulsar distribution.'''
 import unittest
+import asyncio
 
 import pulsar
-from pulsar import asyncio, send, multi_async
+from pulsar import send, multi_async
 from pulsar.apps.test import TestSuite
 from pulsar.apps.test.plugins import profile
 from pulsar.utils.version import get_version
@@ -12,6 +13,7 @@ def simple_function(actor):
     return actor.name
 
 
+@asyncio.coroutine
 def wait(actor, period=0.5):
     start = actor._loop.time()
     yield from asyncio.sleep(period)
@@ -27,11 +29,13 @@ class TestTestWorker(unittest.TestCase):
         app = monitor.app
         self.assertTrue(isinstance(app, TestSuite))
 
+    @asyncio.coroutine
     def test_unknown_send_target(self):
         # The target does not exists
         yield from self.async.assertRaises(pulsar.CommandError, send,
                                            'vcghdvchdgcvshcd', 'ping')
 
+    @asyncio.coroutine
     def test_multiple_execute(self):
         m = yield from multi_async((send('arbiter', 'run', wait, 1.2),
                                     send('arbiter', 'ping'),

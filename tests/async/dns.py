@@ -1,10 +1,12 @@
 import unittest
+import asyncio
 
 from pulsar import get_event_loop
 
 
 class TestDns(unittest.TestCase):
 
+    @asyncio.coroutine
     def test_getnameinfo(self):
         loop = get_event_loop()
         info = yield from loop.getaddrinfo('www.bbc.co.uk', 'http')

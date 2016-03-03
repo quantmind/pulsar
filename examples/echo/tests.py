@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 from asyncio import gather
 
 from pulsar import (send, new_event_loop, get_application,
@@ -13,6 +14,7 @@ class TestEchoServerThread(unittest.TestCase):
     server_cfg = None
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
@@ -25,6 +27,7 @@ class TestEchoServerThread(unittest.TestCase):
             return send('arbiter', 'kill_actor', cls.server_cfg.name)
 
     #    TEST THE SERVER APPLICATION
+    @asyncio.coroutine
     def test_server_on_arbiter(self):
         app = yield from get_application(self.__class__.__name__.lower())
         cfg = app.cfg
@@ -39,16 +42,19 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertTrue(server.cfg.addresses)
 
     #    TEST CLIENT INTERACTION
+    @asyncio.coroutine
     def test_ping(self):
         result = yield from self.client(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
 
+    @asyncio.coroutine
     def test_large(self):
         '''Echo a 3MB message'''
         msg = b''.join((b'a' for x in range(2**13)))
         result = yield from self.client(msg)
         self.assertEqual(result, msg)
 
+    @asyncio.coroutine
     def test_multi(self):
         result = yield from gather(self.client(b'ciao'),
                                    self.client(b'pippo'),
@@ -59,17 +65,20 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertTrue(b'foo' in result)
 
     # TESTS FOR PROTOCOLS AND CONNECTIONS
+    @asyncio.coroutine
     def test_client(self):
         yield from self.test_multi()
         c = self.client
         self.assertTrue(c.pool.available)
 
+    @asyncio.coroutine
     def test_info(self):
         info = yield from send(self.server_cfg.name, 'info')
         self.assertIsInstance(info, dict)
         self.assertEqual(info['actor']['name'], self.server_cfg.name)
         self.assertEqual(info['actor']['concurrency'], self.concurrency)
 
+    @asyncio.coroutine
     def test_connection(self):
         client = Echo(self.server_cfg.addresses[0], full_response=True)
         response = yield from client(b'test connection')
@@ -77,6 +86,7 @@ class TestEchoServerThread(unittest.TestCase):
         connection = response.connection
         self.assertTrue(str(connection))
 
+    @asyncio.coroutine
     def test_connection_pool(self):
         '''Test the connection pool. A very important test!'''
         client = Echo(self.server_cfg.addresses[0], pool_size=2)

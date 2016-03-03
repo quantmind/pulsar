@@ -7,15 +7,7 @@ Asynchonous API
 ==================
 
 Pulsar asynchronous api is built on top of the new python :mod:`asyncio`
-module, therefore ``pulsar.Future`` class is an alias for
-:class:`.asyncio.Future`.
-
-However, pulsar can run on python 2.7 and 3.3+ using the same code base.
-To achieve this, pulsar uses a specialised :class:`asyncio.Task` class
-with the following features:
-
-* works with both ``yield`` and ``yield from``
-* tolerant of synchronous values
+module.
 
 
 Async object interface

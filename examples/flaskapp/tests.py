@@ -1,5 +1,6 @@
 '''Tests the "helloworld" example.'''
 import unittest
+import asyncio
 
 from pulsar import send, SERVER_SOFTWARE
 from pulsar.apps.http import HttpClient
@@ -17,6 +18,7 @@ class TestFlaskThread(unittest.TestCase):
         return 'flask_' + cls.concurrency
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         s = server(name=cls.name(),
                    concurrency=cls.concurrency,
@@ -30,6 +32,7 @@ class TestFlaskThread(unittest.TestCase):
         if cls.app_cfg is not None:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
+    @asyncio.coroutine
     def testResponse200(self):
         c = self.client
         response = yield from c.get(self.uri)
@@ -40,6 +43,7 @@ class TestFlaskThread(unittest.TestCase):
         self.assertTrue(headers)
         self.assertEqual(headers['server'], SERVER_SOFTWARE)
 
+    @asyncio.coroutine
     def testResponse404(self):
         c = self.client
         response = yield from c.get('%s/bh' % self.uri)

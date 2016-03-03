@@ -688,7 +688,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def _close_all(self, actor):
         # Close al monitors at once
         try:
-            for m in self.monitors.values():
+            for m in tuple(self.monitors.values()):
                 stop = m.stop()
                 if stop:
                     yield from stop

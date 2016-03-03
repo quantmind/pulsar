@@ -38,14 +38,13 @@ Coroutines
 A :ref:`coroutine <coroutine>`, a generator which consumes values.
 For example::
 
-    def my_async_generator(...):
-        yield from something_but_dont_care_what_it_returns()
+    async def my_async_generator(...):
+        await something_but_dont_care_what_it_returns()
         ...
-        bla = yield from something_and_care_what_it_returns()
-        result = yield from do_something(bla)
-        return result
+        bla = await something_and_care_what_it_returns()
+        return await do_something(bla)
 
-a coroutine is obtained by calling the generator function::
+a coroutine is obtained by calling the coroutine function::
 
     o = my_async_generator()
 
@@ -61,9 +60,9 @@ An :class:`asyncio.Task`, is a component which has been added to
 pulsar asynchronous engine. It is created via the :func:`.async` function
 when applied to a generator function::
 
-    from pulsar import async
+    from pulsar import ensure_future
 
-    task = async(my_async_generator())
+    task = ensure_future(my_async_generator())
 
 A :class:`~asyncio.Task` is a subclass of :class:`~asyncio.Future` and
 therefore it has the same API, for example, you can add callbacks to a task::

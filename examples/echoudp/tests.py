@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 
 from pulsar import send, new_event_loop, get_application
@@ -11,6 +12,7 @@ class TestEchoUdpServerThread(unittest.TestCase):
     server_cfg = None
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    concurrency=cls.concurrency)
@@ -23,6 +25,7 @@ class TestEchoUdpServerThread(unittest.TestCase):
             return send('arbiter', 'kill_actor', cls.server_cfg.name)
 
     #    TEST THE SERVER APPLICATION
+    @asyncio.coroutine
     def test_server_on_arbiter(self):
         app = yield from get_application(self.__class__.__name__.lower())
         cfg = app.cfg
@@ -37,10 +40,12 @@ class TestEchoUdpServerThread(unittest.TestCase):
         self.assertTrue(server.cfg.addresses)
 
     #    TEST CLIENT INTERACTION
+    @asyncio.coroutine
     def test_ping(self):
         result = yield from self.client(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
 
+    @asyncio.coroutine
     def test_large(self):
         '''Echo a 3MB message'''
         msg = b''.join((b'a' for x in range(2**13)))

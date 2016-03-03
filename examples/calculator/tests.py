@@ -1,6 +1,7 @@
 '''Tests the RPC "calculator" example.'''
 import unittest
 import types
+import asyncio
 
 from pulsar import send
 from pulsar.apps import rpc, http
@@ -17,6 +18,7 @@ class TestRpcOnThread(unittest.TestCase):
     rpc_timeout = 500
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         name = 'calc_' + cls.concurrency
         s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
@@ -52,10 +54,12 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertEqual(hnd.subHandlers, {})
 
     # Pulsar server commands
+    @asyncio.coroutine
     def test_ping(self):
         response = yield from self.p.ping()
         self.assertEqual(response, 'pong')
 
+    @asyncio.coroutine
     def test_functions_list(self):
         result = yield from self.p.functions_list()
         self.assertTrue(result)
@@ -66,6 +70,7 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue('calc.add' in d)
         self.assertTrue('calc.divide' in d)
 
+    @asyncio.coroutine
     def test_time_it(self):
         '''Ping server 5 times'''
         bench = yield from self.p.timeit('ping', 5)
@@ -73,26 +78,32 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue(bench.taken)
 
     # Test Object method
+    @asyncio.coroutine
     def test_check_request(self):
         result = yield from self.p.check_request('check_request')
         self.assertTrue(result)
 
+    @asyncio.coroutine
     def test_add(self):
         response = yield from self.p.calc.add(3, 7)
         self.assertEqual(response, 10)
 
+    @asyncio.coroutine
     def test_subtract(self):
         response = yield from self.p.calc.subtract(546, 46)
         self.assertEqual(response, 500)
 
+    @asyncio.coroutine
     def test_multiply(self):
         response = yield from self.p.calc.multiply(3, 9)
         self.assertEqual(response, 27)
 
+    @asyncio.coroutine
     def test_divide(self):
         response = yield from self.p.calc.divide(50, 25)
         self.assertEqual(response, 2)
 
+    @asyncio.coroutine
     def test_info(self):
         response = yield from self.p.server_info()
         self.assertTrue('server' in response)
@@ -126,6 +137,7 @@ class TestRpcOnThread(unittest.TestCase):
         return self.async.assertRaises(rpc.InvalidParams, self.p.calc.divide,
                                        50, 25, 67)
 
+    @asyncio.coroutine
     def test_invalid_function(self):
         p = self.p
         yield from self.async.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
@@ -136,6 +148,7 @@ class TestRpcOnThread(unittest.TestCase):
         yield from self.async.assertRaises(rpc.NoSuchFunction,
                                            p.blabla.foofoo.sjdcbjcb)
 
+    @asyncio.coroutine
     def testInternalError(self):
         return self.async.assertRaises(rpc.InternalError, self.p.calc.divide,
                                        'ciao', 'bo')
@@ -143,16 +156,19 @@ class TestRpcOnThread(unittest.TestCase):
     def testCouldNotserialize(self):
         return self.async.assertRaises(rpc.InternalError, self.p.dodgy_method)
 
+    @asyncio.coroutine
     def testpaths(self):
         '''Fetch a sizable ammount of data'''
         response = yield from self.p.calc.randompaths(num_paths=20, size=100,
                                                       mu=1, sigma=2)
         self.assertTrue(response)
 
+    @asyncio.coroutine
     def test_echo(self):
         response = yield from self.p.echo('testing echo')
         self.assertEqual(response, 'testing echo')
 
+    @asyncio.coroutine
     def test_docs(self):
         handler = Root({'calc': Calculator})
         self.assertEqual(handler.parent, None)
@@ -167,6 +183,7 @@ class TestRpcOnThread(unittest.TestCase):
         response = yield from self.p.documentation()
         self.assertEqual(response, docs)
 
+    @asyncio.coroutine
     def test_batch_one_call(self):
         bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
 
@@ -184,6 +201,7 @@ class TestRpcOnThread(unittest.TestCase):
             self.assertEqual(batch_response.result, 'pong')
             self.assertIsNone(batch_response.exception)
 
+    @asyncio.coroutine
     def test_batch_few_call(self):
         bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
 
@@ -208,6 +226,7 @@ class TestRpcOnThread(unittest.TestCase):
                 self.assertEqual(batch_response.result, 2)
                 self.assertIsNone(batch_response.exception)
 
+    @asyncio.coroutine
     def test_batch_error_response_call(self):
         bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
 
@@ -225,6 +244,7 @@ class TestRpcOnThread(unittest.TestCase):
             self.assertIsInstance(batch_response.exception, rpc.InvalidParams)
             self.assertIsNone(batch_response.result)
 
+    @asyncio.coroutine
     def test_batch_full_response_call(self):
         bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout,
                                 full_response=True)

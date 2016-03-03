@@ -33,7 +33,7 @@ import asyncio
 
 import pulsar
 from pulsar import (get_actor, send, new_event_loop, as_gather,
-                    is_async, format_traceback, ImproperlyConfigured)
+                    isawaitable, format_traceback, ImproperlyConfigured)
 from pulsar.apps.data import create_store
 
 
@@ -144,7 +144,7 @@ class AsyncAssert:
         def _(*args, **kwargs):
             args = yield from as_gather(*args)
             result = getattr(self.test, name)(*args, **kwargs)
-            if is_async(result):
+            if isawaitable(result):
                 result = yield from result
             return result
 

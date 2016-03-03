@@ -54,6 +54,7 @@ Implementation
 import os
 import random
 import json
+import asyncio
 
 import pulsar
 from pulsar import command, task
@@ -182,6 +183,7 @@ class DiningPhilosophers(pulsar.Application):
         self.pickup_fork(philosopher)
 
     @task
+    @asyncio.coroutine
     def pickup_fork(self, philosopher):
         '''The philosopher has fewer than two forks.
 

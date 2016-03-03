@@ -1,3 +1,5 @@
+import asyncio
+
 from pulsar import arbiter, spawn, send, ensure_future, Config, command
 
 
@@ -66,6 +68,7 @@ class Remote(metaclass=RemoteType):
         self.proxy = proxy
 
     @classmethod
+    @asyncio.coroutine
     def spawn(cls, **kwargs):
         proxy = yield from spawn(**kwargs)
         return cls(proxy)

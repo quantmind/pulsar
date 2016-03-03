@@ -1,5 +1,6 @@
 '''Tests actor and actor proxies.'''
 import unittest
+import asyncio
 from time import time
 
 from functools import partial
@@ -15,6 +16,7 @@ def add(actor, a, b):
     return (actor.name, a+b)
 
 
+@asyncio.coroutine
 def spawn_actor_from_actor(actor, name):
     actor2 = yield from spawn(name=name)
     pong = yield from send(actor2, 'ping')
@@ -32,6 +34,7 @@ class create_echo_server:
     def __init__(self, address):
         self.address = address
 
+    @asyncio.coroutine
     def __call__(self, actor):
         '''Starts an echo server on a newly spawn actor'''
         server = TcpServer(partial(Connection, EchoServerProtocol),
@@ -42,6 +45,7 @@ class create_echo_server:
         actor.bind_event('stopping', self._stop_server)
         return actor
 
+    @asyncio.coroutine
     def _stop_server(self, actor):
         yield from actor.servers['echo'].close()
         return actor
@@ -50,6 +54,7 @@ class create_echo_server:
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
 
+    @asyncio.coroutine
     def test_spawn_and_interact(self):
         name = 'pluto-%s' % self.concurrency
         proxy = yield from self.spawn_actor(name=name)
@@ -61,6 +66,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(n, name)
         self.assertEqual(result, 4)
 
+    @asyncio.coroutine
     def test_info(self):
         name = 'pippo-%s' % self.concurrency
         proxy = yield from self.spawn_actor(name=name)
@@ -70,6 +76,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         ainfo = info['actor']
         self.assertEqual(ainfo['is_process'], self.concurrency == 'process')
 
+    @asyncio.coroutine
     def test_simple_spawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
         proxy = yield from self.spawn_actor(
@@ -87,6 +94,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         is_alive = yield from async_while(3, proxy_monitor.is_alive)
         self.assertFalse(is_alive)
 
+    @asyncio.coroutine
     def test_spawn_from_actor(self):
         proxy = yield from self.spawn_actor(
             name='spawning-actor-%s' % self.concurrency)
@@ -111,6 +119,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         is_alive = yield from async_while(3, proxy_monitor2.is_alive)
         self.assertFalse(is_alive)
 
+    @asyncio.coroutine
     def test_config_command(self):
         proxy = yield from self.spawn_actor(
             name='actor-test-config-%s' % self.concurrency)

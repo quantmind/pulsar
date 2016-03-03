@@ -38,6 +38,7 @@ class TestWebSocketThread(unittest.TestCase):
     concurrency = 'thread'
 
     @classmethod
+    @asyncio.coroutine
     def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__,
                    concurrency=cls.concurrency, pyparser=cls.pyparser)
@@ -65,6 +66,7 @@ class TestWebSocketThread(unittest.TestCase):
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
         self.assertEqual(v, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
 
+    @asyncio.coroutine
     def test_bad_requests(self):
         c = self.http()
         response = yield from c.post(self.ws_uri)
@@ -82,6 +84,7 @@ class TestWebSocketThread(unittest.TestCase):
                                     headers=[('Sec-Websocket-version', 'xxx')])
         self.assertEqual(response.status_code, 400)
 
+    @asyncio.coroutine
     def test_upgrade(self):
         c = self.http()
         handler = Echo(c._loop)
@@ -100,6 +103,7 @@ class TestWebSocketThread(unittest.TestCase):
         message = yield from handler.get()
         self.assertEqual(message, 'Hi there!')
 
+    @asyncio.coroutine
     def test_ping(self):
         c = self.http()
         handler = Echo(c._loop)
@@ -110,6 +114,7 @@ class TestWebSocketThread(unittest.TestCase):
         message = yield from handler.get()
         self.assertEqual(message, 'PING: TESTING PING')
 
+    @asyncio.coroutine
     def test_pong(self):
         c = self.http()
         handler = Echo(c._loop)
@@ -119,6 +124,7 @@ class TestWebSocketThread(unittest.TestCase):
         message = yield from handler.get()
         self.assertEqual(message, 'PONG: TESTING CLIENT PING')
 
+    @asyncio.coroutine
     def test_close(self):
         c = self.http()
         handler = Echo(c._loop)
@@ -131,6 +137,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(ws.close_reason[0], 1001)
         self.assertTrue(ws._connection.closed)
 
+    @asyncio.coroutine
     def test_home(self):
         c = self.http()
         response = yield from c.get(self.uri)
@@ -138,6 +145,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
 
+    @asyncio.coroutine
     def test_graph(self):
         c = self.http()
         handler = Echo(c._loop)

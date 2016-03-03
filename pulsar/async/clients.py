@@ -83,6 +83,7 @@ class Pool(AsyncObject):
             return connection in self._queue._queue
         return True
 
+    @asyncio.coroutine
     def connect(self):
         '''Get a connection from the pool.
 

@@ -6,7 +6,8 @@ from asyncio import (Future, CancelledError, TimeoutError, sleep, gather,
                      coroutine)
 
 from .consts import MAX_ASYNC_WHILE
-from .access import get_event_loop, LOGGER, isfuture, is_async, ensure_future
+from .access import (get_event_loop, LOGGER, isfuture, isawaitable,
+                     ensure_future)
 
 
 __all__ = ['maybe_async',
@@ -134,7 +135,7 @@ def maybe_async(value, loop=None):
 
 @coroutine
 def as_coroutine(value):
-    if is_async(value):
+    if isawaitable(value):
         value = yield from value
     return value
 
@@ -157,9 +158,10 @@ def task(function):
     if isgeneratorfunction(function):
         wrapper = function
     else:
+        @coroutine
         def wrapper(*args, **kw):
             res = function(*args, **kw)
-            if is_async(res):
+            if isawaitable(res):
                 res = yield from res
             return res
 

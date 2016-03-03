@@ -26,7 +26,7 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(request.absolute_uri(), uri)
 
     def test_is_secure(self):
-        request = self.request(secure=True)
+        request = self.request(https=True)
         self.assertTrue(request.is_secure)
         self.assertEqual(request.environ['HTTPS'], 'on')
         self.assertEqual(request.environ['wsgi.url_scheme'], 'https')
