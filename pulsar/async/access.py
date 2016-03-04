@@ -6,7 +6,7 @@ import warnings
 from collections import OrderedDict
 from threading import current_thread
 
-from asyncio import iscoroutine, coroutine, Future
+from asyncio import Future
 
 from pulsar.utils.config import Global
 from pulsar.utils.system import current_process
@@ -15,6 +15,8 @@ try:
     from asyncio import ensure_future
     from inspect import isawaitable
 except ImportError:     # pragma    nocover
+    from asyncio import iscoroutine
+
     ensure_future = asyncio.async
 
     def isawaitable(c):
@@ -23,7 +25,6 @@ except ImportError:     # pragma    nocover
 
 __all__ = ['get_event_loop',
            'new_event_loop',
-           'asyncio',
            'get_actor',
            'isfuture',
            'is_mainthread',
@@ -34,7 +35,6 @@ __all__ = ['get_event_loop',
            'SELECTORS',
            'Future',
            'reraise',
-           'coroutine',
            'isawaitable',
            'ensure_future',
            'CANCELLED_ERRORS',
@@ -47,9 +47,9 @@ CANCELLED_ERRORS = (asyncio.CancelledError,)
 
 
 def is_async(x):    # pragma    nocover
-    # TODO: remove in pulsar 1.2
+    # TODO: remove in pulsar 1.3
     warnings.warn("pulsar.is_async is deprecated and will be removed in "
-                  "pulsar 1.2, use pulsar.isawaitable instead",
+                  "pulsar 1.3, use pulsar.isawaitable instead",
                   SyntaxWarning, stacklevel=2)
     return isawaitable(x)
 
