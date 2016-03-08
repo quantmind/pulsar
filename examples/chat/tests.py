@@ -5,7 +5,6 @@ import asyncio
 from pulsar import send
 from pulsar.apps import rpc, http, ws
 from pulsar.apps.test import dont_run_with_thread
-from pulsar.utils.httpurl import HTTPError
 from pulsar.utils.system import json
 
 from .manage import server
@@ -85,8 +84,8 @@ class TestWebChat(unittest.TestCase):
         p = rpc.JsonProxy(self.uri)
         try:
             yield from p.message('ciao')
-        except HTTPError as e:
-            self.assertEqual(e.code, 405)
+        except http.HttpRequestException as e:
+            self.assertEqual(e.response.status_code, 405)
         else:
             assert False, '405 not raised'
 
