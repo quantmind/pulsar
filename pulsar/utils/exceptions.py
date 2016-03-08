@@ -15,7 +15,10 @@ __all__ = ['PulsarException',
            'EventAlreadyRegistered',
            'InvalidOperation',
            'HaltServer',
-           'HTTPError',
+           # HTTP client exception
+           'HttpRequestException',
+           'HttpConnectionError',
+           'HttpProxyError',
            'SSLError',
            # HTTP Exceptions
            'HttpException',
@@ -91,17 +94,35 @@ class HaltServer(BaseException):
 
 
 # #################################################################### HTTP
-class HTTPError(PulsarException):
-    "Base for all HTTP related errors."
-    pass
+class HttpRequestException(IOError):
+    "Base for all HTTP related errors"
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize RequestException with `request` and `response` objects.
+        """
+        response = kwargs.pop('response', None)
+        self.response = response
+        self.request = kwargs.pop('request', None)
+        if (response is not None and not self.request and
+                hasattr(response, 'request')):
+            self.request = self.response.request
+        super().__init__(*args, **kwargs)
 
 
-class SSLError(HTTPError):
-    "Raised when SSL certificate fails in an HTTPS connection."
-    pass
+class HttpConnectionError(HttpRequestException):
+    """A Connection error occurred."""
 
 
-class HttpException(HTTPError):
+class HttpProxyError(HttpConnectionError):
+    """A proxy error occurred."""
+
+
+class SSLError(HttpConnectionError):
+    """An SSL error occurred."""
+
+
+# #################################################################### HTTP
+class HttpException(PulsarException):
     '''The base class of all ``HTTP`` server exceptions
 
     Introduces the following attributes:

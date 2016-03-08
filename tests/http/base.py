@@ -12,7 +12,7 @@ from pulsar.utils.path import Path
 from pulsar.utils.httpurl import iri_to_uri
 from pulsar.utils.system import platform
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
-                              HTTPError)
+                              HttpRequestException)
 
 __test__ = False
 
@@ -31,6 +31,8 @@ def no_tls(f):
     def _(self):
         if not self.with_tls:
             return f(self)
+        else:
+            raise unittest.SkipTest('Skipped when using tls')
 
     return _
 
@@ -359,7 +361,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_status(), '400 Bad Request')
         self.assertTrue(response.content)
-        self.assertRaises(HTTPError, response.raise_for_status)
+        self.assertRaises(HttpRequestException, response.raise_for_status)
         # Make sure we only have one connection after a valid request
         response = yield from http.get(self.httpbin('get'))
         self.assertEqual(response.status_code, 200)
@@ -374,7 +376,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(response.headers.has('connection', 'close'))
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.content)
-        self.assertRaises(HTTPError, response.raise_for_status)
+        self.assertRaises(HttpRequestException, response.raise_for_status)
 
     @asyncio.coroutine
     def test_dodgy_on_header_event(self):
@@ -413,6 +415,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(redirect.connection, response.connection)
         self.assertEqual(response.connection._processed, 7)
 
+    @no_tls
     @asyncio.coroutine
     def test_large_response(self):
         http = self._client
@@ -747,7 +750,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             self.httpbin(''), headers=[('accept', 'application/json')])
         self.assertEqual(response.status_code, 415)
 
-    @unittest.skipUnless(linux, 'Test in lunux platform only')
+    @unittest.skipUnless(linux, 'Test in linux platform only')
     @asyncio.coroutine
     def test_servername(self):
         http = self.client()

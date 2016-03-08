@@ -58,14 +58,6 @@ from http.cookies import SimpleCookie
 from .structures import mapping_iterator
 from .string import to_bytes, to_string
 from .html import capfirst
-
-# try:
-#     from http_parser.parser import HttpParser as CHttpParser
-#     hasextensions = True
-#     _Http_Parser = CHttpParser
-# except ImportError:  # pragma    nocover
-#     hasextensions = False
-#     _Http_Parser = None
 #
 # The http_parser has several bugs, therefore it is switched off
 hasextensions = False
@@ -82,15 +74,6 @@ def http_parser(**kwargs):
     return _Http_Parser(**kwargs)
 
 
-try:    # Compiled with SSL?
-    BaseSSLError = None
-    ssl = None
-    import ssl
-    BaseSSLError = ssl.SSLError
-except (ImportError, AttributeError):   # pragma : no cover
-    pass
-
-
 getproxies_environment = urllibr.getproxies_environment
 ascii_letters = string.ascii_letters
 HTTPError = urllibr.HTTPError
@@ -98,10 +81,6 @@ URLError = urllibr.URLError
 request_host = urllibr.request_host
 parse_http_list = urllibr.parse_http_list
 
-
-class SSLError(HTTPError):
-    "Raised when SSL certificate fails in an HTTPS connection."
-    pass
 
 # ###################################################    URI & IRI SUFF
 #

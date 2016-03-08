@@ -86,13 +86,28 @@ Supported out of the box::
 
     client.get('https://github.com/timeline.json')
 
-you can include certificate file and key too, either
-to a :class:`HttpClient` or to a specific request::
+The :class:`.HttpClient` can verify SSL certificates for HTTPS requests,
+just like a web browser. To check a host's SSL certificate, you can use the
+``verify`` argument:
 
-    client = HttpClient(certkey='public.key')
+    client = HttpClient()
+    client.verify is True
+    client = HttpClient(verify=False)
+    client.verify is False
+
+By default, ``verify`` is set to True.
+
+You can override the ``verify`` argument during requests too:
+
     res1 = await client.get('https://github.com/timeline.json')
-    res2 = await client.get('https://github.com/timeline.json',
-                            certkey='another.key')
+    res2 = await client.get('https://locahost:8020', verify=False)
+
+You can pass ``verify`` the path to a CA_BUNDLE file or directory with
+certificates of trusted CAs:
+
+    res3 = await client.get('https://locahost:8020',
+                            verify='/path/to/ca_bundle')
+
 
 .. _http-streaming:
 
@@ -287,12 +302,17 @@ from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from http.client import responses
 try:
     import ssl
+    BaseSSLError = ssl.SSLError
 except ImportError:
     ssl = None
 
+    class BaseSSLError(Exception):
+        pass
+
 import pulsar
 from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
-                    isawaitable, ProtocolConsumer, ensure_future)
+                    isawaitable, ProtocolConsumer, ensure_future,
+                    HttpRequestException, HttpConnectionError, SSLError)
 from pulsar.utils import websocket
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, to_bytes
@@ -301,7 +321,7 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata,
                                   Headers, get_environ_proxies,
                                   choose_boundary, request_host,
-                                  is_succesful, HTTPError, URLError,
+                                  is_succesful,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, http_chunks,
                                   parse_options_header,
@@ -490,7 +510,7 @@ class HttpRequest(RequestBase):
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
                  websocket_handler=None, cookies=None, urlparams=None,
-                 stream=False, proxies=None, **ignored):
+                 stream=False, proxies=None, verify=True, **ignored):
         self.client = client
         self._data = None
         self.files = files
@@ -513,9 +533,10 @@ class HttpRequest(RequestBase):
         self.websocket_handler = websocket_handler
         self.source_address = source_address
         self.stream = stream
+        self.verify = verify
         self.new_parser()
         if self._scheme in tls_schemes:
-            self._ssl = client.ssl_context(**ignored)
+            self._ssl = client.ssl_context(verify=self.verify, **ignored)
         if auth and not isinstance(auth, Auth):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
@@ -551,7 +572,7 @@ class HttpRequest(RequestBase):
     @property
     def key(self):
         tunnel = self._tunnel.full_url if self._tunnel else None
-        return (self.scheme, self.host, self.port, tunnel)
+        return (self.scheme, self.host, self.port, tunnel, self.verify)
 
     @property
     def proxy(self):
@@ -987,10 +1008,10 @@ class HttpResponse(ProtocolConsumer):
         """
         if self.is_error:
             if self.status_code:
-                raise HTTPError(self.url, self.status_code,
-                                self.text(), self.headers, None)
+                raise HttpRequestException(response=self)
             else:
-                raise URLError(self.on_finished.result.error)
+                raise HttpConnectionError(response=self,
+                                          msg=self.on_finished.result.error)
 
     def info(self):
         """Required by python CookieJar.
@@ -1283,7 +1304,13 @@ class HttpClient(AbstractClient):
                 lambda: self.create_connection((host, port), ssl=request.ssl),
                 pool_size=self.pool_size, loop=self._loop)
             self.connection_pools[request.key] = pool
-        conn = yield from pool.connect()
+        try:
+            conn = yield from pool.connect()
+        except BaseSSLError as e:
+            raise SSLError(str(e), response=self) from None
+        except ConnectionRefusedError as e:
+            raise HttpConnectionError(str(e), response=self) from None
+
         with conn:
             try:
                 response = yield from start_request(request, conn)
@@ -1320,9 +1347,16 @@ class HttpClient(AbstractClient):
                     check_hostname=False, certfile=None, keyfile=None,
                     cafile=None, capath=None, cadata=None, **kw):
         assert ssl, 'SSL not supported'
-        if verify:
+        if verify is True:
             cert_reqs = ssl.CERT_REQUIRED
             check_hostname = True
+        elif isinstance(verify, str):
+            if os.path.isfile(verify):
+                cafile = verify
+            elif os.path.isdir(verify):
+                capath = verify
+            cert_reqs = ssl.CERT_REQUIRED
+
         return ssl._create_unverified_context(cert_reqs=cert_reqs,
                                               check_hostname=check_hostname,
                                               certfile=certfile,
