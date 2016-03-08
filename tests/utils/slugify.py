@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+from unittest import skipUnless
 
-from pulsar.utils.slugify import slugify
+from pulsar.utils.slugify import slugify, unidecode
 
 
+@skipUnless(unidecode, 'Requires unidecode package')
 class TestSlugify(unittest.TestCase):
 
     def test_manager(self):
