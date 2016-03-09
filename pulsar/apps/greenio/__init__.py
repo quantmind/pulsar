@@ -53,7 +53,7 @@ utility::
                                  greenio.GreenWSGI(app, green_pool)],
                                 async=True)
 
-    wsgi.WsgiServer(callable=callable).start()
+    wsgi.WSGIServer(callable=callable).start()
 
 The :class:`.GreenPool` manages a pool of greenlets which execute your
 application. In this way, within your ``app`` you can invoke the

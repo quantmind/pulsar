@@ -20,7 +20,7 @@ To quickly setup a server::
             return wsgi.wsgiHandler([app])
 
     if __name__ == '__main__':
-        wsgi.WsgiServer(Wsgi()).start()
+        wsgi.WSGIServer(Wsgi()).start()
 
 
 * The ``MyRpc`` handles the requests
