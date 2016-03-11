@@ -17,7 +17,7 @@ To quickly setup a server::
             app = wsgi.Router('/',
                               post=MyRpc(),
                               response_content_types=['application/json'])
-            return wsgi.wsgiHandler([app])
+            return wsgi.WsgiHandler([app])
 
     if __name__ == '__main__':
         wsgi.WSGIServer(Wsgi()).start()
