@@ -69,7 +69,7 @@ cdef class RedisParser:
     def _pack_command(self, args):
         yield ('*%d\r\n' % len(args)).encode('utf-8')
         for value in args:
-            if isinstance(value, strict_string_type):
+            if isinstance(value, str):
                 value = value.encode('utf-8')
             elif not isinstance(value, bytes):
                 value = str(value).encode('utf-8')
@@ -86,7 +86,7 @@ cdef class RedisParser:
                 yield ('$%d\r\n' % len(value)).encode('utf-8')
                 yield value
                 yield CRLF
-            elif isinstance(value, string_type):
+            elif isinstance(value, str):
                 value = value.encode('utf-8')
                 yield ('$%d\r\n' % len(value)).encode('utf-8')
                 yield value

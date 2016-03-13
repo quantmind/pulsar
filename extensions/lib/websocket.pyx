@@ -2,7 +2,7 @@ import os
 from struct import pack, unpack
 
 cimport cython
-from common cimport websocket_mask
+from websocket cimport websocket_mask, to_bytes
 
 
 cdef class Frame:
@@ -281,7 +281,7 @@ cdef class FrameParser:
         else:
             masking_key = b''
         if opcode is None:
-            opcode = 1 if isinstance(message, string_type) else 2
+            opcode = 1 if isinstance(message, str) else 2
         data = to_bytes(message or b'', 'utf-8')
         if opcode not in self._opcodes:
             raise self.ProtocolError('WEBSOCKET opcode a reserved value')

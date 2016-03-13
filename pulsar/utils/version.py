@@ -11,7 +11,7 @@ def get_version(version, filename=None):
     if version[3] == 'alpha' and version[4] == 0:
         git_changeset = get_git_changeset(filename)
         if git_changeset:
-            sub = '-dev.%s' % git_changeset
+            sub = '.dev%s' % git_changeset
     if version[3] != 'final' and not sub:
         sub = '%s%s' % tuple(version[3:])
     return main + sub

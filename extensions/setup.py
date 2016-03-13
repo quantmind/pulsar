@@ -55,6 +55,7 @@ def lib_extension():
 
 def libparams():
     extensions = [lib_extension()]
-    return {'ext_modules': cythonize(extensions),
+    return {'ext_modules': cythonize(extensions,
+                                     include_path=include_dirs),
             'cmdclass': {'build_ext': tolerant_build_ext},
             'include_dirs': include_dirs}
