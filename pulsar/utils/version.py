@@ -2,6 +2,8 @@ import datetime
 import os
 import subprocess
 
+symbol = {'alpha': 'a', 'beta': 'b'}
+
 
 def get_version(version, filename=None):
     assert len(version) == 5
@@ -13,7 +15,7 @@ def get_version(version, filename=None):
         if git_changeset:
             sub = '.dev%s' % git_changeset
     if version[3] != 'final' and not sub:
-        sub = '%s%s' % tuple(version[3:])
+        sub = '%s%s' % (symbol.get(version[3], version[3]), version[4])
     return main + sub
 
 
