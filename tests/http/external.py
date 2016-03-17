@@ -21,7 +21,8 @@ class ExternalBase(TestHttpClientBase):
     @asyncio.coroutine
     def test_header_links_and_close(self):
         client = self.client()
-        response = yield from client.get('https://api.github.com/users')
+        baseurl = 'https://api.github.com/gists/public'
+        response = yield from client.get(baseurl)
         self.assertEqual(response.status_code, 200)
         links = response.links
         self.assertTrue(links)
@@ -29,8 +30,7 @@ class ExternalBase(TestHttpClientBase):
         self.assertTrue('rel' in next)
         self.assertTrue('url' in next)
         yield from client.close()
-        yield from self.async.assertRaises(AssertionError, client.get,
-                                           'https://api.github.com/users')
+        yield from self.async.assertRaises(AssertionError, client.get, baseurl)
 
 
 class ProxyExternal(ExternalBase):
