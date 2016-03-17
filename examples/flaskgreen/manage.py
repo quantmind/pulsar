@@ -130,6 +130,10 @@ def FlaskApp(echo):
     def not_found(e):
         return make_response("404 Page", 404)
 
+    @app.route('/', methods=['GET'])
+    def home():
+        return "Try any other url for an echo"
+
     @app.route('/<path>', methods=['GET'])
     def add_org(path):
         a = echo(path.encode('utf-8'))
@@ -158,7 +162,7 @@ class Servers(MultiApp):
     cfg = Config(bind=':8080', echo_bind=':8060')
 
     def build(self):
-        yield self.new_app(WSGIServer, callable=Site())
+        yield self.new_app(WSGIServer, callable=FlaskSite())
         yield self.new_app(SocketServer, 'echo', callable=EchoServerProtocol)
 
 
