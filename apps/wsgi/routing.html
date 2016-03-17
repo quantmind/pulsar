@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Routing &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>Routing &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" />
@@ -285,7 +285,7 @@ Routers from the <a class="reference internal" href="#pulsar.apps.wsgi.routers.R
 files such ass <code class="docutils literal"><span class="pre">css</span></code>, <code class="docutils literal"><span class="pre">javascript</span></code>, images and so forth.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.routers.MediaRouter">
-<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">MediaRouter</code><span class="sig-paren">(</span><em>rule</em>, <em>path</em>, <em>show_indexes=False</em>, <em>default_suffix=None</em>, <em>default_file='index.html'</em>, <em>raise_404=True</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#MediaRouter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">MediaRouter</code><span class="sig-paren">(</span><em>rule</em>, <em>path</em>, <em>show_indexes=False</em>, <em>default_suffix=None</em>, <em>default_file='index.html'</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#MediaRouter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> for serving static media files from a given
 directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -331,7 +331,7 @@ concurrently. Cavet, you app does not need to be asynchronous to use this
 method.</p>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.routers.file_response">
-<code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">file_response</code><span class="sig-paren">(</span><em>request</em>, <em>filepath</em>, <em>block=None</em>, <em>status_code=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#file_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.file_response" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">file_response</code><span class="sig-paren">(</span><em>request</em>, <em>filepath</em>, <em>block=None</em>, <em>status_code=None</em>, <em>content_type=None</em>, <em>encoding=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#file_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.file_response" title="Permalink to this definition">¶</a></dt>
 <dd><p>Utility for serving a local file</p>
 <p>Typical usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
@@ -610,6 +610,7 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
 <li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../pics.html">Pics</a></li>
 </ul>
 <ul class="current">
@@ -624,8 +625,7 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
 <li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

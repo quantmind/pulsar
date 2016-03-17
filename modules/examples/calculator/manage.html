@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.calculator.manage &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>examples.calculator.manage &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -79,6 +79,7 @@
 <span class="sd">   :member-order: bysource</span>
 
 <span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">normalvariate</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">as_coroutine</span>
@@ -114,6 +115,7 @@
 
 <span class="k">class</span> <span class="nc">RequestCheck</span><span class="p">:</span>
 
+    <span class="nd">@asyncio.coroutine</span>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">body_data</span><span class="p">())</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name</span><span class="p">)</span>
@@ -127,31 +129,31 @@
 <div class="viewcode-block" id="Root.rpc_dodgy_method"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Root.rpc_dodgy_method">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_dodgy_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;This method will fails because the return object is not</span>
 <span class="sd">        json serializable.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">Calculator</span>
-</div>
-    <span class="n">rpc_check_request</span> <span class="o">=</span> <span class="n">RequestCheck</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Calculator</span></div>
 
-</div>
+    <span class="n">rpc_check_request</span> <span class="o">=</span> <span class="n">RequestCheck</span><span class="p">()</span></div>
+
+
 <div class="viewcode-block" id="Calculator"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Calculator">[docs]</a><span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">rpc</span><span class="o">.</span><span class="n">JSONRPC</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`.JSONRPC` handler which implements few simple</span>
 <span class="sd">    remote methods.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 <div class="viewcode-block" id="Calculator.rpc_add"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_add">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add two numbers&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Calculator.rpc_subtract"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_subtract">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_subtract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Subtract two numbers&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Calculator.rpc_multiply"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_multiply">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_multiply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Multiply two numbers&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-</div>
-    <span class="n">rpc_divide</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">rpc_method</span><span class="p">(</span><span class="n">divide</span><span class="p">,</span> <span class="n">request_handler</span><span class="o">=</span><span class="n">request_handler</span><span class="p">)</span>
-    <span class="n">rpc_randompaths</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">rpc_method</span><span class="p">(</span><span class="n">randompaths</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span></div>
 
-</div>
+    <span class="n">rpc_divide</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">rpc_method</span><span class="p">(</span><span class="n">divide</span><span class="p">,</span> <span class="n">request_handler</span><span class="o">=</span><span class="n">request_handler</span><span class="p">)</span>
+    <span class="n">rpc_randompaths</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">rpc_method</span><span class="p">(</span><span class="n">randompaths</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="Site"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Site">[docs]</a><span class="k">class</span> <span class="nc">Site</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">LazyWsgi</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;WSGI handler for the RPC server&#39;&#39;&#39;</span>
 <div class="viewcode-block" id="Site.setup"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Site.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
@@ -163,9 +165,9 @@
         <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">(</span><span class="n">middleware</span><span class="o">=</span><span class="p">[</span><span class="n">wsgi</span><span class="o">.</span><span class="n">wait_for_body_middleware</span><span class="p">,</span>
                                             <span class="n">middleware</span><span class="p">],</span>
                                 <span class="n">response_middleware</span><span class="o">=</span><span class="n">response</span><span class="p">,</span>
-                                <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                                <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span></div></div>
 
-</div></div>
+
 <span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">Site</span><span class="p">(),</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
@@ -210,6 +212,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -224,8 +227,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

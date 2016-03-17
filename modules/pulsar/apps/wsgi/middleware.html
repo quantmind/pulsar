@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.middleware &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>pulsar.apps.wsgi.middleware &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -96,7 +96,7 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">is_async</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">get_event_loop</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">isawaitable</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">get_event_loop</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
 <span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">parse_authorization_header</span>
@@ -147,7 +147,7 @@
     <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]:</span>
         <span class="n">stream</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span>
         <span class="n">chunk</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">is_async</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
             <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">chunk</span>
         <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span></div>
 
@@ -202,6 +202,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -216,8 +217,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

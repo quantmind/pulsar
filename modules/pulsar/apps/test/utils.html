@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.utils &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>pulsar.apps.test.utils &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" />
    
   
@@ -73,11 +73,11 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">unittest</span>
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Future</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span> <span class="n">as_gather</span><span class="p">,</span>
-                    <span class="n">is_async</span><span class="p">,</span> <span class="n">format_traceback</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
+                    <span class="n">isawaitable</span><span class="p">,</span> <span class="n">format_traceback</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
 
 
@@ -167,7 +167,7 @@
 <span class="sd">        class MyTest(unittest.TestCase):</span>
 
 <span class="sd">            def test1(self):</span>
-<span class="sd">                yield self.async.assertEqual(3, Future().callback(3))</span>
+<span class="sd">                yield from self.async.assertEqual(3, Future().callback(3))</span>
 <span class="sd">                ...</span>
 
 
@@ -184,15 +184,17 @@
 
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 
+        <span class="nd">@asyncio.coroutine</span>
         <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="n">args</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">as_gather</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">is_async</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">result</span>
             <span class="k">return</span> <span class="n">result</span>
 
         <span class="k">return</span> <span class="n">_</span>
 
+    <span class="nd">@asyncio.coroutine</span>
     <span class="k">def</span> <span class="nf">assertRaises</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">yield from</span> <span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -226,13 +228,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span>
 
+    <span class="nd">@asyncio.coroutine</span>
 <div class="viewcode-block" id="ActorTestMixin.spawn_actor"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin.spawn_actor">[docs]</a>    <span class="k">def</span> <span class="nf">spawn_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Spawn a new actor and perform some tests</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">concurrency</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">concurrency</span>
         <span class="n">ad</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">concurrency</span><span class="o">=</span><span class="n">concurrency</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">Future</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">)</span>
         <span class="n">proxy</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">ad</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_spawned</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span> <span class="n">ad</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
@@ -321,6 +324,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -335,8 +339,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

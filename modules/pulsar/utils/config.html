@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.config &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>pulsar.utils.config &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -220,9 +220,9 @@
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; object has no attribute &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span> <span class="o">%</span>
-                                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+                                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span> <span class="kn">from</span> <span class="nn">exc</span>
 
     <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;settings&quot;</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
@@ -836,7 +836,7 @@
     <span class="n">action</span> <span class="o">=</span> <span class="s2">&quot;store_true&quot;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        Turn on debugging in the server.</span>
+<span class="s2">        Turn on debugging.</span>
 
 <span class="s2">        Set the log level to debug, limits the number of worker processes</span>
 <span class="s2">        to 1, set asyncio debug flag.</span>
@@ -867,20 +867,6 @@
 <span class="s2">        Auto reload modules when changes occurs.</span>
 
 <span class="s2">        Useful during development.</span>
-<span class="s2">        &quot;&quot;&quot;</span>
-
-
-<span class="k">class</span> <span class="nc">Noisy</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;noisy&quot;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--noisy&quot;</span><span class="p">]</span>
-    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_bool</span>
-    <span class="n">action</span> <span class="o">=</span> <span class="s2">&quot;store_true&quot;</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        Log Failures as soon as they occur.</span>
-
-<span class="s2">        This option is really needed during development when hunting</span>
-<span class="s2">        for hidden bugs</span>
 <span class="s2">        &quot;&quot;&quot;</span>
 
 
@@ -1276,6 +1262,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -1290,8 +1277,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

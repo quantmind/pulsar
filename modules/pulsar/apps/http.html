@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.http &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>pulsar.apps.http &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
   
@@ -42,17 +42,17 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.http</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;Pulsar ships with a fully featured, :class:`.HttpClient`</span>
+<span class="sd">&quot;&quot;&quot;Pulsar ships with a fully featured, :class:`.HttpClient`</span>
 <span class="sd">class for multiple asynchronous HTTP requests.</span>
 
 <span class="sd">To get started, one builds a client::</span>
 
-<span class="sd">    &gt;&gt;&gt; from pulsar.apps import http</span>
-<span class="sd">    &gt;&gt;&gt; client = http.HttpClient()</span>
+<span class="sd">    from pulsar.apps import http</span>
+<span class="sd">    client = http.HttpClient()</span>
 
 <span class="sd">and than makes requests, in a coroutine::</span>
 
-<span class="sd">    response = yield from http.get(&#39;http://www.bbc.co.uk&#39;)</span>
+<span class="sd">    response = await http.get(&#39;http://www.bbc.co.uk&#39;)</span>
 
 <span class="sd">Making requests</span>
 <span class="sd">=================</span>
@@ -60,7 +60,7 @@
 
 <span class="sd">    from pulsar.apps import http</span>
 <span class="sd">    client = http.HttpClient()</span>
-<span class="sd">    response = yield from client.get(&#39;https://github.com/timeline.json&#39;)</span>
+<span class="sd">    response = await client.get(&#39;https://github.com/timeline.json&#39;)</span>
 
 <span class="sd">``response`` is a :class:`HttpResponse` object which contains all the</span>
 <span class="sd">information about the request and the result:</span>
@@ -85,8 +85,8 @@
 <span class="sd">You can attach parameters to the ``url`` by passing the</span>
 <span class="sd">``urlparams`` dictionary:</span>
 
-<span class="sd">    response = yield from http.get(&#39;http://bla.com&#39;,</span>
-<span class="sd">                                   urlparams={&#39;page&#39;: 2, &#39;key&#39;: &#39;foo&#39;})</span>
+<span class="sd">    response = await http.get(&#39;http://bla.com&#39;,</span>
+<span class="sd">                              urlparams={&#39;page&#39;: 2, &#39;key&#39;: &#39;foo&#39;})</span>
 <span class="sd">    response.request.full_url == &#39;http://bla.com?page=2&amp;key=foo&#39;</span>
 
 
@@ -101,13 +101,13 @@
 
 <span class="sd">If a response contains some Cookies, you can get quick access to them::</span>
 
-<span class="sd">    &gt;&gt;&gt; response = yield from client.get(...)</span>
-<span class="sd">    &gt;&gt;&gt; type(response.cookies)</span>
+<span class="sd">    response = await client.get(...)</span>
+<span class="sd">    type(response.cookies)</span>
 <span class="sd">    &lt;type &#39;dict&#39;&gt;</span>
 
 <span class="sd">To send your own cookies to the server, you can use the cookies parameter::</span>
 
-<span class="sd">    response = yield from client.get(..., cookies={&#39;sessionid&#39;: &#39;test&#39;})</span>
+<span class="sd">    response = await client.get(..., cookies={&#39;sessionid&#39;: &#39;test&#39;})</span>
 
 
 <span class="sd">.. _http-authentication:</span>
@@ -130,13 +130,28 @@
 
 <span class="sd">    client.get(&#39;https://github.com/timeline.json&#39;)</span>
 
-<span class="sd">you can include certificate file and key too, either</span>
-<span class="sd">to a :class:`HttpClient` or to a specific request::</span>
+<span class="sd">The :class:`.HttpClient` can verify SSL certificates for HTTPS requests,</span>
+<span class="sd">just like a web browser. To check a host&#39;s SSL certificate, you can use the</span>
+<span class="sd">``verify`` argument:</span>
 
-<span class="sd">    client = HttpClient(certkey=&#39;public.key&#39;)</span>
-<span class="sd">    res1 = client.get(&#39;https://github.com/timeline.json&#39;)</span>
-<span class="sd">    res2 = client.get(&#39;https://github.com/timeline.json&#39;,</span>
-<span class="sd">                      certkey=&#39;another.key&#39;)</span>
+<span class="sd">    client = HttpClient()</span>
+<span class="sd">    client.verify is True</span>
+<span class="sd">    client = HttpClient(verify=False)</span>
+<span class="sd">    client.verify is False</span>
+
+<span class="sd">By default, ``verify`` is set to True.</span>
+
+<span class="sd">You can override the ``verify`` argument during requests too:</span>
+
+<span class="sd">    res1 = await client.get(&#39;https://github.com/timeline.json&#39;)</span>
+<span class="sd">    res2 = await client.get(&#39;https://locahost:8020&#39;, verify=False)</span>
+
+<span class="sd">You can pass ``verify`` the path to a CA_BUNDLE file or directory with</span>
+<span class="sd">certificates of trusted CAs:</span>
+
+<span class="sd">    res3 = await client.get(&#39;https://locahost:8020&#39;,</span>
+<span class="sd">                            verify=&#39;/path/to/ca_bundle&#39;)</span>
+
 
 <span class="sd">.. _http-streaming:</span>
 
@@ -149,7 +164,7 @@
 <span class="sd">during a request and access the :attr:`HttpResponse.raw` attribute.</span>
 <span class="sd">For example::</span>
 
-<span class="sd">    response = yield from http.get(..., stream=True)</span>
+<span class="sd">    response = await http.get(..., stream=True)</span>
 <span class="sd">    for data in response.raw:</span>
 <span class="sd">        # data can be a future or bytes</span>
 
@@ -188,7 +203,7 @@
 
 <span class="sd">The websocket response is obtained by::</span>
 
-<span class="sd">    ws = yield from http.get(&#39;ws://...&#39;, websocket_handler=Echo())</span>
+<span class="sd">    ws = await http.get(&#39;ws://...&#39;, websocket_handler=Echo())</span>
 
 <span class="sd">.. _http-redirects:</span>
 
@@ -319,7 +334,7 @@
 <span class="sd">.. _requests: http://docs.python-requests.org/</span>
 <span class="sd">.. _`uri scheme`: http://en.wikipedia.org/wiki/URI_scheme</span>
 <span class="sd">.. _`HTTP tunneling`: http://en.wikipedia.org/wiki/HTTP_tunnel</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">platform</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -331,12 +346,17 @@
 <span class="kn">from</span> <span class="nn">http.client</span> <span class="kn">import</span> <span class="n">responses</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">ssl</span>
+    <span class="n">BaseSSLError</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>
 
+    <span class="k">class</span> <span class="nc">BaseSSLError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+        <span class="k">pass</span>
+
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">AbortRequest</span><span class="p">,</span> <span class="n">AbstractClient</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">is_async</span><span class="p">,</span>
-                    <span class="n">ProtocolConsumer</span><span class="p">,</span> <span class="n">ensure_future</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">AbortRequest</span><span class="p">,</span> <span class="n">AbstractClient</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Connection</span><span class="p">,</span>
+                    <span class="n">isawaitable</span><span class="p">,</span> <span class="n">ProtocolConsumer</span><span class="p">,</span> <span class="n">ensure_future</span><span class="p">,</span>
+                    <span class="n">HttpRequestException</span><span class="p">,</span> <span class="n">HttpConnectionError</span><span class="p">,</span> <span class="n">SSLError</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils</span> <span class="kn">import</span> <span class="n">websocket</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">to_bytes</span>
@@ -345,14 +365,16 @@
                                   <span class="n">encode_multipart_formdata</span><span class="p">,</span>
                                   <span class="n">Headers</span><span class="p">,</span> <span class="n">get_environ_proxies</span><span class="p">,</span>
                                   <span class="n">choose_boundary</span><span class="p">,</span> <span class="n">request_host</span><span class="p">,</span>
-                                  <span class="n">is_succesful</span><span class="p">,</span> <span class="n">HTTPError</span><span class="p">,</span> <span class="n">URLError</span><span class="p">,</span>
+                                  <span class="n">is_succesful</span><span class="p">,</span>
                                   <span class="n">get_hostport</span><span class="p">,</span> <span class="n">cookiejar_from_dict</span><span class="p">,</span>
                                   <span class="n">host_no_default_port</span><span class="p">,</span> <span class="n">http_chunks</span><span class="p">,</span>
-                                  <span class="n">parse_options_header</span><span class="p">,</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">)</span>
+                                  <span class="n">parse_options_header</span><span class="p">,</span>
+                                  <span class="n">parse_header_links</span><span class="p">,</span>
+                                  <span class="n">JSON_CONTENT_TYPES</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.plugins</span> <span class="kn">import</span> <span class="p">(</span><span class="n">handle_cookies</span><span class="p">,</span> <span class="n">handle_100</span><span class="p">,</span> <span class="n">WebSocket</span><span class="p">,</span> <span class="n">Redirect</span><span class="p">,</span>
                       <span class="n">Tunneling</span><span class="p">,</span> <span class="n">TooManyRedirects</span><span class="p">,</span> <span class="n">start_request</span><span class="p">,</span>
-                      <span class="n">response_content</span><span class="p">)</span>
+                      <span class="n">response_content</span><span class="p">,</span> <span class="n">keep_alive</span><span class="p">,</span> <span class="n">HTTP11</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">Auth</span><span class="p">,</span> <span class="n">HTTPBasicAuth</span><span class="p">,</span> <span class="n">HTTPDigestAuth</span>
 <span class="kn">from</span> <span class="nn">.oauth</span> <span class="kn">import</span> <span class="n">OAuth1</span><span class="p">,</span> <span class="n">OAuth2</span>
@@ -396,10 +418,10 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">unverifiable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Unverifiable when a redirect.</span>
+        <span class="sd">&quot;&quot;&quot;Unverifiable when a redirect.</span>
 
 <span class="sd">        It is a redirect when :attr:`history` has past requests.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -450,6 +472,10 @@
     <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">client</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">version</span>
+
     <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">req</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;host&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">)</span>
@@ -467,8 +493,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">header_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">handler</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Tunnel the connection if needed</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Tunnel the connection if needed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">connection</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">connection</span>
         <span class="n">tunnel_status</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="s1">&#39;_tunnel_status&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">tunnel_status</span><span class="p">:</span>
@@ -481,7 +507,7 @@
 
 
 <div class="viewcode-block" id="HttpRequest"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpRequest">[docs]</a><span class="k">class</span> <span class="nc">HttpRequest</span><span class="p">(</span><span class="n">RequestBase</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An :class:`HttpClient` request for an HTTP resource.</span>
+    <span class="sd">&quot;&quot;&quot;An :class:`HttpClient` request for an HTTP resource.</span>
 
 <span class="sd">    This class has a similar interface to :class:`urllib.request.Request`.</span>
 
@@ -516,8 +542,7 @@
 
 <span class="sd">        Allow for streaming body</span>
 
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">CONNECT</span> <span class="o">=</span> <span class="s1">&#39;CONNECT&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_proxy</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_ssl</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_tunnel</span> <span class="o">=</span> <span class="bp">None</span>
@@ -529,7 +554,7 @@
                  <span class="n">source_address</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">max_redirects</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                  <span class="n">decompress</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">wait_continue</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                  <span class="n">websocket_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cookies</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">urlparams</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">stream</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">proxies</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">ignored</span><span class="p">):</span>
+                 <span class="n">stream</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">proxies</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">ignored</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">files</span>
@@ -552,9 +577,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">websocket_handler</span> <span class="o">=</span> <span class="n">websocket_handler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">source_address</span> <span class="o">=</span> <span class="n">source_address</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">stream</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="n">verify</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">new_parser</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheme</span> <span class="ow">in</span> <span class="n">tls_schemes</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_ssl</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ssl_context</span><span class="p">(</span><span class="o">**</span><span class="n">ignored</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ssl</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ssl_context</span><span class="p">(</span><span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">,</span> <span class="o">**</span><span class="n">ignored</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">auth</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">auth</span><span class="p">,</span> <span class="n">Auth</span><span class="p">):</span>
             <span class="n">auth</span> <span class="o">=</span> <span class="n">HTTPBasicAuth</span><span class="p">(</span><span class="o">*</span><span class="n">auth</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auth</span> <span class="o">=</span> <span class="n">auth</span>
@@ -569,7 +595,8 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;``(host, port)`` tuple of the HTTP resource&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;``(host, port)`` tuple of the HTTP resource</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tunnel</span><span class="o">.</span><span class="n">address</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tunnel</span> <span class="k">else</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -578,27 +605,29 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">ssl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Context for TLS connections.</span>
+        <span class="sd">&quot;&quot;&quot;Context for TLS connections.</span>
 
 <span class="sd">        If this is a tunneled request and the tunnel connection is not yet</span>
 <span class="sd">        established, it returns ``None``.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tunnel</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ssl</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">tunnel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tunnel</span><span class="o">.</span><span class="n">full_url</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tunnel</span> <span class="k">else</span> <span class="bp">None</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scheme</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">tunnel</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scheme</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">tunnel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Proxy server for this request.&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Proxy server for this request.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_proxy</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">tunnel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Tunnel for this request.&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Tunnel for this request.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tunnel</span>
 
     <span class="nd">@property</span>
@@ -614,7 +643,8 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">full_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Full url of endpoint&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Full url of endpoint</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">urlunparse</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheme</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_netloc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
                            <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span><span class="p">))</span>
 
@@ -628,7 +658,8 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Body of request&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Body of request</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
     <span class="nd">@data.setter</span>
@@ -637,7 +668,7 @@
 
     <span class="k">def</span> <span class="nf">first_line</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_proxy</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONNECT</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;CONNECT&#39;</span><span class="p">:</span>
                 <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_netloc</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_url</span>
@@ -655,11 +686,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">and</span> <span class="s1">&#39;content-length&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span>
 
 <div class="viewcode-block" id="HttpRequest.encode"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpRequest.encode">[docs]</a>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The bytes representation of this :class:`HttpRequest`.</span>
+        <span class="sd">&quot;&quot;&quot;The bytes representation of this :class:`HttpRequest`.</span>
 
 <span class="sd">        Called by :class:`HttpResponse` when it needs to encode this</span>
 <span class="sd">        :class:`HttpRequest` before sending it to the HTTP resource.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Call body before fist_line in case the query is changes.</span>
         <span class="n">first_line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_line</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_continue</span><span class="p">:</span>
@@ -675,20 +706,20 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
 <div class="viewcode-block" id="HttpRequest.has_header"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpRequest.has_header">[docs]</a>    <span class="k">def</span> <span class="nf">has_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header_name</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Check ``header_name`` is in this request headers.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Check ``header_name`` is in this request headers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">header_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="ow">or</span>
                 <span class="n">header_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unredirected_headers</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpRequest.get_header"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpRequest.get_header">[docs]</a>    <span class="k">def</span> <span class="nf">get_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header_name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Retrieve ``header_name`` from this request headers.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Retrieve ``header_name`` from this request headers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
             <span class="n">header_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unredirected_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">header_name</span><span class="p">,</span> <span class="n">default</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="HttpRequest.remove_header"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpRequest.remove_header">[docs]</a>    <span class="k">def</span> <span class="nf">remove_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header_name</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Remove ``header_name`` from this request.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Remove ``header_name`` from this request.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">val1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">header_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">val2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unredirected_headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">header_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">val1</span> <span class="ow">or</span> <span class="n">val2</span></div>
@@ -825,9 +856,10 @@
         <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
             <span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
 
+    <span class="nd">@asyncio.coroutine</span>
     <span class="k">def</span> <span class="nf">_write_streamed_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">is_async</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">data</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_write_body_data</span><span class="p">(</span><span class="n">transport</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_body_data</span><span class="p">(</span><span class="n">transport</span><span class="p">,</span> <span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
@@ -866,7 +898,7 @@
 
 
 <div class="viewcode-block" id="HttpResponse"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpResponse">[docs]</a><span class="k">class</span> <span class="nc">HttpResponse</span><span class="p">(</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`.ProtocolConsumer` for the HTTP client protocol.</span>
+    <span class="sd">&quot;&quot;&quot;A :class:`.ProtocolConsumer` for the HTTP client protocol.</span>
 
 <span class="sd">    Initialised by a call to the :class:`HttpClient.request` method.</span>
 
@@ -881,7 +913,7 @@
 <span class="sd">        Fired once the whole request has finished</span>
 
 <span class="sd">    Public API:</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_tunnel_host</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_has_proxy</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_content</span> <span class="o">=</span> <span class="bp">None</span>
@@ -904,14 +936,16 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">status_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Numeric status code such as 200, 404 and so forth.</span>
+        <span class="sd">&quot;&quot;&quot;Numeric status code such as 200, 404 and so forth.</span>
 
-<span class="sd">        Available once the :attr:`on_headers` has fired.&#39;&#39;&#39;</span>
+<span class="sd">        Available once the :attr:`on_headers` has fired.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The request full url.&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;The request full url.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span>
         <span class="k">if</span> <span class="n">request</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">full_url</span>
@@ -942,24 +976,41 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">cookies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Dictionary of cookies set by the server or ``None``.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Dictionary of cookies set by the server or ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cookies</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Content of the response, in bytes&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Content of the response, in bytes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">response_content</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A raw asynchronous Http response&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;A raw asynchronous Http response</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_raw</span> <span class="o">=</span> <span class="n">HttpStream</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">links</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the parsed header links of the response, if any</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;link&#39;</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">header</span><span class="p">:</span>
+            <span class="n">links</span> <span class="o">=</span> <span class="n">parse_header_links</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rel&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;url&#39;</span><span class="p">)</span>
+                <span class="n">l</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">link</span>
+        <span class="k">return</span> <span class="n">l</span>
+
 <div class="viewcode-block" id="HttpResponse.recv_body"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpResponse.recv_body">[docs]</a>    <span class="k">def</span> <span class="nf">recv_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Flush the response body and return it.&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Flush the response body and return it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">recv_body</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">get_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -968,19 +1019,21 @@
             <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">responses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="s1">&#39;Unknown&#39;</span><span class="p">))</span>
 
 <div class="viewcode-block" id="HttpResponse.text"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpResponse.text">[docs]</a>    <span class="k">def</span> <span class="nf">text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">charset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Decode content as a string.&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Decode content as a string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span>
         <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">charset</span> <span class="ow">or</span> <span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span> <span class="ow">or</span> <span class="s1">&#39;strict&#39;</span><span class="p">)</span></div>
     <span class="n">content_string</span> <span class="o">=</span> <span class="n">text</span>
 
 <div class="viewcode-block" id="HttpResponse.json"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpResponse.json">[docs]</a>    <span class="k">def</span> <span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">charset</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Decode content as a JSON object.&#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Decode content as a JSON object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">charset</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="HttpResponse.decode_content"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpResponse.decode_content">[docs]</a>    <span class="k">def</span> <span class="nf">decode_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Return the best possible representation of the response body.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Return the best possible representation of the response body.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;content-type&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ct</span><span class="p">:</span>
             <span class="n">ct</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="n">parse_options_header</span><span class="p">(</span><span class="n">ct</span><span class="p">)</span>
@@ -989,22 +1042,26 @@
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="n">charset</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">ct</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;text/&#39;</span><span class="p">):</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">charset</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ct</span> <span class="o">==</span> <span class="n">FORM_URL_ENCODED</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">parse_qsl</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">charset</span><span class="p">),</span>
+                                 <span class="n">keep_blank_values</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span></div>
 
 <div class="viewcode-block" id="HttpResponse.raise_for_status"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpResponse.raise_for_status">[docs]</a>    <span class="k">def</span> <span class="nf">raise_for_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Raises stored :class:`HTTPError` or :class:`URLError`, if occured.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&quot;&quot;&quot;Raises stored :class:`HTTPError` or :class:`URLError`, if occured.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_error</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">HTTPError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">HttpRequestException</span><span class="p">(</span><span class="n">response</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">URLError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span></div>
+                <span class="k">raise</span> <span class="n">HttpConnectionError</span><span class="p">(</span><span class="n">response</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                                          <span class="n">msg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpResponse.info"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpResponse.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Required by python CookieJar.</span>
+        <span class="sd">&quot;&quot;&quot;Required by python CookieJar.</span>
 
-<span class="sd">        Return :attr:`headers`.&#39;&#39;&#39;</span>
+<span class="sd">        Return :attr:`headers`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span></div>
 
     <span class="c1"># #####################################################################</span>
@@ -1038,7 +1095,7 @@
 
 
 <div class="viewcode-block" id="HttpClient"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient">[docs]</a><span class="k">class</span> <span class="nc">HttpClient</span><span class="p">(</span><span class="n">AbstractClient</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A client for HTTP/HTTPS servers.</span>
+    <span class="sd">&quot;&quot;&quot;A client for HTTP/HTTPS servers.</span>
 
 <span class="sd">    It handles pool of asynchronous connections.</span>
 
@@ -1094,23 +1151,26 @@
 
 <span class="sd">        Default headers for this :class:`HttpClient`</span>
 
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;connection_made&#39;</span><span class="p">,</span> <span class="s1">&#39;pre_request&#39;</span><span class="p">,</span> <span class="s1">&#39;on_headers&#39;</span><span class="p">,</span>
                          <span class="s1">&#39;post_request&#39;</span><span class="p">,</span> <span class="s1">&#39;connection_lost&#39;</span><span class="p">)</span>
     <span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">HttpResponse</span><span class="p">)</span>
     <span class="n">max_redirects</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="sd">&#39;&#39;&#39;Maximum number of redirects.</span>
+    <span class="sd">&quot;&quot;&quot;Maximum number of redirects.</span>
 
-<span class="sd">    It can be overwritten on :meth:`request`.&#39;&#39;&#39;</span>
+<span class="sd">    It can be overwritten on :meth:`request`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">connection_pool</span> <span class="o">=</span> <span class="n">Pool</span>
-    <span class="sd">&#39;&#39;&#39;Connection :class:`.Pool` factory</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Connection :class:`.Pool` factory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">client_version</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span>
-    <span class="sd">&#39;&#39;&#39;String for the ``User-Agent`` header.&#39;&#39;&#39;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;HTTP/1.1&#39;</span>
-    <span class="sd">&#39;&#39;&#39;Default HTTP request version for this :class:`HttpClient`.</span>
+    <span class="sd">&quot;&quot;&quot;String for the ``User-Agent`` header.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">HTTP11</span>
+    <span class="sd">&quot;&quot;&quot;Default HTTP request version for this :class:`HttpClient`.</span>
 
-<span class="sd">    It can be overwritten on :meth:`request`.&#39;&#39;&#39;</span>
+<span class="sd">    It can be overwritten on :meth:`request`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">DEFAULT_HTTP_HEADERS</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">([</span>
         <span class="p">(</span><span class="s1">&#39;Connection&#39;</span><span class="p">,</span> <span class="s1">&#39;Keep-Alive&#39;</span><span class="p">),</span>
         <span class="p">(</span><span class="s1">&#39;Accept&#39;</span><span class="p">,</span> <span class="s1">&#39;*/*&#39;</span><span class="p">),</span>
@@ -1180,65 +1240,65 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;CONNECT&#39;</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HttpClient.get"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Sends a GET request and returns a :class:`HttpResponse` object.</span>
+        <span class="sd">&quot;&quot;&quot;Sends a GET request and returns a :class:`HttpResponse` object.</span>
 
 <span class="sd">        :params url: url for the new :class:`HttpRequest` object.</span>
 <span class="sd">        :param \*\*kwargs: Optional arguments for the :meth:`request` method.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;allow_redirects&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpClient.options"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Sends a OPTIONS request and returns a :class:`HttpResponse` object.</span>
+        <span class="sd">&quot;&quot;&quot;Sends a OPTIONS request and returns a :class:`HttpResponse` object.</span>
 
 <span class="sd">        :params url: url for the new :class:`HttpRequest` object.</span>
 <span class="sd">        :param \*\*kwargs: Optional arguments for the :meth:`request` method.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;allow_redirects&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;OPTIONS&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpClient.head"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.head">[docs]</a>    <span class="k">def</span> <span class="nf">head</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Sends a HEAD request and returns a :class:`HttpResponse` object.</span>
+        <span class="sd">&quot;&quot;&quot;Sends a HEAD request and returns a :class:`HttpResponse` object.</span>
 
 <span class="sd">        :params url: url for the new :class:`HttpRequest` object.</span>
 <span class="sd">        :param \*\*kwargs: Optional arguments for the :meth:`request` method.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;HEAD&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpClient.post"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.post">[docs]</a>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Sends a POST request and returns a :class:`HttpResponse` object.</span>
+        <span class="sd">&quot;&quot;&quot;Sends a POST request and returns a :class:`HttpResponse` object.</span>
 
 <span class="sd">        :params url: url for the new :class:`HttpRequest` object.</span>
 <span class="sd">        :param \*\*kwargs: Optional arguments for the :meth:`request` method.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpClient.put"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.put">[docs]</a>    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Sends a PUT request and returns a :class:`HttpResponse` object.</span>
+        <span class="sd">&quot;&quot;&quot;Sends a PUT request and returns a :class:`HttpResponse` object.</span>
 
 <span class="sd">        :params url: url for the new :class:`HttpRequest` object.</span>
 <span class="sd">        :param \*\*kwargs: Optional arguments for the :meth:`request` method.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpClient.patch"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.patch">[docs]</a>    <span class="k">def</span> <span class="nf">patch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Sends a PATCH request and returns a :class:`HttpResponse` object.</span>
+        <span class="sd">&quot;&quot;&quot;Sends a PATCH request and returns a :class:`HttpResponse` object.</span>
 
 <span class="sd">        :params url: url for the new :class:`HttpRequest` object.</span>
 <span class="sd">        :param \*\*kwargs: Optional arguments for the :meth:`request` method.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;PATCH&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpClient.delete"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Sends a DELETE request and returns a :class:`HttpResponse` object.</span>
+        <span class="sd">&quot;&quot;&quot;Sends a DELETE request and returns a :class:`HttpResponse` object.</span>
 
 <span class="sd">        :params url: url for the new :class:`HttpRequest` object.</span>
 <span class="sd">        :param \*\*kwargs: Optional arguments for the :meth:`request` method.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HttpClient.request"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Constructs and sends a request to a remote server.</span>
+        <span class="sd">&quot;&quot;&quot;Constructs and sends a request to a remote server.</span>
 
 <span class="sd">        It returns a :class:`.Future` which results in a</span>
 <span class="sd">        :class:`HttpResponse` object.</span>
@@ -1252,7 +1312,8 @@
 <span class="sd">            initialisation.</span>
 
 <span class="sd">        :rtype: a :class:`.Future`</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s1">&#39;finish&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fired</span><span class="p">(),</span> <span class="s2">&quot;Http session is closed&quot;</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
@@ -1263,6 +1324,18 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">response</span></div>
 
+<div class="viewcode-block" id="HttpClient.add_basic_authentication"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.add_basic_authentication">[docs]</a>    <span class="k">def</span> <span class="nf">add_basic_authentication</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;pre_request&#39;</span><span class="p">,</span> <span class="n">HTTPBasicAuth</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="HttpClient.add_digest_authentication"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.add_digest_authentication">[docs]</a>    <span class="k">def</span> <span class="nf">add_digest_authentication</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a :class:`HTTPDigestAuth` handler to the ``pre_requests`` hook.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;pre_request&#39;</span><span class="p">,</span> <span class="n">HTTPDigestAuth</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span></div>
+
+    <span class="c1"># INTERNALS</span>
+    <span class="nd">@asyncio.coroutine</span>
     <span class="k">def</span> <span class="nf">_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="n">nparams</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">nparams</span><span class="o">.</span><span class="n">update</span><span class="p">(((</span><span class="n">name</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span>
@@ -1272,10 +1345,16 @@
         <span class="k">if</span> <span class="n">pool</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">address</span>
             <span class="n">pool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection_pool</span><span class="p">(</span>
-                <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">ssl</span><span class="p">),</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_connection</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">),</span> <span class="n">ssl</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">ssl</span><span class="p">),</span>
                 <span class="n">pool_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connection_pools</span><span class="p">[</span><span class="n">request</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">conn</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">BaseSSLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SSLError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">response</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
+        <span class="k">except</span> <span class="n">ConnectionRefusedError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HttpConnectionError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">response</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
+
         <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">start_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">conn</span><span class="p">)</span>
@@ -1285,12 +1364,14 @@
                 <span class="n">headers</span> <span class="o">=</span> <span class="bp">None</span>
 
             <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">headers</span> <span class="ow">or</span>
-                    <span class="ow">not</span> <span class="n">headers</span><span class="o">.</span><span class="n">has</span><span class="p">(</span><span class="s1">&#39;connection&#39;</span><span class="p">,</span> <span class="s1">&#39;keep-alive&#39;</span><span class="p">)</span> <span class="ow">or</span>
+                    <span class="ow">not</span> <span class="n">keep_alive</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span> <span class="ow">or</span>
                     <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">101</span> <span class="ow">or</span>
                     <span class="c1"># Streaming responses return before the response</span>
                     <span class="c1"># is finished - therefore we detach the connection</span>
                     <span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">stream</span><span class="p">):</span>
-                <span class="n">conn</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Detached </span><span class="si">%s</span><span class="s1"> from pool&#39;</span><span class="p">,</span> <span class="n">conn</span><span class="p">)</span>
 
         <span class="c1"># Handle a possible redirect</span>
         <span class="k">if</span> <span class="n">response</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">request_again</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
@@ -1298,17 +1379,6 @@
             <span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">response</span>
 
-<div class="viewcode-block" id="HttpClient.add_basic_authentication"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.add_basic_authentication">[docs]</a>    <span class="k">def</span> <span class="nf">add_basic_authentication</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;pre_request&#39;</span><span class="p">,</span> <span class="n">HTTPBasicAuth</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span></div>
-
-<div class="viewcode-block" id="HttpClient.add_digest_authentication"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient.add_digest_authentication">[docs]</a>    <span class="k">def</span> <span class="nf">add_digest_authentication</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Add a :class:`HTTPDigestAuth` handler to the ``pre_requests`` hook.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;pre_request&#39;</span><span class="p">,</span> <span class="n">HTTPDigestAuth</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">))</span></div>
-
-    <span class="c1">#    INTERNALS</span>
     <span class="k">def</span> <span class="nf">get_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c1"># Returns a :class:`Header` obtained from combining</span>
         <span class="c1"># :attr:`headers` with *headers*. Can handle websocket requests.</span>
@@ -1321,9 +1391,16 @@
                     <span class="n">check_hostname</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">certfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                     <span class="n">cafile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">capath</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cadata</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">ssl</span><span class="p">,</span> <span class="s1">&#39;SSL not supported&#39;</span>
-        <span class="k">if</span> <span class="n">verify</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verify</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">:</span>
             <span class="n">cert_reqs</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">CERT_REQUIRED</span>
             <span class="n">check_hostname</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">verify</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">verify</span><span class="p">):</span>
+                <span class="n">cafile</span> <span class="o">=</span> <span class="n">verify</span>
+            <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">verify</span><span class="p">):</span>
+                <span class="n">capath</span> <span class="o">=</span> <span class="n">verify</span>
+            <span class="n">cert_reqs</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">CERT_REQUIRED</span>
+
         <span class="k">return</span> <span class="n">ssl</span><span class="o">.</span><span class="n">_create_unverified_context</span><span class="p">(</span><span class="n">cert_reqs</span><span class="o">=</span><span class="n">cert_reqs</span><span class="p">,</span>
                                               <span class="n">check_hostname</span><span class="o">=</span><span class="n">check_hostname</span><span class="p">,</span>
                                               <span class="n">certfile</span><span class="o">=</span><span class="n">certfile</span><span class="p">,</span>
@@ -1331,19 +1408,15 @@
                                               <span class="n">cafile</span><span class="o">=</span><span class="n">cafile</span><span class="p">,</span> <span class="n">capath</span><span class="o">=</span><span class="n">capath</span><span class="p">,</span>
                                               <span class="n">cadata</span><span class="o">=</span><span class="n">cadata</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="p">):</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="o">=</span><span class="n">ssl</span><span class="p">)</span>
-        <span class="c1"># Wait for the connection made event</span>
-        <span class="k">yield from</span> <span class="n">connection</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s1">&#39;connection_made&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">connection</span>
-
-    <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Close all connections.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># Internal method, use self.close()</span>
+        <span class="c1"># Close all connections.</span>
+        <span class="c1"># Returns a future which can be used to wait for complete closure</span>
+        <span class="n">waiters</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection_pools</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">async</span><span class="o">=</span><span class="n">async</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connection_pools</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+            <span class="n">waiters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection_pools</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">waiters</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -1382,6 +1455,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -1396,8 +1470,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

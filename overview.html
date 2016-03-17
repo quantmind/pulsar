@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>Overview &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" />
    
@@ -96,8 +96,17 @@ connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.</p>
 <p>Pulsar uses the <a class="reference external" href="https://docs.python.org/3/library/asyncio.html">asyncio</a> and <a class="reference external" href="http://docs.python.org/library/multiprocessing.html">multiprocessing</a> modules from the standard python
-library and it can be configured to run in multi-processing mode,
-multi-threading mode or a combination of the two.</p>
+library and it can be configured to run in multi-processing mode.</p>
+<p>Another example of pulsar framework is the asynchronous <code class="docutils literal"><span class="pre">HttpClient</span></code>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">http</span>
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>and somewhere in a coroutine you can wait for responses:</p>
+<div class="code python highlight-python"><div class="highlight"><pre>response = await session.get(&#39;https://github.com/timeline.json&#39;)
+</pre></div>
+</div>
 <div class="section" id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar has no hard dependencies, install via pip:</p>
@@ -115,6 +124,7 @@ Out of the box it is shipped with the the following:</p>
 <ul class="simple">
 <li>Socket servers</li>
 <li>WSGI server</li>
+<li>HTTP client</li>
 <li><a class="reference external" href="http://www.jsonrpc.org/">JSON-RPC</a></li>
 <li>Web Sockets</li>
 <li>Test suite</li>
@@ -189,6 +199,8 @@ of course. To do so, simply follow these guidelines:</p>
 <li>Push to your branch <code class="docutils literal"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">my_branch</span></code></li>
 <li>Create an issue at <a class="reference external" href="https://github.com/quantmind/pulsar/issues">https://github.com/quantmind/pulsar/issues</a> with
 pull request for the <strong>dev branch</strong>.</li>
+<li>Alternatively, if you need to report a bug or an unexpected behaviour, make sure
+to include a <a class="reference external" href="http://stackoverflow.com/help/mcve">mcve</a> in your issue.</li>
 </ul>
 <p>A good <code class="docutils literal"><span class="pre">pull</span></code> request should:</p>
 <ul class="simple">
@@ -243,6 +255,7 @@ file in the top distribution directory for the full license text.</p>
 <li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -257,8 +270,7 @@ file in the top distribution directory for the full license text.</p>
 <li class="toctree-l1"><a class="reference internal" href="apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.mailbox &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>pulsar.async.mailbox &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -58,8 +58,8 @@
 
 <span class="sd">      from pulsar import send</span>
 
-<span class="sd">      def example():</span>
-<span class="sd">          result = yield from send(&#39;abc&#39;, &#39;ping&#39;)</span>
+<span class="sd">      async def example():</span>
+<span class="sd">          result = await send(&#39;abc&#39;, &#39;ping&#39;)</span>
 
 <span class="sd">* The :class:`.Arbiter` :attr:`~pulsar.Actor.mailbox` is a :class:`.TcpServer`</span>
 <span class="sd">  accepting connections from remote actors.</span>
@@ -96,6 +96,7 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">CommandError</span>
@@ -103,7 +104,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.websocket</span> <span class="kn">import</span> <span class="n">frame_parser</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.string</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">is_async</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">isawaitable</span>
 <span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">task</span>
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actor_identity</span><span class="p">,</span> <span class="n">get_proxy</span><span class="p">,</span> <span class="n">get_command</span><span class="p">,</span> <span class="n">ActorProxy</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Protocol</span>
@@ -117,13 +118,14 @@
     <span class="k">return</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
 
 
+<span class="nd">@asyncio.coroutine</span>
 <span class="k">def</span> <span class="nf">command_in_context</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">cmnd</span> <span class="o">=</span> <span class="n">get_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">cmnd</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">CommandError</span><span class="p">(</span><span class="s1">&#39;unknown </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">command</span><span class="p">)</span>
     <span class="n">request</span> <span class="o">=</span> <span class="n">CommandRequest</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">cmnd</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">is_async</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">result</span>
     <span class="k">return</span> <span class="n">result</span>
 
@@ -378,6 +380,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -392,8 +395,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Events &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>Events &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Signal Handling" href="signal.html" />
     <link rel="prev" title="Actor messages" href="messages.html" />
@@ -77,7 +77,7 @@ referred to this type of event as a <strong>may times event</strong>.</p>
 <p>As the name says, the <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> is a special event which
 can be fired once only. Firing a <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> event multiple
 times will cause an <code class="xref py py-class docutils literal"><span class="pre">InavlidStateError</span></code> to be raised.</p>
-<p>A <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> event is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> and
+<p>A <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> event is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> and
 therefore you can yield it in a coroutine to wait until it get fired.</p>
 </div>
 <div class="section" id="event-handler">
@@ -151,6 +151,7 @@ method mentioned above:</p>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -165,8 +166,7 @@ method mentioned above:</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

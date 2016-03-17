@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Protocols/Transports API &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>Protocols/Transports API &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Application API" href="application.html" />
     <link rel="prev" title="Event API" href="events.html" />
@@ -47,7 +47,7 @@
 <span id="protocol-api"></span><h1>Protocols/Transports API<a class="headerlink" href="#protocols-transports-api" title="Permalink to this headline">¶</a></h1>
 <p>This part of the <a class="reference internal" href="index.html#api"><span>pulsar API</span></a> is about classes responsible for
 implementing the Protocol/Transport paradigm. They are based on
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio.Protocol" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Protocol</span></code></a> and <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio.DatagramProtocol" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.DatagramProtocol</span></code></a> classes.</p>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio.Protocol" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Protocol</span></code></a> and <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio.DatagramProtocol" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.DatagramProtocol</span></code></a> classes.</p>
 <span class="target" id="module-pulsar.async.protocols"></span><div class="section" id="protocols">
 <h2>Protocols<a class="headerlink" href="#protocols" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="pulsarprotocol">
@@ -76,7 +76,7 @@ the producer has processed at the time it created this
 <dl class="attribute">
 <dt id="pulsar.async.protocols.PulsarProtocol.transport">
 <code class="descname">transport</code><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol.transport" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio-transport" title="(in Python v3.5)"><span class="xref std std-ref">transport</span></a> for this protocol.</p>
+<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio-transport" title="(in Python v3.6)"><span class="xref std std-ref">transport</span></a> for this protocol.</p>
 <p>Available once the <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol.connection_made" title="pulsar.async.protocols.PulsarProtocol.connection_made"><code class="xref py py-meth docutils literal"><span class="pre">connection_made()</span></code></a> is called.</p>
 </dd></dl>
 
@@ -107,13 +107,15 @@ the producer has processed at the time it created this
 <dl class="method">
 <dt id="pulsar.async.protocols.PulsarProtocol.close">
 <code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close by closing the <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol.transport" title="pulsar.async.protocols.PulsarProtocol.transport"><code class="xref py py-attr docutils literal"><span class="pre">transport</span></code></a>.</p>
+<dd><p>Close by closing the <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol.transport" title="pulsar.async.protocols.PulsarProtocol.transport"><code class="xref py py-attr docutils literal"><span class="pre">transport</span></code></a></p>
+<p>Return the <code class="docutils literal"><span class="pre">connection_lost</span></code> event which can be used to wait
+for complete transport closure.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.async.protocols.PulsarProtocol.abort">
 <code class="descname">abort</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/protocols.html#PulsarProtocol.abort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.PulsarProtocol.abort" title="Permalink to this definition">¶</a></dt>
-<dd><p>Abort by aborting the <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol.transport" title="pulsar.async.protocols.PulsarProtocol.transport"><code class="xref py py-attr docutils literal"><span class="pre">transport</span></code></a>.</p>
+<dd><p>Abort by aborting the <a class="reference internal" href="#pulsar.async.protocols.PulsarProtocol.transport" title="pulsar.async.protocols.PulsarProtocol.transport"><code class="xref py py-attr docutils literal"><span class="pre">transport</span></code></a></p>
 </dd></dl>
 
 <dl class="method">
@@ -143,12 +145,12 @@ and adds a <code class="xref py py-attr docutils literal"><span class="pre">time
 <dl class="class">
 <dt id="pulsar.async.protocols.Protocol">
 <em class="property">class </em><code class="descclassname">pulsar.async.protocols.</code><code class="descname">Protocol</code><span class="sig-paren">(</span><em>loop</em>, <em>session=1</em>, <em>producer=None</em>, <em>logger=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/protocols.html#Protocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Protocol" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio.Protocol" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Protocol</span></code></a> with <a class="reference internal" href="../tutorials/events.html#event-handling"><span>events</span></a></p>
+<dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio.Protocol" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Protocol</span></code></a> with <a class="reference internal" href="../tutorials/events.html#event-handling"><span>events</span></a></p>
 <dl class="method">
 <dt id="pulsar.async.protocols.Protocol.write">
 <code class="descname">write</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/protocols.html#Protocol.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Protocol.write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write <code class="docutils literal"><span class="pre">data</span></code> into the wire.</p>
-<p>Returns an empty tuple or a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> if this
+<p>Returns an empty tuple or a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> if this
 protocol has paused writing.</p>
 </dd></dl>
 
@@ -162,7 +164,7 @@ protocol has paused writing.</p>
 <em class="property">class </em><code class="descclassname">pulsar.async.protocols.</code><code class="descname">Connection</code><span class="sig-paren">(</span><em>consumer_factory=None</em>, <em>timeout=None</em>, <em>low_limit=None</em>, <em>high_limit=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.async.mixins.FlowControl" title="pulsar.async.mixins.FlowControl"><code class="xref py py-class docutils literal"><span class="pre">FlowControl</span></code></a> to handle multiple TCP requests/responses.</p>
 <p>It is a class which acts as bridge between a
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio-transport" title="(in Python v3.5)"><span class="xref std std-ref">transport</span></a> and a <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><code class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></code></a>.
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-protocol.html#asyncio-transport" title="(in Python v3.6)"><span class="xref std std-ref">transport</span></a> and a <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><code class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></code></a>.
 It routes data arriving from the transport to the
 <a class="reference internal" href="#pulsar.async.protocols.Connection.current_consumer" title="pulsar.async.protocols.Connection.current_consumer"><code class="xref py py-meth docutils literal"><span class="pre">current_consumer()</span></code></a>.</p>
 <dl class="attribute">
@@ -333,7 +335,7 @@ into the transport. Something like this:</p>
 <p>There is no need to override this method,
 implement <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer.start_request" title="pulsar.async.protocols.ProtocolConsumer.start_request"><code class="xref py py-meth docutils literal"><span class="pre">start_request()</span></code></a> instead.
 If either <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer.connection" title="pulsar.async.protocols.ProtocolConsumer.connection"><code class="xref py py-attr docutils literal"><span class="pre">connection</span></code></a> or <a class="reference internal" href="#pulsar.async.protocols.ProtocolConsumer.transport" title="pulsar.async.protocols.ProtocolConsumer.transport"><code class="xref py py-attr docutils literal"><span class="pre">transport</span></code></a> are missing, a
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#RuntimeError" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></code></a> occurs.</p>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></code></a> occurs.</p>
 <p>For server side consumer, this method simply fires the <code class="docutils literal"><span class="pre">pre_request</span></code>
 event.</p>
 </dd></dl>
@@ -363,7 +365,7 @@ to handle the potential exception <code class="docutils literal"><span class="pr
 <dt id="pulsar.async.protocols.ProtocolConsumer.write">
 <code class="descname">write</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/protocols.html#ProtocolConsumer.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.ProtocolConsumer.write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delegate writing to the underlying <a class="reference internal" href="#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><code class="xref py py-class docutils literal"><span class="pre">Connection</span></code></a></p>
-<p>Return an empty tuple or a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></p>
+<p>Return an empty tuple or a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></p>
 </dd></dl>
 
 </dd></dl>
@@ -522,7 +524,7 @@ model with a minimum of protocol mechanism.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called back when the server is
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called back when the server is
 serving the socket.</td>
 </tr>
 </tbody>
@@ -657,7 +659,7 @@ for clients with several connections to a remote <a class="reference internal" h
 <em class="property">class </em><code class="descclassname">pulsar.async.clients.</code><code class="descname">Pool</code><span class="sig-paren">(</span><em>creator</em>, <em>pool_size=10</em>, <em>loop=None</em>, <em>timeout=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/clients.html#Pool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.clients.Pool" title="Permalink to this definition">¶</a></dt>
 <dd><p>An asynchronous pool of open connections.</p>
 <p>Open connections are either <a class="reference internal" href="#pulsar.async.clients.Pool.in_use" title="pulsar.async.clients.Pool.in_use"><code class="xref py py-attr docutils literal"><span class="pre">in_use</span></code></a> or <a class="reference internal" href="#pulsar.async.clients.Pool.available" title="pulsar.async.clients.Pool.available"><code class="xref py py-attr docutils literal"><span class="pre">available</span></code></a>
-to be used. Available connection are placed in an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-queue.html#asyncio.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Queue</span></code></a>.</p>
+to be used. Available connection are placed in an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-queue.html#asyncio.Queue" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Queue</span></code></a>.</p>
 <p>This class is not thread safe.</p>
 <dl class="attribute">
 <dt id="pulsar.async.clients.Pool.pool_size">
@@ -682,6 +684,12 @@ to the pool.</p>
 <dd><p>Number of available connections in the pool.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pulsar.async.clients.Pool.closed">
+<code class="descname">closed</code><a class="headerlink" href="#pulsar.async.clients.Pool.closed" title="Permalink to this definition">¶</a></dt>
+<dd><p>True when this pool is closed</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.async.clients.Pool.connect">
 <code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/clients.html#Pool.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.clients.Pool.connect" title="Permalink to this definition">¶</a></dt>
@@ -692,7 +700,7 @@ to the pool.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> resulting in the connection.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> resulting in the connection.</td>
 </tr>
 </tbody>
 </table>
@@ -700,8 +708,10 @@ to the pool.</p>
 
 <dl class="method">
 <dt id="pulsar.async.clients.Pool.close">
-<code class="descname">close</code><span class="sig-paren">(</span><em>async=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/clients.html#Pool.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.clients.Pool.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close all <a class="reference internal" href="#pulsar.async.clients.Pool.available" title="pulsar.async.clients.Pool.available"><code class="xref py py-attr docutils literal"><span class="pre">available</span></code></a> connections</p>
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/clients.html#Pool.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.clients.Pool.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close all connections</p>
+<p>Return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called once all connections
+have closed</p>
 </dd></dl>
 
 </dd></dl>
@@ -782,6 +792,7 @@ to the pool.</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -796,8 +807,7 @@ to the pool.</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

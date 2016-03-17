@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actors API &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>Actors API &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Event API" href="events.html" />
     <link rel="prev" title="Asynchonous API" href="async.html" />
@@ -54,7 +54,7 @@ check out the <a class="reference internal" href="../design.html#design-actor"><
 <dl class="function">
 <dt id="pulsar.async.actor.spawn">
 <code class="descclassname">pulsar.async.actor.</code><code class="descname">spawn</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/actor.html#spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.spawn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spawn a new <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> and return an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>.</p>
+<dd><p>Spawn a new <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> and return an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>.</p>
 <p><strong>Parameter kwargs</strong></p>
 <p>These optional parameters are:</p>
 <ul class="simple">
@@ -67,7 +67,7 @@ and <code class="docutils literal"><span class="pre">periodic_task</span></code>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a>.</td>
 </tr>
 </tbody>
 </table>
@@ -111,7 +111,7 @@ to perform in the <code class="docutils literal"><span class="pre">target</span>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> if the action acknowledge the
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> if the action acknowledge the
 caller or <cite>None</cite>.</p>
 </td>
 </tr>
@@ -197,7 +197,7 @@ an <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pu
 <dl class="attribute">
 <dt id="pulsar.async.actor.Actor._loop">
 <code class="descname">_loop</code><a class="headerlink" href="#pulsar.async.actor.Actor._loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a> which listen
+<dd><p>An <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.6)"><span class="xref std std-ref">event loop</span></a> which listen
 for input/output events on sockets or socket-like objects.
 It is the driver of the <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a>.
 If the <a class="reference internal" href="#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a> stops, the <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a> stops
@@ -251,7 +251,7 @@ information about an actor.</p>
 <dl class="attribute">
 <dt id="pulsar.async.actor.Actor.next_periodic_task">
 <code class="descname">next_periodic_task</code><a class="headerlink" href="#pulsar.async.actor.Actor.next_periodic_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.Handle" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Handle</span></code></a> for the next
+<dd><p>The <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.Handle" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Handle</span></code></a> for the next
 <a class="reference internal" href="../design.html#actor-periodic-task"><span>actor periodic task</span></a>.</p>
 </dd></dl>
 
@@ -389,7 +389,7 @@ status and performance. The dictionary contains the following entries:</p>
 <li><code class="docutils literal"><span class="pre">actor</span></code> a dictionary containing information regarding the type of
 actor and its status.</li>
 <li><code class="docutils literal"><span class="pre">events</span></code> a dictionary of information about the
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.5)"><span class="xref std std-ref">event loop</span></a> running the actor.</li>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.6)"><span class="xref std std-ref">event loop</span></a> running the actor.</li>
 <li><code class="docutils literal"><span class="pre">extra</span></code> the <a class="reference internal" href="#pulsar.async.actor.Actor.extra" title="pulsar.async.actor.Actor.extra"><code class="xref py py-attr docutils literal"><span class="pre">extra</span></code></a> attribute (you can use it to add stuff).</li>
 <li><code class="docutils literal"><span class="pre">system</span></code> system info.</li>
 </ul>
@@ -644,7 +644,7 @@ results in a running state.</p>
 <dd><p>Implement the <a class="reference internal" href="../design.html#actor-periodic-task"><span>actor period task</span></a>.</p>
 <p>This is an internal method called periodically by the
 <a class="reference internal" href="#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></code></a> to ping the actor monitor.
-If successful return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called
+If successful return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called
 back with the acknowledgement from the monitor.</p>
 </dd></dl>
 
@@ -738,7 +738,7 @@ the <code class="xref py py-class docutils literal"><span class="pre">Arbiter</s
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'INACTIVE': 1, 'CLOSE': 5, 'STOPPING': 4, 'STARTING': 2, 'TERMINATE': 6, 'RUN': 3}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'INACTIVE': 1, 'CLOSE': 5, 'STARTING': 2, 'TERMINATE': 6, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3, 'INITIAL': 0, 'STOPPING': 4}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>
@@ -810,6 +810,7 @@ periodic task.</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -824,8 +825,7 @@ periodic task.</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

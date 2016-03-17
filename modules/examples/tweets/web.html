@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.tweets.web &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>examples.tweets.web &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -52,7 +52,7 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">from</span> <span class="nn">string</span> <span class="kn">import</span> <span class="n">Template</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ensure_future</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">LazyWsgi</span><span class="p">,</span> <span class="n">WsgiHandler</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">MediaRouter</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.ws</span> <span class="kn">import</span> <span class="n">WebSocket</span><span class="p">,</span> <span class="n">PubSubWS</span>
@@ -90,12 +90,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_store</span><span class="p">)</span>
         <span class="n">pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
         <span class="c1"># subscribe to channel</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">pubsub</span><span class="p">)</span>
+        <span class="n">ensure_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">pubsub</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">WsgiHandler</span><span class="p">([</span><span class="n">Router</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">home_page</span><span class="p">),</span>
                             <span class="n">MediaRouter</span><span class="p">(</span><span class="s1">&#39;/static&#39;</span><span class="p">,</span> <span class="n">STATIC_DIR</span><span class="p">),</span>
                             <span class="n">WebSocket</span><span class="p">(</span><span class="s1">&#39;/message&#39;</span><span class="p">,</span>
-                                      <span class="n">TweetsWsHandler</span><span class="p">(</span><span class="n">pubsub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">))])</span>
-</div>
+                                      <span class="n">TweetsWsHandler</span><span class="p">(</span><span class="n">pubsub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">))])</span></div>
+
 <div class="viewcode-block" id="TwitterSite.home_page"><a class="viewcode-back" href="../../../tutorials/tweets.html#examples.tweets.web.TwitterSite.home_page">[docs]</a>    <span class="k">def</span> <span class="nf">home_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Renders the home page</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -106,8 +106,8 @@
         <span class="n">ws</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">absolute_uri</span><span class="p">(</span><span class="s1">&#39;/message&#39;</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="n">scheme</span><span class="p">)</span>
         <span class="n">html</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">safe_substitute</span><span class="p">({</span><span class="s1">&#39;twitter&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">ws</span><span class="p">})})</span>
         <span class="n">doc</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">doc</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="n">doc</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">doc_head</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">cfg</span>
         <span class="n">description</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="n">DESCRIPTION</span>
@@ -121,7 +121,6 @@
         <span class="n">head</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">REQUIRE_JS</span><span class="p">)</span>
         <span class="n">head</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/static/tweets.js&#39;</span><span class="p">)</span>
 
-    <span class="nd">@task</span>
 <div class="viewcode-block" id="TwitterSite.subscribe"><a class="viewcode-back" href="../../../tutorials/tweets.html#examples.tweets.web.TwitterSite.subscribe">[docs]</a>    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pubsub</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Subscribe to the channel for tweets</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -164,6 +163,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -178,8 +178,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

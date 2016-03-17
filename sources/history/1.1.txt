@@ -1,0 +1,76 @@
+## Ver. 1.1.3 - 2016-Feb-19
+
+Make sure the ``asyncio.coroutine`` decorator is used by all pulsar coroutines
+This allows to use pulsar to write python 3.5 compatible code with the
+``async/await`` syntax. [709f9ff](https://github.com/quantmind/pulsar/commit/709f9ff0e9df9858100a9b2e2ef154ad57391a07)
+
+### Documentation
+* Mcve reference in the readme [b49434d](https://github.com/quantmind/pulsar/commit/b49434d3e9a0f016e6b7630bdbfab0327ab3b002)
+* Removed CHANGELOG.rst from the top level directory and created a folder inside
+  the docs which contains a list of minor releases
+* Started using markdown in documentation. [6b20825](https://github.com/quantmind/pulsar/commit/6b208259b5937fd0e4468dcb263e2f365df86a66)
+
+### Http
+* Better keep-alive management of HTTP connections [df1be4b](https://github.com/quantmind/pulsar/commit/df1be4bc4347b7d71de677bc73d5b8c9085d90f7)
+* Http client uses the base class connection method rather than using a
+  different one [b584828](https://github.com/quantmind/pulsar/commit/b5848289bb0605ebe97d1179260b47d9889a9887)
+* The http response object has the links attribute which return a parsed
+  Links headers dictionary. Code from python requests [023ca50](https://github.com/quantmind/pulsar/commit/023ca508d2ecd222924e0e1087ea88a6cbbaadda)
+
+### Wsgi
+* Use file_response function in MediaMixin.serve_file method [c012af1](https://github.com/quantmind/pulsar/commit/c012af1855c704d352dec3a045911e7b1a14f572)
+* FileRouter is now a proxy for MediaRouter
+
+
+## Ver. 1.1.2 - 2016-Feb-04
+
+* Removed ``release`` application and created a [new repository](https://github.com/quantmind/pulsar-agile) for it
+* ``wait`` method in ``greenio`` app accepts an extra parameter for checking if in child greenlet
+* Specialised ``MustBeInChildGreenlet`` error for functions which should be called on a child greenlet
+* Critical bug fix in ``pubsub`` subscribe method for Redis backend
+* Added an asynchronous ``wsgi.file_wrapper`` to the WSGI environment
+* Added ``file_response`` utility to serve local files
+* Introduced ``pulsar.ensure_future`` in place of ``pulsar.async``
+
+
+## Ver. 1.1.1 - 2016-Jan-06
+
+* Full support for python 3.5
+* Pulsar **1.1.x** is the last minor release ("major.minor.micro") to support python 3.4
+* From pulsar **1.2.x**, support for python 3.4 will be dropped and the new
+  [async-await][] syntax will be used in the whole codebase
+
+### Core
+* Added CI for python 3.5
+* Added ``debug`` properties to all ``AsyncObject``. The property returns the event loop
+  debug mode flag
+
+### Http
+* Backward incompatible changes with API much closer to [requests][] and far better support for streaming both uploads and downloads
+* Added ``content`` attribute to ``HttpResponse``, in line with [requests][]
+* Ability to pass ``stream=True`` during a request, same API as python [requests][]
+* Added the ``raw`` property to the Http Response, it can be used in conjunction with
+  ``stream`` to stream http data. Similar API to [requests][]
+* Renamed ``proxy_info`` to ``proxies``, same API as python [requests][]
+* You can now pass ``proxies`` dictionary during a request
+* Stream uploads by passing a generator as ``data`` parameter
+* Better websocket upgrade process
+* Tidy up ``CONNECT`` request url (for tunneling)
+* Added tests for proxyserver example using [requests][]
+
+### Wsgi
+* Both ``wsgi`` and ``http`` apps use the same ``pulsar.utils.httpurl.http_chunks``
+  function for transfer-encoding ``chunked``
+* ``render_error`` escapes the Exception message to prevent [XSS][]
+
+### Datastore
+* Better ``pulsards_url`` function, default value form ``cfg.data_store``
+* ``key_value_save`` set to empty list by default (no persistence)
+
+### Examples
+* Refactored proxy server example
+* Updated django chat example so that warning are no longer issued
+
+[requests]: http://docs.python-requests.org/
+[XSS]: https://en.wikipedia.org/wiki/Cross-site_scripting
+[async-await]: https://www.python.org/dev/peps/pep-0492/#specification

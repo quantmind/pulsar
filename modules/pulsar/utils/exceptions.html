@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.exceptions &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>pulsar.utils.exceptions &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -59,7 +59,10 @@
            <span class="s1">&#39;EventAlreadyRegistered&#39;</span><span class="p">,</span>
            <span class="s1">&#39;InvalidOperation&#39;</span><span class="p">,</span>
            <span class="s1">&#39;HaltServer&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;HTTPError&#39;</span><span class="p">,</span>
+           <span class="c1"># HTTP client exception</span>
+           <span class="s1">&#39;HttpRequestException&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HttpConnectionError&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HttpProxyError&#39;</span><span class="p">,</span>
            <span class="s1">&#39;SSLError&#39;</span><span class="p">,</span>
            <span class="c1"># HTTP Exceptions</span>
            <span class="s1">&#39;HttpException&#39;</span><span class="p">,</span>
@@ -135,17 +138,35 @@
 
 
 <span class="c1"># #################################################################### HTTP</span>
-<div class="viewcode-block" id="HTTPError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HTTPError">[docs]</a><span class="k">class</span> <span class="nc">HTTPError</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="s2">&quot;Base for all HTTP related errors.&quot;</span>
-    <span class="k">pass</span></div>
+<div class="viewcode-block" id="HttpRequestException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpRequestException">[docs]</a><span class="k">class</span> <span class="nc">HttpRequestException</span><span class="p">(</span><span class="ne">IOError</span><span class="p">):</span>
+    <span class="s2">&quot;Base for all HTTP related errors&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize RequestException with `request` and `response` objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;response&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;request&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="ow">and</span>
+                <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s1">&#39;request&#39;</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">request</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SSLError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.SSLError">[docs]</a><span class="k">class</span> <span class="nc">SSLError</span><span class="p">(</span><span class="n">HTTPError</span><span class="p">):</span>
-    <span class="s2">&quot;Raised when SSL certificate fails in an HTTPS connection.&quot;</span>
-    <span class="k">pass</span></div>
+<div class="viewcode-block" id="HttpConnectionError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpConnectionError">[docs]</a><span class="k">class</span> <span class="nc">HttpConnectionError</span><span class="p">(</span><span class="n">HttpRequestException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A Connection error occurred.&quot;&quot;&quot;</span></div>
 
 
-<div class="viewcode-block" id="HttpException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpException">[docs]</a><span class="k">class</span> <span class="nc">HttpException</span><span class="p">(</span><span class="n">HTTPError</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpProxyError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpProxyError">[docs]</a><span class="k">class</span> <span class="nc">HttpProxyError</span><span class="p">(</span><span class="n">HttpConnectionError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A proxy error occurred.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="SSLError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.SSLError">[docs]</a><span class="k">class</span> <span class="nc">SSLError</span><span class="p">(</span><span class="n">HttpConnectionError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An SSL error occurred.&quot;&quot;&quot;</span></div>
+
+
+<span class="c1"># #################################################################### HTTP</span>
+<div class="viewcode-block" id="HttpException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpException">[docs]</a><span class="k">class</span> <span class="nc">HttpException</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The base class of all ``HTTP`` server exceptions</span>
 
 <span class="sd">    Introduces the following attributes:</span>
@@ -255,6 +276,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -269,8 +291,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.handlers &mdash; pulsar 1.1.3beta0 documentation</title>
+    <title>pulsar.apps.wsgi.handlers &mdash; pulsar 1.1.4b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.3beta0',
+        VERSION:     '1.1.4b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.3beta0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -42,7 +42,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.wsgi.handlers</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">This section describes the asynchronous WSGI specification used by pulsar.</span>
 <span class="sd">It is a superset of the `WSGI 1.0.1`_ specification for synchronous</span>
 <span class="sd">server/middleware.</span>
@@ -141,7 +141,9 @@
 
 <span class="sd">.. _WSGI: http://www.wsgi.org</span>
 <span class="sd">.. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
+
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">ensure_future</span><span class="p">,</span> <span class="n">isfuture</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_method</span>
 
@@ -204,6 +206,7 @@
             <span class="n">response</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">start_response</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">response</span>
 
+    <span class="nd">@asyncio.coroutine</span>
     <span class="k">def</span> <span class="nf">_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
@@ -295,6 +298,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acknowledgement.html">Acknowledgement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../pics.html">Pics</a></li>
 </ul>
 <ul>
@@ -309,8 +313,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../oldchangelog.html">Changelog Pre Pulsar 1.0</a></li>
+<ul class="simple">
 </ul>
 
 
