@@ -1,7 +1,40 @@
-"""Demonstrate the use of
+"""This script demonstrates the use synchronous web frameworks such as flask_
+in the context of asynchronous responses. It uses pulsar the :mod:`.greenio`
+module to run flask on a pool of greenlet.
 
-* Pulsar multi app
-* Asynchronous flask with greenlet
+This configuration allows the use of the greenlet-friendly :class:`EchoGreen`
+client within a flask response function.
+The Echo server starts at the same time as the Flask WSGI server.
+
+To run the script::
+
+    python manage.py
+
+and point to http://localhost:8080 or any other sub urls.
+
+Main Classes
+==============
+
+.. autoclass:: FlaskSite
+
+.. autoclass:: EchoGreen
+
+.. autoclass:: Servers
+
+Components
+=============
+
+In this snippet the following components are used:
+
+* Pulsar :class:`.MultiApp`
+* Pulsar :class:`.WSGIServer`
+* Pulsar :class:`.SocketServer`
+* Pulsar :class:`.GreenWSGI`
+
+For more information about writing server and clients check the
+:ref:`writing clients tutorial <tutorials-writing-clients>`.
+
+.. _flask: http://flask.pocoo.org/
 """
 from flask import Flask, make_response
 
@@ -22,22 +55,12 @@ from pulsar.apps.greenio.wsgi import GreenWSGI
 
 
 class EchoProtocol(pulsar.ProtocolConsumer):
-    '''An echo :class:`~.ProtocolConsumer` for client and servers.
-
-    The only difference between client and server is the implementation
-    of the :meth:`response` method.
-    '''
     separator = b'\r\n\r\n'
     '''A separator for messages.'''
     buffer = b''
     '''The buffer for long messages'''
 
     def data_received(self, data):
-        '''Implements the :meth:`~.ProtocolConsumer.data_received` method.
-
-        It simply search for the :attr:`separator` and, if found, it invokes
-        the :meth:`response` method with the value of the message.
-        '''
         if self.buffer:
             data = self.buffer + data
 
@@ -52,16 +75,9 @@ class EchoProtocol(pulsar.ProtocolConsumer):
             self.buffer = data
 
     def start_request(self):
-        '''Override :meth:`~.ProtocolConsumer.start_request` to write
-        the message ended by the :attr:`separator` into the transport.
-        '''
         self.transport.write(self._request + self.separator)
 
     def response(self, data, rest):
-        '''Clients return the message so that the
-        :attr:`.ProtocolConsumer.on_finished` is called back with the
-        message value, while servers sends the message back to the client.
-        '''
         if rest:
             raise ProtocolError
         return data[:-len(self.separator)]
@@ -71,9 +87,6 @@ class EchoServerProtocol(EchoProtocol):
     '''The :class:`EchoProtocol` used by the echo :func:`server`.
     '''
     def response(self, data, rest):
-        '''Override :meth:`~EchoProtocol.response` method by writing the
-        ``data`` received back to the client.
-        '''
         self.transport.write(data)
         data = data[:-len(self.separator)]
         # If we get a QUIT message, close the transport.
@@ -125,8 +138,9 @@ def FlaskApp(echo):
     return app
 
 
-class Site(wsgi.LazyWsgi):
-
+class FlaskSite(wsgi.LazyWsgi):
+    """Configure a flask_ application to run on a :class:`.GreenPool`
+    """
     def setup(self, environ=None):
         green_pool = GreenPool()
         echo = EchoGreen(('localhost', 8060), green_pool.wait)
@@ -135,10 +149,12 @@ class Site(wsgi.LazyWsgi):
 
 
 def server(**kwargs):
-    return wsgi.WSGIServer(Site(), **kwargs)
+    return wsgi.WSGIServer(FlaskSite(), **kwargs)
 
 
-class Server(MultiApp):
+class Servers(MultiApp):
+    """Multiapp Server configurator
+    """
     cfg = Config(bind=':8080', echo_bind=':8060')
 
     def build(self):
@@ -147,5 +163,4 @@ class Server(MultiApp):
 
 
 if __name__ == '__main__':  # pragma    nocover
-    app = Server()
-    app.start()
+    Servers().start()

@@ -25,6 +25,7 @@ Most of the material presented in the these tutorials is based on the
    calculator
    chat
    django
+   flaskgreen
    tweets
    philosophers
    pulsards
