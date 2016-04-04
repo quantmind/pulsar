@@ -91,11 +91,13 @@ def get_application(name):
             return _get_remote_app(actor, name)
 
 
+@asyncio.coroutine
 def _get_remote_app(actor, name):
     cfg = yield from actor.send('arbiter', 'run', _get_app, name)
     return cfg.app() if cfg else None
 
 
+@asyncio.coroutine
 def _get_app(arbiter, name, safe=True):
     monitor = arbiter.get_actor(name)
     if monitor:

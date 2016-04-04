@@ -17,6 +17,12 @@ def add(actor, a, b):
 
 
 @asyncio.coroutine
+def get_test(_):
+    app = yield from pulsar.get_application('test')
+    return app.cfg
+
+
+@asyncio.coroutine
 def spawn_actor_from_actor(actor, name):
     actor2 = yield from spawn(name=name)
     pong = yield from send(actor2, 'ping')
@@ -144,6 +150,14 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         yield from self.stop_actors(proxy)
         is_alive = yield from async_while(3, proxy_monitor.is_alive)
         self.assertFalse(is_alive)
+
+    @asyncio.coroutine
+    def test_get_application(self):
+        proxy = yield from self.spawn_actor(
+            name='actor-test-get-application-%s' % self.concurrency)
+        cfg = yield from send(proxy, 'run', get_test)
+        self.assertTrue(cfg)
+        self.assertEqual(cfg.name, 'test')
 
 
 @dont_run_with_thread
