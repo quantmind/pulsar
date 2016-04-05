@@ -470,7 +470,11 @@ class Application(Configurator):
                 return start
             else:
                 return
-        raise ImproperlyConfigured('Already started or not in arbiter domain')
+        elif monitor:
+            raise ImproperlyConfigured('%s already started ' % monitor.name)
+        else:
+            raise ImproperlyConfigured('Cannot start application from %s'
+                                       % actor)
 
     def stop(self, actor=None):
         """Stop the application
