@@ -46,7 +46,7 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(app.cfg.unz, 'whatz')
         self.assertEqual(app.cfg.bind, ':9999')
 
-    def testTimeout(self):
+    def test_timeout(self):
         app = self.create(timeout=22, name='pippo')
         self.assertEqual(app.name, 'pippo')
         self.assertEqual(app.cfg.timeout, 22)

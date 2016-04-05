@@ -6,7 +6,7 @@ from pulsar import send, SERVER_SOFTWARE
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import dont_run_with_thread
 
-from .manage import FlaskGreen
+from .manage import FlaskGreen, log_connection
 
 
 class TestFlaskGreenThread(unittest.TestCase):
@@ -38,6 +38,7 @@ class TestFlaskGreenThread(unittest.TestCase):
     def test_apps(self):
         self.assertEqual(self.app_cfg[0].name, self.name())
         self.assertEqual(self.app_cfg[1].name, 'echo_%s' % self.name())
+        self.assertEqual(self.app_cfg[1].connection_made, log_connection)
 
     @asyncio.coroutine
     def testResponse200(self):

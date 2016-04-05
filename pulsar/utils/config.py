@@ -233,10 +233,10 @@ class Config:
             self.__dict__[name] = value
             return
 
-        if name not in self.settings and self.prefix and default:
+        if name not in self.settings and self.prefix:
             prefix_name = '%s_%s' % (self.prefix, name)
             if prefix_name in self.settings:
-                name = prefix_name
+                return  # don't do anything
 
         if name in self.settings:
             self.settings[name].set(value, default=default)

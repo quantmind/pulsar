@@ -167,7 +167,7 @@ class FlaskGreen(MultiApp):
     def build(self):
         yield self.new_app(WSGIServer, callable=FlaskSite())
         yield self.new_app(SocketServer, 'echo', callable=EchoServerProtocol,
-                           connection_made=log_connection)
+                           echo_connection_made=log_connection)
 
 
 def log_connection(connection, exc=None):
