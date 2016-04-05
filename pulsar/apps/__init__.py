@@ -563,8 +563,8 @@ class MultiApp(Configurator):
 
             def build(self):
                 yield self.new_app(TaskQueue)
-                yield self.new_app(WSGIserver, prefix="rpc", callable=..., ...)
-                yield self.new_app(WSGIserver, prefix="web", callable=..., ...)
+                yield self.new_app(WSGIserver, "rpc", callable=..., ...)
+                yield self.new_app(WSGIserver, "web", callable=..., ...)
     """
     _apps = None
 

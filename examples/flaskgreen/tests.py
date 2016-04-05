@@ -15,7 +15,7 @@ class TestFlaskGreenThread(unittest.TestCase):
 
     @classmethod
     def name(cls):
-        return 'flask_' + cls.concurrency
+        return 'flaskgreen_' + cls.concurrency
 
     @classmethod
     @asyncio.coroutine
