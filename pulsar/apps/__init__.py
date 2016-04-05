@@ -625,7 +625,7 @@ class MultiApp(Configurator):
             an instance of *App*.
         :return: a tuple used by the :meth:`apps` method.
         """
-        params.update(self.cfg.params.copy())
+        params.update(self.cfg.params)
         params.pop('name', None)    # remove the name
         prefix = prefix or ''
         if not prefix and '' in self._apps:

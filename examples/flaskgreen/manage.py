@@ -97,13 +97,14 @@ class EchoServerProtocol(EchoProtocol):
 
 
 class EchoGreen(AbstractClient):
-    """A client for the echo server.
+    """A client for the echo server to be used by the Flask application
     """
     protocol_factory = partial(Connection, EchoProtocol)
+    address = None
 
-    def __init__(self, address, wait, pool_size=10, loop=None):
+    def __init__(self, appname, wait, pool_size=5, loop=None):
         super().__init__(loop)
-        self.address = address
+        self.app_name = appname
         self.wait = wait
         self.pool = Pool(self.connect, pool_size, self._loop)
 
@@ -115,6 +116,10 @@ class EchoGreen(AbstractClient):
 
     @asyncio.coroutine
     def _call(self, message):
+        # get the address of the echo application
+        if not self.address:
+            app = yield from pulsar.get_application(self.app_name)
+            self.address = app.cfg.addresses[0]
         connection = yield from self.pool.connect()
         with connection:
             consumer = connection.current_consumer()
@@ -147,24 +152,28 @@ class FlaskSite(wsgi.LazyWsgi):
     """
     def setup(self, environ=None):
         green_pool = GreenPool()
-        echo = EchoGreen(('localhost', 8060), green_pool.wait)
+        cfg = environ['pulsar.cfg']
+        echo_app_name = 'echo_%s' % cfg.name
+        echo = EchoGreen(echo_app_name, green_pool.wait)
         app = FlaskApp(echo)
         return wsgi.WsgiHandler([GreenWSGI(app, green_pool)], async=True)
 
 
-def server(**kwargs):
-    return wsgi.WSGIServer(FlaskSite(), **kwargs)
-
-
-class Servers(MultiApp):
+class FlaskGreen(MultiApp):
     """Multiapp Server configurator
     """
     cfg = Config(bind=':8080', echo_bind=':8060')
 
     def build(self):
         yield self.new_app(WSGIServer, callable=FlaskSite())
-        yield self.new_app(SocketServer, 'echo', callable=EchoServerProtocol)
+        yield self.new_app(SocketServer, 'echo', callable=EchoServerProtocol,
+                           connection_made=log_connection)
+
+
+def log_connection(connection, exc=None):
+    if not exc:
+        connection.logger.debug('Got a new connection to echo server!')
 
 
 if __name__ == '__main__':  # pragma    nocover
-    Servers().start()
+    FlaskGreen().start()

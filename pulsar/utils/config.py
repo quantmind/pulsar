@@ -231,15 +231,17 @@ class Config:
         """
         if name in self.__dict__:
             self.__dict__[name] = value
-        elif name not in self.settings:
-            # not in settings, check if this is a prefixed name
-            if self.prefix:
-                prefix_name = '%s_%s' % (self.prefix, name)
-                if prefix_name in self.settings:
-                    return  # don't set this value
-            self.params[name] = value
-        else:
+            return
+
+        if name not in self.settings and self.prefix and default:
+            prefix_name = '%s_%s' % (self.prefix, name)
+            if prefix_name in self.settings:
+                name = prefix_name
+
+        if name in self.settings:
             self.settings[name].set(value, default=default)
+        else:
+            self.params[name] = value
 
     def parser(self):
         """Create the argparser_ for this configuration by adding all
@@ -631,10 +633,10 @@ class Setting(metaclass=SettingMeta):
         # setting.modified = False
         if prefix and not setting.is_global:
             flags = setting.flags
+            # Prefix a setting
+            setting.orig_name = setting.name
+            setting.name = '%s_%s' % (prefix, setting.name)
             if flags and flags[-1].startswith('--'):
-                # Prefix a setting
-                setting.orig_name = setting.name
-                setting.name = '%s_%s' % (prefix, setting.name)
                 setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
         if name and not setting.is_global:
             setting.short = '%s application. %s' % (name, setting.short)

@@ -1,4 +1,4 @@
-'''Tests the "helloworld" example.'''
+'''Tests the "flaskapp" example.'''
 import unittest
 import asyncio
 
