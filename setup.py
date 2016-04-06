@@ -21,24 +21,6 @@ def read(name):
         return fp.read()
 
 
-def requirements(name, width_links=False):
-    requires = []
-    links = []
-
-    for line in read(name).split('\n'):
-        if line.startswith('-e '):
-            link = line[3:].strip()
-            if link == '.':
-                continue
-            links.append(link)
-            line = link.split('=')[1]
-        line = line.strip()
-        if line:
-            requires.append(line)
-
-    return requires, links if width_links else requires
-
-
 def run_setup():
     if libparams is None:
         params = {}
@@ -62,7 +44,6 @@ def run_setup():
                                                        'examples',
                                                        'examples.*']),
                        setup_requires=['wheel'],
-                       tests_require=requirements('requirements-dev.txt'),
                        classifiers=mod.CLASSIFIERS,
                        entry_points={
                             "distutils.commands": [

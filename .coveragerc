@@ -13,7 +13,7 @@ omit =
     *pulsar/apps/test/plugins/bench.py
     *pulsar/apps/test/cov.py
     *pulsar/apps/test/plugins/profile.py
-    *pulsar/apps/test/pep.py
+    *pulsar/apps/test/setup.py
     *pulsar/apps/tx/*
     examples/httpbin/config.py
     examples/httpbin/throttle.py

@@ -10,15 +10,16 @@ services:
   - redis-server
 
 install:
+  - pip install -r requirements-dev.txt
   - python setup.py egg_info
 
 services:
   - redis-server
 
 script:
-  - python setup.py test --coverage
   - python setup.py flake8
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python setup.py test --coveralls; fi
+  - python setup.py test --coverage
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python  --coveralls; fi
 
 notifications:
   email: false
