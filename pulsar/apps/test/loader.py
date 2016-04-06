@@ -104,10 +104,10 @@ class TestLoader:
     def testmodules(self, tags=None, exclude_tags=None):
         """Generator of ``tag``, ``modules`` pairs.
 
-        :parameter tags: optional list of tags to include, if not available all tags
-            will be included.
-        :parameter exclude_tags: optional list of tags to exclude. If not provided no
-            tags will be excluded.
+        :parameter tags: optional list of tags to include, if not available
+            all tags will be included.
+        :parameter exclude_tags: optional list of tags to exclude.
+            If not provided no tags will be excluded.
         """
         d = dict(self._testmodules(tags, exclude_tags))
         return [(k, d[k]) for k in sorted(d)]
@@ -193,4 +193,3 @@ class TestLoader:
             p = pattern.search(name)
             if p:
                 return p.groups(0)
-

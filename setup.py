@@ -24,8 +24,8 @@ def read(name):
 def run_setup():
     if libparams is None:
         params = {}
-        print('WARNING: C extensions could not be compiled, '
-              'Maybe Cython is not installed.')
+        print('WARNING: C extensions could not be included, '
+              'cython is not installed.')
     else:
         params = libparams()
 
