@@ -10,7 +10,7 @@ services:
   - redis-server
 
 install:
-  - pip install -r requirements-dev.txt
+  - python setup.py egg_info
 
 services:
   - redis-server
