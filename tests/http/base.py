@@ -14,8 +14,6 @@ from pulsar.utils.system import platform
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HttpRequestException)
 
-__test__ = False
-
 
 linux = platform.name == 'posix' and not platform.isMacOSX
 

@@ -1,4 +1,5 @@
 import pulsar
+from pulsar.utils.importer import module_attribute
 from pulsar.apps.test.result import Plugin
 
 
@@ -9,6 +10,15 @@ def as_test_setting(setting):
     setting.app = 'test'
     setting.section = "Test"
     return setting
+
+
+def validate_plugin_list(val):
+    if val and not isinstance(val, (list, tuple)):
+        raise TypeError("Not a list: %s" % val)
+    values = []
+    for v in val:
+        values.append(module_attribute(v, safe=False)())
+    return values
 
 
 class WrapTest:

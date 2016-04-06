@@ -37,18 +37,7 @@ from pulsar import (get_actor, send, new_event_loop, as_gather,
 from pulsar.apps.data import create_store
 
 
-__all__ = ['sequential',
-           'NOT_TEST_METHODS',
-           'ActorTestMixin',
-           'AsyncAssert',
-           'check_server',
-           'test_timeout',
-           'dont_run_with_thread']
-
-
 LOGGER = logging.getLogger('pulsar.test')
-NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
-                    'setUpClass', 'tearDownClass')
 
 
 def skip_test(o):

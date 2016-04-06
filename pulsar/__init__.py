@@ -41,23 +41,22 @@ HINDI = (b'\xe0\xa4\xaa\xe0\xa4\xb2\xe0\xa5\x8d'
          b'\xe0\xa4\xb8\xe0\xa4\xb0').decode('utf-8')
 SERVER_SOFTWARE = "{0}/{1}".format(SERVER_NAME, version)
 
-if os.environ.get('pulsar_setup_running') != 'yes':
-    if os.environ.get('pulsar_speedup') == 'no':
+if os.environ.get('pulsar_speedup') == 'no':
+    HAS_C_EXTENSIONS = False
+else:
+    HAS_C_EXTENSIONS = True
+    try:
+        from .utils import lib      # noqa
+    except ImportError:
         HAS_C_EXTENSIONS = False
-    else:
-        HAS_C_EXTENSIONS = True
-        try:
-            from .utils import lib      # noqa
-        except ImportError:
-            HAS_C_EXTENSIONS = False
 
-    from .utils.exceptions import *     # noqa
-    from .utils import system           # noqa
-    platform = system.platform          # noqa
-    from .utils.config import *         # noqa
-    from .async import *                # noqa
-    from .apps import *                 # noqa
+from .utils.exceptions import *     # noqa
+from .utils import system           # noqa
+platform = system.platform          # noqa
+from .utils.config import *         # noqa
+from .async import *                # noqa
+from .apps import *                 # noqa
 
-    del get_version
-    # Import data stores
-    from .apps.data import data_stores  # noqa
+del get_version
+# Import data stores
+from .apps.data import data_stores  # noqa

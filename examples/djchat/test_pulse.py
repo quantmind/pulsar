@@ -1,4 +1,4 @@
-'''Tests the pulse Command.'''
+"""Tests the pulse Command."""
 import unittest
 
 try:

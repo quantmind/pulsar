@@ -2,8 +2,6 @@ import requests
 
 from pulsar.apps.test import dont_run_with_thread
 
-__test__ = False
-
 
 class TestRequest:
     session = requests.session()

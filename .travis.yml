@@ -11,16 +11,14 @@ services:
 
 install:
   - pip install -r requirements-dev.txt
-  - python setup.py install
 
 services:
   - redis-server
 
 script:
-  - flake8
-  - rm -rf pulsar build pulsar.egg-info dist
-  - python -m runtests --coverage
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python -m runtests --coveralls; fi
+  - python setup.py flake8
+  - python setup.py test --coverage
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python setup.py test --coveralls; fi
 
 notifications:
   email: false

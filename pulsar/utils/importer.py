@@ -1,7 +1,7 @@
 import os
 import sys
 import glob
-from importlib import *     # noqa
+from importlib import import_module
 
 
 def expand_star(mod_name):
@@ -41,17 +41,29 @@ def module_attribute(dotpath, default=None, safe=False):
     argument if *safe* is `True`.
     '''
     if dotpath:
-        bits = str(dotpath).split('.')
+        bits = str(dotpath).split(':')
         try:
-            module = import_module('.'.join(bits[:-1]))
-            return getattr(module, bits[-1], default)
+            if len(bits) == 2:
+                attr = bits[1]
+                module_name = bits[0]
+            else:
+                bits = bits[0].split('.')
+                if len(bits) > 1:
+                    attr = bits[-1]
+                    module_name = '.'.join(bits[:-1])
+                else:
+                    raise ValueError('Could not find attribute in %s'
+                                     % dotpath)
+
+            module = import_module(module_name)
+            return getattr(module, attr)
         except Exception:
             if not safe:
                 raise
             return default
     else:
         if not safe:
-            raise ImportError()
+            raise ImportError
         return default
 
 

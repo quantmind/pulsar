@@ -44,7 +44,12 @@ def run_setup():
                                                        'examples',
                                                        'examples.*']),
                        setup_requires=['wheel'],
-                       classifiers=mod.CLASSIFIERS))
+                       classifiers=mod.CLASSIFIERS,
+                       entry_points={
+                            "distutils.commands": [
+                                "pulsar_test = pulsar.apps.test.setup:Test"
+                            ]
+                       }))
     setup(**params)
 
 

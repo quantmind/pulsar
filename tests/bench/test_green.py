@@ -5,7 +5,19 @@ from pulsar import send
 from pulsar.apps import greenio
 
 from examples.echo.manage import server, Echo
-from tests.apps.greenio import EchoGreen
+
+
+class EchoGreen(Echo):
+    '''An echo client which uses greenlets to provide implicit
+    asynchronous code'''
+
+    def __call__(self, message):
+        connection = greenio.wait(self.pool.connect())
+        with connection:
+            consumer = connection.current_consumer()
+            consumer.start(message)
+            greenio.wait(consumer.on_finished)
+            return consumer if self.full_response else consumer.buffer
 
 
 class TestGreenIo(unittest.TestCase):

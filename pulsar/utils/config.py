@@ -29,6 +29,7 @@ import types
 
 from pulsar import __version__, SERVER_NAME
 from . import system
+from .string import camel_to_dash
 from .internet import parse_address
 from .importer import import_system_file
 from .log import configured_logger
@@ -388,7 +389,7 @@ class Config:
     def configured_logger(self, name=None):
         """Configured logger.
         """
-        loghandlers = self.loghandlers
+        log_handlers = self.log_handlers
         # logname
         if not name:
             # base name is always pulsar
@@ -402,23 +403,23 @@ class Config:
         #
         namespaces = {}
 
-        for loglevel in self.loglevel or ():
-            bits = loglevel.split('.')
+        for log_level in self.log_level or ():
+            bits = log_level.split('.')
             namespaces['.'.join(bits[:-1]) or ''] = bits[-1]
 
         for namespace in sorted(namespaces):
             if self.daemon:     # pragma    nocover
                 handlers = []
-                for hnd in loghandlers:
+                for hnd in log_handlers:
                     if hnd != 'console':
                         handlers.append(hnd)
                 if not handlers:
                     handlers.append('file')
-                loghandlers = handlers
+                log_handlers = handlers
             configured_logger(namespace,
-                              config=self.logconfig,
+                              config=self.log_config,
                               level=namespaces[namespace],
-                              handlers=loghandlers)
+                              handlers=log_handlers)
         return logging.getLogger(name)
 
     def __copy__(self):
@@ -469,7 +470,7 @@ class SettingMeta(type):
         new_class()
         new_class.fmt_desc(attrs['desc'] or '')
         if not new_class.name:
-            new_class.name = new_class.__name__.lower()
+            new_class.name = camel_to_dash(new_class.__name__)
         if new_class.name in KNOWN_SETTINGS_ORDER:
             old_class = KNOWN_SETTINGS.pop(new_class.name)
             new_class.order = old_class.order
@@ -658,6 +659,8 @@ class TestOption(Setting):
 def validate_bool(val):
     if isinstance(val, bool):
         return val
+    if isinstance(val, int):
+        return bool(val)
     if not isinstance(val, str):
         raise TypeError("Invalid type for casting: %s" % val)
     if val.lower().strip() == "true":
@@ -788,7 +791,6 @@ class HttpProxyServer(Global):
 
 
 class Debug(Global):
-    name = "debug"
     flags = ["--debug"]
     validator = validate_bool
     action = "store_true"
@@ -802,7 +804,6 @@ class Debug(Global):
 
 
 class Daemon(Global):
-    name = "daemon"
     flags = ["-D", "--daemon"]
     validator = validate_bool
     action = "store_true"
@@ -816,7 +817,6 @@ class Daemon(Global):
 
 
 class Reload(Global):
-    name = "reload"
     flags = ["--reload"]
     validator = validate_bool
     action = "store_true"
@@ -828,12 +828,10 @@ class Reload(Global):
         """
 
 
-class Pidfile(Global):
-    name = "pidfile"
-    flags = ["-p", "--pid"]
+class PidFile(Global):
+    flags = ["-p", "--pid-file"]
     meta = "FILE"
     validator = validate_string
-    default = None
     desc = """\
         A filename to use for the PID file.
 
@@ -842,19 +840,15 @@ class Pidfile(Global):
 
 
 class Password(Global):
-    name = "password"
     flags = ["--password"]
     validator = validate_string
-    default = None
     desc = """Set a password for the server"""
 
 
 class User(Global):
-    name = "user"
     flags = ["-u", "--user"]
     meta = "USER"
     validator = validate_string
-    default = None
     desc = """\
         Switch worker processes to run as this user.
 
@@ -865,11 +859,9 @@ class User(Global):
 
 
 class Group(Global):
-    name = "group"
     flags = ["-g", "--group"]
     meta = "GROUP"
     validator = validate_string
-    default = None
     desc = """\
         Switch worker process to run as this group.
 
@@ -879,8 +871,7 @@ class Group(Global):
         """
 
 
-class Loglevel(Global):
-    name = "loglevel"
+class LogLevel(Global):
     flags = ["--log-level"]
     nargs = '+'
     default = ['info']
@@ -902,7 +893,6 @@ class Loglevel(Global):
 
 
 class LogHandlers(Global):
-    name = "loghandlers"
     flags = ["--log-handlers"]
     nargs = '+'
     default = ['console']
@@ -911,7 +901,6 @@ class LogHandlers(Global):
 
 
 class LogConfig(Global):
-    name = "logconfig"
     default = {}
     validator = validate_dict
     desc = """
@@ -922,9 +911,8 @@ class LogConfig(Global):
     """
 
 
-class Procname(Global):
-    name = "process_name"
-    flags = ["-n", "--name"]
+class ProcessName(Global):
+    flags = ["-n", "--process-name"]
     meta = "STRING"
     validator = validate_string
     default = None
@@ -940,8 +928,7 @@ class Procname(Global):
         """
 
 
-class DefaultProcName(Global):
-    name = "default_process_name"
+class DefaultProcessName(Global):
     validator = validate_string
     default = SERVER_NAME
     desc = """\
@@ -950,7 +937,6 @@ class DefaultProcName(Global):
 
 
 class Coverage(Global):
-    name = "coverage"
     flags = ["--coverage"]
     validator = validate_bool
     action = "store_true"
@@ -959,7 +945,6 @@ class Coverage(Global):
 
 
 class DataStore(Global):
-    name = 'data_store'
     flags = ['--data-store']
     meta = "CONNECTION STRING"
     default = ''

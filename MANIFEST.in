@@ -1,7 +1,6 @@
 include MANIFEST.in
 include LICENSE
 include README.rst
-include runtests.py
 include docs/make.bat
 include docs/Makefile
 recursive-include examples *.py *.js *.css *.html *.json

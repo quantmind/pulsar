@@ -9,8 +9,7 @@ from .utils import TestFailure, LOGGER
 __all__ = ['Plugin',
            'TestStream',
            'TestRunner',
-           'TestResult',
-           'Plugin']
+           'TestResult']
 
 
 STDOUT_LINE = '\nStdout:\n%s'
@@ -144,7 +143,7 @@ class Plugin:
     def printSummary(self, timeTaken):
         pass
 
-    def import_module(self, mod, parent=None):
+    def import_module(self, mod):
         return mod
 
     def getDescription(self, test):
@@ -370,8 +369,7 @@ def testsafe(name, return_val=None):
 class TestRunner(Plugin):
     '''A :class:`.Plugin` for asynchronously running tests.
     '''
-    def __init__(self, plugins, stream, writercls=None, descriptions=True,
-                 logger=None):
+    def __init__(self, plugins, stream, writercls=None, descriptions=True):
         self.descriptions = descriptions
         self.plugins = []
         writercls = writercls or TestStream
@@ -413,9 +411,9 @@ class TestRunner(Plugin):
         else:
             return c
 
-    def import_module(self, mod, parent=None):
+    def import_module(self, mod):
         for p in self.plugins:
-            mod = p.import_module(mod, parent)
+            mod = p.import_module(mod)
             if not mod:
                 return
         return mod

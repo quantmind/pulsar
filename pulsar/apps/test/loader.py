@@ -16,6 +16,12 @@ from .utils import LOGGER
 __all__ = ['TestLoader']
 
 
+no_tags = ('tests', 'test')
+test_patterns = [re.compile(r'''test_(?P<name>.*).py'''),
+                 re.compile(r'''(?P<name>.*)_test.py'''),
+                 re.compile(r'''tests.py''')]
+
+
 def issubclass_safe(cls, base_cls):
     try:
         return issubclass(cls, base_cls)
@@ -40,13 +46,7 @@ class TestLoader:
         self.runner = runner
         self.logger = logger or LOGGER
         self.root = root
-        self.modules = []
-        for mod in modules:
-            if isinstance(mod, str):
-                mod = (mod, None, None)
-            if len(mod) < 3:
-                mod = tuple(mod) + (None,) * (3 - len(mod))
-            self.modules.append(mod)
+        self.modules = modules
 
     def __repr__(self):
         return self.root
@@ -102,136 +102,95 @@ class TestLoader:
                     yield tag, obj
 
     def testmodules(self, tags=None, exclude_tags=None):
-        '''Generator of ``tag``, ``modules`` pairs.
+        """Generator of ``tag``, ``modules`` pairs.
 
-:parameter tags: optional list of tags to include, if not available all tags
-    will be included.
-:parameter exclude_tags: optional list of tags to exclude. If not provided no
-    tags will be excluded.'''
+        :parameter tags: optional list of tags to include, if not available all tags
+            will be included.
+        :parameter exclude_tags: optional list of tags to exclude. If not provided no
+            tags will be excluded.
+        """
         d = dict(self._testmodules(tags, exclude_tags))
         return [(k, d[k]) for k in sorted(d)]
 
-    def _testmodules(self, tags, exclude_tags):
-        for name, pattern, tag in self.modules:
-            names = name.split('.') if name else ()
-            absolute_path = pattern_path = os.path.join(self.root, *names)
-            if pattern == '*':
-                pattern = None
-            if pattern:
-                pattern_path = os.path.join(pattern_path, pattern)
-                pattern = re.compile(pattern.replace('*', '(.*)'))
-            self.logger.debug('Loading from "%s"', pattern_path)
-            if os.path.isdir(absolute_path):
-                pathbase = os.path.dirname(absolute_path)
-                if pathbase not in sys.path:
-                    sys.path.append(pathbase)
-                name = names[-1]
-                stags = (tag,) if tag else ()
-                for tag, mod in self.get_tests(absolute_path, name, pattern,
-                                               import_tags=tags, tags=stags,
-                                               exclude_tags=exclude_tags):
-                    yield tag, mod
-            elif os.path.isfile(absolute_path + '.py'):
-                include, ntag = self.match(pattern,
-                                           os.path.basename(absolute_path))
-                if include:
-                    tag = ntag or tag or name
-                    mod = self.import_module(name)
-                    if mod:
-                        yield tag[0] if isinstance(tag, tuple) else tag, mod
-            else:
-                raise ValueError('%s cannot be found in %s directory.'
-                                 % (name, self.root))
+    def _testmodules(self, include, exclude):
+        if not self.modules:
+            yield from self.get_tests(self.root, include, exclude)
+        else:
+            for name in self.modules:
+                absolute_path = os.path.join(self.root, name)
+                if os.path.isdir(absolute_path):
+                    self.logger.debug('Loading from "%s"', name)
+                    yield from self.get_tests(absolute_path, include, exclude)
+                else:
+                    raise ValueError('%s cannot be found in %s directory.'
+                                     % (name, self.root))
 
-    def get_tests(self, path, dotted_path, pattern, import_tags=None,
-                  tags=(), exclude_tags=None, parent=None):
-        '''Collect python modules for testing and return a generator of
-tag,module pairs.
+    def get_tests(self, path, include_tags, exclude_tags, tags=None):
+        """Collect python modules for testing.
 
-:parameter path: directory path where to search. Files starting with ``_``
-    or ``.`` are excluded from the search, as well as non-python files.
+            :parameter path: directory path where to search. Files starting
+                with ``_`` or ``.`` are excluded from the search,
+                as well as non-python files.
+            :parameter dotted_path: the dotted python path equivalent
+                of ``path``.
+            :parameter parent: the parent module for the current one.
+                This parameter is passed by this function recursively
+            :return: a generator of tag, module pairs.
+        """
+        if tags is None:
+            tags = []
 
-:parameter dotted_path: the dotted python path equivalent of ``path``.
-
-:parameter parent: the parent module for the current one. This parameter
-    is passed by this function recursively.'''
         for mod_name in os.listdir(path):
             if mod_name.startswith('_') or mod_name.startswith('.'):
                 continue
             mod_path = os.path.join(path, mod_name)
             is_file = os.path.isfile(mod_path)
             if is_file:
-                if mod_name.endswith('.py'):
-                    mod_name = mod_name.split('.')[0]
-                else:
+                tag = self.match(mod_name)
+                if tag is None:  # does not match and is a file, skip.
                     continue
-            include, addtag = self.match(pattern, mod_name)
-            if not include and is_file:  # does not match and is a file, skip.
-                continue
-            elif include and not is_file and pattern:
-                # All modules under this directory will be included
-                # regardless of pattern
-                pattern = None
-            # module dotted path
-            if dotted_path:
-                mod_dotted_path = '%s.%s' % (dotted_path, mod_name)
+                m_tags = tags + list(tag)
             else:
-                tags = (mod_name,)
-                mod_dotted_path = mod_name
-            #
-            module = self.import_module(mod_dotted_path, mod_path, parent)
-            if not module:
-                continue
-            ctags = tags + addtag
-            tag = '.'.join(ctags)
-            c = self.checktag(tag, import_tags, exclude_tags)
+                m_tags = tags if mod_name in no_tags else tags + [mod_name]
+
+            tag = '.'.join(m_tags)
+            c = self.checktag(tag, include_tags, exclude_tags)
             if not c:
                 continue
+
             if is_file:
+                module = self.import_module(mod_path)
+                if not module:
+                    continue
                 yield tag, module
+
             else:
-                counter = 0
-                # Recursively import modules
-                for ctag, mod in self.get_tests(mod_path, mod_dotted_path,
-                                                pattern, import_tags, ctags,
-                                                exclude_tags, parent=module):
-                    counter += 1
-                    yield ctag, mod
-                # If more than one submodule, yield this tag too
-                if pattern:
-                    if counter > 1:
-                        yield tag, module
-                elif c == 2:
-                    yield tag, module
+                yield from self.get_tests(mod_path, include_tags,
+                                          exclude_tags, m_tags)
 
-    def import_module(self, name, path=None, parent=None):
-        imp = True
-        if path and os.path.isdir(path):
-            imp = False
-            # import only if it has a __init__.py file
-            for sname in os.listdir(path):
-                if sname == '__init__.py':
-                    imp = True
-                    break
-        if imp:
-            try:
-                mod = import_module(name)
-                if getattr(mod, '__test__', True):
-                    return self.runner.import_module(mod, parent)
-            except ImportError:
-                self.logger.error('Failed to import module %s. Skipping.',
-                                  name, exc_info=True)
-                self.logger.debug('Full python path:\n%s', '\n'.join(sys.path))
-            except Exception:
-                self.logger.critical('Failed to import module %s. Skipping.',
-                                     name, exc_info=True)
+    def import_module(self, file_name):
+        path, name = os.path.split(file_name)
+        add_to_path = path not in sys.path
+        try:
+            if add_to_path:
+                sys.path.insert(0, path)
+            mod = import_module(name[:-3])
+            if getattr(mod, '__test__', True):
+                return self.runner.import_module(mod)
+        except ImportError:
+            self.logger.error('Failed to import module %s. Skipping.',
+                              name, exc_info=True)
+            self.logger.debug('Full python path:\n%s', '\n'.join(sys.path))
+        except Exception:
+            self.logger.critical('Failed to import module %s. Skipping.',
+                                 name, exc_info=True)
+        finally:
+            if add_to_path:
+                sys.path.pop(0)
 
-    def match(self, pattern, name):
-        if pattern:
+    def match(self, name):
+        for pattern in test_patterns:
             p = pattern.search(name)
             if p:
-                return True, p.groups(0)
-            else:
-                return False, (name,)
-        else:
-            return True, (name,)
+                return p.groups(0)
+

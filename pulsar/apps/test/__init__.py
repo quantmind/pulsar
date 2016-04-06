@@ -320,15 +320,31 @@ from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs, TestOption
 
 from .populate import populate, random_string
-from .result import *           # noqa
-from .plugins.base import *     # noqa
-from .loader import *           # noqa
-from .utils import *            # noqa
-from .wsgi import *             # noqa
+from .result import Plugin, TestStream, TestRunner, TestResult
+from .plugins.base import WrapTest, TestPlugin, validate_plugin_list
+from .loader import TestLoader
+from .utils import (sequential, ActorTestMixin, AsyncAssert, check_server,
+                    test_timeout, dont_run_with_thread)
+from .wsgi import HttpTestClient
 from .runner import Runner
 
 
-__all__ = ['populate', 'random_string']
+__all__ = ['populate',
+           'random_string',
+           'HttpTestClient',
+           'TestLoader',
+           'Plugin',
+           'TestStream',
+           'TestRunner',
+           'TestResult',
+           'WrapTest',
+           'TestPlugin',
+           'sequential',
+           'ActorTestMixin',
+           'AsyncAssert',
+           'check_server',
+           'test_timeout',
+           'dont_run_with_thread']
 
 
 pyver = '%s.%s' % (sys.version_info[:2])
@@ -351,7 +367,6 @@ class TestVerbosity(TestOption):
 
 
 class TestTimeout(TestOption):
-    name = 'test_timeout'
     flags = ['--test-timeout']
     validator = pulsar.validate_pos_int
     type = int
@@ -375,7 +390,7 @@ class TestLabels(TestOption):
 class TestExcludeLabels(TestOption):
     name = "exclude_labels"
     flags = ['-e', '--exclude-labels']
-    nargs = '*'
+    nargs = '+'
     desc = 'Exclude a group o labels from running.'
     validator = pulsar.validate_list
 
@@ -406,19 +421,23 @@ class TestSequential(TestOption):
     desc = """Run test functions sequentially."""
 
 
-class TestShowLeaks(TestOption):
-    name = "show_leaks"
-    flags = ['--show-leaks']
-    nargs = '?'
-    choices = (0, 1, 2)
-    const = 1
-    type = int
-    default = 0
-    desc = """Shows memory leaks.
+class TestPlugins(TestOption):
+    flags = ['--test-plugins']
+    validator = validate_plugin_list
+    nargs = '+'
+    default = ['pulsar.apps.test.plugins.bench:BenchMark',
+               'pulsar.apps.test.plugins.profile:Profile']
+    desc = '''Test plugins.'''
 
-    Run the garbage collector before a process-based actor dies and shows
-    the memory leak report.
-    """
+
+class TestModules(TestOption):
+    flags = ['--test-modules']
+    validator = pulsar.validate_list
+    nargs = '+'
+    default = []
+    desc = '''\\
+        An iterable over modules where to look for tests.
+        '''
 
 
 class TestSuite(pulsar.Application):
@@ -448,34 +467,17 @@ class TestSuite(pulsar.Application):
     :parameter plugins: Optional list of :class:`.TestPlugin` instances.
     '''
     name = 'test'
-    cfg = pulsar.Config(apps=['test'],
-                        loglevel=['none'],
-                        plugins=())
-
-    def new_runner(self):
-        '''The :class:`.TestRunner` driving test cases.
-        '''
-        result_class = getattr(self, 'result_class', None)
-        stream = pulsar.get_stream(self.cfg)
-        runner = TestRunner(self.cfg.plugins, stream, result_class)
-        abort_message = runner.configure(self.cfg)
-        if abort_message:    # pragma    nocover
-            raise ExitTest(str(abort_message))
-        self.runner = runner
-        return runner
+    cfg = pulsar.Config(apps=['test'], log_level=['none'])
 
     @lazyproperty
     def loader(self):
-        # When config is available load the tests and check what type of
-        # action is required.
-        modules = self.cfg.get('modules')
-        # Create a runner and configure it
-        runner = self.new_runner()
-        if not modules:
-            modules = ['tests']
-        if hasattr(modules, '__call__'):
-            modules = modules(self)
-        return TestLoader(self.root_dir, modules, runner, logger=self.logger)
+        stream = pulsar.get_stream(self.cfg)
+        test_runner = TestRunner(self.cfg.test_plugins, stream)
+        abort_message = test_runner.configure(self.cfg)
+        if abort_message:    # pragma    nocover
+            raise ExitTest(str(abort_message))
+        return TestLoader(self.root_dir, self.cfg.test_modules,
+                          test_runner, logger=self.logger)
 
     def on_config(self, arbiter):
         stream = arbiter.stream
@@ -519,11 +521,6 @@ class TestSuite(pulsar.Application):
 
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
-        if self.cfg.show_leaks:
-            show = show_leaks if self.cfg.show_leaks == 1 else hide_leaks
-            self.cfg.set('when_exit', show)
-            arbiter = pulsar.arbiter()
-            arbiter.cfg.set('when_exit', show)
         try:
             tests = []
             loader.runner.on_start()
@@ -548,9 +545,7 @@ class TestSuite(pulsar.Application):
     @classmethod
     def create_config(cls, *args, **kwargs):
         cfg = super().create_config(*args, **kwargs)
-        if cfg.params.get('plugins') is None:
-            cfg.params['plugins'] = ()
-        for plugin in cfg.params['plugins']:
+        for plugin in cfg.test_plugins:
             cfg.settings.update(plugin.config.settings)
         return cfg
 

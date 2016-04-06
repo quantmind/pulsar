@@ -44,7 +44,8 @@ import math
 from unittest import TestSuite
 
 import pulsar
-from pulsar.apps import test
+
+from .base import WrapTest, TestPlugin
 
 if sys.platform == "win32":  # pragma    nocover
     default_timer = time.clock
@@ -60,14 +61,14 @@ def simple(info, *args):
     return info
 
 
-class BenchTest(test.WrapTest):
+class BenchTest(WrapTest):
 
     def __init__(self, test, number, repeat):
         super().__init__(test)
         self.number = number
         self.repeat = repeat
 
-    def updateSummary(self, info, repeat, total_time, total_time2):
+    def update_summary(self, info, repeat, total_time, total_time2):
         mean = total_time/repeat
         std = math.sqrt((total_time2 - total_time*mean)/repeat)
         std = round(100*std/mean, 2)
@@ -98,12 +99,12 @@ class BenchTest(test.WrapTest):
                 DT += dt
             t += DT
             t2 += DT*DT
-        self.updateSummary(info, self.repeat, t, t2)
+        self.update_summary(info, self.repeat, t, t2)
         self.set_test_attribute('bench_info',
                                 testGetSummary(info, self.repeat, t, t2))
 
 
-class BenchMark(test.TestPlugin):
+class BenchMark(TestPlugin):
     '''Benchmarking addon for pulsar test suite.'''
     desc = '''Run benchmarks function flagged with __benchmark__ attribute'''
 

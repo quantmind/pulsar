@@ -1,4 +1,5 @@
 import string
+import re
 from uuid import uuid4
 from random import randint, choice
 
@@ -42,3 +43,8 @@ def random_string(min_len=3, max_len=20, characters=None, **kwargs):
 
 def gen_unique_id():
     return 'i%s' % uuid4().hex
+
+
+def camel_to_dash(name):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()

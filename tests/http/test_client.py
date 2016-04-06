@@ -1,4 +1,4 @@
-from . import base
+import base
 
 
 class TestHttpClient(base.TestHttpClient):

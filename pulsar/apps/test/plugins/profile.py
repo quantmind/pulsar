@@ -31,7 +31,9 @@ from datetime import datetime
 from io import StringIO as Stream
 
 import pulsar
-from pulsar.apps import test
+
+from .base import TestPlugin
+
 
 other_filename = 'unknown'
 line_func = re.compile(r'(?P<line>\d+)\((?P<func>\w+)\)')
@@ -118,8 +120,9 @@ def copy_file(filename, target, context=None):
         file.write(stream)
 
 
-class Profile(test.TestPlugin):
-    ''':class:`pulsar.apps.test.TestPlugin` for profiling test cases.'''
+class Profile(TestPlugin):
+    """TestPlugin for profiling test cases.
+    """
     desc = '''Profile tests using the cProfile module'''
     profile_stats_path = pulsar.Setting(
         flags=['--profile-stats-path'],

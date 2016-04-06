@@ -557,7 +557,7 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
 class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     '''Concurrency implementation for the ``arbiter``
     '''
-    pidfile = None
+    pid_file = None
 
     def is_arbiter(self):
         return True
@@ -565,8 +565,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def create_actor(self):
         if self.cfg.daemon:     # pragma    nocover
             # Daemonize the system
-            if not self.cfg.pidfile:
-                self.cfg.set('pidfile', 'pulsar.pid')
+            if not self.cfg.pid_file:
+                self.cfg.set('pid_file', 'pulsar.pid')
             system.daemonize(keep_fds=logger_fds())
         self.aid = self.name
         actor = super().create_actor()
@@ -708,11 +708,11 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
 
     def _stop_arbiter(self, actor):     # pragma    nocover
         self._remove_signals(actor)
-        p = self.pidfile
+        p = self.pid_file
         if p is not None:
             actor.logger.debug('Removing %s' % p.fname)
             p.unlink()
-            self.pidfile = None
+            self.pid_file = None
         if self.managed_actors:
             actor.state = ACTOR_STATES.TERMINATE
         actor.collect_coverage()
@@ -734,15 +734,15 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             raise HaltServer('Cannot create the arbiter in a daemon process')
         if not os.environ.get('SERVER_SOFTWARE'):
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
-        pidfile = actor.cfg.pidfile
-        if pidfile is not None:
-            actor.logger.info('Create pid file %s', pidfile)
+        pid_file = actor.cfg.pid_file
+        if pid_file is not None:
+            actor.logger.info('Create pid file %s', pid_file)
             try:
-                p = Pidfile(pidfile)
+                p = Pidfile(pid_file)
                 p.create(actor.pid)
             except RuntimeError as e:
                 raise HaltServer('ERROR. %s' % str(e), exit_code=2)
-            self.pidfile = p
+            self.pid_file = p
 
     def _info_monitor(self, actor, info=None):
         data = info
