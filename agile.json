@@ -3,20 +3,14 @@
         "pulsar": {
             "python_module": "pulsar",
             "version": "pulsar.__version__",
-            "release_notes": "docs/source/history",
-            "dist": {
-                "shell": [
-                    "rm -rf dist",
-                    "{{ python }} setup.py sdist upload"
-                ]
-            }
+            "release_notes": "docs/source/history"
         }
     },
     "shell": {
         "pulsar": {
             "command": [
                 "rm -rf dist",
-                "{{ python }} setup.py sdist"
+                "{{ python }} setup.py sdist bdist_wheel upload"
             ]
         }
     },
