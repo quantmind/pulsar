@@ -22,7 +22,6 @@ This example shows how to use
 import os
 import sys
 import string
-import asyncio
 import mimetypes
 from functools import partial
 from itertools import repeat, chain
@@ -320,8 +319,7 @@ class Upload(BaseRouter):
     def put(self, request):
         return ensure_future(self._async_put(request))
 
-    @asyncio.coroutine
-    def _async_put(self, request):
+    async def _async_put(self, request):
         headers = self.getheaders(request)
         data = {'method': request.method,
                 'headers': headers,
@@ -329,7 +327,7 @@ class Upload(BaseRouter):
                 'args': MultiValueDict(),
                 'files': MultiValueDict()}
         request.cache.response_data = data
-        yield from request.data_and_files(stream=partial(self.stream, request))
+        await request.data_and_files(stream=partial(self.stream, request))
         data['args'] = dict(data['args'])
         data['files'] = dict(data['files'])
         return Json(data).http_response(request)
@@ -379,8 +377,7 @@ class Site(wsgi.LazyWsgi):
                                  wsgi.MediaRouter('media', ASSET_DIR,
                                                   show_indexes=True),
                                  ws.WebSocket('/graph-data', Graph()),
-                                 router],
-                                async=True)
+                                 router])
 
 
 def server(description=None, **kwargs):

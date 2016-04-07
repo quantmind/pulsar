@@ -1,6 +1,6 @@
 import asyncio
 
-from pulsar import isfuture, ensure_future
+from pulsar import isawaitable, ensure_future
 
 
 class StreamConsumedError(Exception):
@@ -24,15 +24,14 @@ class HttpStream:
     def done(self):
         return self._response.on_finished.fired()
 
-    @asyncio.coroutine
-    def read(self, n=None):
+    async def read(self, n=None):
         '''Read all content'''
         if self._streamed:
             return b''
         buffer = []
         for body in self:
-            if isfuture(body):
-                body = yield from body
+            if isawaitable(body):
+                body = await body
             buffer.append(body)
         return b''.join(buffer)
 

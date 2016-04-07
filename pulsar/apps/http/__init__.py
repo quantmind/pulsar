@@ -812,11 +812,10 @@ class HttpRequest(RequestBase):
         for chunk in data:
             transport.write(chunk)
 
-    @asyncio.coroutine
-    def _write_streamed_data(self, transport):
+    async def _write_streamed_data(self, transport):
         for data in self.data:
             if isawaitable(data):
-                data = yield from data
+                data = await data
             self._write_body_data(transport, data)
         self._write_body_data(transport, b'', True)
 
@@ -1291,8 +1290,7 @@ class HttpClient(AbstractClient):
         self.bind_event('pre_request', HTTPDigestAuth(username, password))
 
     # INTERNALS
-    @asyncio.coroutine
-    def _request(self, method, url, **params):
+    async def _request(self, method, url, **params):
         nparams = params.copy()
         nparams.update(((name, getattr(self, name)) for name in
                         self.request_parameters if name not in params))
@@ -1305,7 +1303,7 @@ class HttpClient(AbstractClient):
                 pool_size=self.pool_size, loop=self._loop)
             self.connection_pools[request.key] = pool
         try:
-            conn = yield from pool.connect()
+            conn = await pool.connect()
         except BaseSSLError as e:
             raise SSLError(str(e), response=self) from None
         except ConnectionRefusedError as e:
@@ -1313,7 +1311,7 @@ class HttpClient(AbstractClient):
 
         with conn:
             try:
-                response = yield from start_request(request, conn)
+                response = await start_request(request, conn)
                 headers = response.headers
             except AbortRequest:
                 response = None
@@ -1332,7 +1330,7 @@ class HttpClient(AbstractClient):
         # Handle a possible redirect
         if response and isinstance(response.request_again, tuple):
             method, url, params = response.request_again
-            response = yield from self._request(method, url, **params)
+            response = await self._request(method, url, **params)
         return response
 
     def get_headers(self, request, headers=None):

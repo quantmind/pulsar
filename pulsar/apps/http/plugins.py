@@ -50,8 +50,7 @@ def _consumer(response, consumer):
     return consumer
 
 
-@asyncio.coroutine
-def start_request(request, conn):
+async def start_request(request, conn):
     response = conn.current_consumer()
     # bind request-specific events
     response.bind_events(**request.inp_params)
@@ -61,16 +60,16 @@ def start_request(request, conn):
     if request.stream:
         response.bind_event('data_processed', response.raw)
         response.start(request)
-        yield from response.events['on_headers']
+        await response.events['on_headers']
     else:
         response.bind_event('data_processed', response_content)
         response.start(request)
-        yield from response.on_finished
+        await response.on_finished
 
     if hasattr(response.request_again, '__call__'):
         response = response.request_again(response)
         if isawaitable(response):
-            response = yield from response
+            response = await response
 
     return response
 
@@ -257,21 +256,20 @@ class Tunneling:
             response.request_again = self._tunnel_request
             response.finished()
 
-    @asyncio.coroutine
-    def _tunnel_request(self, response):
+    async def _tunnel_request(self, response):
         request = response.request.request
         connection = response.connection
         loop = connection._loop
         sock = connection.sock
         connection.transport.pause_reading()
-        yield None
+        # await asyncio.sleep(0.01)
         # set a new connection_made event
         connection.events['connection_made'] = OneTime(loop=loop)
         connection._processed -= 1
         connection.producer._requests_processed -= 1
         #
         # For some reason when using the code below, it fails in python 3.5
-        # _, connection = yield from loop._create_connection_transport(
+        # _, connection = await loop._create_connection_transport(
         #         sock, lambda: connection,
         #         request._ssl,
         #         server_hostname=request._netloc)
@@ -281,8 +279,8 @@ class Tunneling:
         loop._make_legacy_ssl_transport(sock, connection, request._ssl,
                                         waiter,
                                         server_hostname=request._netloc)
-        yield from waiter
+        await waiter
         #
-        yield from connection.event('connection_made')
-        response = yield from start_request(request, connection)
+        await connection.event('connection_made')
+        response = await start_request(request, connection)
         return response

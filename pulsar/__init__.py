@@ -5,7 +5,7 @@ import os
 from .utils.version import get_version
 
 
-VERSION = (1, 2, 1, 'alpha', 0)
+VERSION = (1, 3, 0, 'alpha', 0)
 
 __version__ = version = get_version(VERSION)
 __license__ = "BSD"
@@ -20,8 +20,8 @@ CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                'Operating System :: OS Independent',
                'Programming Language :: Python',
                'Programming Language :: Python :: 3',
-               'Programming Language :: Python :: 3.4',
                'Programming Language :: Python :: 3.5',
+               'Programming Language :: Python :: 3.6',
                'Topic :: Internet',
                'Topic :: Utilities',
                'Topic :: System :: Distributed Computing',

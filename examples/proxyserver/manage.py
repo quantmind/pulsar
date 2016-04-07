@@ -41,7 +41,7 @@ from functools import partial
 import asyncio
 
 import pulsar
-from pulsar import HttpException, task
+from pulsar import HttpException, ensure_future
 from pulsar.apps import wsgi, http
 from pulsar.apps.http.plugins import noerror
 from pulsar.utils.httpurl import Headers, ENCODE_BODY_METHODS
@@ -84,7 +84,7 @@ class ProxyServerWsgiHandler(LocalMixin):
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
         response = TunnelResponse(self, environ, start_response)
-        response.request()
+        ensure_future(response.request())
         return response.future
 
 
@@ -99,8 +99,7 @@ class TunnelResponse:
         self.start_response = start_response
         self.future = asyncio.Future()
 
-    @task
-    def request(self):
+    async def request(self):
         '''Perform the Http request to the upstream server
         '''
         request_headers = self.request_headers()
@@ -111,12 +110,12 @@ class TunnelResponse:
             data = DataIterator(self)
         http = self.wsgi.http_client
         try:
-            yield from http.request(method,
-                                    environ['RAW_URI'],
-                                    data=data,
-                                    headers=request_headers,
-                                    version=environ['SERVER_PROTOCOL'],
-                                    pre_request=self.pre_request)
+            await http.request(method,
+                               environ['RAW_URI'],
+                               data=data,
+                               headers=request_headers,
+                               version=environ['SERVER_PROTOCOL'],
+                               pre_request=self.pre_request)
         except Exception as exc:
             self.error(exc)
 
