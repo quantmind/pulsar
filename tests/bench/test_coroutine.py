@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 
-from pulsar import async, new_event_loop, Future
+from pulsar import ensure_future, new_event_loop, Future
 
 
 DELAY = 0
@@ -44,7 +44,7 @@ class TestCoroutine(unittest.TestCase):
         self.loop = new_event_loop()
 
     def test_coroutine(self):
-        future = async(main(self.loop, 1), loop=self.loop)
+        future = ensure_future(main(self.loop, 1), loop=self.loop)
         self.loop.run_until_complete(future)
         self.assertEqual(future.result(), 9)
 
