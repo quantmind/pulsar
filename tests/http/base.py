@@ -769,14 +769,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield from http.get(self.httpbin('plaintext'))
         raw = response.raw
         self.assertEqual(raw._response, response)
-        yield from self.async.assertEqual(raw.read(), b'')
+        yield from self.wait.assertEqual(raw.read(), b'')
 
     @asyncio.coroutine
     def test_stream_dont_stream(self):
         http = self._client
         response = yield from http.get(self.httpbin('plaintext'), stream=True)
         yield from response.on_finished
-        self.async.assertEqual(response.text(), 'Hello, World!')
+        self.wait.assertEqual(response.text(), 'Hello, World!')
 
     @asyncio.coroutine
     def test_raw_stream(self):
@@ -784,9 +784,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield from http.get(self.httpbin('plaintext'), stream=True)
         raw = response.raw
         self.assertEqual(raw._response, response)
-        yield from self.async.assertEqual(raw.read(), b'Hello, World!')
+        yield from self.wait.assertEqual(raw.read(), b'Hello, World!')
         self.assertTrue(raw.done)
-        yield from self.async.assertEqual(raw.read(), b'')
+        yield from self.wait.assertEqual(raw.read(), b'')
 
     @no_tls
     @asyncio.coroutine

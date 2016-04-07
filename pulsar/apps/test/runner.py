@@ -69,7 +69,7 @@ class Runner:
 
         test_cls.tag = tag
         test_cls.cfg = self.cfg
-        test_cls.async = AsyncAssert(test_cls)
+        test_cls.wait = AsyncAssert(test_cls)
         try:
             all_tests = self.runner.loadTestsFromTestCase(test_cls)
         except Exception:

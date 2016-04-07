@@ -33,7 +33,7 @@ class ExternalBase(base.TestHttpClientBase):
         self.assertTrue('rel' in next)
         self.assertTrue('url' in next)
         yield from client.close()
-        yield from self.async.assertRaises(AssertionError, client.get, baseurl)
+        yield from self.wait.assertRaises(AssertionError, client.get, baseurl)
 
 
 class ProxyExternal(ExternalBase):

@@ -38,12 +38,11 @@ class JSONRPC(RpcHandler):
     def __call__(self, request):
         return ensure_future(self._execute_request(request))
 
-    @asyncio.coroutine
-    def _execute_request(self, request):
+    async def _execute_request(self, request):
         response = request.response
 
         try:
-            data = yield from as_coroutine(request.body_data())
+            data = await as_coroutine(request.body_data())
         except ValueError:
             res, status = self._get_error_and_status(InvalidRequest(
                 status=415, msg='Content-Type must be application/json'))
@@ -53,16 +52,15 @@ class JSONRPC(RpcHandler):
                 status = 200
 
                 tasks = [self._call(request, each) for each in data]
-                result = yield from asyncio.gather(*tasks)
+                result = await asyncio.gather(*tasks)
                 res = [r[0] for r in result]
             else:
-                res, status = yield from self._call(request, data)
+                res, status = await self._call(request, data)
 
         response.status_code = status
         return Json(res).http_response(request)
 
-    @asyncio.coroutine
-    def _call(self, request, data):
+    async def _call(self, request, data):
         exc_info = None
         proc = None
         try:
@@ -80,7 +78,7 @@ class JSONRPC(RpcHandler):
                 args, kwargs = tuple(params or ()), {}
             #
             proc = self.get_handler(data.get('method'))
-            result = yield from as_coroutine(proc(request, *args, **kwargs))
+            result = await as_coroutine(proc(request, *args, **kwargs))
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
@@ -235,10 +233,10 @@ class JsonProxy(AsyncObject):
     def __getattr__(self, name):
         return JsonCall(self, name)
 
-    def _call(self, name, *args, **kwargs):
+    async def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
         body = json.dumps(data).encode('utf-8')
-        resp = yield from self._http.post(self._url, data=body)
+        resp = await self._http.post(self._url, data=body)
         if self._full_response:
             return resp
         else:
@@ -309,7 +307,7 @@ class JsonBatchProxy(JsonProxy):
         >>> a.ping()
         'i71a9b79eef9b48eea2fb9d691c8e897e'
 
-        >>> for each in (yield from a):
+        >>> for each in (await a):
         >>>     print(each.id, each.result, each.exception)
 
     """
@@ -330,12 +328,11 @@ class JsonBatchProxy(JsonProxy):
         self._batch.append(body)
         return data['id']
 
-    @asyncio.coroutine
-    def __call__(self):
+    async def __call__(self):
         if not self._batch:
             return
 
-        resp = yield from self._http.post(
+        resp = await self._http.post(
             self._url, data=b'[' + b','.join(self._batch) + b']')
 
         if self._full_response:

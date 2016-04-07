@@ -35,7 +35,6 @@ the :class:`.PulsarServerCommands` handler.
    :member-order: bysource
 
 '''
-import asyncio
 from random import normalvariate
 
 from pulsar import as_coroutine
@@ -71,9 +70,8 @@ def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
 
 class RequestCheck:
 
-    @asyncio.coroutine
-    def __call__(self, request, name):
-        data = yield from as_coroutine(request.body_data())
+    async def __call__(self, request, name):
+        data = await as_coroutine(request.body_data())
         assert(data['method'] == name)
         return True
 

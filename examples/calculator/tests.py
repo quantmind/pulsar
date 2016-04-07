@@ -1,7 +1,6 @@
 '''Tests the RPC "calculator" example.'''
 import unittest
 import types
-import asyncio
 
 from pulsar import send
 from pulsar.apps import rpc, http
@@ -18,11 +17,10 @@ class TestRpcOnThread(unittest.TestCase):
     rpc_timeout = 500
 
     @classmethod
-    @asyncio.coroutine
-    def setUpClass(cls):
+    async def setUpClass(cls):
         name = 'calc_' + cls.concurrency
         s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
-        cls.app_cfg = yield from send('arbiter', 'run', s)
+        cls.app_cfg = await send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.p = rpc.JsonProxy(cls.uri, timeout=cls.rpc_timeout)
 
@@ -54,14 +52,12 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertEqual(hnd.subHandlers, {})
 
     # Pulsar server commands
-    @asyncio.coroutine
-    def test_ping(self):
-        response = yield from self.p.ping()
+    async def test_ping(self):
+        response = await self.p.ping()
         self.assertEqual(response, 'pong')
 
-    @asyncio.coroutine
-    def test_functions_list(self):
-        result = yield from self.p.functions_list()
+    async def test_functions_list(self):
+        result = await self.p.functions_list()
         self.assertTrue(result)
         d = dict(result)
         self.assertTrue('ping' in d)
@@ -70,42 +66,35 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue('calc.add' in d)
         self.assertTrue('calc.divide' in d)
 
-    @asyncio.coroutine
-    def test_time_it(self):
+    async def test_time_it(self):
         '''Ping server 5 times'''
-        bench = yield from self.p.timeit('ping', 5)
+        bench = await self.p.timeit('ping', 5)
         self.assertTrue(len(bench.result), 5)
         self.assertTrue(bench.taken)
 
     # Test Object method
-    @asyncio.coroutine
-    def test_check_request(self):
-        result = yield from self.p.check_request('check_request')
+    async def test_check_request(self):
+        result = await self.p.check_request('check_request')
         self.assertTrue(result)
 
-    @asyncio.coroutine
-    def test_add(self):
-        response = yield from self.p.calc.add(3, 7)
+    async def test_add(self):
+        response = await self.p.calc.add(3, 7)
         self.assertEqual(response, 10)
 
-    @asyncio.coroutine
-    def test_subtract(self):
-        response = yield from self.p.calc.subtract(546, 46)
+    async def test_subtract(self):
+        response = await self.p.calc.subtract(546, 46)
         self.assertEqual(response, 500)
 
-    @asyncio.coroutine
-    def test_multiply(self):
-        response = yield from self.p.calc.multiply(3, 9)
+    async def test_multiply(self):
+        response = await self.p.calc.multiply(3, 9)
         self.assertEqual(response, 27)
 
-    @asyncio.coroutine
-    def test_divide(self):
-        response = yield from self.p.calc.divide(50, 25)
+    async def test_divide(self):
+        response = await self.p.calc.divide(50, 25)
         self.assertEqual(response, 2)
 
-    @asyncio.coroutine
-    def test_info(self):
-        response = yield from self.p.server_info()
+    async def test_info(self):
+        response = await self.p.server_info()
         self.assertTrue('server' in response)
         server = response['server']
         self.assertTrue('version' in server)
@@ -130,46 +119,41 @@ class TestRpcOnThread(unittest.TestCase):
                              '%s:%s' % self.app_cfg.addresses[0])
 
     def test_invalid_params(self):
-        return self.async.assertRaises(rpc.InvalidParams, self.p.calc.add,
-                                       50, 25, 67)
+        return self.wait.assertRaises(rpc.InvalidParams, self.p.calc.add,
+                                      50, 25, 67)
 
     def test_invalid_params_fromApi(self):
-        return self.async.assertRaises(rpc.InvalidParams, self.p.calc.divide,
-                                       50, 25, 67)
+        return self.wait.assertRaises(rpc.InvalidParams, self.p.calc.divide,
+                                      50, 25, 67)
 
-    @asyncio.coroutine
-    def test_invalid_function(self):
+    async def test_invalid_function(self):
         p = self.p
-        yield from self.async.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
-        yield from self.async.assertRaises(rpc.NoSuchFunction,
-                                           p.blabla)
-        yield from self.async.assertRaises(rpc.NoSuchFunction,
-                                           p.blabla.foofoo)
-        yield from self.async.assertRaises(rpc.NoSuchFunction,
-                                           p.blabla.foofoo.sjdcbjcb)
+        await self.wait.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
+        await self.wait.assertRaises(rpc.NoSuchFunction,
+                                     p.blabla)
+        await self.wait.assertRaises(rpc.NoSuchFunction,
+                                     p.blabla.foofoo)
+        await self.wait.assertRaises(rpc.NoSuchFunction,
+                                     p.blabla.foofoo.sjdcbjcb)
 
-    @asyncio.coroutine
-    def testInternalError(self):
-        return self.async.assertRaises(rpc.InternalError, self.p.calc.divide,
-                                       'ciao', 'bo')
+    async def testInternalError(self):
+        return self.wait.assertRaises(rpc.InternalError, self.p.calc.divide,
+                                      'ciao', 'bo')
 
     def testCouldNotserialize(self):
-        return self.async.assertRaises(rpc.InternalError, self.p.dodgy_method)
+        return self.wait.assertRaises(rpc.InternalError, self.p.dodgy_method)
 
-    @asyncio.coroutine
-    def testpaths(self):
+    async def testpaths(self):
         '''Fetch a sizable ammount of data'''
-        response = yield from self.p.calc.randompaths(num_paths=20, size=100,
-                                                      mu=1, sigma=2)
+        response = await self.p.calc.randompaths(num_paths=20, size=100,
+                                                 mu=1, sigma=2)
         self.assertTrue(response)
 
-    @asyncio.coroutine
-    def test_echo(self):
-        response = yield from self.p.echo('testing echo')
+    async def test_echo(self):
+        response = await self.p.echo('testing echo')
         self.assertEqual(response, 'testing echo')
 
-    @asyncio.coroutine
-    def test_docs(self):
+    async def test_docs(self):
         handler = Root({'calc': Calculator})
         self.assertEqual(handler.parent, None)
         self.assertEqual(handler.root, handler)
@@ -180,18 +164,17 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertEqual(calc.root, handler)
         docs = handler.docs()
         self.assertTrue(docs)
-        response = yield from self.p.documentation()
+        response = await self.p.documentation()
         self.assertEqual(response, docs)
 
-    @asyncio.coroutine
-    def test_batch_one_call(self):
+    async def test_batch_one_call(self):
         bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
 
         call_id1 = bp.ping()
         self.assertIsNotNone(call_id1)
         self.assertEqual(len(bp), 1)
 
-        batch_generator = yield from bp
+        batch_generator = await bp()
         self.assertIsInstance(batch_generator, types.GeneratorType)
         self.assertEqual(len(bp), 0)
 
@@ -201,8 +184,7 @@ class TestRpcOnThread(unittest.TestCase):
             self.assertEqual(batch_response.result, 'pong')
             self.assertIsNone(batch_response.exception)
 
-    @asyncio.coroutine
-    def test_batch_few_call(self):
+    async def test_batch_few_call(self):
         bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
 
         call_id1 = bp.ping()
@@ -213,7 +195,7 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertIsNotNone(call_id2)
         self.assertEqual(len(bp), 2)
 
-        batch_generator = yield from bp
+        batch_generator = await bp()
         self.assertIsInstance(batch_generator, types.GeneratorType)
         self.assertEqual(len(bp), 0)
 
@@ -226,15 +208,14 @@ class TestRpcOnThread(unittest.TestCase):
                 self.assertEqual(batch_response.result, 2)
                 self.assertIsNone(batch_response.exception)
 
-    @asyncio.coroutine
-    def test_batch_error_response_call(self):
+    async def test_batch_error_response_call(self):
         bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout)
 
         call_id1 = bp.ping('wrong param')
         self.assertIsNotNone(call_id1)
         self.assertEqual(len(bp), 1)
 
-        batch_generator = yield from bp
+        batch_generator = await bp()
         self.assertIsInstance(batch_generator, types.GeneratorType)
         self.assertEqual(len(bp), 0)
 
@@ -244,8 +225,7 @@ class TestRpcOnThread(unittest.TestCase):
             self.assertIsInstance(batch_response.exception, rpc.InvalidParams)
             self.assertIsNone(batch_response.result)
 
-    @asyncio.coroutine
-    def test_batch_full_response_call(self):
+    async def test_batch_full_response_call(self):
         bp = rpc.JsonBatchProxy(self.uri, timeout=self.rpc_timeout,
                                 full_response=True)
 
@@ -254,7 +234,7 @@ class TestRpcOnThread(unittest.TestCase):
         bp.ping()
         self.assertEqual(len(bp), 3)
 
-        response = yield from bp
+        response = await bp()
         self.assertIsInstance(response, http.HttpResponse)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(bp), 0)

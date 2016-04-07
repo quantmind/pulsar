@@ -80,14 +80,20 @@ class WsProtocol:
 
 ###########################################################################
 #    EXTRA COMMAND LINE PARAMETERS
-class Eating_Period(pulsar.Setting):
+class PhilosophersSetting(pulsar.Setting):
+    virtual = True
+    app = 'philosophers'
+    section = "Socket Servers"
+
+
+class EatingPeriod(PhilosophersSetting):
     flags = ["--eating-period"]
     validator = pulsar.validate_pos_float
     default = 2
     desc = """The average period of eating for a philosopher."""
 
 
-class Waiting_Period(pulsar.Setting):
+class WaitingPeriod(PhilosophersSetting):
     flags = ["--waiting-period"]
     validator = pulsar.validate_pos_float
     default = 2
@@ -124,7 +130,7 @@ def pickup_fork(request, fork_right):
 class DiningPhilosophers(pulsar.Application):
     description = ('Dining philosophers sit at a table around a bowl of '
                    'spaghetti and waits for available forks.')
-    cfg = pulsar.Config(workers=5)
+    cfg = pulsar.Config(workers=5, apps=['philosophers'])
 
     def monitor_start(self, monitor):
         self.not_available_forks = set()
