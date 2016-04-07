@@ -219,11 +219,11 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertTrue(html.startswith(b'<!DOCTYPE html>'))
         self.assertTrue(b'<title>500 Internal Server Error</title>' in html)
 
-    def test_wsgi_handler_404(self):
+    async def test_wsgi_handler_404(self):
         start = mock.MagicMock()
         handler = wsgi.WsgiHandler()
         environ = self.request().environ
-        response = handler(environ, start)
+        response = await handler(environ, start)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(start.call_count, 1)
 

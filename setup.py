@@ -42,7 +42,9 @@ def run_setup():
                        packages=find_packages(exclude=['tests.*',
                                                        'tests',
                                                        'examples',
-                                                       'examples.*']),
+                                                       'examples.*',
+                                                       'extensions',
+                                                       'extensions.*']),
                        setup_requires=['wheel'],
                        classifiers=mod.CLASSIFIERS,
                        entry_points={

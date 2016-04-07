@@ -11,16 +11,8 @@ from asyncio import Future
 from pulsar.utils.config import Global
 from pulsar.utils.system import current_process
 
-try:
-    from asyncio import ensure_future
-    from inspect import isawaitable
-except ImportError:     # pragma    nocover
-    from asyncio import iscoroutine
-
-    ensure_future = asyncio.async
-
-    def isawaitable(c):
-        return isinstance(c, Future) or iscoroutine(c)
+from asyncio import ensure_future
+from inspect import isawaitable
 
 
 __all__ = ['get_event_loop',
@@ -37,21 +29,11 @@ __all__ = ['get_event_loop',
            'reraise',
            'isawaitable',
            'ensure_future',
-           'CANCELLED_ERRORS',
-           # Deprecated
-           'is_async']
+           'CANCELLED_ERRORS']
 
 
 _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,)
 CANCELLED_ERRORS = (asyncio.CancelledError,)
-
-
-def is_async(x):    # pragma    nocover
-    # TODO: remove in pulsar 1.3
-    warnings.warn("pulsar.is_async is deprecated and will be removed in "
-                  "pulsar 1.3, use pulsar.isawaitable instead",
-                  SyntaxWarning, stacklevel=2)
-    return isawaitable(x)
 
 
 def reraise(tp, value, tb=None):
