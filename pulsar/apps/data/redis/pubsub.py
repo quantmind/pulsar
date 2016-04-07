@@ -1,5 +1,3 @@
-import asyncio
-
 from functools import partial
 
 from pulsar import Protocol
@@ -13,12 +11,10 @@ class PubsubProtocol(Protocol):
         self.parser = self._producer._parser_class()
         self.handler = handler
 
-    @asyncio.coroutine
-    def execute(self, *args):
+    async def execute(self, *args):
+        # must be an asynchronous object like the base class method
         chunk = self.parser.multi_bulk(args)
         self._transport.write(chunk)
-        # must be an asynchronous object like the base class method
-        yield None
 
     def data_received(self, data):
         parser = self.parser
@@ -79,20 +75,18 @@ class RedisPubSub(PubSub):
         if self._connection:
             return self._connection.execute('UNSUBSCRIBE', *channels)
 
-    @asyncio.coroutine
-    def close(self):
+    async def close(self):
         '''Stop listening for messages.
         '''
         if self._connection:
-            yield from self._connection.execute('PUNSUBSCRIBE')
-            yield from self._connection.execute('UNSUBSCRIBE')
+            await self._connection.execute('PUNSUBSCRIBE')
+            await self._connection.execute('UNSUBSCRIBE')
 
     #    INTERNALS
-    @asyncio.coroutine
-    def _subscribe(self, *args):
+    async def _subscribe(self, *args):
         if not self._connection:
             protocol_factory = partial(PubsubProtocol, self,
                                        producer=self.store)
-            self._connection = yield from self.store.connect(protocol_factory)
-        result = yield from self._connection.execute(*args)
+            self._connection = await self.store.connect(protocol_factory)
+        result = await self._connection.execute(*args)
         return result

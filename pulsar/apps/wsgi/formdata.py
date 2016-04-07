@@ -157,8 +157,7 @@ class MultipartDecoder(FormDecoder):
             producer = BytesProducer(inp)
             return producer(self._consume, boundary)
 
-    @asyncio.coroutine
-    def _consume(self, fp, boundary):
+    async def _consume(self, fp, boundary):
         sep = b'--'
         nextpart = ('--%s' % boundary).encode()
         lastpart = ("--%s--" % boundary).encode()
@@ -170,11 +169,11 @@ class MultipartDecoder(FormDecoder):
             current = None
 
             if terminator:
-                headers = yield from parse_headers(fp)
+                headers = await parse_headers(fp)
                 current = MultipartPart(self, headers)
 
                 if nbytes > 0:
-                    data = yield from fp.read(nbytes)
+                    data = await fp.read(nbytes)
                 else:
                     data = b''
 
@@ -184,7 +183,7 @@ class MultipartDecoder(FormDecoder):
                     current = None
 
             while 1:
-                line = yield from fp.readline()
+                line = await fp.readline()
                 line = line or lastpart
                 if line.startswith(sep):
                     terminator = line.rstrip()
@@ -216,9 +215,8 @@ class BytesDecoder(FormDecoder):
         else:
             return self._ready(data)
 
-    @asyncio.coroutine
-    def _async(self, chunk):
-        chunk = yield from chunk
+    async def _async(self, chunk):
+        chunk = await chunk
         return self._ready(chunk)
 
     def _ready(self, data):
@@ -352,8 +350,7 @@ class MultipartPart:
                 self.parser.result[0][self.name] = self.string()
 
 
-@asyncio.coroutine
-def parse_headers(fp, _class=HTTPMessage):
+async def parse_headers(fp, _class=HTTPMessage):
     """Parses only RFC2822 headers from a file pointer.
     email Parser wants to see strings rather than bytes.
     But a TextIOWrapper around self.rfile would buffer too many bytes
@@ -363,7 +360,7 @@ def parse_headers(fp, _class=HTTPMessage):
     """
     headers = []
     while True:
-        line = yield from fp.readline()
+        line = await fp.readline()
         if len(line) > _MAXLINE:
             raise HttpException("header line")
         headers.append(line)

@@ -1,4 +1,3 @@
-import asyncio
 from functools import partial
 
 from pulsar import Connection, Pool, get_actor
@@ -16,20 +15,18 @@ class RedisStoreConnection(Connection):
         super().__init__(*args, **kw)
         self.parser = self._producer._parser_class()
 
-    @asyncio.coroutine
-    def execute(self, *args, **options):
+    async def execute(self, *args, **options):
         consumer = self.current_consumer()
         consumer.start((args, options))
-        result = yield from consumer.on_finished
+        result = await consumer.on_finished
         if isinstance(result, ResponseError):
             raise result.exception
         return result
 
-    @asyncio.coroutine
-    def execute_pipeline(self, commands, raise_on_error=True):
+    async def execute_pipeline(self, commands, raise_on_error=True):
         consumer = self.current_consumer()
         consumer.start((commands, raise_on_error, []))
-        result = yield from consumer.on_finished
+        result = await consumer.on_finished
         if isinstance(result, ResponseError):
             raise result.exception
         return result
@@ -85,34 +82,31 @@ class RedisStore(RemoteStore):
     def ping(self):
         return self.client().ping()
 
-    @asyncio.coroutine
-    def execute(self, *args, **options):
-        connection = yield from self._pool.connect()
+    async def execute(self, *args, **options):
+        connection = await self._pool.connect()
         with connection:
-            result = yield from connection.execute(*args, **options)
+            result = await connection.execute(*args, **options)
             return result
 
-    @asyncio.coroutine
-    def execute_pipeline(self, commands, raise_on_error=True):
-        conn = yield from self._pool.connect()
+    async def execute_pipeline(self, commands, raise_on_error=True):
+        conn = await self._pool.connect()
         with conn:
-            result = yield from conn.execute_pipeline(commands, raise_on_error)
+            result = await conn.execute_pipeline(commands, raise_on_error)
             return result
 
-    @asyncio.coroutine
-    def connect(self, protocol_factory=None):
+    async def connect(self, protocol_factory=None):
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(self._host, tuple):
             host, port = self._host
-            transport, connection = yield from self._loop.create_connection(
+            transport, connection = await self._loop.create_connection(
                 protocol_factory, host, port)
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(self._host))
         if self._password:
-            yield from connection.execute('AUTH', self._password)
+            await connection.execute('AUTH', self._password)
         if self._database:
-            yield from connection.execute('SELECT', self._database)
+            await connection.execute('SELECT', self._database)
         return connection
 
     def flush(self):

@@ -139,7 +139,6 @@ Green WSGI
 """
 import threading
 import logging
-import asyncio
 from collections import deque
 
 from greenlet import greenlet, getcurrent
@@ -180,8 +179,7 @@ def run_in_greenlet(callable):
 
     A ``callable`` decorated with this decorator returns a coroutine
     """
-    @asyncio.coroutine
-    def _(*args, **kwargs):
+    async def _(*args, **kwargs):
         green = greenlet(callable)
         # switch to the new greenlet
         result = green.switch(*args, **kwargs)
@@ -189,7 +187,7 @@ def run_in_greenlet(callable):
         while isawaitable(result):
             # keep on switching back to the greenlet if we get a Future
             try:
-                result = green.switch((yield from result))
+                result = green.switch((await result))
             except Exception as exc:
                 result = green.throw(exc)
 
@@ -288,8 +286,7 @@ class GreenPool(AsyncObject):
         ensure_future(self._green_task(self._available.pop(), task),
                       loop=self._loop)
 
-    @asyncio.coroutine
-    def _green_task(self, green, task):
+    async def _green_task(self, green, task):
         # Coroutine executing the in main greenlet
         # This coroutine is executed for every task put into the queue
 
@@ -297,10 +294,10 @@ class GreenPool(AsyncObject):
             # switch to the greenlet to start the task
             task = green.switch(task)
 
-            # if an asynchronous result is returned, yield from
+            # if an asynchronous result is returned, await
             while isawaitable(task):
                 try:
-                    task = yield from task
+                    task = await task
                 except Exception as exc:
                     # This call can return an asynchronous component
                     task = green.throw(exc)

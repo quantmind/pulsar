@@ -1,6 +1,6 @@
 import uuid
 import threading
-from asyncio import sleep, coroutine
+from asyncio import sleep
 
 from pulsar import isawaitable
 
@@ -16,19 +16,17 @@ class RedisScript:
         self.script = script
         self.sha = None
 
-    @coroutine
-    def __call__(self, client, keys=None, args=None):
+    async def __call__(self, client, keys=None, args=None):
         '''Execute the script, passing any required ``args``
         '''
         if self.sha not in client.store.loaded_scripts:
-            sha = yield from client.immediate_execute('SCRIPT', 'LOAD',
-                                                      self.script)
+            sha = await client.immediate_execute('SCRIPT', 'LOAD', self.script)
             self.sha = sha.decode('utf-8')
             client.store.loaded_scripts.add(self.sha)
 
         result = client.evalsha(self.sha, keys, args)
         if isawaitable(result):
-            result = yield from result
+            result = await result
         return result
 
 
@@ -65,40 +63,35 @@ class Lock:
         '''
         return self._local.token
 
-    @coroutine
-    def _acquire(self):
+    async def _acquire(self):
         token = uuid.uuid1().hex.encode('utf-8')
         timeout = self.timeout and int(self.timeout * 1000) or ''
-        acquired = yield from self.lua_acquire(self.client,
-                                               keys=[self.name],
-                                               args=[token, timeout])
+        acquired = await self.lua_acquire(self.client, keys=[self.name],
+                                          args=[token, timeout])
         if acquired:
             self._local.token = token
 
         return acquired
 
-    @coroutine
-    def acquire(self):
+    async def acquire(self):
         loop = self._loop
         start = loop.time()
-        acquired = yield from self._acquire()
+        acquired = await self._acquire()
         while self.blocking is not None and not acquired:
             if loop.time() - start >= self.blocking:
                 break
             sleep(self.sleep)
-            acquired = yield from self._acquire()
+            acquired = await self._acquire()
 
         return acquired
 
-    @coroutine
-    def release(self):
+    async def release(self):
         expected_token = self.token
         if not expected_token:
             raise LockError("Cannot release an unlocked lock")
         self._local.token = None
-        released = yield from self.lua_release(self.client,
-                                               keys=[self.name],
-                                               args=[expected_token])
+        released = await self.lua_release(self.client, keys=[self.name],
+                                          args=[expected_token])
         if not released:
             raise LockError("Cannot release a lock that's no longer owned")
         return True

@@ -214,8 +214,7 @@ class SocketServer(pulsar.Application):
         '''
         return partial(Connection, self.cfg.callable)
 
-    @asyncio.coroutine
-    def monitor_start(self, monitor):
+    async def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address.
 
         If the platform does not support multiprocessing sockets set the
@@ -241,7 +240,7 @@ class SocketServer(pulsar.Application):
                                            cfg.key_file)
         # First create the sockets
         try:
-            server = yield from loop.create_server(asyncio.Protocol, *address)
+            server = await loop.create_server(asyncio.Protocol, *address)
         except socket.error as e:
             raise ImproperlyConfigured(e)
         else:
@@ -333,8 +332,7 @@ class UdpSocketServer(SocketServer):
         '''
         return self.cfg.callable
 
-    @asyncio.coroutine
-    def monitor_start(self, monitor):
+    async def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address.
 
         If the platform does not support multiprocessing sockets set the
@@ -350,7 +348,7 @@ class UdpSocketServer(SocketServer):
                                               'No address to bind to')
         address = parse_address(self.cfg.address)
         # First create the sockets
-        t, _ = yield from loop.create_datagram_endpoint(
+        t, _ = await loop.create_datagram_endpoint(
             asyncio.DatagramProtocol, address)
         sock = t.get_extra_info('socket')
         assert loop.remove_reader(sock.fileno())

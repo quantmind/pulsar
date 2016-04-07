@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import task, isawaitable
+from pulsar import isawaitable
 
 from .jsonrpc import JSONRPC
 
@@ -19,17 +19,16 @@ class PulsarServerCommands(JSONRPC):
         '''Echo the server.'''
         return message
 
-    @task
-    def rpc_server_info(self, request):
+    async def rpc_server_info(self, request):
         '''Return a dictionary of information regarding the server and workers.
 
         It invokes the :meth:`extra_server_info` for adding custom
         information.
         '''
-        info = yield from pulsar.send('arbiter', 'info')
+        info = await pulsar.send('arbiter', 'info')
         info = self.extra_server_info(request, info)
         if isawaitable(info):
-            info = yield from info
+            info = await info
         return info
 
     def rpc_functions_list(self, request):

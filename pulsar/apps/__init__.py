@@ -91,17 +91,15 @@ def get_application(name):
             return _get_remote_app(actor, name)
 
 
-@asyncio.coroutine
-def _get_remote_app(actor, name):
-    cfg = yield from actor.send('arbiter', 'run', _get_app, name)
+async def _get_remote_app(actor, name):
+    cfg = await actor.send('arbiter', 'run', _get_app, name)
     return cfg.app() if cfg else None
 
 
-@asyncio.coroutine
-def _get_app(arbiter, name, safe=True):
+async def _get_app(arbiter, name, safe=True):
     monitor = arbiter.get_actor(name)
     if monitor:
-        cfg = yield from monitor.start_event
+        cfg = await monitor.start_event
         if safe:
             return cfg
         else:
@@ -109,7 +107,7 @@ def _get_app(arbiter, name, safe=True):
 
 
 @task
-def monitor_start(self, exc=None):
+async def monitor_start(self, exc=None):
     start_event = self.start_event
     if exc:
         start_event.set_exception(exc)
@@ -122,34 +120,34 @@ def monitor_start(self, exc=None):
         for callback in when_monitor_start:
             coro = callback(self)
             if coro:
-                yield from coro
+                await coro
         self.bind_event('periodic_task', app.monitor_task)
         coro = app.monitor_start(self)
         if coro:
-            yield from coro
+            await coro
         if not self.cfg.workers:
             coro = app.worker_start(self)
             if coro:
-                yield from coro
+                await coro
         result = self.cfg
     except Exception as exc:
         coro = self.stop(exc)
         if coro:
-            yield from coro
+            await coro
         start_event.set_result(None)
     else:
         start_event.set_result(result)
 
 
 @task
-def monitor_stopping(self, exc=None):
+async def monitor_stopping(self, exc=None):
     if not self.cfg.workers:
         coro = self.app.worker_stopping(self)
         if coro:
-            yield from coro
+            await coro
     coro = self.app.monitor_stopping(self)
     if coro:
-        yield from coro
+        await coro
     return self
 
 
