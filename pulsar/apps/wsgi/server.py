@@ -17,12 +17,12 @@ import time
 import os
 import socket
 import io
-from asyncio import wait_for
+from asyncio import wait_for, ensure_future, sleep
 from wsgiref.handlers import format_date_time
 from urllib.parse import urlparse, unquote
 
 import pulsar
-from pulsar import (reraise, HttpException, ProtocolError, task, isfuture,
+from pulsar import (reraise, HttpException, ProtocolError, isawaitable,
                     BadRequest)
 from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, has_empty_content, http_parser,
@@ -247,7 +247,8 @@ class HttpServerResponse(ProtocolConsumer):
                                                    parser,
                                                    self.transport,
                                                    loop=self._loop)
-                self._response(self.wsgi_environ())
+                ensure_future(self._response(self.wsgi_environ()),
+                              loop=self._loop)
             body = parser.recv_body()
             if body:
                 self._body_reader.feed_data(body)
@@ -371,8 +372,7 @@ class HttpServerResponse(ProtocolConsumer):
 
     ########################################################################
     #    INTERNALS
-    @task
-    def _response(self, environ):
+    async def _response(self, environ):
         exc_info = None
         response = None
         done = False
@@ -385,12 +385,12 @@ class HttpServerResponse(ProtocolConsumer):
                             environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
                         raise BadRequest
                     response = self.wsgi_callable(environ, self.start_response)
-                    if isfuture(response):
-                        response = yield from wait_for(response, alive)
+                    if isawaitable(response):
+                        response = await wait_for(response, alive)
                 else:
                     response = handle_wsgi_error(environ, exc_info)
-                    if isfuture(response):
-                        response = yield from wait_for(response, alive)
+                    if isawaitable(response):
+                        response = await wait_for(response, alive)
                 #
                 if exc_info:
                     self.start_response(response.status,
@@ -400,12 +400,12 @@ class HttpServerResponse(ProtocolConsumer):
                 loop = self._loop
                 start = loop.time()
                 for chunk in response:
-                    if isfuture(chunk):
-                        chunk = yield from wait_for(chunk, alive)
+                    if isawaitable(chunk):
+                        chunk = await wait_for(chunk, alive)
                         start = loop.time()
                     result = self.write(chunk)
-                    if isfuture(result):
-                        yield from wait_for(result, alive)
+                    if isawaitable(result):
+                        await wait_for(result, alive)
                         start = loop.time()
                     else:
                         time_in_loop = loop.time() - start
@@ -413,7 +413,7 @@ class HttpServerResponse(ProtocolConsumer):
                             self.logger.debug(
                                 'Released the event loop after %.3f seconds',
                                 time_in_loop)
-                            yield None
+                            await sleep(0.1, loop=self._loop)
                             start = loop.time()
                 #
                 # make sure we write headers and last chunk if needed

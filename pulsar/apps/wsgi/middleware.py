@@ -52,7 +52,7 @@ import re
 from functools import wraps
 
 import pulsar
-from pulsar import isawaitable, task, get_event_loop
+from pulsar import isawaitable, get_event_loop
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -91,8 +91,7 @@ def authorization_middleware(environ, start_response=None):
             environ[key] = parse_authorization_header(environ[code])
 
 
-@task
-def wait_for_body_middleware(environ, start_response=None):
+async def wait_for_body_middleware(environ, start_response=None):
     '''Use this middleware to wait for the full body.
 
     This middleware wait for the full body to be received before letting
@@ -104,7 +103,7 @@ def wait_for_body_middleware(environ, start_response=None):
         stream = environ['wsgi.input']
         chunk = stream.read()
         if isawaitable(chunk):
-            chunk = yield from chunk
+            chunk = await chunk
         environ['wsgi.input'] = BytesIO(chunk)
 
 

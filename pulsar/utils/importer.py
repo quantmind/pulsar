@@ -99,16 +99,15 @@ def py_file(name):
 
 
 def import_system_file(mod, safe=True):
-    try:
-        if not os.path.isfile(mod):
+    if os.path.isfile(mod):
+        return _import_system_file(mod)
+    else:
+        try:
+            return import_module(mod)
+        except ImportError:
             mod2 = os.path.join(mod, '__init__.py')
             if os.path.isfile(mod2):
-                mod = mod2
-        if os.path.isfile(mod):
-            return _import_system_file(mod)
-        else:
-            return import_module(mod)
-    except ImportError:
-        if not safe:
-            raise
-        pass
+                return _import_system_file(mod2)
+            elif not safe:
+                raise
+            pass
