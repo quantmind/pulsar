@@ -83,8 +83,8 @@ class TestGreenIO(unittest.TestCase):
     def test_error_in_pool(self):
         # Test an error
         pool = greenio.GreenPool()
-        yield from self.async.assertRaises(RuntimeError, pool.submit,
-                                           raise_error)
+        yield from self.wait.assertRaises(RuntimeError, pool.submit,
+                                          raise_error)
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
@@ -105,7 +105,7 @@ class TestGreenIO(unittest.TestCase):
         # Test an error
         pool = greenio.GreenPool()
         self.assertEqual(pool._max_workers, greenio._DEFAULT_WORKERS)
-        yield from self.async.assertEqual(pool.submit(lambda: 'OK'), 'OK')
+        yield from self.wait.assertEqual(pool.submit(lambda: 'OK'), 'OK')
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
         a = pool.submit(lambda: 'a')

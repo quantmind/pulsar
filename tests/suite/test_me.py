@@ -32,8 +32,8 @@ class TestTestWorker(unittest.TestCase):
     @asyncio.coroutine
     def test_unknown_send_target(self):
         # The target does not exists
-        yield from self.async.assertRaises(pulsar.CommandError, send,
-                                           'vcghdvchdgcvshcd', 'ping')
+        yield from self.wait.assertRaises(pulsar.CommandError, send,
+                                          'vcghdvchdgcvshcd', 'ping')
 
     @asyncio.coroutine
     def test_multiple_execute(self):

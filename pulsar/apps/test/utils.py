@@ -111,8 +111,8 @@ class AsyncAssert:
 
         class MyTest(unittest.TestCase):
 
-            def test1(self):
-                yield from self.async.assertEqual(3, Future().callback(3))
+            async def test1(self):
+                await self.wait.assertEqual(3, Future().callback(3))
                 ...
 
 

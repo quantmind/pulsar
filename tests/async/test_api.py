@@ -30,10 +30,10 @@ class TestApi(unittest.TestCase):
 
     def test_bad_concurrency(self):
         # bla concurrency does not exists
-        return self.async.assertRaises(ValueError, pulsar.spawn, kind='bla')
+        return self.wait.assertRaises(ValueError, pulsar.spawn, kind='bla')
 
     def test_actor_coverage(self):
         '''test case for coverage'''
-        return self.async.assertRaises(pulsar.CommandNotFound,
-                                       pulsar.send, 'arbiter',
-                                       'sjdcbhjscbhjdbjsj', 'bla')
+        return self.wait.assertRaises(pulsar.CommandNotFound,
+                                      pulsar.send, 'arbiter',
+                                      'sjdcbhjscbhjdbjsj', 'bla')

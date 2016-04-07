@@ -42,9 +42,9 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         name = 'pluto-%s' % self.concurrency
         proxy = yield from self.spawn_actor(name=name)
         self.assertEqual(proxy.name, name)
-        yield from self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield from self.async.assertEqual(send(proxy, 'echo', 'Hello!'),
-                                          'Hello!')
+        yield from self.wait.assertEqual(send(proxy, 'ping'), 'pong')
+        yield from self.wait.assertEqual(send(proxy, 'echo', 'Hello!'),
+                                         'Hello!')
         n, result = yield from send(proxy, 'run', add, 1, 3)
         self.assertEqual(n, name)
         self.assertEqual(result, 4)
@@ -67,9 +67,9 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         proxy_monitor = arbiter.get_actor(proxy.aid)
         self.assertEqual(proxy_monitor, proxy)
-        yield from self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield from self.async.assertEqual(send(proxy.proxy, 'echo', 'Hello!'),
-                                          'Hello!')
+        yield from self.wait.assertEqual(send(proxy, 'ping'), 'pong')
+        yield from self.wait.assertEqual(send(proxy.proxy, 'echo', 'Hello!'),
+                                         'Hello!')
         # We call the ActorTestMixin.stop_actors method here, since the
         # ActorTestMixin.tearDown method is invoked on the test-worker domain
         # (here we are in the arbiter domain)
