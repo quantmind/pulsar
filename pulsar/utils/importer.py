@@ -100,6 +100,10 @@ def py_file(name):
 
 def import_system_file(mod, safe=True):
     try:
+        if not os.path.isfile(mod):
+            mod2 = os.path.join(mod, '__init__.py')
+            if os.path.isfile(mod2):
+                mod = mod2
         if os.path.isfile(mod):
             return _import_system_file(mod)
         else:

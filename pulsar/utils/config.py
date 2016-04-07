@@ -225,7 +225,7 @@ class Config:
         except KeyError:
             return default
 
-    def set(self, name, value, default=False):
+    def set(self, name, value, default=False, imported=False):
         """Set the :class:`Setting` at ``name`` with a new ``value``.
 
         If ``default`` is ``True``, the :attr:`Setting.default` is also set.
@@ -240,8 +240,8 @@ class Config:
                 return  # don't do anything
 
         if name in self.settings:
-            self.settings[name].set(value, default=default)
-        else:
+            self.settings[name].set(value, default=default, imported=imported)
+        elif not imported:
             self.params[name] = value
 
     def parser(self):
@@ -290,7 +290,7 @@ class Config:
                     if valid_config_value(val):
                         unknowns.append((k, val))
                 else:
-                    self.set(kl, val, True)
+                    self.set(kl, val, True, True)
         return unknowns
 
     def parse_command_line(self, argv=None):
@@ -505,6 +505,7 @@ class Setting(metaclass=SettingMeta):
     It provided it must be a function accepting one positional argument,
     the value to validate."""
     value = None
+    imported = False
     """The actual value for this setting."""
     default = None
     """The default value for this setting."""
@@ -567,7 +568,12 @@ class Setting(metaclass=SettingMeta):
         self.modified = False
 
     def __getstate__(self):
-        return self.__dict__.copy()
+        data = self.__dict__.copy()
+        if self.imported:
+            data.pop('imported', None)
+            data.pop('value', None)
+            data.pop('default', None)
+        return data
 
     def __str__(self):
         return '{0} ({1})'.format(self.name, self.value)
@@ -585,7 +591,7 @@ class Setting(metaclass=SettingMeta):
         """Returns :attr:`value`"""
         return self.value
 
-    def set(self, val, default=False):
+    def set(self, val, default=False, imported=False):
         """Set ``val`` as the :attr:`value` for this :class:`Setting`.
 
         If ``default`` is ``True`` set also the :attr:`default` value.
@@ -593,6 +599,7 @@ class Setting(metaclass=SettingMeta):
         if hasattr(self.validator, '__call__'):
             val = self.validator(val)
         self.value = val
+        self.imported = imported
         if default:
             self.default = val
         self.modified = True

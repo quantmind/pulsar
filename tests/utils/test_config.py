@@ -7,21 +7,15 @@ import traceback
 import unittest
 
 import pulsar
-from pulsar import get_actor, Config, validate_callable
+from pulsar import get_actor, validate_callable
 
-
-def connection_made(conn):
-    return conn
-
-
-def post_fork(actor):
-    return actor
+from tests.utils import config, post_fork
 
 
 class TestConfig(unittest.TestCase):
 
     def testFunction(self):
-        cfg = Config()
+        cfg = config()
         worker = get_actor()
         self.assertTrue(cfg.post_fork)
         self.assertEqual(cfg.post_fork(worker), None)
@@ -33,30 +27,31 @@ class TestConfig(unittest.TestCase):
     def testFunctionFromConfigFile(self):
         # TODO, fails in pypy for some odd reasons
         worker = get_actor()
-        cfg = Config()
+        cfg = config()
         self.assertEqual(cfg.connection_made(worker), None)
-        self.assertTrue(cfg.import_from_module(__file__))
+        self.assertEqual(cfg.import_from_module(os.path.dirname(__file__))[0],
+                         ('foo', 5))
         self.assertEqual(cfg.connection_made(worker), worker)
         cfg1 = pickle.loads(pickle.dumps(cfg))
         self.assertEqual(cfg1.connection_made(worker), worker)
 
     def testBadConfig(self):
-        cfg = Config()
+        cfg = config()
         self.assertEqual(cfg.config, 'config.py')
         self.assertEqual(cfg.import_from_module('foo/bla/cnkjnckjcn.py'), [])
         cfg.set('config', None)
         self.assertEqual(cfg.config, None)
 
     def test_exclude(self):
-        cfg = Config(exclude=['config'])
+        cfg = config(exclude=['config'])
         self.assertEqual(cfg.config, 'config.py')
         self.assertEqual(cfg.params['config'], 'config.py')
         self.assertFalse('config' in cfg.settings)
 
     def testDefaults(self):
-        from pulsar.utils import config
-        self.assertFalse(config.pass_through(None))
-        cfg = Config()
+        from pulsar.utils.config import pass_through
+        self.assertFalse(pass_through(None))
+        cfg = config()
         self.assertEqual(list(sorted(cfg)), list(sorted(cfg.settings)))
 
         def _():
@@ -77,7 +72,7 @@ class TestConfig(unittest.TestCase):
 
     def testSystem(self):
         from pulsar import system
-        cfg = Config()
+        cfg = config()
         self.assertEqual(cfg.uid, system.get_uid())
         self.assertEqual(cfg.gid, system.get_gid())
         self.assertEqual(cfg.proc_name, 'pulsar')
@@ -124,7 +119,7 @@ class TestConfig(unittest.TestCase):
         self.assertRaises(TypeError, validate_callable(3), test)
 
     def test_methods(self):
-        cfg = Config()
+        cfg = config()
         self.assertEqual(cfg.get('sdjcbsjkbcd', 'ciao'), 'ciao')
         d = dict(cfg.items())
         self.assertEqual(len(d), len(cfg))
@@ -136,7 +131,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg.settings['debug'].default, True)
 
     def test_attribute_error(self):
-        cfg = Config()
+        cfg = config()
         self.assertRaises(AttributeError, lambda: cfg.wwwwww)
         # Check KeyError not in stacktrace
         try:
