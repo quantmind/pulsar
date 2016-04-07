@@ -6,7 +6,7 @@ from pulsar import send, SERVER_SOFTWARE, get_application, get_actor
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import dont_run_with_thread
 
-from manage import server
+from examples.helloworld.manage import server
 
 
 class TestHelloWorldThread(unittest.TestCase):

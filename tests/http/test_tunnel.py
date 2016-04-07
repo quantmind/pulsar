@@ -1,5 +1,4 @@
-import base
-import req
+from tests.http import base, req
 
 
 class TestTlsHttpClientWithProxy(base.TestHttpClient, req.TestRequest):

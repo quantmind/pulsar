@@ -3,10 +3,10 @@ import asyncio
 
 from pulsar import get_actor
 
-from base import TestHttpClientBase
+from tests.http import base
 
 
-class ExternalBase(TestHttpClientBase):
+class ExternalBase(base.TestHttpClientBase):
     with_httpbin = False
 
     def after_response(self, response):

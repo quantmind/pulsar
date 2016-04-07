@@ -2,7 +2,7 @@ import unittest
 
 from pulsar.utils.httpurl import hasextensions, HttpParser
 
-import base
+from tests.http import base
 
 
 @unittest.skipUnless(hasextensions, 'Requires C extensions')

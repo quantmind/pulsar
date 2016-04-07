@@ -1,11 +1,11 @@
 """Tests the pulse Command."""
 import unittest
 
+from pulsar.apps import wsgi
 try:
     from pulsar.apps.pulse.management.commands.pulse import Command
 except ImportError:
     Command = None
-from pulsar.apps import wsgi
 
 
 @unittest.skipUnless(Command, 'Requires django')

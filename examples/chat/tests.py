@@ -7,7 +7,7 @@ from pulsar.apps import rpc, http, ws
 from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.system import json
 
-from manage import server
+from examples.chat.manage import server
 
 
 class Message(ws.WS):

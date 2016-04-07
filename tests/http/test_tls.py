@@ -2,7 +2,8 @@ import os
 import asyncio
 
 from pulsar.apps.http import SSLError, HttpClient
-import base
+
+from tests.http import base
 
 
 crt = os.path.join(os.path.dirname(__file__), 'ca_bundle')

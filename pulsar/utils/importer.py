@@ -1,7 +1,27 @@
 import os
-import sys
 import glob
 from importlib import import_module
+
+import importlib.util
+
+from .slugify import slugify
+
+try:
+    importlib.util.module_from_spec
+
+    def _import_system_file(filename):
+        module_name = slugify(filename, '_')
+        spec = importlib.util.spec_from_file_location(module_name, filename)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+except AttributeError:
+    from importlib.machinery import SourceFileLoader
+
+    def _import_system_file(filename):
+        module_name = slugify(filename, '_')
+        return SourceFileLoader(module_name, filename).load_module()
 
 
 def expand_star(mod_name):
@@ -78,31 +98,13 @@ def py_file(name):
         return name
 
 
-def import_system_file(mod, add_to_path=True):
-    if os.path.isfile(mod):
-        # it is a file in the system path
-        dir, name = os.path.split(mod)
-        name = py_file(name)
-        assert name
-        names = [name]
-        while dir and dir not in sys.path:
-            ndir, name = os.path.split(dir)
-            if dir == ndir:
-                dir = ''
-                break
-            dir = ndir
-            names.insert(0, name)
-        # the file was not in the system path
-        if not dir and add_to_path:
-            dir, name = os.path.split(mod)
-            if dir and dir != mod:
-                sys.path.append(dir)
-            mod_name = py_file(name)
+def import_system_file(mod, safe=True):
+    try:
+        if os.path.isfile(mod):
+            return _import_system_file(mod)
         else:
-            mod_name = '.'.join(names)
-        return import_module(mod_name)
-    else:
-        try:
             return import_module(mod)
-        except ImportError:
-            pass
+    except ImportError:
+        if not safe:
+            raise
+        pass

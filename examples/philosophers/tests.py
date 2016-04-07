@@ -4,7 +4,7 @@ import asyncio
 from pulsar import send
 from pulsar.apps.test import test_timeout
 
-from .manage import DiningPhilosophers
+from examples.philosophers.manage import DiningPhilosophers
 
 
 class TestPhylosophers(unittest.TestCase):

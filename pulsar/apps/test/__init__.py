@@ -357,6 +357,7 @@ This section covers configuration parameters used by the
 class TestVerbosity(TestOption):
     name = 'verbosity'
     flags = ['--verbosity']
+    validator = pulsar.validate_pos_int
     type = int
     default = 1
     desc = """Test verbosity, 0, 1, 2, 3"""

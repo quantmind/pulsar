@@ -7,7 +7,7 @@ from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import dont_run_with_thread
 
-from .manage import server, frame_parser
+from examples.websocket.manage import server, frame_parser
 
 
 class Echo(WS):

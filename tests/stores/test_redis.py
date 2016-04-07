@@ -4,8 +4,8 @@ from pulsar import HAS_C_EXTENSIONS
 from pulsar.apps.test import check_server
 from pulsar.apps.data import RedisScript
 
-from test_pulsards import unittest, RedisCommands, create_store
-from test_lock import RedisLockTests
+from tests.stores.test_pulsards import unittest, RedisCommands, create_store
+from tests.stores.test_lock import RedisLockTests
 
 
 OK = check_server('redis')

@@ -6,7 +6,7 @@ from pulsar import (send, new_event_loop, get_application,
                     run_in_loop, get_event_loop)
 from pulsar.apps.test import dont_run_with_thread
 
-from .manage import server, Echo, EchoServerProtocol
+from examples.echo.manage import server, Echo, EchoServerProtocol
 
 
 class TestEchoServerThread(unittest.TestCase):

@@ -71,7 +71,10 @@ class Test(orig.test):
                 setting = cfg.settings[name]
 
                 if setting.nargs in ('*', '+'):
-                    value = shlex.split(value)
+                    values = []
+                    for v in shlex.split(value):
+                        values.extend((c for c in v.split(',') if c))
+                    value = values
 
                 setattr(self, name, value)
                 params[name] = value
