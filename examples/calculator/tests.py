@@ -7,7 +7,7 @@ from pulsar import send
 from pulsar.apps import rpc, http
 from pulsar.apps.test import dont_run_with_thread
 
-from .manage import server, Root, Calculator
+from manage import server, Root, Calculator
 
 
 class TestRpcOnThread(unittest.TestCase):

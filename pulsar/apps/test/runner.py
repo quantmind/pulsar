@@ -18,14 +18,23 @@ class InvalidTestFunction(TestCase.failureException):
 
 class Runner:
 
-    def __init__(self, monitor, runner, tests):
+    def __init__(self, monitor, suite):
+        cfg = suite.cfg
+        loader = suite.loader
+        tests = loader.test_files(cfg.labels, cfg.exclude_labels)
+        #
         self._loop = monitor._loop
+        self.cfg = suite.cfg
         self._time_start = self._loop.time()
         self.logger = monitor.logger
+        self.suite = suite
         self.monitor = monitor
-        self.runner = runner
+        self.loader = loader
+        self.runner = loader.runner
         self.tests = list(reversed(tests))
-        self._loop.call_soon(self._next)
+        #
+        self.runner.on_start()
+        self._loop.call_soon(self._next_file)
 
     def _exit(self, exit_code):
         raise HaltServer(exit_code=exit_code)
@@ -35,31 +44,12 @@ class Runner:
             print('\nAbort tests')
             raise AbortTests
 
-    def _next(self):
-        runner = self.runner
-        cfg = self.monitor.cfg
-
+    def _next_file(self):
         if self.tests:
-            run = True
-            tag, testcls = self.tests.pop()
-            testcls.tag = tag
-            testcls.cfg = cfg
-            testcls.async = AsyncAssert(testcls)
-            try:
-                all_tests = runner.loadTestsFromTestCase(testcls)
-            except Exception:
-                self.logger.exception('Could not load tests', exc_info=True)
-                run = False
-            else:
-                run = all_tests.countTestCases()
+            tag, file_path = self.tests.pop()
+            test_classes = iter(self.loader.import_module(file_path))
+            self._loop.call_soon(self._next_class, tag, test_classes)
 
-            if run:
-                self.logger.info('Running Tests from %s', testcls)
-                runner.startTestClass(testcls)
-                ensure_future(self._run_testcls(testcls, all_tests),
-                              loop=self._loop)
-            else:
-                self._loop.call_soon(self._next)
         else:
             time_taken = self._loop.time() - self._time_start
             runner = self.runner
@@ -71,15 +61,40 @@ class Runner:
                 exit_code = 0
             self._loop.call_soon(self._exit, exit_code)
 
-    @asyncio.coroutine
-    def _run_testcls(self, testcls, all_tests):
-        cfg = testcls.cfg
-        seq = getattr(testcls, '_sequential_execution', cfg.sequential)
-        test_timeout = get_test_timeout(testcls, cfg.test_timeout)
+    def _next_class(self, tag, test_classes):
         try:
-            if skip_test(testcls):
-                raise SkipTest(skip_reason(testcls))
-            yield from self._run(testcls.setUpClass, test_timeout)
+            test_cls = next(test_classes)
+        except StopIteration:
+            return self._loop.call_soon(self._next_file)
+
+        test_cls.tag = tag
+        test_cls.cfg = self.cfg
+        test_cls.async = AsyncAssert(test_cls)
+        try:
+            all_tests = self.runner.loadTestsFromTestCase(test_cls)
+        except Exception:
+            self.logger.exception('Could not load tests')
+            run = False
+        else:
+            run = all_tests.countTestCases()
+
+        if run:
+            self.logger.info('Running Tests from %s', test_cls)
+            self.runner.startTestClass(test_cls)
+            coro = self._run_test_cls(test_cls, test_classes, all_tests)
+            ensure_future(coro, loop=self._loop)
+        else:
+            self._loop.call_soon(self._next_file)
+
+    @asyncio.coroutine
+    def _run_test_cls(self, test_cls, test_classes, all_tests):
+        cfg = test_cls.cfg
+        seq = getattr(test_cls, '_sequential_execution', cfg.sequential)
+        test_timeout = get_test_timeout(test_cls, cfg.test_timeout)
+        try:
+            if skip_test(test_cls):
+                raise SkipTest(skip_reason(test_cls))
+            yield from self._run(test_cls.setUpClass, test_timeout)
             yield None  # release the loop
         except SkipTest as exc:
             reason = str(exc)
@@ -108,14 +123,14 @@ class Runner:
                 return
 
         try:
-            yield from self._run(testcls.tearDownClass, test_timeout)
+            yield from self._run(test_cls.tearDownClass, test_timeout)
         except AbortTests:
             return
         except Exception:
             self.logger.exception('Failure in tearDownClass')
 
-        self.logger.info('Finished Tests from %s', testcls)
-        self._loop.call_soon(self._next)
+        self.logger.info('Finished Tests from %s', test_cls)
+        self._loop.call_soon(self._next_class, test_cls.tag, test_classes)
 
     @asyncio.coroutine
     def _run(self, method, test_timeout):

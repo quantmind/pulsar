@@ -10,10 +10,9 @@ import sys
 import unittest
 from importlib import import_module
 
-from .utils import LOGGER
+import pulsar
 
-
-__all__ = ['TestLoader']
+from .result import TestRunner
 
 
 no_tags = ('tests', 'test')
@@ -42,17 +41,44 @@ class TestLoader:
         more information.
     :parameter runner: The :class:`.TestRunner` passed by the test suite.
     '''
-    def __init__(self, root, modules, runner, logger=None):
-        self.runner = runner
-        self.logger = logger or LOGGER
-        self.root = root
-        self.modules = modules
+    def __init__(self, suite):
+        self.stream = pulsar.get_stream(suite.cfg)
+        self.runner = TestRunner(suite.cfg.test_plugins, self.stream)
+        self.abort_message = self.runner.configure(suite.cfg)
+        self.root = suite.root_dir
+        self.modules = suite.cfg.test_modules
+        self.logger = suite.logger
 
-    def __repr__(self):
-        return self.root
-    __str__ = __repr__
+    def tags(self, include=None, exclude=None):
+        """Return a generator of tag information
+        """
+        for tag, file_path in self.test_files(include, exclude):
+            with self.import_module(file_path) as importer:
+                if importer.module:
+                    doc = importer.module.__doc__
+                    if doc:
+                        tag = '{0} - {1}'.format(tag, doc)
+                    yield tag
 
-    def alltags(self, tag):
+    def test_modules(self, tags):
+        for tag, file_path in self.test_files(tags):
+            mod = self.import_module(file_path)
+            if mod:
+                yield mod
+
+    def test_files(self, tags=None, exclude_tags=None):
+        """List of ``tag``, ``modules`` pairs.
+
+        :parameter tags: optional list of tags to include, if not available
+            all tags will be included.
+        :parameter exclude_tags: optional list of tags to exclude.
+            If not provided no tags will be excluded.
+        """
+        d = dict(self._test_files(tags, exclude_tags))
+        return [(k, d[k]) for k in sorted(d)]
+
+    # INTERNALS
+    def _all_tags(self, tag):
         bits = tag.split('.')
         tag, rest = bits[0], bits[1:]
         yield tag
@@ -60,19 +86,19 @@ class TestLoader:
             tag += '.' + b
             yield tag
 
-    def checktag(self, tag, import_tags, exclude_tags):
+    def _check_tag(self, tag, import_tags, exclude_tags):
         '''Return ``True`` if ``tag`` is in ``import_tags``.'''
         if exclude_tags:
-            alltags = list(self.alltags(tag))
+            alltags = list(self._all_tags(tag))
             for exclude_tag in exclude_tags:
                 for bit in alltags:
                     if bit == exclude_tag:
                         return 0
         if import_tags:
             c = 0
-            alltags = list(self.alltags(tag))
+            alltags = list(self._all_tags(tag))
             for import_tag in import_tags:
-                allitags = list(self.alltags(import_tag))
+                allitags = list(self._all_tags(import_tag))
                 for bit in alltags:
                     if bit == import_tag:
                         return 2
@@ -82,37 +108,7 @@ class TestLoader:
         else:
             return 2
 
-    def testclasses(self, tags=None, exclude_tags=None):
-        pt = ', '.join(('"%s"' % t for t in tags)) if tags else 'all'
-        ex = ((' excluding %s' % ', '.join(('"%s"' % t for t in exclude_tags)))
-              if exclude_tags else '')
-        self.logger.info('Load test classes for %s %s', pt, ex)
-        for tag, mod in self.testmodules(tags, exclude_tags):
-            if tags:
-                skip = True
-                for bit in self.alltags(tag):
-                    if bit in tags:
-                        skip = False
-                        break
-                if skip:
-                    continue
-            for name in dir(mod):
-                obj = getattr(mod, name)
-                if issubclass_safe(obj, unittest.TestCase):
-                    yield tag, obj
-
-    def testmodules(self, tags=None, exclude_tags=None):
-        """Generator of ``tag``, ``modules`` pairs.
-
-        :parameter tags: optional list of tags to include, if not available
-            all tags will be included.
-        :parameter exclude_tags: optional list of tags to exclude.
-            If not provided no tags will be excluded.
-        """
-        d = dict(self._testmodules(tags, exclude_tags))
-        return [(k, d[k]) for k in sorted(d)]
-
-    def _testmodules(self, include, exclude):
+    def _test_files(self, include, exclude):
         if not self.modules:
             yield from self.get_tests(self.root, include, exclude)
         else:
@@ -135,7 +131,7 @@ class TestLoader:
                 of ``path``.
             :parameter parent: the parent module for the current one.
                 This parameter is passed by this function recursively
-            :return: a generator of tag, module pairs.
+            :return: a generator of tag, module path pairs.
         """
         if tags is None:
             tags = []
@@ -154,29 +150,51 @@ class TestLoader:
                 m_tags = tags if mod_name in no_tags else tags + [mod_name]
 
             tag = '.'.join(m_tags)
-            c = self.checktag(tag, include_tags, exclude_tags)
+            c = self._check_tag(tag, include_tags, exclude_tags)
             if not c:
                 continue
 
             if is_file:
-                module = self.import_module(mod_path)
-                if not module:
-                    continue
-                yield tag, module
-
+                yield tag, mod_path
             else:
                 yield from self.get_tests(mod_path, include_tags,
                                           exclude_tags, m_tags)
 
     def import_module(self, file_name):
-        path, name = os.path.split(file_name)
+        return ModuleImporter(file_name, self.logger)
+
+    def match(self, name):
+        for pattern in test_patterns:
+            p = pattern.search(name)
+            if p:
+                return p.groups(0)
+
+
+class ModuleImporter:
+    module = None
+    add_to_path = False
+
+    def __init__(self, file_name, logger):
+        self.file_name = file_name
+        self.logger = logger
+
+    def __iter__(self):
+        with self:
+            if self.module:
+                for name in dir(self.module):
+                    obj = getattr(self.module, name)
+                    if issubclass_safe(obj, unittest.TestCase):
+                        yield obj
+
+    def __enter__(self):
+        path, name = os.path.split(self.file_name)
         add_to_path = path not in sys.path
+        if add_to_path:
+            sys.path.insert(0, path)
+            self.add_to_path = add_to_path
+
         try:
-            if add_to_path:
-                sys.path.insert(0, path)
-            mod = import_module(name[:-3])
-            if getattr(mod, '__test__', True):
-                return self.runner.import_module(mod)
+            self.module = import_module(name[:-3])
         except ImportError:
             self.logger.error('Failed to import module %s. Skipping.',
                               name, exc_info=True)
@@ -184,12 +202,8 @@ class TestLoader:
         except Exception:
             self.logger.critical('Failed to import module %s. Skipping.',
                                  name, exc_info=True)
-        finally:
-            if add_to_path:
-                sys.path.pop(0)
+        return self
 
-    def match(self, name):
-        for pattern in test_patterns:
-            p = pattern.search(name)
-            if p:
-                return p.groups(0)
+    def __exit__(self, *args):
+        if self.add_to_path:
+            sys.path.pop(0)

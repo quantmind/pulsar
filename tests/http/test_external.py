@@ -3,7 +3,7 @@ import asyncio
 
 from pulsar import get_actor
 
-from tests.http.base import TestHttpClientBase
+from base import TestHttpClientBase
 
 
 class ExternalBase(TestHttpClientBase):

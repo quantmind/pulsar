@@ -354,10 +354,6 @@ This section covers configuration parameters used by the
 :ref:`Asynchronous/Parallel test suite <apps-test>`.'''
 
 
-class ExitTest(Exception):
-    pass
-
-
 class TestVerbosity(TestOption):
     name = 'verbosity'
     flags = ['--verbosity']
@@ -471,22 +467,15 @@ class TestSuite(pulsar.Application):
 
     @lazyproperty
     def loader(self):
-        stream = pulsar.get_stream(self.cfg)
-        test_runner = TestRunner(self.cfg.test_plugins, stream)
-        abort_message = test_runner.configure(self.cfg)
-        if abort_message:    # pragma    nocover
-            raise ExitTest(str(abort_message))
-        return TestLoader(self.root_dir, self.cfg.test_modules,
-                          test_runner, logger=self.logger)
+        return TestLoader(self)
 
     def on_config(self, arbiter):
-        stream = arbiter.stream
-        try:
-            loader = self.loader
-        except ExitTest as e:
-            stream.writeln(str(e))
+        loader = self.loader
+        stream = loader.stream
+        if loader.abort_message:
+            stream.writeln(str(loader.abort_message))
             return False
-        stream = arbiter.stream
+
         stream.writeln(sys.version)
         if self.cfg.list_labels:    # pragma    nocover
             tags = self.cfg.labels
@@ -497,50 +486,19 @@ class TestSuite(pulsar.Application):
             else:
                 stream.writeln('\nAll test labels:')
             stream.writeln('')
-
-            def _tags():
-                for tag, mod in loader.testmodules(tags):
-                    doc = mod.__doc__
-                    if doc:
-                        tag = '{0} - {1}'.format(tag, doc)
-                    yield tag
-            for tag in sorted(_tags()):
+            for tag in loader.tags(tags, self.cfg.exclude_labels):
                 stream.writeln(tag)
             stream.writeln('')
             return False
 
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
-        cfg = self.cfg
-        workers = min(0, cfg.workers)
-        cfg.set('workers', workers)
-        loader = self.loader
+        self.cfg.set('workers', 0)
 
         if self.cfg.callable:
             self.cfg.callable()
 
-        tags = self.cfg.labels
-        exclude_tags = self.cfg.exclude_labels
-        try:
-            tests = []
-            loader.runner.on_start()
-            for tag, testcls in loader.testclasses(tags, exclude_tags):
-                suite = loader.runner.loadTestsFromTestCase(testcls)
-                if suite and suite._tests:
-                    tests.append((tag, testcls))
-            self._time_start = None
-            if tests:
-                self.logger.info('loading %s test classes', len(tests))
-                monitor._loop.call_soon(Runner, monitor, loader.runner, tests)
-            else:   # pragma    nocover
-                raise ExitTest('Could not find any tests.')
-        except ExitTest as e:   # pragma    nocover
-            monitor.stream.writeln(str(e))
-            monitor._loop.stop()
-        except Exception:   # pragma    nocover
-            monitor.logger.critical('Error occurred while starting tests',
-                                    exc_info=True)
-            monitor._loop.call_soon(self._exit, 3)
+        monitor._loop.call_soon(Runner, monitor, self)
 
     @classmethod
     def create_config(cls, *args, **kwargs):
