@@ -146,11 +146,11 @@ Running Tests
 ==================
 Pulsar test suite uses the pulsar test application. To run tests::
 
-    python runtests.py
+    python setup.py test
 
 For options and help type::
 
-    python runtests.py -h
+    python setup.py test --help
 
 flake8_ check (requires flake8 package)::
 

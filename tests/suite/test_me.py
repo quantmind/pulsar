@@ -49,8 +49,8 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(m[4], 'ciao again!')
 
     def test_no_plugins(self):
-        suite = TestSuite()
-        self.assertFalse(suite.cfg.plugins)
+        suite = TestSuite(test_plugins=[])
+        self.assertFalse(suite.cfg.test_plugins)
         self.assertFalse('profile' in suite.cfg.settings)
 
     def test_profile_plugins(self):

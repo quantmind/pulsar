@@ -10,7 +10,7 @@ VERSION = (1, 2, 1, 'alpha', 0)
 __version__ = version = get_version(VERSION)
 __license__ = "BSD"
 __author__ = "Luca Sbardella"
-__contact__ = "luca.sbardella@gmail.com"
+__contact__ = "luca@quantmind.com"
 __homepage__ = "https://github.com/quantmind/pulsar"
 __docformat__ = "restructuredtext"
 CLASSIFIERS = ['Development Status :: 5 - Production/Stable',

@@ -1,4 +1,6 @@
 """Tests django chat application"""
+import os
+import sys
 import unittest
 import asyncio
 
@@ -9,6 +11,9 @@ from pulsar.utils.string import gen_unique_id
 
 try:
     from examples.djchat.manage import server
+    path = os.path.dirname(__file__)
+    if path not in sys.path:
+        sys.path.append(path)
 except ImportError:
     server = None
 

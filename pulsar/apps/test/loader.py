@@ -70,7 +70,7 @@ class TestLoader:
     def import_module(self, file_name):
         return ModuleImporter(file_name, self.logger)
 
-    def test_files(self, tags=None, exclude_tags=None):
+    def test_files(self, include=None, exclude=None):
         """List of ``tag``, ``modules`` pairs.
 
         :parameter tags: optional list of tags to include, if not available
@@ -78,7 +78,7 @@ class TestLoader:
         :parameter exclude_tags: optional list of tags to exclude.
             If not provided no tags will be excluded.
         """
-        d = dict(self._test_files(tags, exclude_tags))
+        d = dict(self._test_files(include, exclude))
         return [(k, d[k]) for k in sorted(d)]
 
     # INTERNALS

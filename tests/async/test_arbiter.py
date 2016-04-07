@@ -7,21 +7,7 @@ from pulsar import send, spawn, ACTOR_ACTION_TIMEOUT
 from pulsar.apps.test import (ActorTestMixin, dont_run_with_thread,
                               test_timeout)
 
-
-def cause_timeout(actor):
-    if actor.next_periodic_task:
-        actor.next_periodic_task.cancel()
-    else:
-        actor.event_loop.call_soon(cause_timeout, actor)
-
-
-def cause_terminate(actor):
-    if actor.next_periodic_task:
-        actor.next_periodic_task.cancel()
-        # hayjack the stop method
-        actor.stop = lambda exc=None, exit_code=None: False
-    else:
-        actor._loop.call_soon(cause_timeout, actor)
+from tests.async import cause_timeout, cause_terminate
 
 
 def wait_for_stop(test, aid, terminating=False):

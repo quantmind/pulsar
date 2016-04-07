@@ -1,38 +1,15 @@
 '''Tests actor and actor proxies.'''
 import unittest
 import asyncio
-from time import time
 
 from functools import partial
 
 import pulsar
-from pulsar import send, spawn, async_while, TcpServer, Connection
+from pulsar import send, async_while, TcpServer, Connection
 from pulsar.apps.test import ActorTestMixin, dont_run_with_thread
 
 from examples.echo.manage import EchoServerProtocol
-
-
-def add(actor, a, b):
-    return (actor.name, a+b)
-
-
-@asyncio.coroutine
-def get_test(_):
-    app = yield from pulsar.get_application('test')
-    return app.cfg
-
-
-@asyncio.coroutine
-def spawn_actor_from_actor(actor, name):
-    actor2 = yield from spawn(name=name)
-    pong = yield from send(actor2, 'ping')
-    assert pong == 'pong', 'no pong from actor'
-    t1 = time()
-    # cover the notify from a fron actor
-    t2 = yield from send(actor2, 'notify', {})
-    assert t2 >= t1
-
-    return actor2.aid
+from tests.async import add, get_test, spawn_actor_from_actor
 
 
 class create_echo_server:

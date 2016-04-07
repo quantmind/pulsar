@@ -432,7 +432,7 @@ class TestModules(TestOption):
     validator = pulsar.validate_list
     nargs = '+'
     default = []
-    desc = '''\\
+    desc = '''\
         An iterable over modules where to look for tests.
         '''
 
