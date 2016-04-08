@@ -1,3 +1,4 @@
+import os
 import sys
 import shlex
 import json
@@ -40,7 +41,8 @@ def extend(params, package=None):
     params['cmdclass'] = cmdclass
     #
     if package:
-        meta = sh('%s %s %s' % (sys.executable, __file__, package))
+        path = os.path.abspath(os.getcwd())
+        meta = sh('%s %s %s %s' % (sys.executable, __file__, package, path))
         params.update(json.loads(meta))
 
 
@@ -53,8 +55,10 @@ def sh(command, cwd=None):
                             universal_newlines=True).communicate()[0]
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
+    if len(sys.argv) >= 2:
         package = sys.argv[1]
+        if len(sys.argv) > 2:
+            sys.path.append(sys.argv[2])
         pkg = __import__(package)
         print(json.dumps(dict(version=pkg.__version__,
                               description=pkg.__doc__)))
