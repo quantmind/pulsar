@@ -313,7 +313,6 @@ Utilities
 .. automodule:: pulsar.apps.test.utils
 
 '''
-import os
 import sys
 
 import pulsar
@@ -328,7 +327,6 @@ from .utils import (sequential, ActorTestMixin, AsyncAssert, check_server,
                     test_timeout, dont_run_with_thread)
 from .wsgi import HttpTestClient
 from .runner import Runner
-from .cov import coveralls
 
 
 __all__ = ['populate',
@@ -511,12 +509,8 @@ class TestSuite(pulsar.Application):
             return False
 
         elif self.cfg.coveralls:    # pragma nocover
-            repo_token = None
-            strip_dirs = [os.getcwd()]
-            if os.path.isfile('.coveralls-repo-token'):
-                with open('.coveralls-repo-token') as f:
-                    repo_token = f.read().strip()
-            coveralls(strip_dirs=strip_dirs, repo_token=repo_token)
+            from pulsar.apps.test.cov import coveralls
+            coveralls()
             return False
 
         if self.cfg.coverage:

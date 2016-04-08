@@ -342,7 +342,7 @@ class Configurator:
         else:
             self.cfg.params.update(self.cfg.import_from_module())
 
-    def start(self):
+    def start(self, exit=True):
         """Invoked the application callable method and start
         the ``arbiter`` if it wasn't already started.
 
@@ -353,7 +353,9 @@ class Configurator:
         on_start = self()
         arbiter = pulsar.arbiter()
         if arbiter and on_start:
-            arbiter.start()
+            arbiter.start(exit=exit)
+            if arbiter.exit_code is not None:
+                return arbiter.exit_code
         return on_start
 
     @classmethod

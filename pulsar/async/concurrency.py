@@ -715,18 +715,19 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         if self.managed_actors:
             actor.state = ACTOR_STATES.TERMINATE
         actor.collect_coverage()
-        exit_code = actor.exit_code or 0
-        if exit_code == autoreload.EXIT_CODE:
+        actor.exit_code = actor.exit_code or 0
+        if actor.exit_code == autoreload.EXIT_CODE:
             actor.logger.info("Code changed, reloading server")
+            actor._exit = True
         else:
             # actor.logger.info("Bye (exit code = %s)", exit_code)
-            actor.stream.writeln("\nBye (exit code = %s)" % exit_code)
+            actor.stream.writeln("\nBye (exit code = %s)" % actor.exit_code)
         try:
             actor.cfg.when_exit(actor)
         except Exception:
             pass
-        if exit_code:
-            sys.exit(exit_code)
+        if actor.exit_code and actor._exit:
+            sys.exit(actor.exit_code)
 
     def _start_arbiter(self, actor, exc=None):
         if current_process().daemon:

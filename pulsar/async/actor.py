@@ -271,7 +271,7 @@ class Actor(EventHandler, Coverage):
     #######################################################################
     #    HIGH LEVEL API METHODS
     #######################################################################
-    def start(self):
+    def start(self, exit=True):
         '''Called after forking to start the actor's life.
 
         This is where logging is configured, the :attr:`mailbox` is
@@ -281,6 +281,7 @@ class Actor(EventHandler, Coverage):
         if self.state == ACTOR_STATES.INITIAL:
             self.__impl.before_start(self)
             self._started = self._loop.time()
+            self._exit = exit
             self.state = ACTOR_STATES.STARTING
             self._run()
 
@@ -438,7 +439,7 @@ class Actor(EventHandler, Coverage):
             return self.stop(exc)
         except BaseException:
             pass
-        self.stop()
+        return self.stop()
 
     def _remove_actor(self, actor, log=True):
         return self.__impl._remove_actor(self, actor, log=log)

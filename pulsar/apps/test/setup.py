@@ -61,7 +61,7 @@ class Test(orig.test):
 
     def run_tests(self):
         test_suite = self.test_suite(**self.test_params)
-        self.result_code = test_suite.start()
+        self.result_code = test_suite.start(exit=False)
 
 
 def options(self):

@@ -136,7 +136,7 @@ class TestRpcOnThread(unittest.TestCase):
         await self.wait.assertRaises(rpc.NoSuchFunction,
                                      p.blabla.foofoo.sjdcbjcb)
 
-    async def testInternalError(self):
+    def testInternalError(self):
         return self.wait.assertRaises(rpc.InternalError, self.p.calc.divide,
                                       'ciao', 'bo')
 

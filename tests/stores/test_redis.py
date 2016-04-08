@@ -5,7 +5,7 @@ from pulsar.apps.test import check_server
 from pulsar.apps.data import RedisScript
 
 from tests.stores.test_pulsards import unittest, RedisCommands, create_store
-from tests.stores.test_lock import RedisLockTests
+from tests.stores.lock import RedisLockTests
 
 
 OK = check_server('redis')

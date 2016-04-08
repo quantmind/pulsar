@@ -17,7 +17,8 @@ services:
 
 script:
   - flake8
-  - coverage run setup.py test --coverage
+  - coverage run setup.py test --coverage --log-level error
+  - coverage combine
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python setup.py test --coveralls; fi
 
 notifications:

@@ -32,7 +32,7 @@ class Chat(ws.WS):
     _pubsub = None
     _client = None
 
-    def get_pubsub(self, websocket):
+    async def get_pubsub(self, websocket):
         '''Create the pubsub handler if not already available'''
         if not self._store:
             cfg = websocket.cfg
@@ -41,35 +41,35 @@ class Chat(ws.WS):
             self._pubsub = self._store.pubsub()
             webchat = '%s:webchat' % cfg.exc_id
             chatuser = '%s:chatuser' % cfg.exc_id
-            yield from self._pubsub.subscribe(webchat, chatuser)
+            await self._pubsub.subscribe(webchat, chatuser)
         return self._pubsub
 
-    def on_open(self, websocket):
+    async def on_open(self, websocket):
         '''A new websocket connection is established.
 
         Add it to the set of clients listening for messages.
         '''
-        pubsub = yield from self.get_pubsub(websocket)
+        pubsub = await self.get_pubsub(websocket)
         pubsub.add_client(ChatClient(websocket))
         user, _ = self.user(websocket)
         users_key = 'webchatusers:%s' % websocket.cfg.exc_id
         # add counter to users
-        registered = yield from self._client.hincrby(users_key, user, 1)
+        registered = await self._client.hincrby(users_key, user, 1)
         if registered == 1:
-            yield from self.publish(websocket, 'chatuser', 'joined')
+            await self.publish(websocket, 'chatuser', 'joined')
 
-    def on_close(self, websocket):
+    async def on_close(self, websocket):
         '''Leave the chat room
         '''
         user, _ = self.user(websocket)
         users_key = 'webchatusers:%s' % websocket.cfg.exc_id
-        registered = yield from self._client.hincrby(users_key, user, -1)
-        pubsub = yield from self.get_pubsub(websocket)
+        registered = await self._client.hincrby(users_key, user, -1)
+        pubsub = await self.get_pubsub(websocket)
         pubsub.remove_client(websocket._chat_client)
         if not registered:
-            yield from self.publish(websocket, 'chatuser', 'gone')
+            await self.publish(websocket, 'chatuser', 'gone')
         if registered <= 0:
-            yield from self._client.hdel(users_key, user)
+            await self._client.hdel(users_key, user)
 
     def on_message(self, websocket, msg):
         '''When a new message arrives, it publishes to all listening clients.
