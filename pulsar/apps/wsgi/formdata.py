@@ -32,7 +32,7 @@ def http_protocol(parser):
     return "HTTP/%s" % ".".join(('%s' % v for v in version))
 
 
-class HttpBodyReader():
+class HttpBodyReader:
     _expect_sent = None
     _waiting = None
 
@@ -377,12 +377,10 @@ class BytesProducer:
     def __init__(self, bytes):
         self.bytes = bytes
 
-    def readline(self):
-        yield None
+    async def readline(self):
         return self.bytes.readline()
 
-    def read(self):
-        yield None
+    async def read(self):
         return self.bytes.read()
 
     def __call__(self, consumer, *args):

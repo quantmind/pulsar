@@ -39,7 +39,6 @@ Implementation
 '''
 import os
 import time
-import asyncio
 
 from pulsar import Future, ensure_future
 from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,
@@ -120,10 +119,9 @@ class Rpc(PulsarServerCommands):
         self.channel = channel
         super().__init__(**kwargs)
 
-    @asyncio.coroutine
-    def rpc_message(self, request, message):
+    async def rpc_message(self, request, message):
         '''Publish a message via JSON-RPC'''
-        yield from self.pubsub.publish(self.channel, message)
+        await self.pubsub.publish(self.channel, message)
         return 'OK'
 
 
