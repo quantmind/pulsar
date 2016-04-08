@@ -30,7 +30,7 @@ class Coverage:
 
     def stop_coverage(self):
         cov = self.coverage
-        if cov:
+        if cov and self.is_arbiter():
             self.logger.info('Saving coverage file')
             cov.stop()
             cov.save()

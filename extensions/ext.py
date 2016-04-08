@@ -55,18 +55,16 @@ class tolerant_build_ext(build_ext):
 
 
 def params(cython=False):
-    file = ext_file
-
     if not cython:
-        cython = not os.path.isfile(file)
+        cython = not os.path.isfile(ext_file)
 
     if cython and os.path.isfile(ext_file):
         os.remove(ext_file)
 
-    file = 'lib.pyx' if cython else 'lib.c'
+    file_name = 'lib.pyx' if cython else 'lib.c'
 
     extension = Extension('pulsar.utils.lib',
-                          [os.path.join(path, file)],
+                          [os.path.join(path, file_name)],
                           include_dirs=[path])
 
     extensions = [extension]
