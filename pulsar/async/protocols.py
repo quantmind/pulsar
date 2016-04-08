@@ -176,10 +176,9 @@ class ProtocolConsumer(EventHandler):
         future.add_done_callback(self._abort_request)
         raise AbortRequest
 
-    @asyncio.coroutine
-    def _start(self):
+    async def _start(self):
         try:
-            yield from self.fire_event('pre_request')
+            await self.fire_event('pre_request')
         except AbortEvent:
             self.logger.debug('Abort request %s', self.request)
         else:
@@ -236,12 +235,12 @@ class ProtocolConsumer(EventHandler):
             c._current_consumer = None
 
     @task
-    def _abort_request(self, fut):
+    async def _abort_request(self, fut):
         exc = fut.exception()
         for event in self.ONE_TIME_EVENTS:
             if not self.event(event).fired():
                 try:
-                    yield from self.fire_event(event, exc=exc)
+                    await self.fire_event(event, exc=exc)
                 except AbortRequest:
                     pass
 
@@ -629,7 +628,7 @@ class TcpServer(Producer):
             return self._server.sockets[0].getsockname()
 
     @task
-    def start_serving(self, backlog=100, sslcontext=None):
+    async def start_serving(self, backlog=100, sslcontext=None):
         """Start serving.
 
         :param backlog: Number of maximum connections
@@ -647,21 +646,21 @@ class TcpServer(Producer):
                 if sockets:
                     server = None
                     for sock in sockets:
-                        srv = yield from create_server(self.create_protocol,
-                                                       sock=sock,
-                                                       backlog=backlog,
-                                                       ssl=sslcontext)
+                        srv = await create_server(self.create_protocol,
+                                                  sock=sock,
+                                                  backlog=backlog,
+                                                  ssl=sslcontext)
                         if server:
                             server.sockets.extend(srv.sockets)
                         else:
                             server = srv
                 else:
                     if isinstance(address, tuple):
-                        server = yield from create_server(self.create_protocol,
-                                                          host=address[0],
-                                                          port=address[1],
-                                                          backlog=backlog,
-                                                          ssl=sslcontext)
+                        server = await create_server(self.create_protocol,
+                                                     host=address[0],
+                                                     port=address[1],
+                                                     backlog=backlog,
+                                                     ssl=sslcontext)
                     else:
                         raise NotImplementedError
                 self._server = server
@@ -745,14 +744,14 @@ class TcpServer(Producer):
             return multi_async(all)
 
     @task
-    def _close(self, server):
+    async def _close(self, server):
         """Stop serving the :attr:`.Server.sockets` and close all
         concurrent connections.
         """
         server.close()
         coro = self._close_connections()
         if coro:
-            yield from coro
+            await coro
         self.fire_event('stop')
 
 
@@ -779,7 +778,7 @@ class DatagramServer(Producer):
         self._params = {'address': address, 'sockets': sockets}
 
     @task
-    def create_endpoint(self, **kw):
+    async def create_endpoint(self, **kw):
         """create the server endpoint.
 
         :return: a :class:`~asyncio.Future` called back when the server is
@@ -797,7 +796,7 @@ class DatagramServer(Producer):
                         transports.append(transport(self._loop, proto))
                 else:
                     loop = self._loop
-                    transport, _ = yield from loop.create_datagram_endpoint(
+                    transport, _ = await loop.create_datagram_endpoint(
                         self.protocol_factory, local_addr=address)
                     transports.append(transport)
                 self._transports = transports

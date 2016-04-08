@@ -52,7 +52,6 @@ Client
 '''
 import socket
 import pickle
-import asyncio
 from collections import namedtuple
 
 from pulsar import ProtocolError, CommandError
@@ -74,15 +73,15 @@ def create_aid():
     return gen_unique_id()[:8]
 
 
-@asyncio.coroutine
-def command_in_context(command, caller, target, args, kwargs, connection=None):
+async def command_in_context(command, caller, target, args, kwargs,
+                             connection=None):
     cmnd = get_command(command)
     if not cmnd:
         raise CommandError('unknown %s' % command)
     request = CommandRequest(target, caller, connection)
     result = cmnd(request, args, kwargs)
     if isawaitable(result):
-        result = yield from result
+        result = await result
     return result
 
 
@@ -194,7 +193,7 @@ class MailboxProtocol(Protocol):
                 actor.logger.warning('Connection lost with actor.')
 
     @task
-    def _on_message(self, message):
+    async def _on_message(self, message):
         actor = get_actor()
         command = message.get('command')
         ack = message.get('ack')
@@ -221,15 +220,14 @@ class MailboxProtocol(Protocol):
                         raise CommandError(
                             "'%s' got message from unknown '%s'"
                             % (actor, message['sender']))
-                    result = yield from actor.send(target, command,
-                                                   *message['args'],
-                                                   **message['kwargs'])
+                    result = await actor.send(target, command,
+                                              *message['args'],
+                                              **message['kwargs'])
                 else:
-                    result = yield from command_in_context(command, caller,
-                                                           target,
-                                                           message['args'],
-                                                           message['kwargs'],
-                                                           self)
+                    result = await command_in_context(command, caller, target,
+                                                      message['args'],
+                                                      message['kwargs'],
+                                                      self)
             except CommandError as exc:
                 self.logger.warning('Command error: %s' % exc)
                 result = None
@@ -277,14 +275,14 @@ class MailboxClient(AbstractClient):
         return '%s %s' % (self.name, nice_address(self.address))
 
     @task
-    def request(self, command, sender, target, args, kwargs):
+    async def request(self, command, sender, target, args, kwargs):
         # the request method
         if self._connection is None:
-            self._connection = yield from self.connect()
+            self._connection = await self.connect()
             self._connection.bind_event('connection_lost', self._lost)
         req = Message.command(command, sender, target, args, kwargs)
         self._connection._start(req)
-        response = yield from req.waiter
+        response = await req.waiter
         return response
 
     def start_serving(self):

@@ -2,8 +2,7 @@ from collections import Mapping
 from inspect import isgeneratorfunction
 from functools import wraps, partial
 
-from asyncio import (Future, CancelledError, TimeoutError, sleep, gather,
-                     coroutine)
+from asyncio import Future, CancelledError, TimeoutError, sleep, gather
 
 from .consts import MAX_ASYNC_WHILE
 from .access import (get_event_loop, LOGGER, isfuture, isawaitable,
@@ -133,10 +132,9 @@ def maybe_async(value, loop=None):
         return value
 
 
-@coroutine
-def as_coroutine(value):
+async def as_coroutine(value):
     if isawaitable(value):
-        value = yield from value
+        value = await value
     return value
 
 
@@ -158,11 +156,10 @@ def task(function):
     if isgeneratorfunction(function):
         wrapper = function
     else:
-        @coroutine
-        def wrapper(*args, **kw):
+        async def wrapper(*args, **kw):
             res = function(*args, **kw)
             if isawaitable(res):
-                res = yield from res
+                res = await res
             return res
 
     @wraps(function)
@@ -199,8 +196,7 @@ def run_in_loop(_loop, callable, *args, **kwargs):
     return waiter
 
 
-@coroutine
-def async_while(timeout, while_clause, *args):
+async def async_while(timeout, while_clause, *args):
     '''The asynchronous equivalent of ``while while_clause(*args):``
 
     Use this function within a :ref:`coroutine <coroutine>` when you need
@@ -221,7 +217,7 @@ def async_while(timeout, while_clause, *args):
     while result:
         interval = min(interval+di, MAX_ASYNC_WHILE)
         try:
-            yield from sleep(interval, loop=loop)
+            await sleep(interval, loop=loop)
         except TimeoutError:
             pass
         if timeout and loop.time() - start >= timeout:

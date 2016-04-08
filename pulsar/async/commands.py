@@ -91,7 +91,7 @@ def info(request):
 
 
 @command()
-def kill_actor(request, aid, timeout=5):
+async def kill_actor(request, aid, timeout=5):
     '''Kill an actor with id ``aid``.
     This command can only be executed by the arbiter,
     therefore a valid sintax is only::
@@ -102,8 +102,8 @@ def kill_actor(request, aid, timeout=5):
     '''
     arb = request.actor
     if arb.is_arbiter():
-        yield from arb.send(aid, 'stop')
-        proxy = yield from async_while(timeout, arb.get_actor, aid)
+        await arb.send(aid, 'stop')
+        proxy = await async_while(timeout, arb.get_actor, aid)
         if proxy:
             arb.logger.warning('Could not kill actor %s', aid)
         else:

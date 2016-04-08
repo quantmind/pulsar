@@ -83,8 +83,7 @@ class Pool(AsyncObject):
             return connection in self._queue._queue
         return True
 
-    @asyncio.coroutine
-    def connect(self):
+    async def connect(self):
         '''Get a connection from the pool.
 
         The connection is either a new one or retrieved from the
@@ -93,7 +92,7 @@ class Pool(AsyncObject):
         :return: a :class:`~asyncio.Future` resulting in the connection.
         '''
         assert not self.closed
-        connection = yield from self._get()
+        connection = await self._get()
         return PoolConnection(self, connection)
 
     def close(self):
@@ -117,30 +116,28 @@ class Pool(AsyncObject):
             self._closed = asyncio.gather(*waiters, loop=self._loop)
         return self._closed
 
-    @asyncio.coroutine
-    def _get(self):
+    async def _get(self):
         queue = self._queue
         # grab the connection without waiting, important!
         if queue.qsize():
             connection = queue.get_nowait()
         # wait for one to be available
         elif self.in_use + self._connecting >= queue._maxsize:
-            connection = yield from asyncio.wait_for(queue.get(),
-                                                     self._timeout,
-                                                     loop=self._loop)
+            connection = await asyncio.wait_for(queue.get(), self._timeout,
+                                                loop=self._loop)
         else:   # must create a new connection
             self._connecting += 1
             try:
-                connection = yield from self._creator()
+                connection = await self._creator()
             finally:
                 self._connecting -= 1
         # None signal that a connection was removed form the queue
         # Go again
         if connection is None:
-            connection = yield from self._get()
+            connection = await self._get()
         else:
             if self.is_connection_closed(connection):
-                connection = yield from self._get()
+                connection = await self._get()
             else:
                 self._in_use_connections.add(connection)
         return connection
@@ -241,16 +238,15 @@ class AbstractClient(Producer):
         return self.fire_event('finish')
     abort = close
 
-    @asyncio.coroutine
-    def create_connection(self, address, protocol_factory=None, **kw):
+    async def create_connection(self, address, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
         '''
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(address, tuple):
             host, port = address
-            _, protocol = yield from self._loop.create_connection(
+            _, protocol = await self._loop.create_connection(
                 protocol_factory, host, port, **kw)
-            yield from protocol.event('connection_made')
+            await protocol.event('connection_made')
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))
@@ -277,12 +273,11 @@ class AbstractUdpClient(Producer):
         return self.fire_event('finish')
     abort = close
 
-    @asyncio.coroutine
-    def create_datagram_endpoint(self, protocol_factory=None, **kw):
+    async def create_datagram_endpoint(self, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
         '''
         protocol_factory = protocol_factory or self.create_protocol
-        _, protocol = yield from self._loop.create_datagram_endpoint(
+        _, protocol = await self._loop.create_datagram_endpoint(
             protocol_factory, **kw)
-        yield from protocol.event('connection_made')
+        await protocol.event('connection_made')
         return protocol
