@@ -61,8 +61,6 @@ Echo Server
 .. autofunction:: server
 
 '''
-import asyncio
-
 import pulsar
 from pulsar import Pool, Future, DatagramProtocol
 from pulsar.utils.pep import to_bytes
@@ -176,11 +174,10 @@ class Echo(pulsar.AbstractUdpClient):
         else:
             return result
 
-    @asyncio.coroutine
-    def _call(self, message):
-        protocol = yield from self.pool.connect()
+    async def _call(self, message):
+        protocol = await self.pool.connect()
         with protocol:
-            result = yield from protocol.send(message)
+            result = await protocol.send(message)
             return result
 
 

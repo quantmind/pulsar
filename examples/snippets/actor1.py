@@ -1,7 +1,4 @@
-'''Simple actor message passing
-'''
-import asyncio
-
+"""Simple actor message passing"""
 from pulsar import arbiter, spawn, send, ensure_future, Config
 
 
@@ -9,17 +6,16 @@ def start(arbiter, **kw):
     ensure_future(app(arbiter))
 
 
-@asyncio.coroutine
-def app(arbiter):
+async def app(arbiter):
     # Spawn a new actor
-    proxy = yield from spawn(name='actor1')
+    proxy = await spawn(name='actor1')
     print(proxy.name)
     # Execute inner method in actor1
-    result = yield from send(proxy, 'run', inner_method)
+    result = await send(proxy, 'run', inner_method)
     print(result)
 
-    yield from send(proxy, 'run', set_value, 10)
-    value = yield from send(proxy, 'run', get_value)
+    await send(proxy, 'run', set_value, 10)
+    value = await send(proxy, 'run', get_value)
     print(value)
 
     # Stop the application

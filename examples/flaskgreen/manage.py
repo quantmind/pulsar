@@ -36,12 +36,11 @@ For more information about writing server and clients check the
 
 .. _flask: http://flask.pocoo.org/
 """
+from functools import partial
+
 from flask import Flask, make_response
 
 from pulsar.apps import wsgi
-
-import asyncio
-from functools import partial
 
 import pulsar
 from pulsar import Pool, Connection, AbstractClient, ProtocolError
@@ -114,17 +113,16 @@ class EchoGreen(AbstractClient):
     def __call__(self, message):
         return self.wait(self._call(message))
 
-    @asyncio.coroutine
-    def _call(self, message):
+    async def _call(self, message):
         # get the address of the echo application
         if not self.address:
-            app = yield from pulsar.get_application(self.app_name)
+            app = await pulsar.get_application(self.app_name)
             self.address = app.cfg.addresses[0]
-        connection = yield from self.pool.connect()
+        connection = await self.pool.connect()
         with connection:
             consumer = connection.current_consumer()
             consumer.start(message)
-            yield from consumer.on_finished
+            await consumer.on_finished
             return consumer.buffer
 
 

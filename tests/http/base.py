@@ -776,7 +776,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self._client
         response = yield from http.get(self.httpbin('plaintext'), stream=True)
         yield from response.on_finished
-        self.wait.assertEqual(response.text(), 'Hello, World!')
+        yield from self.wait.assertEqual(response.text(), 'Hello, World!')
 
     @asyncio.coroutine
     def test_raw_stream(self):

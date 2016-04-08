@@ -73,7 +73,6 @@ Echo Server
 .. autofunction:: server
 
 '''
-import asyncio
 from functools import partial
 
 import pulsar
@@ -196,15 +195,13 @@ class Echo(AbstractClient):
         else:
             return result
 
-    @asyncio.coroutine
-    def _call(self, message):
-        connection = yield from self.pool.connect()
+    async def _call(self, message):
+        connection = await self.pool.connect()
         with connection:
             consumer = connection.current_consumer()
             consumer.start(message)
-            result = yield from consumer.on_finished
-            result = consumer if self.full_response else consumer.buffer
-            return result
+            await consumer.on_finished
+            return consumer if self.full_response else consumer.buffer
 
 
 def server(name=None, description=None, **kwargs):

@@ -4,8 +4,6 @@
    :member-order: bysource
 
 '''
-import asyncio
-
 import pulsar
 from pulsar import ensure_future
 from pulsar.utils.system import json
@@ -163,7 +161,6 @@ class PublishTweets:
             self.pubsub = self.store.pubsub()
         ensure_future(self._publish(messages))
 
-    @asyncio.coroutine
-    def _publish(self, messages):
+    async def _publish(self, messages):
         for message in messages:
-            yield from self.pubsub.publish(self.channel, json.dumps(message))
+            await self.pubsub.publish(self.channel, json.dumps(message))

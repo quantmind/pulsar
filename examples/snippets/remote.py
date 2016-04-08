@@ -1,5 +1,3 @@
-import asyncio
-
 from pulsar import arbiter, spawn, send, ensure_future, Config, command
 
 
@@ -68,9 +66,8 @@ class Remote(metaclass=RemoteType):
         self.proxy = proxy
 
     @classmethod
-    @asyncio.coroutine
-    def spawn(cls, **kwargs):
-        proxy = yield from spawn(**kwargs)
+    async def spawn(cls, **kwargs):
+        proxy = await spawn(**kwargs)
         return cls(proxy)
 
     def __getattr__(self, name):
@@ -100,14 +97,14 @@ def start(arbiter, **kw):
     ensure_future(app(arbiter))
 
 
-def app(arbiter):
+async def app(arbiter):
     # Spawn a new actor
-    calc = yield from Calculator.spawn(name='calc1')
+    calc = await Calculator.spawn(name='calc1')
     print(calc.name)
     # set value in the remote calculator
-    yield from calc.set_value(46)
+    await calc.set_value(46)
     # get value from the remote calculator
-    value = yield from calc.get_value()
+    value = await calc.get_value()
     print(value)
 
     # Stop the application

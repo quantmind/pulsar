@@ -129,20 +129,18 @@ class AsyncAssert:
 
     def __getattr__(self, name):
 
-        @asyncio.coroutine
-        def _(*args, **kwargs):
-            args = yield from as_gather(*args)
+        async def _(*args, **kwargs):
+            args = await as_gather(*args)
             result = getattr(self.test, name)(*args, **kwargs)
             if isawaitable(result):
-                result = yield from result
+                result = await result
             return result
 
         return _
 
-    @asyncio.coroutine
-    def assertRaises(self, error, callable, *args, **kwargs):
+    async def assertRaises(self, error, callable, *args, **kwargs):
         try:
-            yield from callable(*args, **kwargs)
+            await callable(*args, **kwargs)
         except error:
             return
         except Exception:   # pragma    nocover
@@ -173,15 +171,14 @@ class ActorTestMixin:
             self._spawned = []
         return self._spawned
 
-    @asyncio.coroutine
-    def spawn_actor(self, concurrency=None, **kwargs):
+    async def spawn_actor(self, concurrency=None, **kwargs):
         '''Spawn a new actor and perform some tests
         '''
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
         self.assertIsInstance(ad, asyncio.Future)
-        proxy = yield from ad
+        proxy = await ad
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)
         self.assertEqual(proxy.proxy, proxy)

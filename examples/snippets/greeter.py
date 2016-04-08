@@ -1,5 +1,4 @@
 import pulsar
-import asyncio
 
 names = ['john', 'luca', 'jo', 'alex']
 
@@ -22,14 +21,13 @@ class Greeter:
         self._loop.call_later(1, pulsar.ensure_future, self())
         a.start()
 
-    @asyncio.coroutine
-    def __call__(self, a=None):
+    async def __call__(self, a=None):
         if a is None:
-            a = yield from pulsar.spawn(name='greeter')
+            a = await pulsar.spawn(name='greeter')
         if names:
             name = names.pop()
             self._loop.logger.info("Hi! I'm %s" % name)
-            yield from pulsar.send(a, 'greetme', {'name': name})
+            await pulsar.send(a, 'greetme', {'name': name})
             self._loop.call_later(1, pulsar.ensure_future, self(a))
         else:
             pulsar.arbiter().stop()

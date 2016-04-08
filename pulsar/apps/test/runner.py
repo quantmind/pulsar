@@ -86,16 +86,14 @@ class Runner:
         else:
             self._loop.call_soon(self._next_file)
 
-    @asyncio.coroutine
-    def _run_test_cls(self, test_cls, test_classes, all_tests):
+    async def _run_test_cls(self, test_cls, test_classes, all_tests):
         cfg = test_cls.cfg
         seq = getattr(test_cls, '_sequential_execution', cfg.sequential)
         test_timeout = get_test_timeout(test_cls, cfg.test_timeout)
         try:
             if skip_test(test_cls):
                 raise SkipTest(skip_reason(test_cls))
-            yield from self._run(test_cls.setUpClass, test_timeout)
-            yield None  # release the loop
+            await self._run(test_cls.setUpClass, test_timeout)
         except SkipTest as exc:
             reason = str(exc)
             for test in all_tests:
@@ -114,16 +112,16 @@ class Runner:
             try:
                 if seq:
                     for test in all_tests:
-                        yield from self._run_test(test, test_timeout)
+                        await self._run_test(test, test_timeout)
                 else:
-                    yield from asyncio.wait([self._run_test(test, test_timeout)
-                                             for test in all_tests],
-                                            loop=self._loop)
+                    await asyncio.wait([self._run_test(test, test_timeout)
+                                        for test in all_tests],
+                                       loop=self._loop)
             except AbortTests:
                 return
 
         try:
-            yield from self._run(test_cls.tearDownClass, test_timeout)
+            await self._run(test_cls.tearDownClass, test_timeout)
         except AbortTests:
             return
         except Exception:
@@ -132,19 +130,17 @@ class Runner:
         self.logger.info('Finished Tests from %s', test_cls)
         self._loop.call_soon(self._next_class, test_cls.tag, test_classes)
 
-    @asyncio.coroutine
-    def _run(self, method, test_timeout):
+    async def _run(self, method, test_timeout):
         self._check_abort()
         coro = method()
         # a coroutine
         if isawaitable(coro):
             test_timeout = get_test_timeout(method, test_timeout)
-            yield from asyncio.wait_for(coro, test_timeout, loop=self._loop)
+            await asyncio.wait_for(coro, test_timeout, loop=self._loop)
         elif isgenerator(coro):
             raise InvalidTestFunction('test function returns a generator')
 
-    @asyncio.coroutine
-    def _run_test(self, test, test_timeout):
+    async def _run_test(self, test, test_timeout):
         '''Run a ``test`` function using the following algorithm
 
         * Run :meth:`setUp` method in :attr:`testcls`
@@ -160,21 +156,17 @@ class Runner:
             reason = skip_reason(method)
             runner.addSkip(test, reason)
         else:
-            error = yield from self._run_safe(test, 'setUp', test_timeout)
+            error = await self._run_safe(test, 'setUp', test_timeout)
             if not error:
                 test = runner.before_test_function_run(test)
-                error = yield from self._run_safe(test, test_name,
-                                                  test_timeout)
+                error = await self._run_safe(test, test_name, test_timeout)
                 runner.after_test_function_run(test)
-            error = yield from self._run_safe(test, 'tearDown',
-                                              test_timeout, error)
+            error = await self._run_safe(test, 'tearDown', test_timeout, error)
             if not error:
                 runner.addSuccess(test)
         runner.stopTest(test)
-        yield None  # release the loop
 
-    @asyncio.coroutine
-    def _run_safe(self, test, method_name, test_timeout, error=None):
+    async def _run_safe(self, test, method_name, test_timeout, error=None):
         self._check_abort()
         try:
             method = getattr(test, method_name)
@@ -182,8 +174,7 @@ class Runner:
             # a coroutine
             if isawaitable(coro):
                 test_timeout = get_test_timeout(method, test_timeout)
-                yield from asyncio.wait_for(coro, test_timeout,
-                                            loop=self._loop)
+                await asyncio.wait_for(coro, test_timeout, loop=self._loop)
             elif isgenerator(coro):
                 raise InvalidTestFunction('test function returns a generator')
         except SkipTest as exc:

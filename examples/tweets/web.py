@@ -80,4 +80,4 @@ class TwitterSite(LazyWsgi):
     def subscribe(self, pubsub):
         '''Subscribe to the channel for tweets
         '''
-        yield from pubsub.subscribe(self.channel)
+        return pubsub.subscribe(self.channel)
