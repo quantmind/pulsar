@@ -10,10 +10,12 @@ class PulsarTest(orig.test):
     test_suite = True
     user_options = [
         ('list-labels', 'l', 'List all test labels without performing tests'),
+        ('coverage', None, 'Collect code coverage from all spawn actors'),
         ('pulsar-args=', 'a', "Arguments to pass to pulsar.test")]
 
     def initialize_options(self):
         self.list_labels = None
+        self.coverage = None
         self.pulsar_args = None
 
     def finalize_options(self):
@@ -27,6 +29,7 @@ class PulsarTest(orig.test):
         from pulsar.apps.test import TestSuite
         test_suite = TestSuite(list_labels=self.list_labels,
                                verbosity=self.verbose+1,
+                               coverage=self.coverage,
                                argv=self.test_args)
         self.result_code = test_suite.start(exit=False)
 

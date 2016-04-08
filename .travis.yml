@@ -14,7 +14,7 @@ install:
 
 script:
   - flake8
-  - coverage run setup.py test --coverage --log-level error --verbosity 2
+  - coverage run setup.py test --coverage
   - coverage combine
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python setup.py test --coveralls; fi
 
