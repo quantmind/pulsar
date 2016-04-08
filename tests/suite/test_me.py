@@ -66,5 +66,5 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(len(pulsar.VERSION) >= 2)
 
     def test_meta(self):
-        for m in ("__author__", "__contact__", "__homepage__", "__doc__"):
+        for m in ("__version__", "__doc__"):
             self.assertTrue(getattr(pulsar, m, None))
