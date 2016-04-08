@@ -12,12 +12,9 @@ install:
   - pip install -r requirements-dev.txt
   - python setup.py egg_info
 
-services:
-  - redis-server
-
 script:
   - flake8
-  - coverage run setup.py test --coverage --log-level error
+  - coverage run setup.py test --coverage --log-level error --verbosity 2
   - coverage combine
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.1 ]]; then python setup.py test --coveralls; fi
 
