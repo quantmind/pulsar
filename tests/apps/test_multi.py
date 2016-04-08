@@ -7,10 +7,7 @@ from pulsar import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
 
-
-def dummy(environ, start_response):
-    start_response('200 OK', [])
-    yield [b'dummy']
+from tests.apps import dummy
 
 
 class MultiWsgi(MultiApp):

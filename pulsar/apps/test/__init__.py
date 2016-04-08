@@ -418,14 +418,6 @@ class TestSequential(TestOption):
     desc = """Run test functions sequentially."""
 
 
-class Coverage(TestOption):
-    flags = ['--coverage']
-    action = 'store_true'
-    default = False
-    validator = pulsar.validate_bool
-    desc = """Collect coverage in multiprocessing mode."""
-
-
 class Coveralls(TestOption):
     flags = ['--coveralls']
     action = 'store_true'
@@ -512,10 +504,6 @@ class TestSuite(pulsar.Application):
             from pulsar.apps.test.cov import coveralls
             coveralls()
             return False
-
-        if self.cfg.coverage:
-            from coverage.monkey import patch_multiprocessing
-            patch_multiprocessing()
 
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''

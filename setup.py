@@ -1,11 +1,7 @@
 #!/usr/bin/env python
-import os
 from setuptools import setup, find_packages
+from extensions import utils
 
-os.environ['pulsar_setup_running'] = 'yes'
-
-package_name = 'pulsar'
-package_fullname = package_name
 
 # Try to import lib build
 try:
@@ -13,12 +9,47 @@ try:
 except ImportError:
     libparams = None
 
-mod = __import__(package_name)
-
 
 def read(name):
     with open(name) as fp:
         return fp.read()
+
+
+meta = dict(
+    name='pulsar',
+    author="Luca Sbardella",
+    author_email="luca@quantmind.com",
+    maintainer_email="luca@quantmind.com",
+    url="https://github.com/quantmind/pulsar",
+    license="BSD",
+    long_description=read('README.rst'),
+    include_package_data=True,
+    setup_requires=['wheel'],
+    packages=find_packages(exclude=['tests.*',
+                                    'tests',
+                                    'examples',
+                                    'examples.*',
+                                    'extensions',
+                                    'extensions.*']),
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Web Environment',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Topic :: Internet',
+        'Topic :: Utilities',
+        'Topic :: System :: Distributed Computing',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Internet :: WWW/HTTP',
+        'Topic :: Internet :: WWW/HTTP :: WSGI',
+        'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
+        'Topic :: Internet :: WWW/HTTP :: Dynamic Content']
+)
 
 
 def run_setup():
@@ -28,30 +59,8 @@ def run_setup():
               'cython is not installed.')
     else:
         params = libparams()
-
-    params.update(dict(name=package_fullname,
-                       version=mod.__version__,
-                       author=mod.__author__,
-                       author_email=mod.__contact__,
-                       maintainer_email=mod.__contact__,
-                       url=mod.__homepage__,
-                       license=mod.__license__,
-                       description=mod.__doc__,
-                       long_description=read('README.rst'),
-                       include_package_data=True,
-                       packages=find_packages(exclude=['tests.*',
-                                                       'tests',
-                                                       'examples',
-                                                       'examples.*',
-                                                       'extensions',
-                                                       'extensions.*']),
-                       setup_requires=['wheel'],
-                       classifiers=mod.CLASSIFIERS,
-                       entry_points={
-                            "distutils.commands": [
-                                "pulsar_test = pulsar.apps.test.setup:Test"
-                            ]
-                       }))
+    params.update(meta)
+    utils.extend(params, 'pulsar')
     setup(**params)
 
 

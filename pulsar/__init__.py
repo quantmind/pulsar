@@ -8,28 +8,6 @@ from .utils.version import get_version
 VERSION = (1, 3, 0, 'alpha', 0)
 
 __version__ = version = get_version(VERSION)
-__license__ = "BSD"
-__author__ = "Luca Sbardella"
-__contact__ = "luca@quantmind.com"
-__homepage__ = "https://github.com/quantmind/pulsar"
-__docformat__ = "restructuredtext"
-CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
-               'Environment :: Web Environment',
-               'Intended Audience :: Developers',
-               'License :: OSI Approved :: BSD License',
-               'Operating System :: OS Independent',
-               'Programming Language :: Python',
-               'Programming Language :: Python :: 3',
-               'Programming Language :: Python :: 3.5',
-               'Programming Language :: Python :: 3.6',
-               'Topic :: Internet',
-               'Topic :: Utilities',
-               'Topic :: System :: Distributed Computing',
-               'Topic :: Software Development :: Libraries :: Python Modules',
-               'Topic :: Internet :: WWW/HTTP',
-               'Topic :: Internet :: WWW/HTTP :: WSGI',
-               'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
-               'Topic :: Internet :: WWW/HTTP :: Dynamic Content']
 
 
 DEFAULT_PORT = 8060

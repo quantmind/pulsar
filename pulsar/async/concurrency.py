@@ -616,7 +616,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             assert not cfg.daemon, "Autoreload not compatible with daemon mode"
             if autoreload.start():
                 return
-        actor.start_coverage()
+        if actor.cfg.coverage:
+            from coverage.monkey import patch_multiprocessing
+            patch_multiprocessing()
         self._install_signals(actor)
 
     def create_mailbox(self, actor, loop):
