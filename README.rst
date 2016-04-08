@@ -2,6 +2,7 @@ Event driven concurrent framework for python.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
 
+:Badges: |license|  |pyversions| |status| |downloads|
 :Master CI: |master-build|_ |coverage-master|
 :Dev CI: |dev-build|_ |coverage-dev|
 :Documentation: http://pythonhosted.org/pulsar/
@@ -14,6 +15,14 @@ activities in different threads and/or processes.
     socket, wsgi, websocket, redis, json-rpc
 
 
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/pulsar.svg
+  :target: https://pypi.python.org/pypi/pulsar
+.. |license| image:: https://img.shields.io/pypi/l/pulsar.svg
+  :target: https://pypi.python.org/pypi/pulsar
+.. |status| image:: https://img.shields.io/pypi/status/pulsar.svg
+  :target: https://pypi.python.org/pypi/pulsar
+.. |downloads| image:: https://img.shields.io/pypi/dd/pulsar.svg
+  :target: https://pypi.python.org/pypi/pulsar
 .. |master-build| image:: https://travis-ci.org/quantmind/pulsar.svg?branch=master
 .. _master-build: http://travis-ci.org/quantmind/pulsar
 .. |dev-build| image:: https://travis-ci.org/quantmind/pulsar.svg?branch=dev
