@@ -1,30 +1,8 @@
 import sys
-import os
 import shlex
-from multiprocessing import current_process
 from importlib import import_module
 
 import setuptools.command.test as orig
-
-if '--coverage' in sys.argv:
-    import coverage
-    p = current_process()
-    p._coverage = coverage.coverage(data_suffix=True)
-    p._coverage.start()
-
-
-elif '--coveralls' in sys.argv:
-    import pulsar
-    from pulsar.utils.path import Path
-    from pulsar.apps.test.cov import coveralls
-
-    repo_token = None
-    strip_dirs = [Path(pulsar.__file__).parent.parent, os.getcwd()]
-    if os.path.isfile('.coveralls-repo-token'):
-        with open('.coveralls-repo-token') as f:
-            repo_token = f.read().strip()
-    coveralls(strip_dirs=strip_dirs, repo_token=repo_token)
-    sys.exit(0)
 
 
 skip_settings = ['version', 'daemon', 'reload', 'process_name',

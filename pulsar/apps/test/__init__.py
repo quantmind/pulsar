@@ -313,6 +313,7 @@ Utilities
 .. automodule:: pulsar.apps.test.utils
 
 '''
+import os
 import sys
 
 import pulsar
@@ -327,6 +328,7 @@ from .utils import (sequential, ActorTestMixin, AsyncAssert, check_server,
                     test_timeout, dont_run_with_thread)
 from .wsgi import HttpTestClient
 from .runner import Runner
+from .cov import coveralls
 
 
 __all__ = ['populate',
@@ -418,6 +420,22 @@ class TestSequential(TestOption):
     desc = """Run test functions sequentially."""
 
 
+class Coverage(TestOption):
+    flags = ['--coverage']
+    action = 'store_true'
+    default = False
+    validator = pulsar.validate_bool
+    desc = """Collect coverage in multiprocessing mode."""
+
+
+class Coveralls(TestOption):
+    flags = ['--coveralls']
+    action = 'store_true'
+    default = False
+    validator = pulsar.validate_bool
+    desc = """Publish coverage to caveralls."""
+
+
 class TestPlugins(TestOption):
     flags = ['--test-plugins']
     validator = validate_plugin_list
@@ -491,6 +509,19 @@ class TestSuite(pulsar.Application):
                 stream.writeln(tag)
             stream.writeln('')
             return False
+
+        elif self.cfg.coveralls:    # pragma nocover
+            repo_token = None
+            strip_dirs = [os.getcwd()]
+            if os.path.isfile('.coveralls-repo-token'):
+                with open('.coveralls-repo-token') as f:
+                    repo_token = f.read().strip()
+            coveralls(strip_dirs=strip_dirs, repo_token=repo_token)
+            return False
+
+        if self.cfg.coverage:
+            from coverage.monkey import patch_multiprocessing
+            patch_multiprocessing()
 
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''

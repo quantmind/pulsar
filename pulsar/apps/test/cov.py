@@ -1,9 +1,6 @@
 import os
 import sys
 
-from coverage.report import Reporter
-from coverage import coverage
-
 from pulsar import new_event_loop
 from pulsar.apps.http import HttpClient
 from pulsar.utils.system import json
@@ -13,56 +10,11 @@ from pulsar.utils.version import gitrepo
 COVERALLS_URL = 'https://coveralls.io/api/v1/jobs'
 
 
-class CoverallsReporter(Reporter):
-
-    def report(self, morfs):
-        self.ret = []
-        self.report_files(self._coverall, morfs)
-        return self.ret
-
-    def _coverall(self, fr, analysis):
-        try:
-            with open(fr.filename) as fp:
-                source = fp.readlines()
-        except IOError:
-            if not self.config.ignore_errors:
-                raise
-
-        if self.config.strip_dirs:
-            filename = fr.filename
-            for dir in self.config.strip_dirs:
-                if filename.startswith(dir):
-                    filename = filename.replace(dir, '').lstrip('/')
-                    break
-        else:
-            filename = fr.relname
-
-        self.ret.append({
-            'name': filename,
-            'source': ''.join(source).rstrip(),
-            'coverage': list(self._coverage_list(source, analysis)),
-        })
-
-    def _coverage_list(self, source, analysis):
-        for lineno, line in enumerate(source, 1):
-            if lineno in analysis.statements:
-                yield int(lineno not in analysis.missing)
-            else:
-                yield None
-
-
-class Coverage(coverage):
-
-    def coveralls(self, morfs=None, strip_dirs=None, **kw):
-        self.config.from_args(**kw)
-        self.config.strip_dirs = strip_dirs
-        reporter = CoverallsReporter(self, self.config)
-        return reporter.report(morfs)
-
-
-def coveralls(http=None, url=None, data_file=None, repo_token=None,
-              git=None, service_name=None, service_job_id=None,
-              strip_dirs=None, ignore_errors=False, stream=None):
+def coveralls(http=None, url=None,
+              data_file=None, repo_token=None,
+              git=None, service_name=None,
+              service_job_id=None, strip_dirs=None,
+              ignore_errors=False, stream=None):    # pragma    nocover
     '''Send a coverage report to coveralls.io.
 
     :param http: optional http client
@@ -74,6 +26,8 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None,
 
     https://coveralls.io/docs/api
     '''
+    from coverage import Coverage
+
     stream = stream or sys.stdout
     coverage = Coverage(data_file=data_file)
     coverage.load()
