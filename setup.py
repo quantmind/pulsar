@@ -13,7 +13,7 @@ meta = dict(
     long_description=utils.read('README.rst'),
     include_package_data=True,
     setup_requires=['wheel'],
-    tests_require=utils.requirements('requirements-dev.txt')[0],
+    # tests_require=utils.requirements('requirements-dev.txt')[0],
     packages=find_packages(exclude=['tests.*',
                                     'tests',
                                     'examples',

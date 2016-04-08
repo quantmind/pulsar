@@ -55,6 +55,7 @@ def extend(params, package=None):
         meta = sh('%s %s %s %s' % (sys.executable, __file__, package, path))
         params.update(json.loads(meta))
 
+    return params
 
 def read(name):
     with open(name) as fp:

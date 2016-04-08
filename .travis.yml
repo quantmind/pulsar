@@ -8,6 +8,9 @@ python:
 services:
   - redis-server
 
+install:
+  - pip install -r requirements-dev.txt
+
 script:
   - python setup.py test --coverage -q
   - flake8
