@@ -1,19 +1,6 @@
 #!/usr/bin/env python
-import os
 from setuptools import setup, find_packages
-from extensions import utils
-
-
-# Try to import lib build
-try:
-    from extensions.setup import libparams
-except ImportError:
-    libparams = None
-
-
-def read(name):
-    with open(name) as fp:
-        return fp.read()
+from extensions import utils, ext
 
 
 meta = dict(
@@ -23,9 +10,10 @@ meta = dict(
     maintainer_email="luca@quantmind.com",
     url="https://github.com/quantmind/pulsar",
     license="BSD",
-    long_description=read('README.rst'),
+    long_description=utils.read('README.rst'),
     include_package_data=True,
     setup_requires=['wheel'],
+    tests_require=utils.requirements('requirements-dev.txt')[0],
     packages=find_packages(exclude=['tests.*',
                                     'tests',
                                     'examples',
@@ -53,17 +41,16 @@ meta = dict(
 )
 
 
-def run_setup():
-    if libparams is None:
-        params = {}
-        print('WARNING: C extensions could not be included, '
-              'cython is not installed.')
-    else:
-        params = libparams()
+def run_setup(with_cext):
+    params = ext.params() if with_cext else {}
     params.update(meta)
     utils.extend(params, 'pulsar')
     setup(**params)
 
 
 if __name__ == '__main__':
-    run_setup()
+    try:
+        run_setup(True)
+    except ext.BuildFailed as exc:
+        print('WARNING: C extensions could not be compiled: %s' % exc.msg)
+        run_setup(False)

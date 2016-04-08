@@ -1,16 +1,42 @@
+from multiprocessing import current_process
+
+try:
+    import coverage
+    from coverage.monkey import patch_multiprocessing
+except ImportError:
+    coverage = None
+
 
 class Coverage:
     '''Coverage mixin for actors.
     '''
     @property
     def coverage(self):
-        return None
+        return getattr(current_process(), '_coverage', None)
 
     def start_coverage(self):
-        pass
+        if self.is_arbiter() and self.cfg.coverage:
+            if not coverage:
+                self.logger.error('Coverage module not installed. '
+                                  'Cannot start coverage.')
+                return
+            cov = self.coverage
+            if not cov:
+                self.logger.info('Start coverage')
+                p = current_process()
+                p._coverage = coverage.Coverage(data_suffix=True)
+                patch_multiprocessing()
+                p._coverage.start()
 
     def stop_coverage(self):
-        pass
-
-    def collect_coverage(self):
-        pass
+        cov = self.coverage
+        if cov:
+            self.logger.info('Saving coverage file')
+            cov.stop()
+            cov.save()
+            c = coverage.Coverage()
+            c.combine()
+            c.save()
+            self.stream.write(
+                'Coverage file available. Type "coverage html" '
+                'for a report\n')

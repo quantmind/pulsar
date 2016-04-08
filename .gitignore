@@ -33,7 +33,8 @@ examples/.grunt
 *~
 .htmlprof
 test.pid
-pulsar.egg-info
+*.egg-info
+.eggs
 .coveralls.yml
 *.sqlite3
 *.rdb

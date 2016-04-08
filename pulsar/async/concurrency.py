@@ -616,9 +616,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             assert not cfg.daemon, "Autoreload not compatible with daemon mode"
             if autoreload.start():
                 return
-        if actor.cfg.coverage:
-            from coverage.monkey import patch_multiprocessing
-            patch_multiprocessing()
         self._install_signals(actor)
 
     def create_mailbox(self, actor, loop):
@@ -708,6 +705,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return removed
 
     def _stop_arbiter(self, actor):     # pragma    nocover
+        actor.stop_coverage()
         self._remove_signals(actor)
         p = self.pid_file
         if p is not None:
@@ -716,7 +714,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             self.pid_file = None
         if self.managed_actors:
             actor.state = ACTOR_STATES.TERMINATE
-        actor.collect_coverage()
         actor.exit_code = actor.exit_code or 0
         if actor.exit_code == autoreload.EXIT_CODE:
             actor.logger.info("Code changed, reloading server")
@@ -784,7 +781,7 @@ def run_actor(self):
         except Exception:   # pragma    nocover
             pass
         log = actor.logger or logger()
-        self.stop_coverage(actor)
+        actor.stop_coverage()
         log.info('Bye from "%s"', actor)
 
 
@@ -797,9 +794,6 @@ class ActorProcess(ProcessMixin, Concurrency, Process):
         # The coverage for this process has not yet started
         run_actor(self)
 
-    def stop_coverage(self, actor):
-        actor.stop_coverage()
-
 
 class ActorThread(Concurrency, Thread):
     '''Actor on a thread of the master process
@@ -811,9 +805,6 @@ class ActorThread(Concurrency, Thread):
 
     def run(self):
         run_actor(self)
-
-    def stop_coverage(self, actor):
-        pass
 
 
 concurrency_models = {'arbiter': ArbiterConcurrency,

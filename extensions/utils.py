@@ -3,6 +3,7 @@ import sys
 import shlex
 import json
 import subprocess
+from multiprocessing import current_process
 
 import setuptools.command.test as orig
 
@@ -27,6 +28,15 @@ class PulsarTest(orig.test):
         self.test_args = argv
 
     def run_tests(self):
+        if self.coverage:
+            import coverage
+            from coverage.monkey import patch_multiprocessing
+            print('Collect coverage')
+            p = current_process()
+            p._coverage = coverage.Coverage(data_suffix=True)
+            patch_multiprocessing()
+            p._coverage.start()
+
         from pulsar.apps.test import TestSuite
         test_suite = TestSuite(list_labels=self.list_labels,
                                verbosity=self.verbose+1,
@@ -44,6 +54,29 @@ def extend(params, package=None):
         path = os.path.abspath(os.getcwd())
         meta = sh('%s %s %s %s' % (sys.executable, __file__, package, path))
         params.update(json.loads(meta))
+
+
+def read(name):
+    with open(name) as fp:
+        return fp.read()
+
+
+def requirements(name):
+    install_requires = []
+    dependency_links = []
+
+    for line in read(name).split('\n'):
+        if line.startswith('-e '):
+            link = line[3:].strip()
+            if link == '.':
+                continue
+            dependency_links.append(link)
+            line = link.split('=')[1]
+        line = line.strip()
+        if line:
+            install_requires.append(line)
+
+    return install_requires, dependency_links
 
 
 def sh(command, cwd=None):
