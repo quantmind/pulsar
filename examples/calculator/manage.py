@@ -118,8 +118,7 @@ class Site(wsgi.LazyWsgi):
         response = [wsgi.GZipMiddleware(200)]
         return wsgi.WsgiHandler(middleware=[wsgi.wait_for_body_middleware,
                                             middleware],
-                                response_middleware=response,
-                                async=True)
+                                response_middleware=response)
 
 
 def server(callable=None, **params):

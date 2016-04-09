@@ -130,15 +130,15 @@ class WsgiHandler:
         :ref:`response middlewares <wsgi-response-middleware>`.
 
     '''
-    def __init__(self, middleware=None, response_middleware=None, sync=False):
+    def __init__(self, middleware=None, response_middleware=None, async=True):
         if middleware:
             middleware = list(middleware)
         self.middleware = middleware or []
         self.response_middleware = response_middleware or []
-        self._sync = sync
+        self._async = async
 
     def __call__(self, environ, start_response):
-        c = self._sync_call if self._sync else self._async_call
+        c = self._async_call if self._async else self._sync_call
         return c(environ, start_response)
 
     async def _async_call(self, environ, start_response):
