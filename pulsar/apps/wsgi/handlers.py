@@ -130,13 +130,18 @@ class WsgiHandler:
         :ref:`response middlewares <wsgi-response-middleware>`.
 
     '''
-    def __init__(self, middleware=None, response_middleware=None, **kw):
+    def __init__(self, middleware=None, response_middleware=None, sync=False):
         if middleware:
             middleware = list(middleware)
         self.middleware = middleware or []
         self.response_middleware = response_middleware or []
+        self._sync = sync
 
-    async def __call__(self, environ, start_response):
+    def __call__(self, environ, start_response):
+        c = self._sync_call if self._sync else self._async_call
+        return c(environ, start_response)
+
+    async def _async_call(self, environ, start_response):
         response = None
         try:
             for middleware in self.middleware:
@@ -156,6 +161,25 @@ class WsgiHandler:
                 response = middleware(environ, response)
                 if isawaitable(response):
                     response = await response
+            response.start(start_response)
+        return response
+
+    def _sync_call(self, environ, start_response):
+        response = None
+        try:
+            for middleware in self.middleware:
+                response = middleware(environ, start_response)
+                if response is not None:
+                    break
+            if response is None:
+                raise Http404
+
+        except Exception as exc:
+            response = handle_wsgi_error(environ, exc)
+
+        if isinstance(response, WsgiResponse) and not response.started:
+            for middleware in self.response_middleware:
+                response = middleware(environ, response)
             response.start(start_response)
         return response
 
