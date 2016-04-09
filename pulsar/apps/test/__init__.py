@@ -443,7 +443,7 @@ class Coveralls(TestOption):
     action = 'store_true'
     default = False
     validator = pulsar.validate_bool
-    desc = """Publish coverage to caveralls."""
+    desc = """Publish coverage to coveralls."""
 
 
 class TestPlugins(TestOption):

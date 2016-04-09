@@ -10,12 +10,17 @@ class Test(orig.test):
     user_options = [
         ('list-labels', 'l', 'List all test labels without performing tests'),
         ('coverage', None, 'Collect code coverage from all spawn actors'),
+        ('coveralls', None, 'Publish coverage to coveralls'),
+        ('sequential', None, 'Run test functions sequentially'),
         ('log-level=', None, 'Logging level'),
-        ('pulsar-args=', 'a', "Arguments to pass to pulsar.test")]
+        ('pulsar-args=', 'a',
+         "Additiona arguments to pass to pulsar test suite")]
 
     def initialize_options(self):
         self.list_labels = None
         self.coverage = None
+        self.coveralls = None
+        self.sequential = None
         self.log_level = None
         self.pulsar_args = None
 
@@ -32,6 +37,8 @@ class Test(orig.test):
         test_suite = TestSuite(list_labels=self.list_labels,
                                verbosity=self.verbose+1,
                                coverage=self.coverage,
+                               coveralls=self.coveralls,
+                               sequential=self.sequential,
                                log_level=self.log_level,
                                argv=self.test_args)
         self.result_code = test_suite.start(exit=False)
