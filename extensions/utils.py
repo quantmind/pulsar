@@ -42,7 +42,7 @@ class PulsarTest(orig.test):
                                verbosity=self.verbose+1,
                                coverage=self.coverage,
                                argv=self.test_args)
-        self.result_code = test_suite.start(exit=False)
+        test_suite.start()
 
 
 def extend(params, package=None):

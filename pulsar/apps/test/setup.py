@@ -41,4 +41,4 @@ class Test(orig.test):
                                sequential=self.sequential,
                                log_level=self.log_level,
                                argv=self.test_args)
-        self.result_code = test_suite.start(exit=False)
+        test_suite.start()
