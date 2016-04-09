@@ -20,6 +20,11 @@ meta = dict(
                                     'examples.*',
                                     'extensions',
                                     'extensions.*']),
+    entry_points={
+        "distutils.commands": [
+            "pulsar_test = pulsar.apps.test.setup:Test"
+        ]
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',

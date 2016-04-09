@@ -6,25 +6,52 @@ as a test suite for any other library.
 
 .. _apps-test-intro:
 
-Introduction
-====================
+Integration
+===============
 
-To get started with pulsar asynchronous test suite is easy. The first thing to
-do is to create a python ``script`` on the top level directory of your library,
-let's call it ``runtests.py``::
+Pulsar test suite can be used in conjunction with setuptools_ or stand-alone.
+
+Setuptools Integration
+--------------------------
+
+Pulsar asynchronous test suite can be used as testing framework in
+your setuptools based project.
+Add this to setup.py file::
+
+    from setuptools import setup
+
+    setup(
+        #...,
+        setup_requires=['pulsar', ...],
+        #...,
+    )
+
+And create an alias into ``setup.cfg`` file::
+
+    [aliases]
+    test=pulsar_test
+
+If you now type::
+
+    python setup.py test
+
+this will execute your tests using pulsar test runner. As this is a
+standalone version of pulsar no prior installation whatsoever is
+required for calling the test command.
+You can also pass additional arguments to pulsar test,
+such as your test directory or other options using -a.
+
+
+Manual Integration
+--------------------------
+
+If for some reason you don’t want/can’t use the setuptools integration,
+you can write a standalone script, for example ``runtests.py``::
 
     from pulsar.apps import TestSuite
 
     if __name__ == '__main__':
-        TestSuite(description='Test suite for my library',
-                  modules=('regression',
-                           ('examples', 'tests'))).start()
-
-where ``modules`` is a tuple/list which specifies where to
-:ref:`search for test cases <apps-test-loading>` to run.
-In the above example the test suite will look for all python files
-in the ``regression`` module (in a recursive fashion), and for modules
-called ``tests`` in the ``examples`` module.
+        TestSuite(description='Test suite for my library').start()
 
 To run the test suite::
 
@@ -36,15 +63,6 @@ Type::
 
 For a list different options/parameters which can be used when running tests.
 
-.. note::
-
-    Pulsar test suite help you speed up your tests!
-    Use ``setUpClass`` rather than ``setUp``, use asynchronous tests and if
-    not possible add fire power with more test workers.
-
-    Try with the ``-w 8`` command line input for a laugh.
-
-The next step is to actually write the tests.
 
 Writing a Test Case
 ===========================
@@ -312,6 +330,8 @@ Utilities
 
 .. automodule:: pulsar.apps.test.utils
 
+
+.. _setuptools: https://pythonhosted.org/setuptools/index.html
 '''
 import sys
 
