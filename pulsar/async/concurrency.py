@@ -611,6 +611,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def before_start(self, actor):  # pragma    nocover
         '''Daemonise the system if required.
         '''
+        actor.start_coverage()
         cfg = actor.cfg
         if cfg.reload:
             assert not cfg.daemon, "Autoreload not compatible with daemon mode"

@@ -22,7 +22,7 @@ class Coverage:
                 return
             cov = self.coverage
             if not cov:
-                self.logger.info('Start coverage')
+                self.logger.warning('Start coverage')
                 p = current_process()
                 p._coverage = coverage.Coverage(data_suffix=True)
                 patch_multiprocessing()
@@ -31,7 +31,7 @@ class Coverage:
     def stop_coverage(self):
         cov = self.coverage
         if cov and self.is_arbiter():
-            self.logger.info('Saving coverage file')
+            self.logger.warning('Saving coverage file')
             cov.stop()
             cov.save()
             c = coverage.Coverage()
