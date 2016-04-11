@@ -191,7 +191,7 @@ class PoolConnection:
 
     def close(self, discard=False):
         '''Close this pool connection by releasing the underlying
-        :attr:`connection` back to the ;attr:`pool`.
+        :attr:`connection` back to the :attr:`pool`.
         '''
         if self.pool is not None:
             self.pool._put(self.connection, discard)
@@ -199,20 +199,33 @@ class PoolConnection:
             conn, self.connection = self.connection, None
             return conn
 
-    def detach(self):
+    def detach(self, discard=True):
         '''Remove the underlying :attr:`connection` from the connection
         :attr:`pool`.
         '''
-        return self.close(True)
+        if discard:
+            return self.close(True)
+        else:
+            self.connection._exit_ = False
+            return self
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
-        self.close()
+        if getattr(self.connection, '_exit_', True):
+            self.close()
+        else:
+            del self.connection._exit_
 
     def __getattr__(self, name):
         return getattr(self.connection, name)
+
+    def __setattr__(self, name, value):
+        try:
+            super().__setattr__(name, value)
+        except AttributeError:
+            setattr(self.connection, name, value)
 
     def __del__(self):
         self.close()

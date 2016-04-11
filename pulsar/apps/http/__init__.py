@@ -1328,13 +1328,8 @@ class HttpClient(AbstractClient):
 
             if (not headers or
                     not keep_alive(response.request.version, headers) or
-                    response.status_code == 101 or
-                    # Streaming responses return before the response
-                    # is finished - therefore we detach the connection
-                    response.request.stream):
-                conn = conn.detach()
-                if self.debug:
-                    self.logger.debug('Detached %s from pool', conn)
+                    response.status_code == 101):
+                conn.detach()
 
         # Handle a possible redirect
         if response and isinstance(response.request_again, tuple):

@@ -12,8 +12,8 @@ class HttpStream:
     '''A streaming body for an HTTP response
     '''
     def __init__(self, response):
-        self._streamed = False
         self._response = response
+        self._conn = None
         self._queue = asyncio.Queue()
 
     def __repr__(self):
@@ -26,7 +26,7 @@ class HttpStream:
 
     async def read(self, n=None):
         '''Read all content'''
-        if self._streamed:
+        if self._conn is None:
             return b''
         buffer = []
         for body in self:
@@ -41,20 +41,25 @@ class HttpStream:
     def __iter__(self):
         '''Iterator over bytes or Futures resulting in bytes
         '''
-        if self._streamed:
+        if self._conn is None:
             raise StreamConsumedError
-        self._streamed = True
-        self(self._response)
-        while True:
-            if self.done:
-                try:
-                    yield self._queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    break
-            else:
-                yield ensure_future(self._queue.get())
+        with self._conn:
+            self._conn = None
+            self(self._response)
+            while True:
+                if self.done:
+                    try:
+                        yield self._queue.get_nowait()
+                    except asyncio.QueueEmpty:
+                        break
+                else:
+                    yield ensure_future(self._queue.get())
 
     def __call__(self, response, exc=None, **kw):
-        if self._streamed and response.parser.is_headers_complete():
+        if self._conn is None and response.parser.is_headers_complete():
             assert response is self._response
             self._queue.put_nowait(response.recv_body())
+
+    def connection(self, conn):
+        self._conn = conn.detach(discard=False)
+        return self
