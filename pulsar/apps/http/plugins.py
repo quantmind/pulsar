@@ -58,7 +58,7 @@ async def start_request(request, conn):
         response.bind_event('pre_request', request.auth)
 
     if request.stream:
-        response.bind_event('data_processed', response.raw.connection(conn))
+        response.bind_event('data_processed', response.raw)
         response.start(request)
         await response.events['on_headers']
     else:
