@@ -169,27 +169,6 @@ def handle_cookies(response, exc=None):
             client.cookies.extract_cookies(response, request)
 
 
-@noerror
-def handle_100(response, exc=None):
-    '''Handle Except: 100-continue.
-
-    This is a ``on_header`` hook which checks if the request headers
-    have the ``Expect: 100-continue`` value. If so add a ``on_headers``
-    callback to handle the response from the server.
-    '''
-    request = response.request
-    if (request.headers.has('expect', '100-continue') and
-            response.status_code == 100):
-        response.bind_event('on_headers', _write_body)
-
-
-@noerror
-def _write_body(response, exc=None):
-    if response.status_code == 100:
-        response.request.new_parser()
-        response.write_body()
-
-
 class WebSocket:
 
     @property

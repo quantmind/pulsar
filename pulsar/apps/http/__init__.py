@@ -328,7 +328,7 @@ from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
                                   parse_header_links,
                                   JSON_CONTENT_TYPES)
 
-from .plugins import (handle_cookies, handle_100, WebSocket, Redirect,
+from .plugins import (handle_cookies, WebSocket, Redirect,
                       Tunneling, TooManyRedirects, start_request,
                       response_content, keep_alive, HTTP11)
 
@@ -358,10 +358,11 @@ def guess_filename(obj):
 
 
 def is_streamed(data):
-    try:
-        len(data)
-    except TypeError:
-        return True
+    if not hasattr(data, 'read'):
+        try:
+            len(data)
+        except TypeError:
+            return True
     return False
 
 
@@ -790,6 +791,8 @@ class HttpRequest(RequestBase):
             else:
                 content_type = FORM_URL_ENCODED
 
+        if hasattr(data, 'read'):
+            data = data.read()
         if content_type in JSON_CONTENT_TYPES:
             body = json.dumps(data).encode(self.charset)
         elif content_type == FORM_URL_ENCODED:
@@ -798,8 +801,10 @@ class HttpRequest(RequestBase):
             body, content_type = encode_multipart_formdata(
                 data, boundary=self.multipart_boundary, charset=self.charset)
         else:
-            raise ValueError("Don't know how to encode body for %s" %
-                             content_type)
+            body = data
+            if not isinstance(body, bytes):
+                raise ValueError("Don't know how to encode body for %s" %
+                                 content_type)
         return body, content_type
 
     def _write_body_data(self, transport, data, finish=False):
@@ -1034,12 +1039,18 @@ class HttpResponse(ProtocolConsumer):
         try:
             if request.parser.execute(data, len(data)) == len(data):
                 if request.parser.is_headers_complete():
-                    self._status_code = request.parser.get_status_code()
-                    if not self.event('on_headers').fired():
-                        self.fire_event('on_headers')
-                    if (not self.event('post_request').fired() and
-                            request.parser.is_message_complete()):
-                        self.finished()
+                    status_code = request.parser.get_status_code()
+                    if (request.headers.has('expect', '100-continue') and
+                            status_code == 100):
+                        request.new_parser()
+                        self.write_body()
+                    else:
+                        self._status_code = status_code
+                        if not self.event('on_headers').fired():
+                            self.fire_event('on_headers')
+                        if (not self.event('post_request').fired() and
+                                request.parser.is_message_complete()):
+                            self.finished()
             else:
                 raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
         except Exception as exc:
@@ -1185,7 +1196,6 @@ class HttpClient(AbstractClient):
         self.bind_event('finish', self._close)
         self.bind_event('pre_request', Tunneling(self._loop))
         self.bind_event('pre_request', WebSocket())
-        self.bind_event('on_headers', handle_100)
         self.bind_event('on_headers', handle_cookies)
         self.bind_event('post_request', Redirect())
 
