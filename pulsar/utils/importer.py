@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 from importlib import import_module
 
@@ -6,22 +7,14 @@ import importlib.util
 
 from .slugify import slugify
 
-try:
-    importlib.util.module_from_spec
 
-    def _import_system_file(filename):
-        module_name = slugify(filename, '_')
-        spec = importlib.util.spec_from_file_location(module_name, filename)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
-
-except AttributeError:
-    from importlib.machinery import SourceFileLoader
-
-    def _import_system_file(filename):
-        module_name = slugify(filename, '_')
-        return SourceFileLoader(module_name, filename).load_module()
+def _import_system_file(filename):
+    module_name = slugify(filename[:-3], '.')
+    spec = importlib.util.spec_from_file_location(module_name, filename)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def expand_star(mod_name):
