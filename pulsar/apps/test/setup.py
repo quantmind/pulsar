@@ -13,6 +13,7 @@ class Test(orig.test):
         ('coveralls', None, 'Publish coverage to coveralls'),
         ('sequential', None, 'Run test functions sequentially'),
         ('log-level=', None, 'Logging level'),
+        ('test-plugins=', None, 'Test plugins'),
         ('pulsar-args=', 'a',
          "Additiona arguments to pass to pulsar test suite")]
 
@@ -22,16 +23,15 @@ class Test(orig.test):
         self.coveralls = None
         self.sequential = None
         self.log_level = None
+        self.test_plugins = None
         self.pulsar_args = None
 
     def finalize_options(self):
-        if self.log_level:
-            self.log_level = shlex.split(self.log_level)
-        if self.pulsar_args:
-            argv = shlex.split(self.pulsar_args)
-        else:
-            argv = []
-        self.test_args = argv
+        for name in ('log_level', 'test_plugins', 'pulsar_args'):
+            value = getattr(self, name)
+            if value:
+                setattr(self, name, shlex.split(value))
+        self.test_args = self.pulsar_args or []
 
     def run_tests(self):
         test_suite = TestSuite(list_labels=self.list_labels,
@@ -39,6 +39,7 @@ class Test(orig.test):
                                coverage=self.coverage,
                                coveralls=self.coveralls,
                                sequential=self.sequential,
+                               test_plugins=self.test_plugins,
                                log_level=self.log_level,
                                argv=self.test_args)
         test_suite.start()
