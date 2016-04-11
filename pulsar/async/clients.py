@@ -15,6 +15,10 @@ __all__ = ['Pool', 'PoolConnection', 'AbstractClient', 'AbstractUdpClient']
 logger = logging.getLogger('pulsar.pool')
 
 
+def call_false():
+    return False
+
+
 class Pool(AsyncObject):
     '''An asynchronous pool of open connections.
 
@@ -154,14 +158,16 @@ class Pool(AsyncObject):
         self._in_use_connections.discard(conn)
 
     def is_connection_closed(self, connection):
-        try:
-            sock = connection.sock
-        except AttributeError:
-            return True
-        if is_socket_closed(sock):
-            connection.close()
-            return True
-        return False
+        if not getattr(connection.transport, 'is_closing', call_false)():
+            try:
+                sock = connection.sock
+            except AttributeError:
+                return True
+            if is_socket_closed(sock):
+                connection.close()
+                return True
+            return False
+        return True
 
     def status(self, message=None, level=None):
         return ('Pool size: %d  Connections in pool: %d '
