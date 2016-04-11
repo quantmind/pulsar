@@ -238,7 +238,6 @@ class Configurator:
                  parse_console=True,
                  script=None,
                  cfg=None,
-                 load_config=True,
                  **params):
         cls = self.__class__
         self.name = name or cls.name or cls.__name__.lower()
@@ -415,7 +414,7 @@ class Application(Configurator):
         Default ``None``
     """
     def __init__(self, callable=None, load_config=True, **params):
-        super().__init__(load_config=load_config, **params)
+        super().__init__(**params)
         self.cfg.callable = callable
         self.logger = None
         if load_config:

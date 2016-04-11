@@ -158,7 +158,7 @@ class WsgiHandler:
 
         if isinstance(response, WsgiResponse) and not response.started:
             for middleware in self.response_middleware:
-                response = middleware(environ, response)
+                response = middleware(environ, response) or response
                 if isawaitable(response):
                     response = await response
             response.start(start_response)
@@ -179,7 +179,7 @@ class WsgiHandler:
 
         if isinstance(response, WsgiResponse) and not response.started:
             for middleware in self.response_middleware:
-                response = middleware(environ, response)
+                response = middleware(environ, response) or response
             response.start(start_response)
         return response
 
