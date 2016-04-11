@@ -43,7 +43,7 @@ class HttpStream:
         '''
         if self._conn is None:
             raise StreamConsumedError
-        with self._conn:
+        with self:
             self._conn = None
             self(self._response)
             while True:
@@ -61,5 +61,15 @@ class HttpStream:
             self._queue.put_nowait(response.recv_body())
 
     def connection(self, conn):
-        self._conn = conn.detach(discard=False)
+        if hasattr(conn, 'detach'):
+            conn = conn.detach(discard=False)
+        self._conn = conn
         return self
+
+    def __enter__(self):
+        if hasattr(self._conn, 'detach'):
+            return self._conn
+        return self
+
+    def __exit__(self, *args):
+        pass
