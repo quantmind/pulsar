@@ -1,3 +1,5 @@
+"""Simple Flask application served by pulsar WSGI server on a pool of threads
+"""
 from flask import Flask, make_response
 
 from pulsar.apps import wsgi
@@ -22,8 +24,7 @@ class Site(wsgi.LazyWsgi):
     def setup(self, environ=None):
         app = FlaskApp()
         return wsgi.WsgiHandler((wsgi.wait_for_body_middleware,
-                                 wsgi.middleware_in_executor(app)),
-                                async=True)
+                                 wsgi.middleware_in_executor(app)))
 
 
 def server(**kwargs):

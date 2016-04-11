@@ -154,7 +154,7 @@ class FlaskSite(wsgi.LazyWsgi):
         echo_app_name = 'echo_%s' % cfg.name
         echo = EchoGreen(echo_app_name, green_pool.wait)
         app = FlaskApp(echo)
-        return wsgi.WsgiHandler([GreenWSGI(app, green_pool)], async=True)
+        return wsgi.WsgiHandler([GreenWSGI(app, green_pool)])
 
 
 class FlaskGreen(MultiApp):

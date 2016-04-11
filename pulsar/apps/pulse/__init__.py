@@ -83,4 +83,4 @@ class Wsgi(LazyWsgi):
         else:
             app = get_wsgi_application()
         app = middleware_in_executor(app)
-        return WsgiHandler((wait_for_body_middleware, app), async=True)
+        return WsgiHandler((wait_for_body_middleware, app))
