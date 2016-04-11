@@ -1160,7 +1160,8 @@ class HttpClient(AbstractClient):
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None, stream=False,
-                 pool_size=10, frame_parser=None, logger=None):
+                 pool_size=10, frame_parser=None, logger=None,
+                 close_connections=False):
         super().__init__(loop)
         self._logger = logger or LOGGER
         self.client_version = client_version or self.client_version
@@ -1175,6 +1176,7 @@ class HttpClient(AbstractClient):
         self.version = version or self.version
         self.verify = verify
         self.stream = stream
+        self.close_connections = close_connections
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
@@ -1328,7 +1330,8 @@ class HttpClient(AbstractClient):
 
             if (not headers or
                     not keep_alive(response.request.version, headers) or
-                    response.status_code == 101):
+                    response.status_code == 101 or
+                    self.close_connections):
                 conn.detach()
 
         # Handle a possible redirect
