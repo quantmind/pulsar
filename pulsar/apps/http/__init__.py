@@ -358,11 +358,10 @@ def guess_filename(obj):
 
 
 def is_streamed(data):
-    if not hasattr(data, 'read'):
-        try:
-            len(data)
-        except TypeError:
-            return True
+    try:
+        len(data)
+    except TypeError:
+        return True
     return False
 
 
@@ -712,8 +711,8 @@ class HttpRequest(RequestBase):
         elif data and is_streamed(data):
             assert self.files is None, ('data cannot be an iterator when '
                                         'files are present')
-            if 'content-type' not in self.headers:
-                self.headers['content-type'] = 'application/octet-stream'
+            # if 'content-type' not in self.headers:
+            #     self.headers['content-type'] = 'application/octet-stream'
             if 'content-length' not in self.headers:
                 self.headers['transfer-encoding'] = 'chunked'
             return data
@@ -727,9 +726,9 @@ class HttpRequest(RequestBase):
             self.headers['Content-Type'] = content_type
         if body:
             self.headers['content-length'] = str(len(body))
-        elif 'expect' not in self.headers:
-            self.headers.pop('content-length', None)
-            self.headers.pop('content-type', None)
+        # elif 'expect' not in self.headers:
+        #     self.headers.pop('content-length', None)
+        #     self.headers.pop('content-type', None)
         return body
 
     def _encode_url(self, data):
