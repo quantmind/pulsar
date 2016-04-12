@@ -9,6 +9,7 @@ from examples.echo.manage import server, Echo
 
 try:
     from pulsar.apps import greenio
+    from pulsar.apps.greenio.pool import _DEFAULT_WORKERS
     run_in_greenlet = greenio.run_in_greenlet
 except ImportError:
     greenio = None
@@ -104,7 +105,7 @@ class TestGreenIO(unittest.TestCase):
     def test_shutdown(self):
         # Test an error
         pool = greenio.GreenPool()
-        self.assertEqual(pool._max_workers, greenio._DEFAULT_WORKERS)
+        self.assertEqual(pool._max_workers, _DEFAULT_WORKERS)
         yield from self.wait.assertEqual(pool.submit(lambda: 'OK'), 'OK')
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)

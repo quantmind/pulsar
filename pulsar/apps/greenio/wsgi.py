@@ -1,4 +1,4 @@
-from . import wait
+from .utils import wait
 
 
 class GreenWSGI:

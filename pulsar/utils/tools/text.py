@@ -1,9 +1,4 @@
-import sys
-
-if sys.version_info >= (3, 0):
-    from itertools import zip_longest
-else:   # pragma    nocover
-    from itertools import izip_longest as zip_longest, izip as zip
+from itertools import zip_longest
 
 __all__ = ['grouper', 'num2eng', 'nice_number']
 
