@@ -15,9 +15,12 @@ class GreenWSGI:
         self.pool = pool
 
     def __call__(self, environ, start_response):
-        return self.pool.submit(self._green_handler, environ, start_response)
+        if self.pool.in_green_worker:
+            return self._call(environ, start_response)
+        else:
+            return self.pool.submit(self._call, environ, start_response)
 
-    def _green_handler(self, environ, start_response):
+    def _call(self, environ, start_response):
         if environ['wsgi.input']:
             environ['wsgi.input'] = GreenStream(environ['wsgi.input'])
         response = None

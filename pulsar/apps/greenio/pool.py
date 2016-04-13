@@ -59,6 +59,7 @@ class GreenPool(AsyncObject):
         Return a :class:`~asyncio.Future` called back once the task
         has finished.
         """
+        assert not self.in_green_worker, "Cannot submit from green workers"
         with self._shutdown_lock:
             if self._shutdown:
                 raise RuntimeError(
