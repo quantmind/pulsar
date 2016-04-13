@@ -362,23 +362,6 @@ class Router(metaclass=RouterType):
         raise AttributeError("'%s' object has no attribute '%s'" %
                              (self.__class__.__name__, name))
 
-    def content_type(self, request):
-        '''Evaluate the content type for the response to a client ``request``.
-
-        The method uses the :attr:`response_content_types` parameter of
-        accepted content types and the content types accepted by the client
-        ``request`` and figures out the best match.
-        '''
-        response_content_types = self.response_content_types
-        request_content_types = request.content_types
-        if request_content_types:
-            ct = request_content_types.best_match(response_content_types)
-            if ct and '*' in ct:
-                ct = None
-            if not ct and response_content_types:
-                raise HttpException(status=415, msg=request_content_types)
-            return ct
-
     def __repr__(self):
         return self.full_route.__repr__()
 
@@ -416,11 +399,12 @@ class Router(metaclass=RouterType):
         this method to produce the WSGI response.
         '''
         request = wsgi_request(environ, self, args)
-        request.response.content_type = self.content_type(request)
         method = request.method.lower()
         callable = getattr(self, method, None)
         if callable is None:
             raise HttpException(status=405)
+
+        request.set_response_content_type(self.response_content_types)
         response_wrapper = self.response_wrapper
         if response_wrapper:
             return response_wrapper(callable, request)

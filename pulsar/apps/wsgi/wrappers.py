@@ -58,7 +58,7 @@ from functools import reduce, partial
 from http.client import responses
 import asyncio
 
-from pulsar import Future, chain_future
+from pulsar import Future, chain_future, HttpException
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie,
                                   has_empty_content, REDIRECT_CODES,
@@ -641,6 +641,22 @@ class WsgiRequest(EnvironMixin):
         """Redirect to a different ``path``
         """
         return redirect(path, **kw)
+
+    def set_response_content_type(self, response_content_types=None):
+        '''Evaluate the content type for the response to a client ``request``.
+
+        The method uses the :attr:`response_content_types` parameter of
+        accepted content types and the content types accepted by the client
+        ``request`` and figures out the best match.
+        '''
+        request_content_types = self.content_types
+        if request_content_types:
+            ct = request_content_types.best_match(response_content_types)
+            if ct and '*' in ct:
+                ct = None
+            if not ct and response_content_types:
+                raise HttpException(status=415, msg=request_content_types)
+            self.response.content_type = ct
 
 
 set_wsgi_request_class(WsgiRequest)
