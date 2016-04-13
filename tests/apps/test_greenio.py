@@ -23,27 +23,19 @@ def raise_error():
 
 
 class EchoGreen(Echo):
-    '''An echo client which uses greenlets to provide implicit
-    asynchronous code'''
 
     def __call__(self, message):
-        connection = greenio.wait(self.pool.connect())
-        with connection:
-            consumer = connection.current_consumer()
-            consumer.start(message)
-            greenio.wait(consumer.on_finished)
-            return consumer if self.full_response else consumer.buffer
+        return greenio.wait(super().__call__(message))
 
 
 @unittest.skipUnless(greenio, 'Requires the greenlet package')
 class TestGreenIO(unittest.TestCase):
 
     @classmethod
-    @asyncio.coroutine
-    def setUpClass(cls):
+    async def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    concurrency=cls.cfg.concurrency)
-        cls.server_cfg = yield from send('arbiter', 'run', s)
+        cls.server_cfg = await send('arbiter', 'run', s)
         cls.client = EchoGreen(cls.server_cfg.addresses[0])
 
     @classmethod
@@ -55,21 +47,19 @@ class TestGreenIO(unittest.TestCase):
         environ = wsgi.test_wsgi_environ(**kwargs)
         return wsgi.WsgiRequest(environ)
 
-    @asyncio.coroutine
-    def test_pool(self):
+    async def test_pool(self):
         pool = greenio.GreenPool()
         self.assertTrue(pool._loop)
         self.assertEqual(pool._loop, get_event_loop())
         self.assertFalse(pool._greenlets)
         future = pool.submit(lambda: 'Hi!')
         self.assertIsInstance(future, Future)
-        result = yield from future
+        result = await future
         self.assertEqual(result, 'Hi!')
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
-    @asyncio.coroutine
-    def test_greenlet_methods(self):
+    async def test_greenlet_methods(self):
         pool = greenio.GreenPool()
         self.assertFalse(pool.in_green_worker)
         self.assertFalse(pool.getcurrent().parent)
@@ -78,14 +68,12 @@ class TestGreenIO(unittest.TestCase):
             self.assertTrue(pool.in_green_worker)
             self.assertTrue(pool.getcurrent().parent)
 
-        yield from pool.submit(_greenlet_methods)
+        await pool.submit(_greenlet_methods)
 
-    @asyncio.coroutine
-    def test_error_in_pool(self):
+    async def test_error_in_pool(self):
         # Test an error
         pool = greenio.GreenPool()
-        yield from self.wait.assertRaises(RuntimeError, pool.submit,
-                                          raise_error)
+        await self.wait.assertRaises(RuntimeError, pool.submit, raise_error)
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
@@ -101,24 +89,23 @@ class TestGreenIO(unittest.TestCase):
         result = self.client(msg)
         self.assertEqual(result, msg)
 
-    @asyncio.coroutine
-    def test_shutdown(self):
+    async def test_shutdown(self):
         # Test an error
         pool = greenio.GreenPool()
         self.assertEqual(pool._max_workers, _DEFAULT_WORKERS)
-        yield from self.wait.assertEqual(pool.submit(lambda: 'OK'), 'OK')
+        await self.wait.assertEqual(pool.submit(lambda: 'OK'), 'OK')
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
         a = pool.submit(lambda: 'a')
         b = pool.submit(lambda: 'b')
         self.assertEqual(len(pool._greenlets), 2)
         self.assertEqual(len(pool._available), 0)
-        result = yield from multi_async([a, b])
+        result = await multi_async([a, b])
         self.assertEqual(result[0], 'a')
         self.assertEqual(result[1], 'b')
         self.assertEqual(len(pool._greenlets), 2)
         self.assertEqual(len(pool._available), 2)
-        yield from pool.shutdown()
+        await pool.shutdown()
         self.assertEqual(len(pool._greenlets), 0)
         self.assertEqual(len(pool._available), 0)
 
@@ -154,31 +141,27 @@ class TestGreenIO(unittest.TestCase):
         # self.assertEqual(lock.locked(), child)
 
     def test_greenwsgi(self):
-        from pulsar.apps.greenio.wsgi import GreenWSGI
         wsgi = mock.MagicMock()
         pool = greenio.GreenPool()
-        green = GreenWSGI(wsgi, pool)
-        self.assertEqual(green.wsgi, wsgi)
+        green = greenio.GreenWSGI(wsgi, pool)
+        self.assertEqual(green.middleware[0], wsgi)
         self.assertEqual(green.pool, pool)
 
-    @asyncio.coroutine
-    def test_uncatched_stopiteration(self):
+    async def test_uncatched_stopiteration(self):
         pool = greenio.GreenPool()
         with self.assertRaises(RuntimeError) as cm:
-            yield from pool.submit(lambda: next(iter([])))
+            await pool.submit(lambda: next(iter([])))
         self.assertIsInstance(cm.exception.__cause__, StopIteration)
 
-    @asyncio.coroutine
-    def test_async_in_greenlet(self):
+    async def test_async_in_greenlet(self):
         pool = greenio.GreenPool()
-        result = yield from pool.submit(async_function, self)
+        result = await pool.submit(async_function, self)
         self.assertEqual(result, True)
 
 
-@asyncio.coroutine
-def async_function(test):
+async def async_function(test):
     future = asyncio.Future()
     future._loop.call_later(1, future.set_result, True)
-    result = yield from future
+    result = await future
     test.assertEqual(result, True)
     return result
