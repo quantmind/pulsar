@@ -158,6 +158,13 @@ class TestGreenIO(unittest.TestCase):
         result = await pool.submit(async_function, self)
         self.assertEqual(result, True)
 
+    @run_in_greenlet
+    def test_green_http(self):
+        http = greenio.GreenHttp()
+        response = http.get('https://api.github.com/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json())
+
 
 async def async_function(test):
     future = asyncio.Future()

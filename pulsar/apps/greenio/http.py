@@ -1,11 +1,13 @@
+from pulsar.apps.http import HttpClient
+
 from .utils import wait
 
 
 class GreenHttp:
     """Wraps an http client so we can use it with greenlets
     """
-    def __init__(self, http):
-        self._http = http
+    def __init__(self, http=None):
+        self._http = http or HttpClient()
 
     def __getattr__(self, name):
         return getattr(self._http, name)

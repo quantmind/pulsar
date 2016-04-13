@@ -10,7 +10,7 @@ greenlets, check out the :greenlet:`greenlet documentation <>` first.
 
     pulsar-odm_ is a separate library, maintained by the same authors of
     pulsar, which provides asynchronous object data mapping with
-    asyncio_ and sqlalchemy_ and uses pulsar greenlet extensions.
+    asyncio_ and sqlalchemy_ and uses pulsar greenio extensions.
 
 This application **does not use monkey patching** and therefore it
 works quite differently from implicit asynchronous libraries such as
@@ -46,12 +46,11 @@ in an implicit asynchronous mode, i.e. without dealing with futures nor
 coroutines, then you can wrap your WSGI ``app`` with the :class:`.GreenWSGI`
 utility::
 
-    from pulsar.apps.wasi import WsgiHandler, WSGIServer
-    from pulsar.apps.greenio import GreenPool
-    from pulsar.apps.greenio.wsgi import GreenWSGI
+    from pulsar.apps.wsgi import WSGIServer
+    from pulsar.apps.greenio import GreenPool, GreenWSGI
 
     green_pool = greenio.GreenPool()
-    callable = WsgiHandler([GreenWSGI(app, green_pool)])
+    callable = GreenWSGI(app, green_pool)
 
     WSGIServer(callable=callable).start()
 
@@ -62,15 +61,13 @@ ready.
 
 .. _green-http:
 
-Green Http
+GreenHttp
 -----------------
 
 The :class:`.HttpClient` can be used with greenlets::
 
-    >>> from pulsar.apps.http import HttpClient
-    >>> http = HttpClient(green=True)
-    >>> http.green
-    True
+    >>> from pulsar.apps.greenio import GreenHttp
+    >>> http = GreenHttp()
 
 And now you can write synchronous looking code and run it in a separate
 greenlet via the :func:`.run_in_greenlet` decorator::
@@ -79,13 +76,13 @@ greenlet via the :func:`.run_in_greenlet` decorator::
     def example():
         response = http.get('http://bbc.co.uk')
         ...
-        return 'done'
+        return response.text()
 
 
 and somewhere, in your asynchronous code::
 
-        result = yield example()
-        result == 'done'
+        result = await example()
+        result == ...
 
 
 the :func:`.run_in_greenlet` decorator, execute the function on a child
