@@ -1,6 +1,11 @@
 #!/usr/bin/env python
+from multiprocessing import current_process
+
+import setuptools.command.test as orig
 from setuptools import setup, find_packages
-from extensions import utils, ext
+from extensions import ext
+
+import pulsar_config as config
 
 
 meta = dict(
@@ -10,16 +15,10 @@ meta = dict(
     maintainer_email="luca@quantmind.com",
     url="https://github.com/quantmind/pulsar",
     license="BSD",
-    long_description=utils.read('README.rst'),
+    long_description=config.read('README.rst'),
     include_package_data=True,
     setup_requires=['wheel'],
-    # tests_require=utils.requirements('requirements-dev.txt')[0],
-    packages=find_packages(exclude=['tests.*',
-                                    'tests',
-                                    'examples',
-                                    'examples.*',
-                                    'extensions',
-                                    'extensions.*']),
+    packages=find_packages(include=['pulsar', 'pulsar.*']),
     entry_points={
         "distutils.commands": [
             "pulsar_test = pulsar.apps.test.setup:Test"
@@ -46,11 +45,43 @@ meta = dict(
 )
 
 
+class PulsarTest(orig.test):
+    test_suite = True
+
+    @property
+    def testcls(self):
+        from pulsar.apps.test.setup import Test
+        return Test
+
+    @property
+    def user_options(self):
+        return self.testcls.user_options
+
+    def initialize_options(self):
+        self.testcls.initialize_options(self)
+
+    def finalize_options(self):
+        self.testcls.initialize_options(self)
+
+    def run_tests(self):
+        if self.coverage:
+            import coverage
+            from coverage.monkey import patch_multiprocessing
+            print('Collect coverage')
+            p = current_process()
+            p._coverage = coverage.Coverage(data_suffix=True)
+            patch_multiprocessing()
+            p._coverage.start()
+        self.testcls.run_tests(self)
+
+
 def run_setup(with_cext):
     params = ext.params() if with_cext else {}
     params.update(meta)
-    utils.extend(params, 'pulsar')
-    setup(**params)
+    cmdclass = params.get('cmdclass', {})
+    cmdclass['test'] = PulsarTest
+    params['cmdclass'] = cmdclass
+    setup(**config.setup(params, 'pulsar'))
 
 
 if __name__ == '__main__':
