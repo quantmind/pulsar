@@ -1,13 +1,12 @@
 import shlex
+from multiprocessing import current_process
 
 import setuptools.command.test as orig
-
-from pulsar.utils.slugify import slugify
-from pulsar.apps.test import TestSuite
 
 
 class Test(orig.test):
     test_suite = True
+    start_coverate = False
     list_options = set(['log-level=', 'test-plugins=',
                         'test-modules=', 'pulsar-args='])
     user_options = [
@@ -24,12 +23,12 @@ class Test(orig.test):
 
     def initialize_options(self):
         for name, _, _ in self.user_options:
-            setattr(self, slugify(name, '_'), None)
+            setattr(self, self._slugify(name), None)
 
     def finalize_options(self):
         self.test_params = {}
         for name, _, _ in self.user_options:
-            attr = slugify(name, '_')
+            attr = self._slugify(name)
             value = getattr(self, attr)
             if value and name in self.list_options:
                 value = shlex.split(value)
@@ -39,7 +38,19 @@ class Test(orig.test):
         self.test_args = self.pulsar_args or []
 
     def run_tests(self):
+        if self.coverage and self.start_coverate:
+            import coverage
+            from coverage.monkey import patch_multiprocessing
+            p = current_process()
+            p._coverage = coverage.Coverage(data_suffix=True)
+            patch_multiprocessing()
+            p._coverage.start()
+
+        from pulsar.apps.test import TestSuite
         test_suite = TestSuite(verbosity=self.verbose+1,
                                argv=self.test_args,
                                **self.test_params)
         test_suite.start()
+
+    def _slugify(self, name):
+        return name.replace('-', '_').replace('=', '')

@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-from multiprocessing import current_process
-
-import setuptools.command.test as orig
 from setuptools import setup, find_packages
 from extensions import ext
 
 import pulsar_config as config
+import pulsar_test
 
 
 meta = dict(
@@ -18,10 +16,10 @@ meta = dict(
     long_description=config.read('README.rst'),
     include_package_data=True,
     setup_requires=['wheel'],
-    packages=find_packages(include=['pulsar', 'pulsar.*']),
+    packages=find_packages(include=['pulsar', 'pulsar.*', 'pulsar_test']),
     entry_points={
         "distutils.commands": [
-            "pulsar_test = pulsar.apps.test.setup:Test"
+            "pulsar_test = pulsar_test:Test"
         ]
     },
     classifiers=[
@@ -45,34 +43,8 @@ meta = dict(
 )
 
 
-class PulsarTest(orig.test):
-    test_suite = True
-
-    @property
-    def testcls(self):
-        from pulsar.apps.test.setup import Test
-        return Test
-
-    @property
-    def user_options(self):
-        return self.testcls.user_options
-
-    def initialize_options(self):
-        self.testcls.initialize_options(self)
-
-    def finalize_options(self):
-        self.testcls.initialize_options(self)
-
-    def run_tests(self):
-        if self.coverage:
-            import coverage
-            from coverage.monkey import patch_multiprocessing
-            print('Collect coverage')
-            p = current_process()
-            p._coverage = coverage.Coverage(data_suffix=True)
-            patch_multiprocessing()
-            p._coverage.start()
-        self.testcls.run_tests(self)
+class PulsarTest(pulsar_test.Test):
+    start_coverate = True
 
 
 def run_setup(with_cext):
