@@ -59,14 +59,16 @@ class GreenPool(AsyncObject):
         Return a :class:`~asyncio.Future` called back once the task
         has finished.
         """
-        assert not self.in_green_worker, "Cannot submit from green workers"
         with self._shutdown_lock:
             if self._shutdown:
                 raise RuntimeError(
                     'cannot schedule new futures after shutdown')
-            future = Future(loop=self._loop)
-            self._put((future, func, args, kwargs))
-            return future
+            if self.in_green_worker:
+                return wait(func(*args, **kwargs))
+            else:
+                future = Future(loop=self._loop)
+                self._put((future, func, args, kwargs))
+                return future
 
     def shutdown(self, wait=True):
         with self._shutdown_lock:
