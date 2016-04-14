@@ -161,9 +161,9 @@ class TestGreenIO(unittest.TestCase):
     @run_in_greenlet
     def test_green_http(self):
         http = greenio.GreenHttp()
-        response = http.get('https://api.github.com/')
+        response = http.get('http://quantmind.com')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json())
+        self.assertTrue(response.text())
 
 
 async def async_function(test):

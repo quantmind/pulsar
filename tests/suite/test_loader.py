@@ -14,18 +14,18 @@ class TestTestLoader(unittest.TestCase):
         self.assertTrue(app.cfg.script)
         # self.assertEqual(app.script, sys.argv[0])
         self.assertEqual(os.path.dirname(app.cfg.script), app.root_dir)
-        self.assertEqual(app.cfg.test_modules, [])
+        self.assertEqual(app.cfg.test_modules, ['tests', 'examples'])
 
     @asyncio.coroutine
     def test_load_pulsar_tests(self):
         app = yield from get_application('test')
         modules = dict(app.loader.test_files())
         self.assertTrue(modules)
-        self.assertFalse('examples.httpbin' in modules)
-        self.assertTrue('examples.echo' in modules)
-        self.assertFalse('examples.djchat' in modules)
-        self.assertTrue('examples.djchat.app' in modules)
-        self.assertTrue('examples.djchat.pulse' in modules)
+        self.assertFalse('httpbin' in modules)
+        self.assertTrue('echo' in modules)
+        self.assertFalse('djchat' in modules)
+        self.assertTrue('djchat.app' in modules)
+        self.assertTrue('djchat.pulse' in modules)
         self.assertFalse('async' in modules)
         self.assertTrue('async.actor' in modules)
 
