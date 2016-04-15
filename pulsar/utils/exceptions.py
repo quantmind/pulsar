@@ -20,13 +20,18 @@ __all__ = ['PulsarException',
            'HttpConnectionError',
            'HttpProxyError',
            'SSLError',
+           #
            # HTTP Exceptions
            'HttpException',
            'HttpRedirect',
            'BadRequest',
+           'Http401',
            'PermissionDenied',
-           'MethodNotAllowed',
            'Http404',
+           'MethodNotAllowed',
+           'HttpGone',
+           'Unsupported',
+           'UnprocessableEntity',
            #
            'format_traceback']
 
@@ -122,6 +127,15 @@ class SSLError(HttpConnectionError):
 
 
 # #################################################################### HTTP
+http_errors = {}
+
+
+def httperror(c):
+    http_errors[c.status] = c
+    return c
+
+
+@httperror
 class HttpException(PulsarException):
     '''The base class of all ``HTTP`` server exceptions
 
@@ -154,6 +168,7 @@ class HttpException(PulsarException):
         return list(self._headers)
 
 
+@httperror
 class HttpRedirect(HttpException):
     '''An :class:`HttpException` for redirects.
 
@@ -173,23 +188,51 @@ class HttpRedirect(HttpException):
         return self._headers['location']
 
 
+@httperror
 class BadRequest(HttpException):
     status = 400
 
 
+@httperror
+class Http401(HttpException):
+    status = 401
+
+    def __init__(self, auth, msg=''):
+        headers = [('WWW-Authenticate', auth)]
+        super().__init__(msg=msg, headers=headers)
+
+
+@httperror
 class PermissionDenied(HttpException):
     '''An :class:`HttpException` with default ``403`` status code.'''
     status = 403
 
 
+@httperror
 class Http404(HttpException):
     '''An :class:`HttpException` with default ``404`` status code.'''
     status = 404
 
 
+@httperror
 class MethodNotAllowed(HttpException):
     '''An :class:`HttpException` with default ``405`` status code.'''
     status = 405
+
+
+@httperror
+class HttpGone(HttpException):
+    status = 410
+
+
+@httperror
+class Unsupported(HttpException):
+    status = 415
+
+
+@httperror
+class UnprocessableEntity(HttpException):
+    status = 422
 
 
 def format_traceback(exc):

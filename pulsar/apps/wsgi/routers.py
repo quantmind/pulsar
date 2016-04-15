@@ -92,7 +92,7 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.slugify import slugify
-from pulsar import Http404, HttpException
+from pulsar import Http404, MethodNotAllowed
 
 from .route import Route
 from .utils import wsgi_request
@@ -400,11 +400,12 @@ class Router(metaclass=RouterType):
         '''
         request = wsgi_request(environ, self, args)
         method = request.method.lower()
+        request.set_response_content_type(self.response_content_types)
+
         callable = getattr(self, method, None)
         if callable is None:
-            raise HttpException(status=405)
+            raise MethodNotAllowed
 
-        request.set_response_content_type(self.response_content_types)
         response_wrapper = self.response_wrapper
         if response_wrapper:
             return response_wrapper(callable, request)
