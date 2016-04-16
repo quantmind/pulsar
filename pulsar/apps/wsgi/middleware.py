@@ -52,7 +52,7 @@ import re
 from functools import wraps
 
 import pulsar
-from pulsar import isawaitable, get_event_loop
+from pulsar import as_coroutine, get_event_loop
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -100,10 +100,7 @@ async def wait_for_body_middleware(environ, start_response=None):
     Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
     if environ['wsgi.input']:
-        stream = environ['wsgi.input']
-        chunk = stream.read()
-        if isawaitable(chunk):
-            chunk = await chunk
+        chunk = await as_coroutine(environ['wsgi.input'].read())
         environ['wsgi.input'] = BytesIO(chunk)
 
 

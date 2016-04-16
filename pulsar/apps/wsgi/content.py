@@ -154,8 +154,13 @@ from pulsar.utils.system import json
 
 from .html import html_visitor, newline
 
-__all__ = ['AsyncString', 'String', 'Html',
-           'Json', 'HtmlDocument', 'Links', 'Scripts', 'Media',
+__all__ = ['String',
+           'Html',
+           'Json',
+           'HtmlDocument',
+           'Links',
+           'Scripts',
+           'Media',
            'html_factory']
 
 
@@ -429,8 +434,6 @@ class String:
     def __call__(self, request):
         stream = multi_async(self.stream(request))
         return chain_future(stream, callback=self.to_string)
-
-AsyncString = String
 
 
 class Json(String):

@@ -9,7 +9,7 @@ from pulsar.utils.system import json
 class TestAsyncContent(unittest.TestCase):
 
     def test_string(self):
-        a = wsgi.AsyncString('Hello')
+        a = wsgi.String('Hello')
         self.assertEqual(a.render(), 'Hello')
         self.assertRaises(RuntimeError, a.render)
 
@@ -30,7 +30,7 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(response.render(), json.dumps([{'bla': 'foo'}]))
 
     def test_json_with_async_string(self):
-        astr = wsgi.AsyncString('ciao')
+        astr = wsgi.String('ciao')
         response = wsgi.Json({'bla': astr})
         self.assertEqual(len(response.children), 1)
         self.assertEqual(response.content_type,
@@ -40,7 +40,7 @@ class TestAsyncContent(unittest.TestCase):
     @asyncio.coroutine
     def test_json_with_async_string2(self):
         d = Future()
-        astr = wsgi.AsyncString(d)
+        astr = wsgi.String(d)
         response = wsgi.Json({'bla': astr})
         self.assertEqual(len(response.children), 1)
         result = response.render()
@@ -50,16 +50,16 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(result, json.dumps({'bla': 'ciao'}))
 
     def test_append_self(self):
-        root = wsgi.AsyncString()
+        root = wsgi.String()
         self.assertEqual(root.parent, None)
         root.append(root)
         self.assertEqual(root.parent, None)
         self.assertEqual(len(root.children), 0)
 
     def test_append(self):
-        root = wsgi.AsyncString()
-        child1 = wsgi.AsyncString()
-        child2 = wsgi.AsyncString()
+        root = wsgi.String()
+        child1 = wsgi.String()
+        child2 = wsgi.String()
         root.append(child1)
         self.assertEqual(child1.parent, root)
         self.assertEqual(len(root.children), 1)
@@ -68,9 +68,9 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(len(root.children), 2)
 
     def test_append_parent(self):
-        root = wsgi.AsyncString()
-        child1 = wsgi.AsyncString()
-        child2 = wsgi.AsyncString()
+        root = wsgi.String()
+        child1 = wsgi.String()
+        child2 = wsgi.String()
         root.append(child1)
         root.append(child2)
         self.assertEqual(len(root.children), 2)
@@ -81,10 +81,10 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(len(child1.children), 1)
 
     def test_append_parent_with_parent(self):
-        root = wsgi.AsyncString()
-        child1 = wsgi.AsyncString()
-        child2 = wsgi.AsyncString()
-        child3 = wsgi.AsyncString()
+        root = wsgi.String()
+        child1 = wsgi.String()
+        child2 = wsgi.String()
+        child3 = wsgi.String()
         root.append(child1)
         child1.append(child2)
         child1.append(child3)
@@ -98,10 +98,10 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(child2.parent, root)
 
     def test_change_parent(self):
-        root = wsgi.AsyncString()
-        child1 = wsgi.AsyncString()
-        child2 = wsgi.AsyncString()
-        child3 = wsgi.AsyncString()
+        root = wsgi.String()
+        child1 = wsgi.String()
+        child2 = wsgi.String()
+        child3 = wsgi.String()
         root.append(child1)
         child1.append(child2)
         child1.append(child3)
@@ -112,8 +112,8 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(len(child1.children), 1)
 
     def test_remove_valueerror(self):
-        root = wsgi.AsyncString()
-        child1 = wsgi.AsyncString()
+        root = wsgi.String()
+        child1 = wsgi.String()
         self.assertEqual(len(root.children), 0)
         root.remove(child1)
         self.assertEqual(len(root.children), 0)

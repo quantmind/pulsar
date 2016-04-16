@@ -58,7 +58,7 @@ from functools import reduce, partial
 from http.client import responses
 import asyncio
 
-from pulsar import Future, chain_future, HttpException
+from pulsar import isawaitable, chain_future, HttpException
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie,
                                   has_empty_content, REDIRECT_CODES,
@@ -558,7 +558,7 @@ class WsgiRequest(EnvironMixin):
     def _data_and_files(self, data=True, files=True, stream=None, future=None):
         if future is None:
             data_files = parse_form_data(self.environ, stream=stream)
-            if isinstance(data_files, Future):
+            if isawaitable(data_files):
                 return chain_future(
                     data_files,
                     partial(self._data_and_files, data, files, stream))
