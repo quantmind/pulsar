@@ -9,3 +9,5 @@ unidecode
 flask
 oauthlib
 requests
+certifi
+recommonmark

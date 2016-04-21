@@ -146,6 +146,8 @@ uses them to add additional functionalities or improve performance:
   of the running application.
 * psutil_: if installed, a ``system`` key is available in the dictionary
   returned by Actor info method.
+* python-certifi_: The [HttpClient][] will attempt to use certificates from
+  certifi if it is present on the system.
 * ujson_: if installed it is used instead of the native ``json`` module.
 * django_: required by the ``pulsar.apps.pulse`` application.
 * unidecode_: to enhance the ``slugify`` function
@@ -216,3 +218,4 @@ file in the top distribution directory for the full license text.
 .. _`Quantmind`: http://quantmind.com
 .. _JSON-RPC: http://www.jsonrpc.org/
 .. _mcve: http://stackoverflow.com/help/mcve
+.. _python-certifi: https://certifi.io

@@ -22,8 +22,8 @@ class TestClientCornerCases(unittest.TestCase):
 
     def test_urlparams(self):
         http = HttpClient()
-        urlparams = {'page': 2, 'key': 'foo'}
+        params = {'page': 2, 'key': 'foo'}
         request = HttpRequest(http, 'http://bla.com?k=6', 'post',
-                              urlparams=urlparams)
-        params = parse_qsl(request.query)
-        self.assertEqual(len(params), 3)
+                              params=params)
+        data = parse_qsl(request.query)
+        self.assertEqual(len(data), 3)

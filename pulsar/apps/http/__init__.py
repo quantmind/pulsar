@@ -1,296 +1,3 @@
-"""Pulsar ships with a fully featured, :class:`.HttpClient`
-class for multiple asynchronous HTTP requests.
-
-To get started, one builds a client::
-
-    from pulsar.apps import http
-    client = http.HttpClient()
-
-and than makes requests, in a coroutine::
-
-    response = await http.get('http://www.bbc.co.uk')
-
-Making requests
-=================
-Pulsar HTTP client has no dependencies and an API similar to requests_::
-
-    from pulsar.apps import http
-    client = http.HttpClient()
-    response = await client.get('https://github.com/timeline.json')
-
-``response`` is a :class:`HttpResponse` object which contains all the
-information about the request and the result:
-
-    >>> request = response.request
-    >>> print(request.headers)
-    Connection: Keep-Alive
-    User-Agent: pulsar/0.8.2-beta.1
-    Accept-Encoding: deflate, gzip
-    Accept: */*
-    >>> response.status_code
-    200
-    >>> print(response.headers)
-    ...
-
-The :attr:`~.ProtocolConsumer.request` attribute of :class:`HttpResponse`
-is an instance of :class:`.HttpRequest`.
-
-Posting data and Parameters
-=============================
-
-You can attach parameters to the ``url`` by passing the
-``urlparams`` dictionary:
-
-    response = await http.get('http://bla.com',
-                              urlparams={'page': 2, 'key': 'foo'})
-    response.request.full_url == 'http://bla.com?page=2&key=foo'
-
-
-.. _http-cookie:
-
-Cookie support
-================
-
-Cookies are handled by the client by storing cookies received with responses.
-To disable cookie one can pass ``store_cookies=False`` during
-:class:`HttpClient` initialisation.
-
-If a response contains some Cookies, you can get quick access to them::
-
-    response = await client.get(...)
-    type(response.cookies)
-    <type 'dict'>
-
-To send your own cookies to the server, you can use the cookies parameter::
-
-    response = await client.get(..., cookies={'sessionid': 'test'})
-
-
-.. _http-authentication:
-
-Authentication
-======================
-
-Authentication, either ``basic`` or ``digest``, can be added to a
-client by invoking
-
-* :meth:`HttpClient.add_basic_authentication` or
-* :meth:`HttpClient.add_digest_authentication`
-
-In either case the authentication is handled by adding additional headers
-to your requests.
-
-TLS/SSL
-=================
-Supported out of the box::
-
-    client.get('https://github.com/timeline.json')
-
-The :class:`.HttpClient` can verify SSL certificates for HTTPS requests,
-just like a web browser. To check a host's SSL certificate, you can use the
-``verify`` argument:
-
-    client = HttpClient()
-    client.verify is True
-    client = HttpClient(verify=False)
-    client.verify is False
-
-By default, ``verify`` is set to True.
-
-You can override the ``verify`` argument during requests too:
-
-    res1 = await client.get('https://github.com/timeline.json')
-    res2 = await client.get('https://locahost:8020', verify=False)
-
-You can pass ``verify`` the path to a CA_BUNDLE file or directory with
-certificates of trusted CAs:
-
-    res3 = await client.get('https://locahost:8020',
-                            verify='/path/to/ca_bundle')
-
-
-.. _http-streaming:
-
-Streaming
-=========================
-
-This is an event-driven client, therefore streaming support is native.
-
-The easyiest way to use streaming is to pass the ``stream=True`` parameter
-during a request and access the :attr:`HttpResponse.raw` attribute.
-For example::
-
-    response = await http.get(..., stream=True)
-    for data in response.raw:
-        # data can be a future or bytes
-
-The ``raw`` attribute is an iterable over bytes or Futures resulting in bytes.
-
-Another approach to streaming is to use the
-:ref:`data_processed <http-many-time-events>` event handler.
-For example::
-
-    def new_data(response, **kw):
-        if response.status_code == 200:
-            data = response.recv_body()
-            # do something with this data
-
-    response = http.get(..., data_processed=new_data)
-
-The response :meth:`~.HttpResponse.recv_body` method fetches the parsed body
-of the response and at the same time it flushes it.
-Check the :ref:`proxy server <tutorials-proxy-server>` example for an
-application using the :class:`HttpClient` streaming capabilities.
-
-.. _http-websocket:
-
-WebSocket
-==============
-
-The http client support websocket upgrades. First you need to have a
-websocket handler::
-
-    from pulsar.apps import ws
-
-    class Echo(ws.WS):
-
-        def on_message(self, websocket, message):
-            websocket.write(message)
-
-The websocket response is obtained by::
-
-    ws = await http.get('ws://...', websocket_handler=Echo())
-
-.. _http-redirects:
-
-Redirects & Decompression
-=============================
-
-[TODO]
-
-Synchronous Mode
-=====================
-
-Can be used in :ref:`synchronous mode <tutorials-synchronous>`::
-
-    client = HttpClient(loop=new_event_loop())
-
-Events
-==============
-:ref:`Events <event-handling>` control the behaviour of the
-:class:`.HttpClient` when certain conditions occur. They are useful for
-handling standard HTTP event such as :ref:`redirects <http-redirects>`,
-:ref:`websocket upgrades <http-websocket>`,
-:ref:`streaming <http-streaming>` or anything your application
-requires.
-
-.. _http-one-time-events:
-
-One time events
-~~~~~~~~~~~~~~~~~~~
-
-There are three :ref:`one time events <one-time-event>` associated with an
-:class:`HttpResponse` object:
-
-* ``pre_request``, fired before the request is sent to the server. Callbacks
-  receive the *response* argument.
-* ``on_headers``, fired when response headers are available. Callbacks
-  receive the *response* argument.
-* ``post_request``, fired when the response is done. Callbacks
-  receive the *response* argument.
-
-Adding event handlers can be done at client level::
-
-    def myheader_handler(response, exc=None):
-        if not exc:
-            print('got headers!')
-
-    client.bind_event('on_headers', myheader_handler)
-
-or at request level::
-
-    response = client.get(..., on_headers=myheader_handler)
-
-By default, the :class:`HttpClient` has one ``pre_request`` callback for
-handling `HTTP tunneling`_, three ``on_headers`` callbacks for
-handling *100 Continue*, *websocket upgrade* and :ref:`cookies <http-cookie>`,
-and one ``post_request`` callback for handling redirects.
-
-.. _http-many-time-events:
-
-Many time events
-~~~~~~~~~~~~~~~~~~~
-
-In addition to the three :ref:`one time events <http-one-time-events>`,
-the Http client supports two additional
-events which can occur several times while processing a given response:
-
-* ``data_received`` is fired when new data has been received but not yet
-  parsed
-* ``data_processed`` is fired just after the data has been parsed by the
-  :class:`.HttpResponse`. This is the event one should bind to when performing
-  :ref:`http streaming <http-streaming>`.
-
-
-both events support handlers with a signature::
-
-    def handler(response, data=None):
-        ...
-
-where ``response`` is the :class:`.HttpResponse` handling the request and
-``data`` is the **raw** data received.
-
-API
-==========
-
-The main class here is the :class:`HttpClient` which is a subclass of
-:class:`.AbstractClient`.
-
-
-HTTP Client
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: HttpClient
-   :members:
-   :member-order: bysource
-
-
-HTTP Request
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: HttpRequest
-   :members:
-   :member-order: bysource
-
-HTTP Response
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: HttpResponse
-   :members:
-   :member-order: bysource
-
-
-.. _module:: pulsar.apps.http.oauth
-
-OAuth1
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: OAuth1
-   :members:
-   :member-order: bysource
-
-OAuth2
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: OAuth2
-   :members:
-   :member-order: bysource
-
-
-.. _requests: http://docs.python-requests.org/
-.. _`uri scheme`: http://en.wikipedia.org/wiki/URI_scheme
-.. _`HTTP tunneling`: http://en.wikipedia.org/wiki/HTTP_tunnel
-"""
 import os
 import platform
 import logging
@@ -303,11 +10,17 @@ from http.client import responses
 try:
     import ssl
     BaseSSLError = ssl.SSLError
-except ImportError:
+except ImportError:     # pragma    nocover
     ssl = None
 
     class BaseSSLError(Exception):
         pass
+
+try:
+    from certifi import where
+    DEFAULT_CA_BUNDLE_PATH = where()
+except ImportError:     # pragma    nocover
+    DEFAULT_CA_BUNDLE_PATH = None
 
 import pulsar
 from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
@@ -509,18 +222,18 @@ class HttpRequest(RequestBase):
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
-                 websocket_handler=None, cookies=None, urlparams=None,
+                 websocket_handler=None, cookies=None, params=None,
                  stream=False, proxies=None, verify=True, **ignored):
         self.client = client
         self._data = None
         self.files = files
-        self.urlparams = urlparams
+        self.params = params
         self.inp_params = inp_params or {}
         self.unredirected_headers = Headers(kind='client')
         self.method = method.upper()
         self.full_url = url
-        if urlparams:
-            self._encode_url(urlparams)
+        if params:
+            self._encode_url(params)
         self.history = history
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
@@ -1279,7 +992,7 @@ class HttpClient(AbstractClient):
 
         :rtype: a :class:`.Future`
         """
-        assert not self.event('finish').fired(), "Http session is closed"
+        assert not self.event('finish').fired(), "Http sessions are closed"
         response = self._request(method, url, **params)
         if timeout is None:
             timeout = self.timeout
@@ -1289,16 +1002,6 @@ class HttpClient(AbstractClient):
             return self._loop.run_until_complete(response)
         else:
             return response
-
-    def add_basic_authentication(self, username, password):
-        """Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
-        """
-        self.bind_event('pre_request', HTTPBasicAuth(username, password))
-
-    def add_digest_authentication(self, username, password):
-        """Add a :class:`HTTPDigestAuth` handler to the ``pre_requests`` hook.
-        """
-        self.bind_event('pre_request', HTTPDigestAuth(username, password))
 
     # INTERNALS
     async def _request(self, method, url, **params):
@@ -1353,21 +1056,25 @@ class HttpClient(AbstractClient):
                     check_hostname=False, certfile=None, keyfile=None,
                     cafile=None, capath=None, cadata=None, **kw):
         assert ssl, 'SSL not supported'
+        cafile = cafile or DEFAULT_CA_BUNDLE_PATH
+
         if verify is True:
             cert_reqs = ssl.CERT_REQUIRED
             check_hostname = True
-        elif isinstance(verify, str):
+
+        if isinstance(verify, str):
+            cert_reqs = ssl.CERT_REQUIRED
             if os.path.isfile(verify):
                 cafile = verify
             elif os.path.isdir(verify):
                 capath = verify
-            cert_reqs = ssl.CERT_REQUIRED
 
         return ssl._create_unverified_context(cert_reqs=cert_reqs,
                                               check_hostname=check_hostname,
                                               certfile=certfile,
                                               keyfile=keyfile,
-                                              cafile=cafile, capath=capath,
+                                              cafile=cafile,
+                                              capath=capath,
                                               cadata=cadata)
 
     def _close(self, _, exc=None):

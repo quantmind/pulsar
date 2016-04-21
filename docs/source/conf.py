@@ -8,11 +8,10 @@ source_dir = p(os.path.abspath(__file__))
 ext_dir = os.path.join(source_dir,'_ext')
 docs_dir = p(source_dir)
 base_dir = p(docs_dir)
-#sys.path.append(os.path.join(source_dir, "_ext"))
 sys.path.insert(0, base_dir)
 sys.path.insert(0, ext_dir)
 import pulsar
-import runtests # so that it import stdnet if available
+from setup import meta
 
 ##################
 from recommonmark.parser import CommonMarkParser
@@ -23,8 +22,7 @@ source_parsers = {
     '.md': CommonMarkParser,
 }
 year = date.today().year
-version = pulsar.__version__
-release = version
+version = release = pulsar.__version__
 
 html_theme_options = {
     'logo': 'pulsar-logo.png',
@@ -73,7 +71,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pulsar'
-copyright = '2011-%s, %s' % (year, pulsar.__author__)
+copyright = '2011-%s, %s' % (year, meta['author'])
 
 html_theme = 'alabaster'
 pygments_style = 'sphinx'

@@ -12,7 +12,7 @@ from pulsar.utils.path import Path
 from pulsar.utils.httpurl import iri_to_uri
 from pulsar.utils.system import platform
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
-                              HttpRequestException)
+                              HttpRequestException, HTTPDigestAuth)
 
 
 linux = platform.name == 'posix' and not platform.isMacOSX
@@ -554,13 +554,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     @asyncio.coroutine
     def test_digest_authentication(self):
-        http = self.client()
-        r = yield from http.get(self.httpbin(
+        sessions = self.client()
+        r = yield from sessions.get(self.httpbin(
             'digest-auth/luca/bla/auth'))
         self.assertEqual(r.status_code, 401)
-        http.add_digest_authentication('luca', 'bla')
-        r = yield from http.get(self.httpbin(
-            'digest-auth/luca/bla/auth'))
+        r = yield from sessions.get(self.httpbin(
+            'digest-auth/luca/bla/auth'),
+            auth=HTTPDigestAuth('luca', 'bla'))
         self.assertEqual(r.status_code, 200)
 
     @asyncio.coroutine
