@@ -1,7 +1,5 @@
 import asyncio
 
-from pulsar import isawaitable, ensure_future
-
 
 class StreamConsumedError(Exception):
     '''Same name as request error'''
@@ -9,8 +7,8 @@ class StreamConsumedError(Exception):
 
 
 class HttpStream:
-    '''A streaming body for an HTTP response
-    '''
+    """An asynchronous streaming body for an HTTP response
+    """
     def __init__(self, response):
         self._response = response
         self._streamed = False
@@ -29,30 +27,30 @@ class HttpStream:
         if self._streamed:
             return b''
         buffer = []
-        for body in self:
-            if isawaitable(body):
-                body = await body
+        async for body in self:
             buffer.append(body)
         return b''.join(buffer)
 
     def close(self):
         pass
 
-    def __iter__(self):
-        '''Iterator over bytes or Futures resulting in bytes
-        '''
+    async def __aiter__(self):
         if self._streamed:
             raise StreamConsumedError
         self._streamed = True
         self(self._response)
-        while True:
-            if self.done:
-                try:
-                    yield self._queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    break
-            else:
-                yield ensure_future(self._queue.get())
+        return self
+
+    async def __anext__(self):
+        '''Iterator over bytes or Futures resulting in bytes
+        '''
+        if self.done:
+            try:
+                return self._queue.get_nowait()
+            except asyncio.QueueEmpty:
+                raise StopAsyncIteration
+        else:
+            return await self._queue.get()
 
     def __call__(self, response, exc=None, **kw):
         if self._streamed and response.parser.is_headers_complete():

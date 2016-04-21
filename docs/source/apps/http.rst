@@ -147,11 +147,16 @@ The easyiest way to use streaming is to pass the ``stream=True`` parameter
 during a request and access the :attr:`HttpResponse.raw` attribute.
 For example::
 
-    response = await sessions.get(..., stream=True)
-    for data in response.raw:
-        # data can be a future or bytes
+    async def body_coroutine(url):
+        # wait for response headers
+        response = await sessions.get(url, stream=True)
+        #
+        async for data in response.raw:
+           # data is a chunk of bytes
+           ...
+           
 
-The ``raw`` attribute is an iterable over bytes or Futures resulting in bytes.
+The ``raw`` attribute is an asynchronous iterable over bytes.
 
 Another approach to streaming is to use the
 :ref:`data_processed <http-many-time-events>` event handler.
@@ -267,11 +272,14 @@ both events support handlers with a signature::
 where ``response`` is the :class:`.HttpResponse` handling the request and
 ``data`` is the **raw** data received.
 
+.. module:: pulsar.apps.http
+
 API
 ==========
 
-The main class here is the :class:`HttpClient` which is a subclass of
-:class:`.AbstractClient`.
+The main classes here are the :class:`.HttpClient`, a subclass of
+:class:`.AbstractClient`, the :class:`.HttpResponse`, returned by http
+requests and the :class:`.HttpRequest`.
 
 
 HTTP Client
