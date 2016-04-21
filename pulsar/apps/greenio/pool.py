@@ -1,3 +1,4 @@
+import sys
 import threading
 import logging
 from collections import deque
@@ -122,7 +123,10 @@ class GreenPool(AsyncObject):
                     task = await task
                 except Exception as exc:
                     # This call can return an asynchronous component
-                    task = green.throw(exc)
+                    exc_info = sys.exc_info()
+                    if not exc_info[0]:
+                        exc_info = (exc, None, None)
+                    task = green.throw(*exc_info)
 
     def _green_run(self):
         # The run method of a worker greenlet
