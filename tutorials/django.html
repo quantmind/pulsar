@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Django with Pulsar &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>Django with Pulsar &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Green Flask" href="flaskgreen.html" />
     <link rel="prev" title="Websocket Chat Server" href="chat.html" />
@@ -87,13 +87,6 @@ classes are used.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="examples.djchat.djchat.views.Chat.on_open">
-<code class="descname">on_open</code><span class="sig-paren">(</span><em>websocket</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat.on_open" title="Permalink to this definition">¶</a></dt>
-<dd><p>A new websocket connection is established.</p>
-<p>Add it to the set of clients listening for messages.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="examples.djchat.djchat.views.Chat.on_close">
 <code class="descname">on_close</code><span class="sig-paren">(</span><em>websocket</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat.on_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat.on_close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Leave the chat room</p>
@@ -103,6 +96,13 @@ classes are used.</p>
 <dt id="examples.djchat.djchat.views.Chat.on_message">
 <code class="descname">on_message</code><span class="sig-paren">(</span><em>websocket</em>, <em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat.on_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>When a new message arrives, it publishes to all listening clients.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="examples.djchat.djchat.views.Chat.on_open">
+<code class="descname">on_open</code><span class="sig-paren">(</span><em>websocket</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/djchat/djchat/views.html#Chat.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.djchat.djchat.views.Chat.on_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>A new websocket connection is established.</p>
+<p>Add it to the set of clients listening for messages.</p>
 </dd></dl>
 
 </dd></dl>

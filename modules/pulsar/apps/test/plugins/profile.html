@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.plugins.profile &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.apps.test.plugins.profile &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../../test.html" />
    
   
@@ -75,7 +75,9 @@
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">StringIO</span> <span class="k">as</span> <span class="n">Stream</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">test</span>
+
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">TestPlugin</span>
+
 
 <span class="n">other_filename</span> <span class="o">=</span> <span class="s1">&#39;unknown&#39;</span>
 <span class="n">line_func</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;(?P&lt;line&gt;\d+)\((?P&lt;func&gt;\w+)\)&#39;</span><span class="p">)</span>
@@ -162,8 +164,9 @@
         <span class="nb">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Profile"><a class="viewcode-back" href="../../../../../apps/test.html#pulsar.apps.test.plugins.profile.Profile">[docs]</a><span class="k">class</span> <span class="nc">Profile</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">TestPlugin</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;:class:`pulsar.apps.test.TestPlugin` for profiling test cases.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Profile"><a class="viewcode-back" href="../../../../../apps/test.html#pulsar.apps.test.plugins.profile.Profile">[docs]</a><span class="k">class</span> <span class="nc">Profile</span><span class="p">(</span><span class="n">TestPlugin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;TestPlugin for profiling test cases.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;Profile tests using the cProfile module&#39;&#39;&#39;</span>
     <span class="n">profile_stats_path</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">(</span>
         <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--profile-stats-path&#39;</span><span class="p">],</span>

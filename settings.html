@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>Settings &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="index.html" />
     <link rel="next" title="Acknowledgement" href="acknowledgement.html" />
     <link rel="prev" title="Release Notes" href="changelog.html" />
    
@@ -96,10 +96,10 @@ background.</p>
 <p>Auto reload modules when changes occurs.</p>
 <p>Useful during development.</p>
 </div>
-<div class="section" id="pidfile">
-<span id="setting-pidfile"></span><h3>pidfile<a class="headerlink" href="#pidfile" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <code class="docutils literal"><span class="pre">pidfile</span></code></p>
-<p><em>Command line</em>: <code class="docutils literal"><span class="pre">-p</span></code>, <code class="docutils literal"><span class="pre">--pid</span></code></p>
+<div class="section" id="pid-file">
+<span id="setting-pid-file"></span><h3>pid_file<a class="headerlink" href="#pid-file" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <code class="docutils literal"><span class="pre">pid_file</span></code></p>
+<p><em>Command line</em>: <code class="docutils literal"><span class="pre">-p</span></code>, <code class="docutils literal"><span class="pre">--pid-file</span></code></p>
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>A filename to use for the PID file.</p>
 <p>If not set, no PID file will be written.</p>
@@ -131,9 +131,9 @@ the worker process user.</p>
 retrieved with a call to pwd.getgrnam(value) or None to not change
 the worker processes group.</p>
 </div>
-<div class="section" id="loglevel">
-<span id="setting-loglevel"></span><h3>loglevel<a class="headerlink" href="#loglevel" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <code class="docutils literal"><span class="pre">loglevel</span></code></p>
+<div class="section" id="log-level">
+<span id="setting-log-level"></span><h3>log_level<a class="headerlink" href="#log-level" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <code class="docutils literal"><span class="pre">log_level</span></code></p>
 <p><em>Command line</em>: <code class="docutils literal"><span class="pre">--log-level</span></code></p>
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">['info']</span></code></p>
 <p>The granularity of log outputs.</p>
@@ -149,16 +149,16 @@ Valid level names are:</p>
 <li>none</li>
 </ul>
 </div>
-<div class="section" id="loghandlers">
-<span id="setting-loghandlers"></span><h3>loghandlers<a class="headerlink" href="#loghandlers" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <code class="docutils literal"><span class="pre">loghandlers</span></code></p>
+<div class="section" id="log-handlers">
+<span id="setting-log-handlers"></span><h3>log_handlers<a class="headerlink" href="#log-handlers" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <code class="docutils literal"><span class="pre">log_handlers</span></code></p>
 <p><em>Command line</em>: <code class="docutils literal"><span class="pre">--log-handlers</span></code></p>
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">['console']</span></code></p>
 <p>Log handlers for pulsar server</p>
 </div>
-<div class="section" id="logconfig">
-<span id="setting-logconfig"></span><h3>logconfig<a class="headerlink" href="#logconfig" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <code class="docutils literal"><span class="pre">logconfig</span></code></p>
+<div class="section" id="log-config">
+<span id="setting-log-config"></span><h3>log_config<a class="headerlink" href="#log-config" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <code class="docutils literal"><span class="pre">log_config</span></code></p>
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">{}</span></code></p>
 <p>The logging configuration dictionary.</p>
 <p>This settings can only be specified on a config file and therefore
@@ -167,7 +167,7 @@ no command-line parameter is available.</p>
 <div class="section" id="process-name">
 <span id="setting-process-name"></span><h3>process_name<a class="headerlink" href="#process-name" title="Permalink to this headline">¶</a></h3>
 <p><em>Config name</em>: <code class="docutils literal"><span class="pre">process_name</span></code></p>
-<p><em>Command line</em>: <code class="docutils literal"><span class="pre">-n</span></code>, <code class="docutils literal"><span class="pre">--name</span></code></p>
+<p><em>Command line</em>: <code class="docutils literal"><span class="pre">-n</span></code>, <code class="docutils literal"><span class="pre">--process-name</span></code></p>
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>A base to use with setproctitle for process naming.</p>
 <p>This affects things like <code class="docutils literal"><span class="pre">ps</span></code> and <code class="docutils literal"><span class="pre">top</span></code>. If you&#8217;re going to be
@@ -514,16 +514,29 @@ To see available labels use the <code class="docutils literal"><span class="pre"
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">False</span></code></p>
 <p>Run test functions sequentially.</p>
 </div>
-<div class="section" id="show-leaks">
-<span id="setting-show-leaks"></span><h3>show_leaks<a class="headerlink" href="#show-leaks" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="coveralls">
+<span id="setting-coveralls"></span><h3>coveralls<a class="headerlink" href="#coveralls" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <code class="docutils literal"><span class="pre">test</span></code></p>
-<p><em>Config name</em>: <code class="docutils literal"><span class="pre">show_leaks</span></code></p>
-<p><em>Command line</em>: <code class="docutils literal"><span class="pre">--show-leaks</span></code></p>
-<p><em>Default</em>: <code class="docutils literal"><span class="pre">0</span></code></p>
-<p>Shows memory leaks.</p>
-<blockquote>
-<div>Run the garbage collector before a process-based actor dies and shows
-the memory leak report.</div></blockquote>
+<p><em>Config name</em>: <code class="docutils literal"><span class="pre">coveralls</span></code></p>
+<p><em>Command line</em>: <code class="docutils literal"><span class="pre">--coveralls</span></code></p>
+<p><em>Default</em>: <code class="docutils literal"><span class="pre">False</span></code></p>
+<p>Publish coverage to coveralls.</p>
+</div>
+<div class="section" id="test-plugins">
+<span id="setting-test-plugins"></span><h3>test_plugins<a class="headerlink" href="#test-plugins" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <code class="docutils literal"><span class="pre">test</span></code></p>
+<p><em>Config name</em>: <code class="docutils literal"><span class="pre">test_plugins</span></code></p>
+<p><em>Command line</em>: <code class="docutils literal"><span class="pre">--test-plugins</span></code></p>
+<p><em>Default</em>: <code class="docutils literal"><span class="pre">['pulsar.apps.test.plugins.bench:BenchMark',</span> <span class="pre">'pulsar.apps.test.plugins.profile:Profile']</span></code></p>
+<p>Test plugins.</p>
+</div>
+<div class="section" id="test-modules">
+<span id="setting-test-modules"></span><h3>test_modules<a class="headerlink" href="#test-modules" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <code class="docutils literal"><span class="pre">test</span></code></p>
+<p><em>Config name</em>: <code class="docutils literal"><span class="pre">test_modules</span></code></p>
+<p><em>Command line</em>: <code class="docutils literal"><span class="pre">--test-modules</span></code></p>
+<p><em>Default</em>: <code class="docutils literal"><span class="pre">[]</span></code></p>
+<p>An iterable over modules where to look for tests.</p>
 </div>
 </div>
 <div class="section" id="utilities">

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.protocols &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.async.protocols &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -220,10 +220,9 @@
         <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_abort_request</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">AbortRequest</span></div>
 
-    <span class="nd">@asyncio.coroutine</span>
-    <span class="k">def</span> <span class="nf">_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s1">&#39;pre_request&#39;</span><span class="p">)</span>
+            <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s1">&#39;pre_request&#39;</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">AbortEvent</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Abort request </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -280,12 +279,12 @@
             <span class="n">c</span><span class="o">.</span><span class="n">_current_consumer</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="nd">@task</span>
-    <span class="k">def</span> <span class="nf">_abort_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fut</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_abort_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fut</span><span class="p">):</span>
         <span class="n">exc</span> <span class="o">=</span> <span class="n">fut</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span><span class="o">.</span><span class="n">fired</span><span class="p">():</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
+                    <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
                 <span class="k">except</span> <span class="n">AbortRequest</span><span class="p">:</span>
                     <span class="k">pass</span></div>
 
@@ -673,7 +672,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">sockets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">getsockname</span><span class="p">()</span>
 
     <span class="nd">@task</span>
-<div class="viewcode-block" id="TcpServer.start_serving"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.TcpServer.start_serving">[docs]</a>    <span class="k">def</span> <span class="nf">start_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backlog</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">sslcontext</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="TcpServer.start_serving"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.TcpServer.start_serving">[docs]</a>    <span class="n">async</span> <span class="k">def</span> <span class="nf">start_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backlog</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">sslcontext</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Start serving.</span>
 
 <span class="sd">        :param backlog: Number of maximum connections</span>
@@ -691,21 +690,21 @@
                 <span class="k">if</span> <span class="n">sockets</span><span class="p">:</span>
                     <span class="n">server</span> <span class="o">=</span> <span class="bp">None</span>
                     <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">sockets</span><span class="p">:</span>
-                        <span class="n">srv</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">create_server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span><span class="p">,</span>
-                                                       <span class="n">sock</span><span class="o">=</span><span class="n">sock</span><span class="p">,</span>
-                                                       <span class="n">backlog</span><span class="o">=</span><span class="n">backlog</span><span class="p">,</span>
-                                                       <span class="n">ssl</span><span class="o">=</span><span class="n">sslcontext</span><span class="p">)</span>
+                        <span class="n">srv</span> <span class="o">=</span> <span class="n">await</span> <span class="n">create_server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span><span class="p">,</span>
+                                                  <span class="n">sock</span><span class="o">=</span><span class="n">sock</span><span class="p">,</span>
+                                                  <span class="n">backlog</span><span class="o">=</span><span class="n">backlog</span><span class="p">,</span>
+                                                  <span class="n">ssl</span><span class="o">=</span><span class="n">sslcontext</span><span class="p">)</span>
                         <span class="k">if</span> <span class="n">server</span><span class="p">:</span>
                             <span class="n">server</span><span class="o">.</span><span class="n">sockets</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">srv</span><span class="o">.</span><span class="n">sockets</span><span class="p">)</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="n">server</span> <span class="o">=</span> <span class="n">srv</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-                        <span class="n">server</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">create_server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span><span class="p">,</span>
-                                                          <span class="n">host</span><span class="o">=</span><span class="n">address</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                                                          <span class="n">port</span><span class="o">=</span><span class="n">address</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-                                                          <span class="n">backlog</span><span class="o">=</span><span class="n">backlog</span><span class="p">,</span>
-                                                          <span class="n">ssl</span><span class="o">=</span><span class="n">sslcontext</span><span class="p">)</span>
+                        <span class="n">server</span> <span class="o">=</span> <span class="n">await</span> <span class="n">create_server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span><span class="p">,</span>
+                                                     <span class="n">host</span><span class="o">=</span><span class="n">address</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                     <span class="n">port</span><span class="o">=</span><span class="n">address</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                                     <span class="n">backlog</span><span class="o">=</span><span class="n">backlog</span><span class="p">,</span>
+                                                     <span class="n">ssl</span><span class="o">=</span><span class="n">sslcontext</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">server</span>
@@ -789,14 +788,14 @@
             <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="nb">all</span><span class="p">)</span>
 
     <span class="nd">@task</span>
-    <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Stop serving the :attr:`.Server.sockets` and close all</span>
 <span class="sd">        concurrent connections.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">server</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">coro</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_close_connections</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">coro</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="n">coro</span>
+            <span class="n">await</span> <span class="n">coro</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s1">&#39;stop&#39;</span><span class="p">)</span></div>
 
 
@@ -823,7 +822,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="n">address</span><span class="p">,</span> <span class="s1">&#39;sockets&#39;</span><span class="p">:</span> <span class="n">sockets</span><span class="p">}</span>
 
     <span class="nd">@task</span>
-<div class="viewcode-block" id="DatagramServer.create_endpoint"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.DatagramServer.create_endpoint">[docs]</a>    <span class="k">def</span> <span class="nf">create_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<div class="viewcode-block" id="DatagramServer.create_endpoint"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.DatagramServer.create_endpoint">[docs]</a>    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;create the server endpoint.</span>
 
 <span class="sd">        :return: a :class:`~asyncio.Future` called back when the server is</span>
@@ -841,7 +840,7 @@
                         <span class="n">transports</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">transport</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="n">proto</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
-                    <span class="n">transport</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">loop</span><span class="o">.</span><span class="n">create_datagram_endpoint</span><span class="p">(</span>
+                    <span class="n">transport</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">await</span> <span class="n">loop</span><span class="o">.</span><span class="n">create_datagram_endpoint</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span><span class="p">,</span> <span class="n">local_addr</span><span class="o">=</span><span class="n">address</span><span class="p">)</span>
                     <span class="n">transports</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">transport</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_transports</span> <span class="o">=</span> <span class="n">transports</span>

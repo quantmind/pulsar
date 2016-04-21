@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous WSGI &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>Asynchronous WSGI &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Routing" href="routing.html" />
     <link rel="prev" title="WSGI Server" href="intro.html" />
@@ -100,7 +100,7 @@ in the tutorial. It accepts two iterables, a list of
 <a class="reference internal" href="response.html#wsgi-response-middleware"><span>response middleware</span></a>.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler">
-<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.handlers.</code><code class="descname">WsgiHandler</code><span class="sig-paren">(</span><em>middleware=None</em>, <em>response_middleware=None</em>, <em>async=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#WsgiHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.handlers.</code><code class="descname">WsgiHandler</code><span class="sig-paren">(</span><em>middleware=None</em>, <em>response_middleware=None</em>, <em>async=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#WsgiHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="Permalink to this definition">¶</a></dt>
 <dd><p>An handler for applications conforming to python <a class="reference external" href="http://www.wsgi.org">WSGI</a>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler.middleware">

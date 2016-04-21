@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -102,7 +102,7 @@
 <span class="kn">from</span> <span class="nn">http.client</span> <span class="kn">import</span> <span class="n">responses</span>
 <span class="kn">import</span> <span class="nn">asyncio</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">chain_future</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">isawaitable</span><span class="p">,</span> <span class="n">chain_future</span><span class="p">,</span> <span class="n">HttpException</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">SimpleCookie</span><span class="p">,</span>
                                   <span class="n">has_empty_content</span><span class="p">,</span> <span class="n">REDIRECT_CODES</span><span class="p">,</span>
@@ -602,7 +602,7 @@
     <span class="k">def</span> <span class="nf">_data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">future</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">data_files</span> <span class="o">=</span> <span class="n">parse_form_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_files</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">data_files</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span>
                     <span class="n">data_files</span><span class="p">,</span>
                     <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_and_files</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">stream</span><span class="p">))</span>
@@ -684,7 +684,23 @@
 <div class="viewcode-block" id="WsgiRequest.redirect"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.redirect">[docs]</a>    <span class="k">def</span> <span class="nf">redirect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Redirect to a different ``path``</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WsgiRequest.set_response_content_type"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.set_response_content_type">[docs]</a>    <span class="k">def</span> <span class="nf">set_response_content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_content_types</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Evaluate the content type for the response to a client ``request``.</span>
+
+<span class="sd">        The method uses the :attr:`response_content_types` parameter of</span>
+<span class="sd">        accepted content types and the content types accepted by the client</span>
+<span class="sd">        ``request`` and figures out the best match.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">request_content_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_types</span>
+        <span class="k">if</span> <span class="n">request_content_types</span><span class="p">:</span>
+            <span class="n">ct</span> <span class="o">=</span> <span class="n">request_content_types</span><span class="o">.</span><span class="n">best_match</span><span class="p">(</span><span class="n">response_content_types</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ct</span> <span class="ow">and</span> <span class="s1">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">ct</span><span class="p">:</span>
+                <span class="n">ct</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ct</span> <span class="ow">and</span> <span class="n">response_content_types</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">415</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">request_content_types</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">ct</span></div></div>
 
 
 <span class="n">set_wsgi_request_class</span><span class="p">(</span><span class="n">WsgiRequest</span><span class="p">)</span>

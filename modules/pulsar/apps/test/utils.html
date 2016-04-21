@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.utils &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.apps.test.utils &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" />
    
   
@@ -81,18 +81,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sequential&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;NOT_TEST_METHODS&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;ActorTestMixin&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;AsyncAssert&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;check_server&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;test_timeout&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;dont_run_with_thread&#39;</span><span class="p">]</span>
-
-
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;pulsar.test&#39;</span><span class="p">)</span>
-<span class="n">NOT_TEST_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;setUp&#39;</span><span class="p">,</span> <span class="s1">&#39;tearDown&#39;</span><span class="p">,</span> <span class="s1">&#39;_pre_setup&#39;</span><span class="p">,</span> <span class="s1">&#39;_post_teardown&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;setUpClass&#39;</span><span class="p">,</span> <span class="s1">&#39;tearDownClass&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">skip_test</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
@@ -166,8 +155,8 @@
 
 <span class="sd">        class MyTest(unittest.TestCase):</span>
 
-<span class="sd">            def test1(self):</span>
-<span class="sd">                yield from self.async.assertEqual(3, Future().callback(3))</span>
+<span class="sd">            async def test1(self):</span>
+<span class="sd">                await self.wait.assertEqual(3, Future().callback(3))</span>
 <span class="sd">                ...</span>
 
 
@@ -184,20 +173,18 @@
 
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 
-        <span class="nd">@asyncio.coroutine</span>
-        <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">as_gather</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">async</span> <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">await</span> <span class="n">as_gather</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">result</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">result</span>
             <span class="k">return</span> <span class="n">result</span>
 
         <span class="k">return</span> <span class="n">_</span>
 
-    <span class="nd">@asyncio.coroutine</span>
-    <span class="k">def</span> <span class="nf">assertRaises</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">assertRaises</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">await</span> <span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">error</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c1"># pragma    nocover</span>
@@ -228,15 +215,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span>
 
-    <span class="nd">@asyncio.coroutine</span>
-<div class="viewcode-block" id="ActorTestMixin.spawn_actor"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin.spawn_actor">[docs]</a>    <span class="k">def</span> <span class="nf">spawn_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ActorTestMixin.spawn_actor"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin.spawn_actor">[docs]</a>    <span class="n">async</span> <span class="k">def</span> <span class="nf">spawn_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Spawn a new actor and perform some tests</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">concurrency</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">concurrency</span>
         <span class="n">ad</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">concurrency</span><span class="o">=</span><span class="n">concurrency</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">)</span>
-        <span class="n">proxy</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">ad</span>
+        <span class="n">proxy</span> <span class="o">=</span> <span class="n">await</span> <span class="n">ad</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_spawned</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span> <span class="n">ad</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="n">proxy</span><span class="p">)</span>

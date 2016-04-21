@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.flaskgreen.manage &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>examples.flaskgreen.manage &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -80,12 +80,11 @@
 
 <span class="sd">.. _flask: http://flask.pocoo.org/</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
 <span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">make_response</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
-
-<span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">AbstractClient</span><span class="p">,</span> <span class="n">ProtocolError</span>
@@ -141,13 +140,14 @@
 
 
 <div class="viewcode-block" id="EchoGreen"><a class="viewcode-back" href="../../../tutorials/flaskgreen.html#examples.flaskgreen.manage.EchoGreen">[docs]</a><span class="k">class</span> <span class="nc">EchoGreen</span><span class="p">(</span><span class="n">AbstractClient</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A client for the echo server.</span>
+    <span class="sd">&quot;&quot;&quot;A client for the echo server to be used by the Flask application</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">EchoProtocol</span><span class="p">)</span>
+    <span class="n">address</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">wait</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">appname</span><span class="p">,</span> <span class="n">wait</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">address</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app_name</span> <span class="o">=</span> <span class="n">appname</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait</span> <span class="o">=</span> <span class="n">wait</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
 
@@ -157,13 +157,16 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
 
-    <span class="nd">@asyncio.coroutine</span>
-    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="c1"># get the address of the echo application</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">:</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="n">await</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_application</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">connection</span><span class="p">:</span>
             <span class="n">consumer</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
             <span class="n">consumer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-            <span class="k">yield from</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+            <span class="n">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
             <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">buffer</span></div>
 
 
@@ -173,6 +176,10 @@
     <span class="nd">@app.errorhandler</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">not_found</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;404 Page&quot;</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
+
+    <span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">home</span><span class="p">():</span>
+        <span class="k">return</span> <span class="s2">&quot;Try any other url for an echo&quot;</span>
 
     <span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/&lt;path&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
     <span class="k">def</span> <span class="nf">add_org</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
@@ -187,27 +194,31 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">green_pool</span> <span class="o">=</span> <span class="n">GreenPool</span><span class="p">()</span>
-        <span class="n">echo</span> <span class="o">=</span> <span class="n">EchoGreen</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="n">green_pool</span><span class="o">.</span><span class="n">wait</span><span class="p">)</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.cfg&#39;</span><span class="p">]</span>
+        <span class="n">echo_app_name</span> <span class="o">=</span> <span class="s1">&#39;echo_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">echo</span> <span class="o">=</span> <span class="n">EchoGreen</span><span class="p">(</span><span class="n">echo_app_name</span><span class="p">,</span> <span class="n">green_pool</span><span class="o">.</span><span class="n">wait</span><span class="p">)</span>
         <span class="n">app</span> <span class="o">=</span> <span class="n">FlaskApp</span><span class="p">(</span><span class="n">echo</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">GreenWSGI</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">green_pool</span><span class="p">)],</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">GreenWSGI</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">green_pool</span><span class="p">)])</span></div>
 
 
-<span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">FlaskSite</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="Servers"><a class="viewcode-back" href="../../../tutorials/flaskgreen.html#examples.flaskgreen.manage.Servers">[docs]</a><span class="k">class</span> <span class="nc">Servers</span><span class="p">(</span><span class="n">MultiApp</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">FlaskGreen</span><span class="p">(</span><span class="n">MultiApp</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Multiapp Server configurator</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="s1">&#39;:8080&#39;</span><span class="p">,</span> <span class="n">echo_bind</span><span class="o">=</span><span class="s1">&#39;:8060&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">WSGIServer</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="n">Site</span><span class="p">())</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">SocketServer</span><span class="p">,</span> <span class="s1">&#39;echo&#39;</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="n">EchoServerProtocol</span><span class="p">)</span></div>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">WSGIServer</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="n">FlaskSite</span><span class="p">())</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">SocketServer</span><span class="p">,</span> <span class="s1">&#39;echo&#39;</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="n">EchoServerProtocol</span><span class="p">,</span>
+                           <span class="n">echo_connection_made</span><span class="o">=</span><span class="n">log_connection</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">log_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Got a new connection to echo server!&#39;</span><span class="p">)</span>
 
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c1"># pragma    nocover</span>
-    <span class="n">Servers</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">FlaskGreen</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 
           </div>

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.server &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -61,12 +61,12 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">io</span>
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">wait_for</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">wait_for</span><span class="p">,</span> <span class="n">ensure_future</span><span class="p">,</span> <span class="n">sleep</span>
 <span class="kn">from</span> <span class="nn">wsgiref.handlers</span> <span class="kn">import</span> <span class="n">format_date_time</span>
 <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">unquote</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">reraise</span><span class="p">,</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">isfuture</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">reraise</span><span class="p">,</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">isawaitable</span><span class="p">,</span>
                     <span class="n">BadRequest</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">native_str</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">has_empty_content</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">,</span>
@@ -291,7 +291,8 @@
                                                    <span class="n">parser</span><span class="p">,</span>
                                                    <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">,</span>
                                                    <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wsgi_environ</span><span class="p">())</span>
+                <span class="n">ensure_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wsgi_environ</span><span class="p">()),</span>
+                              <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
             <span class="n">body</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">recv_body</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">body</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_body_reader</span><span class="o">.</span><span class="n">feed_data</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
@@ -415,8 +416,7 @@
 
     <span class="c1">########################################################################</span>
     <span class="c1">#    INTERNALS</span>
-    <span class="nd">@task</span>
-    <span class="k">def</span> <span class="nf">_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
         <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
@@ -429,12 +429,12 @@
                             <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SERVER_PROTOCOL&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;HTTP/1.0&#39;</span><span class="p">):</span>
                         <span class="k">raise</span> <span class="n">BadRequest</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
-                        <span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+                        <span class="n">response</span> <span class="o">=</span> <span class="n">await</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc_info</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
-                        <span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+                        <span class="n">response</span> <span class="o">=</span> <span class="n">await</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
                 <span class="c1">#</span>
                 <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
@@ -444,12 +444,12 @@
                 <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
                 <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
-                        <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
+                        <span class="n">chunk</span> <span class="o">=</span> <span class="n">await</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
                         <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">isfuture</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
-                        <span class="k">yield from</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+                        <span class="n">await</span> <span class="n">wait_for</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">alive</span><span class="p">)</span>
                         <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">time_in_loop</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
@@ -457,7 +457,7 @@
                             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
                                 <span class="s1">&#39;Released the event loop after </span><span class="si">%.3f</span><span class="s1"> seconds&#39;</span><span class="p">,</span>
                                 <span class="n">time_in_loop</span><span class="p">)</span>
-                            <span class="k">yield</span> <span class="bp">None</span>
+                            <span class="n">await</span> <span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
                             <span class="n">start</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="c1">#</span>
                 <span class="c1"># make sure we write headers and last chunk if needed</span>

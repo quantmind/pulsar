@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.apps.test &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
   
@@ -50,25 +50,52 @@
 
 <span class="sd">.. _apps-test-intro:</span>
 
-<span class="sd">Introduction</span>
-<span class="sd">====================</span>
+<span class="sd">Integration</span>
+<span class="sd">===============</span>
 
-<span class="sd">To get started with pulsar asynchronous test suite is easy. The first thing to</span>
-<span class="sd">do is to create a python ``script`` on the top level directory of your library,</span>
-<span class="sd">let&#39;s call it ``runtests.py``::</span>
+<span class="sd">Pulsar test suite can be used in conjunction with setuptools_ or stand-alone.</span>
+
+<span class="sd">Setuptools Integration</span>
+<span class="sd">--------------------------</span>
+
+<span class="sd">Pulsar asynchronous test suite can be used as testing framework in</span>
+<span class="sd">your setuptools based project.</span>
+<span class="sd">Add this to setup.py file::</span>
+
+<span class="sd">    from setuptools import setup</span>
+
+<span class="sd">    setup(</span>
+<span class="sd">        #...,</span>
+<span class="sd">        setup_requires=[&#39;pulsar&#39;, ...],</span>
+<span class="sd">        #...,</span>
+<span class="sd">    )</span>
+
+<span class="sd">And create an alias into ``setup.cfg`` file::</span>
+
+<span class="sd">    [aliases]</span>
+<span class="sd">    test=pulsar_test</span>
+
+<span class="sd">If you now type::</span>
+
+<span class="sd">    python setup.py test</span>
+
+<span class="sd">this will execute your tests using pulsar test runner. As this is a</span>
+<span class="sd">standalone version of pulsar no prior installation whatsoever is</span>
+<span class="sd">required for calling the test command.</span>
+<span class="sd">You can also pass additional arguments to pulsar test,</span>
+<span class="sd">such as your test directory or other options using -a.</span>
+
+
+<span class="sd">Manual Integration</span>
+<span class="sd">--------------------------</span>
+
+<span class="sd">If for some reason you don’t want/can’t use the setuptools integration,</span>
+<span class="sd">you can write a standalone script, for example ``runtests.py``::</span>
 
 <span class="sd">    from pulsar.apps import TestSuite</span>
 
 <span class="sd">    if __name__ == &#39;__main__&#39;:</span>
-<span class="sd">        TestSuite(description=&#39;Test suite for my library&#39;,</span>
-<span class="sd">                  modules=(&#39;regression&#39;,</span>
-<span class="sd">                           (&#39;examples&#39;, &#39;tests&#39;))).start()</span>
-
-<span class="sd">where ``modules`` is a tuple/list which specifies where to</span>
-<span class="sd">:ref:`search for test cases &lt;apps-test-loading&gt;` to run.</span>
-<span class="sd">In the above example the test suite will look for all python files</span>
-<span class="sd">in the ``regression`` module (in a recursive fashion), and for modules</span>
-<span class="sd">called ``tests`` in the ``examples`` module.</span>
+<span class="sd">        TestSuite(description=&#39;Test suite for my library&#39;).start()</span>
 
 <span class="sd">To run the test suite::</span>
 
@@ -80,15 +107,6 @@
 
 <span class="sd">For a list different options/parameters which can be used when running tests.</span>
 
-<span class="sd">.. note::</span>
-
-<span class="sd">    Pulsar test suite help you speed up your tests!</span>
-<span class="sd">    Use ``setUpClass`` rather than ``setUp``, use asynchronous tests and if</span>
-<span class="sd">    not possible add fire power with more test workers.</span>
-
-<span class="sd">    Try with the ``-w 8`` command line input for a laugh.</span>
-
-<span class="sd">The next step is to actually write the tests.</span>
 
 <span class="sd">Writing a Test Case</span>
 <span class="sd">===========================</span>
@@ -356,6 +374,8 @@
 
 <span class="sd">.. automodule:: pulsar.apps.test.utils</span>
 
+
+<span class="sd">.. _setuptools: https://pythonhosted.org/setuptools/index.html</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
@@ -364,15 +384,31 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span><span class="p">,</span> <span class="n">TestOption</span>
 
 <span class="kn">from</span> <span class="nn">.populate</span> <span class="kn">import</span> <span class="n">populate</span><span class="p">,</span> <span class="n">random_string</span>
-<span class="kn">from</span> <span class="nn">.result</span> <span class="kn">import</span> <span class="o">*</span>           <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">.plugins.base</span> <span class="kn">import</span> <span class="o">*</span>     <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">.loader</span> <span class="kn">import</span> <span class="o">*</span>           <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="o">*</span>            <span class="c1"># noqa</span>
-<span class="kn">from</span> <span class="nn">.wsgi</span> <span class="kn">import</span> <span class="o">*</span>             <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.result</span> <span class="kn">import</span> <span class="n">Plugin</span><span class="p">,</span> <span class="n">TestStream</span><span class="p">,</span> <span class="n">TestRunner</span><span class="p">,</span> <span class="n">TestResult</span>
+<span class="kn">from</span> <span class="nn">.plugins.base</span> <span class="kn">import</span> <span class="n">WrapTest</span><span class="p">,</span> <span class="n">TestPlugin</span><span class="p">,</span> <span class="n">validate_plugin_list</span>
+<span class="kn">from</span> <span class="nn">.loader</span> <span class="kn">import</span> <span class="n">TestLoader</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span><span class="n">sequential</span><span class="p">,</span> <span class="n">ActorTestMixin</span><span class="p">,</span> <span class="n">AsyncAssert</span><span class="p">,</span> <span class="n">check_server</span><span class="p">,</span>
+                    <span class="n">test_timeout</span><span class="p">,</span> <span class="n">dont_run_with_thread</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.wsgi</span> <span class="kn">import</span> <span class="n">HttpTestClient</span>
 <span class="kn">from</span> <span class="nn">.runner</span> <span class="kn">import</span> <span class="n">Runner</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;populate&#39;</span><span class="p">,</span> <span class="s1">&#39;random_string&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;populate&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;random_string&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HttpTestClient&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;TestLoader&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Plugin&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;TestStream&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;TestRunner&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;TestResult&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;WrapTest&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;TestPlugin&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;sequential&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ActorTestMixin&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;AsyncAssert&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;check_server&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;test_timeout&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;dont_run_with_thread&#39;</span><span class="p">]</span>
 
 
 <span class="n">pyver</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
@@ -382,20 +418,16 @@
 <span class="s1">:ref:`Asynchronous/Parallel test suite &lt;apps-test&gt;`.&#39;&#39;&#39;</span>
 
 
-<span class="k">class</span> <span class="nc">ExitTest</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-    <span class="k">pass</span>
-
-
 <span class="k">class</span> <span class="nc">TestVerbosity</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;verbosity&#39;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--verbosity&#39;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_int</span>
     <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
     <span class="n">default</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Test verbosity, 0, 1, 2, 3&quot;&quot;&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">TestTimeout</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;test_timeout&#39;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--test-timeout&#39;</span><span class="p">]</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_int</span>
     <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
@@ -419,7 +451,7 @@
 <span class="k">class</span> <span class="nc">TestExcludeLabels</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;exclude_labels&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-e&#39;</span><span class="p">,</span> <span class="s1">&#39;--exclude-labels&#39;</span><span class="p">]</span>
-    <span class="n">nargs</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span>
+    <span class="n">nargs</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s1">&#39;Exclude a group o labels from running.&#39;</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_list</span>
 
@@ -450,19 +482,31 @@
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Run test functions sequentially.&quot;&quot;&quot;</span>
 
 
-<span class="k">class</span> <span class="nc">TestShowLeaks</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;show_leaks&quot;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--show-leaks&#39;</span><span class="p">]</span>
-    <span class="n">nargs</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span>
-    <span class="n">choices</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="n">const</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Shows memory leaks.</span>
+<span class="k">class</span> <span class="nc">Coveralls</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--coveralls&#39;</span><span class="p">]</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;store_true&#39;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Publish coverage to coveralls.&quot;&quot;&quot;</span>
 
-<span class="s2">    Run the garbage collector before a process-based actor dies and shows</span>
-<span class="s2">    the memory leak report.</span>
-<span class="s2">    &quot;&quot;&quot;</span>
+
+<span class="k">class</span> <span class="nc">TestPlugins</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--test-plugins&#39;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_plugin_list</span>
+    <span class="n">nargs</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;pulsar.apps.test.plugins.bench:BenchMark&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;pulsar.apps.test.plugins.profile:Profile&#39;</span><span class="p">]</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;Test plugins.&#39;&#39;&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">TestModules</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--test-modules&#39;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_list</span>
+    <span class="n">nargs</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\</span>
+<span class="s1">        An iterable over modules where to look for tests.</span>
+<span class="s1">        &#39;&#39;&#39;</span>
 
 
 <div class="viewcode-block" id="TestSuite"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite">[docs]</a><span class="k">class</span> <span class="nc">TestSuite</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
@@ -492,43 +536,19 @@
 <span class="sd">    :parameter plugins: Optional list of :class:`.TestPlugin` instances.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;test&#39;</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">],</span>
-                        <span class="n">loglevel</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;none&#39;</span><span class="p">],</span>
-                        <span class="n">plugins</span><span class="o">=</span><span class="p">())</span>
-
-<div class="viewcode-block" id="TestSuite.new_runner"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.new_runner">[docs]</a>    <span class="k">def</span> <span class="nf">new_runner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`.TestRunner` driving test cases.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">result_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;result_class&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="n">stream</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="n">runner</span> <span class="o">=</span> <span class="n">TestRunner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">result_class</span><span class="p">)</span>
-        <span class="n">abort_message</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">abort_message</span><span class="p">:</span>    <span class="c1"># pragma    nocover</span>
-            <span class="k">raise</span> <span class="n">ExitTest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">abort_message</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">runner</span> <span class="o">=</span> <span class="n">runner</span>
-        <span class="k">return</span> <span class="n">runner</span></div>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">],</span> <span class="n">log_level</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;none&#39;</span><span class="p">])</span>
 
     <span class="nd">@lazyproperty</span>
     <span class="k">def</span> <span class="nf">loader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># When config is available load the tests and check what type of</span>
-        <span class="c1"># action is required.</span>
-        <span class="n">modules</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;modules&#39;</span><span class="p">)</span>
-        <span class="c1"># Create a runner and configure it</span>
-        <span class="n">runner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_runner</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">modules</span><span class="p">:</span>
-            <span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tests&#39;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">modules</span><span class="p">,</span> <span class="s1">&#39;__call__&#39;</span><span class="p">):</span>
-            <span class="n">modules</span> <span class="o">=</span> <span class="n">modules</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">TestLoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">modules</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">TestLoader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arbiter</span><span class="p">):</span>
-        <span class="n">stream</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">stream</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span>
-        <span class="k">except</span> <span class="n">ExitTest</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">stream</span>
+        <span class="k">if</span> <span class="n">loader</span><span class="o">.</span><span class="n">abort_message</span><span class="p">:</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">abort_message</span><span class="p">))</span>
             <span class="k">return</span> <span class="bp">False</span>
-        <span class="n">stream</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">stream</span>
+
         <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">list_labels</span><span class="p">:</span>    <span class="c1"># pragma    nocover</span>
             <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">labels</span>
@@ -539,62 +559,29 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">All test labels:&#39;</span><span class="p">)</span>
             <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
-
-            <span class="k">def</span> <span class="nf">_tags</span><span class="p">():</span>
-                <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">testmodules</span><span class="p">(</span><span class="n">tags</span><span class="p">):</span>
-                    <span class="n">doc</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">__doc__</span>
-                    <span class="k">if</span> <span class="n">doc</span><span class="p">:</span>
-                        <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;{0} - {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
-                    <span class="k">yield</span> <span class="n">tag</span>
-            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_tags</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">tags</span><span class="p">(</span><span class="n">tags</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exclude_labels</span><span class="p">):</span>
                 <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
             <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">False</span>
 
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">coveralls</span><span class="p">:</span>    <span class="c1"># pragma nocover</span>
+            <span class="kn">from</span> <span class="nn">pulsar.apps.test.cov</span> <span class="kn">import</span> <span class="n">coveralls</span>
+            <span class="n">coveralls</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
 <div class="viewcode-block" id="TestSuite.monitor_start"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When the monitor starts load all test classes into the queue&#39;&#39;&#39;</span>
-        <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
-        <span class="n">workers</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">)</span>
-        <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;workers&#39;</span><span class="p">,</span> <span class="n">workers</span><span class="p">)</span>
-        <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;workers&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">callable</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">callable</span><span class="p">()</span>
 
-        <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">labels</span>
-        <span class="n">exclude_tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exclude_labels</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">show_leaks</span><span class="p">:</span>
-            <span class="n">show</span> <span class="o">=</span> <span class="n">show_leaks</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">show_leaks</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">hide_leaks</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;when_exit&#39;</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span>
-            <span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>
-            <span class="n">arbiter</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;when_exit&#39;</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">tests</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">loader</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">on_start</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">testcls</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">testclasses</span><span class="p">(</span><span class="n">tags</span><span class="p">,</span> <span class="n">exclude_tags</span><span class="p">):</span>
-                <span class="n">suite</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">loadTestsFromTestCase</span><span class="p">(</span><span class="n">testcls</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">suite</span> <span class="ow">and</span> <span class="n">suite</span><span class="o">.</span><span class="n">_tests</span><span class="p">:</span>
-                    <span class="n">tests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tag</span><span class="p">,</span> <span class="n">testcls</span><span class="p">))</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="k">if</span> <span class="n">tests</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;loading </span><span class="si">%s</span><span class="s1"> test classes&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">))</span>
-                <span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="n">Runner</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">loader</span><span class="o">.</span><span class="n">runner</span><span class="p">,</span> <span class="n">tests</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>   <span class="c1"># pragma    nocover</span>
-                <span class="k">raise</span> <span class="n">ExitTest</span><span class="p">(</span><span class="s1">&#39;Could not find any tests.&#39;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">ExitTest</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>   <span class="c1"># pragma    nocover</span>
-            <span class="n">monitor</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-            <span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c1"># pragma    nocover</span>
-            <span class="n">monitor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;Error occurred while starting tests&#39;</span><span class="p">,</span>
-                                    <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            <span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exit</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span></div>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="n">Runner</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">create_config</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_config</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;plugins&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;plugins&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
-        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;plugins&#39;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">test_plugins</span><span class="p">:</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cfg</span>
 

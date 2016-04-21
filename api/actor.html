@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actors API &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>Actors API &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Event API" href="events.html" />
     <link rel="prev" title="Asynchonous API" href="async.html" />
@@ -288,7 +288,7 @@ the <a class="reference internal" href="async.html#pulsar.async.futures.AsyncObj
 
 <dl class="method">
 <dt id="pulsar.async.actor.Actor.start">
-<code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.start" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start</code><span class="sig-paren">(</span><em>exit=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called after forking to start the actor&#8217;s life.</p>
 <p>This is where logging is configured, the <a class="reference internal" href="#pulsar.async.actor.Actor.mailbox" title="pulsar.async.actor.Actor.mailbox"><code class="xref py py-attr docutils literal"><span class="pre">mailbox</span></code></a> is
 registered and the <a class="reference internal" href="#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">_loop</span></code></a> is initialised and
@@ -592,29 +592,9 @@ constructor.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.async.concurrency.Concurrency.selector">
-<code class="descname">selector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.selector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.selector" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a selector instance.</p>
-<p>By default it return nothing so that the best handler for the
-system is chosen.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.concurrency.Concurrency.spawn">
-<code class="descname">spawn</code><span class="sig-paren">(</span><em>actor</em>, <em>aid=None</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.spawn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spawn a new actor from <code class="docutils literal"><span class="pre">actor</span></code>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.concurrency.Concurrency.run_actor">
-<code class="descname">run_actor</code><span class="sig-paren">(</span><em>actor</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.run_actor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.run_actor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Start running the <code class="docutils literal"><span class="pre">actor</span></code>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.concurrency.Concurrency.setup_event_loop">
-<code class="descname">setup_event_loop</code><span class="sig-paren">(</span><em>actor</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.setup_event_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.setup_event_loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set up the event loop for <code class="docutils literal"><span class="pre">actor</span></code>.</p>
+<dt id="pulsar.async.concurrency.Concurrency.create_mailbox">
+<code class="descname">create_mailbox</code><span class="sig-paren">(</span><em>actor</em>, <em>loop</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.create_mailbox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.create_mailbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the mailbox for <code class="docutils literal"><span class="pre">actor</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -633,12 +613,6 @@ results in a running state.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.async.concurrency.Concurrency.create_mailbox">
-<code class="descname">create_mailbox</code><span class="sig-paren">(</span><em>actor</em>, <em>loop</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.create_mailbox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.create_mailbox" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create the mailbox for <code class="docutils literal"><span class="pre">actor</span></code>.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.async.concurrency.Concurrency.periodic_task">
 <code class="descname">periodic_task</code><span class="sig-paren">(</span><em>actor</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.periodic_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.periodic_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Implement the <a class="reference internal" href="../design.html#actor-periodic-task"><span>actor period task</span></a>.</p>
@@ -646,6 +620,32 @@ results in a running state.</p>
 <a class="reference internal" href="#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><code class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></code></a> to ping the actor monitor.
 If successful return a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called
 back with the acknowledgement from the monitor.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.concurrency.Concurrency.run_actor">
+<code class="descname">run_actor</code><span class="sig-paren">(</span><em>actor</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.run_actor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.run_actor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start running the <code class="docutils literal"><span class="pre">actor</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.concurrency.Concurrency.selector">
+<code class="descname">selector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.selector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.selector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a selector instance.</p>
+<p>By default it return nothing so that the best handler for the
+system is chosen.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.concurrency.Concurrency.setup_event_loop">
+<code class="descname">setup_event_loop</code><span class="sig-paren">(</span><em>actor</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.setup_event_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.setup_event_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up the event loop for <code class="docutils literal"><span class="pre">actor</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.concurrency.Concurrency.spawn">
+<code class="descname">spawn</code><span class="sig-paren">(</span><em>actor</em>, <em>aid=None</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.spawn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spawn a new actor from <code class="docutils literal"><span class="pre">actor</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -682,12 +682,6 @@ the <code class="xref py py-class docutils literal"><span class="pre">Monitor</s
 <em class="property">class </em><code class="descclassname">pulsar.async.concurrency.</code><code class="descname">ArbiterConcurrency</code><a class="reference internal" href="../modules/pulsar/async/concurrency.html#ArbiterConcurrency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.ArbiterConcurrency" title="Permalink to this definition">¶</a></dt>
 <dd><p>Concurrency implementation for the <code class="docutils literal"><span class="pre">arbiter</span></code></p>
 <dl class="method">
-<dt id="pulsar.async.concurrency.ArbiterConcurrency.get_actor">
-<code class="descname">get_actor</code><span class="sig-paren">(</span><em>actor</em>, <em>aid</em>, <em>check_monitor=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#ArbiterConcurrency.get_actor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.ArbiterConcurrency.get_actor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given an actor unique id return the actor proxy.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.async.concurrency.ArbiterConcurrency.add_monitor">
 <code class="descname">add_monitor</code><span class="sig-paren">(</span><em>actor</em>, <em>monitor_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#ArbiterConcurrency.add_monitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.ArbiterConcurrency.add_monitor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a new <code class="docutils literal"><span class="pre">monitor</span></code>.</p>
@@ -723,6 +717,12 @@ mailbox server.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.async.concurrency.ArbiterConcurrency.get_actor">
+<code class="descname">get_actor</code><span class="sig-paren">(</span><em>actor</em>, <em>aid</em>, <em>check_monitor=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#ArbiterConcurrency.get_actor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.ArbiterConcurrency.get_actor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an actor unique id return the actor proxy.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.async.concurrency.ArbiterConcurrency.periodic_task">
 <code class="descname">periodic_task</code><span class="sig-paren">(</span><em>actor</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#ArbiterConcurrency.periodic_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.ArbiterConcurrency.periodic_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Override the <a class="reference internal" href="#pulsar.async.concurrency.Concurrency.periodic_task" title="pulsar.async.concurrency.Concurrency.periodic_task"><code class="xref py py-meth docutils literal"><span class="pre">Concurrency.periodic_task()</span></code></a> to implement
@@ -738,7 +738,7 @@ the <code class="xref py py-class docutils literal"><span class="pre">Arbiter</s
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'INACTIVE': 1, 'CLOSE': 5, 'STARTING': 2, 'TERMINATE': 6, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3, 'INITIAL': 0, 'STOPPING': 4}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'CLOSE': 5, 'STARTING': 2, 'STOPPING': 4, 'TERMINATE': 6, 'RUN': 3, 'INACTIVE': 1}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>

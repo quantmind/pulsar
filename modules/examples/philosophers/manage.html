@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.philosophers.manage &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>examples.philosophers.manage &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -98,7 +98,6 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">random</span>
 <span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">asyncio</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">task</span>
@@ -124,14 +123,20 @@
 
 <span class="c1">###########################################################################</span>
 <span class="c1">#    EXTRA COMMAND LINE PARAMETERS</span>
-<span class="k">class</span> <span class="nc">Eating_Period</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">PhilosophersSetting</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
+    <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="s1">&#39;philosophers&#39;</span>
+    <span class="n">section</span> <span class="o">=</span> <span class="s2">&quot;Socket Servers&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">EatingPeriod</span><span class="p">(</span><span class="n">PhilosophersSetting</span><span class="p">):</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--eating-period&quot;</span><span class="p">]</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_float</span>
     <span class="n">default</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;The average period of eating for a philosopher.&quot;&quot;&quot;</span>
 
 
-<span class="k">class</span> <span class="nc">Waiting_Period</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">WaitingPeriod</span><span class="p">(</span><span class="n">PhilosophersSetting</span><span class="p">):</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--waiting-period&quot;</span><span class="p">]</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_float</span>
     <span class="n">default</span> <span class="o">=</span> <span class="mi">2</span>
@@ -168,7 +173,7 @@
 <div class="viewcode-block" id="DiningPhilosophers"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers">[docs]</a><span class="k">class</span> <span class="nc">DiningPhilosophers</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
     <span class="n">description</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Dining philosophers sit at a table around a bowl of &#39;</span>
                    <span class="s1">&#39;spaghetti and waits for available forks.&#39;</span><span class="p">)</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">workers</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">workers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;philosophers&#39;</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">not_available_forks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -227,14 +232,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">pickup_fork</span><span class="p">(</span><span class="n">philosopher</span><span class="p">)</span></div>
 
     <span class="nd">@task</span>
-    <span class="nd">@asyncio.coroutine</span>
-<div class="viewcode-block" id="DiningPhilosophers.pickup_fork"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers.pickup_fork">[docs]</a>    <span class="k">def</span> <span class="nf">pickup_fork</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">philosopher</span><span class="p">):</span>
+<div class="viewcode-block" id="DiningPhilosophers.pickup_fork"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers.pickup_fork">[docs]</a>    <span class="n">async</span> <span class="k">def</span> <span class="nf">pickup_fork</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">philosopher</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The philosopher has fewer than two forks.</span>
 
 <span class="sd">        Check if forks are available.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">fork</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">philosopher</span><span class="o">.</span><span class="n">monitor</span><span class="p">,</span> <span class="s1">&#39;pickup_fork&#39;</span><span class="p">,</span>
-                                           <span class="n">philosopher</span><span class="o">.</span><span class="n">number</span><span class="p">)</span>
+        <span class="n">fork</span> <span class="o">=</span> <span class="n">await</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">philosopher</span><span class="o">.</span><span class="n">monitor</span><span class="p">,</span> <span class="s1">&#39;pickup_fork&#39;</span><span class="p">,</span>
+                                      <span class="n">philosopher</span><span class="o">.</span><span class="n">number</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">fork</span><span class="p">:</span>
             <span class="n">forks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forks</span>
             <span class="k">if</span> <span class="n">fork</span> <span class="ow">in</span> <span class="n">forks</span><span class="p">:</span>

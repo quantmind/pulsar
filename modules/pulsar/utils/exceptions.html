@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.exceptions &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.utils.exceptions &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -64,13 +64,18 @@
            <span class="s1">&#39;HttpConnectionError&#39;</span><span class="p">,</span>
            <span class="s1">&#39;HttpProxyError&#39;</span><span class="p">,</span>
            <span class="s1">&#39;SSLError&#39;</span><span class="p">,</span>
+           <span class="c1">#</span>
            <span class="c1"># HTTP Exceptions</span>
            <span class="s1">&#39;HttpException&#39;</span><span class="p">,</span>
            <span class="s1">&#39;HttpRedirect&#39;</span><span class="p">,</span>
            <span class="s1">&#39;BadRequest&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Http401&#39;</span><span class="p">,</span>
            <span class="s1">&#39;PermissionDenied&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;MethodNotAllowed&#39;</span><span class="p">,</span>
            <span class="s1">&#39;Http404&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;MethodNotAllowed&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HttpGone&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Unsupported&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;UnprocessableEntity&#39;</span><span class="p">,</span>
            <span class="c1">#</span>
            <span class="s1">&#39;format_traceback&#39;</span><span class="p">]</span>
 
@@ -166,6 +171,15 @@
 
 
 <span class="c1"># #################################################################### HTTP</span>
+<span class="n">http_errors</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span> <span class="nf">httperror</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">http_errors</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">status</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+    <span class="k">return</span> <span class="n">c</span>
+
+
+<span class="nd">@httperror</span>
 <div class="viewcode-block" id="HttpException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpException">[docs]</a><span class="k">class</span> <span class="nc">HttpException</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The base class of all ``HTTP`` server exceptions</span>
 
@@ -198,6 +212,7 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">)</span></div>
 
 
+<span class="nd">@httperror</span>
 <div class="viewcode-block" id="HttpRedirect"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpRedirect">[docs]</a><span class="k">class</span> <span class="nc">HttpRedirect</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` for redirects.</span>
 
@@ -217,23 +232,51 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span></div>
 
 
+<span class="nd">@httperror</span>
 <span class="k">class</span> <span class="nc">BadRequest</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">400</span>
 
 
+<span class="nd">@httperror</span>
+<span class="k">class</span> <span class="nc">Http401</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="mi">401</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">auth</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;WWW-Authenticate&#39;</span><span class="p">,</span> <span class="n">auth</span><span class="p">)]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+
+
+<span class="nd">@httperror</span>
 <div class="viewcode-block" id="PermissionDenied"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.PermissionDenied">[docs]</a><span class="k">class</span> <span class="nc">PermissionDenied</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``403`` status code.&#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">403</span></div>
 
 
+<span class="nd">@httperror</span>
 <div class="viewcode-block" id="Http404"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.Http404">[docs]</a><span class="k">class</span> <span class="nc">Http404</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``404`` status code.&#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">404</span></div>
 
 
+<span class="nd">@httperror</span>
 <div class="viewcode-block" id="MethodNotAllowed"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.MethodNotAllowed">[docs]</a><span class="k">class</span> <span class="nc">MethodNotAllowed</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``405`` status code.&#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">405</span></div>
+
+
+<span class="nd">@httperror</span>
+<span class="k">class</span> <span class="nc">HttpGone</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="mi">410</span>
+
+
+<span class="nd">@httperror</span>
+<span class="k">class</span> <span class="nc">Unsupported</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="mi">415</span>
+
+
+<span class="nd">@httperror</span>
+<span class="k">class</span> <span class="nc">UnprocessableEntity</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="mi">422</span>
 
 
 <span class="k">def</span> <span class="nf">format_traceback</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.futures &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.async.futures &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -46,8 +46,7 @@
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isgeneratorfunction</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span><span class="p">,</span> <span class="n">partial</span>
 
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Future</span><span class="p">,</span> <span class="n">CancelledError</span><span class="p">,</span> <span class="n">TimeoutError</span><span class="p">,</span> <span class="n">sleep</span><span class="p">,</span> <span class="n">gather</span><span class="p">,</span>
-                     <span class="n">coroutine</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">CancelledError</span><span class="p">,</span> <span class="n">TimeoutError</span><span class="p">,</span> <span class="n">sleep</span><span class="p">,</span> <span class="n">gather</span>
 
 <span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">MAX_ASYNC_WHILE</span>
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_event_loop</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">,</span> <span class="n">isfuture</span><span class="p">,</span> <span class="n">isawaitable</span><span class="p">,</span>
@@ -177,10 +176,9 @@
         <span class="k">return</span> <span class="n">value</span></div>
 
 
-<span class="nd">@coroutine</span>
-<span class="k">def</span> <span class="nf">as_coroutine</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="n">async</span> <span class="k">def</span> <span class="nf">as_coroutine</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">value</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">await</span> <span class="n">value</span>
     <span class="k">return</span> <span class="n">value</span>
 
 
@@ -202,11 +200,10 @@
     <span class="k">if</span> <span class="n">isgeneratorfunction</span><span class="p">(</span><span class="n">function</span><span class="p">):</span>
         <span class="n">wrapper</span> <span class="o">=</span> <span class="n">function</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nd">@coroutine</span>
-        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">async</span> <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
             <span class="n">res</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
-                <span class="n">res</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">res</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">await</span> <span class="n">res</span>
             <span class="k">return</span> <span class="n">res</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
@@ -243,8 +240,7 @@
     <span class="k">return</span> <span class="n">waiter</span></div>
 
 
-<span class="nd">@coroutine</span>
-<div class="viewcode-block" id="async_while"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.async_while">[docs]</a><span class="k">def</span> <span class="nf">async_while</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">while_clause</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="async_while"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.futures.async_while">[docs]</a><span class="n">async</span> <span class="k">def</span> <span class="nf">async_while</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">while_clause</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The asynchronous equivalent of ``while while_clause(*args):``</span>
 
 <span class="sd">    Use this function within a :ref:`coroutine &lt;coroutine&gt;` when you need</span>
@@ -265,7 +261,7 @@
     <span class="k">while</span> <span class="n">result</span><span class="p">:</span>
         <span class="n">interval</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">interval</span><span class="o">+</span><span class="n">di</span><span class="p">,</span> <span class="n">MAX_ASYNC_WHILE</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
+            <span class="n">await</span> <span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">TimeoutError</span><span class="p">:</span>
             <span class="k">pass</span>
         <span class="k">if</span> <span class="n">timeout</span> <span class="ow">and</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">timeout</span><span class="p">:</span>

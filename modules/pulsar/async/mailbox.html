@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.mailbox &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.async.mailbox &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -96,7 +96,6 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
-<span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">CommandError</span>
@@ -118,15 +117,15 @@
     <span class="k">return</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
 
 
-<span class="nd">@asyncio.coroutine</span>
-<span class="k">def</span> <span class="nf">command_in_context</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="n">async</span> <span class="k">def</span> <span class="nf">command_in_context</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span>
+                             <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">cmnd</span> <span class="o">=</span> <span class="n">get_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">cmnd</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">CommandError</span><span class="p">(</span><span class="s1">&#39;unknown </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">command</span><span class="p">)</span>
     <span class="n">request</span> <span class="o">=</span> <span class="n">CommandRequest</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">cmnd</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">result</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">result</span>
     <span class="k">return</span> <span class="n">result</span>
 
 
@@ -238,7 +237,7 @@
                 <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Connection lost with actor.&#39;</span><span class="p">)</span>
 
     <span class="nd">@task</span>
-    <span class="k">def</span> <span class="nf">_on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="n">command</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;command&#39;</span><span class="p">)</span>
         <span class="n">ack</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ack&#39;</span><span class="p">)</span>
@@ -265,15 +264,14 @@
                         <span class="k">raise</span> <span class="n">CommandError</span><span class="p">(</span>
                             <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; got message from unknown &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span>
                             <span class="o">%</span> <span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;sender&#39;</span><span class="p">]))</span>
-                    <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span>
-                                                   <span class="o">*</span><span class="n">message</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span>
-                                                   <span class="o">**</span><span class="n">message</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">])</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span>
+                                              <span class="o">*</span><span class="n">message</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span>
+                                              <span class="o">**</span><span class="n">message</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">])</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">result</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">command_in_context</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span>
-                                                           <span class="n">target</span><span class="p">,</span>
-                                                           <span class="n">message</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span>
-                                                           <span class="n">message</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">],</span>
-                                                           <span class="bp">self</span><span class="p">)</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">command_in_context</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+                                                      <span class="n">message</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span>
+                                                      <span class="n">message</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">],</span>
+                                                      <span class="bp">self</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">CommandError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Command error: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">exc</span><span class="p">)</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
@@ -321,14 +319,14 @@
         <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">nice_address</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">))</span>
 
     <span class="nd">@task</span>
-    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="c1"># the request method</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lost</span><span class="p">)</span>
         <span class="n">req</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">req</span><span class="o">.</span><span class="n">waiter</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">await</span> <span class="n">req</span><span class="o">.</span><span class="n">waiter</span>
         <span class="k">return</span> <span class="n">response</span>
 
     <span class="k">def</span> <span class="nf">start_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

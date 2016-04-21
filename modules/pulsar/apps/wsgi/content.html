@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.content &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>pulsar.apps.wsgi.content &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -186,7 +186,6 @@
 <span class="sd">.. _`HTML5 document`: http://www.w3schools.com/html/html5_intro.asp</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
@@ -199,8 +198,13 @@
 
 <span class="kn">from</span> <span class="nn">.html</span> <span class="kn">import</span> <span class="n">html_visitor</span><span class="p">,</span> <span class="n">newline</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;AsyncString&#39;</span><span class="p">,</span> <span class="s1">&#39;String&#39;</span><span class="p">,</span> <span class="s1">&#39;Html&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;Json&#39;</span><span class="p">,</span> <span class="s1">&#39;HtmlDocument&#39;</span><span class="p">,</span> <span class="s1">&#39;Links&#39;</span><span class="p">,</span> <span class="s1">&#39;Scripts&#39;</span><span class="p">,</span> <span class="s1">&#39;Media&#39;</span><span class="p">,</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;String&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Html&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Json&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HtmlDocument&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Links&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Scripts&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Media&#39;</span><span class="p">,</span>
            <span class="s1">&#39;html_factory&#39;</span><span class="p">]</span>
 
 
@@ -474,8 +478,6 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">stream</span> <span class="o">=</span> <span class="n">multi_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">chain_future</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">)</span></div>
-
-<span class="n">AsyncString</span> <span class="o">=</span> <span class="n">String</span>
 
 
 <div class="viewcode-block" id="Json"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Json">[docs]</a><span class="k">class</span> <span class="nc">Json</span><span class="p">(</span><span class="n">String</span><span class="p">):</span>
@@ -1186,16 +1188,15 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_template</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flatatt</span><span class="p">(),</span> <span class="n">head</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
 
-    <span class="nd">@asyncio.coroutine</span>
-    <span class="k">def</span> <span class="nf">_html</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">head</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_html</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">head</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Asynchronous rendering</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">head</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">body</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">body</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">await</span> <span class="n">body</span>
             <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">head</span><span class="p">):</span>
-            <span class="n">head</span> <span class="o">=</span> <span class="k">yield from</span> <span class="n">head</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">await</span> <span class="n">head</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_template</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flatatt</span><span class="p">(),</span> <span class="n">head</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span></div>
 </pre></div>

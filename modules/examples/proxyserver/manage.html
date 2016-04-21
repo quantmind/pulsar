@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.proxyserver.manage &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>examples.proxyserver.manage &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -85,7 +85,7 @@
 <span class="kn">import</span> <span class="nn">asyncio</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ensure_future</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">http</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.http.plugins</span> <span class="kn">import</span> <span class="n">noerror</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span><span class="p">,</span> <span class="n">ENCODE_BODY_METHODS</span>
@@ -128,7 +128,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">uri</span> <span class="ow">or</span> <span class="n">uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>  <span class="c1"># No proper uri, raise 404</span>
             <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">TunnelResponse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="p">()</span>
+        <span class="n">ensure_future</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">future</span></div>
 
 
@@ -143,8 +143,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span> <span class="o">=</span> <span class="n">start_response</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
 
-    <span class="nd">@task</span>
-    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Perform the Http request to the upstream server</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">request_headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">()</span>
@@ -155,12 +154,12 @@
             <span class="n">data</span> <span class="o">=</span> <span class="n">DataIterator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">http</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi</span><span class="o">.</span><span class="n">http_client</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span>
-                                    <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;RAW_URI&#39;</span><span class="p">],</span>
-                                    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-                                    <span class="n">headers</span><span class="o">=</span><span class="n">request_headers</span><span class="p">,</span>
-                                    <span class="n">version</span><span class="o">=</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SERVER_PROTOCOL&#39;</span><span class="p">],</span>
-                                    <span class="n">pre_request</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pre_request</span><span class="p">)</span>
+            <span class="n">await</span> <span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span>
+                               <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;RAW_URI&#39;</span><span class="p">],</span>
+                               <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                               <span class="n">headers</span><span class="o">=</span><span class="n">request_headers</span><span class="p">,</span>
+                               <span class="n">version</span><span class="o">=</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SERVER_PROTOCOL&#39;</span><span class="p">],</span>
+                               <span class="n">pre_request</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pre_request</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 

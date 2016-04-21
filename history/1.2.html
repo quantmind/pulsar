@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Logging &mdash; pulsar 1.3.0b1 documentation</title>
+    <title>Ver. 1.2.0 - 2016-Mar-17 &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -28,9 +28,6 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 1.3.0b1 documentation" href="../index.html" />
-    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="The Arbiter" href="actors.html" />
-    <link rel="prev" title="Udp Server and Client" href="udp.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -43,18 +40,55 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="logging">
-<span id="tutorials-logging"></span><h1>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar provides several <a class="reference internal" href="../settings.html#settings"><span>settings</span></a> for managing the python logging module and display information when running. These configuration parameters can be specified both on the command line
-or in the <a class="reference internal" href="../settings.html#setting-config"><span>config</span></a> file of your application.</p>
-<p>The <span class="xref std std-ref">log-level</span> sets levels of loggers, for example:</p>
-<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level debug
-</pre></div>
+  <div class="section" id="ver-1-2-0-2016-mar-17">
+<span id="ver-1-2-0-2016-mar-17"></span><h1>Ver. 1.2.0 - 2016-Mar-17<a class="headerlink" href="#ver-1-2-0-2016-mar-17" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar 1.2 is broadly backward compatible with the <a class="reference external" href="./1.1.html">1.1 version</a>
+with the only caveat that the <code class="docutils literal"><span class="pre">is_async</span></code> function is now deprecated and replaced
+by the <code class="docutils literal"><span class="pre">isawaitable</span></code> function.
+Warnings will be issued when used by client applications.</p>
+<p>In addition, pulsar <strong>1.2.x</strong> is the last minor release (&#8220;major.minor.micro&#8221;) to support python 3.4.
+From pulsar <strong>1.3.x</strong>, support for python 3.4 will be dropped and the new
+<a class="reference external" href="https://www.python.org/dev/peps/pep-0492/#new-coroutine-declaration-syntax">async-await</a>
+syntax will be used in the whole codebase.</p>
 </div>
-<p>Set the log level for the <code class="docutils literal"><span class="pre">pulsar.*</span></code> loggers to <code class="docutils literal"><span class="pre">DEBUG</span></code>.</p>
-<p>You can pass several namespaces to the command, for example:</p>
-<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level warning pulsar.wsgi.debug
-</pre></div>
+<div class="section" id="new-features">
+<span id="new-features"></span><h1>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Added <code class="docutils literal"><span class="pre">isawaitable</span></code> function and deprecated <code class="docutils literal"><span class="pre">is_async</span></code> which will be removed
+in version 1.3. Issue #203 <a class="reference external" href="https://github.com/quantmind/pulsar/commit/6a2f9e427ed30c55fa2dfd2c13d7e0bf1dc1d14e">6a2f9e4</a></li>
+<li>Verify parameter in http client. Fixes #191 <a class="reference external" href="https://github.com/quantmind/pulsar/commit/46112618701e83f2c2de2d37391d2f5efe28b2ad">4611261</a></li>
+<li>Hindi pulsar, need double check <a class="reference external" href="https://github.com/quantmind/pulsar/commit/c83e1786a7ef7a0ef9870f59e19f9b4099673d5d">c83e178</a></li>
+</ul>
+</div>
+<div class="section" id="bug-fixes-and-enhancements">
+<span id="bug-fixes-and-enhancements"></span><h1>Bug fixes and Enhancements<a class="headerlink" href="#bug-fixes-and-enhancements" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Versioning supports <a class="reference external" href="https://www.python.org/dev/peps/pep-0440/">pep440</a> for alpha and beta
+releases too <a class="reference external" href="https://github.com/quantmind/pulsar/commit/468daa2da55ac9628215b93340d19d553e451e62">468daa2</a></li>
+<li>Tidy up cython extensions. No more py2 checks. Better dev version to avoid warning
+in command line <a class="reference external" href="https://github.com/quantmind/pulsar/commit/6d369f0a4f4defcbc3083769d2fb0082cc8badb3">6d369f0</a></li>
+<li>fix <a class="reference external" href="https://github.com/quantmind/pulsar/issues/211">#211</a></li>
+<li>Fix <a class="reference external" href="https://github.com/quantmind/pulsar/issues/209">#209</a></li>
+</ul>
+<div class="section" id="examples">
+<span id="examples"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Added Green Flask example applications to illustrate how to use synchronous web frameworks and
+pulsar <code class="docutils literal"><span class="pre">greenio</span></code> module <a class="reference external" href="https://github.com/quantmind/pulsar/commit/1855819ed41a7bf67b6dba0feb39d593b480bb38">1855819</a></li>
+</ul>
+</div>
+<div class="section" id="test">
+<span id="test"></span><h2>Test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Links test <a class="reference external" href="https://github.com/quantmind/pulsar/commit/c80b163c6e5eeea3fbcb8af677d6e6a9369545da">c80b163</a></li>
+<li>Don&#8217;t run slugify test if unidecode package is not installed. Fixes <a class="reference external" href="https://github.com/quantmind/pulsar/issues/206">#206</a></li>
+</ul>
+</div>
+<div class="section" id="wsgi">
+<span id="wsgi"></span><h2>Wsgi<a class="headerlink" href="#wsgi" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Check for missing suffix in the file when serving media files <a class="reference external" href="https://github.com/quantmind/pulsar/commit/bc6e04d805ad8579ff28f106cb1a14e4891f0ae6">bc6e04d</a></li>
+</ul>
 </div>
 </div>
 
@@ -86,12 +120,12 @@ or in the <a class="reference internal" href="../settings.html#setting-config"><
 
 
 <h3>Navigation</h3>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
@@ -139,7 +173,7 @@ or in the <a class="reference internal" href="../settings.html#setting-config"><
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
-      <a href="../sources/tutorials/logging.txt"
+      <a href="../sources/history/1.2.txt"
           rel="nofollow">Page source</a>
     </div>
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tools &mdash; pulsar 1.1.4b1 documentation</title>
+    <title>Tools &mdash; pulsar 1.3.0b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.1.4b1',
+        VERSION:     '1.3.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.1.4b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Exceptions" href="exceptions.html" />
     <link rel="prev" title="Application API" href="application.html" />
@@ -403,7 +403,7 @@ the python <a class="reference external" href="http://docs.python.org/dev/librar
 <em class="property">class </em><code class="descclassname">pulsar.utils.config.</code><code class="descname">Config</code><span class="sig-paren">(</span><em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>apps=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>settings=None</em>, <em>prefix=None</em>, <em>name=None</em>, <em>log_name=None</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dictionary-like container of <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><code class="xref py py-class docutils literal"><span class="pre">Setting</span></code></a> parameters for
 fine tuning pulsar servers.</p>
-<p>It provides easy access to <a class="reference internal" href="#pulsar.utils.config.Setting.value" title="pulsar.utils.config.Setting.value"><code class="xref py py-attr docutils literal"><span class="pre">Setting.value</span></code></a>
+<p>It provides easy access to <code class="xref py py-attr docutils literal"><span class="pre">Setting.value</span></code>
 attribute by exposing the <a class="reference internal" href="#pulsar.utils.config.Setting.name" title="pulsar.utils.config.Setting.name"><code class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></code></a> as attribute.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -488,7 +488,7 @@ if available.</li>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Config.set">
-<code class="descname">set</code><span class="sig-paren">(</span><em>name</em>, <em>value</em>, <em>default=False</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.set" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set</code><span class="sig-paren">(</span><em>name</em>, <em>value</em>, <em>default=False</em>, <em>imported=False</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><code class="xref py py-class docutils literal"><span class="pre">Setting</span></code></a> at <code class="docutils literal"><span class="pre">name</span></code> with a new <code class="docutils literal"><span class="pre">value</span></code>.</p>
 <p>If <code class="docutils literal"><span class="pre">default</span></code> is <code class="docutils literal"><span class="pre">True</span></code>, the <a class="reference internal" href="#pulsar.utils.config.Setting.default" title="pulsar.utils.config.Setting.default"><code class="xref py py-attr docutils literal"><span class="pre">Setting.default</span></code></a> is also set.</p>
 </dd></dl>
@@ -582,8 +582,8 @@ the value to validate.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.utils.config.Setting.value">
-<code class="descname">value</code><em class="property"> = None</em><a class="headerlink" href="#pulsar.utils.config.Setting.value" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.config.Setting.imported">
+<code class="descname">imported</code><em class="property"> = False</em><a class="headerlink" href="#pulsar.utils.config.Setting.imported" title="Permalink to this definition">¶</a></dt>
 <dd><p>The actual value for this setting.</p>
 </dd></dl>
 
@@ -686,13 +686,13 @@ the name for the argument in usage message.</p>
 <dl class="method">
 <dt id="pulsar.utils.config.Setting.get">
 <code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns <a class="reference internal" href="#pulsar.utils.config.Setting.value" title="pulsar.utils.config.Setting.value"><code class="xref py py-attr docutils literal"><span class="pre">value</span></code></a></p>
+<dd><p>Returns <code class="xref py py-attr docutils literal"><span class="pre">value</span></code></p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Setting.set">
-<code class="descname">set</code><span class="sig-paren">(</span><em>val</em>, <em>default=False</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting.set" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set <code class="docutils literal"><span class="pre">val</span></code> as the <a class="reference internal" href="#pulsar.utils.config.Setting.value" title="pulsar.utils.config.Setting.value"><code class="xref py py-attr docutils literal"><span class="pre">value</span></code></a> for this <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><code class="xref py py-class docutils literal"><span class="pre">Setting</span></code></a>.</p>
+<code class="descname">set</code><span class="sig-paren">(</span><em>val</em>, <em>default=False</em>, <em>imported=False</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set <code class="docutils literal"><span class="pre">val</span></code> as the <code class="xref py py-attr docutils literal"><span class="pre">value</span></code> for this <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><code class="xref py py-class docutils literal"><span class="pre">Setting</span></code></a>.</p>
 <p>If <code class="docutils literal"><span class="pre">default</span></code> is <code class="docutils literal"><span class="pre">True</span></code> set also the <a class="reference internal" href="#pulsar.utils.config.Setting.default" title="pulsar.utils.config.Setting.default"><code class="xref py py-attr docutils literal"><span class="pre">default</span></code></a> value.</p>
 </dd></dl>
 
