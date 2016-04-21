@@ -16,13 +16,12 @@ class Pidfile:
 
     def create(self, pid=None):
         pid = pid or os.getpid()
-        oldpid = self.read()
-        if oldpid:
-            if oldpid == pid:
-                return
-            raise RuntimeError("Already running on PID %s "
-                               "(or pid file '%s' is stale)" %
-                               (oldpid, self.fname))
+        self.pid = self.read()
+        if self.pid and self.pid != pid:
+            if self.exists:
+                raise RuntimeError("Already running on PID %s "
+                                   "(pid file '%s')" %
+                                   (self.pid, self.fname))
         self.pid = pid
         # Write pidfile
         if self.fname:
@@ -64,3 +63,13 @@ class Pidfile:
                 return wpid
         except IOError:
             return
+
+    @property
+    def exists(self):
+        if self.pid:
+            try:
+                os.kill(self.pid, 0)
+                return True
+            except ProcessLookupError:
+                pass
+        return False
