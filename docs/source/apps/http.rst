@@ -87,7 +87,7 @@ To send your own cookies to the server, you can use the cookies parameter::
 Authentication
 ======================
 
-Authentication, either ``basic`` or ``digest``, can be added to a
+Authentication, either ``basic`` or ``digest``, can be added
 by passing the ``auth`` parameter during a request. For basic authentication::
 
     sessions.get(..., auth=('<username>','<password>'))
@@ -98,7 +98,7 @@ same as::
 
     sessions.get(..., auth=HTTPBasicAuth('<username>','<password>'))
 
-or ``digest``::
+or digest::
 
     from pulsar.apps.http import HTTPDigestAuth
 
@@ -131,7 +131,7 @@ You can override the ``verify`` argument during requests too::
     sessions.get('https://locahost:8020', verify=False)
 
 You can pass ``verify`` the path to a CA_BUNDLE file or directory with
-certificates of trusted CAs:
+certificates of trusted CAs::
 
     sessions.get('https://locahost:8020', verify='/path/to/ca_bundle')
 
@@ -142,6 +142,9 @@ Streaming
 =========================
 
 This is an event-driven client, therefore streaming support is native.
+
+The raw stream
+~~~~~~~~~~~~~~~~~~~~~
 
 The easyiest way to use streaming is to pass the ``stream=True`` parameter
 during a request and access the :attr:`HttpResponse.raw` attribute.
@@ -154,9 +157,18 @@ For example::
         async for data in response.raw:
            # data is a chunk of bytes
            ...
-           
 
-The ``raw`` attribute is an asynchronous iterable over bytes.
+
+The ``raw`` attribute is an asynchronous iterable over bytes and it can be
+iterated once only. When iterating over a ``raw`` attribute which has
+been already iterated, :class:`.StreamConsumedError` is raised.
+
+The attribute has the ``read`` method for reading the whole body at once::
+
+      await response.raw.read()
+
+Data processed hook
+~~~~~~~~~~~~~~~~~~~~~
 
 Another approach to streaming is to use the
 :ref:`data_processed <http-many-time-events>` event handler.
@@ -180,7 +192,7 @@ WebSocket
 ==============
 
 The http client support websocket upgrades. First you need to have a
-websocket handler::
+websocket handler, a class derived from :class:`.WS`::
 
     from pulsar.apps import ws
 

@@ -2,7 +2,7 @@ import asyncio
 
 
 class StreamConsumedError(Exception):
-    '''Same name as request error'''
+    """Same name as request error"""
     pass
 
 
@@ -20,10 +20,13 @@ class HttpStream:
 
     @property
     def done(self):
+        """Check if the stream is finished
+        """
         return self._response.on_finished.fired()
 
     async def read(self, n=None):
-        '''Read all content'''
+        """Read all content
+        """
         if self._streamed:
             return b''
         buffer = []
@@ -34,16 +37,22 @@ class HttpStream:
     def close(self):
         pass
 
+    def __iter__(self):
+        return _start_iter(self)
+
+    def __next__(self):
+        if self.done:
+            try:
+                return self._queue.get_nowait()
+            except asyncio.QueueEmpty:
+                raise StopIteration
+        else:
+            return self._queue.get()
+
     async def __aiter__(self):
-        if self._streamed:
-            raise StreamConsumedError
-        self._streamed = True
-        self(self._response)
-        return self
+        return _start_iter(self)
 
     async def __anext__(self):
-        '''Iterator over bytes or Futures resulting in bytes
-        '''
         if self.done:
             try:
                 return self._queue.get_nowait()
@@ -56,3 +65,11 @@ class HttpStream:
         if self._streamed and response.parser.is_headers_complete():
             assert response is self._response
             self._queue.put_nowait(response.recv_body())
+
+
+def _start_iter(self):
+    if self._streamed:
+        raise StreamConsumedError
+    self._streamed = True
+    self(self._response)
+    return self
