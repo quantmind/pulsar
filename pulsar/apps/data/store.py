@@ -308,6 +308,12 @@ class PubSub:
         return '%s(%s)' % (self.__class__.__name__, self.store)
     __str__ = __repr__
 
+    @property
+    def protocol(self):
+        """Protocol of this pubsub handler
+        """
+        return self._protocol
+
     def publish(self, channel, message):
         '''Publish a new ``message`` to a ``channel``.
         '''
@@ -363,6 +369,9 @@ class PubSub:
         from the publisher, the :meth:`broadcast` method will notify all
         :attr:`clients` via the ``callable`` method.'''
         self._clients.add(client)
+
+    def __contains__(self, client):
+        return client in self._clients
 
     def remove_client(self, client):
         '''Remove *client* from the set of all :attr:`clients`.'''
