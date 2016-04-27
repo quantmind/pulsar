@@ -591,7 +591,7 @@ class MediaRouter(Router, MediaMixin):
         self._default_suffix = default_suffix
         self._default_file = default_file
         self._show_indexes = show_indexes
-        self._file_path = path
+        self._file_path = path or ''
 
     def filesystem_path(self, request):
         return self.get_full_path(request.urlargs['path'])
