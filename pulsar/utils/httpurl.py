@@ -1328,12 +1328,14 @@ class CacheControl:
         self.proxy_revalidate = proxy_revalidate
         self.nostore = nostore
 
-    def __call__(self, headers):
+    def __call__(self, headers, etag=None):
         if self.nostore:
             headers['cache-control'] = ('no-store, no-cache, must-revalidate,'
                                         ' max-age=0')
         elif self.maxage:
             headers['cache-control'] = 'max-age=%s' % self.maxage
+            if etag:
+                headers['etag'] = '"%s"' % etag
             if self.private:
                 headers.add_header('cache-control', 'private')
             else:

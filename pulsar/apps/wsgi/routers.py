@@ -92,6 +92,7 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.slugify import slugify
+from pulsar.utils.security import digest
 from pulsar import Http404, MethodNotAllowed
 
 from .route import Route
@@ -101,7 +102,6 @@ from .content import Html
 
 __all__ = ['Router',
            'MediaRouter',
-           'FileRouter',
            'MediaMixin',
            'RouterParam',
            'file_response']
@@ -505,39 +505,11 @@ class Router(metaclass=RouterType):
 
 
 class MediaMixin:
-
-    @classmethod
-    def modified_since(cls, header, size=0):
-        try:
-            if header is None:
-                raise ValueError
-            matches = re.match(r"^([^;]+)(; length=([0-9]+))?$",
-                               header,
-                               re.IGNORECASE)
-            header_mtime = mktime_tz(parsedate_tz(matches.group(1)))
-            header_len = matches.group(3)
-            if header_len and int(header_len) != size:
-                raise ValueError
-            return header_mtime
-        except (AttributeError, ValueError, OverflowError):
-            pass
-
-    @classmethod
-    def was_modified_since(cls, header=None, mtime=0, size=0):
-        '''Check if an item was modified since the user last downloaded it
-
-        :param header: the value of the ``If-Modified-Since`` header.
-            If this is ``None``, simply return ``True``
-        :param mtime: the modification time of the item in question.
-        :param size: the size of the item.
-        '''
-        header_mtime = cls.modified_since(header, size)
-        if header_mtime and header_mtime <= mtime:
-            return False
-        return True
+    cache_control = CacheControl(maxage=86400)
 
     def serve_file(self, request, fullpath, status_code=None):
-        return file_response(request, fullpath, status_code=status_code)
+        return file_response(request, fullpath, status_code=status_code,
+                             cache_control=self.cache_control)
 
     def directory_index(self, request, fullpath):
         names = [Html('a', '../', href='../', cn='folder')]
@@ -582,8 +554,6 @@ class MediaRouter(Router, MediaMixin):
 
         The default file to serve when a directory is requested.
     '''
-    cache_control = CacheControl(maxage=86400)
-
     def __init__(self, rule, path, show_indexes=False,
                  default_suffix=None, default_file='index.html',
                  **params):
@@ -633,11 +603,38 @@ class MediaRouter(Router, MediaMixin):
                 raise
 
 
-FileRouter = MediaRouter
+def modified_since(header, size=0):
+    try:
+        if header is None:
+            raise ValueError
+        matches = re.match(r"^([^;]+)(; length=([0-9]+))?$",
+                           header,
+                           re.IGNORECASE)
+        header_mtime = mktime_tz(parsedate_tz(matches.group(1)))
+        header_len = matches.group(3)
+        if header_len and int(header_len) != size:
+            raise ValueError
+        return header_mtime
+    except (AttributeError, ValueError, OverflowError):
+        pass
+
+
+def was_modified_since(header=None, mtime=0, size=0):
+    '''Check if an item was modified since the user last downloaded it
+
+    :param header: the value of the ``If-Modified-Since`` header.
+        If this is ``None``, simply return ``True``
+    :param mtime: the modification time of the item in question.
+    :param size: the size of the item.
+    '''
+    header_mtime = modified_since(header, size)
+    if header_mtime and header_mtime <= mtime:
+        return False
+    return True
 
 
 def file_response(request, filepath, block=None, status_code=None,
-                  content_type=None, encoding=None):
+                  content_type=None, encoding=None, cache_control=None):
     """Utility for serving a local file
 
     Typical usage::
@@ -662,7 +659,7 @@ def file_response(request, filepath, block=None, status_code=None,
         size = info[stat.ST_SIZE]
         modified = info[stat.ST_MTIME]
         header = request.get('HTTP_IF_MODIFIED_SINCE')
-        if not MediaMixin.was_modified_since(header, modified, size):
+        if not was_modified_since(header, modified, size):
             response.status_code = 304
         else:
             if not content_type:
@@ -676,5 +673,8 @@ def file_response(request, filepath, block=None, status_code=None,
                 response.status_code = status_code
             else:
                 response.headers["Last-Modified"] = http_date(modified)
+            if cache_control:
+                etag = digest('modified: %d - size: %d' % (modified, size))
+                cache_control(response.headers, etag=etag)
         return response
     raise Http404

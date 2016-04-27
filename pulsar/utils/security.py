@@ -6,6 +6,7 @@ import string
 from random import SystemRandom
 
 from .httpurl import ascii_letters
+from .string import to_bytes
 
 SALT_CHARS = ascii_letters + string.digits
 
@@ -35,3 +36,7 @@ def check_password_hash(pwhash, password):
         return False
     salt, hashval = pwhash.split('$')
     return _hash_internal(salt, password) == hashval
+
+
+def digest(text):
+    return sha1(to_bytes(text)).hexdigest()
