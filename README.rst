@@ -202,7 +202,7 @@ file in the top distribution directory for the full license text.
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
 .. _`actors primitive`: http://en.wikipedia.org/wiki/Actor_model
 .. _setproctitle: http://code.google.com/p/py-setproctitle/
-.. _psutil: http://code.google.com/p/psutil/
+.. _psutil: https://github.com/giampaolo/psutil
 .. _pypi: http://pypi.python.org/pypi/pulsar
 .. _BSD: http://opensource.org/licenses/BSD-3-Clause
 .. _pulsar: https://github.com/quantmind/pulsar

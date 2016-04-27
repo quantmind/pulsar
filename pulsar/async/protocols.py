@@ -1,7 +1,5 @@
-import sys
 import asyncio
 
-import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
 from .futures import multi_async, task, Future, ensure_future
@@ -685,9 +683,7 @@ class TcpServer(Producer):
     def info(self):
         sockets = []
         up = int(self._loop.time() - self._started) if self._started else 0
-        server = {'pulsar_version': pulsar.__version__,
-                  'python_version': sys.version,
-                  'uptime_in_seconds': up,
+        server = {'uptime_in_seconds': up,
                   'sockets': sockets,
                   'max_requests': self._max_requests,
                   'keep_alive': self._keep_alive}
@@ -826,9 +822,7 @@ class DatagramServer(Producer):
     def info(self):
         sockets = []
         up = int(self._loop.time() - self._started) if self._started else 0
-        server = {'pulsar_version': pulsar.__version__,
-                  'python_version': sys.version,
-                  'uptime_in_seconds': up,
+        server = {'uptime_in_seconds': up,
                   'sockets': sockets,
                   'max_requests': self._max_requests}
         clients = {'requests_processed': self._requests_processed}

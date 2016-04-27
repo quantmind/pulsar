@@ -59,8 +59,8 @@ def process_info(pid=None):
         return {}
     else:
         mem = p.memory_info()
-        return {'memory': mem.rss,
-                'memory_virtual': mem.vms,
+        return {'memory': convert_bytes(mem.rss),
+                'memory_virtual': convert_bytes(mem.vms),
                 'cpu_percent': p.cpu_percent(),
                 'nice': p.nice(),
                 'num_threads': p.num_threads()}

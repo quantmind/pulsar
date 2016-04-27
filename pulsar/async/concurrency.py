@@ -754,6 +754,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                 monitors[actor['name']] = info
         server = data.pop('actor')
         server.update({'version': pulsar.__version__,
+                       'python_version': sys.version,
                        'name': pulsar.SERVER_NAME,
                        'number_of_monitors': len(self.monitors),
                        'number_of_actors': len(self.managed_actors)})
