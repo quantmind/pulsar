@@ -7,8 +7,9 @@ Mapping = collections.Mapping
 
 def mapping_iterator(iterable):
     if isinstance(iterable, Mapping):
-        iterable = iterable.items()
-    return iterable
+        return iterable.items()
+    else:
+        return iterable or ()
 
 
 def inverse_mapping(iterable):

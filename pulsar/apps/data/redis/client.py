@@ -485,11 +485,11 @@ class RedisClient:
                                  (type(self), name))
 
     def _eval(self, command, script, keys, args):
-        all = keys if keys is not None else ()
-        num_keys = len(all)
+        all_args = keys if keys is not None else ()
+        num_keys = len(all_args)
         if args:
-            all = tuple(chain(all, args))
-        return self.execute(command, script, num_keys, *all)
+            all_args = tuple(chain(all_args, args))
+        return self.execute(command, script, num_keys, *all_args)
 
 
 class Pipeline(RedisClient):

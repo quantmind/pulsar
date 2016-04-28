@@ -267,7 +267,7 @@ class SocketServer(pulsar.Application):
     def worker_stopping(self, worker, exc=None):
         server = worker.servers.get(self.name)
         if server:
-            return server.close()
+            server.close()
 
     def worker_info(self, worker, info):
         server = worker.servers.get(self.name)
