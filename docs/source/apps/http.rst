@@ -47,19 +47,47 @@ information about the request and the result:
 The :attr:`~.ProtocolConsumer.request` attribute of :class:`HttpResponse`
 is an instance of the original :class:`.HttpRequest`.
 
-Posting data and parameters
+Passing Parameters In URLs
 =============================
-
-Posting data is as simple as passing the ``data`` parameter::
-
-    sessions.post(..., data={'entry1': 'bla', 'entry2': 'doo')
 
 You can attach parameters to the ``url`` by passing the
 ``params`` dictionary::
 
     response = sessions.get('http://bla.com',
                             params={'page': 2, 'key': 'foo'})
-    response.request.full_url   // 'http://bla.com?page=2&key=foo'
+    response.url   // 'http://bla.com?page=2&key=foo'
+
+
+You can also pass a list of items as a value:
+
+   params = {key1': 'value1', 'key2': ['value2', 'value3']}
+   response = sessions.get('http://bla.com', params=params)
+   response.url   // http://bla.com?key1=value1&key2=value2&key2=value3
+
+
+Posting simple data
+=============================
+
+Posting data is as simple as passing the ``data`` parameter::
+
+    sessions.post(..., data={'entry1': 'bla', 'entry2': 'doo'})
+
+
+Posting JSON data
+=============================
+
+Posting data is as simple as passing the ``data`` parameter::
+
+    sessions.post(..., json={'entry1': 'bla', 'entry2': 'doo'})
+
+Posting file data
+=============================
+
+Posting data is as simple as passing the ``data`` parameter::
+
+    files = {'file': open('report.xls', 'rb')}
+    sessions.post(..., files=files)
+
 
 
 .. _http-cookie:

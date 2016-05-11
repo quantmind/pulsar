@@ -137,10 +137,10 @@ class HTTPDigestAuth(Auth):
                 params = request.inp_params.copy()
                 headers = params.pop('headers', [])
                 headers.append(('authorization', self.encode(
-                    request.method, request.full_url)))
+                    request.method, request.url)))
                 params['headers'] = headers
                 response.request_again = request_again(request.method,
-                                                       request.full_url,
+                                                       request.url,
                                                        params)
 
     def KD(self, s, d):

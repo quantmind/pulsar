@@ -1,6 +1,6 @@
 import unittest
 
-from pulsar.apps.http import HttpClient, HttpRequest, parse_qsl
+from pulsar.apps.http import HttpClient, HttpRequest, parse_qsl, urlparse
 
 
 class TestClientCornerCases(unittest.TestCase):
@@ -25,5 +25,6 @@ class TestClientCornerCases(unittest.TestCase):
         params = {'page': 2, 'key': 'foo'}
         request = HttpRequest(http, 'http://bla.com?k=6', 'post',
                               params=params)
-        data = parse_qsl(request.query)
+        url = urlparse(request.url)
+        data = parse_qsl(url.query)
         self.assertEqual(len(data), 3)

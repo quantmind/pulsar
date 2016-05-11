@@ -78,7 +78,6 @@ getproxies_environment = urllibr.getproxies_environment
 ascii_letters = string.ascii_letters
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
-request_host = urllibr.request_host
 parse_http_list = urllibr.parse_http_list
 
 

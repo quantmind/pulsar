@@ -27,14 +27,11 @@ from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
                     isawaitable, ProtocolConsumer, ensure_future,
                     HttpRequestException, HttpConnectionError, SSLError)
 from pulsar.utils import websocket
-from pulsar.utils.system import json
-from pulsar.utils.pep import native_str, to_bytes
+from pulsar.utils.system import json as _json
+from pulsar.utils.pep import to_bytes
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.httpurl import (http_parser, ENCODE_URL_METHODS,
-                                  encode_multipart_formdata,
-                                  Headers, get_environ_proxies,
-                                  choose_boundary, request_host,
-                                  is_succesful,
+from pulsar.utils.httpurl import (http_parser, encode_multipart_formdata,
+                                  Headers, get_environ_proxies, is_succesful,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, http_chunks,
                                   parse_options_header,
@@ -70,6 +67,12 @@ def guess_filename(obj):
         return os.path.basename(name)
 
 
+def scheme_host_port(url):
+    url = urlparse(url)
+    host, port = get_hostport(url.scheme, url.netloc)
+    return url.scheme, host, port
+
+
 def is_streamed(data):
     try:
         len(data)
@@ -78,11 +81,19 @@ def is_streamed(data):
     return False
 
 
+def split_url_params(params):
+    for key, values in mapping_iterator(params):
+        if not isinstance(values, (list, tuple)):
+            values = (values,)
+        for value in values:
+            yield key, value
+
+
 class RequestBase:
     inp_params = None
     release_connection = True
     history = None
-    full_url = None
+    url = None
     scheme = None
 
     @property
@@ -94,18 +105,30 @@ class RequestBase:
         return bool(self.history)
 
     @property
+    def address(self):
+        return scheme_host_port(self.url)[1:]
+
+    @property
     def origin_req_host(self):
+        """Required by Cookies handlers
+        """
         if self.history:
             return self.history[0].request.origin_req_host
         else:
-            return request_host(self)
+            return scheme_host_port(self.url)[1]
 
     @property
     def type(self):
         return self.scheme
 
+    @property
+    def full_url(self):
+        return self.url
+
     def get_full_url(self):
-        return self.full_url
+        """Required by Cookies handlers
+        """
+        return self.url
 
     def write_body(self, transport):
         pass
@@ -115,27 +138,21 @@ class HttpTunnel(RequestBase):
     first_line = None
     data = None
 
-    def __init__(self, request, scheme, host):
+    def __init__(self, request, url):
         self.status = 0
         self.request = request
-        self.scheme = scheme
-        self.host, self.port = get_hostport(scheme, host)
-        self.full_url = '%s://%s:%s' % (scheme, self.host, self.port)
+        self.url = '%s://%s:%s' % scheme_host_port(url)
         self.parser = request.parser
         request.new_parser()
         self.headers = request.client.tunnel_headers.copy()
 
     def __repr__(self):
-        return 'Tunnel %s' % self.full_url
+        return 'Tunnel %s' % self.url
     __str__ = __repr__
 
     @property
     def key(self):
         return self.request.key
-
-    @property
-    def address(self):
-        return (self.host, self.port)
 
     @property
     def client(self):
@@ -148,7 +165,7 @@ class HttpTunnel(RequestBase):
     def encode(self):
         req = self.request
         self.headers['host'] = req.get_header('host')
-        bits = req.target_address + (req.version,)
+        bits = scheme_host_port(req.url)[1:] + (req.version,)
         self.first_line = 'CONNECT %s:%s %s\r\n' % bits
         return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
 
@@ -191,13 +208,6 @@ class HttpRequest(RequestBase):
 
         HTTP version for this request, usually ``HTTP/1.1``
 
-    .. attribute:: encode_multipart
-
-        If ``True`` (default), defaults POST data as ``multipart/form-data``.
-        Pass ``encode_multipart=False`` to default to
-        ``application/x-www-form-urlencoded``. In any case, this parameter is
-        overwritten by passing the correct content-type header.
-
     .. attribute:: history
 
         List of past :class:`.HttpResponse` (collected during redirects).
@@ -218,22 +228,16 @@ class HttpRequest(RequestBase):
     _write_done = False
 
     def __init__(self, client, url, method, inp_params=None, headers=None,
-                 data=None, files=None, history=None, auth=None,
-                 charset=None, encode_multipart=True, multipart_boundary=None,
-                 source_address=None, allow_redirects=False, max_redirects=10,
-                 decompress=True, version=None, wait_continue=False,
-                 websocket_handler=None, cookies=None, params=None,
-                 stream=False, proxies=None, verify=True, **ignored):
+                 data=None, files=None, json=None, history=None, auth=None,
+                 charset=None, max_redirects=10, source_address=None,
+                 allow_redirects=False, decompress=True, version=None,
+                 wait_continue=False, websocket_handler=None, cookies=None,
+                 params=None, stream=False, proxies=None, verify=True,
+                 **ignored):
         self.client = client
-        self._data = None
-        self.files = files
-        self.params = params
+        self.method = method.upper()
         self.inp_params = inp_params or {}
         self.unredirected_headers = Headers(kind='client')
-        self.method = method.upper()
-        self.full_url = url
-        if params:
-            self._encode_url(params)
         self.history = history
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
@@ -241,36 +245,27 @@ class HttpRequest(RequestBase):
         self.charset = charset or 'utf-8'
         self.version = version
         self.decompress = decompress
-        self.encode_multipart = encode_multipart
-        self.multipart_boundary = multipart_boundary
         self.websocket_handler = websocket_handler
         self.source_address = source_address
         self.stream = stream
         self.verify = verify
         self.new_parser()
-        if self._scheme in tls_schemes:
-            self._ssl = client.ssl_context(verify=self.verify, **ignored)
         if auth and not isinstance(auth, Auth):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
         self.headers = client.get_headers(self, headers)
+        self.url = self._full_url(url, params)
+        self.body = self._encode_body(data, files, json)
+        self._set_proxy(proxies, ignored)
         cookies = cookiejar_from_dict(client.cookies, cookies)
         if cookies:
             cookies.add_cookie_header(self)
-        self.unredirected_headers['host'] = host_no_default_port(self._scheme,
-                                                                 self._netloc)
-        self.data = data
-        self._set_proxy(proxies)
 
     @property
     def address(self):
         """``(host, port)`` tuple of the HTTP resource
         """
-        return self._tunnel.address if self._tunnel else (self.host, self.port)
-
-    @property
-    def target_address(self):
-        return (self.host, int(self.port))
+        return self._tunnel.address if self._tunnel else super().address
 
     @property
     def ssl(self):
@@ -284,8 +279,9 @@ class HttpRequest(RequestBase):
 
     @property
     def key(self):
-        tunnel = self._tunnel.full_url if self._tunnel else None
-        return (self.scheme, self.host, self.port, tunnel, self.verify)
+        tunnel = self._tunnel.url if self._tunnel else None
+        scheme, host, port = scheme_host_port(self._proxy or self.url)
+        return scheme, host, port, tunnel, self.verify
 
     @property
     def proxy(self):
@@ -299,51 +295,20 @@ class HttpRequest(RequestBase):
         """
         return self._tunnel
 
-    @property
-    def netloc(self):
-        if self._proxy:
-            return self._proxy.netloc
-        else:
-            return self._netloc
-
     def __repr__(self):
         return self.first_line()
     __str__ = __repr__
 
-    @property
-    def full_url(self):
-        """Full url of endpoint
-        """
-        return urlunparse((self._scheme, self._netloc, self.path,
-                           self.params, self.query, self.fragment))
-
-    @full_url.setter
-    def full_url(self, url):
-        self._scheme, self._netloc, self.path, self.params,\
-            self.query, self.fragment = urlparse(url)
-        if not self._netloc and self.method == 'CONNECT':
-            self._scheme, self._netloc, self.path, self.params,\
-                self.query, self.fragment = urlparse('http://%s' % url)
-
-    @property
-    def data(self):
-        """Body of request
-        """
-        return self._data
-
-    @data.setter
-    def data(self, data):
-        self._data = self._encode_data(data)
-
     def first_line(self):
+        p = urlparse(self.url)
         if self._proxy:
             if self.method == 'CONNECT':
-                url = self._netloc
+                url = p.netloc
             else:
-                url = self.full_url
+                url = self.url
         else:
-            url = urlunparse(('', '', self.path or '/', self.params,
-                              self.query, self.fragment))
+            url = urlunparse(('', '', p.path or '/', p.params,
+                              p.query, p.fragment))
         return '%s %s %s' % (self.method, url, self.version)
 
     def new_parser(self):
@@ -352,7 +317,7 @@ class HttpRequest(RequestBase):
                                               method=self.method)
 
     def is_chunked(self):
-        return self.data and 'content-length' not in self.headers
+        return self.body and 'content-length' not in self.headers
 
     def encode(self):
         """The bytes representation of this :class:`HttpRequest`.
@@ -362,7 +327,7 @@ class HttpRequest(RequestBase):
         """
         # Call body before fist_line in case the query is changes.
         first_line = self.first_line()
-        if self.data and self.wait_continue:
+        if self.body and self.wait_continue:
             self.headers['expect'] = '100-continue'
         headers = self.headers
         if self.unredirected_headers:
@@ -399,65 +364,59 @@ class HttpRequest(RequestBase):
     def write_body(self, transport):
         assert not self._write_done, 'Body already sent'
         self._write_done = True
-        if not self.data:
+        if not self.body:
             return
-        if is_streamed(self.data):
+        if is_streamed(self.body):
             ensure_future(self._write_streamed_data(transport),
                           loop=transport._loop)
         else:
-            self._write_body_data(transport, self.data, True)
+            self._write_body_data(transport, self.body, True)
 
     # INTERNAL ENCODING METHODS
-    def _encode_data(self, data):
+    def _full_url(self, url, params):
+        """Full url of endpoint
+        """
+        p = urlparse(url)
+        if not p.netloc and self.method == 'CONNECT':
+            p = urlparse('http://%s' % url)
+
+        params = mapping_iterator(params)
+        query = parse_qsl(p.query)
+        query.extend(split_url_params(params))
+        query = urlencode(query)
+        return urlunparse((p.scheme, p.netloc, p.path,
+                           p.params, query, p.fragment))
+
+    def _encode_body(self, data, files, json):
         body = None
-        if self.method in ENCODE_URL_METHODS:
-            self.files = None
-            self._encode_url(data)
-        elif isinstance(data, bytes):
-            assert self.files is None, ('data cannot be bytes when files are '
-                                        'present')
-            body = data
-        elif isinstance(data, str):
-            assert self.files is None, ('data cannot be string when files are '
-                                        'present')
+        if isinstance(data, (str, bytes)):
+            if files:
+                raise ValueError('data cannot be a string or bytes when '
+                                 'files are present')
             body = to_bytes(data, self.charset)
         elif data and is_streamed(data):
-            assert self.files is None, ('data cannot be an iterator when '
-                                        'files are present')
-            # if 'content-type' not in self.headers:
-            #     self.headers['content-type'] = 'application/octet-stream'
+            if files:
+                raise ValueError('data cannot be an iterator when '
+                                 'files are present')
             if 'content-length' not in self.headers:
                 self.headers['transfer-encoding'] = 'chunked'
             return data
-        elif data or self.files:
-            if self.files:
-                body, content_type = self._encode_files(data)
+        elif data or files:
+            if files:
+                body, content_type = self._encode_files(data, files)
             else:
                 body, content_type = self._encode_params(data)
-            # set files to None, Important!
-            self.files = None
             self.headers['Content-Type'] = content_type
+        elif json:
+            body = _json.dumps(json).encode(self.charset)
+            self.headers['Content-Type'] = 'application/json'
+
         if body:
             self.headers['content-length'] = str(len(body))
-        # elif 'expect' not in self.headers:
-        #     self.headers.pop('content-length', None)
-        #     self.headers.pop('content-type', None)
+
         return body
 
-    def _encode_url(self, data):
-        query = self.query
-        if data:
-            data = native_str(data)
-            if isinstance(data, str):
-                data = parse_qsl(data)
-            else:
-                data = mapping_iterator(data)
-            query = parse_qsl(query)
-            query.extend(data)
-            query = urlencode(query)
-        self.query = query
-
-    def _encode_files(self, data):
+    def _encode_files(self, data, files):
         fields = []
         for field, val in mapping_iterator(data or ()):
             if (isinstance(val, str) or isinstance(val, bytes) or
@@ -471,7 +430,7 @@ class HttpRequest(RequestBase):
                                    isinstance(field, bytes) else field,
                                    v.encode('utf-8') if isinstance(v, str)
                                    else v))
-        for (k, v) in mapping_iterator(self.files):
+        for (k, v) in mapping_iterator(files):
             # support for explicit filename
             ft = None
             if isinstance(v, (tuple, list)):
@@ -494,30 +453,25 @@ class HttpRequest(RequestBase):
         #
         return encode_multipart_formdata(fields, charset=self.charset)
 
-    def _encode_params(self, data):
+    def _encode_params(self, params):
         content_type = self.headers.get('content-type')
         # No content type given, chose one
         if not content_type:
-            if self.encode_multipart:
-                content_type = MULTIPART_FORM_DATA
-            else:
-                content_type = FORM_URL_ENCODED
+            content_type = FORM_URL_ENCODED
 
-        if hasattr(data, 'read'):
-            data = data.read()
+        if hasattr(params, 'read'):
+            params = params.read()
+
         if content_type in JSON_CONTENT_TYPES:
-            body = json.dumps(data).encode(self.charset)
+            body = _json.dumps(params)
         elif content_type == FORM_URL_ENCODED:
-            body = urlencode(data).encode(self.charset)
+            body = urlencode(tuple(split_url_params(params)))
         elif content_type == MULTIPART_FORM_DATA:
             body, content_type = encode_multipart_formdata(
-                data, boundary=self.multipart_boundary, charset=self.charset)
+                params, charset=self.charset)
         else:
-            body = data
-            if not isinstance(body, bytes):
-                raise ValueError("Don't know how to encode body for %s" %
-                                 content_type)
-        return body, content_type
+            body = params
+        return to_bytes(body, self.charset), content_type
 
     def _write_body_data(self, transport, data, finish=False):
         if self.is_chunked():
@@ -530,43 +484,35 @@ class HttpRequest(RequestBase):
             transport.write(chunk)
 
     async def _write_streamed_data(self, transport):
-        for data in self.data:
+        for data in self.body:
             if isawaitable(data):
                 data = await data
             self._write_body_data(transport, data)
         self._write_body_data(transport, b'', True)
 
     # PROXY INTERNALS
-    def _set_proxy(self, proxies):
+    def _set_proxy(self, proxies, ignored):
+        url = urlparse(self.url)
+        self.unredirected_headers['host'] = host_no_default_port(url.scheme,
+                                                                 url.netloc)
+        if url.scheme in tls_schemes:
+            self._ssl = self.client.ssl_context(verify=self.verify, **ignored)
+
         request_proxies = self.client.proxies.copy()
         if proxies:
             request_proxies.update(proxies)
         self.proxies = request_proxies
-        self.scheme = self._scheme
-        self._set_hostport(self._scheme, self._netloc)
         #
-        if self.scheme in request_proxies:
-            hostonly = self.host
+        if url.scheme in request_proxies:
+            host, port = get_hostport(url.scheme, url.netloc)
             no_proxy = [n for n in request_proxies.get('no', '').split(',')
                         if n]
-            if not any(map(hostonly.endswith, no_proxy)):
-                url = request_proxies[self.scheme]
-                p = urlparse(url)
-                if not p.scheme:
-                    raise ValueError('Could not understand proxy %s' % url)
-                scheme = p.scheme
-                host = p.netloc
+            if not any(map(host.endswith, no_proxy)):
+                url = request_proxies[url.scheme]
                 if not self._ssl:
-                    self.scheme = scheme
-                    self._set_hostport(scheme, host)
-                    self._proxy = scheme_host(scheme, host)
+                    self._proxy = url
                 else:
-                    self._tunnel = HttpTunnel(self, scheme, host)
-
-    def _set_hostport(self, scheme, host):
-        self._tunnel = None
-        self._proxy = None
-        self.host, self.port = get_hostport(scheme, host)
+                    self._tunnel = HttpTunnel(self, url)
 
 
 class HttpResponse(ProtocolConsumer):
@@ -620,7 +566,7 @@ class HttpResponse(ProtocolConsumer):
         """
         request = self.request
         if request:
-            return request.full_url
+            return request.url
 
     @property
     def history(self):
@@ -701,7 +647,7 @@ class HttpResponse(ProtocolConsumer):
     def json(self, charset=None):
         """Decode content as a JSON object.
         """
-        return json.loads(self.text(charset))
+        return _json.loads(self.text(charset))
 
     def decode_content(self):
         """Return the best possible representation of the response body.
@@ -777,8 +723,6 @@ class HttpClient(AbstractClient):
 
     It handles pool of asynchronous connections.
 
-    :param encode_multipart: optional flag for setting the
-        :attr:`encode_multipart` attribute
     :param pool_size: set the :attr:`pool_size` attribute.
     :param store_cookies: set the :attr:`store_cookies` attribute
 
@@ -802,16 +746,6 @@ class HttpClient(AbstractClient):
     .. attribute:: timeout
 
         Default timeout for requests. If None or 0, no timeout on requests
-
-    .. attribute:: encode_multipart
-
-        Flag indicating if body data is by default encoded using the
-        ``multipart/form-data`` or ``application/x-www-form-urlencoded``
-        encoding.
-
-        It can be overwritten during a :meth:`request`.
-
-        Default: ``True``
 
     .. attribute:: proxies
 
@@ -859,17 +793,15 @@ class HttpClient(AbstractClient):
         ('Connection', 'Keep-Alive'),
         ('Proxy-Connection', 'Keep-Alive')],
         kind='client')
-    request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
-                          'websocket_handler', 'multipart_boundary', 'version',
+    request_parameters = ('max_redirects', 'decompress',
+                          'websocket_handler', 'version',
                           'verify', 'stream')
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxies dictionary
     no_proxy = set(('localhost', platform.node()))
 
-    def __init__(self, proxies=None, cache=None, headers=None,
-                 encode_multipart=True, multipart_boundary=None,
-                 keyfile=None, certfile=None, verify=True,
-                 ca_certs=None, cookies=None, store_cookies=True,
+    def __init__(self, proxies=None, headers=None, verify=True,
+                 cookies=None, store_cookies=True,
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None, stream=False,
@@ -901,8 +833,6 @@ class HttpClient(AbstractClient):
             self.proxies = get_environ_proxies()
             if 'no' not in self.proxies:
                 self.proxies['no'] = ','.join(self.no_proxy)
-        self.encode_multipart = encode_multipart
-        self.multipart_boundary = multipart_boundary or choose_boundary()
         self.websocket_handler = websocket_handler
         self.http_parser = parser or http_parser
         self.frame_parser = frame_parser or websocket.frame_parser

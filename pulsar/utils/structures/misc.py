@@ -33,7 +33,7 @@ def aslist(value):
 
 class MultiValueDict(dict):
     """A subclass of dictionary customized to handle multiple
-values for the same key.
+    values for the same key.
     """
     def __init__(self, data=None):
         super().__init__()
@@ -41,9 +41,12 @@ values for the same key.
             self.update(data)
 
     def __getitem__(self, key):
-        """Returns the data value for this key. If the value is a list with
-only one element, it returns that element, otherwise it returns the list.
-Raises KeyError if key is not found."""
+        """Returns the data value for this key.
+
+        If the value is a list with only one element, it returns that element,
+        otherwise it returns the list.
+        Raises KeyError if key is not found.
+        """
         l = super().__getitem__(key)
         return l[0] if len(l) == 1 else l
 
@@ -180,6 +183,9 @@ class AttributeDictionary(collections.Mapping):
 
     def copy(self):
         return self.__class__(self)
+
+    def clear(self):
+        self.__dict__.clear()
 
 
 class FrozenDict(dict):

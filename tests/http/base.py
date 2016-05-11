@@ -9,10 +9,10 @@ import examples
 
 from pulsar import send, SERVER_SOFTWARE, get_event_loop
 from pulsar.utils.path import Path
-from pulsar.utils.httpurl import iri_to_uri
 from pulsar.utils.system import platform
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
-                              HttpRequestException, HTTPDigestAuth)
+                              HttpRequestException, HTTPDigestAuth,
+                              FORM_URL_ENCODED)
 
 
 linux = platform.name == 'posix' and not platform.isMacOSX
@@ -135,12 +135,11 @@ class TestHttpClientBase:
 
     def after_test_home_page(self, response, processed=1):
         request = response.request
-        self.assertEqual(request.scheme, 'https' if self.with_tls else 'http')
         # Only one connection pool,
         # even though the proxy and the connection are for different addresses
         http = response.producer
         self.assertEqual(len(http.connection_pools), 1)
-        pool = http.connection_pools[response.request.key]
+        pool = http.connection_pools[request.key]
         self.assertEqual(pool.available, 1)
         self.assertEqual(pool.in_use, 0)
         self.assertEqual(http.sessions, 1)
@@ -163,10 +162,9 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
-    @asyncio.coroutine
-    def test_home_page(self):
+    async def test_home_page(self):
         http = self.client()
-        response = yield from http.get(self.httpbin())
+        response = await http.get(self.httpbin())
         self.assertEqual(str(response), '<Response [200]>')
         self.assertTrue('content-length' in response.headers)
         content = response.content
@@ -176,64 +174,83 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_server(response)
         self.after_test_home_page(response)
         # Try again
-        response = yield from http.get(self.httpbin())
+        response = await http.get(self.httpbin())
         self.assertEqual(str(response), '<Response [200]>')
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
-    @asyncio.coroutine
-    def test_200_get(self):
+    async def test_200_get(self):
         http = self.client()
-        response = yield from http.get(self.httpbin())
+        response = await http.get(self.httpbin())
         self.assertEqual(str(response), '<Response [200]>')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_status(), '200 OK')
         self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
         self._check_pool(http, response)
-        response = yield from http.get(self.httpbin('get'))
+        response = await http.get(self.httpbin('get'))
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
 
-    @asyncio.coroutine
-    def test_200_get_data(self):
+    async def test_200_get_c(self):
         http = self.client()
-        response = yield from http.get(self.httpbin('get'),
-                                       data={'bla': 'foo'})
+        response = await http.get(self.httpbin('get'), params={'bla': 'foo'})
         result = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'],
                          'application/json; charset=utf-8')
         self.assertEqual(result['args'], {'bla': 'foo'})
-        self.assertEqual(response.url,
-                         self.httpbin(iri_to_uri('get', {'bla': 'foo'})))
+        self.assertEqual(response.url, '%s?bla=foo' % self.httpbin('get'))
         self._check_pool(http, response)
 
-    @asyncio.coroutine
-    def test_200_gzip(self):
+    async def test_200_get_params_list(self):
+        http = self.client()
+        params = {'key1': 'value1', 'key2': ['value2', 'value3']}
+        response = await http.get(self.httpbin('get'), params=params)
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'],
+                         'application/json; charset=utf-8')
+        self.assertEqual(result['args'], params)
+        _, query = response.url.split('?')
+        self.assertTrue('key1=value1' in query)
+        self.assertTrue('key2=value2&key2=value3' in query)
+        self._check_pool(http, response)
+
+    async def test_200_gzip(self):
         http = self._client
-        response = yield from http.get(self.httpbin('gzip'))
+        response = await http.get(self.httpbin('gzip'))
         self.assertEqual(response.status_code, 200)
         content = response.json()
         self.assertTrue(content['gzipped'])
         if 'content-encoding' in response.headers:
             self.assertTrue(response.headers['content-encoding'], 'gzip')
 
-    @asyncio.coroutine
-    def test_json_post(self):
+    async def test_post_json(self):
         http = self._client
         data = {'bla': 'foo',
                 'unz': 'whatz',
                 'numero': [1, 2]}
         ct = 'application/json'
-        response = yield from http.post(self.httpbin('post'),
-                                        headers=[('content-type', ct)],
-                                        data=data)
+        response = await http.post(self.httpbin('post'), json=data)
         self.assertEqual(response.request.headers['content-type'], ct)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'], [1, 2])
+
+    async def test_post_encoded(self):
+        http = self._client
+        data = {'bla': 'foo',
+                'unz': 'whatz',
+                'numero': [1, 2]}
+        response = await http.post(self.httpbin('post'), data=data)
+        self.assertEqual(response.request.headers['content-type'],
+                         FORM_URL_ENCODED)
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     @asyncio.coroutine
     def test_upload_images(self):
@@ -338,14 +355,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
 
-    @asyncio.coroutine
-    def test_post(self):
+    async def test_post(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield from http.post(self.httpbin('post'),
-                                        encode_multipart=False,
-                                        data=data)
+        response = await http.post(self.httpbin('post'),  data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -473,12 +487,12 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'], ['1', '2'])
 
-    @asyncio.coroutine
-    def test_delete(self):
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
+    async def test_delete(self):
+        data = {'bla': 'foo',
+                'unz': 'whatz',
+                'numero': ['1', '2']}
         http = self._client
-        response = yield from http.delete(self.httpbin('delete'), data=data)
+        response = await http.delete(self.httpbin('delete'), params=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -512,17 +526,16 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(data['cookies']['sessionid'], 't1')
         self.assertEqual(data['cookies']['cookies_are'], 'working')
 
-    @asyncio.coroutine
-    def test_cookie(self):
+    async def test_cookie(self):
         http = self._client
         # First set the cookies
-        r = yield from http.get(self.httpbin('cookies', 'set', 'bla', 'foo'))
+        r = await http.get(self.httpbin('cookies', 'set', 'bla', 'foo'))
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
         self.assertTrue(http.cookies)
         # Now check if I get them
-        r = yield from http.get(self.httpbin('cookies'))
+        r = await http.get(self.httpbin('cookies'))
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.request.unredirected_headers)
         result = r.json()

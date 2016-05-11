@@ -125,13 +125,13 @@ class Redirect:
         url = response.headers.get('location')
         # Handle redirection without scheme (see: RFC 1808 Section 4)
         if url.startswith('//'):
-            parsed_rurl = urlparse(request.full_url)
+            parsed_rurl = urlparse(request.url)
             url = '%s:%s' % (parsed_rurl.scheme, url)
         # Facilitate non-RFC2616-compliant 'location' headers
         # (e.g. '/path/to/resource' instead of
         # 'http://domain.tld/path/to/resource')
         if not urlparse(url).netloc:
-            url = urljoin(request.full_url,
+            url = urljoin(request.url,
                           # Compliant with RFC3986, we percent
                           # encode the url.
                           requote_uri(url))
@@ -255,9 +255,10 @@ class Tunneling:
         #
         # Therefore use legacy SSL transport
         waiter = asyncio.Future(loop=loop)
-        loop._make_legacy_ssl_transport(sock, connection, request._ssl,
-                                        waiter,
-                                        server_hostname=request._netloc)
+        url = urlparse(request.url)
+        loop._make_legacy_ssl_transport(sock, connection,
+                                        request._ssl, waiter,
+                                        server_hostname=url.netloc)
         await waiter
         #
         await connection.event('connection_made')
