@@ -95,9 +95,9 @@ Posting data is as simple as passing the ``data`` parameter::
 Cookie support
 ================
 
-Cookies are handled by sessions by storing cookies received with responses.
-To disable cookie one can pass ``store_cookies=False`` during
-:class:`HttpClient` initialisation.
+Cookies are handled by storing cookies received with responses in a sessions
+object. To disable cookie one can pass ``store_cookies=False`` during
+:class:`.HttpClient` initialisation.
 
 If a response contains some Cookies, you can get quick access to them::
 

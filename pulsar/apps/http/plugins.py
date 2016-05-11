@@ -180,7 +180,7 @@ class WebSocket:
     @noerror
     def __call__(self, response, exc=None):
         request = response.request
-        if request and request.scheme in ('ws', 'wss'):
+        if request and urlparse(request.url).scheme in ('ws', 'wss'):
             headers = request.headers
             headers['connection'] = 'Upgrade'
             headers['upgrade'] = 'websocket'

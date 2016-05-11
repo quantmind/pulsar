@@ -22,7 +22,6 @@ This example shows how to use
 import os
 import sys
 import string
-import mimetypes
 from functools import partial
 from itertools import repeat, chain
 from random import random
@@ -47,23 +46,12 @@ FAVICON = os.path.join(ASSET_DIR, 'favicon.ico')
 characters = string.ascii_letters + string.digits
 
 
-def asset(name, mode='r', chunk_size=None):
+def asset(name, mode='r'):
     name = os.path.join(ASSET_DIR, name)
     if os.path.isfile(name):
-        content_type, encoding = mimetypes.guess_type(name)
-        if chunk_size:
-            def _chunks():
-                with open(name, mode) as file:
-                    while True:
-                        data = file.read(chunk_size)
-                        if not data:
-                            break
-                        yield data
-            data = _chunks()
-        else:
-            with open(name, mode) as file:
-                data = file.read()
-        return data, content_type, encoding
+        with open(name, mode) as file:
+            data = file.read()
+        return data
 
 
 class BaseRouter(wsgi.Router):
@@ -135,7 +123,7 @@ class HttpBin(BaseRouter):
         html.head.links.append('favicon.ico', rel="icon", type='image/x-icon')
         html.head.scripts.append('httpbin.js')
         ul = ul.render(request)
-        templ, _, _ = asset('template.html')
+        templ = asset('template.html')
         body = templ % (title, JAPANESE, CHINESE, version, pyversion, ul)
         html.body.append(body)
         return html.http_response(request)
