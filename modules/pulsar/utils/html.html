@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.html &mdash; pulsar 1.3.0b1 documentation</title>
+    <title>pulsar.utils.html &mdash; pulsar 1.3.1b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.3.0b1',
+        VERSION:     '1.3.1b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.1b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -73,15 +73,15 @@
 
 <div class="viewcode-block" id="child_tag"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.child_tag">[docs]</a><span class="k">def</span> <span class="nf">child_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The default children ``tag`` for a given ``tag``.&#39;&#39;&#39;</span>
-    <span class="k">return</span> <span class="n">HTML_CHILDREN_TAG</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HTML_CHILDREN_TAG</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="mark_safe"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.mark_safe">[docs]</a><span class="k">def</span> <span class="nf">mark_safe</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Mar a string ``v`` as safe. A safe string won&#39;t be escaped by the</span>
 <span class="sd">:func:`escape` function.&#39;&#39;&#39;</span>
-    <span class="k">return</span> <span class="n">SafeString</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SafeString</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
 
-</div>
+
 <span class="k">def</span> <span class="nf">is_safe</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s1">&#39;__html__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 
@@ -96,9 +96,9 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="n">html</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;amp;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
             <span class="s1">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;lt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&amp;#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
-            <span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;quot;&#39;</span><span class="p">)</span>
+            <span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;quot;&#39;</span><span class="p">)</span></div>
 
-</div>
+
 <span class="k">def</span> <span class="nf">dump_data_value</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
@@ -121,18 +121,18 @@
     <span class="k">if</span> <span class="n">x</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">x</span></div>
 
-</div>
+
 <div class="viewcode-block" id="nicename"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.nicename">[docs]</a><span class="k">def</span> <span class="nf">nicename</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Make ``name`` a more user friendly string.</span>
 
 <span class="sd">    Capitalise the first letter and replace dash and underscores with a space</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">capfirst</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="n">capfirst</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span></div>
 
-</div>
+
 <span class="k">def</span> <span class="nf">plural</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">plural</span> <span class="ow">or</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="n">text</span>

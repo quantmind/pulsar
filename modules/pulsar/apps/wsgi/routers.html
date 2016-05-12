@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.routers &mdash; pulsar 1.3.0b1 documentation</title>
+    <title>pulsar.apps.wsgi.routers &mdash; pulsar 1.3.1b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.3.0b1',
+        VERSION:     '1.3.1b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.3.1b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -136,6 +136,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">http_date</span><span class="p">,</span> <span class="n">CacheControl</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.slugify</span> <span class="kn">import</span> <span class="n">slugify</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">digest</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">MethodNotAllowed</span>
 
 <span class="kn">from</span> <span class="nn">.route</span> <span class="kn">import</span> <span class="n">Route</span>
@@ -145,7 +146,6 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Router&#39;</span><span class="p">,</span>
            <span class="s1">&#39;MediaRouter&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;FileRouter&#39;</span><span class="p">,</span>
            <span class="s1">&#39;MediaMixin&#39;</span><span class="p">,</span>
            <span class="s1">&#39;RouterParam&#39;</span><span class="p">,</span>
            <span class="s1">&#39;file_response&#39;</span><span class="p">]</span>
@@ -549,39 +549,11 @@
 
 
 <span class="k">class</span> <span class="nc">MediaMixin</span><span class="p">:</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">modified_since</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">r&quot;^([^;]+)(; length=([0-9]+))?$&quot;</span><span class="p">,</span>
-                               <span class="n">header</span><span class="p">,</span>
-                               <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
-            <span class="n">header_mtime</span> <span class="o">=</span> <span class="n">mktime_tz</span><span class="p">(</span><span class="n">parsedate_tz</span><span class="p">(</span><span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
-            <span class="n">header_len</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">header_len</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">header_len</span><span class="p">)</span> <span class="o">!=</span> <span class="n">size</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span>
-            <span class="k">return</span> <span class="n">header_mtime</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">OverflowError</span><span class="p">):</span>
-            <span class="k">pass</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">was_modified_since</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mtime</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Check if an item was modified since the user last downloaded it</span>
-
-<span class="sd">        :param header: the value of the ``If-Modified-Since`` header.</span>
-<span class="sd">            If this is ``None``, simply return ``True``</span>
-<span class="sd">        :param mtime: the modification time of the item in question.</span>
-<span class="sd">        :param size: the size of the item.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">header_mtime</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">modified_since</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">header_mtime</span> <span class="ow">and</span> <span class="n">header_mtime</span> <span class="o">&lt;=</span> <span class="n">mtime</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        <span class="k">return</span> <span class="bp">True</span>
+    <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">serve_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">file_response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status_code</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">file_response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status_code</span><span class="p">,</span>
+                             <span class="n">cache_control</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_control</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">directory_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">):</span>
         <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">Html</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;../&#39;</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="s1">&#39;../&#39;</span><span class="p">,</span> <span class="n">cn</span><span class="o">=</span><span class="s1">&#39;folder&#39;</span><span class="p">)]</span>
@@ -626,8 +598,6 @@
 
 <span class="sd">        The default file to serve when a directory is requested.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">show_indexes</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                  <span class="n">default_suffix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">default_file</span><span class="o">=</span><span class="s1">&#39;index.html&#39;</span><span class="p">,</span>
                  <span class="o">**</span><span class="n">params</span><span class="p">):</span>
@@ -635,7 +605,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_default_suffix</span> <span class="o">=</span> <span class="n">default_suffix</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_default_file</span> <span class="o">=</span> <span class="n">default_file</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_show_indexes</span> <span class="o">=</span> <span class="n">show_indexes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">filesystem_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_full_path</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">urlargs</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">])</span>
@@ -677,11 +647,38 @@
                 <span class="k">raise</span></div>
 
 
-<span class="n">FileRouter</span> <span class="o">=</span> <span class="n">MediaRouter</span>
+<span class="k">def</span> <span class="nf">modified_since</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">r&quot;^([^;]+)(; length=([0-9]+))?$&quot;</span><span class="p">,</span>
+                           <span class="n">header</span><span class="p">,</span>
+                           <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+        <span class="n">header_mtime</span> <span class="o">=</span> <span class="n">mktime_tz</span><span class="p">(</span><span class="n">parsedate_tz</span><span class="p">(</span><span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="n">header_len</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">header_len</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">header_len</span><span class="p">)</span> <span class="o">!=</span> <span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+        <span class="k">return</span> <span class="n">header_mtime</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">OverflowError</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+
+<span class="k">def</span> <span class="nf">was_modified_since</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mtime</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Check if an item was modified since the user last downloaded it</span>
+
+<span class="sd">    :param header: the value of the ``If-Modified-Since`` header.</span>
+<span class="sd">        If this is ``None``, simply return ``True``</span>
+<span class="sd">    :param mtime: the modification time of the item in question.</span>
+<span class="sd">    :param size: the size of the item.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">header_mtime</span> <span class="o">=</span> <span class="n">modified_since</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">header_mtime</span> <span class="ow">and</span> <span class="n">header_mtime</span> <span class="o">&lt;=</span> <span class="n">mtime</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">return</span> <span class="bp">True</span>
 
 
 <div class="viewcode-block" id="file_response"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.file_response">[docs]</a><span class="k">def</span> <span class="nf">file_response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                  <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                  <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cache_control</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Utility for serving a local file</span>
 
 <span class="sd">    Typical usage::</span>
@@ -706,7 +703,7 @@
         <span class="n">size</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_SIZE</span><span class="p">]</span>
         <span class="n">modified</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="n">stat</span><span class="o">.</span><span class="n">ST_MTIME</span><span class="p">]</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_IF_MODIFIED_SINCE&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">MediaMixin</span><span class="o">.</span><span class="n">was_modified_since</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">modified</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">was_modified_since</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">modified</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
             <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="mi">304</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">content_type</span><span class="p">:</span>
@@ -720,6 +717,9 @@
                 <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status_code</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Last-Modified&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">http_date</span><span class="p">(</span><span class="n">modified</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cache_control</span><span class="p">:</span>
+                <span class="n">etag</span> <span class="o">=</span> <span class="n">digest</span><span class="p">(</span><span class="s1">&#39;modified: </span><span class="si">%d</span><span class="s1"> - size: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">modified</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
+                <span class="n">cache_control</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">etag</span><span class="o">=</span><span class="n">etag</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">response</span>
     <span class="k">raise</span> <span class="n">Http404</span></div>
 </pre></div>

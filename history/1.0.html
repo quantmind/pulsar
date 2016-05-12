@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Ver. 1.0.7 - 2015-Dec-10 &mdash; pulsar 1.3.0b1 documentation</title>
+    <title>Ver. 1.0.7 - 2015-Dec-10 &mdash; pulsar 1.3.1b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.3.0b1',
+        VERSION:     '1.3.1b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.3.1b1 documentation" href="../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -41,19 +41,19 @@
           <div class="body" role="main">
             
   <div class="section" id="ver-1-0-7-2015-dec-10">
-<h1>Ver. 1.0.7 - 2015-Dec-10<a class="headerlink" href="#ver-1-0-7-2015-dec-10" title="Permalink to this headline">¶</a></h1>
+<span id="ver-1-0-7-2015-dec-10"></span><h1>Ver. 1.0.7 - 2015-Dec-10<a class="headerlink" href="#ver-1-0-7-2015-dec-10" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="api">
-<h2>Api<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<span id="api"></span><h2>Api<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Improvements in the <code class="docutils literal"><span class="pre">release</span></code> application</li>
-<li>Handle <code class="docutils literal"><span class="pre">StopIteration</span></code> in green pool [[182](<a class="reference external" href="https://github.com/quantmind/pulsar/pull/182">https://github.com/quantmind/pulsar/pull/182</a>)]</li>
+<li>Handle <code class="docutils literal"><span class="pre">StopIteration</span></code> in green pool [<a class="reference external" href="https://github.com/quantmind/pulsar/pull/182">182</a>]</li>
 </ul>
 </div>
 </div>
 <div class="section" id="ver-1-0-6-2015-nov-26">
-<h1>Ver. 1.0.6 - 2015-Nov-26<a class="headerlink" href="#ver-1-0-6-2015-nov-26" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="id1">
-<h2>Api<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span id="ver-1-0-6-2015-nov-26"></span><h1>Ver. 1.0.6 - 2015-Nov-26<a class="headerlink" href="#ver-1-0-6-2015-nov-26" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="api">
+<span id="id1"></span><h2>Api<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Pulsar Protocol requires loop as first parameter during initialisation</li>
 <li>Actor uses event loop <code class="docutils literal"><span class="pre">set_debug</span></code> method when running with the <code class="docutils literal"><span class="pre">--debug</span></code> flag</li>
@@ -62,7 +62,7 @@
 </ul>
 </div>
 <div class="section" id="internals">
-<h2>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
+<span id="internals"></span><h2>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Use <code class="docutils literal"><span class="pre">actor_stop</span></code> rather than <code class="docutils literal"><span class="pre">loop.stop</span></code> when handling OS signals which kill an actor.</li>
 <li>Better <code class="docutils literal"><span class="pre">close</span></code> method for <code class="docutils literal"><span class="pre">TCPServer</span></code></li>
@@ -70,17 +70,17 @@
 </ul>
 </div>
 <div class="section" id="bug-fixes">
-<h2>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permalink to this headline">¶</a></h2>
+<span id="bug-fixes"></span><h2>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Bug fix in <code class="docutils literal"><span class="pre">HttpRedirect.location</span></code> attribute</li>
 </ul>
 </div>
 </div>
 <div class="section" id="ver-1-0-5-2015-nov-12">
-<h1>Ver. 1.0.5 - 2015-Nov-12<a class="headerlink" href="#ver-1-0-5-2015-nov-12" title="Permalink to this headline">¶</a></h1>
+<span id="ver-1-0-5-2015-nov-12"></span><h1>Ver. 1.0.5 - 2015-Nov-12<a class="headerlink" href="#ver-1-0-5-2015-nov-12" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Asynchronous Redis locking primitive for distributing computing</li>
-<li>Added the <a class="reference internal" href="../tutorials/tweets.html#tutorials-tweets"><span>Twitter Streaming</span></a> tutorial</li>
+<li>Added the :ref:<code class="docutils literal"><span class="pre">Twitter</span> <span class="pre">Streaming</span> <span class="pre">&lt;tutorials-tweets&gt;</span></code> tutorial</li>
 <li>Added Javascript directory in examples and a gruntfile for compiling and linting scripts</li>
 <li>Better handling of Ctrl-C in the test application</li>
 <li>Data streaming for <code class="docutils literal"><span class="pre">multipart/form-data</span></code> content type</li>
@@ -89,7 +89,7 @@
 </ul>
 </div>
 <div class="section" id="ver-1-0-3-2015-jul-21">
-<h1>Ver. 1.0.3 - 2015-Jul-21<a class="headerlink" href="#ver-1-0-3-2015-jul-21" title="Permalink to this headline">¶</a></h1>
+<span id="ver-1-0-3-2015-jul-21"></span><h1>Ver. 1.0.3 - 2015-Jul-21<a class="headerlink" href="#ver-1-0-3-2015-jul-21" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Flake8 on all codebase</li>
 <li>Added JSON-RPC 2.0 Batch - part of specification (by artemmus)</li>
@@ -105,7 +105,7 @@ objects.</li>
 </ul>
 </div>
 <div class="section" id="ver-1-0-2-2015-jun-16">
-<h1>Ver. 1.0.2 - 2015-Jun-16<a class="headerlink" href="#ver-1-0-2-2015-jun-16" title="Permalink to this headline">¶</a></h1>
+<span id="ver-1-0-2-2015-jun-16"></span><h1>Ver. 1.0.2 - 2015-Jun-16<a class="headerlink" href="#ver-1-0-2-2015-jun-16" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Test WSGI environment does not use asynchronous stream</li>
 <li>Bug fixes in pulsar data store commands</li>
@@ -115,19 +115,19 @@ objects.</li>
 </ul>
 </div>
 <div class="section" id="ver-1-0-1-2015-jun-03">
-<h1>Ver. 1.0.1 - 2015-Jun-03<a class="headerlink" href="#ver-1-0-1-2015-jun-03" title="Permalink to this headline">¶</a></h1>
+<span id="ver-1-0-1-2015-jun-03"></span><h1>Ver. 1.0.1 - 2015-Jun-03<a class="headerlink" href="#ver-1-0-1-2015-jun-03" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Better support of <code class="docutils literal"><span class="pre">get_version</span></code> for third party packages.</li>
-<li>Added optional timeout to <a class="reference internal" href="../apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a> requests.</li>
-<li>Refactored <a class="reference internal" href="../apps/wsgi/content.html#pulsar.apps.wsgi.content.String" title="pulsar.apps.wsgi.content.String"><code class="xref py py-class docutils literal"><span class="pre">String</span></code></a> and renamed from <code class="docutils literal"><span class="pre">AsyncString</span></code>. <code class="docutils literal"><span class="pre">AsyncString</span></code>
+<li>Added optional timeout to :class:<code class="docutils literal"><span class="pre">.HttpClient</span></code> requests.</li>
+<li>Refactored :class:<code class="docutils literal"><span class="pre">.String</span></code> and renamed from <code class="docutils literal"><span class="pre">AsyncString</span></code>. <code class="docutils literal"><span class="pre">AsyncString</span></code>
 still available for backward compatibility.</li>
-<li>Added the new <a class="reference internal" href="../apps/greenio.html#pulsar.apps.greenio.lock.GreenLock" title="pulsar.apps.greenio.lock.GreenLock"><code class="xref py py-class docutils literal"><span class="pre">GreenLock</span></code></a> class. A locking primitive for
+<li>Added the new :class:<code class="docutils literal"><span class="pre">.GreenLock</span></code> class. A locking primitive for
 greenlets in a greenlet pool.</li>
 <li>Added new example to snippets directory. A simple Actor application.</li>
 </ul>
 </div>
 <div class="section" id="ver-1-0-0-2015-may-18">
-<h1>Ver. 1.0.0 - 2015-May-18<a class="headerlink" href="#ver-1-0-0-2015-may-18" title="Permalink to this headline">¶</a></h1>
+<span id="ver-1-0-0-2015-may-18"></span><h1>Ver. 1.0.0 - 2015-May-18<a class="headerlink" href="#ver-1-0-0-2015-may-18" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Python 3.4 and above</li>
 <li>New test runner</li>

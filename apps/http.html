@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous HTTP client &mdash; pulsar 1.3.0b1 documentation</title>
+    <title>Asynchronous HTTP client &mdash; pulsar 1.3.1b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.3.0b1',
+        VERSION:     '1.3.1b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.0b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.3.1b1 documentation" href="../index.html" />
     <link rel="next" title="Django Application" href="pulse.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" />
    
@@ -51,29 +51,32 @@ very similar to python <a class="reference external" href="http://docs.python-re
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><a class="reference internal" href="#getting-started" id="id1">Getting Started</a></li>
-<li><a class="reference internal" href="#posting-data-and-parameters" id="id2">Posting data and parameters</a></li>
-<li><a class="reference internal" href="#cookie-support" id="id3">Cookie support</a></li>
-<li><a class="reference internal" href="#authentication" id="id4">Authentication</a></li>
-<li><a class="reference internal" href="#tls-ssl" id="id5">TLS/SSL</a></li>
-<li><a class="reference internal" href="#streaming" id="id6">Streaming</a><ul>
-<li><a class="reference internal" href="#the-raw-stream" id="id7">The raw stream</a></li>
-<li><a class="reference internal" href="#data-process-hook" id="id8">Data process hook</a></li>
+<li><a class="reference internal" href="#passing-parameters-in-urls" id="id2">Passing Parameters In URLs</a></li>
+<li><a class="reference internal" href="#posting-simple-data" id="id3">Posting simple data</a></li>
+<li><a class="reference internal" href="#posting-json-data" id="id4">Posting JSON data</a></li>
+<li><a class="reference internal" href="#posting-file-data" id="id5">Posting file data</a></li>
+<li><a class="reference internal" href="#cookie-support" id="id6">Cookie support</a></li>
+<li><a class="reference internal" href="#authentication" id="id7">Authentication</a></li>
+<li><a class="reference internal" href="#tls-ssl" id="id8">TLS/SSL</a></li>
+<li><a class="reference internal" href="#streaming" id="id9">Streaming</a><ul>
+<li><a class="reference internal" href="#the-raw-stream" id="id10">The raw stream</a></li>
+<li><a class="reference internal" href="#data-processed-hook" id="id11">Data processed hook</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#websocket" id="id9">WebSocket</a></li>
-<li><a class="reference internal" href="#redirects-decompression" id="id10">Redirects &amp; Decompression</a></li>
-<li><a class="reference internal" href="#synchronous-mode" id="id11">Synchronous Mode</a></li>
-<li><a class="reference internal" href="#events" id="id12">Events</a><ul>
-<li><a class="reference internal" href="#one-time-events" id="id13">One time events</a></li>
-<li><a class="reference internal" href="#many-time-events" id="id14">Many time events</a></li>
+<li><a class="reference internal" href="#websocket" id="id12">WebSocket</a></li>
+<li><a class="reference internal" href="#redirects-decompression" id="id13">Redirects &amp; Decompression</a></li>
+<li><a class="reference internal" href="#synchronous-mode" id="id14">Synchronous Mode</a></li>
+<li><a class="reference internal" href="#events" id="id15">Events</a><ul>
+<li><a class="reference internal" href="#one-time-events" id="id16">One time events</a></li>
+<li><a class="reference internal" href="#many-time-events" id="id17">Many time events</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#api" id="id15">API</a><ul>
-<li><a class="reference internal" href="#http-client" id="id16">HTTP Client</a></li>
-<li><a class="reference internal" href="#http-request" id="id17">HTTP Request</a></li>
-<li><a class="reference internal" href="#http-response" id="id18">HTTP Response</a></li>
-<li><a class="reference internal" href="#oauth1" id="id19">OAuth1</a></li>
-<li><a class="reference internal" href="#oauth2" id="id20">OAuth2</a></li>
+<li><a class="reference internal" href="#api" id="id18">API</a><ul>
+<li><a class="reference internal" href="#http-client" id="id19">HTTP Client</a></li>
+<li><a class="reference internal" href="#http-request" id="id20">HTTP Request</a></li>
+<li><a class="reference internal" href="#http-response" id="id21">HTTP Response</a></li>
+<li><a class="reference internal" href="#oauth1" id="id22">OAuth1</a></li>
+<li><a class="reference internal" href="#oauth2" id="id23">OAuth2</a></li>
 </ul>
 </li>
 </ul>
@@ -109,25 +112,48 @@ information about the request and the result:</p>
 <p>The <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.request" title="pulsar.async.protocols.ProtocolConsumer.request"><code class="xref py py-attr docutils literal"><span class="pre">request</span></code></a> attribute of <code class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></code>
 is an instance of the original <a class="reference internal" href="#pulsar.apps.http.HttpRequest" title="pulsar.apps.http.HttpRequest"><code class="xref py py-class docutils literal"><span class="pre">HttpRequest</span></code></a>.</p>
 </div>
-<div class="section" id="posting-data-and-parameters">
-<h2><a class="toc-backref" href="#id2">Posting data and parameters</a><a class="headerlink" href="#posting-data-and-parameters" title="Permalink to this headline">¶</a></h2>
-<p>Posting data is as simple as passing the <code class="docutils literal"><span class="pre">data</span></code> parameter:</p>
-<div class="highlight-python"><div class="highlight"><pre>sessions.post(..., data={&#39;entry1&#39;: &#39;bla&#39;, &#39;entry2&#39;: &#39;doo&#39;)
-</pre></div>
-</div>
+<div class="section" id="passing-parameters-in-urls">
+<h2><a class="toc-backref" href="#id2">Passing Parameters In URLs</a><a class="headerlink" href="#passing-parameters-in-urls" title="Permalink to this headline">¶</a></h2>
 <p>You can attach parameters to the <code class="docutils literal"><span class="pre">url</span></code> by passing the
 <code class="docutils literal"><span class="pre">params</span></code> dictionary:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="n">sessions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;http://bla.com&#39;</span><span class="p">,</span>
                         <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;foo&#39;</span><span class="p">})</span>
-<span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">full_url</span>   <span class="o">//</span> <span class="s1">&#39;http://bla.com?page=2&amp;key=foo&#39;</span>
+<span class="n">response</span><span class="o">.</span><span class="n">url</span>   <span class="o">//</span> <span class="s1">&#39;http://bla.com?page=2&amp;key=foo&#39;</span>
+</pre></div>
+</div>
+<p>You can also pass a list of items as a value:</p>
+<blockquote>
+<div>params = {key1&#8217;: &#8216;value1&#8217;, &#8216;key2&#8217;: [&#8216;value2&#8217;, &#8216;value3&#8217;]}
+response = sessions.get(&#8216;<a class="reference external" href="http://bla.com">http://bla.com</a>&#8216;, params=params)
+response.url   // <a class="reference external" href="http://bla.com?key1=value1&amp;key2=value2&amp;key2=value3">http://bla.com?key1=value1&amp;key2=value2&amp;key2=value3</a></div></blockquote>
+</div>
+<div class="section" id="posting-simple-data">
+<h2><a class="toc-backref" href="#id3">Posting simple data</a><a class="headerlink" href="#posting-simple-data" title="Permalink to this headline">¶</a></h2>
+<p>Posting data is as simple as passing the <code class="docutils literal"><span class="pre">data</span></code> parameter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">sessions</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;entry1&#39;</span><span class="p">:</span> <span class="s1">&#39;bla&#39;</span><span class="p">,</span> <span class="s1">&#39;entry2&#39;</span><span class="p">:</span> <span class="s1">&#39;doo&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="posting-json-data">
+<h2><a class="toc-backref" href="#id4">Posting JSON data</a><a class="headerlink" href="#posting-json-data" title="Permalink to this headline">¶</a></h2>
+<p>Posting data is as simple as passing the <code class="docutils literal"><span class="pre">data</span></code> parameter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">sessions</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;entry1&#39;</span><span class="p">:</span> <span class="s1">&#39;bla&#39;</span><span class="p">,</span> <span class="s1">&#39;entry2&#39;</span><span class="p">:</span> <span class="s1">&#39;doo&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="posting-file-data">
+<h2><a class="toc-backref" href="#id5">Posting file data</a><a class="headerlink" href="#posting-file-data" title="Permalink to this headline">¶</a></h2>
+<p>Posting data is as simple as passing the <code class="docutils literal"><span class="pre">data</span></code> parameter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">files</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;report.xls&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)}</span>
+<span class="n">sessions</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="cookie-support">
-<span id="http-cookie"></span><h2><a class="toc-backref" href="#id3">Cookie support</a><a class="headerlink" href="#cookie-support" title="Permalink to this headline">¶</a></h2>
-<p>Cookies are handled by sessions by storing cookies received with responses.
-To disable cookie one can pass <code class="docutils literal"><span class="pre">store_cookies=False</span></code> during
-<code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code> initialisation.</p>
+<span id="http-cookie"></span><h2><a class="toc-backref" href="#id6">Cookie support</a><a class="headerlink" href="#cookie-support" title="Permalink to this headline">¶</a></h2>
+<p>Cookies are handled by storing cookies received with responses in a sessions
+object. To disable cookie one can pass <code class="docutils literal"><span class="pre">store_cookies=False</span></code> during
+<a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a> initialisation.</p>
 <p>If a response contains some Cookies, you can get quick access to them:</p>
 <div class="highlight-python"><div class="highlight"><pre>response = await sessions.get(...)
 type(response.cookies)
@@ -140,7 +166,7 @@ type(response.cookies)
 </div>
 </div>
 <div class="section" id="authentication">
-<span id="http-authentication"></span><h2><a class="toc-backref" href="#id4">Authentication</a><a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
+<span id="http-authentication"></span><h2><a class="toc-backref" href="#id7">Authentication</a><a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
 <p>Authentication, either <code class="docutils literal"><span class="pre">basic</span></code> or <code class="docutils literal"><span class="pre">digest</span></code>, can be added
 by passing the <code class="docutils literal"><span class="pre">auth</span></code> parameter during a request. For basic authentication:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">sessions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;&lt;username&gt;&#39;</span><span class="p">,</span><span class="s1">&#39;&lt;password&gt;&#39;</span><span class="p">))</span>
@@ -162,7 +188,7 @@ by passing the <code class="docutils literal"><span class="pre">auth</span></cod
 to your requests.</p>
 </div>
 <div class="section" id="tls-ssl">
-<h2><a class="toc-backref" href="#id5">TLS/SSL</a><a class="headerlink" href="#tls-ssl" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id8">TLS/SSL</a><a class="headerlink" href="#tls-ssl" title="Permalink to this headline">¶</a></h2>
 <p>Supported out of the box:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">sessions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span>
 </pre></div>
@@ -189,10 +215,10 @@ certificates of trusted CAs:</p>
 </div>
 </div>
 <div class="section" id="streaming">
-<span id="http-streaming"></span><h2><a class="toc-backref" href="#id6">Streaming</a><a class="headerlink" href="#streaming" title="Permalink to this headline">¶</a></h2>
+<span id="http-streaming"></span><h2><a class="toc-backref" href="#id9">Streaming</a><a class="headerlink" href="#streaming" title="Permalink to this headline">¶</a></h2>
 <p>This is an event-driven client, therefore streaming support is native.</p>
 <div class="section" id="the-raw-stream">
-<h3><a class="toc-backref" href="#id7">The raw stream</a><a class="headerlink" href="#the-raw-stream" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id10">The raw stream</a><a class="headerlink" href="#the-raw-stream" title="Permalink to this headline">¶</a></h3>
 <p>The easyiest way to use streaming is to pass the <code class="docutils literal"><span class="pre">stream=True</span></code> parameter
 during a request and access the <code class="xref py py-attr docutils literal"><span class="pre">HttpResponse.raw</span></code> attribute.
 For example:</p>
@@ -213,8 +239,8 @@ been already iterated, <code class="xref py py-class docutils literal"><span cla
 </pre></div>
 </div>
 </div>
-<div class="section" id="data-process-hook">
-<h3><a class="toc-backref" href="#id8">Data process hook</a><a class="headerlink" href="#data-process-hook" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="data-processed-hook">
+<h3><a class="toc-backref" href="#id11">Data processed hook</a><a class="headerlink" href="#data-processed-hook" title="Permalink to this headline">¶</a></h3>
 <p>Another approach to streaming is to use the
 <a class="reference internal" href="#http-many-time-events"><span>data_processed</span></a> event handler.
 For example:</p>
@@ -233,9 +259,9 @@ application using the <code class="xref py py-class docutils literal"><span clas
 </div>
 </div>
 <div class="section" id="websocket">
-<span id="http-websocket"></span><h2><a class="toc-backref" href="#id9">WebSocket</a><a class="headerlink" href="#websocket" title="Permalink to this headline">¶</a></h2>
+<span id="http-websocket"></span><h2><a class="toc-backref" href="#id12">WebSocket</a><a class="headerlink" href="#websocket" title="Permalink to this headline">¶</a></h2>
 <p>The http client support websocket upgrades. First you need to have a
-websocket handler:</p>
+websocket handler, a class derived from <a class="reference internal" href="websockets.html#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><code class="xref py py-class docutils literal"><span class="pre">WS</span></code></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">ws</span>
 
 <span class="k">class</span> <span class="nc">Echo</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
@@ -250,18 +276,18 @@ websocket handler:</p>
 </div>
 </div>
 <div class="section" id="redirects-decompression">
-<span id="http-redirects"></span><h2><a class="toc-backref" href="#id10">Redirects &amp; Decompression</a><a class="headerlink" href="#redirects-decompression" title="Permalink to this headline">¶</a></h2>
+<span id="http-redirects"></span><h2><a class="toc-backref" href="#id13">Redirects &amp; Decompression</a><a class="headerlink" href="#redirects-decompression" title="Permalink to this headline">¶</a></h2>
 <p>[TODO]</p>
 </div>
 <div class="section" id="synchronous-mode">
-<h2><a class="toc-backref" href="#id11">Synchronous Mode</a><a class="headerlink" href="#synchronous-mode" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id14">Synchronous Mode</a><a class="headerlink" href="#synchronous-mode" title="Permalink to this headline">¶</a></h2>
 <p>Can be used in <a class="reference internal" href="../tutorials/sync.html#tutorials-synchronous"><span>synchronous mode</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">sessions</span> <span class="o">=</span> <span class="n">HttpClient</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">new_event_loop</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="events">
-<h2><a class="toc-backref" href="#id12">Events</a><a class="headerlink" href="#events" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id15">Events</a><a class="headerlink" href="#events" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference internal" href="../tutorials/events.html#event-handling"><span>Events</span></a> control the behaviour of the
 <a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a> when certain conditions occur. They are useful for
 handling standard HTTP event such as <a class="reference internal" href="#http-redirects"><span>redirects</span></a>,
@@ -269,7 +295,7 @@ handling standard HTTP event such as <a class="reference internal" href="#http-r
 <a class="reference internal" href="#http-streaming"><span>streaming</span></a> or anything your application
 requires.</p>
 <div class="section" id="one-time-events">
-<span id="http-one-time-events"></span><h3><a class="toc-backref" href="#id13">One time events</a><a class="headerlink" href="#one-time-events" title="Permalink to this headline">¶</a></h3>
+<span id="http-one-time-events"></span><h3><a class="toc-backref" href="#id16">One time events</a><a class="headerlink" href="#one-time-events" title="Permalink to this headline">¶</a></h3>
 <p>There are three <a class="reference internal" href="../tutorials/events.html#one-time-event"><span>one time events</span></a> associated with an
 <code class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></code> object:</p>
 <ul class="simple">
@@ -298,7 +324,7 @@ handling <em>100 Continue</em>, <em>websocket upgrade</em> and <a class="referen
 and one <code class="docutils literal"><span class="pre">post_request</span></code> callback for handling redirects.</p>
 </div>
 <div class="section" id="many-time-events">
-<span id="http-many-time-events"></span><h3><a class="toc-backref" href="#id14">Many time events</a><a class="headerlink" href="#many-time-events" title="Permalink to this headline">¶</a></h3>
+<span id="http-many-time-events"></span><h3><a class="toc-backref" href="#id17">Many time events</a><a class="headerlink" href="#many-time-events" title="Permalink to this headline">¶</a></h3>
 <p>In addition to the three <a class="reference internal" href="#http-one-time-events"><span>one time events</span></a>,
 the <a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a> supports two additional
 events which can occur several times while processing a given response:</p>
@@ -319,15 +345,15 @@ parsed</li>
 <span class="target" id="module-pulsar.apps.http"></span></div>
 </div>
 <div class="section" id="api">
-<h2><a class="toc-backref" href="#id15">API</a><a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id18">API</a><a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <p>The main classes here are the <a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a>, a subclass of
 <a class="reference internal" href="../api/protocols.html#pulsar.async.clients.AbstractClient" title="pulsar.async.clients.AbstractClient"><code class="xref py py-class docutils literal"><span class="pre">AbstractClient</span></code></a>, the <a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><code class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></code></a>, returned by http
 requests and the <a class="reference internal" href="#pulsar.apps.http.HttpRequest" title="pulsar.apps.http.HttpRequest"><code class="xref py py-class docutils literal"><span class="pre">HttpRequest</span></code></a>.</p>
 <div class="section" id="http-client">
-<h3><a class="toc-backref" href="#id16">HTTP Client</a><a class="headerlink" href="#http-client" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id19">HTTP Client</a><a class="headerlink" href="#http-client" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.http.HttpClient">
-<em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">HttpClient</code><span class="sig-paren">(</span><em>proxies=None</em>, <em>cache=None</em>, <em>headers=None</em>, <em>encode_multipart=True</em>, <em>multipart_boundary=None</em>, <em>keyfile=None</em>, <em>certfile=None</em>, <em>verify=True</em>, <em>ca_certs=None</em>, <em>cookies=None</em>, <em>store_cookies=True</em>, <em>max_redirects=10</em>, <em>decompress=True</em>, <em>version=None</em>, <em>websocket_handler=None</em>, <em>parser=None</em>, <em>trust_env=True</em>, <em>loop=None</em>, <em>client_version=None</em>, <em>timeout=None</em>, <em>stream=False</em>, <em>pool_size=10</em>, <em>frame_parser=None</em>, <em>logger=None</em>, <em>close_connections=False</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">HttpClient</code><span class="sig-paren">(</span><em>proxies=None</em>, <em>headers=None</em>, <em>verify=True</em>, <em>cookies=None</em>, <em>store_cookies=True</em>, <em>max_redirects=10</em>, <em>decompress=True</em>, <em>version=None</em>, <em>websocket_handler=None</em>, <em>parser=None</em>, <em>trust_env=True</em>, <em>loop=None</em>, <em>client_version=None</em>, <em>timeout=None</em>, <em>stream=False</em>, <em>pool_size=10</em>, <em>frame_parser=None</em>, <em>logger=None</em>, <em>close_connections=False</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient" title="Permalink to this definition">¶</a></dt>
 <dd><p>A client for HTTP/HTTPS servers.</p>
 <p>It handles pool of asynchronous connections.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -335,8 +361,6 @@ requests and the <a class="reference internal" href="#pulsar.apps.http.HttpReque
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>encode_multipart</strong> &#8211; optional flag for setting the
-<a class="reference internal" href="#pulsar.apps.http.HttpClient.encode_multipart" title="pulsar.apps.http.HttpClient.encode_multipart"><code class="xref py py-attr docutils literal"><span class="pre">encode_multipart</span></code></a> attribute</li>
 <li><strong>pool_size</strong> &#8211; set the <a class="reference internal" href="#pulsar.apps.http.HttpClient.pool_size" title="pulsar.apps.http.HttpClient.pool_size"><code class="xref py py-attr docutils literal"><span class="pre">pool_size</span></code></a> attribute.</li>
 <li><strong>store_cookies</strong> &#8211; set the <a class="reference internal" href="#pulsar.apps.http.HttpClient.store_cookies" title="pulsar.apps.http.HttpClient.store_cookies"><code class="xref py py-attr docutils literal"><span class="pre">store_cookies</span></code></a> attribute</li>
 </ul>
@@ -369,16 +393,6 @@ serves.</p>
 <dt id="pulsar.apps.http.HttpClient.timeout">
 <code class="descname">timeout</code><a class="headerlink" href="#pulsar.apps.http.HttpClient.timeout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Default timeout for requests. If None or 0, no timeout on requests</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.http.HttpClient.encode_multipart">
-<code class="descname">encode_multipart</code><a class="headerlink" href="#pulsar.apps.http.HttpClient.encode_multipart" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flag indicating if body data is by default encoded using the
-<code class="docutils literal"><span class="pre">multipart/form-data</span></code> or <code class="docutils literal"><span class="pre">application/x-www-form-urlencoded</span></code>
-encoding.</p>
-<p>It can be overwritten during a <a class="reference internal" href="#pulsar.apps.http.HttpClient.request" title="pulsar.apps.http.HttpClient.request"><code class="xref py py-meth docutils literal"><span class="pre">request()</span></code></a>.</p>
-<p>Default: <code class="docutils literal"><span class="pre">True</span></code></p>
 </dd></dl>
 
 <dl class="attribute">
@@ -555,10 +569,10 @@ initialisation.</li>
 
 </div>
 <div class="section" id="http-request">
-<h3><a class="toc-backref" href="#id17">HTTP Request</a><a class="headerlink" href="#http-request" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id20">HTTP Request</a><a class="headerlink" href="#http-request" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.http.HttpRequest">
-<em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">HttpRequest</code><span class="sig-paren">(</span><em>client</em>, <em>url</em>, <em>method</em>, <em>inp_params=None</em>, <em>headers=None</em>, <em>data=None</em>, <em>files=None</em>, <em>history=None</em>, <em>auth=None</em>, <em>charset=None</em>, <em>encode_multipart=True</em>, <em>multipart_boundary=None</em>, <em>source_address=None</em>, <em>allow_redirects=False</em>, <em>max_redirects=10</em>, <em>decompress=True</em>, <em>version=None</em>, <em>wait_continue=False</em>, <em>websocket_handler=None</em>, <em>cookies=None</em>, <em>params=None</em>, <em>stream=False</em>, <em>proxies=None</em>, <em>verify=True</em>, <em>**ignored</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">HttpRequest</code><span class="sig-paren">(</span><em>client</em>, <em>url</em>, <em>method</em>, <em>inp_params=None</em>, <em>headers=None</em>, <em>data=None</em>, <em>files=None</em>, <em>json=None</em>, <em>history=None</em>, <em>auth=None</em>, <em>charset=None</em>, <em>max_redirects=10</em>, <em>source_address=None</em>, <em>allow_redirects=False</em>, <em>decompress=True</em>, <em>version=None</em>, <em>wait_continue=False</em>, <em>websocket_handler=None</em>, <em>cookies=None</em>, <em>params=None</em>, <em>stream=False</em>, <em>proxies=None</em>, <em>verify=True</em>, <em>**ignored</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a> request for an HTTP resource.</p>
 <p>This class has a similar interface to <a class="reference external" href="http://python.readthedocs.org/en/latest/library/urllib.request.html#urllib.request.Request" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">urllib.request.Request</span></code></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -586,15 +600,6 @@ initialisation.</li>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.http.HttpRequest.encode_multipart">
-<code class="descname">encode_multipart</code><a class="headerlink" href="#pulsar.apps.http.HttpRequest.encode_multipart" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <code class="docutils literal"><span class="pre">True</span></code> (default), defaults POST data as <code class="docutils literal"><span class="pre">multipart/form-data</span></code>.
-Pass <code class="docutils literal"><span class="pre">encode_multipart=False</span></code> to default to
-<code class="docutils literal"><span class="pre">application/x-www-form-urlencoded</span></code>. In any case, this parameter is
-overwritten by passing the correct content-type header.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.apps.http.HttpRequest.history">
 <code class="descname">history</code><a class="headerlink" href="#pulsar.apps.http.HttpRequest.history" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of past <a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><code class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></code></a> (collected during redirects).</p>
@@ -619,24 +624,12 @@ overwritten by passing the correct content-type header.</p>
 <dd><p><code class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></code> tuple of the HTTP resource</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="pulsar.apps.http.HttpRequest.data">
-<code class="descname">data</code><a class="headerlink" href="#pulsar.apps.http.HttpRequest.data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Body of request</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="pulsar.apps.http.HttpRequest.encode">
 <code class="descname">encode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest.encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest.encode" title="Permalink to this definition">¶</a></dt>
 <dd><p>The bytes representation of this <a class="reference internal" href="#pulsar.apps.http.HttpRequest" title="pulsar.apps.http.HttpRequest"><code class="xref py py-class docutils literal"><span class="pre">HttpRequest</span></code></a>.</p>
 <p>Called by <a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><code class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></code></a> when it needs to encode this
 <a class="reference internal" href="#pulsar.apps.http.HttpRequest" title="pulsar.apps.http.HttpRequest"><code class="xref py py-class docutils literal"><span class="pre">HttpRequest</span></code></a> before sending it to the HTTP resource.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.http.HttpRequest.full_url">
-<code class="descname">full_url</code><a class="headerlink" href="#pulsar.apps.http.HttpRequest.full_url" title="Permalink to this definition">¶</a></dt>
-<dd><p>Full url of endpoint</p>
 </dd></dl>
 
 <dl class="method">
@@ -681,7 +674,7 @@ established, it returns <code class="docutils literal"><span class="pre">None</s
 
 </div>
 <div class="section" id="http-response">
-<h3><a class="toc-backref" href="#id18">HTTP Response</a><a class="headerlink" href="#http-response" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id21">HTTP Response</a><a class="headerlink" href="#http-response" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.http.HttpResponse">
 <em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">HttpResponse</code><span class="sig-paren">(</span><em>loop=None</em>, <em>one_time_events=None</em>, <em>many_times_events=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse" title="Permalink to this definition">¶</a></dt>
@@ -785,7 +778,7 @@ established, it returns <code class="docutils literal"><span class="pre">None</s
 
 </div>
 <div class="section" id="oauth1">
-<h3><a class="toc-backref" href="#id19">OAuth1</a><a class="headerlink" href="#oauth1" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id22">OAuth1</a><a class="headerlink" href="#oauth1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.http.OAuth1">
 <em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">OAuth1</code><span class="sig-paren">(</span><em>client_id=None</em>, <em>client=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http/oauth.html#OAuth1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.OAuth1" title="Permalink to this definition">¶</a></dt>
@@ -794,7 +787,7 @@ established, it returns <code class="docutils literal"><span class="pre">None</s
 
 </div>
 <div class="section" id="oauth2">
-<h3><a class="toc-backref" href="#id20">OAuth2</a><a class="headerlink" href="#oauth2" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id23">OAuth2</a><a class="headerlink" href="#oauth2" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.http.OAuth2">
 <em class="property">class </em><code class="descclassname">pulsar.apps.http.</code><code class="descname">OAuth2</code><span class="sig-paren">(</span><em>client_id=None</em>, <em>client=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http/oauth.html#OAuth2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.OAuth2" title="Permalink to this definition">¶</a></dt>
