@@ -28,7 +28,7 @@ html_theme_options = {
     'logo': 'pulsar-logo.png',
     'github_user': 'quantmind',
     'github_repo': 'pulsar',
-    'description': 'Concurrent framework for python 3.4 and above.'
+    'description': 'Concurrent framework for python 3.5 and above.'
 }
 html_sidebars = {
     '**': [
