@@ -19,7 +19,7 @@ Main Classes
 
 .. autoclass:: EchoGreen
 
-.. autoclass:: Servers
+.. autoclass:: FlaskSite
 
 Components
 =============
