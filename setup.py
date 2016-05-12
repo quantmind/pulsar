@@ -117,7 +117,7 @@ if __name__ == '__main__':
     if command == 'package_info':
         package_info()
     elif command == 'agile':
-        from agile import AgileManager
+        from agile.app import AgileManager
         AgileManager(description='Release manager for pulsar',
                      argv=sys.argv[2:]).start()
     else:
