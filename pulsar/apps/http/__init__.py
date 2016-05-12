@@ -253,7 +253,7 @@ class HttpRequest(RequestBase):
         if auth and not isinstance(auth, Auth):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
-        self.headers = client.get_headers(self, headers)
+        self.headers = client._get_headers(headers)
         self.url = self._full_url(url, params)
         self.body = self._encode_body(data, files, json)
         self._set_proxy(proxies, ignored)
@@ -496,7 +496,7 @@ class HttpRequest(RequestBase):
         self.unredirected_headers['host'] = host_no_default_port(url.scheme,
                                                                  url.netloc)
         if url.scheme in tls_schemes:
-            self._ssl = self.client.ssl_context(verify=self.verify, **ignored)
+            self._ssl = self.client._ssl_context(verify=self.verify, **ignored)
 
         request_proxies = self.client.proxies.copy()
         if proxies:
@@ -783,15 +783,15 @@ class HttpClient(AbstractClient):
 
     It can be overwritten on :meth:`request`.
     """
-    DEFAULT_HTTP_HEADERS = Headers([
+    DEFAULT_HTTP_HEADERS = Headers((
         ('Connection', 'Keep-Alive'),
         ('Accept', '*/*'),
         ('Accept-Encoding', 'deflate'),
-        ('Accept-Encoding', 'gzip')],
+        ('Accept-Encoding', 'gzip')),
         kind='client')
-    DEFAULT_TUNNEL_HEADERS = Headers([
+    DEFAULT_TUNNEL_HEADERS = Headers((
         ('Connection', 'Keep-Alive'),
-        ('Proxy-Connection', 'Keep-Alive')],
+        ('Proxy-Connection', 'Keep-Alive')),
         kind='client')
     request_parameters = ('max_redirects', 'decompress',
                           'websocket_handler', 'version',
@@ -843,6 +843,7 @@ class HttpClient(AbstractClient):
         self.bind_event('on_headers', handle_cookies)
         self.bind_event('post_request', Redirect())
 
+    # API
     def connect(self, address):
         if isinstance(address, tuple):
             address = ':'.join(('%s' % v for v in address))
@@ -974,7 +975,7 @@ class HttpClient(AbstractClient):
             response = await self._request(method, url, **params)
         return response
 
-    def get_headers(self, request, headers=None):
+    def _get_headers(self, headers=None):
         # Returns a :class:`Header` obtained from combining
         # :attr:`headers` with *headers*. Can handle websocket requests.
         d = self.headers.copy()
@@ -982,9 +983,9 @@ class HttpClient(AbstractClient):
             d.override(headers)
         return d
 
-    def ssl_context(self, verify=True, cert_reqs=None,
-                    check_hostname=False, certfile=None, keyfile=None,
-                    cafile=None, capath=None, cadata=None, **kw):
+    def _ssl_context(self, verify=True, cert_reqs=None,
+                     check_hostname=False, certfile=None, keyfile=None,
+                     cafile=None, capath=None, cadata=None, **kw):
         assert ssl, 'SSL not supported'
         cafile = cafile or DEFAULT_CA_BUNDLE_PATH
 

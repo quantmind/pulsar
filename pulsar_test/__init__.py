@@ -6,7 +6,7 @@ import setuptools.command.test as orig
 
 class Test(orig.test):
     test_suite = True
-    start_coverate = False
+    start_coverage = False
     list_options = set(['log-level=', 'test-plugins=',
                         'test-modules=', 'pulsar-args='])
     user_options = [
@@ -38,7 +38,7 @@ class Test(orig.test):
         self.test_args = self.pulsar_args or []
 
     def run_tests(self):
-        if self.coverage and self.start_coverate:
+        if self.coverage and self.start_coverage:
             import coverage
             from coverage.monkey import patch_multiprocessing
             p = current_process()

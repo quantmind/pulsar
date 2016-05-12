@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -
-'''Event driven concurrent framework for Python'''
+"""Event driven concurrent framework for Python"""
 import os
 
 from .utils.version import get_version
@@ -34,7 +34,4 @@ platform = system.platform          # noqa
 from .utils.config import *         # noqa
 from .async import *                # noqa
 from .apps import *                 # noqa
-
-del get_version
-# Import data stores
 from .apps.data import data_stores  # noqa

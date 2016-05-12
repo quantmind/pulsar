@@ -351,7 +351,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         self.assertEqual(http.version, 'HTTP/1.1')
         response = yield from http.get(
-            self.httpbin(), headers=[('connection', 'close')])
+            self.httpbin(), headers={'connection': 'close'})
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
 
@@ -653,7 +653,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         # Test if modified since
         response = yield from http.get(
             self.httpbin('media/httpbin.js'),
-            headers=[('If-modified-since', modified)])
+            headers={'If-modified-since': modified})
         self.assertEqual(response.status_code, 304)
         self.assertFalse('Content-length' in response.headers)
 
@@ -758,7 +758,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_415(self):
         http = self._client
         response = yield from http.get(
-            self.httpbin(''), headers=[('accept', 'application/json')])
+            self.httpbin(''), headers={'accept': 'application/json'})
         self.assertEqual(response.status_code, 415)
 
     @unittest.skipUnless(linux, 'Test in linux platform only')
@@ -826,7 +826,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         fut._loop.call_later(0.5, fut.set_result, result)
         response = yield from http.post(
             self.httpbin('post_chunks'),
-            headers=[('content-type', 'text/plain')],
+            headers={'content-type': 'text/plain'},
             data=gen())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.content), 300)
