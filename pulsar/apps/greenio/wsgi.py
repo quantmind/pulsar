@@ -21,8 +21,9 @@ class GreenWSGI:
             return self.pool.submit(self._call, environ, start_response)
 
     def _call(self, environ, start_response):
-        if environ['wsgi.input']:
-            environ['wsgi.input'] = GreenStream(environ['wsgi.input'])
+        wsgi_input = environ['wsgi.input']
+        if wsgi_input and not isinstance(wsgi_input, GreenStream):
+            environ['wsgi.input'] = GreenStream(wsgi_input)
         response = None
         try:
             for middleware in self.middleware:
