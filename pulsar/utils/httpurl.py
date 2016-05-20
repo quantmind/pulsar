@@ -305,7 +305,7 @@ def capheader(name):
     return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
 
 
-def header_field(name, HEADERS_SET=None, strict=False):
+def header_field(name, headers=None, strict=False):
     '''Return a header `name` in Camel case.
 
     For example::
@@ -316,16 +316,14 @@ def header_field(name, HEADERS_SET=None, strict=False):
     If ``header_set`` is given, only return headers included in the set.
     '''
     name = name.lower()
-    if name.startswith('x-'):
+    if name.startswith('x-') or not strict:
         return capheader(name)
     else:
         header = ALL_HEADER_FIELDS_DICT.get(name)
-        if header and HEADERS_SET:
-            return header if header in HEADERS_SET else None
-        elif header:
+        if header and headers:
+            return header if header in headers else None
+        else:
             return header
-        elif not strict:
-            return capheader(name)
 
 
 #    HEADERS UTILITIES
