@@ -20,7 +20,7 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(bytes(h), b'Server: bla\r\n'
                                    b'Content-Type: text/html\r\n\r\n')
 
-    def testClientHeader(self):
+    def test_client_header(self):
         h = Headers(kind='client')
         self.assertEqual(h.kind, 'client')
         self.assertEqual(len(h), 0)
@@ -28,9 +28,9 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(h.get_all('content-type'), ['text/html'])
         self.assertEqual(len(h), 1)
         h['server'] = 'bla'
-        self.assertEqual(len(h), 1)
+        self.assertEqual(len(h), 2)
         del h['content-type']
-        self.assertEqual(len(h), 0)
+        self.assertEqual(len(h), 1)
         self.assertEqual(h.get_all('content-type', []), [])
 
     def test_non_standard_request_headers(self):
@@ -38,9 +38,9 @@ class TestHeaders(unittest.TestCase):
         h['accept'] = 'text/html'
         self.assertEqual(len(h), 1)
         h['server'] = 'bla'
-        self.assertEqual(len(h), 1)
-        h['proxy-connection'] = 'keep-alive'
         self.assertEqual(len(h), 2)
+        h['proxy-connection'] = 'keep-alive'
+        self.assertEqual(len(h), 3)
         headers = str(h)
         self.assertTrue('Proxy-Connection:' in headers)
 
