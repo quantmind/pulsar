@@ -134,6 +134,9 @@ The Arbiter runs the main eventloop and it controls the life of all actors.
 Monitors manage group of actors performing similar functions, You can think
 of them as a pool of actors.
 
+.. image:: https://pulsar.fluidily.com/assets/images/actors.png
+   :alt: Pulsar Actors
+
 More information about design and philosophy in the documentation.
 
 

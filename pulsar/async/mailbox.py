@@ -190,7 +190,7 @@ class MailboxProtocol(Protocol):
         if exc:
             actor = get_actor()
             if actor.is_running():
-                actor.logger.warning('Connection lost with actor.')
+                actor.logger.warning('Connection lost with actor')
 
     @task
     async def _on_message(self, message):

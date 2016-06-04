@@ -8,6 +8,9 @@
 import os
 import signal
 import sys
+import site
+import logging
+from inspect import getfile
 
 try:
     import termios
@@ -23,13 +26,16 @@ try:
     if fd >= 0:
         USE_INOTIFY = True
         os.close(fd)
-except ImportError:     # pragma    nocover
+except ImportError:
     pass
+
+logger = logging.getLogger('pulsar.autoreload')
 
 EXIT_CODE = 5
 
 FILE_MODIFIED = 1
 I18N_MODIFIED = 2
+MODULE_BLACKLIST = ('pydev', '_pydev')
 
 _mtimes = {}
 _win = (sys.platform == "win32")
@@ -39,12 +45,40 @@ _cached_modules = set()
 _cached_filenames = []
 
 
+def module_white_list():
+    stdlib = os.path.dirname(os.path.dirname(sys.executable))
+    sitepackages = site.getsitepackages()
+    for module in sys.modules.values():
+        if in_black_list(module, stdlib, sitepackages):
+            continue
+        yield module
+
+
+def in_black_list(module, stdlib, sitepackages):
+    try:
+        filename = getfile(module)
+        name = module.__name__
+    except Exception:
+        return True
+
+    for blacklist in MODULE_BLACKLIST:
+        if name.startswith(blacklist):
+            return True
+
+    for package in sitepackages:
+        if filename.startswith(package):
+            return False
+
+    if filename.startswith(stdlib):
+        return True
+
+
 def gen_filenames(only_new=False):
     """Returns a list of filenames referenced in sys.modules and translation
     files.
     """
     global _cached_modules, _cached_filenames
-    module_values = set(sys.modules.values())
+    module_values = set(module_white_list())
     if _cached_modules == module_values:
         # No changes in module list, short-circuit the function
         if only_new:
@@ -120,7 +154,10 @@ def inotify_code_changed():
 def code_changed():
     global _mtimes, _win
     for filename in gen_filenames():
-        stat = os.stat(filename)
+        try:
+            stat = os.stat(filename)
+        except Exception:
+            continue
         mtime = stat.st_mtime
         if _win:
             mtime -= stat.st_ctime
@@ -170,6 +207,7 @@ def restart_with_reloader():
         new_environ = os.environ.copy()
         new_environ["RUN_MAIN"] = 'true'
         exit_code = os.spawnve(os.P_WAIT, sys.executable, args, new_environ)
+        logger.info('main execution exited with code %d', exit_code)
         if exit_code != EXIT_CODE:
             return exit_code
 
@@ -184,4 +222,3 @@ def start():
                 sys.exit(exit_code)
         except KeyboardInterrupt:
             pass
-        return True

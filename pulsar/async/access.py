@@ -17,6 +17,8 @@ from inspect import isawaitable
 __all__ = ['get_event_loop',
            'new_event_loop',
            'get_actor',
+           'cfg',
+           'cfg_value',
            'isfuture',
            'is_mainthread',
            'process_data',
@@ -143,3 +145,17 @@ def get_actor():
 
 def set_actor(actor):
     return thread_data('actor', actor)
+
+
+def cfg():
+    actor = get_actor()
+    if actor:
+        return actor.cfg
+
+
+def cfg_value(setting, value=None):
+    if value is None:
+        actor = get_actor()
+        if actor:
+            return actor.cfg.get(setting)
+    return value

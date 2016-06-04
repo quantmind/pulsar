@@ -181,7 +181,6 @@ class RedisCommands(StoreMixin):
         eq = self.wait.assertEqual
         yield from self.wait.assertRaises(ResponseError, c.rename, key, des)
         yield from eq(c.set(key, 'hello'), True)
-        yield from self.wait.assertRaises(ResponseError, c.rename, key, key)
         yield from eq(c.rename(key, des), True)
         yield from eq(c.exists(key), False)
         yield from eq(c.get(des), b'hello')

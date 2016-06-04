@@ -430,8 +430,7 @@ class Connection(Protocol, Timeout):
 
         number of separate requests processed.
     """
-    def __init__(self, consumer_factory=None, timeout=None,
-                 low_limit=None, high_limit=None, **kw):
+    def __init__(self, consumer_factory=None, timeout=None, **kw):
         super().__init__(**kw)
         self.bind_event('connection_lost', self._connection_lost)
         self._processed = 0

@@ -1,5 +1,4 @@
 import unittest
-import asyncio
 
 from pulsar import get_actor
 
@@ -12,17 +11,15 @@ class ExternalBase(base.TestHttpClientBase):
     def after_response(self, response):
         pass
 
-    @asyncio.coroutine
-    def test_get_https(self):
+    async def test_get_https(self):
         client = self.client()
-        response = yield from client.get('https://github.com/trending')
+        response = await client.get('https://github.com/trending')
         self.assertEqual(response.status_code, 200)
 
-    @asyncio.coroutine
-    def test_header_links_and_close(self):
+    async def test_header_links_and_close(self):
         client = self.client()
         baseurl = 'https://api.github.com/gists/public'
-        response = yield from client.get(baseurl)
+        response = await client.get(baseurl)
         if response.status_code == 403:
             # TODO: this fails in travis for some reason
             return
@@ -32,8 +29,9 @@ class ExternalBase(base.TestHttpClientBase):
         next = links['next']
         self.assertTrue('rel' in next)
         self.assertTrue('url' in next)
-        yield from client.close()
-        yield from self.wait.assertRaises(AssertionError, client.get, baseurl)
+        await client.close()
+        await client.get(baseurl)
+        await client.close()
 
 
 class ProxyExternal(ExternalBase):
@@ -41,10 +39,9 @@ class ProxyExternal(ExternalBase):
     def after_response(self, response):
         self.assertTrue(response.request.proxy)
 
-    @asyncio.coroutine
-    def test_get_https(self):
+    async def test_get_https(self):
         client = self.client()
-        response = yield from client.get('https://github.com/trending')
+        response = await client.get('https://github.com/trending')
         self.assertEqual(response.status_code, 200)
 
 
