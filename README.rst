@@ -2,7 +2,7 @@ Event driven concurrent framework for python.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
 
-:Badges: |license|  |pyversions| |status| |downloads|
+:Badges: |license|  |pyversions| |status|
 :Master CI: |master-build|_ |coverage-master|
 :Dev CI: |dev-build|_ |coverage-dev|
 :Documentation: http://pythonhosted.org/pulsar/
