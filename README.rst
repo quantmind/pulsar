@@ -77,7 +77,7 @@ Another example of pulsar framework is the asynchronous HttpClient_:
 
 The http client maintains connections alive (by default 15 seconds) and therefore
 any requests that you make within a session will automatically reuse the
-appropriate connection. All connections are released once the session exit the
+appropriate connection. All connections are released once the session exits the
 asynchronous ``with`` block.
 
 Installing

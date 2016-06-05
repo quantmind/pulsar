@@ -169,6 +169,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             self.assertEqual(len(session.connection_pools), 1)
         self.assertEqual(len(session.connection_pools), 0)
 
+    async def test_home_page_head(self):
+        http = self._client
+        response = await http.head(self.httpbin())
+        self.assertEqual(response.ok, True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(repr(response.request))
+
     async def test_home_page(self):
         http = self.client()
         response = await http.get(self.httpbin())

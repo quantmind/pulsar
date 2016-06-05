@@ -128,6 +128,10 @@ class HttpBin(BaseRouter):
         html.body.append(body)
         return html.http_response(request)
 
+    def head(self, request):
+        request.response.status_code = 200
+        return request.response
+
     @route(title='Returns GET data')
     def get_get(self, request):
         return self.info_data_response(request)
