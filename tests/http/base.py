@@ -162,6 +162,13 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
+    async def test_close_connections(self):
+        async with self.client() as session:
+            self.assertEqual(len(session.connection_pools), 0)
+            await session.get(self.httpbin())
+            self.assertEqual(len(session.connection_pools), 1)
+        self.assertEqual(len(session.connection_pools), 0)
+
     async def test_home_page(self):
         http = self.client()
         response = await http.get(self.httpbin())

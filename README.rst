@@ -1,6 +1,7 @@
-Event driven concurrent framework for python.
-With pulsar you can write asynchronous servers performing one or several
-activities in different threads and/or processes.
+.. image:: https://pulsar.fluidily.com/assets/images/pulsar-banner.png
+   :alt: Pulsar
+   :width: 300
+
 
 :Badges: |license|  |pyversions| |status|
 :Master CI: |master-build|_ |coverage-master|
@@ -10,7 +11,7 @@ activities in different threads and/or processes.
 :Source: https://github.com/quantmind/pulsar
 :Mailing list: `google user group`_
 :Design by: `Quantmind`_ and `Luca Sbardella`_
-:Platforms: Linux, OSX, Windows. Python 3.4 and above
+:Platforms: Linux, OSX, Windows. Python 3.5 and above
 :Keywords: client, server, asynchronous, concurrency, actor, thread, process,
     socket, wsgi, websocket, redis, json-rpc
 
@@ -63,19 +64,21 @@ notified when a new connection is made, and then it goes to sleep.
 Pulsar uses the asyncio_ and multiprocessing_ modules from the standard python
 library and it can be configured to run in multi-processing mode.
 
-Another example of pulsar framework is the asynchronous ``HttpClient``:
+Another example of pulsar framework is the asynchronous HttpClient_:
 
 .. code:: python
 
     from pulsar.apps import http
 
-    session = http.HttpClient()
+    async with http.HttpClient() as session:
+        response1 = await session.get('https://github.com/timeline.json')
+        response2 = await session.get('https://api.github.com/emojis.json')
 
-and somewhere in a coroutine you can wait for responses:
 
-.. code:: python
-
-    response = await session.get('https://github.com/timeline.json')
+The http client maintains connections alive (by default 15 seconds) and therefore
+any requests that you make within a session will automatically reuse the
+appropriate connection. All connections are released once the session exit the
+asynchronous ``with`` block.
 
 Installing
 ============
@@ -145,14 +148,16 @@ Add-ons
 Pulsar checks if some additional libraries are available at runtime, and
 uses them to add additional functionalities or improve performance:
 
+* greenlet_: required by the `pulsar.apps.greenio`_ module and useful for
+  developing implicit asynchronous applications
 * setproctitle_: if installed, pulsar can use it to change the processes names
-  of the running application.
+  of the running application
 * psutil_: if installed, a ``system`` key is available in the dictionary
-  returned by Actor info method.
-* python-certifi_: The [HttpClient][] will attempt to use certificates from
-  certifi if it is present on the system.
-* ujson_: if installed it is used instead of the native ``json`` module.
-* django_: required by the ``pulsar.apps.pulse`` application.
+  returned by Actor info method
+* python-certifi_: The HttpClient_ will attempt to use certificates from
+  certifi if it is present on the system
+* ujson_: if installed it is used instead of the native ``json`` module
+* django_: required by the `pulsar.apps.pulse`_ application
 * unidecode_: to enhance the ``slugify`` function
 
 
@@ -222,3 +227,7 @@ file in the top distribution directory for the full license text.
 .. _JSON-RPC: http://www.jsonrpc.org/
 .. _mcve: http://stackoverflow.com/help/mcve
 .. _python-certifi: https://certifi.io
+.. _greenlet: http://greenlet.readthedocs.io/
+.. _`pulsar.apps.greenio`: https://github.com/quantmind/pulsar/tree/master/pulsar/apps/greenio
+.. _`pulsar.apps.pulse`: https://github.com/quantmind/pulsar/tree/master/pulsar/apps/pulse
+.. _HttpClient: http://quantmind.github.io/pulsar/apps/http.html

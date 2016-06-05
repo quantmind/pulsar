@@ -943,6 +943,13 @@ class HttpClient(AbstractClient):
         self.connection_pools.clear()
         return asyncio.gather(*waiters, loop=self._loop)
 
+    async def __aenter__(self):
+        await self.close()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
+
     # INTERNALS
     def create_protocol(self, **kw):
         kw['timeout'] = self.keep_alive
