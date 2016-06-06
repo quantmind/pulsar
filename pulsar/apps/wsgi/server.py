@@ -39,6 +39,7 @@ __all__ = ['HttpServerResponse', 'test_wsgi_environ', 'AbortWsgi']
 
 
 MAX_TIME_IN_LOOP = 0.2
+HTTP_1_1 = (1, 1)
 
 
 class AbortWsgi(Exception):
@@ -182,9 +183,10 @@ def keep_alive(headers, version, method):
         headers['connection'] = 'upgrade'
         return True
     elif "keep-alive" in conn:
+        if version == HTTP_1_1:
+            headers.pop('connection')
         return True
-    elif version == (1, 1):
-        headers['connection'] = 'keep-alive'
+    elif version == HTTP_1_1:
         return True
     elif method == 'CONNECT':
         return True

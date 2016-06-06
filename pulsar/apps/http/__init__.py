@@ -571,6 +571,9 @@ class HttpResponse(ProtocolConsumer):
 
     @property
     def history(self):
+        """List of :class:`.HttpResponse` objects from the history of the
+        request. Any redirect responses will end up here.
+        The list is sorted from the oldest to the most recent request."""
         request = self.request
         if request:
             return request.history
@@ -882,6 +885,7 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
+        kwargs.setdefault('allow_redirects', True)
         return self.request('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
@@ -890,6 +894,7 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
+        kwargs.setdefault('allow_redirects', True)
         return self.request('PUT', url, **kwargs)
 
     def patch(self, url, **kwargs):
@@ -898,6 +903,7 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
+        kwargs.setdefault('allow_redirects', True)
         return self.request('PATCH', url, **kwargs)
 
     def delete(self, url, **kwargs):
@@ -906,6 +912,7 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
+        kwargs.setdefault('allow_redirects', True)
         return self.request('DELETE', url, **kwargs)
 
     def request(self, method, url, timeout=None, **params):

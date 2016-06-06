@@ -162,7 +162,7 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
-    async def test_close_connections(self):
+    async def __test_close_connections(self):
         async with self.client() as session:
             self.assertEqual(len(session.connection_pools), 0)
             await session.get(self.httpbin())
@@ -174,6 +174,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = await http.head(self.httpbin())
         self.assertEqual(response.ok, True)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'],
+                         'text/html; charset=utf-8')
+        self.assertTrue(int(response.headers['content-length']))
+        self.assertFalse(response.text())
         self.assertTrue(repr(response.request))
 
     async def test_home_page(self):
@@ -184,7 +188,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         content = response.content
         size = response.headers['content-length']
         self.assertEqual(len(content), int(size))
-        self.assertEqual(response.headers['connection'].lower(), 'keep-alive')
+        self.assertFalse('connection' in response.headers)
         self._check_server(response)
         self.after_test_home_page(response)
         # Try again
@@ -357,7 +361,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.1')
         response = yield from http.get(self.httpbin())
-        self.assertEqual(response.headers['connection'], 'keep-alive')
+        self.assertFalse('connection' in response.headers)
         self._check_pool(http, response)
 
     @asyncio.coroutine

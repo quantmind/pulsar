@@ -220,17 +220,14 @@ JSON_CONTENT_TYPES = ('application/json',
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
 REDIRECT_CODES = (301, 302, 303, 305, 307)
+NO_CONTENT_CODES = frozenset((204, 304))
 
 
 def has_empty_content(status, method=None):
-    '''204, 304 and 1xx codes have no content'''
-    if status == httpclient.NO_CONTENT or\
-            status == httpclient.NOT_MODIFIED or\
-            100 <= status < 200 or\
-            method == "HEAD":
-        return True
-    else:
-        return False
+    """204, 304 and 1xx codes have no content, same for HEAD requests"""
+    return (status in NO_CONTENT_CODES or
+            100 <= status < 200 or
+            method == "HEAD")
 
 
 def is_succesful(status):
@@ -990,10 +987,7 @@ class HttpParser:
             self._chunked = False
         #
         status = self._status_code
-        if status and (status == httpclient.NO_CONTENT or
-                       status == httpclient.NOT_MODIFIED or
-                       100 <= status < 200 or      # 1xx codes
-                       self._method == "HEAD"):
+        if status and has_empty_content(status, self._method):
             clen = 0
         elif clen is not None:
             try:

@@ -76,6 +76,7 @@ from .formdata import parse_form_data
 __all__ = ['EnvironMixin', 'WsgiResponse',
            'WsgiRequest', 'cached_property']
 
+HEAD = 'HEAD'
 MAX_BUFFER_SIZE = 2**16
 ONEMB = 2**20
 
@@ -296,7 +297,7 @@ class WsgiResponse:
         """The list of headers for this response
         """
         headers = self.headers
-        if has_empty_content(self.status_code, self.method):
+        if has_empty_content(self.status_code):
             headers.pop('content-type', None)
             headers.pop('content-length', None)
             self._content = ()
@@ -317,6 +318,8 @@ class WsgiResponse:
                     ct = '%s; charset=%s' % (ct, self.encoding)
             if ct:
                 headers['Content-Type'] = ct
+            if self.method == HEAD:
+                self._content = ()
         if self.can_set_cookies():
             for c in self.cookies.values():
                 headers.add_header('Set-Cookie', c.OutputString())
