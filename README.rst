@@ -3,7 +3,7 @@
    :width: 300
 
 
-:Badges: |license|  |pyversions| |status|
+:Badges: |license|  |pyversions| |status| |pypiversion|
 :Master CI: |master-build|_ |coverage-master|
 :Dev CI: |dev-build|_ |coverage-dev|
 :Documentation: http://pythonhosted.org/pulsar/
@@ -15,7 +15,8 @@
 :Keywords: client, server, asynchronous, concurrency, actor, thread, process,
     socket, wsgi, websocket, redis, json-rpc
 
-
+.. |pypiversion| image:: https://badge.fury.io/py/pulsar.svg
+    :target: https://pypi.python.org/pypi/pulsar
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/pulsar.svg
   :target: https://pypi.python.org/pypi/pulsar
 .. |license| image:: https://img.shields.io/pypi/l/pulsar.svg
@@ -87,9 +88,7 @@ Pulsar has no hard dependencies, install via pip::
 
     pip install pulsar
 
-or downloading the tarball from pypi_.
-
-If cython_ is available, c extensions will be compiled and installed.
+or download the tarball from pypi_.
 
 
 Applications
@@ -100,7 +99,7 @@ Out of the box it is shipped with the the following:
 
 * Socket servers
 * WSGI server
-* HTTP client
+* HttpClient_
 * JSON-RPC_
 * Web Sockets
 * Test suite
