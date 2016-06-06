@@ -88,9 +88,7 @@ Pulsar has no hard dependencies, install via pip::
 
     pip install pulsar
 
-or downloading the tarball from pypi_.
-
-If cython_ is available, c extensions will be compiled and installed.
+or download the tarball from pypi_.
 
 
 Applications
@@ -101,7 +99,7 @@ Out of the box it is shipped with the the following:
 
 * Socket servers
 * WSGI server
-* HTTP client
+* HttpClient_
 * JSON-RPC_
 * Web Sockets
 * Test suite
