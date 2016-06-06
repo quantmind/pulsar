@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.access &mdash; pulsar 1.3.1b1 documentation</title>
+    <title>pulsar.async.access &mdash; pulsar 1.3.4b0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.3.1b1',
+        VERSION:     '1.3.4b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.1b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -61,6 +61,8 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get_event_loop&#39;</span><span class="p">,</span>
            <span class="s1">&#39;new_event_loop&#39;</span><span class="p">,</span>
            <span class="s1">&#39;get_actor&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;cfg&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;cfg_value&#39;</span><span class="p">,</span>
            <span class="s1">&#39;isfuture&#39;</span><span class="p">,</span>
            <span class="s1">&#39;is_mainthread&#39;</span><span class="p">,</span>
            <span class="s1">&#39;process_data&#39;</span><span class="p">,</span>
@@ -187,6 +189,20 @@
 
 <span class="k">def</span> <span class="nf">set_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">thread_data</span><span class="p">(</span><span class="s1">&#39;actor&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">cfg</span><span class="p">():</span>
+    <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span>
+
+
+<span class="k">def</span> <span class="nf">cfg_value</span><span class="p">(</span><span class="n">setting</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">setting</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
 </pre></div>
 
           </div>
@@ -203,7 +219,7 @@
 
 
 
-<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+<p class="blurb">Concurrent framework for python 3.5 and above.</p>
 
 
 

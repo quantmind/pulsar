@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.server &mdash; pulsar 1.3.1b1 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar 1.3.4b0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.3.1b1',
+        VERSION:     '1.3.4b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.1b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -83,6 +83,7 @@
 
 
 <span class="n">MAX_TIME_IN_LOOP</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">HTTP_1_1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">AbortWsgi</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -226,9 +227,10 @@
         <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;upgrade&#39;</span>
         <span class="k">return</span> <span class="bp">True</span>
     <span class="k">elif</span> <span class="s2">&quot;keep-alive&quot;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="n">HTTP_1_1</span><span class="p">:</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;connection&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">True</span>
-    <span class="k">elif</span> <span class="n">version</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;keep-alive&#39;</span>
+    <span class="k">elif</span> <span class="n">version</span> <span class="o">==</span> <span class="n">HTTP_1_1</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">True</span>
     <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;CONNECT&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">True</span>
@@ -566,7 +568,7 @@
 
 
 
-<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+<p class="blurb">Concurrent framework for python 3.5 and above.</p>
 
 
 

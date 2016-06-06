@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar 1.3.1b1 documentation</title>
+    <title>Settings &mdash; pulsar 1.3.4b0 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.3.1b1',
+        VERSION:     '1.3.4b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.1b1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.3.4b0 documentation" href="index.html" />
     <link rel="next" title="Acknowledgement" href="acknowledgement.html" />
     <link rel="prev" title="Release Notes" href="changelog.html" />
    
@@ -69,6 +69,13 @@ paramaters can be specified.</p>
 <p><em>Command line</em>: <code class="docutils literal"><span class="pre">--http-proxy</span></code></p>
 <p><em>Default</em>: <code class="docutils literal"><span class="pre">''</span></code></p>
 <p>The HTTP proxy server to use with HttpClient.</p>
+</div>
+<div class="section" id="http-keep-alive">
+<span id="setting-http-keep-alive"></span><h3>http_keep_alive<a class="headerlink" href="#http-keep-alive" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <code class="docutils literal"><span class="pre">http_keep_alive</span></code></p>
+<p><em>Command line</em>: <code class="docutils literal"><span class="pre">--http-keep-alive</span></code></p>
+<p><em>Default</em>: <code class="docutils literal"><span class="pre">15</span></code></p>
+<p>Keep HTTP connections alive for this number of seconds</p>
 </div>
 <div class="section" id="debug">
 <span id="setting-debug"></span><h3>debug<a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h3>
@@ -206,13 +213,6 @@ By default no datastore is used.</p>
 <p>Execution ID.</p>
 <p>Use this setting to specify an execution ID.
 If not provided, a value will be assigned by pulsar.</p>
-</div>
-<div class="section" id="greenlet">
-<span id="setting-greenlet"></span><h3>greenlet<a class="headerlink" href="#greenlet" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <code class="docutils literal"><span class="pre">greenlet</span></code></p>
-<p><em>Command line</em>: <code class="docutils literal"><span class="pre">--greenlet</span></code></p>
-<p><em>Default</em>: <code class="docutils literal"><span class="pre">0</span></code></p>
-<p>Use greenlet whenever possible.</p>
 </div>
 <div class="section" id="selector">
 <span id="setting-selector"></span><h3>selector<a class="headerlink" href="#selector" title="Permalink to this headline">¶</a></h3>
@@ -567,7 +567,7 @@ To see available labels use the <code class="docutils literal"><span class="pre"
 
 
 
-<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+<p class="blurb">Concurrent framework for python 3.5 and above.</p>
 
 
 

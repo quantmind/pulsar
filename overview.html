@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar 1.3.1b1 documentation</title>
+    <title>Overview &mdash; pulsar 1.3.4b0 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.3.1b1',
+        VERSION:     '1.3.4b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.1b1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.3.4b0 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" />
    
@@ -44,14 +44,12 @@
             
   <div class="section" id="overview">
 <span id="intro-overview"></span><h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
-<p>Event driven concurrent framework for python.
-With pulsar you can write asynchronous servers performing one or several
-activities in different threads and/or processes.</p>
+<a class="reference internal image-reference" href="https://pulsar.fluidily.com/assets/images/pulsar-banner.png"><img alt="Pulsar" src="https://pulsar.fluidily.com/assets/images/pulsar-banner.png" style="width: 300px;" /></a>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Badges:</th><td class="field-body"><a class="reference external" href="https://pypi.python.org/pypi/pulsar"><img alt="license" src="https://img.shields.io/pypi/l/pulsar.svg" /></a>  <a class="reference external" href="https://pypi.python.org/pypi/pulsar"><img alt="pyversions" src="https://img.shields.io/pypi/pyversions/pulsar.svg" /></a> <a class="reference external" href="https://pypi.python.org/pypi/pulsar"><img alt="status" src="https://img.shields.io/pypi/status/pulsar.svg" /></a> <a class="reference external" href="https://pypi.python.org/pypi/pulsar"><img alt="downloads" src="https://img.shields.io/pypi/dd/pulsar.svg" /></a></td>
+<tr class="field-odd field"><th class="field-name">Badges:</th><td class="field-body"><a class="reference external" href="https://pypi.python.org/pypi/pulsar"><img alt="license" src="https://img.shields.io/pypi/l/pulsar.svg" /></a>  <a class="reference external" href="https://pypi.python.org/pypi/pulsar"><img alt="pyversions" src="https://img.shields.io/pypi/pyversions/pulsar.svg" /></a> <a class="reference external" href="https://pypi.python.org/pypi/pulsar"><img alt="status" src="https://img.shields.io/pypi/status/pulsar.svg" /></a> <a class="reference external" href="https://pypi.python.org/pypi/pulsar"><img alt="pypiversion" src="https://badge.fury.io/py/pulsar.svg" /></a></td>
 </tr>
 <tr class="field-even field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://travis-ci.org/quantmind/pulsar.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/quantmind/pulsar?branch=master"><img alt="coverage-master" src="https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master" /></a></td>
 </tr>
@@ -67,7 +65,7 @@ activities in different threads and/or processes.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Design by:</th><td class="field-body"><a class="reference external" href="http://quantmind.com">Quantmind</a> and <a class="reference external" href="http://lucasbardella.com">Luca Sbardella</a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 3.4 and above</td>
+<tr class="field-odd field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 3.5 and above</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Keywords:</th><td class="field-body">client, server, asynchronous, concurrency, actor, thread, process,
 socket, wsgi, websocket, redis, json-rpc</td>
@@ -99,24 +97,25 @@ Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.</p>
 <p>Pulsar uses the <a class="reference external" href="https://docs.python.org/3/library/asyncio.html">asyncio</a> and <a class="reference external" href="http://docs.python.org/library/multiprocessing.html">multiprocessing</a> modules from the standard python
 library and it can be configured to run in multi-processing mode.</p>
-<p>Another example of pulsar framework is the asynchronous <code class="docutils literal"><span class="pre">HttpClient</span></code>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">http</span>
+<p>Another example of pulsar framework is the asynchronous <a class="reference external" href="http://quantmind.github.io/pulsar/apps/http.html">HttpClient</a>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre>from pulsar.apps import http
 
-<span class="n">session</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">()</span>
+async with http.HttpClient() as session:
+    response1 = await session.get(&#39;https://github.com/timeline.json&#39;)
+    response2 = await session.get(&#39;https://api.github.com/emojis.json&#39;)
 </pre></div>
 </div>
-<p>and somewhere in a coroutine you can wait for responses:</p>
-<div class="code python highlight-python"><div class="highlight"><pre>response = await session.get(&#39;https://github.com/timeline.json&#39;)
-</pre></div>
-</div>
+<p>The http client maintains connections alive (by default 15 seconds) and therefore
+any requests that you make within a session will automatically reuse the
+appropriate connection. All connections are released once the session exits the
+asynchronous <code class="docutils literal"><span class="pre">with</span></code> block.</p>
 <div class="section" id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar has no hard dependencies, install via pip:</p>
 <div class="highlight-python"><div class="highlight"><pre>pip install pulsar
 </pre></div>
 </div>
-<p>or downloading the tarball from <a class="reference external" href="http://pypi.python.org/pypi/pulsar">pypi</a>.</p>
-<p>If <a class="reference external" href="http://cython.org/">cython</a> is available, c extensions will be compiled and installed.</p>
+<p>or download the tarball from <a class="reference external" href="http://pypi.python.org/pypi/pulsar">pypi</a>.</p>
 </div>
 <div class="section" id="applications">
 <h2>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h2>
@@ -126,7 +125,7 @@ Out of the box it is shipped with the the following:</p>
 <ul class="simple">
 <li>Socket servers</li>
 <li>WSGI server</li>
-<li>HTTP client</li>
+<li><a class="reference external" href="http://quantmind.github.io/pulsar/apps/http.html">HttpClient</a></li>
 <li><a class="reference external" href="http://www.jsonrpc.org/">JSON-RPC</a></li>
 <li>Web Sockets</li>
 <li>Test suite</li>
@@ -160,6 +159,7 @@ and the <code class="docutils literal"><span class="pre">Monitor</span></code>, 
 The Arbiter runs the main eventloop and it controls the life of all actors.
 Monitors manage group of actors performing similar functions, You can think
 of them as a pool of actors.</p>
+<img alt="Pulsar Actors" src="https://pulsar.fluidily.com/assets/images/actors.png" />
 <p>More information about design and philosophy in the documentation.</p>
 </div>
 <div class="section" id="add-ons">
@@ -167,14 +167,16 @@ of them as a pool of actors.</p>
 <p>Pulsar checks if some additional libraries are available at runtime, and
 uses them to add additional functionalities or improve performance:</p>
 <ul class="simple">
+<li><a class="reference external" href="http://greenlet.readthedocs.io/">greenlet</a>: required by the <a class="reference external" href="https://github.com/quantmind/pulsar/tree/master/pulsar/apps/greenio">pulsar.apps.greenio</a> module and useful for
+developing implicit asynchronous applications</li>
 <li><a class="reference external" href="http://code.google.com/p/py-setproctitle/">setproctitle</a>: if installed, pulsar can use it to change the processes names
-of the running application.</li>
+of the running application</li>
 <li><a class="reference external" href="https://github.com/giampaolo/psutil">psutil</a>: if installed, a <code class="docutils literal"><span class="pre">system</span></code> key is available in the dictionary
-returned by Actor info method.</li>
-<li><a class="reference external" href="https://certifi.io">python-certifi</a>: The [HttpClient][] will attempt to use certificates from
-certifi if it is present on the system.</li>
-<li><a class="reference external" href="https://pypi.python.org/pypi/ujson">ujson</a>: if installed it is used instead of the native <code class="docutils literal"><span class="pre">json</span></code> module.</li>
-<li><a class="reference external" href="https://www.djangoproject.com/">django</a>: required by the <code class="docutils literal"><span class="pre">pulsar.apps.pulse</span></code> application.</li>
+returned by Actor info method</li>
+<li><a class="reference external" href="https://certifi.io">python-certifi</a>: The <a class="reference external" href="http://quantmind.github.io/pulsar/apps/http.html">HttpClient</a> will attempt to use certificates from
+certifi if it is present on the system</li>
+<li><a class="reference external" href="https://pypi.python.org/pypi/ujson">ujson</a>: if installed it is used instead of the native <code class="docutils literal"><span class="pre">json</span></code> module</li>
+<li><a class="reference external" href="https://www.djangoproject.com/">django</a>: required by the <a class="reference external" href="https://github.com/quantmind/pulsar/tree/master/pulsar/apps/pulse">pulsar.apps.pulse</a> application</li>
 <li><a class="reference external" href="https://pypi.python.org/pypi/Unidecode">unidecode</a>: to enhance the <code class="docutils literal"><span class="pre">slugify</span></code> function</li>
 </ul>
 </div>
@@ -237,7 +239,7 @@ file in the top distribution directory for the full license text.</p>
 
 
 
-<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+<p class="blurb">Concurrent framework for python 3.5 and above.</p>
 
 
 

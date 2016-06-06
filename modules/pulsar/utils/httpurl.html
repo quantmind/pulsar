@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.httpurl &mdash; pulsar 1.3.1b1 documentation</title>
+    <title>pulsar.utils.httpurl &mdash; pulsar 1.3.4b0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.3.1b1',
+        VERSION:     '1.3.4b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.1b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -264,17 +264,14 @@
 <span class="n">ENCODE_URL_METHODS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;HEAD&#39;</span><span class="p">,</span> <span class="s1">&#39;OPTIONS&#39;</span><span class="p">])</span>
 <span class="n">ENCODE_BODY_METHODS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="s1">&#39;TRACE&#39;</span><span class="p">])</span>
 <span class="n">REDIRECT_CODES</span> <span class="o">=</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">305</span><span class="p">,</span> <span class="mi">307</span><span class="p">)</span>
+<span class="n">NO_CONTENT_CODES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">((</span><span class="mi">204</span><span class="p">,</span> <span class="mi">304</span><span class="p">))</span>
 
 
 <span class="k">def</span> <span class="nf">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;204, 304 and 1xx codes have no content&#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">httpclient</span><span class="o">.</span><span class="n">NO_CONTENT</span> <span class="ow">or</span>\
-            <span class="n">status</span> <span class="o">==</span> <span class="n">httpclient</span><span class="o">.</span><span class="n">NOT_MODIFIED</span> <span class="ow">or</span>\
-            <span class="mi">100</span> <span class="o">&lt;=</span> <span class="n">status</span> <span class="o">&lt;</span> <span class="mi">200</span> <span class="ow">or</span>\
-            <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">True</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">False</span>
+    <span class="sd">&quot;&quot;&quot;204, 304 and 1xx codes have no content, same for HEAD requests&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">status</span> <span class="ow">in</span> <span class="n">NO_CONTENT_CODES</span> <span class="ow">or</span>
+            <span class="mi">100</span> <span class="o">&lt;=</span> <span class="n">status</span> <span class="o">&lt;</span> <span class="mi">200</span> <span class="ow">or</span>
+            <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">is_succesful</span><span class="p">(</span><span class="n">status</span><span class="p">):</span>
@@ -349,7 +346,7 @@
     <span class="k">return</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="n">capfirst</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="n">b</span><span class="p">))</span>
 
 
-<span class="k">def</span> <span class="nf">header_field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">HEADERS_SET</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">header_field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Return a header `name` in Camel case.</span>
 
 <span class="sd">    For example::</span>
@@ -360,16 +357,14 @@
 <span class="sd">    If ``header_set`` is given, only return headers included in the set.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;x-&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;x-&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">strict</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">capheader</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">ALL_HEADER_FIELDS_DICT</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">header</span> <span class="ow">and</span> <span class="n">HEADERS_SET</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">header</span> <span class="k">if</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">HEADERS_SET</span> <span class="k">else</span> <span class="bp">None</span>
-        <span class="k">elif</span> <span class="n">header</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">header</span> <span class="ow">and</span> <span class="n">headers</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">header</span> <span class="k">if</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">header</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="n">strict</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">capheader</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
 
 <span class="c1">#    HEADERS UTILITIES</span>
@@ -1036,10 +1031,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="c1">#</span>
         <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span>
-        <span class="k">if</span> <span class="n">status</span> <span class="ow">and</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">httpclient</span><span class="o">.</span><span class="n">NO_CONTENT</span> <span class="ow">or</span>
-                       <span class="n">status</span> <span class="o">==</span> <span class="n">httpclient</span><span class="o">.</span><span class="n">NOT_MODIFIED</span> <span class="ow">or</span>
-                       <span class="mi">100</span> <span class="o">&lt;=</span> <span class="n">status</span> <span class="o">&lt;</span> <span class="mi">200</span> <span class="ow">or</span>      <span class="c1"># 1xx codes</span>
-                       <span class="bp">self</span><span class="o">.</span><span class="n">_method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="ow">and</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method</span><span class="p">):</span>
             <span class="n">clen</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">elif</span> <span class="n">clen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -1458,7 +1450,7 @@
 
 
 
-<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+<p class="blurb">Concurrent framework for python 3.5 and above.</p>
 
 
 

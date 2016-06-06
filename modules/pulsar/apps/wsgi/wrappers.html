@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 1.3.1b1 documentation</title>
+    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 1.3.4b0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.3.1b1',
+        VERSION:     '1.3.4b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.1b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -120,6 +120,7 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;EnvironMixin&#39;</span><span class="p">,</span> <span class="s1">&#39;WsgiResponse&#39;</span><span class="p">,</span>
            <span class="s1">&#39;WsgiRequest&#39;</span><span class="p">,</span> <span class="s1">&#39;cached_property&#39;</span><span class="p">]</span>
 
+<span class="n">HEAD</span> <span class="o">=</span> <span class="s1">&#39;HEAD&#39;</span>
 <span class="n">MAX_BUFFER_SIZE</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">16</span>
 <span class="n">ONEMB</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">20</span>
 
@@ -340,7 +341,7 @@
         <span class="sd">&quot;&quot;&quot;The list of headers for this response</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span>
-        <span class="k">if</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">):</span>
             <span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;content-type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;content-length&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="p">()</span>
@@ -361,6 +362,8 @@
                     <span class="n">ct</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">; charset=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">ct</span><span class="p">:</span>
                 <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ct</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">HEAD</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_set_cookies</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                 <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Set-Cookie&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">OutputString</span><span class="p">())</span>
@@ -752,7 +755,7 @@
 
 
 
-<p class="blurb">Concurrent framework for python 3.4 and above.</p>
+<p class="blurb">Concurrent framework for python 3.5 and above.</p>
 
 
 
