@@ -59,16 +59,16 @@ class TestLoader:
     def tags(self, include=None, exclude=None):
         """Return a generator of tag information
         """
-        for tag, file_path in self.test_files(include, exclude):
-            module = self.import_module(file_path).module()
+        for tag, file_path_function in self.test_files(include, exclude):
+            module = self.import_module(*file_path_function).module()
             if module:
                 doc = module.__doc__
                 if doc:
                     tag = '{0} - {1}'.format(tag, doc)
                 yield tag
 
-    def import_module(self, file_name):
-        return ModuleImporter(file_name, self.logger)
+    def import_module(self, file_name, test_function=None):
+        return ModuleImporter(file_name, test_function, self.logger)
 
     def test_files(self, include=None, exclude=None):
         """List of ``tag``, ``modules`` pairs.
@@ -97,20 +97,20 @@ class TestLoader:
             for exclude_tag in exclude_tags:
                 for bit in alltags:
                     if bit == exclude_tag:
-                        return 0
+                        return
         if import_tags:
-            c = 0
+            found = None
             alltags = list(self._all_tags(tag))
             for import_tag in import_tags:
                 allitags = list(self._all_tags(import_tag))
                 for bit in alltags:
                     if bit == import_tag:
-                        return 2
+                        return True
                     elif bit in allitags:
-                        c = 1
-            return c
+                        found = allitags[allitags.index(bit)+1:]
+            return found
         else:
-            return 2
+            return True
 
     def _test_files(self, include, exclude):
         if not self.modules:
@@ -154,13 +154,21 @@ class TestLoader:
                 m_tags = tags if mod_name in no_tags else tags + [mod_name]
 
             tag = '.'.join(m_tags)
+            test_function = None
+
             if tag or is_file:
-                c = self._check_tag(tag, include_tags, exclude_tags)
-                if not c or (is_file and c < 2):
+                found = self._check_tag(tag, include_tags, exclude_tags)
+                if not found:
                     continue
+                if isinstance(found, list) and is_file:
+                    if len(found) > 1:
+                        continue
+                    test_function = found[0][len(tag)+1:]
+                    if not test_function.startswith('test'):
+                        continue
 
             if is_file:
-                yield tag, mod_path
+                yield tag, (mod_path, test_function)
             else:
                 yield from self._get_tests(mod_path, include_tags,
                                            exclude_tags, m_tags)
@@ -174,17 +182,21 @@ class TestLoader:
 
 class ModuleImporter:
 
-    def __init__(self, file_name, logger):
+    def __init__(self, file_name, test_function, logger):
         self.file_name = file_name
+        self.test_function = test_function
         self.logger = logger
 
     def __iter__(self):
         module = self.module()
         if module:
+            test_function = self.test_function
             for name in dir(module):
                 obj = getattr(module, name)
                 if issubclass_safe(obj, unittest.TestCase):
-                    yield obj
+                    if self.test_function and not hasattr(obj, test_function):
+                        continue
+                    yield obj, test_function
 
     def module(self):
         if not hasattr(self, '_module'):

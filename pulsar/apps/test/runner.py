@@ -46,8 +46,8 @@ class Runner:
 
     def _next_file(self):
         if self.tests:
-            tag, file_path = self.tests.pop()
-            test_classes = iter(self.loader.import_module(file_path))
+            tag, file_path_function = self.tests.pop()
+            test_classes = iter(self.loader.import_module(*file_path_function))
             self._loop.call_soon(self._next_class, tag, test_classes)
 
         else:
@@ -63,7 +63,7 @@ class Runner:
 
     def _next_class(self, tag, test_classes):
         try:
-            test_cls = next(test_classes)
+            test_cls, test_fun = next(test_classes)
         except StopIteration:
             return self._loop.call_soon(self._next_file)
 
@@ -74,12 +74,19 @@ class Runner:
             all_tests = self.runner.loadTestsFromTestCase(test_cls)
         except Exception:
             self.logger.exception('Could not load tests')
-            run = False
+            all_tests = False
         else:
-            run = all_tests.countTestCases()
+            all_tests = list(all_tests)
+            if test_fun:
+                all_tests, funcs = False, all_tests
+                for fun in funcs:
+                    if fun._testMethodName == test_fun:
+                        all_tests = [fun]
+                        break
 
-        if run:
-            self.logger.info('Running Tests from %s', test_cls)
+        if all_tests:
+            self.logger.info('Running %d Tests from %s.%s',
+                             len(all_tests), tag, test_cls.__name__)
             self.runner.startTestClass(test_cls)
             coro = self._run_test_cls(test_cls, test_classes, all_tests)
             ensure_future(coro, loop=self._loop)
@@ -127,7 +134,8 @@ class Runner:
         except Exception:
             self.logger.exception('Failure in tearDownClass')
 
-        self.logger.info('Finished Tests from %s', test_cls)
+        self.logger.info('Finished tests from %s.%s',
+                         test_cls.tag, test_cls.__name__)
         self._loop.call_soon(self._next_class, test_cls.tag, test_classes)
 
     async def _run(self, method, test_timeout):
