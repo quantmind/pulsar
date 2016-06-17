@@ -59,9 +59,6 @@ from pulsar.utils.pep import to_string
 from pulsar.utils.slugify import slugify
 
 
-__all__ = ['route', 'Route']
-
-
 class rule_info(namedtuple('rinfo', 'rule method parameters position order')):
 
     def override(self, parent):

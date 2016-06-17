@@ -20,7 +20,8 @@ from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
 from .futures import ensure_future, add_errback, chain_future, Future
 from .protocols import TcpServer
 from .actor import Actor
-from .consts import *   # noqa
+from .consts import (ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY,
+                     MONITOR_TASK_PERIOD)
 
 
 if sys.platform == 'win32':     # pragma    nocover

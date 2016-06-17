@@ -22,12 +22,6 @@ from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES,
 from .structures import Accept, RequestCacheControl
 from .content import Html, HtmlDocument
 
-__all__ = ['handle_wsgi_error',
-           'render_error_debug',
-           'wsgi_request',
-           'set_wsgi_request_class',
-           'dump_environ',
-           'HOP_HEADERS']
 
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
                                   ) + JSON_CONTENT_TYPES

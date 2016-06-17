@@ -50,7 +50,7 @@ from .stream import HttpStream, StreamConsumedError
 
 __all__ = ['HttpRequest', 'HttpResponse', 'HttpClient', 'HTTPDigestAuth',
            'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2',
-           'HttpStream', 'StreamConsumedError']
+           'HttpStream', 'StreamConsumedError', 'full_url']
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
@@ -88,6 +88,19 @@ def split_url_params(params):
             values = (values,)
         for value in values:
             yield key, value
+
+
+def full_url(url, params, method=None):
+    p = urlparse(url)
+    if not p.netloc and method == 'CONNECT':
+        p = urlparse('http://%s' % url)
+
+    params = mapping_iterator(params)
+    query = parse_qsl(p.query)
+    query.extend(split_url_params(params))
+    query = urlencode(query)
+    return urlunparse((p.scheme, p.netloc, p.path,
+                       p.params, query, p.fragment))
 
 
 class RequestBase:
@@ -255,7 +268,7 @@ class HttpRequest(RequestBase):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
         self.headers = client._get_headers(headers)
-        self.url = self._full_url(url, params)
+        self.url = full_url(url, params, method=self.method)
         self.body = self._encode_body(data, files, json)
         self._set_proxy(proxies, ignored)
         cookies = cookiejar_from_dict(client.cookies, cookies)
@@ -374,20 +387,6 @@ class HttpRequest(RequestBase):
             self._write_body_data(transport, self.body, True)
 
     # INTERNAL ENCODING METHODS
-    def _full_url(self, url, params):
-        """Full url of endpoint
-        """
-        p = urlparse(url)
-        if not p.netloc and self.method == 'CONNECT':
-            p = urlparse('http://%s' % url)
-
-        params = mapping_iterator(params)
-        query = parse_qsl(p.query)
-        query.extend(split_url_params(params))
-        query = urlencode(query)
-        return urlunparse((p.scheme, p.netloc, p.path,
-                           p.params, query, p.fragment))
-
     def _encode_body(self, data, files, json):
         body = None
         if isinstance(data, (str, bytes)):

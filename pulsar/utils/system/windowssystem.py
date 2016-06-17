@@ -2,7 +2,6 @@ import os
 import signal
 import ctypes
 import ctypes.wintypes
-import socket
 import getpass
 from multiprocessing import current_process
 
@@ -10,7 +9,6 @@ from .base import *     # noqa
 
 __all__ = ['close_on_exec',
            'daemonize',
-           'socketpair',
            'EXIT_SIGNALS',
            'get_uid',
            'get_gid',
@@ -24,6 +22,7 @@ SetHandleInformation.argtypes = (ctypes.wintypes.HANDLE, ctypes.wintypes.DWORD,
                                  ctypes.wintypes.DWORD)
 SetHandleInformation.restype = ctypes.wintypes.BOOL
 
+MAXFD = 1024
 HANDLE_FLAG_INHERIT = 0x00000001
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGBREAK)
 
@@ -33,9 +32,9 @@ def set_owner_process(gid, uid):
 
 
 def get_parent_id():
-    if ispy32:
+    try:
         return os.getppid()
-    else:
+    except Exception:
         return None
 
 
@@ -75,28 +74,3 @@ def get_maxfd():
 
 def daemonize():
     pass
-
-
-def socketpair(family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0):
-    """A socket pair usable as a self-pipe, for Windows.
-
-    Origin: https://gist.github.com/4325783, by Geert Jansen.  Public domain.
-    """
-    # We create a connected TCP socket. Note the trick with setblocking(0)
-    # that prevents us from having to create a thread.
-    lsock = socket.socket(family, type, proto)
-    lsock.bind(('localhost', 0))
-    lsock.listen(1)
-    addr, port = lsock.getsockname()
-    csock = socket.socket(family, type, proto)
-    csock.setblocking(True)
-    try:
-        csock.connect((addr, port))
-    except Exception:
-        lsock.close()
-        csock.close()
-        raise
-    ssock, _ = lsock.accept()
-    csock.setblocking(True)
-    lsock.close()
-    return (ssock, csock)

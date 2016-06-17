@@ -35,8 +35,6 @@ from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
 from .formdata import http_protocol, HttpBodyReader
 from .wrappers import FileWrapper, close_object
 
-__all__ = ['HttpServerResponse', 'test_wsgi_environ', 'AbortWsgi']
-
 
 MAX_TIME_IN_LOOP = 0.2
 HTTP_1_1 = (1, 1)

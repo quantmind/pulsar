@@ -105,9 +105,6 @@ from .utils import handle_wsgi_error
 from .wrappers import WsgiResponse
 
 
-__all__ = ['WsgiHandler', 'LazyWsgi']
-
-
 class WsgiHandler:
     '''An handler for applications conforming to python WSGI_.
 

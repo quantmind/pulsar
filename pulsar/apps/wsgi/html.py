@@ -5,9 +5,6 @@ from pulsar.utils.structures import recursive_update
 HTML_VISITORS = {}
 
 
-__all__ = ['HtmlVisitor']
-
-
 newline = frozenset(('meta', 'link', 'script', 'head', 'body', 'title'))
 
 
