@@ -2,6 +2,8 @@
    :alt: Pulsar
    :width: 300
 
+|
+|
 
 :Badges: |license|  |pyversions| |status| |pypiversion|
 :Master CI: |master-build|_ |coverage-master|
