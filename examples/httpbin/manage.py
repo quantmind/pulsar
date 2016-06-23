@@ -27,6 +27,7 @@ from itertools import repeat, chain
 from random import random
 from base64 import b64encode
 
+import pulsar
 from pulsar import (HttpRedirect, HttpException, version, JAPANESE, CHINESE,
                     ensure_future)
 from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
@@ -292,6 +293,16 @@ class HttpBin(BaseRouter):
     def servername(self, request):
         name = request.get('SERVER_NAME')
         return String(name, '\n').http_response(request)
+
+    @route(title="Pulsar is several languages")
+    def get_pulsar(self, request):
+        data = [
+            'pulsar',
+            pulsar.JAPANESE,
+            pulsar.CHINESE,
+            pulsar.HINDI
+        ]
+        return Json(data).http_response(request)
 
     ########################################################################
     #    BENCHMARK ROUTES

@@ -460,10 +460,10 @@ class Json(String):
                     yield child
 
     def to_string(self, stream):
+        stream = stream
         if len(stream) == 1 and not self.as_list:
-            return json.dumps(stream[0])
-        else:
-            return json.dumps(stream)
+            stream = stream[0]
+        return json.dumps(stream, ensure_ascii=self.charset == 'ascii')
 
 
 def html_factory(tag, **defaults):

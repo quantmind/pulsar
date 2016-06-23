@@ -543,18 +543,36 @@ class MediaRouter(Router, MediaMixin):
         If ``True``, the router will serve media file directories as
         well as media files.
 
+    .. attribute::    serve_only
+
+        File suffixes to be served. When specified this is a set of suffixes
+        (jpeg, png, json for example) which are served by this router
+        if a file does not match the suffix it wont be served and the router
+        return nothing so that other router can process the url.
+
     .. attribute:: default_file
 
         The default file to serve when a directory is requested.
     '''
-    def __init__(self, rule, path, show_indexes=False,
+    def __init__(self, rule, path=None, show_indexes=False,
                  default_suffix=None, default_file='index.html',
-                 **params):
+                 serve_only=None, **params):
         super().__init__('%s/<path:path>' % rule, **params)
+        self._serve_only = set(serve_only or ())
         self._default_suffix = default_suffix
         self._default_file = default_file
         self._show_indexes = show_indexes
         self._file_path = path or ''
+
+    def resolve(self, path, urlargs=None):
+        router_args = super().resolve(path, urlargs)
+        if router_args:
+            router, args = router_args
+            if router is self and self._serve_only:
+                suffix = args.get('path', '').split('.')[-1]
+                if suffix not in self._serve_only:
+                    return
+        return router_args
 
     def filesystem_path(self, request):
         return self.get_full_path(request.urlargs['path'])
@@ -565,26 +583,29 @@ class MediaRouter(Router, MediaMixin):
 
     def get(self, request):
         fullpath = self.filesystem_path(request)
-        if os.path.isdir(fullpath) and self._default_file:
-            file = os.path.join(fullpath, self._default_file)
-            if os.path.isfile(file):
-                if not request.path.endswith('/'):
-                    return request.redirect('%s/' % request.path)
-                fullpath = file
-        #
-        # Check for missing suffix
-        if self._default_suffix:
-            ext = '.%s' % self._default_suffix
-            if not fullpath.endswith(ext):
-                file = '%s%s' % (fullpath, ext)
-                if os.path.isfile(file):
-                    fullpath = file
 
-        if os.path.isdir(fullpath):
-            if self._show_indexes:
-                return self.directory_index(request, fullpath)
-            else:
-                raise Http404
+        if not self._serve_only:
+
+            if os.path.isdir(fullpath) and self._default_file:
+                file = os.path.join(fullpath, self._default_file)
+                if os.path.isfile(file):
+                    if not request.path.endswith('/'):
+                        return request.redirect('%s/' % request.path)
+                    fullpath = file
+            #
+            # Check for missing suffix
+            if self._default_suffix:
+                ext = '.%s' % self._default_suffix
+                if not fullpath.endswith(ext):
+                    file = '%s%s' % (fullpath, ext)
+                    if os.path.isfile(file):
+                        fullpath = file
+
+            if os.path.isdir(fullpath):
+                if self._show_indexes:
+                    return self.directory_index(request, fullpath)
+                else:
+                    raise Http404
         #
         try:
             return self.serve_file(request, fullpath)
