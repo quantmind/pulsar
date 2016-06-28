@@ -404,6 +404,11 @@ class WsgiRequest(EnvironMixin):
         return self.__repr__()
 
     @cached_property
+    def first_line(self):
+        env = self.environ
+        return '%s %s' % (env['REQUEST_METHOD'], self.absolute_uri())
+
+    @cached_property
     def content_types(self):
         """List of content types this client supports as a
         :class:`.ContentAccept` object.

@@ -229,10 +229,9 @@ def handle_wsgi_error(environ, exc):
     else:
         response.status_code = getattr(exc, 'status', 500)
         response.headers.update(getattr(exc, 'headers', None) or ())
-    path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
     if status >= 500:
-        LOGGER.critical('%s - %s.\n%s', exc, path,
+        LOGGER.critical('%s - @ %s.\n%s', exc, request.first_line,
                         dump_environ(environ), exc_info=exc_info)
     else:
         log_wsgi_info(LOGGER.warning, environ, response.status, exc)
