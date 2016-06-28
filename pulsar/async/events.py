@@ -87,6 +87,7 @@ class OneTime(Future, AbstractEvent):
     '''
     def __init__(self, loop=None, name=None):
         super().__init__(loop=loop)
+        self._processing = False
         self._name = name or self.__class__.__name__.lower()
 
     def __repr__(self):
@@ -103,9 +104,9 @@ class OneTime(Future, AbstractEvent):
         '''Bind a ``callback`` to this event.
         '''
         self.handlers.append(callback)
-        if self.done():
-            result, exc = future_result_exc(self)
-            self._loop.call_soon(lambda: self._process(result, exc=exc))
+        if self._fired and not self._processing:
+            arg, exc = future_result_exc(self)
+            self._process(arg, exc, {})
 
     def fire(self, arg, exc=None, **kwargs):
         '''The callback handlers registered via the :meth:~AbstractEvent.bind`
@@ -126,6 +127,7 @@ class OneTime(Future, AbstractEvent):
 
     def _process(self, arg, exc, kwargs, future=None):
         while self._handlers:
+            self._processing = True
             hnd = self._handlers.popleft()
             try:
                 result = hnd(arg, exc=exc, **kwargs)
@@ -143,10 +145,12 @@ class OneTime(Future, AbstractEvent):
                     result.add_done_callback(
                         partial(self._process, arg, exc, kwargs))
                     return
-        if exc:
-            self.set_exception(exc)
-        else:
-            self.set_result(arg)
+        self._processing = False
+        if not self.done():
+            if exc:
+                self.set_exception(exc)
+            else:
+                self.set_result(arg)
 
 
 class EventHandler(AsyncObject):
