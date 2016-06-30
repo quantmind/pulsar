@@ -127,6 +127,10 @@ def _get_default(parent, name):
         raise AttributeError
 
 
+class SkipRoute(Exception):
+    pass
+
+
 class RouterParam:
     '''A :class:`RouterParam` is a way to flag a :class:`Router` parameter
     so that children can inherit the value if they don't define their own.
@@ -235,6 +239,7 @@ class Router(metaclass=RouterType):
     _creation_count = 0
     _parent = None
     name = None
+    SkipRoute = SkipRoute
 
     response_content_types = RouterParam(None)
     response_wrapper = RouterParam(None)
@@ -364,7 +369,10 @@ class Router(metaclass=RouterType):
         router_args = self.resolve(path)
         if router_args:
             router, args = router_args
-            return router.response(environ, args)
+            try:
+                return router.response(environ, args)
+            except SkipRoute:
+                pass
 
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
@@ -564,16 +572,6 @@ class MediaRouter(Router, MediaMixin):
         self._show_indexes = show_indexes
         self._file_path = path or ''
 
-    def resolve(self, path, urlargs=None):
-        router_args = super().resolve(path, urlargs)
-        if router_args:
-            router, args = router_args
-            if router is self and self._serve_only:
-                suffix = args.get('path', '').split('.')[-1]
-                if suffix not in self._serve_only:
-                    return
-        return router_args
-
     def filesystem_path(self, request):
         return self.get_full_path(request.urlargs['path'])
 
@@ -582,6 +580,11 @@ class MediaRouter(Router, MediaMixin):
         return os.path.join(self._file_path, *bits)
 
     def get(self, request):
+        if self._serve_only:
+            suffix = request.urlargs.get('path', '').split('.')[-1]
+            if suffix not in self._serve_only:
+                raise self.SkipRoute
+
         fullpath = self.filesystem_path(request)
 
         if not self._serve_only:
