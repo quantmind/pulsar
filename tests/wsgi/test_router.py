@@ -2,6 +2,7 @@
 import unittest
 
 import pulsar
+from pulsar import Http404
 from pulsar.apps.wsgi import (Router, RouterParam, route, test_wsgi_environ,
                               MediaRouter)
 
@@ -250,7 +251,6 @@ class TestRouter(unittest.TestCase):
         router = MediaRouter('/', serve_only=('json', 'png'))
         self.assertIsInstance(router._serve_only, set)
         self.assertEqual(len(router._serve_only), 2)
-        self.assertEqual(router.resolve('/foo'), None)
-        self.assertEqual(router.resolve('/foo/bla'), None)
-        self.assertEqual(router.resolve('/foo/bla.png'),
-                         (router, {'path': '/foo/bla.png'}))
+        self.assertEqual(router(test_wsgi_environ('/foo')), None)
+        self.assertEqual(router(test_wsgi_environ('/foo/bla')), None)
+        self.assertRaises(Http404, router, test_wsgi_environ('/foo/bla.png'))
