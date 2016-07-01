@@ -370,7 +370,8 @@ class ColoredStream(logging.StreamHandler):   # pragma    nocover
 
 if win32:   # pragma    nocover
     import ctypes
-    from ctypes import wintypes
+    from ctypes import wintypes, LibraryLoader
+    windll = LibraryLoader(ctypes.WinDLL)
 
     SHORT = ctypes.c_short
 
@@ -401,19 +402,19 @@ if win32:   # pragma    nocover
                'cyan': 0x0003,
                'white': WHITE}
 
-    _GetStdHandle = ctypes.windll.kernel32.GetStdHandle
+    _GetStdHandle = windll.kernel32.GetStdHandle
     _GetStdHandle.argtypes = [wintypes.DWORD]
     _GetStdHandle.restype = wintypes.HANDLE
 
     def GetStdHandle(kind):
         return _GetStdHandle(kind)
 
-    SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
+    SetConsoleTextAttribute = windll.kernel32.SetConsoleTextAttribute
     SetConsoleTextAttribute.argtypes = [wintypes.HANDLE, wintypes.WORD]
     SetConsoleTextAttribute.restype = wintypes.BOOL
 
     _GetConsoleScreenBufferInfo = \
-        ctypes.windll.kernel32.GetConsoleScreenBufferInfo
+        windll.kernel32.GetConsoleScreenBufferInfo
     _GetConsoleScreenBufferInfo.argtypes = [
         wintypes.HANDLE, ctypes.POINTER(CONSOLE_SCREEN_BUFFER_INFO)]
     _GetConsoleScreenBufferInfo.restype = wintypes.BOOL
