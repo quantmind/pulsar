@@ -25,9 +25,6 @@ from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
 from pulsar.utils.pep import to_bytes
 
 
-__all__ = ['HttpAuthenticate', 'parse_authorization_header']
-
-
 _require_quoting = frozenset(['domain', 'nonce', 'opaque', 'realm'])
 
 

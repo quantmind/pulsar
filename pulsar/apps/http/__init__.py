@@ -25,7 +25,8 @@ except ImportError:     # pragma    nocover
 import pulsar
 from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
                     isawaitable, ProtocolConsumer, ensure_future,
-                    HttpRequestException, HttpConnectionError, SSLError)
+                    HttpRequestException, HttpConnectionError, SSLError,
+                    cfg_value)
 from pulsar.utils import websocket
 from pulsar.utils.system import json as _json
 from pulsar.utils.pep import to_bytes
@@ -49,7 +50,7 @@ from .stream import HttpStream, StreamConsumedError
 
 __all__ = ['HttpRequest', 'HttpResponse', 'HttpClient', 'HTTPDigestAuth',
            'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2',
-           'HttpStream', 'StreamConsumedError']
+           'HttpStream', 'StreamConsumedError', 'full_url']
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
@@ -87,6 +88,19 @@ def split_url_params(params):
             values = (values,)
         for value in values:
             yield key, value
+
+
+def full_url(url, params, method=None):
+    p = urlparse(url)
+    if not p.netloc and method == 'CONNECT':
+        p = urlparse('http://%s' % url)
+
+    params = mapping_iterator(params)
+    query = parse_qsl(p.query)
+    query.extend(split_url_params(params))
+    query = urlencode(query)
+    return urlunparse((p.scheme, p.netloc, p.path,
+                       p.params, query, p.fragment))
 
 
 class RequestBase:
@@ -254,7 +268,7 @@ class HttpRequest(RequestBase):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
         self.headers = client._get_headers(headers)
-        self.url = self._full_url(url, params)
+        self.url = full_url(url, params, method=self.method)
         self.body = self._encode_body(data, files, json)
         self._set_proxy(proxies, ignored)
         cookies = cookiejar_from_dict(client.cookies, cookies)
@@ -373,20 +387,6 @@ class HttpRequest(RequestBase):
             self._write_body_data(transport, self.body, True)
 
     # INTERNAL ENCODING METHODS
-    def _full_url(self, url, params):
-        """Full url of endpoint
-        """
-        p = urlparse(url)
-        if not p.netloc and self.method == 'CONNECT':
-            p = urlparse('http://%s' % url)
-
-        params = mapping_iterator(params)
-        query = parse_qsl(p.query)
-        query.extend(split_url_params(params))
-        query = urlencode(query)
-        return urlunparse((p.scheme, p.netloc, p.path,
-                           p.params, query, p.fragment))
-
     def _encode_body(self, data, files, json):
         body = None
         if isinstance(data, (str, bytes)):
@@ -570,6 +570,9 @@ class HttpResponse(ProtocolConsumer):
 
     @property
     def history(self):
+        """List of :class:`.HttpResponse` objects from the history of the
+        request. Any redirect responses will end up here.
+        The list is sorted from the oldest to the most recent request."""
         request = self.request
         if request:
             return request.history
@@ -806,7 +809,7 @@ class HttpClient(AbstractClient):
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None, stream=False,
                  pool_size=10, frame_parser=None, logger=None,
-                 close_connections=False):
+                 close_connections=False, keep_alive=None):
         super().__init__(loop)
         self._logger = logger or LOGGER
         self.client_version = client_version or self.client_version
@@ -822,6 +825,7 @@ class HttpClient(AbstractClient):
         self.verify = verify
         self.stream = stream
         self.close_connections = close_connections
+        self.keep_alive = cfg_value('http_keep_alive', keep_alive)
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
@@ -837,7 +841,6 @@ class HttpClient(AbstractClient):
         self.http_parser = parser or http_parser
         self.frame_parser = frame_parser or websocket.frame_parser
         # Add hooks
-        self.bind_event('finish', self._close)
         self.bind_event('pre_request', Tunneling(self._loop))
         self.bind_event('pre_request', WebSocket())
         self.bind_event('on_headers', handle_cookies)
@@ -881,6 +884,7 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
+        kwargs.setdefault('allow_redirects', True)
         return self.request('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
@@ -889,6 +893,7 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
+        kwargs.setdefault('allow_redirects', True)
         return self.request('PUT', url, **kwargs)
 
     def patch(self, url, **kwargs):
@@ -897,6 +902,7 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
+        kwargs.setdefault('allow_redirects', True)
         return self.request('PATCH', url, **kwargs)
 
     def delete(self, url, **kwargs):
@@ -905,6 +911,7 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
+        kwargs.setdefault('allow_redirects', True)
         return self.request('DELETE', url, **kwargs)
 
     def request(self, method, url, timeout=None, **params):
@@ -923,7 +930,6 @@ class HttpClient(AbstractClient):
 
         :rtype: a :class:`.Future`
         """
-        assert not self.event('finish').fired(), "Http sessions are closed"
         response = self._request(method, url, **params)
         if timeout is None:
             timeout = self.timeout
@@ -934,7 +940,27 @@ class HttpClient(AbstractClient):
         else:
             return response
 
+    def close(self):
+        """Close all connections
+        """
+        waiters = []
+        for p in self.connection_pools.values():
+            waiters.append(p.close())
+        self.connection_pools.clear()
+        return asyncio.gather(*waiters, loop=self._loop)
+
+    async def __aenter__(self):
+        await self.close()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
+
     # INTERNALS
+    def create_protocol(self, **kw):
+        kw['timeout'] = self.keep_alive
+        return super().create_protocol(**kw)
+
     async def _request(self, method, url, **params):
         nparams = params.copy()
         nparams.update(((name, getattr(self, name)) for name in
@@ -943,9 +969,11 @@ class HttpClient(AbstractClient):
         pool = self.connection_pools.get(request.key)
         if pool is None:
             host, port = request.address
-            pool = self.connection_pool(
-                lambda: self.create_connection((host, port), ssl=request.ssl),
-                pool_size=self.pool_size, loop=self._loop)
+            connector = partial(self.create_connection,
+                                (host, port),
+                                ssl=request.ssl)
+            pool = self.connection_pool(connector, pool_size=self.pool_size,
+                                        loop=self._loop)
             self.connection_pools[request.key] = pool
         try:
             conn = await pool.connect()
@@ -1007,13 +1035,3 @@ class HttpClient(AbstractClient):
                                               cafile=cafile,
                                               capath=capath,
                                               cadata=cadata)
-
-    def _close(self, _, exc=None):
-        # Internal method, use self.close()
-        # Close all connections.
-        # Returns a future which can be used to wait for complete closure
-        waiters = []
-        for p in self.connection_pools.values():
-            waiters.append(p.close())
-        self.connection_pools.clear()
-        return asyncio.gather(*waiters, loop=self._loop)

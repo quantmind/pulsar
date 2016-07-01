@@ -46,8 +46,7 @@ class TestHttpClientBase:
     timeout = 10
 
     @classmethod
-    @asyncio.coroutine
-    def setUpClass(cls):
+    async def setUpClass(cls):
         # Create the HttpBin server by sending this request to the arbiter
         from examples.proxyserver.manage import server as pserver
         from examples.httpbin import manage
@@ -64,7 +63,7 @@ class TestHttpClientBase:
                        name='httpbin-%s' % cls.__name__.lower(),
                        keep_alive=30, key_file=key_file, cert_file=cert_file,
                        workers=1)
-            cfg = yield from send('arbiter', 'run', s)
+            cfg = await send('arbiter', 'run', s)
             cls.app = cfg.app()
             bits = ('https' if cls.with_tls else 'http',) + cfg.addresses[0]
             # bits = (bits[0], 'dynquant.com', '8070')
@@ -72,19 +71,18 @@ class TestHttpClientBase:
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
                         name='proxyserver-%s' % cls.__name__.lower())
-            cfg = yield from send('arbiter', 'run', s)
+            cfg = await send('arbiter', 'run', s)
             cls.proxy_app = cfg.app()
             cls.proxy_uri = 'http://{0}:{1}'.format(*cfg.addresses[0])
             # cls.proxy_uri = 'http://127.0.0.1:8080'
         cls._client = cls.client()
 
     @classmethod
-    @asyncio.coroutine
-    def tearDownClass(cls):
+    async def tearDownClass(cls):
         if cls.app is not None:
-            yield from send('arbiter', 'kill_actor', cls.app.name)
+            await send('arbiter', 'kill_actor', cls.app.name)
         if cls.proxy_app is not None:
-            yield from send('arbiter', 'kill_actor', cls.proxy_app.name)
+            await send('arbiter', 'kill_actor', cls.proxy_app.name)
 
     @classmethod
     def proxies(cls):
@@ -149,11 +147,16 @@ class TestHttpClientBase:
     def _check_server(self, response):
         self.assertEqual(response.headers['server'], SERVER_SOFTWARE)
 
-    @asyncio.coroutine
-    def _test_stream_response(self, siz=3000, rep=10):
+    def json(self, response, status=None):
+        if status:
+            self.assertEqual(response.status_code, status)
+        ct = response.headers['content-type'].split(';')
+        self.assertEqual(ct[0], 'application/json')
+        return response.json()
+
+    async def _test_stream_response(self, siz=3000, rep=10):
         http = self._client
-        response = yield from http.get(
-            self.httpbin('stream/%d/%d' % (siz, rep)))
+        response = await http.get(self.httpbin('stream/%d/%d' % (siz, rep)))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.parser.is_chunked())
         body = response.content
@@ -161,6 +164,24 @@ class TestHttpClientBase:
 
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
+
+    async def test_close_connections(self):
+        async with self.client() as session:
+            self.assertEqual(len(session.connection_pools), 0)
+            await session.get(self.httpbin())
+            self.assertEqual(len(session.connection_pools), 1)
+        self.assertEqual(len(session.connection_pools), 0)
+
+    async def test_home_page_head(self):
+        http = self._client
+        response = await http.head(self.httpbin())
+        self.assertEqual(response.ok, True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'],
+                         'text/html; charset=utf-8')
+        self.assertTrue(int(response.headers['content-length']))
+        self.assertFalse(response.text())
+        self.assertTrue(repr(response.request))
 
     async def test_home_page(self):
         http = self.client()
@@ -170,7 +191,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         content = response.content
         size = response.headers['content-length']
         self.assertEqual(len(content), int(size))
-        self.assertEqual(response.headers['connection'].lower(), 'keep-alive')
+        self.assertFalse('connection' in response.headers)
         self._check_server(response)
         self.after_test_home_page(response)
         # Try again
@@ -195,10 +216,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     async def test_200_get_c(self):
         http = self.client()
         response = await http.get(self.httpbin('get'), params={'bla': 'foo'})
-        result = response.json()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['content-type'],
-                         'application/json; charset=utf-8')
+        result = self.json(response, 200)
         self.assertEqual(result['args'], {'bla': 'foo'})
         self.assertEqual(response.url, '%s?bla=foo' % self.httpbin('get'))
         self._check_pool(http, response)
@@ -252,8 +270,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'], ['1', '2'])
 
-    @asyncio.coroutine
-    def test_upload_images(self):
+    async def test_upload_images(self):
         http = self._client
         path = Path(examples.__file__).parent.parent
         path = path.join('docs', 'source', '_static')
@@ -264,7 +281,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                 image = file.read()
             sent.append(image)
             files.append(('images', (name, image)))
-        response = yield from http.put(self.httpbin('upload'), files=files)
+        response = await http.put(self.httpbin('upload'), files=files)
         self.assertEqual(response.status_code, 200)
         ct = response.request.headers['content-type']
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
@@ -275,14 +292,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             image = b64decode(image.encode('utf-8'))
             self.assertEqual(image, s)
 
-    @asyncio.coroutine
-    def test_upload_files(self):
+    async def test_upload_files(self):
         http = self._client
         files = {'test': 'simple file'}
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield from http.put(self.httpbin('upload'), data=data,
-                                       files=files)
+        response = await http.put(self.httpbin('upload'), data=data,
+                                  files=files)
         self.assertEqual(response.status_code, 200)
         ct = response.request.headers['content-type']
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
@@ -343,7 +359,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.1')
         response = yield from http.get(self.httpbin())
-        self.assertEqual(response.headers['connection'], 'keep-alive')
+        self.assertFalse('connection' in response.headers)
         self._check_pool(http, response)
 
     @asyncio.coroutine
@@ -802,18 +818,16 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         yield from self.wait.assertEqual(raw.read(), b'')
 
     @no_tls
-    @asyncio.coroutine
-    def test_raw_stream_large(self):
+    async def test_raw_stream_large(self):
         http = self._client
         url = self.httpbin('stream/100000/3')
-        response = yield from http.get(url, stream=True)
+        response = await http.get(url, stream=True)
         raw = response.raw
         self.assertEqual(raw._response, response)
-        data = yield from raw.read()
+        data = await raw.read()
         self.assertTrue(len(data), 300000)
 
-    @asyncio.coroutine
-    def test_post_iterator(self):
+    async def test_post_iterator(self):
         http = self._client
         fut = asyncio.Future()
 
@@ -824,7 +838,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
         result = b'f'*100
         fut._loop.call_later(0.5, fut.set_result, result)
-        response = yield from http.post(
+        response = await http.post(
             self.httpbin('post_chunks'),
             headers={'content-type': 'text/plain'},
             data=gen())
@@ -832,3 +846,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(response.content), 300)
         self.assertEqual(response.headers['content-type'],
                          response.request.headers['content-type'])
+
+    async def test_json_utf8(self):
+        http = self._client
+        response = await http.get(self.httpbin('pulsar'))
+        data = self.json(response, 200)
+        self.assertEqual(len(data), 4)

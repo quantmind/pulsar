@@ -5,7 +5,6 @@ import resource
 import grp
 import pwd
 import signal
-import socket
 import ctypes
 from multiprocessing import current_process
 
@@ -13,7 +12,6 @@ from .base import *     # noqa
 
 __all__ = ['close_on_exec',
            'daemonize',
-           'socketpair',
            'EXIT_SIGNALS',
            'get_uid',
            'get_gid',
@@ -25,8 +23,6 @@ __all__ = ['close_on_exec',
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGQUIT)
 # Default maximum for the number of available file descriptors.
 REDIRECT_TO = getattr(os, "devnull", "/dev/null")
-
-socketpair = socket.socketpair
 
 
 def get_parent_id():

@@ -1,8 +1,10 @@
 {
+    "python": {
+        "pulsar_version": "pulsar.__version__"
+    },
     "github": {
         "pulsar": {
-            "python_module": "pulsar",
-            "version": "pulsar.__version__",
+            "version": "{{ pulsar_version }}",
             "release_notes": "docs/source/history"
         }
     },
@@ -17,7 +19,7 @@
     "tasks": {
         "release": {
             "description": "make a new release to github",
-            "command": ["github:pulsar"]
+            "command": ["python", "github:pulsar"]
         }
     }
 }

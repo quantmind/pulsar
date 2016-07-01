@@ -9,7 +9,8 @@ from pulsar import send, async_while, TcpServer, Connection
 from pulsar.apps.test import ActorTestMixin, dont_run_with_thread
 
 from examples.echo.manage import EchoServerProtocol
-from tests.async import add, get_test, spawn_actor_from_actor
+from tests.async import (add, get_test, spawn_actor_from_actor, close_mailbox,
+                         wait_for_stop)
 
 
 class create_echo_server:
@@ -135,6 +136,12 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         cfg = yield from send(proxy, 'run', get_test)
         self.assertTrue(cfg)
         self.assertEqual(cfg.name, 'test')
+
+    async def test_connection_lost(self):
+        proxy = await self.spawn_actor(
+            name='actor-test-connection-lost-%s' % self.concurrency)
+        await send(proxy, 'run', close_mailbox)
+        await wait_for_stop(self, proxy.aid, True)
 
 
 @dont_run_with_thread

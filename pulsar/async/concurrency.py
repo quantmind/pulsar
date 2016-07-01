@@ -20,7 +20,8 @@ from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
 from .futures import ensure_future, add_errback, chain_future, Future
 from .protocols import TcpServer
 from .actor import Actor
-from .consts import *   # noqa
+from .consts import (ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY,
+                     MONITOR_TASK_PERIOD)
 
 
 if sys.platform == 'win32':     # pragma    nocover
@@ -185,7 +186,6 @@ class Concurrency:
         '''Create the mailbox for ``actor``.'''
         client = MailboxClient(actor.monitor.address, actor, loop)
         loop.call_soon_threadsafe(self.hand_shake, actor)
-        client.bind_event('finish', lambda _, **kw: loop.stop())
         return client
 
     def periodic_task(self, actor, **kw):
@@ -293,11 +293,11 @@ class Concurrency:
             self._remove_signals(actor)
             return True
         #
-        actor.state = ACTOR_STATES.CLOSE
         if actor._loop.is_running():
             actor.logger.debug('Closing mailbox')
             actor.mailbox.close()
         else:
+            actor.state = ACTOR_STATES.CLOSE
             actor.logger.debug('Exiting actor with exit code 1')
             actor.exit_code = 1
             actor.mailbox.abort()
@@ -613,11 +613,10 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         '''
         actor.start_coverage()
         cfg = actor.cfg
+        self._install_signals(actor)
         if cfg.reload:
             assert not cfg.daemon, "Autoreload not compatible with daemon mode"
-            if autoreload.start():
-                return
-        self._install_signals(actor)
+            autoreload.start()
 
     def create_mailbox(self, actor, loop):
         '''Override :meth:`.Concurrency.create_mailbox` to create the
@@ -656,6 +655,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                 interval, self.periodic_task, actor)
 
         if actor.cfg.reload and autoreload.check_changes():
+            # reload changes
             actor.stop(exit_code=autoreload.EXIT_CODE)
 
     def _stop_actor(self, actor, finished=False):

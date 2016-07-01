@@ -37,9 +37,6 @@ re_accepts_gzip = re.compile(r'\bgzip\b')
 re_media_type = re.compile(r'^(image|audio|video)/.+')
 
 
-__all__ = ['AccessControl', 'GZipMiddleware']
-
-
 class ResponseMiddleware:
     '''Base class for response middlewares.
 

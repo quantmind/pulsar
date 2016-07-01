@@ -2,7 +2,9 @@
 import unittest
 
 import pulsar
-from pulsar.apps.wsgi import Router, RouterParam, route, test_wsgi_environ
+from pulsar import Http404
+from pulsar.apps.wsgi import (Router, RouterParam, route, test_wsgi_environ,
+                              MediaRouter)
 
 from examples.httpbin.manage import HttpBin
 
@@ -244,3 +246,11 @@ class TestRouter(unittest.TestCase):
             self.assertEqual(str(exc), 'Test Response Wrapper')
         else:
             raise RuntimeError
+
+    def test_media_router_serve_only(self):
+        router = MediaRouter('/', serve_only=('json', 'png'))
+        self.assertIsInstance(router._serve_only, set)
+        self.assertEqual(len(router._serve_only), 2)
+        self.assertEqual(router(test_wsgi_environ('/foo')), None)
+        self.assertEqual(router(test_wsgi_environ('/foo/bla')), None)
+        self.assertRaises(Http404, router, test_wsgi_environ('/foo/bla.png'))

@@ -177,6 +177,7 @@ class JsonProxy(AsyncObject):
             http.request(url, body=..., method=...)
 
         Default ``None``.
+    :param encoding: encoding of the request. Default ``ascii``.
 
     Lets say your RPC server is running at ``http://domain.name.com/``::
 
@@ -193,7 +194,7 @@ class JsonProxy(AsyncObject):
 
     def __init__(self, url, version=None, data=None,
                  full_response=False, http=None, timeout=None, sync=False,
-                 loop=None, **kw):
+                 loop=None, encoding='ascii', **kw):
         self.sync = sync
         self._url = url
         self._version = version or self.__class__.default_version
@@ -207,6 +208,7 @@ class JsonProxy(AsyncObject):
         http.headers['accept'] = 'application/json, text/*; q=0.5'
         http.headers['content-type'] = 'application/json'
         self._http = http
+        self._encoding = encoding
 
     @property
     def url(self):
@@ -235,7 +237,8 @@ class JsonProxy(AsyncObject):
 
     async def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
-        body = json.dumps(data).encode('utf-8')
+        is_ascii = self._encoding == 'ascii'
+        body = json.dumps(data, ensure_ascii=is_ascii).encode(self._encoding)
         resp = await self._http.post(self._url, data=body)
         if self._full_response:
             return resp
@@ -324,7 +327,8 @@ class JsonBatchProxy(JsonProxy):
 
     def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
-        body = json.dumps(data).encode('utf-8')
+        is_ascii = self._encoding == 'ascii'
+        body = json.dumps(data, ensure_ascii=is_ascii).encode(self._encoding)
         self._batch.append(body)
         return data['id']
 

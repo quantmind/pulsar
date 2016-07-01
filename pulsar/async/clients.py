@@ -237,25 +237,28 @@ class PoolConnection:
         self.close()
 
 
-class AbstractClient(Producer):
-    '''A :class:`.Producer` for a client connections.
-    '''
-    ONE_TIME_EVENTS = ('finish',)
+class ClientMixin:
 
     def __repr__(self):
         return self.__class__.__name__
     __str__ = __repr__
 
+    def close(self):
+        '''Close all idle connections.
+        '''
+        raise NotImplementedError
+
+    def abort(self):
+        return self.close()
+
+
+class AbstractClient(Producer, ClientMixin):
+    '''A :class:`.Producer` for a client connections.
+    '''
     def connect(self):
         '''Abstract method for creating a connection.
         '''
         raise NotImplementedError
-
-    def close(self):
-        '''Close all idle connections.
-        '''
-        return self.fire_event('finish')
-    abort = close
 
     async def create_connection(self, address, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
@@ -272,25 +275,13 @@ class AbstractClient(Producer):
         return protocol
 
 
-class AbstractUdpClient(Producer):
+class AbstractUdpClient(Producer, ClientMixin):
     '''A :class:`.Producer` for a client udp connections.
     '''
-    ONE_TIME_EVENTS = ('finish',)
-
-    def __repr__(self):
-        return self.__class__.__name__
-    __str__ = __repr__
-
     def create_endpoint(self):
         '''Abstract method for creating the endpoint
         '''
         raise NotImplementedError
-
-    def close(self):
-        '''Close all idle connections.
-        '''
-        return self.fire_event('finish')
-    abort = close
 
     async def create_datagram_endpoint(self, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.

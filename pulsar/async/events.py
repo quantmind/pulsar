@@ -1,8 +1,7 @@
 from collections import deque
 from functools import partial
-from inspect import isgeneratorfunction
 
-from asyncio import Future, iscoroutinefunction, InvalidStateError
+from asyncio import Future, InvalidStateError, ensure_future
 
 from .access import _EVENT_LOOP_CLASSES
 from .futures import future_result_exc, AsyncObject
@@ -18,18 +17,10 @@ class AbortEvent(Exception):
 
 
 class AbstractEvent(AsyncObject):
-    '''Abstract event handler.'''
-    _silenced = False
+    """Abstract event handler
+    """
     _handlers = None
     _fired = 0
-
-    @property
-    def silenced(self):
-        '''Boolean indicating if this event is silenced.
-
-        To silence an event one uses the :meth:`silence` method.
-        '''
-        return self._silenced
 
     @property
     def handlers(self):
@@ -40,8 +31,6 @@ class AbstractEvent(AsyncObject):
     def bind(self, callback):
         '''Bind a ``callback`` to this event.
         '''
-        if iscoroutinefunction(callback) or isgeneratorfunction(callback):
-            raise TypeError("coroutines cannot be used with bind()")
         self.handlers.append(callback)
 
     def remove_callback(self, callback):
@@ -67,13 +56,6 @@ class AbstractEvent(AsyncObject):
         if self._handlers:
             self._handlers[:] = []
 
-    def silence(self):
-        '''Silence this event.
-
-        A silenced event won't fire when the :meth:`fire` method is called.
-        '''
-        self._silenced = True
-
 
 class Event(AbstractEvent):
     '''The default implementation of :class:`AbstractEvent`.
@@ -87,16 +69,14 @@ class Event(AbstractEvent):
     __str__ = __repr__
 
     def fire(self, arg, **kwargs):
-        if not self._silenced:
-            self._fired += self._fired + 1
-            if self._handlers:
-                for hnd in self._handlers:
-                    try:
-                        hnd(arg, **kwargs)
-                    except Exception:
-                        self.logger.exception('Exception while firing '
-                                              'event for %s', self)
-        return self
+        self._fired += self._fired + 1
+        if self._handlers:
+            for hnd in self._handlers:
+                try:
+                    hnd(arg, **kwargs)
+                except Exception:
+                    self.logger.exception('Exception while firing '
+                                          'event for %s', self)
 
 
 class OneTime(Future, AbstractEvent):
@@ -107,6 +87,7 @@ class OneTime(Future, AbstractEvent):
     '''
     def __init__(self, loop=None, name=None):
         super().__init__(loop=loop)
+        self._processing = False
         self._name = name or self.__class__.__name__.lower()
 
     def __repr__(self):
@@ -122,13 +103,10 @@ class OneTime(Future, AbstractEvent):
     def bind(self, callback):
         '''Bind a ``callback`` to this event.
         '''
-        if iscoroutinefunction(callback) or isgeneratorfunction(callback):
-            raise TypeError("coroutines cannot be used with bind()")
-        if not self.done():
-            self.handlers.append(callback)
-        else:
-            result, exc = future_result_exc(self)
-            self._loop.call_soon(lambda: callback(result, exc=exc))
+        self.handlers.append(callback)
+        if self._fired and not self._processing:
+            arg, exc = future_result_exc(self)
+            self._process(arg, exc, {})
 
     def fire(self, arg, exc=None, **kwargs):
         '''The callback handlers registered via the :meth:~AbstractEvent.bind`
@@ -137,11 +115,10 @@ class OneTime(Future, AbstractEvent):
         :param arg: the argument
         :param exc: optional exception
         '''
-        if not self._silenced:
-            if self._fired:
-                raise InvalidStateError('already fired')
-            self._fired = 1
-            self._process(arg, exc, kwargs)
+        if self._fired:
+            raise InvalidStateError('already fired')
+        self._fired = 1
+        self._process(arg, exc, kwargs)
         return self
 
     def clear(self):
@@ -150,6 +127,7 @@ class OneTime(Future, AbstractEvent):
 
     def _process(self, arg, exc, kwargs, future=None):
         while self._handlers:
+            self._processing = True
             hnd = self._handlers.popleft()
             try:
                 result = hnd(arg, exc=exc, **kwargs)
@@ -159,14 +137,20 @@ class OneTime(Future, AbstractEvent):
                 self.logger.exception('Exception while firing onetime event')
             else:
                 # If result is a future, resume process once done
-                if isinstance(result, Future):
+                try:
+                    result = ensure_future(result)
+                except TypeError:
+                    pass
+                else:
                     result.add_done_callback(
                         partial(self._process, arg, exc, kwargs))
                     return
-        if exc:
-            self.set_exception(exc)
-        else:
-            self.set_result(arg)
+        self._processing = False
+        if not self.done():
+            if exc:
+                self.set_exception(exc)
+            else:
+                self.set_result(arg)
 
 
 class EventHandler(AsyncObject):
@@ -283,16 +267,6 @@ class EventHandler(AsyncObject):
             return event
         else:
             self.logger.warning('Unknown event "%s" for %s', name, self)
-
-    def silence_event(self, name):
-        '''Silence event ``name``.
-
-        This causes the event not to fire at the :meth:`fire_event` method
-        is invoked with the event ``name``.
-        '''
-        event = self._events.get(name)
-        if event:
-            event.silence()
 
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.

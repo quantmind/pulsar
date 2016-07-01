@@ -797,6 +797,15 @@ class HttpProxyServer(Global):
             os.environ['wss_proxy'] = self.value
 
 
+class HttpKeepAlive(Global):
+    name = "http_keep_alive"
+    flags = ["--http-keep-alive"]
+    default = 15
+    desc = """\
+        Keep HTTP connections alive for this number of seconds
+        """
+
+
 class Debug(Global):
     flags = ["--debug"]
     validator = validate_bool
@@ -974,17 +983,6 @@ class ExecutionId(Global):
     If not provided, a value will be assigned by pulsar.
     """
 
-
-class UseGreenlet(Global):
-    name = 'greenlet'
-    flags = ['--greenlet']
-    nargs = '?'
-    type = int
-    default = 0
-    const = 100
-    desc = """\
-    Use greenlet whenever possible.
-    """
 
 ############################################################################
 #    Worker Processes

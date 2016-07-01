@@ -220,17 +220,14 @@ JSON_CONTENT_TYPES = ('application/json',
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
 REDIRECT_CODES = (301, 302, 303, 305, 307)
+NO_CONTENT_CODES = frozenset((204, 304))
 
 
 def has_empty_content(status, method=None):
-    '''204, 304 and 1xx codes have no content'''
-    if status == httpclient.NO_CONTENT or\
-            status == httpclient.NOT_MODIFIED or\
-            100 <= status < 200 or\
-            method == "HEAD":
-        return True
-    else:
-        return False
+    """204, 304 and 1xx codes have no content, same for HEAD requests"""
+    return (status in NO_CONTENT_CODES or
+            100 <= status < 200 or
+            method == "HEAD")
 
 
 def is_succesful(status):
@@ -305,7 +302,7 @@ def capheader(name):
     return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
 
 
-def header_field(name, HEADERS_SET=None, strict=False):
+def header_field(name, headers=None, strict=False):
     '''Return a header `name` in Camel case.
 
     For example::
@@ -316,16 +313,14 @@ def header_field(name, HEADERS_SET=None, strict=False):
     If ``header_set`` is given, only return headers included in the set.
     '''
     name = name.lower()
-    if name.startswith('x-'):
+    if name.startswith('x-') or not strict:
         return capheader(name)
     else:
         header = ALL_HEADER_FIELDS_DICT.get(name)
-        if header and HEADERS_SET:
-            return header if header in HEADERS_SET else None
-        elif header:
+        if header and headers:
+            return header if header in headers else None
+        else:
             return header
-        elif not strict:
-            return capheader(name)
 
 
 #    HEADERS UTILITIES
@@ -992,10 +987,7 @@ class HttpParser:
             self._chunked = False
         #
         status = self._status_code
-        if status and (status == httpclient.NO_CONTENT or
-                       status == httpclient.NOT_MODIFIED or
-                       100 <= status < 200 or      # 1xx codes
-                       self._method == "HEAD"):
+        if status and has_empty_content(status, self._method):
             clen = 0
         elif clen is not None:
             try:

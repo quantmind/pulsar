@@ -58,12 +58,6 @@ from pulsar.utils.httpurl import BytesIO
 from .auth import parse_authorization_header
 
 
-__all__ = ['clean_path_middleware',
-           'authorization_middleware',
-           'wait_for_body_middleware',
-           'middleware_in_executor']
-
-
 def clean_path_middleware(environ, start_response=None):
     '''Clean url from double slashes and redirect if needed.'''
     path = environ['PATH_INFO']

@@ -13,8 +13,6 @@ from pulsar.utils.structures import MultiValueDict, mapping_iterator
 from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
                                   JSON_CONTENT_TYPES, parse_options_header)
 
-__all__ = ['parse_form_data']
-
 
 ONEMB = 2**20
 # Default max size for body when not streaming

@@ -12,11 +12,11 @@ from .proxy import ActorProxy, ActorProxyMonitor, actor_identity
 from .mailbox import command_in_context
 from .access import get_actor
 from .cov import Coverage
-from .consts import *   # noqa
+from .consts import ACTOR_STATES
 
 
 __all__ = ['is_actor', 'send', 'spawn',
-           'Actor', 'ACTOR_STATES', 'get_stream']
+           'Actor', 'get_stream']
 
 
 def is_actor(obj):

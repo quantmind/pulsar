@@ -22,12 +22,6 @@ from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES,
 from .structures import Accept, RequestCacheControl
 from .content import Html, HtmlDocument
 
-__all__ = ['handle_wsgi_error',
-           'render_error_debug',
-           'wsgi_request',
-           'set_wsgi_request_class',
-           'dump_environ',
-           'HOP_HEADERS']
 
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
                                   ) + JSON_CONTENT_TYPES
@@ -235,10 +229,9 @@ def handle_wsgi_error(environ, exc):
     else:
         response.status_code = getattr(exc, 'status', 500)
         response.headers.update(getattr(exc, 'headers', None) or ())
-    path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
     if status >= 500:
-        LOGGER.critical('%s - %s.\n%s', exc, path,
+        LOGGER.critical('%s - @ %s.\n%s', exc, request.first_line,
                         dump_environ(environ), exc_info=exc_info)
     else:
         log_wsgi_info(LOGGER.warning, environ, response.status, exc)

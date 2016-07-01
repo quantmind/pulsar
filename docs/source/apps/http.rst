@@ -235,10 +235,45 @@ The websocket response is obtained by::
 
 .. _http-redirects:
 
-Redirects & Decompression
+Redirects
 =============================
 
-[TODO]
+By default Requests will perform location redirection for all verbs except HEAD.
+
+The :attr:`.HttpResponse.history` list contains the Response objects that were
+created in order to complete the request. For example::
+
+   response = await sessions.get('http://github.com')
+   response.status_code    # 200
+   response.history        # [<Response [301]>]
+
+
+If you're using GET, OPTIONS, POST, PUT, PATCH or DELETE, you can disable
+redirection handling with the ``allow_redirects`` parameter::
+
+   response = await sessions.get('http://github.com', allow_redirects=False)
+   response.status_code    # 301
+   response.history        # []
+
+Decompression
+=====================
+
+Decompression of the response body is automatic.
+To disable decompression pass the ``decompress`` parameter to a request::
+
+   response = await sessions.get('https://github.com', decompress=False)
+   response.status_code    # 200
+   response.text()         # UnicodeDecodeError: 'utf-8' codec can't decode byte 0x8b in position 1: invalid start byte
+
+Alternatively, the ``decompress`` flag can be set at session level::
+
+   sessions = HttpClient(decompress=False)
+   response = await sessions.get('https://github.com')
+   response.status_code    # 200
+   response.text()         # UnicodeDecodeError: 'utf-8' codec can't decode byte 0x8b in position 1: invalid start byte
+
+
+
 
 Synchronous Mode
 =====================

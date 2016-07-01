@@ -190,7 +190,7 @@ class MailboxProtocol(Protocol):
         if exc:
             actor = get_actor()
             if actor.is_running():
-                actor.logger.warning('Connection lost with actor.')
+                actor.logger.warning('Connection lost with actor')
 
     @task
     async def _on_message(self, message):
@@ -263,11 +263,6 @@ class MailboxClient(AbstractClient):
         self.name = 'Mailbox for %s' % actor
         self._connection = None
 
-    def response(self, request):
-        resp = super().response
-        self._consumer = resp(request, self._consumer, False)
-        return self._consumer
-
     def connect(self):
         return self.create_connection(self.address)
 
@@ -285,12 +280,12 @@ class MailboxClient(AbstractClient):
         response = await req.waiter
         return response
 
-    def start_serving(self):
-        pass
-
     def close(self):
         if self._connection:
             self._connection.close()
+
+    def start_serving(self):    # pragma    nocover
+        pass
 
     def _lost(self, _, exc=None):
         # When the connection is lost, stop the event loop
