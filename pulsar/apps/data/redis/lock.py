@@ -57,6 +57,16 @@ class Lock:
     def _loop(self):
         return self.client._loop
 
+    async def __aenter__(self):
+        acquired = await self.acquire()
+        if not acquired:
+            raise LockError('Could not acquire lock')
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.token:
+            await self.release()
+
     @property
     def token(self):
         ''''Return the token that acquire the lock or None.
@@ -78,9 +88,9 @@ class Lock:
         start = loop.time()
         acquired = await self._acquire()
         while self.blocking is not None and not acquired:
-            if loop.time() - start >= self.blocking:
+            if self.blocking and loop.time() - start >= self.blocking:
                 break
-            sleep(self.sleep)
+            await sleep(self.sleep)
             acquired = await self._acquire()
 
         return acquired
@@ -89,9 +99,9 @@ class Lock:
         expected_token = self.token
         if not expected_token:
             raise LockError("Cannot release an unlocked lock")
-        self._local.token = None
         released = await self.lua_release(self.client, keys=[self.name],
                                           args=[expected_token])
+        self._local.token = None
         if not released:
             raise LockError("Cannot release a lock that's no longer owned")
         return True

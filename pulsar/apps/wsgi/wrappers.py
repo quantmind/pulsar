@@ -406,7 +406,10 @@ class WsgiRequest(EnvironMixin):
     @cached_property
     def first_line(self):
         env = self.environ
-        return '%s %s' % (env['REQUEST_METHOD'], self.absolute_uri())
+        try:
+            return '%s %s' % (env['REQUEST_METHOD'], self.absolute_uri())
+        except Exception:
+            return '%s %s' % (env.get('REQUEST_METHOD'), env.get('PATH'))
 
     @cached_property
     def content_types(self):
