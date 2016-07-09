@@ -7,7 +7,6 @@
 
 :Badges: |license|  |pyversions| |status| |pypiversion|
 :Master CI: |master-build|_ |coverage-master|
-:Dev CI: |dev-build|_ |coverage-dev|
 :Documentation: http://pythonhosted.org/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar

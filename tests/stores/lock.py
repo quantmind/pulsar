@@ -107,3 +107,14 @@ class RedisLockTests:
         a = await lock2.acquire()
         self.assertTrue(a)
         await lock2.release()
+
+    async def test_context_manager_error(self):
+        key = self.randomkey()
+        lock2 = self.client.lock(key, blocking=None)
+
+        async def _lock():
+            async with lock2:
+                pass
+
+        async with self.client.lock(key):
+            await self.wait.assertRaises(LockError, _lock)
