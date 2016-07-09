@@ -50,8 +50,8 @@ class Lock:
         self.timeout = timeout
         self.blocking = blocking
         self.sleep = sleep
-        if self.blocking and self.sleep > self.blocking:
-            raise LockError("'sleep' must be less than 'blocking'")
+        if self.blocking:
+            self.sleep = min(self.sleep, self.blocking)
 
     @property
     def _loop(self):
