@@ -5,8 +5,8 @@ omit =
     *pulsar/utils/system/winservice.py
     *pulsar/utils/system/windowssystem.py
     *pulsar/utils/system/winprocess.py
-    *pulsar/utils/system/appengine.py
     *pulsar/utils/autoreload.py
+    *pulsar/utils/version.py
     *pulsar/async/cov.py
     *pulsar/async/dns.py
     *pulsar/apps/test/plugins/bench.py
@@ -20,8 +20,6 @@ omit =
     examples/snippets/*
     examples/pulsards/*
     examples/tweets/*
-
-
 
 [report]
 # Regexes for lines to exclude from consideration
