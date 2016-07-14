@@ -644,6 +644,11 @@ class HttpResponse(ProtocolConsumer):
         """
         data = self.content
         if data is not None:
+            if charset is None:
+                ct = self.headers.get('content-type')
+                if ct:
+                    ct, options = parse_options_header(ct)
+                    charset = options.get('charset')
             return data.decode(charset or 'utf-8', errors or 'strict')
     content_string = text
 
