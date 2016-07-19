@@ -15,6 +15,8 @@ __all__ = ['PulsarException',
            'EventAlreadyRegistered',
            'InvalidOperation',
            'HaltServer',
+           'LockError',
+           #
            # HTTP client exception
            'HttpRequestException',
            'HttpConnectionError',
@@ -96,6 +98,10 @@ class HaltServer(BaseException):
     def __init__(self, reason='Exiting server.', exit_code=3):
         super().__init__(reason)
         self.exit_code = exit_code
+
+
+class LockError(RuntimeError):
+    pass
 
 
 # #################################################################### HTTP

@@ -7,4 +7,5 @@ from .protocols import *        # noqa
 from .clients import *          # noqa
 from .actor import *            # noqa
 from .concurrency import *      # noqa
-from . import commands          # noqa
+from .lock import LockBase, Lock    # noqa
+from . import commands              # noqa

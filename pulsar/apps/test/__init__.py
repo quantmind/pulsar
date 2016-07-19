@@ -493,7 +493,11 @@ class TestSuite(pulsar.Application):
     :parameter plugins: Optional list of :class:`.TestPlugin` instances.
     '''
     name = 'test'
-    cfg = pulsar.Config(apps=['test'], log_level=['none'])
+    cfg = pulsar.Config(
+        description='pulsar test suite',
+        apps=['test'],
+        log_level=['none']
+    )
 
     @lazyproperty
     def loader(self):
