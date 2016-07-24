@@ -96,7 +96,7 @@ def full_url(url, params, method=None):
         p = urlparse('http://%s' % url)
 
     params = mapping_iterator(params)
-    query = parse_qsl(p.query)
+    query = parse_qsl(p.query, True)
     query.extend(split_url_params(params))
     query = urlencode(query)
     return urlunparse((p.scheme, p.netloc, p.path,

@@ -28,3 +28,8 @@ class TestClientCornerCases(unittest.TestCase):
         url = urlparse(request.url)
         data = parse_qsl(url.query)
         self.assertEqual(len(data), 3)
+
+    def test_empty_params(self):
+        http = HttpClient()
+        request = HttpRequest(http, 'http://bla.com?k', 'get')
+        self.assertEqual(request.url, 'http://bla.com?k=')
