@@ -1,6 +1,6 @@
 [run]
 source = pulsar,examples
-concurrency = greenlet
+concurrency = greenlet,multiprocessing
 omit =
     *pulsar/utils/system/winservice.py
     *pulsar/utils/system/windowssystem.py
