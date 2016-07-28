@@ -71,29 +71,27 @@ class RedisCommands(StoreMixin):
 
     ###########################################################################
     #    KEYS
-    @asyncio.coroutine
-    def test_dump_restore(self):
+    async def test_dump_restore(self):
         key = self.randomkey()
         c = self.client
         eq = self.wait.assertEqual
-        yield from eq(c.dump(key), None)
-        yield from eq(c.set(key, 'hello'), True)
-        value = yield from c.dump(key)
+        eq(await c.dump(key), None)
+        eq(await c.set(key, 'hello'), True)
+        value = await c.dump(key)
         self.assertTrue(value)
-        yield from self.wait.assertRaises(
+        await self.wait.assertRaises(
             ResponseError, c.restore, key, 0, 'bla')
-        yield from eq(c.restore(key+'2', 0, value), True)
-        yield from eq(c.get(key+'2'), b'hello')
+        eq(await c.restore(key+'2', 0, value), True)
+        eq(await c.get(key+'2'), b'hello')
 
-    @asyncio.coroutine
-    def test_exists(self):
+    async def test_exists(self):
         key = self.randomkey()
         c = self.client
-        eq = self.wait.assertEqual
-        yield from eq(c.exists(key), False)
-        yield from eq(c.set(key, 'hello'), True)
-        yield from eq(c.exists(key), True)
-        yield from eq(c.delete(key), 1)
+        eq = self.assertEqual
+        eq(await c.exists(key), False)
+        eq(await c.set(key, 'hello'), True)
+        eq(await c.exists(key), True)
+        eq(await c.delete(key), 1)
 
     @asyncio.coroutine
     def test_expire_persist_ttl(self):

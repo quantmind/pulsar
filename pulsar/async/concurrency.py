@@ -687,10 +687,13 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     async def _close_all(self, actor):
         # Close al monitors at once
         try:
+            monitors = []
             for m in tuple(self.monitors.values()):
                 stop = m.stop()
                 if stop:
-                    await stop
+                    monitors.append(stop)
+            if monitors:
+                await asyncio.gather(*monitors)
             await self._close_actors(actor)
         except Exception:
             actor.logger.exception('Exception while closing arbiter')

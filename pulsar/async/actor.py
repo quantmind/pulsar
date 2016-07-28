@@ -349,6 +349,11 @@ class Actor(EventHandler, Coverage):
         '''
         return self.state >= ACTOR_STATES.RUN
 
+    def after_run(self):
+        """``True`` when the actor is sopping or has already stopped
+        """
+        return self.state > ACTOR_STATES.RUN
+
     def closed(self):
         '''``True`` if actor has exited in an clean fashion.
 
