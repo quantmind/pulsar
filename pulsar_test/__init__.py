@@ -40,10 +40,9 @@ class Test(orig.test):
     def run_tests(self):
         if self.coverage and self.start_coverage:
             import coverage
-            from coverage.monkey import patch_multiprocessing
             p = current_process()
             p._coverage = coverage.Coverage(data_suffix=True)
-            patch_multiprocessing()
+            coverage.process_startup()
             p._coverage.start()
 
         from pulsar.apps.test import TestSuite

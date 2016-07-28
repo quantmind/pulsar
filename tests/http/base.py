@@ -324,10 +324,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                                             'ws': self.proxy_uri,
                                             'wss': self.proxy_uri})
 
-    @asyncio.coroutine
-    def test_request_object(self):
+    async def test_request_object(self):
         http = self._client
-        response = yield from http.get(self.httpbin())
+        response = await http.get(self.httpbin())
         request = response.request
         self.assertTrue(request.headers)
         self.assertTrue(request.has_header('Connection'))
@@ -337,36 +336,33 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(request.headers.kind, 'client')
         self.assertEqual(request.unredirected_headers.kind, 'client')
 
-    @asyncio.coroutine
-    def test_http10(self):
+    async def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
         was passed by the client.
         '''
         http = self.client(version='HTTP/1.0')
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.0')
-        response = yield from http.get(self.httpbin())
+        response = await http.get(self.httpbin())
         self.assertEqual(response.headers['connection'], 'close')
         self.assertEqual(str(response), '<Response [200]>')
         self._check_pool(http, response, available=0)
 
-    @asyncio.coroutine
-    def test_http11(self):
+    async def test_http11(self):
         '''By default HTTP/1.1 keep alive the connection if no keep-alive
         header was passed by the client.
         '''
         http = self.client()
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.1')
-        response = yield from http.get(self.httpbin())
+        response = await http.get(self.httpbin())
         self.assertFalse('connection' in response.headers)
         self._check_pool(http, response)
 
-    @asyncio.coroutine
-    def test_http11_close(self):
+    async def test_http11_close(self):
         http = self.client()
         self.assertEqual(http.version, 'HTTP/1.1')
-        response = yield from http.get(
+        response = await http.get(
             self.httpbin(), headers={'connection': 'close'})
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
@@ -381,42 +377,38 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'], ['1', '2'])
 
-    @asyncio.coroutine
-    def test_400_and_get(self):
+    async def test_400_and_get(self):
         http = self.client()
-        response = yield from http.get(self.httpbin('status', '400'))
+        response = await http.get(self.httpbin('status', '400'))
         self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_status(), '400 Bad Request')
         self.assertTrue(response.content)
         self.assertRaises(HttpRequestException, response.raise_for_status)
         # Make sure we only have one connection after a valid request
-        response = yield from http.get(self.httpbin('get'))
+        response = await http.get(self.httpbin('get'))
         self.assertEqual(response.status_code, 200)
         # for tunneling this fails sometimes
         self._check_pool(http, response, sessions=2, processed=2)
 
-    @asyncio.coroutine
-    def test_404_get(self):
+    async def test_404_get(self):
         http = self._client
-        response = yield from http.get(self.httpbin('status', '404'))
+        response = await http.get(self.httpbin('status', '404'))
         self.assertEqual(response.status_code, 404)
         self.assertTrue(response.headers.has('connection', 'close'))
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.content)
         self.assertRaises(HttpRequestException, response.raise_for_status)
 
-    @asyncio.coroutine
-    def test_dodgy_on_header_event(self):
+    async def test_dodgy_on_header_event(self):
         client = self._client
-        response = yield from client.get(self.httpbin(), on_headers=dodgyhook)
+        response = await client.get(self.httpbin(), on_headers=dodgyhook)
         self.assertTrue(response.headers)
         self.assertEqual(response.status_code, 200)
 
-    @asyncio.coroutine
-    def test_redirect_1(self):
+    async def test_redirect_1(self):
         http = self.client()
-        response = yield from http.get(self.httpbin('redirect', '1'))
+        response = await http.get(self.httpbin('redirect', '1'))
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 1)
@@ -428,10 +420,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(redirect.connection, response.connection)
         self.assertEqual(response.connection._processed, 2)
 
-    @asyncio.coroutine
-    def test_redirect_6(self):
+    async def test_redirect_6(self):
         http = self.client()
-        response = yield from http.get(self.httpbin('redirect', '6'))
+        response = await http.get(self.httpbin('redirect', '6'))
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 6)
@@ -444,22 +435,19 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.connection._processed, 7)
 
     @no_tls
-    @asyncio.coroutine
-    def test_large_response(self):
+    async def test_large_response(self):
         http = self._client
-        response = yield from http.get(self.httpbin('getsize/600000'))
+        response = await http.get(self.httpbin('getsize/600000'))
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['size'], 600000)
         self.assertEqual(len(data['data']), 600000)
         self.assertFalse(response.parser.is_chunked())
 
-    @asyncio.coroutine
-    def test_too_many_redirects(self):
+    async def test_too_many_redirects(self):
         http = self._client
         try:
-            response = yield from http.get(self.httpbin('redirect', '5'),
-                                           max_redirects=2)
+            await http.get(self.httpbin('redirect', '5'), max_redirects=2)
         except TooManyRedirects as e:
             response = e.response
         else:
@@ -469,35 +457,31 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(history[0].url.endswith('/redirect/5'))
         self.assertTrue(history[1].url.endswith('/redirect/4'))
 
-    @asyncio.coroutine
-    def test_post_multipart(self):
+    async def test_post_multipart(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield from http.post(self.httpbin('post'), data=data)
+        response = await http.post(self.httpbin('post'), data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'], ['1', '2'])
 
-    @asyncio.coroutine
-    def test_put(self):
+    async def test_put(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield from http.put(self.httpbin('put'), data=data)
+        response = await http.put(self.httpbin('put'), data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'], ['1', '2'])
 
-    @asyncio.coroutine
-    def test_patch(self):
+    async def test_patch(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self._client
-        response = yield from http.patch(self.httpbin('patch'),
-                                         data=data)
+        response = await http.patch(self.httpbin('patch'), data=data)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -514,10 +498,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'], ['1', '2'])
 
-    @asyncio.coroutine
-    def test_response_headers(self):
+    async def test_response_headers(self):
         http = self._client
-        response = yield from http.get(self.httpbin('response_headers'))
+        response = await http.get(self.httpbin('response_headers'))
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertEqual(result['Transfer-Encoding'], 'chunked')
@@ -531,12 +514,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_stream_response_large_chunk(self):
         return self._test_stream_response(100000, 3)
 
-    @asyncio.coroutine
-    def test_send_cookie(self):
+    async def test_send_cookie(self):
         http = self._client
         cookies = {'sessionid': 't1', 'cookies_are': 'working'}
-        response = yield from http.get(self.httpbin('cookies'),
-                                       cookies=cookies)
+        response = await http.get(self.httpbin('cookies'), cookies=cookies)
         self.assertEqual(response.status_code, 200)
         data = response.decode_content()
         self.assertEqual(data['cookies']['sessionid'], 't1')
@@ -558,42 +539,38 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(result['cookies'])
         self.assertEqual(result['cookies']['bla'], 'foo')
 
-    @asyncio.coroutine
-    def test_cookie_no_store(self):
+    async def test_cookie_no_store(self):
         # Try without saving cookies
         http = self.client(store_cookies=False)
-        r = yield from http.get(self.httpbin('cookies', 'set', 'bla', 'foo'))
+        r = await http.get(self.httpbin('cookies', 'set', 'bla', 'foo'))
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
-        r = yield from http.get(self.httpbin('cookies'))
+        r = await http.get(self.httpbin('cookies'))
         self.assertEqual(r.status_code, 200)
         result = r.json()
         self.assertFalse(result['cookies'])
 
-    @asyncio.coroutine
-    def test_basic_authentication(self):
+    async def test_basic_authentication(self):
         http = self._client
-        r = yield from http.get(self.httpbin('basic-auth/bla/foo'))
+        r = await http.get(self.httpbin('basic-auth/bla/foo'))
         # The response MUST include a WWW-Authenticate header field
         self.assertEqual(r.status_code, 401)
-        r = yield from http.get(self.httpbin('basic-auth/bla/foo'),
-                                auth=('bla', 'foo'))
+        r = await http.get(self.httpbin('basic-auth/bla/foo'),
+                           auth=('bla', 'foo'))
         self.assertEqual(r.status_code, 200)
 
-    @asyncio.coroutine
-    def test_digest_authentication(self):
+    async def test_digest_authentication(self):
         sessions = self.client()
-        r = yield from sessions.get(self.httpbin(
+        r = await sessions.get(self.httpbin(
             'digest-auth/luca/bla/auth'))
         self.assertEqual(r.status_code, 401)
-        r = yield from sessions.get(self.httpbin(
+        r = await sessions.get(self.httpbin(
             'digest-auth/luca/bla/auth'),
             auth=HTTPDigestAuth('luca', 'bla'))
         self.assertEqual(r.status_code, 200)
 
-    @asyncio.coroutine
-    def test_missing_host_400(self):
+    async def test_missing_host_400(self):
         http = self._client
 
         def remove_host(response, exc=None):
@@ -602,12 +579,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             response.request.remove_header('host')
             self.assertFalse(r.has_header('host'))
 
-        response = yield from http.get(self.httpbin(),
-                                       pre_request=remove_host)
+        response = await http.get(self.httpbin(), pre_request=remove_host)
         self.assertEqual(response.status_code, 400)
 
-    @asyncio.coroutine
-    def test_missing_host_10(self):
+    async def test_missing_host_10(self):
         http = self.client(version='HTTP/1.0')
 
         def remove_host(response, exc=None):
@@ -615,49 +590,44 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             if not hasattr(request, '_test_host'):
                 request._test_host = request.remove_header('host')
 
-        response = yield from http.get(self.httpbin(),
-                                       pre_request=remove_host)
+        response = await http.get(self.httpbin(), pre_request=remove_host)
         self.assertEqual(response.status_code, 200)
         request = response.request
         self.assertFalse(request.has_header('host'))
         self.assertTrue(request._test_host)
 
-    @asyncio.coroutine
-    def test_expect(self):
+    async def test_expect(self):
         http = self._client
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield from http.post(self.httpbin('post'), data=data,
-                                        wait_continue=True)
+        response = await http.post(self.httpbin('post'), data=data,
+                                   wait_continue=True)
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'], ['1', '2'])
 
-    @asyncio.coroutine
-    def test_expect_fail(self):
+    async def test_expect_fail(self):
         '''This is an important test for the proxy server example.
         The expect-continue must be handled by the upstream server which in
         this case refuses the continue.'''
         http = self._client
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield from http.post(self.httpbin('expect'), data=data,
-                                        wait_continue=True)
+        response = await http.post(self.httpbin('expect'), data=data,
+                                   wait_continue=True)
         self.assertEqual(response.status_code, 417)
 
-    @asyncio.coroutine
-    def test_media_root(self):
+    async def test_media_root(self):
         http = self._client
-        response = yield from http.get(self.httpbin('media/'))
+        response = await http.get(self.httpbin('media/'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
 
-    @asyncio.coroutine
-    def test_media_file(self):
+    async def test_media_file(self):
         http = self._client
-        response = yield from http.get(self.httpbin('media/httpbin.js'))
+        response = await http.get(self.httpbin('media/httpbin.js'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.headers['content-type'] in
                         ('application/javascript',
@@ -667,31 +637,29 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(modified)
         #
         # Test if modified since
-        response = yield from http.get(
+        response = await http.get(
             self.httpbin('media/httpbin.js'),
             headers={'If-modified-since': modified})
         self.assertEqual(response.status_code, 304)
         self.assertFalse('Content-length' in response.headers)
 
-    @asyncio.coroutine
-    def test_http_get_timeit(self):
+    async def test_http_get_timeit(self):
         N = 10
         client = self._client
-        bench = yield from client.timeit('get', N, self.httpbin('get'),
-                                         data={'bla': 'foo'})
+        bench = await client.timeit('get', N, self.httpbin('get'),
+                                    data={'bla': 'foo'})
         self.assertTrue(bench.taken)
         self.assertEqual(len(bench.result), N)
         for r in bench.result:
             self.assertEqual(r.status_code, 200)
 
-    @asyncio.coroutine
-    def test_send_files(self):
+    async def test_send_files(self):
         client = self._client
         files = {'test': 'simple file'}
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
-        response = yield from client.post(self.httpbin('post'), data=data,
-                                          files=files)
+        response = await client.post(self.httpbin('post'), data=data,
+                                     files=files)
         self.assertEqual(response.status_code, 200)
         ct = response.request.headers['content-type']
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
@@ -699,8 +667,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(data['files'], {'test': ['simple file']})
         self.assertEqual(data['args']['numero'], ['1', '2'])
 
-    @asyncio.coroutine
-    def test_send_images(self):
+    async def test_send_images(self):
         path = Path(examples.__file__).parent.parent
         path = path.join('docs', 'source', '_static')
         files = []
@@ -711,7 +678,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             sent.append(image)
             files.append(('images', (name, image)))
         client = self._client
-        response = yield from client.post(self.httpbin('post'), files=files)
+        response = await client.post(self.httpbin('post'), files=files)
         self.assertEqual(response.status_code, 200)
         ct = response.request.headers['content-type']
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
@@ -722,29 +689,26 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             image = b64decode(image.encode('utf-8'))
             self.assertEqual(image, s)
 
-    @asyncio.coroutine
-    def test_bench_json(self):
+    async def test_bench_json(self):
         http = self._client
-        response = yield from http.get(self.httpbin('json'))
+        response = await http.get(self.httpbin('json'))
         self.assertEqual(response.headers['content-type'],
                          'application/json; charset=utf-8')
         result = response.decode_content()
         self.assertEqual(result, {'message': 'Hello, World!'})
 
-    @asyncio.coroutine
-    def test_bench_text(self):
+    async def test_bench_text(self):
         http = self._client
-        response = yield from http.get(self.httpbin('plaintext'))
+        response = await http.get(self.httpbin('plaintext'))
         self.assertEqual(response.headers['content-type'],
                          'text/plain; charset=utf-8')
         result = response.decode_content()
         self.assertEqual(result, 'Hello, World!')
 
-    @asyncio.coroutine
-    def test_pool_200(self):
+    async def test_pool_200(self):
         N = 6
         http = self.client(pool_size=2)
-        bench = yield from http.timeit('get', N, self.httpbin())
+        bench = await http.timeit('get', N, self.httpbin())
         self.assertEqual(len(bench.result), N)
         for response in bench.result:
             self.assertEqual(str(response), '<Response [200]>')
@@ -755,11 +719,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(pool.in_use, 0)
         self.assertEqual(pool.available, 2)
 
-    @asyncio.coroutine
-    def test_pool_400(self):
+    async def test_pool_400(self):
         N = 6
         http = self.client(pool_size=2)
-        bench = yield from http.timeit('get', N, self.httpbin('status', '400'))
+        bench = await http.timeit('get', N, self.httpbin('status', '400'))
         self.assertEqual(len(bench.result), N)
         for response in bench.result:
             self.assertEqual(str(response), '<Response [400]>')
@@ -770,21 +733,19 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(pool.in_use, 0)
         self.assertEqual(pool.available, 0)
 
-    @asyncio.coroutine
-    def test_415(self):
+    async def test_415(self):
         http = self._client
-        response = yield from http.get(
+        response = await http.get(
             self.httpbin(''), headers={'accept': 'application/json'})
         self.assertEqual(response.status_code, 415)
 
     @unittest.skipUnless(linux, 'Test in linux platform only')
-    @asyncio.coroutine
-    def test_servername(self):
+    async def test_servername(self):
         http = self.client()
         http.headers.remove_header('host')
         self.assertNotIn('host', http.headers)
         http.headers['host'] = 'fakehost'
-        response = yield from http.get(self.httpbin('servername'))
+        response = await http.get(self.httpbin('servername'))
         self.assertEqual(response.status_code, 200)
         result = response.decode_content().strip()
         # result should resolve to loopback address
@@ -792,30 +753,27 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                socket.getaddrinfo(result, None)}
         self.assertTrue({'127.0.0.1', '::1'} & ips)
 
-    @asyncio.coroutine
-    def test_raw_property(self):
+    async def test_raw_property(self):
         http = self._client
-        response = yield from http.get(self.httpbin('plaintext'))
+        response = await http.get(self.httpbin('plaintext'))
         raw = response.raw
         self.assertEqual(raw._response, response)
-        yield from self.wait.assertEqual(raw.read(), b'')
+        self.assertEqual(await raw.read(), b'')
 
-    @asyncio.coroutine
-    def test_stream_dont_stream(self):
+    async def test_stream_dont_stream(self):
         http = self._client
-        response = yield from http.get(self.httpbin('plaintext'), stream=True)
-        yield from response.on_finished
-        yield from self.wait.assertEqual(response.text(), 'Hello, World!')
+        response = await http.get(self.httpbin('plaintext'), stream=True)
+        await response.on_finished
+        self.assertEqual(response.text(), 'Hello, World!')
 
-    @asyncio.coroutine
-    def test_raw_stream(self):
+    async def test_raw_stream(self):
         http = self._client
-        response = yield from http.get(self.httpbin('plaintext'), stream=True)
+        response = await http.get(self.httpbin('plaintext'), stream=True)
         raw = response.raw
         self.assertEqual(raw._response, response)
-        yield from self.wait.assertEqual(raw.read(), b'Hello, World!')
+        self.assertEqual(await raw.read(), b'Hello, World!')
         self.assertTrue(raw.done)
-        yield from self.wait.assertEqual(raw.read(), b'')
+        self.assertEqual(await raw.read(), b'')
 
     @no_tls
     async def test_raw_stream_large(self):

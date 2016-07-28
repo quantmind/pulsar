@@ -2,7 +2,6 @@ from multiprocessing import current_process
 
 try:
     import coverage
-    from coverage.monkey import patch_multiprocessing
 except ImportError:
     coverage = None
 
@@ -25,7 +24,7 @@ class Coverage:
                 self.logger.warning('Start coverage')
                 p = current_process()
                 p._coverage = coverage.Coverage(data_suffix=True)
-                patch_multiprocessing()
+                coverage.process_startup()
                 p._coverage.start()
 
     def stop_coverage(self):
