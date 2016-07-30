@@ -31,7 +31,8 @@ class AbstractEvent(AsyncObject):
     def bind(self, callback):
         '''Bind a ``callback`` to this event.
         '''
-        self.handlers.append(callback)
+        if callback not in self.handlers:
+            self.handlers.append(callback)
 
     def remove_callback(self, callback):
         '''Remove a callback from the list
@@ -103,7 +104,7 @@ class OneTime(Future, AbstractEvent):
     def bind(self, callback):
         '''Bind a ``callback`` to this event.
         '''
-        self.handlers.append(callback)
+        super().bind(callback)
         if self._fired and not self._processing:
             arg, exc = future_result_exc(self)
             self._process(arg, exc, {})

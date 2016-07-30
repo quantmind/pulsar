@@ -1,4 +1,5 @@
 from functools import partial
+from asyncio import gather
 
 from pulsar import Protocol
 from pulsar.apps.data import PubSub
@@ -79,8 +80,12 @@ class RedisPubSub(PubSub):
         '''Stop listening for messages.
         '''
         if self._connection:
-            await self._connection.execute('PUNSUBSCRIBE')
-            await self._connection.execute('UNSUBSCRIBE')
+            await gather(
+                self._connection.execute('PUNSUBSCRIBE'),
+                self._connection.execute('UNSUBSCRIBE'),
+                loop=self._loop
+            )
+            await self._connection.close()
 
     #    INTERNALS
     async def _subscribe(self, *args):
