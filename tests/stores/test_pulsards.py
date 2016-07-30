@@ -74,7 +74,7 @@ class RedisCommands(StoreMixin):
     async def test_dump_restore(self):
         key = self.randomkey()
         c = self.client
-        eq = self.wait.assertEqual
+        eq = self.assertEqual
         eq(await c.dump(key), None)
         eq(await c.set(key, 'hello'), True)
         value = await c.dump(key)
@@ -93,20 +93,19 @@ class RedisCommands(StoreMixin):
         eq(await c.exists(key), True)
         eq(await c.delete(key), 1)
 
-    @asyncio.coroutine
-    def test_expire_persist_ttl(self):
+    async def test_expire_persist_ttl(self):
         key = self.randomkey()
         c = self.client
-        eq = self.wait.assertEqual
-        yield from self.wait.assertRaises(ResponseError, c.expire, key, 'bla')
-        yield from eq(c.expire(key, 1), False)
-        yield from eq(c.set(key, 1), True)
-        yield from eq(c.expire(key, 10), True)
-        ttl = yield from c.ttl(key)
+        eq = self.assertEqual
+        await self.wait.assertRaises(ResponseError, c.expire, key, 'bla')
+        eq(await c.expire(key, 1), False)
+        eq(await c.set(key, 1), True)
+        eq(await c.expire(key, 10), True)
+        ttl = await c.ttl(key)
         self.assertTrue(ttl > 0 and ttl <= 10)
-        yield from eq(c.persist(key), True)
-        yield from eq(c.ttl(key), -1)
-        yield from eq(c.persist(key), False)
+        eq(await c.persist(key), True)
+        eq(await c.ttl(key), -1)
+        eq(await c.persist(key), False)
 
     @asyncio.coroutine
     def test_expireat(self):
