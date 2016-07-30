@@ -119,7 +119,7 @@ class Twitter(pulsar.Application):
             gap = 0
         elif not response.status_code:
             # This is a network error, back off lineraly 250ms up to 16s
-            self.interval1 = gap = max(self.interval1+0.25, 16)
+            self.interval1 = gap = min(self.interval1+0.25, 16)
         elif response.status_code == 420:
             gap = 60 if not self.interval2 else max(2*self.interval2)
             self.interval2 = gap

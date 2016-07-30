@@ -88,5 +88,10 @@ class RedisPubSub(PubSub):
             protocol_factory = partial(PubsubProtocol, self,
                                        producer=self.store)
             self._connection = await self.store.connect(protocol_factory)
+            self._connection.bind_event('connection_lost', self._conn_lost)
         result = await self._connection.execute(*args)
         return result
+
+    def _conn_lost(self, con, exc=None):
+        self._connection = None
+        self.fire_event('connection_lost')

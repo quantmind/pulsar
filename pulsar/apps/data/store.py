@@ -6,7 +6,7 @@ asynchronous commands on remote servers.
 from abc import ABCMeta, abstractmethod
 from urllib.parse import urlsplit, parse_qsl, urlunparse, urlencode
 
-from pulsar import ImproperlyConfigured, Producer
+from pulsar import ImproperlyConfigured, Producer, EventHandler
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
 
@@ -268,7 +268,7 @@ class PubSubClient:
         raise NotImplementedError
 
 
-class PubSub:
+class PubSub(EventHandler):
     '''A Publish/Subscriber interface.
 
     A :class:`PubSub` handler is never initialised directly, instead,
@@ -295,11 +295,11 @@ class PubSub:
     An additional ``protocol`` object can be supplied. The protocol must
     implement the ``encode`` and ``decode`` methods.
     '''
+    MANY_TIMES_EVENTS = ('connection_lost',)
 
     def __init__(self, store, protocol=None):
-        super().__init__()
+        super().__init__(loop=store._loop)
         self.store = store
-        self._loop = store._loop
         self._protocol = protocol
         self._connection = None
         self._clients = set()

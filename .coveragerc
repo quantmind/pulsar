@@ -2,18 +2,15 @@
 source = pulsar,examples
 concurrency = greenlet,multiprocessing
 omit =
-    *pulsar/utils/system/winservice.py
-    *pulsar/utils/system/windowssystem.py
-    *pulsar/utils/system/winprocess.py
-    *pulsar/utils/autoreload.py
-    *pulsar/utils/version.py
-    *pulsar/async/cov.py
-    *pulsar/async/dns.py
-    *pulsar/apps/test/plugins/bench.py
-    *pulsar/apps/test/cov.py
-    *pulsar/apps/test/plugins/profile.py
-    *pulsar/apps/test/setup.py
-    *pulsar/apps/tx/*
+    pulsar/utils/system/winservice.py
+    pulsar/utils/system/windowssystem.py
+    pulsar/utils/system/winprocess.py
+    pulsar/utils/autoreload.py
+    pulsar/utils/version.py
+    pulsar/async/cov.py
+    pulsar/apps/test/plugins/bench.py
+    pulsar/apps/test/cov.py
+    pulsar/apps/test/plugins/profile.py
     examples/httpbin/config.py
     examples/httpbin/throttle.py
     examples/philosophers/config.py
