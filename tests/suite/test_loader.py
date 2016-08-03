@@ -20,9 +20,6 @@ class TestTestLoader(unittest.TestCase):
         self.assertTrue(modules)
         self.assertFalse('httpbin' in modules)
         self.assertTrue('echo' in modules)
-        self.assertFalse('djchat' in modules)
-        self.assertTrue('djchat.app' in modules)
-        self.assertTrue('djchat.pulse' in modules)
         self.assertFalse('async' in modules)
         self.assertTrue('async.actor' in modules)
 
