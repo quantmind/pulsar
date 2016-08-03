@@ -52,6 +52,12 @@ class GreenPool(AsyncObject):
         """
         return isinstance(getcurrent(), GreenletWorker)
 
+    @property
+    def closed(self):
+        """True if this pool is closed and no task can queued
+        """
+        return self._shutdown
+
     def submit(self, func, *args, **kwargs):
         """Equivalent to ``func(*args, **kwargs)``.
 

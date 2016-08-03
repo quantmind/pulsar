@@ -2,7 +2,7 @@ import asyncio
 
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, task, Future, ensure_future
+from .futures import task, Future, ensure_future
 from .events import EventHandler, AbortEvent
 from .mixins import FlowControl, Timeout
 
@@ -670,14 +670,16 @@ class TcpServer(Producer):
             except Exception as exc:
                 self.fire_event('start', exc=exc)
 
-    def close(self):
+    async def close(self):
         """Stop serving the :attr:`.Server.sockets`.
         """
         if self._server:
-            server, self._server = self._server, None
-            return self._close(server)
-        elif not self.fired_event('stop'):
-            return self.fire_event('stop')
+            self._server.close()
+            self._server = None
+            coro = self._close_connections()
+            if coro:
+                await coro
+            self.fire_event('stop')
 
     def info(self):
         sockets = []
@@ -718,7 +720,7 @@ class TcpServer(Producer):
     def _connection_lost(self, connection, exc=None):
         self._concurrent_connections.discard(connection)
 
-    def _close_connections(self, connection=None):
+    def _close_connections(self, connection=None, timeout=5):
         """Close ``connection`` if specified, otherwise close all connections.
 
         Return a list of :class:`.Future` called back once the connection/s
@@ -736,18 +738,7 @@ class TcpServer(Producer):
                 connection.close()
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
-            return multi_async(all)
-
-    @task
-    async def _close(self, server):
-        """Stop serving the :attr:`.Server.sockets` and close all
-        concurrent connections.
-        """
-        server.close()
-        coro = self._close_connections()
-        if coro:
-            await coro
-        self.fire_event('stop')
+            return asyncio.wait(all, timeout=timeout, loop=self._loop)
 
 
 class DatagramServer(Producer):
@@ -806,8 +797,7 @@ class DatagramServer(Producer):
                 self.fire_event('start', exc=exc)
                 self.fire_event('stop')
 
-    @task
-    def close(self):
+    async def close(self):
         """Stop serving the :attr:`.Server.sockets` and close all
         concurrent connections.
         """

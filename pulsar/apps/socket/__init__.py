@@ -108,6 +108,7 @@ except ImportError:     # pragma    nocover
 
 import pulsar
 from pulsar import TcpServer, DatagramServer, Connection, ImproperlyConfigured
+from pulsar import as_coroutine
 from pulsar.utils.internet import parse_address
 from pulsar.utils.config import pass_through
 
@@ -264,10 +265,13 @@ class SocketServer(pulsar.Application):
             server.bind_event('stop', lambda _, **kw: worker.stop())
             worker.servers[self.name] = server
 
-    def worker_stopping(self, worker, exc=None):
+    async def worker_stopping(self, worker, exc=None):
         server = worker.servers.get(self.name)
         if server:
-            server.close()
+            await server.close()
+        close = getattr(self.cfg.callable, 'close', None)
+        if hasattr(close, '__call__'):
+            await as_coroutine(close())
 
     def worker_info(self, worker, info):
         server = worker.servers.get(self.name)

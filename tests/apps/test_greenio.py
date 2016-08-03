@@ -2,7 +2,7 @@ import unittest
 import asyncio
 from unittest import mock
 
-from pulsar import Future, send, multi_async, get_event_loop
+from pulsar import Future, send, get_event_loop
 from pulsar.apps import wsgi
 
 from examples.echo.manage import server, Echo
@@ -100,12 +100,14 @@ class TestGreenIO(unittest.TestCase):
         b = pool.submit(lambda: 'b')
         self.assertEqual(len(pool._greenlets), 2)
         self.assertEqual(len(pool._available), 0)
-        result = await multi_async([a, b])
+        result = await asyncio.gather(a, b)
         self.assertEqual(result[0], 'a')
         self.assertEqual(result[1], 'b')
         self.assertEqual(len(pool._greenlets), 2)
         self.assertEqual(len(pool._available), 2)
+        self.assertEqual(pool.closed, False)
         await pool.shutdown()
+        self.assertEqual(pool.closed, True)
         self.assertEqual(len(pool._greenlets), 0)
         self.assertEqual(len(pool._available), 0)
 

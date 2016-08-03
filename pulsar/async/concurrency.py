@@ -673,7 +673,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         if done:
             actor.logger.debug('Closing mailbox server')
             actor.state = ACTOR_STATES.CLOSE
-            actor.mailbox.close()
+            actor._loop.create_task(actor.mailbox.close())
         else:
             monitors = len(self.monitors)
             managed = len(self.managed_actors)

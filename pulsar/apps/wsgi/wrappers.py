@@ -475,7 +475,8 @@ class WsgiRequest(EnvironMixin):
     def urlargs(self):
         """Dictionary of url parameters obtained when matching a
         :ref:`router <wsgi-router>` with this request :attr:`path`."""
-        return self.cache.urlargs
+        args = self.cache.urlargs
+        return args if args is not None else {}
 
     @property
     def cfg(self):
