@@ -25,6 +25,7 @@ examples/node_modules
 examples/.grunt
 
 # IDE
+.DS_Store
 .project
 .pydevproject
 .idea

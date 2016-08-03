@@ -2,7 +2,6 @@ coverage
 flake8
 cython
 greenlet
-django
 setproctitle
 psutil
 unidecode
