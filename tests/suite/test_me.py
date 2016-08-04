@@ -13,10 +13,9 @@ def simple_function(actor):
     return actor.name
 
 
-@asyncio.coroutine
-def wait(actor, period=0.5):
+async def wait(actor, period=0.5):
     start = actor._loop.time()
-    yield from asyncio.sleep(period)
+    await asyncio.sleep(period)
     return actor._loop.time() - start
 
 
@@ -29,19 +28,19 @@ class TestTestWorker(unittest.TestCase):
         app = monitor.app
         self.assertTrue(isinstance(app, TestSuite))
 
-    @asyncio.coroutine
-    def test_unknown_send_target(self):
+    async def test_unknown_send_target(self):
         # The target does not exists
-        yield from self.wait.assertRaises(pulsar.CommandError, send,
-                                          'vcghdvchdgcvshcd', 'ping')
+        await self.wait.assertRaises(pulsar.CommandError, send,
+                                     'vcghdvchdgcvshcd', 'ping')
 
-    @asyncio.coroutine
-    def test_multiple_execute(self):
-        m = yield from multi_async((send('arbiter', 'run', wait, 1.2),
-                                    send('arbiter', 'ping'),
-                                    send('arbiter', 'echo', 'ciao!'),
-                                    send('arbiter', 'run', wait, 2.1),
-                                    send('arbiter', 'echo', 'ciao again!')))
+    async def test_multiple_execute(self):
+        m = await multi_async((
+            send('arbiter', 'run', wait, 1.2),
+            send('arbiter', 'ping'),
+            send('arbiter', 'echo', 'ciao!'),
+            send('arbiter', 'run', wait, 2.1),
+            send('arbiter', 'echo', 'ciao again!'))
+        )
         self.assertTrue(m[0] >= 1.1)
         self.assertEqual(m[1], 'pong')
         self.assertEqual(m[2], 'ciao!')

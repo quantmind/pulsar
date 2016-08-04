@@ -1,4 +1,3 @@
-import asyncio
 from time import time
 
 import pulsar
@@ -30,20 +29,18 @@ def wait_for_stop(test, aid, terminating=False):
     return waiter
 
 
-@asyncio.coroutine
-def get_test(_):
-    app = yield from get_application('test')
+async def get_test(_):
+    app = await get_application('test')
     return app.cfg
 
 
-@asyncio.coroutine
-def spawn_actor_from_actor(actor, name):
-    actor2 = yield from spawn(name=name)
-    pong = yield from send(actor2, 'ping')
+async def spawn_actor_from_actor(actor, name):
+    actor2 = await spawn(name=name)
+    pong = await send(actor2, 'ping')
     assert pong == 'pong', 'no pong from actor'
     t1 = time()
     # cover the notify from a fron actor
-    t2 = yield from send(actor2, 'notify', {})
+    t2 = await send(actor2, 'notify', {})
     assert t2 >= t1
 
     return actor2.aid
