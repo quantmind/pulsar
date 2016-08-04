@@ -14,12 +14,7 @@ install:
 script:
   - python setup.py test --coverage -q
   - flake8
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test -a "--coveralls"; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test --coveralls; fi
 
 notifications:
   email: false
-
-branches:
-  only:
-    - master
-    - dev
