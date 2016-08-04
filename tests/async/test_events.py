@@ -1,5 +1,4 @@
 import unittest
-import asyncio
 
 from pulsar import EventHandler, get_event_loop
 
@@ -13,24 +12,21 @@ class Handler(EventHandler):
 
 class TestFailure(unittest.TestCase):
 
-    @asyncio.coroutine
-    def test_one_time(self):
+    async def test_one_time(self):
         h = Handler(one_time_events=('start', 'finish'))
         h.bind_event('finish', lambda f, exc=None: 'OK')
-        result = yield from h.fire_event('finish', 'foo')
+        result = await h.fire_event('finish', 'foo')
         self.assertTrue(h.event('finish').done())
         self.assertEqual(result, 'foo')
 
-    @asyncio.coroutine
-    def test_one_time_error(self):
+    async def test_one_time_error(self):
         h = Handler(one_time_events=('start', 'finish'))
         h.bind_event('finish', lambda f, exc=None: 'OK'+4)
-        result = yield from h.fire_event('finish', 3)
+        result = await h.fire_event('finish', 3)
         self.assertTrue(h.event('finish').done())
         self.assertEqual(result, 3)
 
-    @asyncio.coroutine
-    def test_bind_events(self):
+    async def test_bind_events(self):
         h = Handler(one_time_events=('start', 'finish'))
         h.bind_events(foo=3, bla=6)
         self.assertFalse(h.events['start'].handlers)
@@ -39,7 +35,7 @@ class TestFailure(unittest.TestCase):
                       finish=lambda r, exc=None: r+1)
         self.assertTrue(h.events['start'].handlers)
         self.assertTrue(h.events['finish'].handlers)
-        result = yield from h.fire_event('start', 2)
+        result = await h.fire_event('start', 2)
         self.assertEqual(result, 2)
 
     def test_remove_callback(self):

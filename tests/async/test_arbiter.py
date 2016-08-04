@@ -46,26 +46,25 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue('test' in arbiter.registered)
 
     @test_timeout(2*ACTOR_ACTION_TIMEOUT)
-    @asyncio.coroutine
-    def test_spawning_in_arbiter(self):
+    async def test_spawning_in_arbiter(self):
         arbiter = pulsar.get_actor()
         self.assertEqual(arbiter.name, 'arbiter')
         self.assertTrue(len(arbiter.monitors) >= 1)
         name = 'testSpawning-%s' % self.concurrency
         future = spawn(name=name, concurrency=self.concurrency)
         self.assertTrue(future.aid in arbiter.managed_actors)
-        proxy = yield from future
+        proxy = await future
         self.assertEqual(future.aid, proxy.aid)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         self.assertEqual(proxy, arbiter.get_actor(proxy.aid))
         #
-        yield from asyncio.sleep(1)
+        await asyncio.sleep(1)
         # Stop the actor
-        result = yield from send(proxy, 'stop')
+        result = await send(proxy, 'stop')
         self.assertEqual(result, None)
         #
-        result = yield from wait_for_stop(self, proxy.aid)
+        result = await wait_for_stop(self, proxy.aid)
         self.assertEqual(result, None)
 
     def testBadMonitor(self):
@@ -74,38 +73,36 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         name = list(arbiter.monitors.values())[0].name
         self.assertRaises(KeyError, arbiter.add_monitor, name)
 
-    @asyncio.coroutine
-    def testTimeout(self):
+    async def testTimeout(self):
         '''Test a bogus actor for timeout.'''
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         name = 'bogus-timeout-%s' % self.concurrency
-        proxy = yield from self.spawn_actor(name=name, timeout=1)
+        proxy = await self.spawn_actor(name=name, timeout=1)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
-        yield from send(proxy, 'run', cause_timeout)
+        await send(proxy, 'run', cause_timeout)
         # The arbiter should soon start to stop the actor
-        yield from wait_for_stop(self, proxy.aid, True)
+        await wait_for_stop(self, proxy.aid, True)
         #
         self.assertTrue(proxy.stopping_start)
         self.assertFalse(proxy.aid in arbiter.managed_actors)
 
     @test_timeout(2*ACTOR_ACTION_TIMEOUT)
-    @asyncio.coroutine
-    def test_terminate(self):
+    async def test_terminate(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         name = 'bogus-term-%s' % self.concurrency
-        proxy = yield from self.spawn_actor(name=name, timeout=1)
+        proxy = await self.spawn_actor(name=name, timeout=1)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
         #
-        yield from send(proxy, 'run', cause_terminate)
+        await send(proxy, 'run', cause_terminate)
         #
         # The arbiter should now terminate the actor
-        yield from wait_for_stop(self, proxy.aid, True)
+        await wait_for_stop(self, proxy.aid, True)
         #
         self.assertTrue(proxy.stopping_start)
         self.assertTrue(proxy in arbiter.terminated_actors)
