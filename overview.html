@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>Overview &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" />
    
@@ -45,6 +45,10 @@
   <div class="section" id="overview">
 <span id="intro-overview"></span><h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
 <a class="reference internal image-reference" href="https://pulsar.fluidily.com/assets/images/pulsar-banner.png"><img alt="Pulsar" src="https://pulsar.fluidily.com/assets/images/pulsar-banner.png" style="width: 300px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -53,21 +57,19 @@
 </tr>
 <tr class="field-even field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://travis-ci.org/quantmind/pulsar.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/quantmind/pulsar?branch=master"><img alt="coverage-master" src="https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master" /></a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://travis-ci.org/quantmind/pulsar.svg?branch=dev" /></a> <a class="reference external" href="https://coveralls.io/github/quantmind/pulsar?branch=dev"><img alt="coverage-dev" src="https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=dev" /></a></td>
+<tr class="field-odd field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://pythonhosted.org/pulsar/">http://pythonhosted.org/pulsar/</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://pythonhosted.org/pulsar/">http://pythonhosted.org/pulsar/</a></td>
+<tr class="field-even field"><th class="field-name">Downloads:</th><td class="field-body"><a class="reference external" href="http://pypi.python.org/pypi/pulsar">http://pypi.python.org/pypi/pulsar</a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Downloads:</th><td class="field-body"><a class="reference external" href="http://pypi.python.org/pypi/pulsar">http://pypi.python.org/pypi/pulsar</a></td>
+<tr class="field-odd field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
+<tr class="field-even field"><th class="field-name">Mailing list:</th><td class="field-body"><a class="reference external" href="https://groups.google.com/forum/?fromgroups#!forum/python-pulsar">google user group</a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Mailing list:</th><td class="field-body"><a class="reference external" href="https://groups.google.com/forum/?fromgroups#!forum/python-pulsar">google user group</a></td>
+<tr class="field-odd field"><th class="field-name">Design by:</th><td class="field-body"><a class="reference external" href="http://quantmind.com">Quantmind</a> and <a class="reference external" href="http://lucasbardella.com">Luca Sbardella</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Design by:</th><td class="field-body"><a class="reference external" href="http://quantmind.com">Quantmind</a> and <a class="reference external" href="http://lucasbardella.com">Luca Sbardella</a></td>
+<tr class="field-even field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 3.5 and above</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 3.5 and above</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Keywords:</th><td class="field-body">client, server, asynchronous, concurrency, actor, thread, process,
+<tr class="field-odd field"><th class="field-name">Keywords:</th><td class="field-body">client, server, asynchronous, concurrency, actor, thread, process,
 socket, wsgi, websocket, redis, json-rpc</td>
 </tr>
 </tbody>
@@ -130,7 +132,7 @@ Out of the box it is shipped with the the following:</p>
 <li>Web Sockets</li>
 <li>Test suite</li>
 <li>Data stores</li>
-<li><a class="reference external" href="https://www.djangoproject.com/">django</a> integration</li>
+<li><a class="reference external" href="https://github.com/quantmind/pulsar-django">django integration</a></li>
 </ul>
 </div>
 <div class="section" id="examples">
@@ -144,7 +146,6 @@ It includes:</p>
 <li>A JSON-RPC Calculator server</li>
 <li>Websocket random graph.</li>
 <li>Websocket chat room.</li>
-<li><a class="reference external" href="https://www.djangoproject.com/">django</a> web site with a websocket based chat room.</li>
 <li>The <a class="reference external" href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">dining philosophers problem</a>.</li>
 </ul>
 </div>
@@ -176,7 +177,6 @@ returned by Actor info method</li>
 <li><a class="reference external" href="https://certifi.io">python-certifi</a>: The <a class="reference external" href="http://quantmind.github.io/pulsar/apps/http.html">HttpClient</a> will attempt to use certificates from
 certifi if it is present on the system</li>
 <li><a class="reference external" href="https://pypi.python.org/pypi/ujson">ujson</a>: if installed it is used instead of the native <code class="docutils literal"><span class="pre">json</span></code> module</li>
-<li><a class="reference external" href="https://www.djangoproject.com/">django</a>: required by the <a class="reference external" href="https://github.com/quantmind/pulsar/tree/master/pulsar/apps/pulse">pulsar.apps.pulse</a> application</li>
 <li><a class="reference external" href="https://pypi.python.org/pypi/Unidecode">unidecode</a>: to enhance the <code class="docutils literal"><span class="pre">slugify</span></code> function</li>
 </ul>
 </div>
@@ -270,7 +270,6 @@ file in the top distribution directory for the full license text.</p>
 <li class="toctree-l1"><a class="reference internal" href="apps/rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="apps/pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps/ds.html">Pulsar Data Store Server</a></li>

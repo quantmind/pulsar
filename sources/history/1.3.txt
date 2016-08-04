@@ -1,3 +1,29 @@
+## Ver. 1.3.6 - 2016-Jul-09
+
+Redis Lock bug fix and enhancement
+
+* Critical bug fix in Redis Lock, the sleep method was not awaited when acquiring the lock
+* Redis lock is an asynchronous context manager
+
+
+## Ver. 1.3.5 - 2016-Jul-01
+
+Bug fixes and improvements
+
+* Pyreadline compatibility for windows #230
+* Use ``router.SkipRoute`` to abort route serving [36204b4](https://github.com/quantmind/pulsar/commit/36204b4b1727956266fb2d7c21b36a7377bff696)
+* Removed silence from events and fixed #228, [26193f5](https://github.com/quantmind/pulsar/commit/26193f5c9454689fd073dca57459332ef5cb84a5)
+* Allow MediaRouter to serve only files matching a set of extensions [a3312c7](https://github.com/quantmind/pulsar/commit/a3312c74b109f1326a9e933c9efdfc66eea34f4d)
+
+
+## Ver. 1.3.4 - 2016-Jun-17
+
+Minor release which adds the ability to run a single test function from the test suite.
+
+* ``full_url`` is a standalone function [794e6a0](https://github.com/quantmind/pulsar/commit/794e6a0afb22e6dd2c87c7ad26d7f2b9b7cf61db)
+* Test suite can run specific test function in a given tag. Fixes #224 [550b0a5](https://github.com/quantmind/pulsar/commit/550b0a5d6a12044480a5baddf6b3d2f0b25c0b32)
+
+
 ## Ver. 1.3.3 - 2016-Jun-06
 
 A critical bug fix for the WSGI server and several important fixes in internals.

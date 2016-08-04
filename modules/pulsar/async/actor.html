@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.actor &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>pulsar.async.actor &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -56,11 +56,11 @@
 <span class="kn">from</span> <span class="nn">.mailbox</span> <span class="kn">import</span> <span class="n">command_in_context</span>
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span>
 <span class="kn">from</span> <span class="nn">.cov</span> <span class="kn">import</span> <span class="n">Coverage</span>
-<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="o">*</span>   <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;is_actor&#39;</span><span class="p">,</span> <span class="s1">&#39;send&#39;</span><span class="p">,</span> <span class="s1">&#39;spawn&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;Actor&#39;</span><span class="p">,</span> <span class="s1">&#39;ACTOR_STATES&#39;</span><span class="p">,</span> <span class="s1">&#39;get_stream&#39;</span><span class="p">]</span>
+           <span class="s1">&#39;Actor&#39;</span><span class="p">,</span> <span class="s1">&#39;get_stream&#39;</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">is_actor</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
@@ -393,6 +393,11 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">&gt;=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span></div>
 
+<div class="viewcode-block" id="Actor.after_run"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.after_run">[docs]</a>    <span class="k">def</span> <span class="nf">after_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;``True`` when the actor is sopping or has already stopped</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">&gt;</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span></div>
+
 <div class="viewcode-block" id="Actor.closed"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.closed">[docs]</a>    <span class="k">def</span> <span class="nf">closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;``True`` if actor has exited in an clean fashion.</span>
 
@@ -534,7 +539,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../apps/pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>

@@ -35,7 +35,6 @@ located in the :mod:`pulsar.apps` module.
    apps/rpc
    apps/websockets
    apps/http
-   apps/pulse
    apps/greenio
    apps/test
    apps/ds

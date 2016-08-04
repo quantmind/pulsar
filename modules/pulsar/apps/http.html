@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.http &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>pulsar.apps.http &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
   
@@ -94,7 +94,7 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;HttpRequest&#39;</span><span class="p">,</span> <span class="s1">&#39;HttpResponse&#39;</span><span class="p">,</span> <span class="s1">&#39;HttpClient&#39;</span><span class="p">,</span> <span class="s1">&#39;HTTPDigestAuth&#39;</span><span class="p">,</span>
            <span class="s1">&#39;TooManyRedirects&#39;</span><span class="p">,</span> <span class="s1">&#39;Auth&#39;</span><span class="p">,</span> <span class="s1">&#39;OAuth1&#39;</span><span class="p">,</span> <span class="s1">&#39;OAuth2&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;HttpStream&#39;</span><span class="p">,</span> <span class="s1">&#39;StreamConsumedError&#39;</span><span class="p">]</span>
+           <span class="s1">&#39;HttpStream&#39;</span><span class="p">,</span> <span class="s1">&#39;StreamConsumedError&#39;</span><span class="p">,</span> <span class="s1">&#39;full_url&#39;</span><span class="p">]</span>
 
 
 <span class="n">scheme_host</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;scheme_host&#39;</span><span class="p">,</span> <span class="s1">&#39;scheme netloc&#39;</span><span class="p">)</span>
@@ -132,6 +132,19 @@
             <span class="n">values</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span><span class="p">,)</span>
         <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+
+
+<span class="k">def</span> <span class="nf">full_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">netloc</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;CONNECT&#39;</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="s1">&#39;http://</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="n">mapping_iterator</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">parse_qsl</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+    <span class="n">query</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">split_url_params</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">urlunparse</span><span class="p">((</span><span class="n">p</span><span class="o">.</span><span class="n">scheme</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">netloc</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                       <span class="n">p</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">fragment</span><span class="p">))</span>
 
 
 <span class="k">class</span> <span class="nc">RequestBase</span><span class="p">:</span>
@@ -299,7 +312,7 @@
             <span class="n">auth</span> <span class="o">=</span> <span class="n">HTTPBasicAuth</span><span class="p">(</span><span class="o">*</span><span class="n">auth</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auth</span> <span class="o">=</span> <span class="n">auth</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">_get_headers</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">full_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encode_body</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">json</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_proxy</span><span class="p">(</span><span class="n">proxies</span><span class="p">,</span> <span class="n">ignored</span><span class="p">)</span>
         <span class="n">cookies</span> <span class="o">=</span> <span class="n">cookiejar_from_dict</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">cookies</span><span class="p">,</span> <span class="n">cookies</span><span class="p">)</span>
@@ -418,20 +431,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_write_body_data</span><span class="p">(</span><span class="n">transport</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
 
     <span class="c1"># INTERNAL ENCODING METHODS</span>
-    <span class="k">def</span> <span class="nf">_full_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Full url of endpoint</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">netloc</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;CONNECT&#39;</span><span class="p">:</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="s1">&#39;http://</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
-
-        <span class="n">params</span> <span class="o">=</span> <span class="n">mapping_iterator</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="n">parse_qsl</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
-        <span class="n">query</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">split_url_params</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">urlunparse</span><span class="p">((</span><span class="n">p</span><span class="o">.</span><span class="n">scheme</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">netloc</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
-                           <span class="n">p</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">fragment</span><span class="p">))</span>
-
     <span class="k">def</span> <span class="nf">_encode_body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">json</span><span class="p">):</span>
         <span class="n">body</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)):</span>
@@ -689,6 +688,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span>
         <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">charset</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">ct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;content-type&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ct</span><span class="p">:</span>
+                    <span class="n">ct</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="n">parse_options_header</span><span class="p">(</span><span class="n">ct</span><span class="p">)</span>
+                    <span class="n">charset</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;charset&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">charset</span> <span class="ow">or</span> <span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span> <span class="ow">or</span> <span class="s1">&#39;strict&#39;</span><span class="p">)</span></div>
     <span class="n">content_string</span> <span class="o">=</span> <span class="n">text</span>
 
@@ -1127,7 +1131,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../apps/pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>

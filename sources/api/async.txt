@@ -26,6 +26,21 @@ documentation purposes.
    :member-order: bysource
 
 
+.. module:: pulsar.async.lock
+
+Lock
+==========
+
+.. autoclass:: LockBase
+   :members:
+   :member-order: bysource
+
+
+.. autoclass:: Lock
+   :members:
+   :member-order: bysource
+
+
 .. _async-discovery:
 
 

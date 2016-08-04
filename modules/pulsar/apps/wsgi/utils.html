@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.utils &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>pulsar.apps.wsgi.utils &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -66,12 +66,6 @@
 <span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">Accept</span><span class="p">,</span> <span class="n">RequestCacheControl</span>
 <span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="n">Html</span><span class="p">,</span> <span class="n">HtmlDocument</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;handle_wsgi_error&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;render_error_debug&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;wsgi_request&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;set_wsgi_request_class&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;dump_environ&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;HOP_HEADERS&#39;</span><span class="p">]</span>
 
 <span class="n">DEFAULT_RESPONSE_CONTENT_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;text/html&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span>
                                   <span class="p">)</span> <span class="o">+</span> <span class="n">JSON_CONTENT_TYPES</span>
@@ -117,7 +111,7 @@
             <span class="n">status</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">cookie_date</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="cookie_date"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.cookie_date">[docs]</a><span class="k">def</span> <span class="nf">cookie_date</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Formats the time to ensure compatibility with Netscape&#39;s cookie</span>
 <span class="sd">    standard.</span>
 
@@ -130,10 +124,10 @@
 <span class="sd">    :param expires: If provided that date is used, otherwise the current.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rfcdate</span> <span class="o">=</span> <span class="n">formatdate</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1"> GMT&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">rfcdate</span><span class="p">[:</span><span class="mi">7</span><span class="p">],</span> <span class="n">rfcdate</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">11</span><span class="p">],</span> <span class="n">rfcdate</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">25</span><span class="p">])</span>
+    <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1"> GMT&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">rfcdate</span><span class="p">[:</span><span class="mi">7</span><span class="p">],</span> <span class="n">rfcdate</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">11</span><span class="p">],</span> <span class="n">rfcdate</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">25</span><span class="p">])</span></div>
 
 
-<span class="k">def</span> <span class="nf">set_cookie</span><span class="p">(</span><span class="n">cookies</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">expires</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span>
+<div class="viewcode-block" id="set_cookie"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.set_cookie">[docs]</a><span class="k">def</span> <span class="nf">set_cookie</span><span class="p">(</span><span class="n">cookies</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">expires</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span>
                <span class="n">domain</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">secure</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">httponly</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Set a cookie key into the cookies dictionary *cookies*.&#39;&#39;&#39;</span>
     <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
@@ -163,13 +157,13 @@
     <span class="k">if</span> <span class="n">secure</span><span class="p">:</span>
         <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;secure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="k">if</span> <span class="n">httponly</span><span class="p">:</span>
-        <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;httponly&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;httponly&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span></div>
 
 
 <span class="n">_accept_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?&#39;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">parse_accept_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_accept_header"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.parse_accept_header">[docs]</a><span class="k">def</span> <span class="nf">parse_accept_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parses an HTTP Accept-* header.  This does not implement a complete</span>
 <span class="sd">    valid algorithm but one that supports at least value and quality</span>
 <span class="sd">    extraction.</span>
@@ -198,10 +192,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">quality</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">quality</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">quality</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">parse_cache_control_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">on_update</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_cache_control_header"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.parse_cache_control_header">[docs]</a><span class="k">def</span> <span class="nf">parse_cache_control_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">on_update</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parse a cache control header.  The RFC differs between response and</span>
 <span class="sd">    request cache control, this method does not.  It&#39;s your responsibility</span>
 <span class="sd">    to not use the wrong control statements.</span>
@@ -219,7 +213,7 @@
         <span class="n">cls</span> <span class="o">=</span> <span class="n">RequestCacheControl</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">on_update</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">parse_dict_header</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">on_update</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">parse_dict_header</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">on_update</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_gen_query</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
@@ -279,10 +273,9 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
         <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s1">&#39;headers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">())</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;@ </span><span class="si">%s</span><span class="s1"> &quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
     <span class="k">if</span> <span class="n">status</span> <span class="o">&gt;=</span> <span class="mi">500</span><span class="p">:</span>
-        <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> - </span><span class="si">%s</span><span class="s1">.</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> - @ </span><span class="si">%s</span><span class="s1">.</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">first_line</span><span class="p">,</span>
                         <span class="n">dump_environ</span><span class="p">(</span><span class="n">environ</span><span class="p">),</span> <span class="n">exc_info</span><span class="o">=</span><span class="n">exc_info</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">log_wsgi_info</span><span class="p">(</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
@@ -303,7 +296,7 @@
     <span class="k">return</span> <span class="n">response</span></div>
 
 
-<span class="k">def</span> <span class="nf">render_error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
+<div class="viewcode-block" id="render_error"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.render_error">[docs]</a><span class="k">def</span> <span class="nf">render_error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Default renderer for errors.&#39;&#39;&#39;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pulsar.cfg&#39;</span><span class="p">)</span>
     <span class="n">debug</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">debug</span> <span class="k">if</span> <span class="n">cfg</span> <span class="k">else</span> <span class="bp">False</span>
@@ -338,7 +331,7 @@
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
                            <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="n">msg</span><span class="p">})</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="n">msg</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="n">msg</span></div>
 
 
 <div class="viewcode-block" id="render_error_debug"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.render_error_debug">[docs]</a><span class="k">def</span> <span class="nf">render_error_debug</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">is_html</span><span class="p">):</span>
@@ -407,7 +400,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../apps/pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Event API &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>Event API &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Protocols/Transports API" href="protocols.html" />
     <link rel="prev" title="Actors API" href="actor.html" />
@@ -55,14 +55,7 @@ or can occur several times. Check the
 <dl class="class">
 <dt id="pulsar.async.events.AbstractEvent">
 <em class="property">class </em><code class="descclassname">pulsar.async.events.</code><code class="descname">AbstractEvent</code><a class="reference internal" href="../modules/pulsar/async/events.html#AbstractEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.AbstractEvent" title="Permalink to this definition">¶</a></dt>
-<dd><p>Abstract event handler.</p>
-<dl class="attribute">
-<dt id="pulsar.async.events.AbstractEvent.silenced">
-<code class="descname">silenced</code><a class="headerlink" href="#pulsar.async.events.AbstractEvent.silenced" title="Permalink to this definition">¶</a></dt>
-<dd><p>Boolean indicating if this event is silenced.</p>
-<p>To silence an event one uses the <a class="reference internal" href="#pulsar.async.events.AbstractEvent.silence" title="pulsar.async.events.AbstractEvent.silence"><code class="xref py py-meth docutils literal"><span class="pre">silence()</span></code></a> method.</p>
-</dd></dl>
-
+<dd><p>Abstract event handler</p>
 <dl class="method">
 <dt id="pulsar.async.events.AbstractEvent.bind">
 <code class="descname">bind</code><span class="sig-paren">(</span><em>callback</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/events.html#AbstractEvent.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.AbstractEvent.bind" title="Permalink to this definition">¶</a></dt>
@@ -85,13 +78,6 @@ or can occur several times. Check the
 <dt id="pulsar.async.events.AbstractEvent.fire">
 <code class="descname">fire</code><span class="sig-paren">(</span><em>arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/events.html#AbstractEvent.fire"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.AbstractEvent.fire" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fire this event.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.events.AbstractEvent.silence">
-<code class="descname">silence</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/events.html#AbstractEvent.silence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.AbstractEvent.silence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Silence this event.</p>
-<p>A silenced event won&#8217;t fire when the <a class="reference internal" href="#pulsar.async.events.AbstractEvent.fire" title="pulsar.async.events.AbstractEvent.fire"><code class="xref py py-meth docutils literal"><span class="pre">fire()</span></code></a> method is called.</p>
 </dd></dl>
 
 </dd></dl>
@@ -251,14 +237,6 @@ handler. Can only be used for
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.async.events.EventHandler.silence_event">
-<code class="descname">silence_event</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler.silence_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler.silence_event" title="Permalink to this definition">¶</a></dt>
-<dd><p>Silence event <code class="docutils literal"><span class="pre">name</span></code>.</p>
-<p>This causes the event not to fire at the <a class="reference internal" href="#pulsar.async.events.EventHandler.fire_event" title="pulsar.async.events.EventHandler.fire_event"><code class="xref py py-meth docutils literal"><span class="pre">fire_event()</span></code></a> method
-is invoked with the event <code class="docutils literal"><span class="pre">name</span></code>.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.async.events.EventHandler.copy_many_times_events">
 <code class="descname">copy_many_times_events</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler.copy_many_times_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler.copy_many_times_events" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy <a class="reference internal" href="../tutorials/events.html#many-times-event"><span>many times events</span></a> from  <code class="docutils literal"><span class="pre">other</span></code>.</p>
@@ -317,7 +295,6 @@ provided the events handlers already exist.</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apps/pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Routing &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>Routing &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" />
@@ -276,7 +276,7 @@ Routers from the <a class="reference internal" href="#pulsar.apps.wsgi.routers.R
 files such ass <code class="docutils literal"><span class="pre">css</span></code>, <code class="docutils literal"><span class="pre">javascript</span></code>, images and so forth.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.routers.MediaRouter">
-<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">MediaRouter</code><span class="sig-paren">(</span><em>rule</em>, <em>path</em>, <em>show_indexes=False</em>, <em>default_suffix=None</em>, <em>default_file='index.html'</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#MediaRouter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">MediaRouter</code><span class="sig-paren">(</span><em>rule</em>, <em>path=None</em>, <em>show_indexes=False</em>, <em>default_suffix=None</em>, <em>default_file='index.html'</em>, <em>serve_only=None</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#MediaRouter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> for serving static media files from a given
 directory.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -304,6 +304,15 @@ will serve the <code class="docutils literal"><span class="pre">/media/&lt;path:
 <code class="descname">show_indexes</code><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter.show_indexes" title="Permalink to this definition">¶</a></dt>
 <dd><p>If <code class="docutils literal"><span class="pre">True</span></code>, the router will serve media file directories as
 well as media files.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.routers.MediaRouter.serve_only">
+<code class="descname">serve_only</code><a class="headerlink" href="#pulsar.apps.wsgi.routers.MediaRouter.serve_only" title="Permalink to this definition">¶</a></dt>
+<dd><p>File suffixes to be served. When specified this is a set of suffixes
+(jpeg, png, json for example) which are served by this router
+if a file does not match the suffix it wont be served and the router
+return nothing so that other router can process the url.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -610,7 +619,6 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
 <li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>

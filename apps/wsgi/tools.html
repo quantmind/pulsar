@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Utilities &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>Utilities &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="JSON-RPC" href="../rpc.html" />
     <link rel="prev" title="Asynchronous Content" href="content.html" />
@@ -240,6 +240,25 @@ content types.</p>
 <p>The <a class="reference internal" href="#module-pulsar.apps.wsgi.utils" title="pulsar.apps.wsgi.utils"><code class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi.utils</span></code></a> module include several utilities used
 by various components in the <a class="reference internal" href="index.html#apps-wsgi"><span>wsgi application</span></a></p>
 <dl class="function">
+<dt id="pulsar.apps.wsgi.utils.cookie_date">
+<code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">cookie_date</code><span class="sig-paren">(</span><em>epoch_seconds=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#cookie_date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.cookie_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats the time to ensure compatibility with Netscape&#8217;s cookie
+standard.</p>
+<p>Accepts a floating point number expressed in seconds since the epoch in, a
+datetime object or a timetuple.  All times in UTC.  The <code class="xref py py-func docutils literal"><span class="pre">parse_date()</span></code>
+function can be used to parse such a date.</p>
+<p>Outputs a string in the format <code class="docutils literal"><span class="pre">Wdy,</span> <span class="pre">DD-Mon-YYYY</span> <span class="pre">HH:MM:SS</span> <span class="pre">GMT</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>expires</strong> &#8211; If provided that date is used, otherwise the current.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="pulsar.apps.wsgi.utils.handle_wsgi_error">
 <code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">handle_wsgi_error</code><span class="sig-paren">(</span><em>environ</em>, <em>exc</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#handle_wsgi_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.handle_wsgi_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>The default error handler while serving a WSGI request.</p>
@@ -261,9 +280,78 @@ by various components in the <a class="reference internal" href="index.html#apps
 </dd></dl>
 
 <dl class="function">
+<dt id="pulsar.apps.wsgi.utils.parse_accept_header">
+<code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">parse_accept_header</code><span class="sig-paren">(</span><em>value</em>, <em>cls=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#parse_accept_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.parse_accept_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses an HTTP Accept-* header.  This does not implement a complete
+valid algorithm but one that supports at least value and quality
+extraction.</p>
+<p>Returns a new <code class="xref py py-class docutils literal"><span class="pre">Accept</span></code> object (basically a list of
+<code class="docutils literal"><span class="pre">(value,</span> <span class="pre">quality)</span></code> tuples sorted by the quality with some additional
+accessor methods).</p>
+<p>The second parameter can be a subclass of <code class="xref py py-class docutils literal"><span class="pre">Accept</span></code> that is created
+with the parsed values and returned.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>value</strong> &#8211; the accept header string to be parsed.</li>
+<li><strong>cls</strong> &#8211; the wrapper class for the return value (can be
+<code class="xref py py-class docutils literal"><span class="pre">Accept</span></code> or a subclass thereof)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an instance of <cite>cls</cite>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.apps.wsgi.utils.parse_cache_control_header">
+<code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">parse_cache_control_header</code><span class="sig-paren">(</span><em>value</em>, <em>on_update=None</em>, <em>cls=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#parse_cache_control_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.parse_cache_control_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a cache control header.  The RFC differs between response and
+request cache control, this method does not.  It&#8217;s your responsibility
+to not use the wrong control statements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>value</strong> &#8211; a cache control header to be parsed.</li>
+<li><strong>on_update</strong> &#8211; an optional callable that is called every time a value
+on the <code class="xref py py-class docutils literal"><span class="pre">CacheControl</span></code>
+object is changed.</li>
+<li><strong>cls</strong> &#8211; the class for the returned object.  By default
+<code class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.structures.RequestCacheControl</span></code> is
+used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <cite>cls</cite> object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.apps.wsgi.utils.render_error">
+<code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">render_error</code><span class="sig-paren">(</span><em>request</em>, <em>exc</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#render_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.render_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default renderer for errors.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pulsar.apps.wsgi.utils.render_error_debug">
 <code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">render_error_debug</code><span class="sig-paren">(</span><em>request</em>, <em>exception</em>, <em>is_html</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#render_error_debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.render_error_debug" title="Permalink to this definition">¶</a></dt>
 <dd><p>Render the <code class="docutils literal"><span class="pre">exception</span></code> traceback</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.apps.wsgi.utils.set_cookie">
+<code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">set_cookie</code><span class="sig-paren">(</span><em>cookies</em>, <em>key</em>, <em>value=''</em>, <em>max_age=None</em>, <em>expires=None</em>, <em>path='/'</em>, <em>domain=None</em>, <em>secure=False</em>, <em>httponly=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#set_cookie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.set_cookie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a cookie key into the cookies dictionary <em>cookies</em>.</p>
 </dd></dl>
 
 </div>
@@ -315,7 +403,6 @@ by various components in the <a class="reference internal" href="index.html#apps
 <li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>

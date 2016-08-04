@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchonous API &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>Asynchonous API &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" />
@@ -123,6 +123,61 @@ object if successful</p>
 
 </dd></dl>
 
+<span class="target" id="module-pulsar.async.lock"></span></div>
+<div class="section" id="lock">
+<h2>Lock<a class="headerlink" href="#lock" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.async.lock.LockBase">
+<em class="property">class </em><code class="descclassname">pulsar.async.lock.</code><code class="descname">LockBase</code><span class="sig-paren">(</span><em>name</em>, <em>*</em>, <em>loop=None</em>, <em>timeout=None</em>, <em>blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/lock.html#LockBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.lock.LockBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>A asynchronous locking primitive associated to a given name.</p>
+<p>An asynchronous lock is in one of two states, &#8216;locked&#8217; or &#8216;unlocked&#8217;.
+It is created in the unlocked state. It has two basic methods,
+<a class="reference internal" href="#pulsar.async.lock.LockBase.acquire" title="pulsar.async.lock.LockBase.acquire"><code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code></a> and <code class="xref py py-meth docutils literal"><span class="pre">release.</span> <span class="pre">When</span> <span class="pre">the</span> <span class="pre">state</span> <span class="pre">is</span> <span class="pre">unlocked,</span>
+<span class="pre">:meth:()</span></code>.acquire` changes the state to locked and returns immediately.</p>
+<p>When the state is locked, <a class="reference internal" href="#pulsar.async.lock.LockBase.acquire" title="pulsar.async.lock.LockBase.acquire"><code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code></a> wait
+until a call to <a class="reference internal" href="#pulsar.async.lock.LockBase.release" title="pulsar.async.lock.LockBase.release"><code class="xref py py-meth docutils literal"><span class="pre">release()</span></code></a> changes it to unlocked,
+then the <a class="reference internal" href="#pulsar.async.lock.LockBase.acquire" title="pulsar.async.lock.LockBase.acquire"><code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code></a> call resets it to locked and returns.</p>
+<dl class="attribute">
+<dt id="pulsar.async.lock.LockBase.blocking">
+<code class="descname">blocking</code><a class="headerlink" href="#pulsar.async.lock.LockBase.blocking" title="Permalink to this definition">¶</a></dt>
+<dd><p>The time to wait for the lock to be free when acquiring it.
+When False it does not block, when True it blocks forever,
+when a positive number blocks for <code class="docutils literal"><span class="pre">blocking</span></code> seconds.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.async.lock.LockBase.timeout">
+<code class="descname">timeout</code><a class="headerlink" href="#pulsar.async.lock.LockBase.timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Free the lock after timeout seconds. If timeout is None (default)
+does not free the lock until <code class="docutils literal"><span class="pre">release</span></code> is called.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.lock.LockBase.acquire">
+<code class="descname">acquire</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/lock.html#LockBase.acquire"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.lock.LockBase.acquire" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to acquire the lock</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.lock.LockBase.locked">
+<code class="descname">locked</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/lock.html#LockBase.locked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.lock.LockBase.locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the lock is aquired</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.lock.LockBase.release">
+<code class="descname">release</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/lock.html#LockBase.release"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.lock.LockBase.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Release the lock</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pulsar.async.lock.Lock">
+<em class="property">class </em><code class="descclassname">pulsar.async.lock.</code><code class="descname">Lock</code><span class="sig-paren">(</span><em>name</em>, <em>*</em>, <em>loop=None</em>, <em>timeout=None</em>, <em>blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/lock.html#Lock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.lock.Lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>An asynchronous lock</p>
+</dd></dl>
+
 </div>
 <div class="section" id="async-utilities">
 <span id="async-discovery"></span><h2>Async Utilities<a class="headerlink" href="#async-utilities" title="Permalink to this headline">¶</a></h2>
@@ -130,139 +185,21 @@ object if successful</p>
 interaction with <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><span>asynchronous components</span></a>.</p>
 <div class="section" id="task">
 <h3>task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.async.futures.task">
-<code class="descclassname">pulsar.async.futures.</code><code class="descname">task</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Thread-safe decorator to run a <code class="docutils literal"><span class="pre">function</span></code> in an event loop.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> &#8211; a callable which can return coroutines,
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></code></a> or synchronous data. Can be a method of
-an <a class="reference internal" href="../design.html#async-object"><span>async object</span></a>, in which case the loop
-is given by the object <code class="docutils literal"><span class="pre">_loop</span></code> attribute.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </div>
 <div class="section" id="maybe-async">
 <h3>Maybe Async<a class="headerlink" href="#maybe-async" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.async.futures.maybe_async">
-<code class="descclassname">pulsar.async.futures.</code><code class="descname">maybe_async</code><span class="sig-paren">(</span><em>value</em>, <em>loop=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#maybe_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.maybe_async" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handle a possible asynchronous <code class="docutils literal"><span class="pre">value</span></code>.</p>
-<p>Return an <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><span>asynchronous instance</span></a>
-only if <code class="docutils literal"><span class="pre">value</span></code> is a generator, a <code class="xref py py-class docutils literal"><span class="pre">Future</span></code>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>value</strong> &#8211; the value to convert to an asynchronous instance
-if it needs to.</li>
-<li><strong>loop</strong> &#8211; optional <code class="xref py py-class docutils literal"><span class="pre">EventLoop</span></code>.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <code class="xref py py-class docutils literal"><span class="pre">Future</span></code> or a synchronous <code class="docutils literal"><span class="pre">value</span></code>.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </div>
 <div class="section" id="chain-future">
 <h3>Chain Future<a class="headerlink" href="#chain-future" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.async.futures.chain_future">
-<code class="descclassname">pulsar.async.futures.</code><code class="descname">chain_future</code><span class="sig-paren">(</span><em>future</em>, <em>callback=None</em>, <em>errback=None</em>, <em>next=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#chain_future"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.chain_future" title="Permalink to this definition">¶</a></dt>
-<dd><p>Chain a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> to an existing <code class="docutils literal"><span class="pre">future</span></code>.</p>
-<p>This function <cite>chain</cite> the <code class="docutils literal"><span class="pre">next</span></code> future to an existing <code class="docutils literal"><span class="pre">future</span></code>.
-When the input <code class="docutils literal"><span class="pre">future</span></code> receive a result the optional
-<code class="docutils literal"><span class="pre">callback</span></code> is executed and its result set as the results of <code class="docutils literal"><span class="pre">next</span></code>.
-If an exception occurs the optional <code class="docutils literal"><span class="pre">errback</span></code> is executed.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>future</strong> &#8211; the original <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> (can be a coroutine)</li>
-<li><strong>callback</strong> &#8211; optional callback to execute on the result of <code class="docutils literal"><span class="pre">future</span></code></li>
-<li><strong>errback</strong> &#8211; optional callback to execute on the exception of <code class="docutils literal"><span class="pre">future</span></code></li>
-<li><strong>next</strong> &#8211; optional <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> to chain.
-If not provided a new future is created</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the future <code class="docutils literal"><span class="pre">next</span></code></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </div>
 <div class="section" id="multi-async">
 <h3>Multi Async<a class="headerlink" href="#multi-async" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.async.futures.multi_async">
-<code class="descclassname">pulsar.async.futures.</code><code class="descname">multi_async</code><span class="sig-paren">(</span><em>data=None</em>, <em>loop=None</em>, <em>type=None</em>, <em>raise_on_error=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pulsar.async.futures.multi_async" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handle several futures at once. Thread safe.</p>
-</dd></dl>
-
 </div>
 <div class="section" id="async-while">
 <h3>Async While<a class="headerlink" href="#async-while" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.async.futures.async_while">
-<code class="descclassname">pulsar.async.futures.</code><code class="descname">async_while</code><span class="sig-paren">(</span><em>timeout</em>, <em>while_clause</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#async_while"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.async_while" title="Permalink to this definition">¶</a></dt>
-<dd><p>The asynchronous equivalent of <code class="docutils literal"><span class="pre">while</span> <span class="pre">while_clause(*args):</span></code></p>
-<p>Use this function within a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><span>coroutine</span></a> when you need
-to wait <code class="docutils literal"><span class="pre">while_clause</span></code> to be satisfied.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>timeout</strong> &#8211; a timeout in seconds after which this function stop.</li>
-<li><strong>while_clause</strong> &#8211; while clause callable.</li>
-<li><strong>args</strong> &#8211; optional arguments to pass to the <code class="docutils literal"><span class="pre">while_clause</span></code>
-callable.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A <code class="xref py py-class docutils literal"><span class="pre">Future</span></code>.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </div>
 <div class="section" id="run-in-loop">
 <h3>Run in loop<a class="headerlink" href="#run-in-loop" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.async.futures.run_in_loop">
-<code class="descclassname">pulsar.async.futures.</code><code class="descname">run_in_loop</code><span class="sig-paren">(</span><em>_loop</em>, <em>callable</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/futures.html#run_in_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.run_in_loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run <code class="docutils literal"><span class="pre">callable</span></code> in the event <code class="docutils literal"><span class="pre">loop</span></code> thread, thread safe.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>_loop</strong> &#8211; The event loop where <code class="docutils literal"><span class="pre">callable</span></code> is run</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </div>
 </div>
 </div>
@@ -313,7 +250,6 @@ callable.</li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apps/pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog Pre Pulsar 1.0 &mdash; pulsar 1.3.4b0 documentation</title>
+    <title>Changelog Pre Pulsar 1.0 &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.3.4b0',
+        VERSION:     '1.4.1b0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.3.4b0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -136,7 +136,7 @@ obtaining indirectly from the underling <a class="reference internal" href="../a
 This avoids several logging errors when a connection is dropped</li>
 <li>Added utilities to execute <a class="reference external" href="http://www.postgresql.org/">PostgreSql</a> queries via
 <a class="reference external" href="http://pythonhosted.org/psycopg2/">psycopg2</a> in asynchronous mode via the <a class="reference internal" href="../apps/greenio.html#module-pulsar.apps.greenio" title="pulsar.apps.greenio"><code class="xref py py-mod docutils literal"><span class="pre">greenio</span></code></a> module.</li>
-<li><a class="reference internal" href="../apps/pulse.html#apps-pulse"><span>Django pulse application</span></a> can be run asynchronously
+<li><span class="xref std std-ref">Django pulse application</span> can be run asynchronously
 when using PostgreSql database.
 It requires the <a class="reference external" href="http://greenlet.readthedocs.org/">greenlet module</a></li>
 <li>Added <a class="reference internal" href="../apps/wsgi/content.html#pulsar.apps.wsgi.content.Head.embedded_js" title="pulsar.apps.wsgi.content.Head.embedded_js"><code class="xref py py-attr docutils literal"><span class="pre">Head.embedded_js</span></code></a> for adding javascript code directly in the
@@ -193,11 +193,11 @@ imported first).</li>
 <li>Removed support for python 2.6 and python 3.2.</li>
 <li><a class="reference internal" href="../tutorials/coroutine.html#coroutine"><span>Coroutines</span></a> can return a value via the
 <code class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></code> function.</li>
-<li>Added <a class="reference internal" href="../api/async.html#pulsar.async.futures.run_in_loop" title="pulsar.async.futures.run_in_loop"><code class="xref py py-func docutils literal"><span class="pre">run_in_loop()</span></code></a> high level function. This utility
+<li>Added <code class="xref py py-func docutils literal"><span class="pre">run_in_loop()</span></code> high level function. This utility
 runs a callable in the event loop thread and returns a
 <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called back once the callable has
 a result/exception.</li>
-<li>Added <code class="xref py py-func docutils literal"><span class="pre">in_loop()</span></code> and <a class="reference internal" href="../api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><code class="xref py py-func docutils literal"><span class="pre">task()</span></code></a> decorators for
+<li>Added <code class="xref py py-func docutils literal"><span class="pre">in_loop()</span></code> and <code class="xref py py-func docutils literal"><span class="pre">task()</span></code> decorators for
 member functions of <a class="reference internal" href="../design.html#async-object"><span>async objects</span></a>.</li>
 <li><code class="xref py py-func docutils literal"><span class="pre">async()</span></code> is now a function, not a decorator.</li>
 <li>Added the new <a class="reference internal" href="../api/protocols.html#pulsar.async.clients.Pool" title="pulsar.async.clients.Pool"><code class="xref py py-class docutils literal"><span class="pre">Pool</span></code></a> class for managing a pool of asynchronous
@@ -248,7 +248,7 @@ with a body via the <a class="reference internal" href="../api/utilities.html#pu
 <li>The <code class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pubsub</span></code> has been removed. Publish/subscribe
 implementations are now available in the new <a class="reference internal" href="../apps/data/index.html#module-pulsar.apps.data" title="pulsar.apps.data"><code class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.data</span></code></a> module.</li>
 <li>The <code class="docutils literal"><span class="pre">Backend</span></code> class has been removed.</li>
-<li>Improved <a class="reference internal" href="../tutorials/django.html#tutorials-django"><span>django example</span></a> with possibility to
+<li>Improved <span class="xref std std-ref">django example</span> with possibility to
 choose different data stores for messages.</li>
 <li>Removed the twisted integration module and moved it to the example directory.
 The integration is not tested enough and therefore cannot be part of the
@@ -290,10 +290,10 @@ decoding it</li>
 <h2>Ver. 0.7.2 - 2013-Oct-16<a class="headerlink" href="#ver-0-7-2-2013-oct-16" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>A bug fix release.</li>
-<li>Must upgrade if using the <a class="reference internal" href="../apps/pulse.html#apps-pulse"><span>django pulse</span></a> application.</li>
+<li>Must upgrade if using the <span class="xref std std-ref">django pulse</span> application.</li>
 <li>Use <a class="reference external" href="https://pypi.python.org/pypi/ujson">ujson</a> if installed.</li>
 <li>Fixed <a class="reference internal" href="../apps/wsgi/middleware.html#wait-for-body-middleware"><span>wait for body middleware</span></a>.</li>
-<li>Fixed <a class="reference internal" href="../apps/pulse.html#apps-pulse"><span>django pulse</span></a> application when the client request
+<li>Fixed <span class="xref std std-ref">django pulse</span> application when the client request
 has body to load.</li>
 <li><strong>821 regression tests</strong>, <strong>91% coverage</strong>.</li>
 </ul>
@@ -353,7 +353,7 @@ types of event loop pollers. Implementation available for <code class="docutils 
 <li>Modified <code class="xref py py-class docutils literal"><span class="pre">Failure</span></code> implementation to handle one <code class="docutils literal"><span class="pre">exc_info</span></code>
 only and better handling of unlogged failures.</li>
 <li>Added an asynchronous FIFO <code class="xref py py-class docutils literal"><span class="pre">Queue</span></code>.</li>
-<li>Added <a class="reference internal" href="../api/async.html#pulsar.async.futures.async_while" title="pulsar.async.futures.async_while"><code class="xref py py-func docutils literal"><span class="pre">async_while()</span></code></a> utility function.</li>
+<li>Added <code class="xref py py-func docutils literal"><span class="pre">async_while()</span></code> utility function.</li>
 <li>Socket servers handle IPV6 addresses.</li>
 <li>Added <a class="reference internal" href="../apps/socket.html#socket-server-ssl"><span>SSL support</span></a> for socket servers.</li>
 <li>Tasks throw errors back to the coroutine via the generator <code class="docutils literal"><span class="pre">throw</span></code>
@@ -466,7 +466,7 @@ function <code class="docutils literal"><span class="pre">get_event_loop</span><
 <li>Refactoring of asynchronous <a class="reference internal" href="../apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><code class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></code></a> application.</li>
 <li>Added <a class="reference internal" href="../apps/data/clients.html#apps-pubsub"><span>Publish/Subscribe application</span></a>. The application
 is used in the <a class="reference internal" href="../tutorials/chat.html#tutorials-chat"><span>web chat</span></a> example.</li>
-<li>Added <a class="reference internal" href="../apps/pulse.html#apps-pulse"><span>django application</span></a> for running a <a class="reference external" href="https://www.djangoproject.com/">django</a>
+<li>Added <span class="xref std std-ref">django application</span> for running a <a class="reference external" href="https://www.djangoproject.com/">django</a>
 site using pulsar.</li>
 <li><a class="reference internal" href="../api/application.html#pulsar.apps.get_application" title="pulsar.apps.get_application"><code class="xref py py-func docutils literal"><span class="pre">get_application()</span></code></a> returns a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><span>coroutine</span></a>
 so that it can be used in any process domain.</li>
@@ -475,7 +475,7 @@ so that it can be used in any process domain.</li>
 <li><strong>Initial twisted integration</strong><ul>
 <li>Introduced in this application.</li>
 <li>Added <code class="xref py py-func docutils literal"><span class="pre">set_async()</span></code> function which can be used to change
-the asynchronous discovery functions <a class="reference internal" href="../api/async.html#pulsar.async.futures.maybe_async" title="pulsar.async.futures.maybe_async"><code class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></code></a>
+the asynchronous discovery functions <code class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></code>
 and <code class="xref py py-func docutils literal"><span class="pre">maybe_failure()</span></code>. The function is used in the
 implementation of twisted integration and could
 be used in conjunction with other asynchronous libraries as well.</li>
@@ -698,7 +698,6 @@ asynchronous test suite and asynchronous shell.</li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apps/pulse.html">Django Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>

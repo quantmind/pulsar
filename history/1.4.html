@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Logging &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>Ver. 1.4.0 - 2016-Aug-04 &mdash; pulsar 1.4.1b0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -28,9 +28,6 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 1.4.1b0 documentation" href="../index.html" />
-    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="The Arbiter" href="actors.html" />
-    <link rel="prev" title="Udp Server and Client" href="udp.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -43,19 +40,22 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="logging">
-<span id="tutorials-logging"></span><h1>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar provides several <a class="reference internal" href="../settings.html#settings"><span>settings</span></a> for managing the python logging module and display information when running. These configuration parameters can be specified both on the command line
-or in the <a class="reference internal" href="../settings.html#setting-config"><span>config</span></a> file of your application.</p>
-<p>The <span class="xref std std-ref">log-level</span> sets levels of loggers, for example:</p>
-<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level debug
-</pre></div>
-</div>
-<p>Set the log level for the <code class="docutils literal"><span class="pre">pulsar.*</span></code> loggers to <code class="docutils literal"><span class="pre">DEBUG</span></code>.</p>
-<p>You can pass several namespaces to the command, for example:</p>
-<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level warning pulsar.wsgi.debug
-</pre></div>
-</div>
+  <div class="section" id="ver-1-4-0-2016-aug-04">
+<span id="ver-1-4-0-2016-aug-04"></span><h1>Ver. 1.4.0 - 2016-Aug-04<a class="headerlink" href="#ver-1-4-0-2016-aug-04" title="Permalink to this headline">¶</a></h1>
+<p>A release which brings several improvements, bug fixes and a minor backward
+compatibility in the asynchronous Redis Lock.
+Importantly, the django pulse application has been moved to its own repo.</p>
+<ul class="simple">
+<li>Django <code class="docutils literal"><span class="pre">pulse</span></code> application has been moved to its own repo <a class="reference external" href="https://github.com/quantmind/pulsar-django">pulsar-django</a></li>
+<li>Refactored the close method in TcpServer</li>
+<li>Added <code class="docutils literal"><span class="pre">closed</span></code> property to green pool</li>
+<li>Better stopping of monitors</li>
+<li>Added <code class="docutils literal"><span class="pre">after_run</span></code> method to actors</li>
+<li>HttpClient bug fix #221 <a class="reference external" href="https://github.com/quantmind/pulsar/commit/92493315d0559e061ca78f2c1631a4d6d34292bb">9249331</a></li>
+<li>Added asynchronous Lock primitive to the async module <a class="reference external" href="https://github.com/quantmind/pulsar/commit/4a10883aaf2ee76bf495035d6f57fe602eaede4d">4a10883</a></li>
+<li>Handle datastor and redis pubsub connections drop with <code class="docutils literal"><span class="pre">connection_lost</span></code> event <a class="reference external" href="https://github.com/quantmind/pulsar/commit/dc322b761f978cb97dabc7809545b296c737db0a">dc322b7</a></li>
+<li>Always decode content as json in JsonProxy (thanks to &#64;wilddom), pull request #233</li>
+</ul>
 </div>
 
 
@@ -86,12 +86,12 @@ or in the <a class="reference internal" href="../settings.html#setting-config"><
 
 
 <h3>Navigation</h3>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
@@ -138,7 +138,7 @@ or in the <a class="reference internal" href="../settings.html#setting-config"><
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
-      <a href="../sources/tutorials/logging.txt"
+      <a href="../sources/history/1.4.txt"
           rel="nofollow">Page source</a>
     </div>
 
