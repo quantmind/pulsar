@@ -105,7 +105,7 @@ Out of the box it is shipped with the the following:
 * Web Sockets
 * Test suite
 * Data stores
-* django_ integration
+* `django integration`_
 
 .. _examples:
 
@@ -120,7 +120,6 @@ It includes:
 * A JSON-RPC Calculator server
 * Websocket random graph.
 * Websocket chat room.
-* django_ web site with a websocket based chat room.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
 
 
@@ -157,7 +156,6 @@ uses them to add additional functionalities or improve performance:
 * python-certifi_: The HttpClient_ will attempt to use certificates from
   certifi if it is present on the system
 * ujson_: if installed it is used instead of the native ``json`` module
-* django_: required by the `pulsar.apps.pulse`_ application
 * unidecode_: to enhance the ``slugify`` function
 
 
@@ -215,7 +213,6 @@ file in the top distribution directory for the full license text.
 .. _BSD: http://opensource.org/licenses/BSD-3-Clause
 .. _pulsar: https://github.com/quantmind/pulsar
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
-.. _django: https://www.djangoproject.com/
 .. _cython: http://cython.org/
 .. _`google user group`: https://groups.google.com/forum/?fromgroups#!forum/python-pulsar
 .. _flake8: https://pypi.python.org/pypi/flake8
@@ -231,3 +228,4 @@ file in the top distribution directory for the full license text.
 .. _`pulsar.apps.greenio`: https://github.com/quantmind/pulsar/tree/master/pulsar/apps/greenio
 .. _`pulsar.apps.pulse`: https://github.com/quantmind/pulsar/tree/master/pulsar/apps/pulse
 .. _HttpClient: http://quantmind.github.io/pulsar/apps/http.html
+.. _`django integration`: https://github.com/quantmind/pulsar-django
