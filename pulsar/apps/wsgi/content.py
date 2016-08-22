@@ -861,8 +861,6 @@ class Links(Media):
             if value not in self.children:
                 self.children.append(value)
 
-requires = ['require', 'requirejs']
-
 
 class Scripts(Media):
     '''A :class:`.Media` container for ``script`` tags.
@@ -873,7 +871,6 @@ class Scripts(Media):
 
     def __init__(self, *args, **kwargs):
         self.wait = kwargs.pop('wait', 200)
-        self.require = []
         self.paths = {}
         super().__init__(*args, **kwargs)
 
@@ -893,22 +890,6 @@ class Scripts(Media):
             script = self.script(src, type=type, **kwargs)
             if script not in self.children:
                 self.children.append(script)
-
-    def require_script(self):
-        '''Can be used for requirejs'''
-        return {'deps': [r for r in self.require if r not in requires],
-                'paths': self.paths,
-                'baseUrl': self.media_path,
-                'minify': self.minified,
-                'waitSeconds': self.wait}
-
-    def do_stream(self, request):
-        if self.require:
-            yield ('<script type="text/javascript">\n'
-                   'var require = %s;\n'
-                   '</script>\n') % json.dumps(self.require_script())
-        for child in self.children:
-            yield child
 
 
 class Embedded(Html):

@@ -174,10 +174,3 @@ class TestAsyncContent(unittest.TestCase):
                                     "rel='stylesheet' type='text/css'>"))
         self.assertEqual(lines[2], '<![endif]-->')
         self.assertEqual(lines[3], '')
-
-    def test_script(self):
-        links = wsgi.Scripts('/static/')
-        links.require.append('require')
-        html = links.render()
-        lines = html.split('\n')
-        self.assertEqual(len(lines), 4)

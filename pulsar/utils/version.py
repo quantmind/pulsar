@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import os
 import subprocess
 
@@ -40,7 +40,7 @@ def get_git_changeset(filename=None):
                   cwd=dirname)
     timestamp = git_show.partition('\n')[0]
     try:
-        timestamp = datetime.datetime.utcfromtimestamp(int(timestamp))
+        timestamp = datetime.utcfromtimestamp(int(timestamp))
     except ValueError:
         return None
     return timestamp.strftime('%Y%m%d%H%M%S')
