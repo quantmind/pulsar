@@ -31,9 +31,25 @@ To specify the address to bind the server to::
 
     python script.py --bind 127.0.0.1:8070
 
-This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080::
+This will accept connection from the 127.0.0.1 network interface and port 8070.
+This means pulsar will be able to accept connections only from clients
+running into the same computer it is running.
+
+On the other hand, it is possible to listen for connections from all
+the network interfaces available on the server by specifying ``:<port>``.
+For example, this will listen for both ipv4 and ipv6 sockets **on all hosts**
+on port 8080::
 
     python script.py --bind :8080
+
+**Use this notation when running pulsar inside Docker or any other container**.
+
+You can bind to a random available port by specifying 0 as the port number::
+
+    python script.py --bind :0
+
+useful during testing.
+
 
 backlog
 ---------
@@ -128,7 +144,8 @@ class Bind(SocketSetting):
         The socket to bind.
 
         A string of the form: ``HOST``, ``HOST:PORT``, ``unix:PATH``.
-        An IP is a valid HOST.
+        An IP is a valid HOST. Specify ``:PORT`` to listen for connections
+        from all the network interfaces available on the server.
         """
 
 
