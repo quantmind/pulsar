@@ -75,9 +75,25 @@
 
 <span class="sd">    python script.py --bind 127.0.0.1:8070</span>
 
-<span class="sd">This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080::</span>
+<span class="sd">This will accept connection from the 127.0.0.1 network interface and port 8070.</span>
+<span class="sd">This means pulsar will be able to accept connections only from clients</span>
+<span class="sd">running into the same computer it is running.</span>
+
+<span class="sd">On the other hand, it is possible to listen for connections from all</span>
+<span class="sd">the network interfaces available on the server by specifying ``:&lt;port&gt;``.</span>
+<span class="sd">For example, this will listen for both ipv4 and ipv6 sockets **on all hosts**</span>
+<span class="sd">on port 8080::</span>
 
 <span class="sd">    python script.py --bind :8080</span>
+
+<span class="sd">**Use this notation when running pulsar inside Docker or any other container**.</span>
+
+<span class="sd">You can bind to a random available port by specifying 0 as the port number::</span>
+
+<span class="sd">    python script.py --bind :0</span>
+
+<span class="sd">useful during testing.</span>
+
 
 <span class="sd">backlog</span>
 <span class="sd">---------</span>
@@ -172,7 +188,8 @@
 <span class="s2">        The socket to bind.</span>
 
 <span class="s2">        A string of the form: ``HOST``, ``HOST:PORT``, ``unix:PATH``.</span>
-<span class="s2">        An IP is a valid HOST.</span>
+<span class="s2">        An IP is a valid HOST. Specify ``:PORT`` to listen for connections</span>
+<span class="s2">        from all the network interfaces available on the server.</span>
 <span class="s2">        &quot;&quot;&quot;</span>
 
 

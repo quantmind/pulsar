@@ -73,10 +73,22 @@ specific to sockets and can be used to fine tune your application:</p>
 <div class="highlight-python"><div class="highlight"><pre>python script.py --bind 127.0.0.1:8070
 </pre></div>
 </div>
-<p>This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080:</p>
+<p>This will accept connection from the 127.0.0.1 network interface and port 8070.
+This means pulsar will be able to accept connections only from clients
+running into the same computer it is running.</p>
+<p>On the other hand, it is possible to listen for connections from all
+the network interfaces available on the server by specifying <code class="docutils literal"><span class="pre">:&lt;port&gt;</span></code>.
+For example, this will listen for both ipv4 and ipv6 sockets <strong>on all hosts</strong>
+on port 8080:</p>
 <div class="highlight-python"><div class="highlight"><pre>python script.py --bind :8080
 </pre></div>
 </div>
+<p><strong>Use this notation when running pulsar inside Docker or any other container</strong>.</p>
+<p>You can bind to a random available port by specifying 0 as the port number:</p>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --bind :0
+</pre></div>
+</div>
+<p>useful during testing.</p>
 </div>
 <div class="section" id="backlog">
 <h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
