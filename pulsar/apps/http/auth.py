@@ -87,7 +87,7 @@ class HTTPDigestAuth(Auth):
         o = self.options
         qop = o.get('qop')
         realm = o.get('realm')
-        nonce = o['nonce']
+        nonce = o.get('nonce')
         entdig = None
         p_parsed = urlparse(uri)
         path = p_parsed.path
@@ -113,8 +113,8 @@ class HTTPDigestAuth(Auth):
         else:
             # XXX handle auth-int.
             return
-        base = 'username="%s", realm="%s", nonce="%s", uri="%s", ' \
-               'response="%s"' % (self.username, realm, nonce, path, respdig)
+        base = ('username="%s", realm="%s", nonce="%s", uri="%s", '
+                'response="%s"' % (self.username, realm, nonce, path, respdig))
         opaque = o.get('opaque')
         if opaque:
             base += ', opaque="%s"' % opaque
@@ -123,21 +123,22 @@ class HTTPDigestAuth(Auth):
             base += ', algorithm="%s"' % self.algorithm
         if qop:
             base += ', qop=%s, nc=%s, cnonce="%s"' % (qop, ncvalue, cnonce)
-        return 'Digest %s' % (base)
+        return 'Digest %s' % base
 
     @noerror
     def handle_401(self, response, exc=None):
         """Takes the given response and tries digest-auth, if needed."""
         if response.status_code == 401:
-            request = response.request
-            response._handle_401 = getattr(response, '_handle_401', 0) + 1
             s_auth = response.headers.get('www-authenticate', '')
-            if 'digest' in s_auth.lower() and response._handle_401 < 2:
+            if 'digest' not in s_auth.lower():
+                return
+            request = response.request
+            if not request.headers.get('authorization'):
                 self.options = parse_dict_header(s_auth.replace('Digest ', ''))
+                authorization = self.encode(request.method, request.url)
                 params = request.inp_params.copy()
                 headers = params.pop('headers', [])
-                headers.append(('authorization', self.encode(
-                    request.method, request.url)))
+                headers.append(('authorization', authorization))
                 params['headers'] = headers
                 response.request_again = request_again(request.method,
                                                        request.url,

@@ -570,6 +570,16 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             auth=HTTPDigestAuth('luca', 'bla'))
         self.assertEqual(r.status_code, 200)
 
+    async def test_digest_authentication_failure(self):
+        sessions = self.client()
+        r = await sessions.get(self.httpbin(
+            'digest-auth/luca/bla/auth'))
+        self.assertEqual(r.status_code, 401)
+        r = await sessions.get(self.httpbin(
+            'digest-auth/luca/bla/auth'),
+            auth=HTTPDigestAuth('luca', 'foo'))
+        self.assertEqual(r.status_code, 401)
+
     async def test_missing_host_400(self):
         http = self._client
 

@@ -97,6 +97,10 @@ class TestHtml(unittest.TestCase):
         self.assertTrue(" value='0'" in c.flatatt())
         self.assertEqual(c.attr('value'), 0)
 
+    def test_true_attribute(self):
+        txt = wsgi.Html('div', bla=True).render()
+        self.assertEqual(txt, '<div bla></div>')
+
     def test_option_empty_attribute(self):
         opt = wsgi.Html('option', '--------', value='')
         self.assertEqual(opt.attr('value'), '')
@@ -174,7 +178,8 @@ class TestWidgets(unittest.TestCase):
                                     '<title>test</title>',
                                     "<meta charset='utf-8'>",
                                     '</head>',
-                                    '<body></body>',
+                                    '<body>',
+                                    '</body>',
                                     '</html>')))
 
     def test_document(self):

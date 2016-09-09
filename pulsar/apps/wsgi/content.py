@@ -185,7 +185,9 @@ def stream_mapping(value, request):
 def attr_iter(attrs):
     for k in sorted(attrs):
         v = attrs[k]
-        if v is not None:
+        if v is True:
+            yield " %s" % k
+        elif v is not None:
             yield " %s='%s'" % (k, escape(v, force=True))
 
 
@@ -244,6 +246,11 @@ class String:
 
     def __str__(self):
         return self.__repr__()
+
+    def extend(self, iterable):
+        """Extend this string with an iterable"""
+        for child in iterable:
+            self.append(child)
 
     def append(self, child):
         '''Append ``child`` to the list of :attr:`children`.
@@ -810,12 +817,6 @@ class Media(String):
         else:
             return path
 
-    def extend(self, iterable):
-        '''Add a list (iterable) of media to this container
-        '''
-        for media in iterable:
-            self.append(media)
-
 
 class Links(Media):
     '''A :class:`.Media` container for ``link`` tags.
@@ -882,7 +883,7 @@ class Scripts(Media):
         path = self.absolute_path(src)
         return Html('script', src=path, type=type, **kwargs).render()
 
-    def append(self, src=None, type=None, **kwargs):
+    def append(self, src=None, **kwargs):
         '''add a new script to the container.
 
         :param src: a ``string`` representing an absolute path to the script
@@ -890,7 +891,7 @@ class Scripts(Media):
             case the :attr:`Media.media_path` attribute is prepended.
         '''
         if src:
-            script = self.script(src, type=type, **kwargs)
+            script = self.script(src, **kwargs)
             if script not in self.children:
                 self.children.append(script)
 
@@ -1091,6 +1092,18 @@ class Head(Html):
             return self
 
 
+class Body(Html):
+
+    def __init__(self, **kwargs):
+        super().__init__('body')
+        self.scripts = Scripts(**kwargs)
+        self.before_render(add_scripts)
+
+
+def add_scripts(request, body):
+    body.append(body.scripts)
+
+
 class HtmlDocument(Html):
     '''An :class:`.Html` component rendered as an HTML5_ document.
 
@@ -1117,13 +1130,14 @@ class HtmlDocument(Html):
         super().__init__(None, **params)
         self.head = Head(title=title, media_path=media_path, minified=minified,
                          charset=charset, asset_protocol=asset_protocol)
-        self.body = Html('body')
+        self.body = Body(media_path=media_path, minified=minified,
+                         asset_protocol=asset_protocol)
 
     def do_stream(self, request):
         # stream the body
         body = self.body.render(request)
         # the body has asynchronous components
-        # delay the header untl later
+        # delay the header until later
         if isawaitable(body):
             yield self._html(request, body)
 
