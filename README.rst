@@ -10,6 +10,7 @@
 :Documentation: http://pythonhosted.org/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
+:Stack overflow: questions tagged python-pulsar_
 :Mailing list: `google user group`_
 :Design by: `Quantmind`_ and `Luca Sbardella`_
 :Platforms: Linux, OSX, Windows. Python 3.5 and above
@@ -234,3 +235,4 @@ file in the top distribution directory for the full license text.
 .. _`Task queue consumers`: https://github.com/quantmind/pulsar-queue
 .. _`Async botocore`: https://github.com/quantmind/pulsar-cloud
 .. _`django integration`: https://github.com/quantmind/pulsar-django
+.. _`python-pulsar`: http://stackoverflow.com/questions/tagged/python-pulsar
