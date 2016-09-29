@@ -200,16 +200,11 @@ class CertFile(SocketSetting):
 class WrapTransport:
 
     def __init__(self, transport):
-        self.extra = transport._extra
-        self.sock = self.extra.pop('socket')
-        self.transport = transport.__class__
-        # For some reasons if we don't delete the _sock from the
-        # transport, it get closed by python garbadge collector
-        # on python 3.4.3 mac os x
-        del transport._sock
+        self.sock = transport.get_extra_info('socket')
+        self.transport = type(transport)
 
     def __call__(self, loop, protocol):
-        return self.transport(loop, self.sock, protocol, extra=self.extra)
+        return self.transport(loop, self.sock, protocol)
 
 
 class SocketServer(pulsar.Application):
@@ -288,7 +283,10 @@ class SocketServer(pulsar.Application):
             await server.close()
         close = getattr(self.cfg.callable, 'close', None)
         if hasattr(close, '__call__'):
-            await as_coroutine(close())
+            try:
+                await as_coroutine(close())
+            except Exception:
+                pass
 
     def worker_info(self, worker, info):
         server = worker.servers.get(self.name)
@@ -372,7 +370,8 @@ class UdpSocketServer(SocketServer):
         t, _ = await loop.create_datagram_endpoint(
             asyncio.DatagramProtocol, address)
         sock = t.get_extra_info('socket')
-        assert loop.remove_reader(sock.fileno())
+        # remove reader file descriptor if in loop
+        loop.remove_reader(sock.fileno())
         cfg.addresses = [sock.getsockname()]
         monitor.sockets = [WrapTransport(t)]
 

@@ -12,8 +12,12 @@ OPTION_MAP = {
 class Test(orig.test):
     test_suite = True
     start_coverage = False
-    list_options = set(['log-level=', 'test-plugins=',
-                        'test-modules=', 'pulsar-args='])
+    list_options = set([
+        'log-level=',
+        'test-plugins=',
+        'test-modules=',
+        'pulsar-args='
+    ])
     user_options = [
         ('list-labels', 'l', 'List all test labels without performing tests'),
         ('coverage', None, 'Collect code coverage from all spawn actors'),
@@ -61,3 +65,7 @@ class Test(orig.test):
 
     def _slugify(self, name):
         return name.replace('-', '_').replace('=', '')
+
+
+class Bench(Test):
+    pass

@@ -62,7 +62,7 @@ Echo Server
 
 '''
 import pulsar
-from pulsar import Pool, Future, DatagramProtocol
+from pulsar import Pool, create_future, DatagramProtocol
 from pulsar.utils.pep import to_bytes
 from pulsar.apps.socket import UdpSocketServer
 
@@ -110,7 +110,7 @@ class EchoUdpClientProtocol(EchoUdpProtocol):
 
     def send(self, message):
         assert self._waiting is None
-        self._waiting = d = Future(loop=self._loop)
+        self._waiting = d = create_future(self._loop)
         self._transport.sendto(to_bytes(message)+self.separator)
         return d
 

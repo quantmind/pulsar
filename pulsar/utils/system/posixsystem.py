@@ -20,7 +20,12 @@ __all__ = ['close_on_exec',
            'current_process']
 
 # standard signal quit
-EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGQUIT)
+EXIT_SIGNALS = (
+    signal.SIGINT,
+    signal.SIGTERM,
+    signal.SIGABRT,
+    signal.SIGQUIT
+)
 # Default maximum for the number of available file descriptors.
 REDIRECT_TO = getattr(os, "devnull", "/dev/null")
 

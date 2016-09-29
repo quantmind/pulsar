@@ -1,4 +1,4 @@
-from .futures import Future
+from .access import create_future
 
 
 class FlowControl:
@@ -63,7 +63,7 @@ class FlowControl:
         if self._paused:
             waiter = self._write_waiter
             assert waiter is None or waiter.cancelled()
-            waiter = Future(loop=self._loop)
+            waiter = create_future(self._loop)
             self.logger.debug('Waiting for write buffer to drain')
             self._write_waiter = waiter
 

@@ -3,7 +3,7 @@ from collections import namedtuple
 from copy import copy
 from urllib.parse import urlparse, urljoin
 
-from pulsar import OneTime, isawaitable, make_future, PulsarException
+from pulsar import OneTime, isawaitable, create_future, PulsarException
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
 from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
@@ -257,7 +257,7 @@ async def ssl_transport(loop, rawsock, connection, sslcontext, hostname):
     if hasattr(loop, '_make_legacy_ssl_transport'):
         # TODO: this is a hack because the create_connection does not work
         # with standard asyncio event loops
-        waiter = make_future(loop)
+        waiter = create_future(loop)
         loop._make_legacy_ssl_transport(
             rawsock,
             connection,

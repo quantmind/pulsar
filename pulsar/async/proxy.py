@@ -1,7 +1,7 @@
 from pulsar import CommandNotFound
 from pulsar.utils.pep import default_timer
 
-from .futures import Future, chain_future
+from .futures import create_future, chain_future
 from .consts import ACTOR_ACTION_TIMEOUT
 
 
@@ -61,7 +61,7 @@ class command:
 
 
 def actor_proxy_future(aid, future=None):
-    self = Future()
+    self = create_future()
     if isinstance(aid, ActorProxyMonitor):
         assert future is None
         aid.callback = self

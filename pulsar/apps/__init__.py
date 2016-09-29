@@ -66,7 +66,7 @@ from collections import namedtuple, OrderedDict
 import asyncio
 
 import pulsar
-from pulsar import get_actor, Config, task, Future, ImproperlyConfigured
+from pulsar import get_actor, Config, create_future, ImproperlyConfigured
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
@@ -106,7 +106,6 @@ async def _get_app(arbiter, name, safe=True):
             return monitor.app
 
 
-@task
 async def monitor_start(self, exc=None):
     start_event = self.start_event
     if exc:
@@ -139,7 +138,6 @@ async def monitor_start(self, exc=None):
         start_event.set_result(result)
 
 
-@task
 async def monitor_stopping(self, exc=None):
     if not self.cfg.workers:
         coro = self.app.worker_stopping(self)
@@ -464,7 +462,7 @@ class Application(Configurator):
             if not self.cfg.exc_id:
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
-                start = Future(loop=actor._loop)
+                start = create_future(actor._loop)
                 actor.bind_event('start', partial(self._add_monitor, start))
                 return start
             else:

@@ -3,7 +3,7 @@ from collections import deque
 
 from greenlet import getcurrent
 
-from pulsar import get_event_loop, Future
+from pulsar import get_event_loop, create_future
 
 from .utils import MustBeInChildGreenlet
 
@@ -43,7 +43,7 @@ class GreenLock:
             raise MustBeInChildGreenlet('GreenLock.acquire in main greenlet')
 
         if self._local.locked:
-            future = Future(loop=self._loop)
+            future = create_future(self._loop)
             self._queue.append(future)
             parent.switch(future)
 

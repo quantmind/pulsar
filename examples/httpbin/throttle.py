@@ -1,6 +1,6 @@
 '''Not used yet
 '''
-from pulsar import Future
+from pulsar import create_future
 
 
 class Throttling:
@@ -42,7 +42,7 @@ class Throttling:
         loop = self.protocol._loop
         limit = self.limits[rw]
         if limit and self.this_second[rw] > limit:
-            self._thorttle(rw)
+            self._throttle(rw)
             next = (float(self.this_second[rw]) / limit) - 1.0
             loop.call_later(next, self._un_throttle, rw)
         self.this_second[rw] = 0
@@ -52,7 +52,7 @@ class Throttling:
         self.logger.debug('Throttling %s', self._types[rw])
         if rw:
             assert not self._throttle[rw]
-            self._throttle[rw] = Future(self.protocol._loop)
+            self._throttle[rw] = create_future(self.protocol._loop)
         else:
             self._throttle[rw] = True
             t = self.protocol._transport

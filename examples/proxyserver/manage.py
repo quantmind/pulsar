@@ -38,10 +38,9 @@ Implemenation
 '''
 import logging
 from functools import partial
-import asyncio
 
 import pulsar
-from pulsar import HttpException, ensure_future
+from pulsar import HttpException, ensure_future, create_future
 from pulsar.apps import wsgi, http
 from pulsar.apps.http.plugins import noerror
 from pulsar.utils.httpurl import Headers, ENCODE_BODY_METHODS
@@ -97,7 +96,7 @@ class TunnelResponse:
         self.wsgi = wsgi
         self.environ = environ
         self.start_response = start_response
-        self.future = asyncio.Future()
+        self.future = create_future()
 
     async def request(self):
         '''Perform the Http request to the upstream server

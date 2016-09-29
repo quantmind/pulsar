@@ -59,8 +59,8 @@ from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.string import gen_unique_id
 
-from .access import get_actor, isawaitable
-from .futures import Future, task
+from .access import get_actor, isawaitable, create_future
+from .futures import task
 from .proxy import actor_identity, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
 from .clients import AbstractClient
@@ -131,7 +131,7 @@ class Message:
                 'target': actor_identity(target),
                 'args': args if args is not None else (),
                 'kwargs': kwargs if kwargs is not None else {}}
-        waiter = Future()
+        waiter = create_future()
         if command.ack:
             data['ack'] = create_aid()
         else:

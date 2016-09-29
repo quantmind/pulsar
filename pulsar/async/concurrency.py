@@ -17,7 +17,7 @@ from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, EVENT_LOOPS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
-from .futures import ensure_future, add_errback, chain_future, Future
+from .futures import ensure_future, add_errback, chain_future, create_future
 from .protocols import TcpServer
 from .actor import Actor
 from .consts import (ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY,
@@ -457,7 +457,7 @@ class MonitorMixin:
 
     def _close_actors(self, monitor):
         # Close all managed actors at once and wait for completion
-        waiter = Future(loop=monitor._loop)
+        waiter = create_future(monitor._loop)
 
         def _finish():
             monitor.remove_callback('periodic_task', _check)

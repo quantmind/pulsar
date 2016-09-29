@@ -3,7 +3,7 @@ import threading
 import logging
 from collections import deque
 
-from pulsar import Future, ensure_future, AsyncObject, get_event_loop
+from pulsar import create_future, ensure_future, AsyncObject, get_event_loop
 
 from .utils import wait, GreenletWorker, isawaitable, getcurrent
 
@@ -73,7 +73,7 @@ class GreenPool(AsyncObject):
             if self.in_green_worker:
                 return wait(func(*args, **kwargs))
             else:
-                future = Future(loop=self._loop)
+                future = create_future(self._loop)
                 self._put((future, func, args, kwargs))
                 return future
 
@@ -82,7 +82,7 @@ class GreenPool(AsyncObject):
             self._shutdown = True
             self._put(None)
             if wait:
-                self._waiter = Future(loop=self._loop)
+                self._waiter = create_future(self._loop)
                 return self._waiter
 
     def getcurrent(self):

@@ -40,7 +40,7 @@ Implementation
 import os
 import time
 
-from pulsar import Future, ensure_future
+from pulsar import create_future, ensure_future
 from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,
                               GZipMiddleware)
 from pulsar.apps.ws import WS, WebSocket
@@ -160,7 +160,7 @@ class WebChat(LazyWsgi):
 def AsyncResponseMiddleware(environ, resp):
     '''This is just for testing the asynchronous response middleware
     '''
-    future = Future()
+    future = create_future()
     future._loop.call_soon(future.set_result, resp)
     return future
 

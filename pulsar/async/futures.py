@@ -6,7 +6,7 @@ from asyncio import Future, CancelledError, TimeoutError, sleep, gather
 
 from .consts import MAX_ASYNC_WHILE
 from .access import (get_event_loop, LOGGER, isfuture, isawaitable,
-                     ensure_future)
+                     ensure_future, create_future)
 
 
 __all__ = ['maybe_async',
@@ -45,7 +45,7 @@ def chain_future(future, callback=None, errback=None, next=None):
     loop = next._loop if next else None
     future = ensure_future(future, loop=loop)
     if next is None:
-        next = Future(loop=future._loop)
+        next = create_future(future._loop)
 
     def _callback(fut):
         try:
@@ -171,13 +171,13 @@ def task(function):
     return _
 
 
-def run_in_loop(_loop, callable, *args, **kwargs):
+def run_in_loop(loop, callable, *args, **kwargs):
     '''Run ``callable`` in the event ``loop`` thread, thread safe.
 
-    :param _loop: The event loop where ``callable`` is run
+    :param loop: The event loop where ``callable`` is run
     :return: a :class:`~asyncio.Future`
     '''
-    waiter = Future(loop=_loop)
+    waiter = create_future(loop)
 
     def _():
         try:
@@ -186,13 +186,13 @@ def run_in_loop(_loop, callable, *args, **kwargs):
             waiter.set_exception(exc)
         else:
             try:
-                future = ensure_future(result, loop=_loop)
+                future = ensure_future(result, loop=loop)
             except TypeError:
                 waiter.set_result(result)
             else:
                 chain_future(future, next=waiter)
 
-    _loop.call_soon_threadsafe(_)
+    loop.call_soon_threadsafe(_)
     return waiter
 
 

@@ -20,7 +20,7 @@ __all__ = ['get_event_loop',
            'cfg',
            'cfg_value',
            'isfuture',
-           'make_future',
+           'create_future',
            'is_mainthread',
            'process_data',
            'thread_data',
@@ -48,9 +48,10 @@ def isfuture(x):
     return isinstance(x, Future)
 
 
-def make_future(loop):
+def create_future(loop=None):
+    loop = loop or get_event_loop()
     try:
-        return loop.make_future()
+        return loop.create_future()
     except AttributeError:
         return asyncio.Future(loop=loop)
 
@@ -58,13 +59,6 @@ def make_future(loop):
 LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
 EVENT_LOOPS = OrderedDict()
-
-
-try:    # add uvloop if available
-    import uvloop
-    EVENT_LOOPS['uv'] = uvloop.Loop
-except ImportError:     # pragma    nocover
-    pass
 
 
 def make_loop_factory(selector):
@@ -81,6 +75,13 @@ for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
     selector_class = getattr(asyncio.selectors, name, None)
     if selector_class:
         EVENT_LOOPS[selector.lower()] = make_loop_factory(selector_class)
+
+
+try:    # add uvloop if available
+    import uvloop
+    EVENT_LOOPS['uv'] = uvloop.Loop
+except ImportError:     # pragma    nocover
+    pass
 
 
 if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':     # pragma nocover

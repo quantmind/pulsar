@@ -56,9 +56,8 @@ Wsgi File Wrapper
 """
 from functools import reduce, partial
 from http.client import responses
-import asyncio
 
-from pulsar import isawaitable, chain_future, HttpException
+from pulsar import isawaitable, chain_future, HttpException, create_future
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie,
                                   has_empty_content, REDIRECT_CODES,
@@ -695,7 +694,7 @@ class FileWrapper:
             data = self.file.read(self.block)
             if not data:
                 break
-            future = asyncio.Future()
+            future = create_future()
             future.set_result(data)
             yield future
 
