@@ -1,6 +1,5 @@
 '''Tests the "flaskapp" example.'''
 import unittest
-import asyncio
 
 from pulsar import send, SERVER_SOFTWARE
 from pulsar.apps.http import HttpClient
@@ -18,12 +17,11 @@ class TestFlaskThread(unittest.TestCase):
         return 'flask_' + cls.concurrency
 
     @classmethod
-    @asyncio.coroutine
-    def setUpClass(cls):
+    async def setUpClass(cls):
         s = server(name=cls.name(),
                    concurrency=cls.concurrency,
                    bind='127.0.0.1:0')
-        cls.app_cfg = yield from send('arbiter', 'run', s)
+        cls.app_cfg = await send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.client = HttpClient()
 
@@ -32,10 +30,9 @@ class TestFlaskThread(unittest.TestCase):
         if cls.app_cfg is not None:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    @asyncio.coroutine
-    def testResponse200(self):
+    async def testResponse200(self):
         c = self.client
-        response = yield from c.get(self.uri)
+        response = await c.get(self.uri)
         self.assertEqual(response.status_code, 200)
         content = response.content
         self.assertEqual(content, b'Flask Example')
@@ -43,10 +40,9 @@ class TestFlaskThread(unittest.TestCase):
         self.assertTrue(headers)
         self.assertEqual(headers['server'], SERVER_SOFTWARE)
 
-    @asyncio.coroutine
-    def testResponse404(self):
+    async def testResponse404(self):
         c = self.client
-        response = yield from c.get('%s/bh' % self.uri)
+        response = await c.get('%s/bh' % self.uri)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.content, b'404 Page')
 
