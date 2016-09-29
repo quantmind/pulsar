@@ -2142,8 +2142,7 @@ class Storage:
             if exists:
                 db.pop(key)
             if timeout > 0:
-                db._expires[key] = (self._loop.call_later(
-                    timeout, db._do_expire, key), bytearray(value))
+                db._timer(timeout, key, bytearray(value))
                 self._signal(self.NOTIFY_STRING, db, 'expire', key)
             else:
                 db._data[key] = bytearray(value)
@@ -2537,7 +2536,7 @@ class Db:
     def flush(self):
         removed = len(self._data)
         self._data.clear()
-        [handle.cancel() for handle, _ in self._expires.values()]
+        [t.handle.cancel() for t in self._expires.values()]
         self._expires.clear()
         self.store._signal(self.store.NOTIFY_GENERIC, self, 'flushdb',
                            dirty=removed)
@@ -2548,7 +2547,7 @@ class Db:
             return self._data[key]
         elif key in self._expires:
             self.store._hit_keys += 1
-            return self._expires[key][1]
+            return self._expires[key].value
         else:
             self.store._missed_keys += 1
             return default
@@ -2558,22 +2557,23 @@ class Db:
 
     def expire(self, key, timeout):
         if key in self._expires:
-            handle, value = self._expires.pop(key)
-            handle.cancel()
+            t = self._expires.pop(key)
+            t.handle.cancel()
+            value = t.value
         elif key in self._data:
             value = self._data.pop(key)
         else:
             return False
-        self._expires[key] = (self._loop.call_later(
-            timeout, self._do_expire, key), value)
+        if timeout > 0:
+            self._timer(timeout, key, value)
         return True
 
     def persist(self, key):
         if key in self._expires:
             self.store._hit_keys += 1
-            handle, value = self._expires.pop(key)
-            handle.cancel()
-            self._data[key] = value
+            t = self._expires.pop(key)
+            t.handle.cancel()
+            self._data[key] = t.value
             return True
         elif key in self._data:
             self.store._hit_keys += 1
@@ -2584,8 +2584,8 @@ class Db:
     def ttl(self, key, m=1):
         if key in self._expires:
             self.store._hit_keys += 1
-            handle, value = self._expires[key]
-            return max(0, int(m*(handle._when - self._loop.time())))
+            t = self._expires[key]
+            return max(0, int(m*(t.when - self._loop.time())))
         elif key in self._data:
             self.store._hit_keys += 1
             return -1
@@ -2603,9 +2603,9 @@ class Db:
                 value = self._data.pop(key)
                 return value
             elif key in self._expires:
-                handle, value = self._expires.pop(key)
-                handle.cancel()
-                return value
+                t = self._expires.pop(key)
+                t.handle.cancel()
+                return t.value
 
     def rem(self, key):
         if key in self._data:
@@ -2615,8 +2615,8 @@ class Db:
             return 1
         elif key in self._expires:
             self.store._hit_keys += 1
-            handle, _ = self._expires.pop(key)
-            handle.cancel()
+            t = self._expires.pop(key)
+            t.handle.cancel()
             self.store._signal(self.store.NOTIFY_GENERIC, self, 'del', key, 1)
             return 1
         else:
@@ -2625,6 +2625,20 @@ class Db:
 
     def _do_expire(self, key):
         if key in self._expires:
-            handle, value, = self._expires.pop(key)
-            handle.cancel()
+            t = self._expires.pop(key)
+            t.handle.cancel()
             self.store._expired_keys += 1
+
+    def _timer(self, timeout, key, value):
+        loop = self._loop
+        when = loop.time() + timeout
+        handle = loop.call_at(when, self._do_expire, key)
+        self._expires[key] = Timer(handle, value, when)
+
+
+class Timer:
+
+    def __init__(self, handle, value, when):
+        self.handle = handle
+        self.value = value
+        self.when = when
