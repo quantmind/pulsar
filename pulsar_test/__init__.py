@@ -9,6 +9,11 @@ OPTION_MAP = {
 }
 
 
+def extend(values, extra):
+    extra.extend(values)
+    return extra
+
+
 class Test(orig.test):
     test_suite = True
     start_coverage = False
@@ -58,14 +63,28 @@ class Test(orig.test):
             p._coverage.start()
 
         from pulsar.apps.test import TestSuite
-        test_suite = TestSuite(verbosity=self.verbose+1,
-                               argv=self.test_args,
-                               **self.test_params)
+        params = self.get_test_parameters()
+        test_suite = TestSuite(argv=self.test_args,
+                               **params)
         test_suite.start()
+
+    def get_test_parameters(self):
+        params = self.test_params
+        params['verbosity'] = self.verbose+1
+        return params
 
     def _slugify(self, name):
         return name.replace('-', '_').replace('=', '')
 
 
 class Bench(Test):
-    pass
+    description = 'Run benchmarks with pulsar benchmark test suite'
+    user_options = extend(Test.user_options, [
+        ('repeat=', None, 'Number of repetitions'),
+    ])
+
+    def get_test_parameters(self):
+        params = self.test_params
+        params['benchmark'] = True
+        params['verbosity'] = False
+        return params

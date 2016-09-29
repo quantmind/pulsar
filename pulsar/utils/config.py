@@ -556,6 +556,8 @@ class Setting(metaclass=SettingMeta):
         self.nargs = nargs or self.nargs
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
+        if validator:
+            self.validator = validator
         if self.default is not None:
             self.set(self.default)
         if self.app and not self.section:

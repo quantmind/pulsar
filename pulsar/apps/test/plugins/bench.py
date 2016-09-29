@@ -41,6 +41,7 @@ benchmark plugin evaluate the perfomance and display results:
 import sys
 import time
 import math
+from inspect import isawaitable
 from unittest import TestSuite
 
 import pulsar
@@ -77,7 +78,7 @@ class BenchTest(WrapTest):
                      'mean': '%.5f' % mean,
                      'std': '{0} %'.format(std)})
 
-    def _call(self):
+    async def _call(self):
         testMethod = self.testMethod
         testStartUp = getattr(self.test, 'startUp', lambda: None)
         testGetTime = getattr(self.test, 'getTime', lambda dt: dt)
@@ -92,7 +93,9 @@ class BenchTest(WrapTest):
             for r in range(self.number):
                 testStartUp()
                 start = default_timer()
-                testMethod()
+                result = testMethod()
+                if isawaitable(result):
+                    await result
                 delta = default_timer() - start
                 dt = testGetTime(delta)
                 testGetInfo(info, delta, dt)

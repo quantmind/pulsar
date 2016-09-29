@@ -1,3 +1,5 @@
+from functools import wraps
+
 from pulsar import isawaitable
 
 from greenlet import greenlet, getcurrent
@@ -27,6 +29,7 @@ def run_in_greenlet(callable):
 
     A ``callable`` decorated with this decorator returns a coroutine
     """
+    @wraps(callable)
     async def _(*args, **kwargs):
         green = greenlet(callable)
         # switch to the new greenlet

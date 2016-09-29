@@ -16,7 +16,7 @@ from .result import TestRunner
 
 
 no_tags = set(('tests', 'test'))
-build_directories = set(('build', 'dist'))
+build_directories = set(('build', 'dist', 'node_modules'))
 test_patterns = [re.compile(r'''test_(?P<name>.*).py'''),
                  re.compile(r'''(?P<name>.*)_test.py'''),
                  re.compile(r'''tests.py''')]

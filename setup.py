@@ -98,6 +98,7 @@ def run_setup(with_cext):
     params.update(meta)
     cmdclass = params.get('cmdclass', {})
     cmdclass['test'] = PulsarTest
+    cmdclass['bench'] = pulsar_test.Bench
     params['cmdclass'] = cmdclass
     setup(**extend(params, 'pulsar'))
 
