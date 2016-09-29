@@ -624,7 +624,6 @@ class TcpServer(Producer):
         if self._server is not None:
             return self._server.sockets[0].getsockname()
 
-    @task
     async def start_serving(self, backlog=100, sslcontext=None):
         """Start serving.
 
@@ -763,7 +762,6 @@ class DatagramServer(Producer):
                          max_requests=max_requests, logger=logger)
         self._params = {'address': address, 'sockets': sockets}
 
-    @task
     async def create_endpoint(self, **kw):
         """create the server endpoint.
 
@@ -776,17 +774,18 @@ class DatagramServer(Producer):
             del self._params
             try:
                 transports = []
+                loop = self._loop
                 if sockets:
-                    for transport in sockets:
-                        proto = self.create_protocol()
-                        transports.append(transport(self._loop, proto))
+                    for sock in sockets:
+                        transport, _ = await loop.create_datagram_endpoint(
+                            self.create_protocol, sock=sock)
+                        transports.append(transport)
                 else:
-                    loop = self._loop
                     transport, _ = await loop.create_datagram_endpoint(
-                        self.protocol_factory, local_addr=address)
+                        self.create_protocol, local_addr=address)
                     transports.append(transport)
                 self._transports = transports
-                self._started = self._loop.time()
+                self._started = loop.time()
                 for transport in self._transports:
                     address = transport.get_extra_info('sockname')
                     self.logger.info('%s serving on %s', self._name,
@@ -817,7 +816,10 @@ class DatagramServer(Producer):
         clients = {'requests_processed': self._requests_processed}
         if self._transports:
             for transport in self._transports:
-                sockets.append({
-                    'address': format_address(transport._sock.getsockname())})
+                sock = transport.get_extra_info('socket')
+                if sock:
+                    sockets.append({
+                        'address': format_address(sock.getsockname())
+                    })
         return {'server': server,
                 'clients': clients}

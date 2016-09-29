@@ -130,7 +130,7 @@ class Concurrency:
         '''
         set_actor(actor)
         if not actor.mailbox.address:
-            actor.mailbox.start_serving()
+            ensure_future(actor.mailbox.start_serving(), loop=actor._loop)
         actor._loop.run_forever()
 
     def add_monitor(self, actor, monitor_name, **params):

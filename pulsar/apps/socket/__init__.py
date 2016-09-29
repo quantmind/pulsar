@@ -202,6 +202,13 @@ class WrapTransport:
     def __init__(self, transport):
         self.sock = transport.get_extra_info('socket')
         self.transport = type(transport)
+        # For some reasons if we don't delete the _sock from the
+        # transport, it get closed by python garbadge collector
+        # on python 3.4.3 mac os x
+        try:
+            del transport._sock
+        except AttributeError:
+            pass
 
     def __call__(self, loop, protocol):
         return self.transport(loop, self.sock, protocol)
@@ -257,23 +264,25 @@ class SocketServer(pulsar.Application):
         except socket.error as e:
             raise ImproperlyConfigured(e)
         else:
-            addresses = []
-            sockets = []
-            for sock in server.sockets:
-                addresses.append(sock.getsockname())
-                sockets.append(sock)
-                loop.remove_reader(sock.fileno())
-            monitor.sockets = sockets
-            cfg.addresses = addresses
+            self.monitor_sockets(monitor, server.sockets)
+
+    def monitor_sockets(self, monitor, sockets):
+        addresses = []
+        loop = monitor._loop
+        for sock in sockets:
+            addresses.append(sock.getsockname())
+            loop.remove_reader(sock.fileno())
+        monitor.sockets = sockets
+        self.cfg.addresses = addresses
 
     def actorparams(self, monitor, params):
         params.update({'sockets': monitor.sockets})
 
-    def worker_start(self, worker, exc=None):
+    async def worker_start(self, worker, exc=None):
         '''Start the worker by invoking the :meth:`create_server` method.
         '''
         if not exc:
-            server = self.create_server(worker)
+            server = await self.create_server(worker)
             server.bind_event('stop', lambda _, **kw: worker.stop())
             worker.servers[self.name] = server
 
@@ -300,7 +309,7 @@ class SocketServer(pulsar.Application):
         return TcpServer(*args, **kw)
 
     #   INTERNALS
-    def create_server(self, worker):
+    async def create_server(self, worker):
         '''Create the Server which will listen for requests.
 
         :return: a :class:`.TcpServer`.
@@ -322,7 +331,7 @@ class SocketServer(pulsar.Application):
             callback = getattr(cfg, event)
             if callback != pass_through:
                 server.bind_event(event, callback)
-        server.start_serving(cfg.backlog, sslcontext=self.sslcontext())
+        await server.start_serving(cfg.backlog, sslcontext=self.sslcontext())
         return server
 
     def sslcontext(self):
@@ -367,13 +376,15 @@ class UdpSocketServer(SocketServer):
                                               'No address to bind to')
         address = parse_address(self.cfg.address)
         # First create the sockets
-        t, _ = await loop.create_datagram_endpoint(
+        transport, _ = await loop.create_datagram_endpoint(
             asyncio.DatagramProtocol, address)
-        sock = t.get_extra_info('socket')
-        # remove reader file descriptor if in loop
-        loop.remove_reader(sock.fileno())
-        cfg.addresses = [sock.getsockname()]
-        monitor.sockets = [WrapTransport(t)]
+        sock = transport.get_extra_info('socket')
+        self.monitor_sockets(monitor, [sock])
+        # TODO: if we don't do this the socket get closed for some reason
+        try:
+            del transport._sock
+        except AttributeError:
+            pass
 
     def actorparams(self, monitor, params):
         params.update({'sockets': monitor.sockets})
@@ -384,7 +395,7 @@ class UdpSocketServer(SocketServer):
         return DatagramServer(*args, **kw)
 
     #   INTERNALS
-    def create_server(self, worker):
+    async def create_server(self, worker):
         '''Create the Server which will listen for requests.
 
         :return: the server obtained from :meth:`server_factory`.
@@ -404,5 +415,5 @@ class UdpSocketServer(SocketServer):
             callback = getattr(cfg, event)
             if callback != pass_through:
                 server.bind_event(event, callback)
-        server.create_endpoint()
+        await server.create_endpoint()
         return server
