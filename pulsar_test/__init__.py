@@ -4,6 +4,11 @@ from multiprocessing import current_process
 import setuptools.command.test as orig
 
 
+OPTION_MAP = {
+    'io': 'event_loop'
+}
+
+
 class Test(orig.test):
     test_suite = True
     start_coverage = False
@@ -14,8 +19,11 @@ class Test(orig.test):
         ('coverage', None, 'Collect code coverage from all spawn actors'),
         ('coveralls', None, 'Publish coverage to coveralls'),
         ('sequential', None, 'Run test functions sequentially'),
+        ('debug', None, 'Set debug flag'),
         ('test-timeout=', None, 'Timeout for asynchronous tests'),
         ('log-level=', None, 'Logging level'),
+        ('io=', None, 'Event Loop'),
+        ('concurrency=', None, 'Concurrency'),
         ('test-plugins=', None, 'Test plugins'),
         ('test-modules=', None, 'Modules where to look for tests'),
         ('pulsar-args=', 'a',
@@ -34,7 +42,8 @@ class Test(orig.test):
                 value = shlex.split(value)
                 setattr(self, attr, value)
             if value is not None:
-                self.test_params[attr] = value
+                param_name = OPTION_MAP.get(attr, attr)
+                self.test_params[param_name] = value
         self.test_args = self.pulsar_args or []
 
     def run_tests(self):

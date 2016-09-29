@@ -276,6 +276,10 @@ class HttpRequest(RequestBase):
             cookies.add_cookie_header(self)
 
     @property
+    def _loop(self):
+        return self.client._loop
+
+    @property
     def address(self):
         """``(host, port)`` tuple of the HTTP resource
         """
@@ -382,7 +386,7 @@ class HttpRequest(RequestBase):
             return
         if is_streamed(self.body):
             ensure_future(self._write_streamed_data(transport),
-                          loop=transport._loop)
+                          loop=self._loop)
         else:
             self._write_body_data(transport, self.body, True)
 

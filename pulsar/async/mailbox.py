@@ -242,14 +242,11 @@ class MailboxProtocol(Protocol):
         data = self._parser.encode(obj, opcode=2)
         try:
             self._transport.write(data)
-        except socket.error:
+        except (socket.error, RuntimeError):
             actor = get_actor()
-            if actor.is_running():
-                if actor.is_arbiter():
-                    raise
-                else:
-                    actor.logger.warning('Lost connection with arbiter')
-                    actor._loop.stop()
+            if actor.is_running() and not actor.is_arbiter():
+                actor.logger.warning('Lost connection with arbiter')
+                actor._loop.stop()
 
 
 class MailboxClient(AbstractClient):

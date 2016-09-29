@@ -20,12 +20,13 @@ __all__ = ['get_event_loop',
            'cfg',
            'cfg_value',
            'isfuture',
+           'make_future',
            'is_mainthread',
            'process_data',
            'thread_data',
            'logger',
            'NOTHING',
-           'SELECTORS',
+           'EVENT_LOOPS',
            'Future',
            'reraise',
            'isawaitable',
@@ -47,47 +48,64 @@ def isfuture(x):
     return isinstance(x, Future)
 
 
+def make_future(loop):
+    try:
+        return loop.make_future()
+    except AttributeError:
+        return asyncio.Future(loop=loop)
+
+
 LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
-SELECTORS = OrderedDict()
+EVENT_LOOPS = OrderedDict()
+
+
+try:    # add uvloop if available
+    import uvloop
+    EVENT_LOOPS['uv'] = uvloop.Loop
+except ImportError:     # pragma    nocover
+    pass
+
+
+def make_loop_factory(selector):
+    LoopClass = asyncio.get_event_loop_policy()._loop_factory
+
+    def loop_factory():
+        return LoopClass(selector())
+
+    return loop_factory
+
 
 for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
     name = '%sSelector' % selector
     selector_class = getattr(asyncio.selectors, name, None)
     if selector_class:
-        SELECTORS[selector.lower()] = selector_class
+        EVENT_LOOPS[selector.lower()] = make_loop_factory(selector_class)
 
 
 if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':     # pragma nocover
     default_selector = 'epoll on linux, kqueue on mac, select on windows'
-elif SELECTORS:
-    default_selector = tuple(SELECTORS)[0]
+elif EVENT_LOOPS:
+    default_loop = tuple(EVENT_LOOPS)[0]
 else:
-    default_selector = None
+    default_loop = None
 
 
-if default_selector:
-    class PollerSetting(Global):
-        name = "selector"
+if default_loop:
+    class EventLoopSetting(Global):
+        name = "event_loop"
         flags = ["--io"]
-        choices = tuple(SELECTORS)
-        default = default_selector
+        choices = tuple(EVENT_LOOPS)
+        default = default_loop
         desc = """\
-            Specify the default selector used for I/O event polling.
+            Specify the event loop used for I/O event polling.
 
             The default value is the best possible for the system running the
             application.
             """
 
 get_event_loop = asyncio.get_event_loop
-
-
-def new_event_loop(**kwargs):
-    '''Obtain a new event loop.'''
-    loop = asyncio.new_event_loop()
-    if hasattr(loop, 'setup_loop'):
-        loop.setup_loop(**kwargs)
-    return loop
+new_event_loop = asyncio.new_event_loop
 
 
 def is_mainthread(thread=None):

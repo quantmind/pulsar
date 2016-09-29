@@ -1,14 +1,12 @@
-import asyncio
 from functools import partial
 from collections import namedtuple
 from copy import copy
 from urllib.parse import urlparse, urljoin
 
-from pulsar import OneTime, isawaitable
+from pulsar import OneTime, isawaitable, make_future, PulsarException
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
 from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
-from pulsar import PulsarException
 
 
 def noerror(callback):
@@ -247,20 +245,32 @@ class Tunneling:
         connection._processed -= 1
         connection.producer._requests_processed -= 1
         #
-        # For some reason when using the code below, it fails in python 3.5
-        # _, connection = await loop._create_connection_transport(
-        #         sock, lambda: connection,
-        #         request._ssl,
-        #         server_hostname=request._netloc)
-        #
-        # Therefore use legacy SSL transport
-        waiter = asyncio.Future(loop=loop)
         url = urlparse(request.url)
-        loop._make_legacy_ssl_transport(sock, connection,
-                                        request._ssl, waiter,
-                                        server_hostname=url.netloc)
-        await waiter
-        #
+        await ssl_transport(loop, sock, connection, request._ssl, url.netloc)
         await connection.event('connection_made')
         response = await start_request(request, connection)
         return response
+
+
+async def ssl_transport(loop, rawsock, connection, sslcontext, hostname):
+
+    if hasattr(loop, '_make_legacy_ssl_transport'):
+        # TODO: this is a hack because the create_connection does not work
+        # with standard asyncio event loops
+        waiter = make_future(loop)
+        loop._make_legacy_ssl_transport(
+            rawsock,
+            connection,
+            sslcontext,
+            waiter,
+            server_hostname=hostname
+        )
+        await waiter
+
+    else:
+        await loop.create_connection(
+            lambda: connection,
+            ssl=sslcontext,
+            sock=rawsock,
+            server_hostname=hostname
+        )

@@ -419,10 +419,7 @@ class Actor(EventHandler, Coverage):
                  'process_id': self.pid,
                  'is_process': isp,
                  'age': self.impl.age}
-        events = {'callbacks': len(self._loop._ready),
-                  'scheduled': len(self._loop._scheduled)}
         data = {'actor': actor,
-                'events': events,
                 'extra': self.extra}
         if isp:
             data['system'] = system.process_info(self.pid)

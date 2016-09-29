@@ -14,7 +14,7 @@ from pulsar.utils import autoreload
 from pulsar.utils.tools import Pidfile
 
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
-from .access import get_actor, set_actor, logger, SELECTORS
+from .access import get_actor, set_actor, logger, EVENT_LOOPS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
 from .futures import ensure_future, add_errback, chain_future, Future
@@ -104,13 +104,13 @@ class Concurrency:
     def is_monitor(self):
         return False
 
-    def selector(self):
+    def new_loop(self):
         '''Return a selector instance.
 
         By default it return nothing so that the best handler for the
         system is chosen.
         '''
-        return SELECTORS[self.cfg.selector]()
+        return EVENT_LOOPS[self.cfg.event_loop]()
 
     def get_actor(self, actor, aid, check_monitor=True):
         if aid == actor.aid:
@@ -140,7 +140,7 @@ class Concurrency:
         '''Set up the event loop for ``actor``.
         '''
         actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
-        loop = asyncio.SelectorEventLoop(self.selector())
+        loop = self.new_loop()
         if self.cfg.debug:
             loop.set_debug(True)
         executor = ThreadPoolExecutor(self.cfg.thread_workers)

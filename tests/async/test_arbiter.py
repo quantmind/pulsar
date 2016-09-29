@@ -4,14 +4,13 @@ import asyncio
 
 import pulsar
 from pulsar import send, spawn, ACTOR_ACTION_TIMEOUT
-from pulsar.apps.test import (ActorTestMixin, dont_run_with_thread,
-                              test_timeout)
+from pulsar.apps.test import ActorTestMixin, test_timeout
 
 from tests.async import cause_timeout, cause_terminate, wait_for_stop
 
 
-class TestArbiterThread(ActorTestMixin, unittest.TestCase):
-    concurrency = 'thread'
+class TestArbiterProcess(ActorTestMixin, unittest.TestCase):
+    concurrency = 'process'
 
     def test_arbiter_object(self):
         '''Test the arbiter in its process domain'''
@@ -67,27 +66,11 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         result = await wait_for_stop(self, proxy.aid)
         self.assertEqual(result, None)
 
-    def testBadMonitor(self):
+    def test_bad_monitor(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.monitors)
         name = list(arbiter.monitors.values())[0].name
         self.assertRaises(KeyError, arbiter.add_monitor, name)
-
-    async def testTimeout(self):
-        '''Test a bogus actor for timeout.'''
-        arbiter = pulsar.get_actor()
-        self.assertTrue(arbiter.is_arbiter())
-        name = 'bogus-timeout-%s' % self.concurrency
-        proxy = await self.spawn_actor(name=name, timeout=1)
-        self.assertEqual(proxy.name, name)
-        self.assertTrue(proxy.aid in arbiter.managed_actors)
-        proxy = arbiter.managed_actors[proxy.aid]
-        await send(proxy, 'run', cause_timeout)
-        # The arbiter should soon start to stop the actor
-        await wait_for_stop(self, proxy.aid, True)
-        #
-        self.assertTrue(proxy.stopping_start)
-        self.assertFalse(proxy.aid in arbiter.managed_actors)
 
     @test_timeout(2*ACTOR_ACTION_TIMEOUT)
     async def test_terminate(self):
@@ -107,7 +90,18 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue(proxy.stopping_start)
         self.assertTrue(proxy in arbiter.terminated_actors)
 
-
-@dont_run_with_thread
-class TestArbiterProcess(TestArbiterThread):
-    concurrency = 'process'
+    async def test_actor_timeout(self):
+        """Test a bogus actor for timeout"""
+        arbiter = pulsar.get_actor()
+        self.assertTrue(arbiter.is_arbiter())
+        name = 'bogus-timeout-%s' % self.concurrency
+        proxy = await self.spawn_actor(name=name, timeout=1)
+        self.assertEqual(proxy.name, name)
+        self.assertTrue(proxy.aid in arbiter.managed_actors)
+        proxy = arbiter.managed_actors[proxy.aid]
+        await send(proxy, 'run', cause_timeout)
+        # The arbiter should soon start to stop the actor
+        await wait_for_stop(self, proxy.aid, True)
+        #
+        self.assertTrue(proxy.stopping_start)
+        self.assertFalse(proxy.aid in arbiter.managed_actors)
