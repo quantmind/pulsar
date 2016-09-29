@@ -19,7 +19,6 @@ class Test(orig.test):
         ('coverage', None, 'Collect code coverage from all spawn actors'),
         ('coveralls', None, 'Publish coverage to coveralls'),
         ('sequential', None, 'Run test functions sequentially'),
-        ('debug', None, 'Set debug flag'),
         ('test-timeout=', None, 'Timeout for asynchronous tests'),
         ('log-level=', None, 'Logging level'),
         ('io=', None, 'Event Loop'),

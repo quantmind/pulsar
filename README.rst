@@ -103,7 +103,7 @@ Out of the box it is shipped with the the following:
 * WSGI server
 * HttpClient_
 * JSON-RPC_
-* Web Sockets
+* `Web Sockets`_
 * Test suite
 * `Data stores`_ (with async Redis client)
 * `Task queue consumers`_
@@ -152,6 +152,8 @@ uses them to add additional functionalities or improve performance:
 
 * greenlet_: required by the `pulsar.apps.greenio`_ module and useful for
   developing implicit asynchronous applications
+* uvloop_: if available it is the default event loop for pulsar actors. To
+  use a different loop use the ``event_loop`` (``--io``) configuration variable
 * setproctitle_: if installed, pulsar can use it to change the processes names
   of the running application
 * psutil_: if installed, a ``system`` key is available in the dictionary
@@ -236,3 +238,5 @@ file in the top distribution directory for the full license text.
 .. _`Async botocore`: https://github.com/quantmind/pulsar-cloud
 .. _`django integration`: https://github.com/quantmind/pulsar-django
 .. _`python-pulsar`: http://stackoverflow.com/questions/tagged/python-pulsar
+.. _`Web Sockets`: http://pythonhosted.org/pulsar/apps/websockets.html
+.. _uvloop: https://github.com/MagicStack/uvloop

@@ -84,7 +84,10 @@ for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
 
 
 if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':     # pragma nocover
-    default_selector = 'epoll on linux, kqueue on mac, select on windows'
+    default_selector = (
+        'uvloop if available, epoll on linux, '
+        'kqueue on mac, select on windows'
+    )
 elif EVENT_LOOPS:
     default_loop = tuple(EVENT_LOOPS)[0]
 else:
