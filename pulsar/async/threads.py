@@ -9,7 +9,7 @@ class Thread(dummy.DummyProcess):
     def pid(self):
         return current_process().pid
 
-    def terminate(self):
+    def kill(self, sig):
         '''Invoke the stop on the event loop method.'''
         if self.is_alive() and self._loop:
             self._loop.call_soon_threadsafe(self._loop.stop)

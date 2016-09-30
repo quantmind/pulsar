@@ -1,17 +1,17 @@
 import os
 import sys
+import itertools
+import asyncio
 from time import time
 from collections import OrderedDict
 from multiprocessing import Process, current_process
 from concurrent.futures import ThreadPoolExecutor
 
-import asyncio
-
 import pulsar
 from pulsar import system, MonitorStarted, HaltServer, Config
 from pulsar.utils.log import logger_fds
-from pulsar.utils import autoreload
 from pulsar.utils.tools import Pidfile
+from pulsar.utils import autoreload
 
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, EVENT_LOOPS
@@ -22,13 +22,7 @@ from .protocols import TcpServer
 from .actor import Actor
 from .consts import (ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY,
                      MONITOR_TASK_PERIOD)
-
-
-if sys.platform == 'win32':     # pragma    nocover
-    signal = None
-else:
-    import signal
-
+from .process import ProcessMixin, signal_from_exitcode
 
 __all__ = ['arbiter']
 
@@ -64,17 +58,17 @@ class Concurrency:
     :param kwargs: additional key-valued arguments to be passed to the actor
         constructor.
     '''
-    _creation_counter = 0
     monitors = None
     managed_actors = None
     terminated_actors = None
     registered = None
     actor_class = Actor
 
-    def make(self, kind, cfg, name, aid, **kw):
-        self.__class__._creation_counter += 1
+    @classmethod
+    def make(cls, kind, cfg, name, aid, **kw):
+        self = cls()
         self.aid = aid
-        self.age = self.__class__._creation_counter
+        self.age = next(_actor_counter)
         self.name = name or self.actor_class.__name__.lower()
         self.kind = kind
         self.cfg = cfg
@@ -86,7 +80,7 @@ class Concurrency:
 
     @property
     def unique_name(self):
-        return '%s(%s)' % (self.name, self.aid)
+        return '%s.%s' % (self.name, self.aid)
 
     def __repr__(self):
         return self.unique_name
@@ -252,39 +246,8 @@ class Concurrency:
         elif actor.stopped():
             return self._stop_actor(actor, True)
 
-    def _install_signals(self, actor):
-        proc_name = actor.cfg.proc_name
-        if proc_name:
-            if not self.is_arbiter():
-                name = actor.name.split('.')[0]
-                proc_name = "%s-%s" % (proc_name, name)
-            if system.set_proctitle(proc_name):
-                actor.logger.debug('Set process title to %s',
-                                   system.get_proctitle())
-        system.set_owner_process(actor.cfg.uid, actor.cfg.gid)
-        if signal:
-            actor.logger.debug('Installing signals')
-            for sig in system.EXIT_SIGNALS:
-                try:
-                    actor._loop.add_signal_handler(
-                        sig, self.handle_exit_signal, actor, sig)
-                except ValueError:
-                    pass
-
     def _remove_signals(self, actor):
-        if signal and actor.is_process():
-            actor.logger.debug('Remove signal handlers')
-            for sig in system.EXIT_SIGNALS:
-                try:
-                    actor._loop.remove_signal_handler(sig)
-                except Exception:
-                    pass
-        if actor._loop.is_running():  # pragma nocover
-            actor.logger.critical('Event loop still running when stopping')
-            actor._loop.stop()
-        else:
-            actor.logger.debug('Close event loop')
-            actor._loop.close()
+        pass
 
     def _stop_actor(self, actor, finished=False):
         # Stop the actor if finished is True
@@ -317,20 +280,6 @@ class Concurrency:
 
     def _remove_actor(self, monitor, actor, log=True):
         raise RuntimeError('Cannot remove actor')
-
-
-class ProcessMixin:
-
-    def is_process(self):
-        return True
-
-    def before_start(self, actor):  # pragma    nocover
-        actor.start_coverage()
-        self._install_signals(actor)
-
-    def handle_exit_signal(self, actor, sig):
-        actor.logger.warning("Got %s. Stopping.", system.SIG_NAMES.get(sig))
-        self.stop(actor, exit_code=int(sig))
 
 
 class MonitorMixin:
@@ -416,12 +365,11 @@ class MonitorMixin:
             dt = actor.should_terminate()
             if not actor.mailbox or dt:
                 if not actor.mailbox:
-                    monitor.logger.warning('Terminating %s. No mailbox.',
-                                           actor)
+                    monitor.logger.warning('kill %s - no mailbox.', actor)
                 else:
-                    monitor.logger.warning('Terminating %s. Could not stop '
+                    monitor.logger.warning('kill %s - could not stop '
                                            'after %.2f seconds.', actor, dt)
-                actor.terminate()
+                actor.kill()
                 self.terminated_actors.append(actor)
                 self._remove_actor(monitor, actor)
                 return 0
@@ -431,7 +379,7 @@ class MonitorMixin:
                                            actor, timeout)
                 else:
                     monitor.logger.info('Stopping %s.', actor)
-                monitor.send(actor, 'stop')
+                actor.stop(monitor.exit_code)
         return 1
 
     def spawn_actors(self, monitor):
@@ -456,16 +404,18 @@ class MonitorMixin:
                 self.manage_actor(monitor, w, True)
 
     def _close_actors(self, monitor):
+        #
         # Close all managed actors at once and wait for completion
-        waiter = create_future(monitor._loop)
+        sig = signal_from_exitcode(monitor.exit_code)
+        for worker in self.managed_actors.values():
+            worker.stop(sig)
 
-        def _finish():
-            monitor.remove_callback('periodic_task', _check)
-            waiter.set_result(None)
+        waiter = create_future(monitor._loop)
 
         def _check(_, **kw):
             if not self.managed_actors:
-                monitor._loop.call_soon(_finish)
+                monitor.remove_callback('periodic_task', _check)
+                waiter.set_result(None)
 
         monitor.bind_event('periodic_task', _check)
         return waiter
@@ -608,16 +558,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         params['kind'] = 'monitor'
         return actor.spawn(**params)
 
-    def before_start(self, actor):  # pragma    nocover
-        '''Daemonise the system if required.
-        '''
-        actor.start_coverage()
-        cfg = actor.cfg
-        self._install_signals(actor)
-        if cfg.reload:
-            assert not cfg.daemon, "Autoreload not compatible with daemon mode"
-            autoreload.start()
-
     def create_mailbox(self, actor, loop):
         '''Override :meth:`.Concurrency.create_mailbox` to create the
         mailbox server.
@@ -685,16 +625,15 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                 self._exit_arbiter(actor, True)
 
     async def _close_all(self, actor):
-        # Close al monitors at once
+        # Close monitors and actors
         try:
-            monitors = []
+            waiters = []
             for m in tuple(self.monitors.values()):
-                stop = m.stop()
+                stop = m.stop(exit_code=actor.exit_code)
                 if stop:
-                    monitors.append(stop)
-            if monitors:
-                await asyncio.gather(*monitors)
-            await self._close_actors(actor)
+                    waiters.append(stop)
+            waiters.append(self._close_actors(actor))
+            await asyncio.gather(*waiters)
         except Exception:
             actor.logger.exception('Exception while closing arbiter')
         self._exit_arbiter(actor, True)
@@ -790,16 +729,6 @@ def run_actor(self):
         log.info('Bye from "%s"', actor)
 
 
-class ActorProcess(ProcessMixin, Concurrency, Process):
-    '''Actor on a Operative system process.
-
-    Created using the python multiprocessing module.
-    '''
-    def run(self):  # pragma    nocover
-        # The coverage for this process has not yet started
-        run_actor(self)
-
-
 class ActorThread(Concurrency, Thread):
     '''Actor on a thread of the master process
     '''
@@ -812,8 +741,31 @@ class ActorThread(Concurrency, Thread):
         run_actor(self)
 
 
+class ActorProcess(ProcessMixin, Concurrency, Process):
+    '''Actor on a Operative system process.
+
+    Created using the python multiprocessing module.
+    '''
+    def run(self):  # pragma    nocover
+        # The coverage for this process has not yet started
+        run_actor(self)
+
+    def kill(self, sig):
+        system.kill(self.pid, sig)
+
+
+class ActorCoroutine(Concurrency):
+
+    def start(self):
+        run_actor(self)
+
+    def kill(self, sig):
+        self._actor.exit_code = int(sig)
+
+
 concurrency_models = {'arbiter': ArbiterConcurrency,
                       'monitor': MonitorConcurrency,
+                      'coroutine': ActorCoroutine,
                       'thread': ActorThread,
                       'process': ActorProcess}
 
@@ -857,9 +809,11 @@ def _spawn_actor(kind, monitor, cfg=None, name=None, aid=None, **kw):
     if not kind:
         raise TypeError('Cannot spawn')
 
-    maker = concurrency_models.get(kind)
-    if maker:
-        c = maker()
-        return c.make(kind, cfg, name, aid, monitor=monitor, **params)
+    model = concurrency_models.get(kind)
+    if model:
+        return model.make(kind, cfg, name, aid, monitor=monitor, **params)
     else:
         raise ValueError('Concurrency %s not supported in pulsar' % kind)
+
+
+_actor_counter = itertools.count(1)
