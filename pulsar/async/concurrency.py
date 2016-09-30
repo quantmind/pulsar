@@ -178,7 +178,7 @@ class Concurrency:
             actor.stop(exc)
 
     def create_actor(self):
-        self.daemon = False
+        self.daemon = True
         self.params['monitor'] = get_proxy(self.params['monitor'])
         return ActorProxyMonitor(self)
 
