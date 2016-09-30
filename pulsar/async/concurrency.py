@@ -14,7 +14,7 @@ from pulsar.utils.tools import Pidfile
 from pulsar.utils import autoreload
 
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
-from .access import get_actor, set_actor, logger, EVENT_LOOPS
+from .access import get_actor, set_actor, logger, EventLoopPolicy
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
 from .futures import ensure_future, add_errback, chain_future, create_future
@@ -98,14 +98,6 @@ class Concurrency:
     def is_monitor(self):
         return False
 
-    def new_loop(self):
-        '''Return a selector instance.
-
-        By default it return nothing so that the best handler for the
-        system is chosen.
-        '''
-        return EVENT_LOOPS[self.cfg.event_loop]()
-
     def get_actor(self, actor, aid, check_monitor=True):
         if aid == actor.aid:
             return actor
@@ -134,13 +126,12 @@ class Concurrency:
         '''Set up the event loop for ``actor``.
         '''
         actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
-        loop = self.new_loop()
+        loop = asyncio.get_event_loop()
         if self.cfg.debug:
             loop.set_debug(True)
         executor = ThreadPoolExecutor(self.cfg.thread_workers)
         loop.set_default_executor(executor)
         loop.logger = actor._logger
-        asyncio.set_event_loop(loop)
         actor.mailbox = self.create_mailbox(actor, loop)
         return loop
 
@@ -513,6 +504,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return True
 
     def create_actor(self):
+        asyncio.set_event_loop_policy(EventLoopPolicy(self.cfg.event_loop))
         if self.cfg.daemon:     # pragma    nocover
             # Daemonize the system
             if not self.cfg.pid_file:

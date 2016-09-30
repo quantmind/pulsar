@@ -197,23 +197,6 @@ class CertFile(SocketSetting):
     """
 
 
-class WrapTransport:
-
-    def __init__(self, transport):
-        self.sock = transport.get_extra_info('socket')
-        self.transport = type(transport)
-        # For some reasons if we don't delete the _sock from the
-        # transport, it get closed by python garbadge collector
-        # on python 3.4.3 mac os x
-        try:
-            del transport._sock
-        except AttributeError:
-            pass
-
-    def __call__(self, loop, protocol):
-        return self.transport(loop, self.sock, protocol)
-
-
 class SocketServer(pulsar.Application):
     '''A :class:`.Application` which serve application on a socket.
 

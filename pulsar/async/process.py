@@ -12,7 +12,7 @@ class ProcessMixin:
     def before_start(self, actor):  # pragma    nocover
         actor.start_coverage()
         self._install_signals(actor)
-        if actor.cfg.reload:
+        if actor.cfg.reload and self.is_arbiter():
             autoreload.start()
 
     def handle_int(self, actor, sig):

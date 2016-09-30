@@ -86,7 +86,7 @@ class OneTime(Future, AbstractEvent):
     This event handler is a subclass of :class:`.Future`.
     Implemented mainly for the one time events of the :class:`EventHandler`.
     '''
-    def __init__(self, loop=None, name=None):
+    def __init__(self, *, loop=None, name=None):
         super().__init__(loop=loop)
         self._processing = False
         self._name = name or self.__class__.__name__.lower()
@@ -139,7 +139,7 @@ class OneTime(Future, AbstractEvent):
             else:
                 # If result is a future, resume process once done
                 try:
-                    result = ensure_future(result)
+                    result = ensure_future(result, loop=self._loop)
                 except TypeError:
                     pass
                 else:

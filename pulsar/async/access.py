@@ -2,6 +2,8 @@ import os
 import threading
 import logging
 import asyncio
+from asyncio.events import BaseDefaultEventLoopPolicy as __BasePolicy
+
 from collections import OrderedDict
 from threading import current_thread
 
@@ -60,12 +62,13 @@ LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
 EVENT_LOOPS = OrderedDict()
 
+DefaultLoopClass = asyncio.get_event_loop_policy()._loop_factory
+
 
 def make_loop_factory(selector):
-    LoopClass = asyncio.get_event_loop_policy()._loop_factory
 
     def loop_factory():
-        return LoopClass(selector())
+        return DefaultLoopClass(selector())
 
     return loop_factory
 
@@ -181,3 +184,19 @@ def cfg_value(setting, value=None):
         if actor:
             return actor.cfg.get(setting)
     return value
+
+
+class EventLoopPolicy(__BasePolicy):
+
+    def __init__(self, name):
+        self.name = name
+
+    @property
+    def _local(self):
+        p = current_process()
+        if not hasattr(p, '_local'):
+            p._local = self._Local()
+        return p._local
+
+    def _loop_factory(self):
+        return EVENT_LOOPS[self.name]()
