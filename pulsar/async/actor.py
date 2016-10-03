@@ -259,11 +259,6 @@ class Actor(EventHandler, Coverage):
         return self.__impl.managed_actors
 
     @property
-    def terminated_actors(self):
-        '''Dictionary of terminated actors or None'''
-        return self.__impl.terminated_actors
-
-    @property
     def registered(self):
         '''Dictionary of registered actors or None'''
         return self.__impl.registered

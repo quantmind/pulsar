@@ -1,3 +1,4 @@
+import signal
 from time import time
 
 import pulsar
@@ -56,10 +57,20 @@ def cause_timeout(actor):
 def cause_terminate(actor):
     if actor.next_periodic_task:
         actor.next_periodic_task.cancel()
-        # hayjack the stop method
+        # hijack the SIGTERM
+        actor.impl.kill = kill_hack(actor.impl.kill)
         actor.stop = lambda exc=None, exit_code=None: False
     else:
         actor._loop.call_soon(cause_timeout, actor)
+
+
+def kill_hack(kill):
+
+    def _(sig):
+        if sig == signal.SIGKILL:
+            kill(sig)
+
+    return _
 
 
 def close_mailbox(actor, close=False):

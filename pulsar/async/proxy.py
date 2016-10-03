@@ -187,8 +187,9 @@ class ActorProxyMonitor(ActorProxy):
         '''
         self.impl.kill(signal.SIGKILL)
 
-    def stop(self, exit_code=0):
-        self.impl.kill(exit_code)
+    def stop(self, sig=None):
+        sig = sig or signal.SIGTERM
+        self.impl.kill(sig)
 
     def join(self, timeout=None):
         '''Wait until the underlying actor terminates.

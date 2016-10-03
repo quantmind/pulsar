@@ -59,7 +59,6 @@ class Concurrency:
     '''
     monitors = None
     managed_actors = None
-    terminated_actors = None
     registered = None
     actor_class = Actor
 
@@ -133,9 +132,8 @@ class Concurrency:
                 asyncio.set_event_loop(loop)
             else:
                 raise
-        if self.cfg.debug:
-            loop.set_debug(True)
-        loop.logger = actor._logger
+        if not hasattr(loop, 'logger'):
+            loop.logger = actor._logger
         actor.mailbox = self.create_mailbox(actor, loop)
         return loop
 
@@ -156,9 +154,6 @@ class Concurrency:
             assert actor.state == ACTOR_STATES.STARTING
             if actor.cfg.debug:
                 actor.logger.debug('starting handshake')
-            a = get_actor()
-            if a is not actor and a is not actor.monitor:
-                set_actor(actor)
             actor.bind_event('start', self._switch_to_run)
             actor.bind_event('start', self.periodic_task)
             actor.bind_event('start', self._acknowledge_start)
@@ -284,7 +279,6 @@ class MonitorMixin:
 
     def create_actor(self):
         self.managed_actors = {}
-        self.terminated_actors = []
         actor = self.actor_class(self)
         actor.bind_event('on_info', self._info_monitor)
         return actor
@@ -365,7 +359,6 @@ class MonitorMixin:
                     monitor.logger.warning('kill %s - could not stop '
                                            'after %.2f seconds.', actor, dt)
                 actor.kill()
-                self.terminated_actors.append(actor)
                 self._remove_actor(monitor, actor)
                 return 0
             elif not started_stopping:
@@ -374,7 +367,7 @@ class MonitorMixin:
                                            actor, timeout)
                 else:
                     monitor.logger.info('Stopping %s.', actor)
-                actor.stop(monitor.exit_code)
+                actor.stop()
         return 1
 
     def spawn_actors(self, monitor):
@@ -508,12 +501,14 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return True
 
     def create_actor(self):
-        policy = EventLoopPolicy(self.cfg.event_loop, self.cfg.thread_workers)
+        cfg = self.cfg
+        policy = EventLoopPolicy(cfg.event_loop, cfg.thread_workers,
+                                 cfg.debug)
         asyncio.set_event_loop_policy(policy)
-        if self.cfg.daemon:     # pragma    nocover
+        if cfg.daemon:     # pragma    nocover
             # Daemonize the system
-            if not self.cfg.pid_file:
-                self.cfg.set('pid_file', 'pulsar.pid')
+            if not cfg.pid_file:
+                cfg.set('pid_file', 'pulsar.pid')
             system.daemonize(keep_fds=logger_fds())
         self.aid = self.name
         actor = super().create_actor()
@@ -758,6 +753,16 @@ class ActorCoroutine(Concurrency):
 
     def kill(self, sig):
         self._actor.exit_code = int(sig)
+
+    def is_alive(self):
+        actor = self._actor
+        return actor.exit_code is None and actor._loop.is_running()
+
+    def join(self, timeout=None):
+        pass
+
+    def run_actor(self, actor):
+        raise MonitorStarted
 
 
 concurrency_models = {'arbiter': ArbiterConcurrency,

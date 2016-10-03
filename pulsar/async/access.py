@@ -189,9 +189,10 @@ def cfg_value(setting, value=None):
 
 class EventLoopPolicy(__BasePolicy):
 
-    def __init__(self, name, workers):
+    def __init__(self, name, workers, debug):
         self.name = name
         self.workers = workers
+        self.debug = debug
 
     @property
     def process(self):
@@ -210,4 +211,6 @@ class EventLoopPolicy(__BasePolicy):
         if not hasattr(p, '_thread_pool'):
             p._thread_pool = ThreadPoolExecutor(self.workers)
         loop.set_default_executor(p._thread_pool)
+        if self.debug:
+            loop.set_debug(True)
         return loop

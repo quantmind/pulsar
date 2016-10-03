@@ -59,7 +59,7 @@ from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.string import gen_unique_id
 
-from .access import get_actor, isawaitable, create_future
+from .access import get_actor, isawaitable, create_future, ensure_future
 from .futures import task
 from .proxy import actor_identity, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
@@ -171,7 +171,7 @@ class MailboxProtocol(Protocol):
                 message = pickle.loads(msg.body)
             except Exception as e:
                 raise ProtocolError('Could not decode message body: %s' % e)
-            self._on_message(message)
+            ensure_future(self._on_message(message), loop=self._loop)
             msg = self._parser.decode()
 
     ########################################################################
@@ -192,7 +192,6 @@ class MailboxProtocol(Protocol):
             if actor.is_running():
                 actor.logger.warning('Connection lost with actor')
 
-    @task
     async def _on_message(self, message):
         actor = get_actor()
         command = message.get('command')

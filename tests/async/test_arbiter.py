@@ -88,7 +88,6 @@ class TestArbiterProcess(ActorTestMixin, unittest.TestCase):
         await wait_for_stop(self, proxy.aid, True)
         #
         self.assertTrue(proxy.stopping_start)
-        self.assertTrue(proxy in arbiter.terminated_actors)
 
     async def test_actor_timeout(self):
         """Test a bogus actor for timeout"""
