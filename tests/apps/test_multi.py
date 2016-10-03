@@ -33,7 +33,7 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(apps[0].version, '2.0')
         self.assertEqual(apps[1].version, pulsar.__version__)
 
-    def testConfig(self):
+    def test_config(self):
         app = self.create(bind=':9999', unz='whatz')
         self.assertTrue(app)
         self.assertEqual(len(app.cfg.params), 4)
@@ -59,7 +59,7 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(app2.cfg.timeout,
                          app2.cfg.settings['timeout'].default)
 
-    def testName(self):
+    def test_name(self):
         app = self.create()
         self.assertEqual(app.name, 'multiwsgi')
         app = self.create(name='bla')
@@ -68,23 +68,23 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(apps[0].name, 'bla')
         self.assertEqual(apps[1].name, 'rpc_bla')
 
-    @asyncio.coroutine
-    def testInstall(self):
+    async def test_start(self):
         arbiter = get_actor()
         app = self.create(name='pluto')
         self.assertTrue(app)
         self.assertFalse(arbiter.get_actor('pluto'))
         self.assertFalse(arbiter.get_actor('rpc_pluto'))
         # create the application
-        yield from app.start()
+        await app.start()
         monitor1 = arbiter.get_actor('pluto')
         self.assertTrue(monitor1)
         self.assertTrue(monitor1.is_monitor())
         monitor2 = arbiter.get_actor('rpc_pluto')
         self.assertTrue(monitor2)
         self.assertTrue(monitor2.is_monitor())
-        yield from monitor1.stop()
-        yield from monitor2.stop()
+        await asyncio.sleep(2)
+        await monitor1.stop()
+        await monitor2.stop()
 
     def test_config_copy(self):
         app = self.create()
