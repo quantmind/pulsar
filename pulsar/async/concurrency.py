@@ -5,7 +5,6 @@ import asyncio
 from time import time
 from collections import OrderedDict
 from multiprocessing import Process, current_process
-from concurrent.futures import ThreadPoolExecutor
 
 import pulsar
 from pulsar import system, MonitorStarted, HaltServer, Config
@@ -126,11 +125,16 @@ class Concurrency:
         '''Set up the event loop for ``actor``.
         '''
         actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
-        loop = asyncio.get_event_loop()
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            if self.cfg and self.cfg.concurrency == 'thread':
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            else:
+                raise
         if self.cfg.debug:
             loop.set_debug(True)
-        executor = ThreadPoolExecutor(self.cfg.thread_workers)
-        loop.set_default_executor(executor)
         loop.logger = actor._logger
         actor.mailbox = self.create_mailbox(actor, loop)
         return loop
@@ -504,7 +508,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return True
 
     def create_actor(self):
-        asyncio.set_event_loop_policy(EventLoopPolicy(self.cfg.event_loop))
+        policy = EventLoopPolicy(self.cfg.event_loop, self.cfg.thread_workers)
+        asyncio.set_event_loop_policy(policy)
         if self.cfg.daemon:     # pragma    nocover
             # Daemonize the system
             if not self.cfg.pid_file:

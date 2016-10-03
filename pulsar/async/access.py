@@ -2,6 +2,7 @@ import os
 import threading
 import logging
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from asyncio.events import BaseDefaultEventLoopPolicy as __BasePolicy
 
 from collections import OrderedDict
@@ -188,15 +189,25 @@ def cfg_value(setting, value=None):
 
 class EventLoopPolicy(__BasePolicy):
 
-    def __init__(self, name):
+    def __init__(self, name, workers):
         self.name = name
+        self.workers = workers
+
+    @property
+    def process(self):
+        return current_process()
 
     @property
     def _local(self):
-        p = current_process()
+        p = self.process
         if not hasattr(p, '_local'):
             p._local = self._Local()
         return p._local
 
     def _loop_factory(self):
-        return EVENT_LOOPS[self.name]()
+        loop = EVENT_LOOPS[self.name]()
+        p = self.process
+        if not hasattr(p, '_thread_pool'):
+            p._thread_pool = ThreadPoolExecutor(self.workers)
+        loop.set_default_executor(p._thread_pool)
+        return loop
