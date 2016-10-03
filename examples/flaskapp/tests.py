@@ -30,7 +30,7 @@ class TestFlaskThread(unittest.TestCase):
         if cls.app_cfg is not None:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    async def testResponse200(self):
+    async def test_response_200(self):
         c = self.client
         response = await c.get(self.uri)
         self.assertEqual(response.status_code, 200)
@@ -40,7 +40,7 @@ class TestFlaskThread(unittest.TestCase):
         self.assertTrue(headers)
         self.assertEqual(headers['server'], SERVER_SOFTWARE)
 
-    async def testResponse404(self):
+    async def test_response_404(self):
         c = self.client
         response = await c.get('%s/bh' % self.uri)
         self.assertEqual(response.status_code, 404)
