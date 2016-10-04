@@ -638,36 +638,33 @@ class TcpServer(Producer):
             sockets = self._params['sockets']
             del self._params
             create_server = self._loop.create_server
-            try:
-                if sockets:
-                    server = None
-                    for sock in sockets:
-                        srv = await create_server(self.create_protocol,
-                                                  sock=sock,
-                                                  backlog=backlog,
-                                                  ssl=sslcontext)
-                        if server:
-                            server.sockets.extend(srv.sockets)
-                        else:
-                            server = srv
-                else:
-                    if isinstance(address, tuple):
-                        server = await create_server(self.create_protocol,
-                                                     host=address[0],
-                                                     port=address[1],
-                                                     backlog=backlog,
-                                                     ssl=sslcontext)
+            if sockets:
+                server = None
+                for sock in sockets:
+                    srv = await create_server(self.create_protocol,
+                                              sock=sock,
+                                              backlog=backlog,
+                                              ssl=sslcontext)
+                    if server:
+                        server.sockets.extend(srv.sockets)
                     else:
-                        raise NotImplementedError
-                self._server = server
-                self._started = self._loop.time()
-                for sock in server.sockets:
-                    address = sock.getsockname()
-                    self.logger.info('%s serving on %s', self._name,
-                                     format_address(address))
-                self._loop.call_soon(self.fire_event, 'start')
-            except Exception as exc:
-                self.fire_event('start', exc=exc)
+                        server = srv
+            else:
+                if isinstance(address, tuple):
+                    server = await create_server(self.create_protocol,
+                                                 host=address[0],
+                                                 port=address[1],
+                                                 backlog=backlog,
+                                                 ssl=sslcontext)
+                else:
+                    raise NotImplementedError
+            self._server = server
+            self._started = self._loop.time()
+            for sock in server.sockets:
+                address = sock.getsockname()
+                self.logger.info('%s serving on %s', self._name,
+                                 format_address(address))
+            self._loop.call_soon(self.fire_event, 'start')
 
     async def close(self):
         """Stop serving the :attr:`.Server.sockets`.

@@ -76,8 +76,7 @@ class Event(AbstractEvent):
                 try:
                     hnd(arg, **kwargs)
                 except Exception:
-                    self.logger.exception('Exception while firing '
-                                          'event for %s', self)
+                    self.logger.exception('Exception while firing %s', self)
 
 
 class OneTime(Future, AbstractEvent):

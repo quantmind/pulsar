@@ -2,9 +2,11 @@ import os
 import sys
 import itertools
 import asyncio
+import pickle
 from time import time
 from collections import OrderedDict
-from multiprocessing import Process, current_process
+from multiprocessing import current_process
+from multiprocessing.reduction import ForkingPickler
 
 import pulsar
 from pulsar import system, MonitorStarted, HaltServer, Config
@@ -24,6 +26,9 @@ from .consts import (ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY,
 from .process import ProcessMixin, signal_from_exitcode
 
 __all__ = ['arbiter']
+
+
+SUBPROCESS = os.path.join(os.path.dirname(__file__), '_subprocess.py')
 
 
 def arbiter(**params):
@@ -664,8 +669,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             sys.exit(actor.exit_code)
 
     def _start_arbiter(self, actor, exc=None):
-        if current_process().daemon:
-            raise HaltServer('Cannot create the arbiter in a daemon process')
         if not os.environ.get('SERVER_SOFTWARE'):
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         pid_file = actor.cfg.pid_file
@@ -733,17 +736,46 @@ class ActorThread(Concurrency, Thread):
         run_actor(self)
 
 
-class ActorProcess(ProcessMixin, Concurrency, Process):
+class ActorProcess(ProcessMixin, Concurrency):
     '''Actor on a Operative system process.
 
     Created using the python multiprocessing module.
     '''
-    def run(self):  # pragma    nocover
-        # The coverage for this process has not yet started
-        run_actor(self)
+    process = None
+
+    def start(self):
+        loop = asyncio.get_event_loop()
+        return ensure_future(self._start(loop), loop=loop)
+
+    async def _start(self, loop):
+        import inspect
+
+        data = {
+            'path': sys.path.copy(),
+            'impl': bytes(ForkingPickler.dumps(self)),
+            'main': inspect.getfile(sys.modules['__main__']),
+            'authkey': bytes(current_process().authkey)
+        }
+
+        self.process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            SUBPROCESS,
+            stdin=asyncio.subprocess.PIPE,
+            loop=loop
+        )
+        await self.process.communicate(pickle.dumps(data))
+
+    def is_alive(self):
+        if self.process:
+            code = self.process.returncode
+            return code is None
+        return False
+
+    def join(self, timeout=None):
+        pass
 
     def kill(self, sig):
-        system.kill(self.pid, sig)
+        self.process.send_signal(sig)
 
 
 class ActorCoroutine(Concurrency):

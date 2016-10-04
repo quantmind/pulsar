@@ -254,12 +254,13 @@ class SocketServer(pulsar.Application):
         loop = monitor._loop
         for sock in sockets:
             addresses.append(sock.getsockname())
-            loop.remove_reader(sock.fileno())
+            fd = sock.fileno()
+            loop.remove_reader(fd)
         monitor.sockets = sockets
         self.cfg.addresses = addresses
 
     def actorparams(self, monitor, params):
-        params.update({'sockets': monitor.sockets})
+        params['sockets'] = monitor.sockets
 
     async def worker_start(self, worker, exc=None):
         '''Start the worker by invoking the :meth:`create_server` method.
