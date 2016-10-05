@@ -87,6 +87,6 @@ class Bench(Test):
         params = self.test_params
         params['benchmark'] = True
         params['verbosity'] = False
-        if not 'test_timeout' in params:
+        if 'test_timeout' not in params:
             params['test_timeout'] = 300
         return params
