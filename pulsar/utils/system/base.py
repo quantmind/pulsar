@@ -4,30 +4,19 @@ except ImportError:
     signal = None
 
 
-__all__ = ['ALL_SIGNALS',
-           'SIG_NAMES',
-           'SKIP_SIGNALS',
+__all__ = ['SIG_NAMES',
            'set_proctitle',
            'get_proctitle']
 
 
 SIG_NAMES = {}
-SKIP_SIGNALS = frozenset(('KILL', 'STOP', 'WINCH'))
 
-
-def all_signals():
-    if signal:
-        for sig in dir(signal):
-            if sig.startswith('SIG') and sig[3] != "_":
-                val = getattr(signal, sig)
-                if isinstance(val, int):
-                    name = sig[3:]
-                    if name not in SKIP_SIGNALS:
-                        SIG_NAMES[val] = name
-                        yield name
-
-
-ALL_SIGNALS = tuple(all_signals())
+if signal:
+    for sig in dir(signal):
+        if sig.startswith('SIG') and sig[3] != "_":
+            val = getattr(signal, sig)
+            if isinstance(val, int):
+                SIG_NAMES[val] = sig[3:]
 
 
 try:

@@ -38,11 +38,10 @@ class TestWebSocketThread(unittest.TestCase):
     concurrency = 'thread'
 
     @classmethod
-    @asyncio.coroutine
-    def setUpClass(cls):
+    async def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__,
                    concurrency=cls.concurrency, pyparser=cls.pyparser)
-        cls.app_cfg = yield from send('arbiter', 'run', s)
+        cls.app_cfg = await send('arbiter', 'run', s)
         addr = cls.app_cfg.addresses[0]
         cls.uri = 'http://{0}:{1}'.format(*addr)
         cls.ws_uri = 'ws://{0}:{1}/data'.format(*addr)
@@ -66,29 +65,27 @@ class TestWebSocketThread(unittest.TestCase):
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
         self.assertEqual(v, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
 
-    @asyncio.coroutine
-    def test_bad_requests(self):
+    async def test_bad_requests(self):
         c = self.http()
-        response = yield from c.post(self.ws_uri)
+        response = await c.post(self.ws_uri)
         self.assertEqual(response.status_code, 405)
         #
-        response = yield from c.get(self.ws_uri,
-                                    headers=[('Sec-Websocket-Key', 'x')])
+        response = await c.get(self.ws_uri,
+                               headers=[('Sec-Websocket-Key', 'x')])
         self.assertEqual(response.status_code, 400)
         #
-        response = yield from c.get(self.ws_uri,
-                                    headers=[('Sec-Websocket-Key', 'bla')])
+        response = await c.get(self.ws_uri,
+                               headers=[('Sec-Websocket-Key', 'bla')])
         self.assertEqual(response.status_code, 400)
         #
-        response = yield from c.get(self.ws_uri,
-                                    headers=[('Sec-Websocket-version', 'xxx')])
+        response = await c.get(self.ws_uri,
+                               headers=[('Sec-Websocket-version', 'xxx')])
         self.assertEqual(response.status_code, 400)
 
-    @asyncio.coroutine
-    def test_upgrade(self):
+    async def test_upgrade(self):
         c = self.http()
         handler = Echo(c._loop)
-        ws = yield from c.get(self.ws_echo, websocket_handler=handler)
+        ws = await c.get(self.ws_echo, websocket_handler=handler)
         response = ws.handshake
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
@@ -100,58 +97,53 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertFalse(ws.on_finished.done())
         # Send a message to the websocket
         ws.write('Hi there!')
-        message = yield from handler.get()
+        message = await handler.get()
         self.assertEqual(message, 'Hi there!')
 
-    @asyncio.coroutine
-    def test_ping(self):
+    async def test_ping(self):
         c = self.http()
         handler = Echo(c._loop)
-        ws = yield from c.get(self.ws_echo, websocket_handler=handler)
+        ws = await c.get(self.ws_echo, websocket_handler=handler)
         #
         # ASK THE SERVER TO SEND A PING FRAME
         ws.write('send ping TESTING PING')
-        message = yield from handler.get()
+        message = await handler.get()
         self.assertEqual(message, 'PING: TESTING PING')
 
-    @asyncio.coroutine
-    def test_pong(self):
+    async def test_pong(self):
         c = self.http()
         handler = Echo(c._loop)
-        ws = yield from c.get(self.ws_echo, websocket_handler=handler)
+        ws = await c.get(self.ws_echo, websocket_handler=handler)
         #
         ws.ping('TESTING CLIENT PING')
-        message = yield from handler.get()
+        message = await handler.get()
         self.assertEqual(message, 'PONG: TESTING CLIENT PING')
 
-    @asyncio.coroutine
-    def test_close(self):
+    async def test_close(self):
         c = self.http()
         handler = Echo(c._loop)
-        ws = yield from c.get(self.ws_echo, websocket_handler=handler)
+        ws = await c.get(self.ws_echo, websocket_handler=handler)
         self.assertEqual(ws.event('post_request').fired(), 0)
         ws.write('send close 1001')
-        message = yield from handler.get()
+        message = await handler.get()
         self.assertEqual(message, 'CLOSE')
         self.assertTrue(ws.close_reason)
         self.assertEqual(ws.close_reason[0], 1001)
         self.assertTrue(ws._connection.closed)
 
-    @asyncio.coroutine
-    def test_home(self):
+    async def test_home(self):
         c = self.http()
-        response = yield from c.get(self.uri)
+        response = await c.get(self.uri)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
 
-    @asyncio.coroutine
-    def test_graph(self):
+    async def test_graph(self):
         c = self.http()
         handler = Echo(c._loop)
-        ws = yield from c.get(self.ws_uri, websocket_handler=handler)
+        ws = await c.get(self.ws_uri, websocket_handler=handler)
         self.assertEqual(ws.event('post_request').fired(), 0)
-        message = yield from handler.get()
+        message = await handler.get()
         self.assertTrue(message)
 
 

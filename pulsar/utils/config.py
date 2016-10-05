@@ -1017,7 +1017,7 @@ class Workers(Setting):
 class Concurrency(Setting):
     name = "concurrency"
     section = "Worker Processes"
-    choices = ('process', 'thread')
+    choices = ('process', 'thread', 'coroutine')
     flags = ["--concurrency"]
     default = "process"
     desc = """The type of concurrency to use."""

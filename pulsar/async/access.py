@@ -2,6 +2,8 @@ import os
 import threading
 import logging
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from collections import OrderedDict
 from threading import current_thread
 
@@ -60,12 +62,13 @@ LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
 EVENT_LOOPS = OrderedDict()
 
+DefaultLoopClass = asyncio.get_event_loop_policy()._loop_factory
+
 
 def make_loop_factory(selector):
-    LoopClass = asyncio.get_event_loop_policy()._loop_factory
 
     def loop_factory():
-        return LoopClass(selector())
+        return DefaultLoopClass(selector())
 
     return loop_factory
 
@@ -181,3 +184,19 @@ def cfg_value(setting, value=None):
         if actor:
             return actor.cfg.get(setting)
     return value
+
+
+class EventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+
+    def __init__(self, name, workers, debug):
+        super().__init__()
+        self.name = name
+        self.workers = workers
+        self.debug = debug
+
+    def _loop_factory(self):
+        loop = EVENT_LOOPS[self.name]()
+        loop.set_default_executor(ThreadPoolExecutor(self.workers))
+        if self.debug:
+            loop.set_debug(True)
+        return loop

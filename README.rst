@@ -64,7 +64,7 @@ connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.
 
-Pulsar uses the asyncio_ and multiprocessing_ modules from the standard python
+Pulsar uses the asyncio_ module from the standard python
 library and it can be configured to run in multi-processing mode.
 
 Another example of pulsar framework is the asynchronous HttpClient_:

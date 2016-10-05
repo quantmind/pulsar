@@ -6,6 +6,11 @@ from pulsar.apps.test import dont_run_with_thread
 class TestRequest:
     session = requests.session()
 
+    async def setUp(self):
+        http = self.client()
+        response = await http.get(self.httpbin())
+        self.assertEqual(str(response), '<Response [200]>')
+
     @dont_run_with_thread
     def test_requests_get_200(self):
         http = self.session

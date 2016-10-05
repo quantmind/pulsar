@@ -10,6 +10,8 @@ from .base import *     # noqa
 __all__ = ['close_on_exec',
            'daemonize',
            'EXIT_SIGNALS',
+           'SIGNALS',
+           'kill',
            'get_uid',
            'get_gid',
            'get_maxfd',
@@ -25,6 +27,11 @@ SetHandleInformation.restype = ctypes.wintypes.BOOL
 MAXFD = 1024
 HANDLE_FLAG_INHERIT = 0x00000001
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGBREAK)
+SIGNALS = ()
+
+
+def kill(pid, sig):
+    os.kill(pid, sig)
 
 
 def set_owner_process(gid, uid):

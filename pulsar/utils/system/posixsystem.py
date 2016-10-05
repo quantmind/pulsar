@@ -13,6 +13,8 @@ from .base import *     # noqa
 __all__ = ['close_on_exec',
            'daemonize',
            'EXIT_SIGNALS',
+           'SIGNALS',
+           'kill',
            'get_uid',
            'get_gid',
            'get_maxfd',
@@ -28,6 +30,15 @@ EXIT_SIGNALS = (
 )
 # Default maximum for the number of available file descriptors.
 REDIRECT_TO = getattr(os, "devnull", "/dev/null")
+
+SIGNALS = tuple((
+    getattr(signal, "SIG%s" % x) for x in
+    "ABRT HUP QUIT INT TERM TTIN TTOU USR1 USR2 WINCH CHLD".split()
+))
+
+
+def kill(pid, sig):
+    os.kill(pid, sig)
 
 
 def get_parent_id():

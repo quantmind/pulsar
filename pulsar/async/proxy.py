@@ -1,6 +1,8 @@
 from pulsar import CommandNotFound
 from pulsar.utils.pep import default_timer
 
+import signal
+
 from .futures import create_future, chain_future
 from .consts import ACTOR_ACTION_TIMEOUT
 
@@ -180,10 +182,14 @@ class ActorProxyMonitor(ActorProxy):
         '''
         return self.impl.is_alive()
 
-    def terminate(self):
+    def kill(self):
         '''Terminate life of underlying actor.
         '''
-        self.impl.terminate()
+        self.impl.kill(signal.SIGKILL)
+
+    def stop(self, sig=None):
+        sig = sig or signal.SIGTERM
+        self.impl.kill(sig)
 
     def join(self, timeout=None):
         '''Wait until the underlying actor terminates.

@@ -29,7 +29,7 @@ class TestRpcOnThread(unittest.TestCase):
         if cls.app_cfg:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    def setUp(self):
+    def test_proxy(self):
         self.assertEqual(self.p.url, self.uri)
         self.assertTrue(str(self.p))
         proxy = self.p.bla
@@ -243,6 +243,10 @@ class TestRpcOnThread(unittest.TestCase):
 @dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):
     concurrency = 'process'
+
+    async def setUp(self):
+        response = await self.p.ping()
+        self.assertEqual(response, 'pong')
 
     # Synchronous client
     def test_sync_ping(self):
