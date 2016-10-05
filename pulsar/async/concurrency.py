@@ -761,7 +761,6 @@ class ActorProcess(ProcessMixin, Concurrency):
             sys.executable,
             SUBPROCESS,
             stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
             loop=loop
         )
         await self.process.communicate(pickle.dumps(data))

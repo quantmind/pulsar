@@ -3,14 +3,13 @@ import unittest
 
 from pulsar import send, SERVER_SOFTWARE
 from pulsar.apps.http import HttpClient
-from pulsar.apps.test import dont_run_with_thread
 
 from examples.flaskapp.manage import server
 
 
-class TestFlaskThread(unittest.TestCase):
+class TestFlaskApp(unittest.TestCase):
     app_cfg = None
-    concurrency = 'thread'
+    concurrency = 'process'
 
     @classmethod
     def name(cls):
@@ -45,8 +44,3 @@ class TestFlaskThread(unittest.TestCase):
         response = await c.get('%s/bh' % self.uri)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.content, b'404 Page')
-
-
-@dont_run_with_thread
-class TestFlaskProcess(TestFlaskThread):
-    concurrency = 'process'
