@@ -55,6 +55,10 @@ class TestEchoUdpServerProcess(TestEchoUdpServerThread):
     def sync_client(self):
         return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
 
+    async def setUp(self):
+        result = await self.client(b'ciao luca')
+        self.assertEqual(result, b'ciao luca')
+
     #    TEST SYNCHRONOUS CLIENT
     def test_sync_echo(self):
         echo = self.sync_client()
