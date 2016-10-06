@@ -194,6 +194,17 @@ class EventLoopPolicy(asyncio.DefaultEventLoopPolicy):
         self.workers = workers
         self.debug = debug
 
+    @property
+    def _local(self):
+        l = getattr(current_process(), '_event_loop_policy', None)
+        if l is None:
+            self._local = l = self._Local()
+        return l
+
+    @_local.setter
+    def _local(self, v):
+        current_process()._event_loop_policy = v
+
     def _loop_factory(self):
         loop = EVENT_LOOPS[self.name]()
         loop.set_default_executor(ThreadPoolExecutor(self.workers))

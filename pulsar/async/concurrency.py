@@ -5,7 +5,7 @@ import asyncio
 import pickle
 from time import time
 from collections import OrderedDict
-from multiprocessing import current_process
+from multiprocessing import Process, current_process
 from multiprocessing.reduction import ForkingPickler
 
 import pulsar
@@ -736,6 +736,18 @@ class ActorThread(Concurrency, Thread):
         run_actor(self)
 
 
+class ActorMultiProcess(ProcessMixin, Concurrency, Process):
+    '''Actor on a Operative system process.
+    Created using the python multiprocessing module.
+    '''
+    def run(self):  # pragma    nocover
+        # The coverage for this process has not yet started
+        run_actor(self)
+
+    def kill(self, sig):
+        system.kill(self.pid, sig)
+
+
 class ActorProcess(ProcessMixin, Concurrency):
     '''Actor on a Operative system process.
 
@@ -797,11 +809,14 @@ class ActorCoroutine(Concurrency):
         raise MonitorStarted
 
 
-concurrency_models = {'arbiter': ArbiterConcurrency,
-                      'monitor': MonitorConcurrency,
-                      'coroutine': ActorCoroutine,
-                      'thread': ActorThread,
-                      'process': ActorProcess}
+concurrency_models = {
+    'arbiter': ArbiterConcurrency,
+    'monitor': MonitorConcurrency,
+    'coroutine': ActorCoroutine,
+    'thread': ActorThread,
+    'process': ActorProcess,
+    'multi': ActorMultiProcess
+}
 
 
 def _spawn_actor(kind, monitor, cfg=None, name=None, aid=None, **kw):
