@@ -21,7 +21,7 @@ class TestTestLoader(unittest.TestCase):
         self.assertFalse('httpbin' in modules)
         self.assertTrue('echo' in modules)
         self.assertFalse('async' in modules)
-        self.assertTrue('async.actor' in modules)
+        self.assertTrue('async.actor_thread' in modules)
 
     async def test_sorted_tags(self):
         app = await get_application('test')
