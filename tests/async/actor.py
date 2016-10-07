@@ -3,7 +3,7 @@ from pulsar.apps.test import ActorTestMixin
 from pulsar import send, async_while
 
 from tests.async import (add, get_test, spawn_actor_from_actor, close_mailbox,
-                         wait_for_stop)
+                         wait_for_stop, check_environ)
 
 
 class ActorTest(ActorTestMixin):
@@ -25,7 +25,8 @@ class ActorTest(ActorTestMixin):
         info = await send(proxy, 'info')
         self.assertTrue('actor' in info)
         ainfo = info['actor']
-        self.assertEqual(ainfo['is_process'], self.concurrency == 'process')
+        self.assertEqual(ainfo['is_process'],
+                         self.concurrency in ('process', 'multi'))
 
     async def test_simple_spawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
@@ -102,3 +103,11 @@ class ActorTest(ActorTestMixin):
             name='actor-test-connection-lost-%s' % self.concurrency)
         await send(proxy, 'run', close_mailbox)
         await wait_for_stop(self, proxy.aid, True)
+
+    async def test_environment(self):
+        import os
+        os.environ['PULSAR_TEST_ENVIRON'] = 'yes'
+        name = 'environment-%s' % self.concurrency
+        proxy = await self.spawn_actor(name=name)
+        value = await send(proxy, 'run', check_environ, 'PULSAR_TEST_ENVIRON')
+        self.assertEqual(value, 'yes')

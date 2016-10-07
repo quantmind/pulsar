@@ -35,6 +35,11 @@ async def get_test(_):
     return app.cfg
 
 
+def check_environ(actor, name):
+    import os
+    return os.environ.get(name)
+
+
 async def spawn_actor_from_actor(actor, name):
     actor2 = await spawn(name=name)
     pong = await send(actor2, 'ping')

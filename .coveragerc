@@ -7,6 +7,7 @@ omit =
     pulsar/utils/system/winprocess.py
     pulsar/utils/autoreload.py
     pulsar/utils/version.py
+    pulsar/async/_subprocess.py
     pulsar/async/cov.py
     pulsar/apps/test/plugins/bench.py
     pulsar/apps/test/cov.py

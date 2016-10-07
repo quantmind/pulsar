@@ -1,3 +1,5 @@
+import os
+
 from multiprocessing import current_process
 
 try:
@@ -14,18 +16,22 @@ class Coverage:
         return getattr(current_process(), '_coverage', None)
 
     def start_coverage(self):
-        if self.is_arbiter() and self.cfg.coverage:
+        if self.cfg.coverage:
             if not coverage:
                 self.logger.error('Coverage module not installed. '
                                   'Cannot start coverage.')
                 return
-            cov = self.coverage
-            if not cov:
-                self.logger.warning('Start coverage')
-                p = current_process()
-                p._coverage = coverage.Coverage(data_suffix=True)
+            if self.is_arbiter():
+                cov = self.coverage
+                if not cov:
+                    self.logger.warning('Start coverage')
+                    p = current_process()
+                    p._coverage = coverage.Coverage(data_suffix=True)
+                    coverage.process_startup()
+                    p._coverage.start()
+                os.environ['COVERAGE_PROCESS_START'] = cov.config_file
+            elif self.cfg.concurrency == 'process':
                 coverage.process_startup()
-                p._coverage.start()
 
     def stop_coverage(self):
         cov = self.coverage
