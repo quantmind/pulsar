@@ -22,14 +22,14 @@ class Coverage:
                                   'Cannot start coverage.')
                 return
             if self.is_arbiter():
-                cov = self.coverage
-                if not cov:
+                if not self.coverage:
                     self.logger.warning('Start coverage')
                     p = current_process()
                     p._coverage = coverage.Coverage(data_suffix=True)
                     coverage.process_startup()
                     p._coverage.start()
-                os.environ['COVERAGE_PROCESS_START'] = cov.config_file
+                config_file = self.coverage.config_file
+                os.environ['COVERAGE_PROCESS_START'] = config_file
             elif self.cfg.concurrency == 'process':
                 coverage.process_startup()
 
