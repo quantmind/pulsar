@@ -25,7 +25,6 @@ Most of the material presented in the these tutorials is based on the
    calculator
    chat
    flaskgreen
-   tweets
    philosophers
    pulsards
    udp

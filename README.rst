@@ -124,6 +124,7 @@ It includes:
 * Websocket random graph.
 * Websocket chat room.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
+* `Twitter streaming <https://github.com/quantmind/pulsar-twitter>`_
 
 
 Design

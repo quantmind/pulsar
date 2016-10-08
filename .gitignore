@@ -18,11 +18,6 @@ MANIFEST
 .python-version
 release-notes.md
 extensions/lib/lib.c
-examples/tweets/settings.py
-
-# Javascript
-examples/node_modules
-examples/.grunt
 
 # IDE
 .DS_Store
