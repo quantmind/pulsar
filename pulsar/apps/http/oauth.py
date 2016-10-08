@@ -23,12 +23,11 @@ class OAuth1(auth.Auth):
 
     def __call__(self, response, exc=None):
         r = response.request
-        url, headers, data = self._client.sign(r.full_url, r.method, r.data,
-                                               r.headers)
+        url, headers, _ = self._client.sign(
+            r.url, r.method, r.body, r.headers)
         for key, value in mapping_iterator(headers):
             r.add_header(key, value)
-        r.full_url = url
-        r.data = data
+        r.url = url
 
 
 class OAuth2(auth.Auth):
@@ -42,12 +41,11 @@ class OAuth2(auth.Auth):
 
     def __call__(self, response, exc=None):
         r = response.request
-        url, headers, data = self.client.add_token(
-            r.full_url, http_method=r.method, body=r.data, headers=r.headers)
+        url, headers, _ = self.client.add_token(
+            r.url, http_method=r.method, body=r.body, headers=r.headers)
         for key, value in mapping_iterator(headers):
             r.add_header(key, value)
-        r.full_url = url
-        r.data = data
+        r.url = url
 
     def prepare_request_uri(self, url, state=None, **kwargs):
         """Prepare the request uri and return a tuple with url and state
