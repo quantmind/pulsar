@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 from asyncio import gather
 
 from pulsar import (send, new_event_loop, get_application,
@@ -158,12 +159,13 @@ class TestEchoServerProcess(TestEchoServerThread):
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
 
-    def test_sync_close(self):
+    async def test_sync_close(self):
         # TODO: fix this. Issue #96
         echo = self.sync_client()
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo.sessions, 1)
         self.assertEqual(echo(b'QUIT'), b'QUIT')
         self.assertEqual(echo.sessions, 1)
+        await asyncio.sleep(2)
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo.sessions, 2)
