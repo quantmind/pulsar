@@ -1,6 +1,6 @@
 import unittest
 
-from pulsar import send, new_event_loop, get_application
+from pulsar import send, new_event_loop, get_application, get_actor
 from pulsar.apps.test import dont_run_with_thread
 
 from examples.echoudp.manage import server, Echo, EchoUdpServerProtocol
@@ -49,6 +49,8 @@ class TestEchoUdpServerThread(unittest.TestCase):
 
 
 @dont_run_with_thread
+@unittest.skipIf(get_actor().cfg.event_loop == 'uv',
+                 "uvloop does not work for multiprocessing udp servers")
 class TestEchoUdpServerProcess(TestEchoUdpServerThread):
     concurrency = 'process'
 

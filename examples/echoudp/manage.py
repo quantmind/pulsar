@@ -14,7 +14,7 @@ Open a new shell, in this directory, launch python and type::
 
     >>> from manage import Echo
     >>> echo = Echo(('localhost',8060))
-    >>> echo(b'Hello!')
+    >>> echo(b'Hello!\n')
     b'Hello!'
 
 Writing the Client
@@ -73,32 +73,28 @@ class EchoUdpProtocol(DatagramProtocol):
     The only difference between client and server is the implementation
     of the :meth:`response` method.
     '''
-    separator = b'\r\n\r\n'
+    separator = b'\n'
     '''A separator for messages.'''
     buffer = None
     '''The buffer for long messages'''
 
-    def popbuffer(self, addr):
-        if self.buffer:
-            return self.buffer.pop(addr, None)
-
     def datagram_received(self, data, addr):
         '''Handle data from ``addr``.
         '''
+        if self.buffer and addr in self.buffer:
+            data = self.buffer.pop(addr) + data
+
         while data:
             idx = data.find(self.separator)
             if idx >= 0:    # we have a full message
                 idx += len(self.separator)
                 chunk, data = data[:idx], data[idx:]
-                buffer = self.popbuffer(addr)
-                self.response(buffer + chunk if buffer else chunk, addr)
+                self.response(chunk, addr)
             else:
                 if self.buffer is None:
                     self.buffer = {}
-                if addr in self.buffer:
-                    self.buffer[addr] += data
-                else:
-                    self.buffer[addr] = data
+                self.buffer[addr] = data
+                data = None
 
     def response(self, data, addr):
         '''Abstract response handler'''
