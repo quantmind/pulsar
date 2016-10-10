@@ -11,9 +11,10 @@ services:
 
 install:
   - pip install -r requirements-dev.txt
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then pip install uvloop; fi
 
 script:
-  - python setup.py test --coverage -q
+  - python setup.py test --coverage -q --log-level error
   - flake8
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test --coveralls; fi
   - python setup.py bench
