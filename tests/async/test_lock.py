@@ -29,7 +29,7 @@ class TestLock(unittest.TestCase):
         self.assertEqual(await lock1.acquire(), True)
         start = lock2._loop.time()
         self.assertEqual(await lock2.acquire(), False)
-        self.assertGreater(lock2._loop.time() - start, 1)
+        self.assertGreaterEqual(lock2._loop.time() - start, 1)
         self.assertFalse(lock2.locked())
         await lock1.release()
         self.assertFalse(lock1.locked())
