@@ -83,7 +83,7 @@ for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
 try:    # add uvloop if available
     import uvloop
     EVENT_LOOPS['uv'] = uvloop.Loop
-except ImportError:     # pragma    nocover
+except Exception:     # pragma    nocover
     pass
 
 
