@@ -4,9 +4,13 @@ import unittest
 from pulsar import send, SERVER_SOFTWARE
 from pulsar.apps.http import HttpClient
 
-from examples.flaskapp.manage import server
+try:
+    from examples.flaskapp.manage import server
+except ImportError:
+    server = None
 
 
+@unittest.skipUnless(server, "Requires flask module")
 class TestFlaskApp(unittest.TestCase):
     app_cfg = None
     concurrency = 'process'

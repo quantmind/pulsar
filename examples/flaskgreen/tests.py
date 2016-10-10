@@ -5,9 +5,13 @@ from pulsar import send, SERVER_SOFTWARE
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import dont_run_with_thread
 
-from examples.flaskgreen.manage import FlaskGreen, log_connection
+try:
+    from examples.flaskgreen.manage import FlaskGreen, log_connection
+except ImportError:
+    FlaskGreen = None
 
 
+@unittest.skipUnless(FlaskGreen, "Requires flask and greenlet module")
 class TestFlaskGreenThread(unittest.TestCase):
     app_cfg = None
     concurrency = 'thread'

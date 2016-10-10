@@ -3,8 +3,8 @@ language: python
 sudo: false
 
 python:
-  # - 3.5.2
-  - nightly
+  - 3.5.2
+  - 3.6-dev
 
 services:
   - redis-server

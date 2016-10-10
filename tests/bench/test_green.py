@@ -1,7 +1,16 @@
 import unittest
 
 from pulsar import send
-from pulsar.apps import greenio
+
+try:
+    from pulsar.apps import greenio
+    run_in_greenlet = greenio.run_in_greenlet
+except ImportError:
+    greenio = None
+
+    def run_in_greenlet(f):
+        return f
+
 
 from examples.echo.manage import server, Echo
 
@@ -19,6 +28,7 @@ class EchoGreen(Echo):
             return consumer if self.full_response else consumer.buffer
 
 
+@unittest.skipUnless(greenio, "Requires the greenlet module")
 class TestGreenIo(unittest.TestCase):
     __benchmark__ = True
     __number__ = 1000
@@ -36,7 +46,7 @@ class TestGreenIo(unittest.TestCase):
         result = await self.client(self.msg)
         self.assertEqual(result, self.msg)
 
-    @greenio.run_in_greenlet
+    @run_in_greenlet
     def test_green_io(self):
         result = self.green(self.msg)
         self.assertEqual(result, self.msg)

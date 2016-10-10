@@ -14,7 +14,7 @@ class ActorTest(ActorTestMixin):
         self.assertEqual(proxy.name, name)
         self.assertEqual(await send(proxy, 'ping'), 'pong')
         self.assertEqual(await send(proxy, 'echo', 'Hello!'), 'Hello!')
-        (n, result) = await send(proxy, 'run', add, 1, 3)
+        n, result = await send(proxy, 'run', add, 1, 3)
         self.assertEqual(n, name)
         self.assertEqual(result, 4)
 
