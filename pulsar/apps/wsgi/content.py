@@ -817,6 +817,9 @@ class Media(String):
         else:
             return path
 
+    def append(self, child, **kwargs):
+        return self.insert(None, child, **kwargs)
+
 
 class Links(Media):
     '''A :class:`.Media` container for ``link`` tags.
@@ -827,11 +830,11 @@ class Links(Media):
     '''
     mediatype = 'css'
 
-    def append(self, href=None, rel=None, type=None, media=None,
+    def insert(self, index, child, rel=None, type=None, media=None,
                condition=None, **kwargs):
         '''Append a link to this container.
 
-        :param href: a string indicating the location of the linked
+        :param child: a string indicating the location of the linked
             document
         :param rel: Specifies the relationship between the document
             and the linked document. If not given ``stylesheet`` is used.
@@ -842,11 +845,11 @@ class Links(Media):
             displayed. If not given or ``all``, the media is for all devices.
         :param kwargs: additional attributes
         '''
-        if href:
+        if child:
             srel = 'stylesheet'
             stype = 'text/css'
             minify = rel in (None, srel) and type in (None, stype)
-            path = self.absolute_path(href, minify=minify)
+            path = self.absolute_path(child, minify=minify)
             if path.endswith('.css'):
                 rel = rel or srel
                 type = type or stype
@@ -860,7 +863,10 @@ class Links(Media):
                              value, '<![endif]-->\n')
             value = value.render()
             if value not in self.children:
-                self.children.append(value)
+                if index is None:
+                    self.children.append(value)
+                else:
+                    self.children.insert(index, value)
 
 
 class Scripts(Media):
@@ -880,17 +886,20 @@ class Scripts(Media):
         path = self.absolute_path(src)
         return Html('script', src=path, type=type, **kwargs).render()
 
-    def append(self, src=None, **kwargs):
+    def insert(self, index, child, **kwargs):
         '''add a new script to the container.
 
-        :param src: a ``string`` representing an absolute path to the script
+        :param child: a ``string`` representing an absolute path to the script
             or relative path (does not start with ``http`` or ``/``), in which
             case the :attr:`Media.media_path` attribute is prepended.
         '''
-        if src:
-            script = self.script(src, **kwargs)
+        if child:
+            script = self.script(child, **kwargs)
             if script not in self.children:
-                self.children.append(script)
+                if index is None:
+                    self.children.append(script)
+                else:
+                    self.children.insert(index, script)
 
 
 class Embedded(Html):
