@@ -1,7 +1,7 @@
 '''Tests the "flaskapp" example.'''
 import unittest
 
-from pulsar import send, SERVER_SOFTWARE
+from pulsar import send, SERVER_SOFTWARE, get_actor
 from pulsar.apps.http import HttpClient
 
 try:
@@ -10,7 +10,8 @@ except ImportError:
     server = None
 
 
-@unittest.skipUnless(server, "Requires flask module")
+@unittest.skipUnless(server or get_actor().cfg.event_loop == 'uv',
+                     "Requires flask module - no uvloop test")
 class TestFlaskApp(unittest.TestCase):
     app_cfg = None
     concurrency = 'process'
