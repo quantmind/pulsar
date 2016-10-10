@@ -3,7 +3,7 @@ language: python
 sudo: false
 
 python:
-  - 3.5.2
+  # - 3.5.2
   - nightly
 
 services:

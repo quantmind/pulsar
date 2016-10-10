@@ -49,11 +49,19 @@ def requirements(name):
 
 
 def sh(command):
-    return subprocess.Popen(command,
+    proc = subprocess.Popen(command,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             shell=True,
-                            universal_newlines=True).communicate()[0]
+                            universal_newlines=True)
+    stdout, stderr = proc.communicate()
+    if proc.returncode:
+        if stdout:
+            sys.stdout.write(stdout)
+        if stderr:
+            sys.stderr.write(stderr)
+        exit(proc.returncode)
+    return stdout
 
 
 meta = dict(
