@@ -38,7 +38,7 @@ The :class:`EchoUdpProtocol` is needed for two reasons:
 Implementation
 ==================
 
-Echo Udp Protocol
+Echo UDP Protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: EchoUdpProtocol
@@ -131,7 +131,7 @@ class Echo(pulsar.AbstractUdpClient):
     '''A client for the echo server.
 
     :param address: set the :attr:`address` attribute
-    :param pool_size: used when initialising the connetion :attr:`pool`.
+    :param pool_size: used when initialising the connection :attr:`pool`.
     :param loop: Optional event loop to set the :attr:`_loop` attribute.
 
     .. attribute:: _loop

@@ -618,7 +618,7 @@ class MultiApp(Configurator):
         :param prefix: The prefix to use for the application,
             the prefix is appended to
             the application :ref:`config parameters <settings>` and to the
-            application name. Each call to this methjod must use a different
+            application name. Each call to this method must use a different
             value of for this parameter. It can be ``None``.
         :param callable: optional callable (function of object) used during
             initialisation of *App* (the :class:`Application.callable`).

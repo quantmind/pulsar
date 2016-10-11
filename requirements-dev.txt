@@ -10,3 +10,4 @@ oauthlib
 requests
 certifi
 recommonmark
+sphinxcontrib-spelling

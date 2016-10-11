@@ -333,7 +333,7 @@ class TestResult(Plugin):
         self.skipped.append((self.getDescription(test), reason))
 
     def addExpectedFailure(self, test, err):
-        """Called when an expected failure/error occured."""
+        """Called when an expected failure/error occurred."""
         self._add_error(test, err, self.expectedFailures)
 
     def addUnexpectedSuccess(self, test):

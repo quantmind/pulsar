@@ -660,7 +660,7 @@ class Html(String):
         return self
 
     def flatatt(self, **attr):
-        '''Return a string with atributes to add to the tag'''
+        '''Return a string with attributes to add to the tag'''
         cs = ''
         attr = self._attr
         classes = self._classes
@@ -772,7 +772,7 @@ class Media(String):
 
         Optional flag indicating if relative media files should be modified to
         end with ``.min.js`` or ``.min.css`` rather than ``.js`` or ``.css``
-        rispectively.
+        respectively.
 
         Default: ``False``
     '''
@@ -798,7 +798,7 @@ class Media(String):
     def absolute_path(self, path, minify=True):
         '''Return a suitable absolute url for ``path``.
 
-        If ``path`` :meth:`is_relative` build a sutable url by prepending
+        If ``path`` :meth:`is_relative` build a suitable url by prepending
         the :attr:`media_path` attribute.
 
         :return: A url path to insert in a HTML ``link`` or ``script``.

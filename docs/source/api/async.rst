@@ -3,7 +3,7 @@
 .. module:: pulsar.async.futures
 
 ==================
-Asynchonous API
+Asynchronous API
 ==================
 
 Pulsar asynchronous api is built on top of the new python :mod:`asyncio`
@@ -22,21 +22,6 @@ documentation purposes.
    :member-order: bysource
 
 .. autoclass:: Bench
-   :members:
-   :member-order: bysource
-
-
-.. module:: pulsar.async.lock
-
-Lock
-==========
-
-.. autoclass:: LockBase
-   :members:
-   :member-order: bysource
-
-
-.. autoclass:: Lock
    :members:
    :member-order: bysource
 
@@ -81,3 +66,18 @@ Async While
 Run in loop
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: run_in_loop
+
+
+.. module:: pulsar.async.lock
+
+Lock
+==========
+
+.. autoclass:: LockBase
+   :members:
+   :member-order: bysource
+
+
+.. autoclass:: Lock
+   :members:
+   :member-order: bysource

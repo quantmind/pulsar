@@ -117,7 +117,7 @@ def coveralls(http=None, url=None,
         info = response.json()
         code = 0
         if 'error' in info:
-            stream.write('An error occured while sending coverage'
+            stream.write('An error occurred while sending coverage'
                          ' report to coverall.io')
             code = 1
         stream.write('\n%s\n' % info['message'])

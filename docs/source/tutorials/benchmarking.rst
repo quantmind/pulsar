@@ -7,7 +7,7 @@ Benchmarking
 Test Concurrency
 ======================
 
-The simpliest way to benchmark pulsar is to use the :ref:`HttpBin <tutorials-httpbin>`
+The simplest way to benchmark pulsar is to use the :ref:`HttpBin <tutorials-httpbin>`
 example application. It is a web server responding to several urls::
 
     python manage.py -b :9060
@@ -87,7 +87,7 @@ Benchmarking the pulsar store application versus redis is useful for
 measuring the speed of the python event loop and parsing with respect
 a superfast C implementation like redis.
 
-First lunch the pulsar ds example::
+First lunch the pulsar ``ds`` example::
 
     python manage.py
 

@@ -52,7 +52,7 @@ class OAuth2(auth.Auth):
 
         :param url: base url for OAuth2 requests
         :param state: optional state, if not supplied one is generated
-        :param kwargs: additinal paparameters
+        :param kwargs: additional parameters
         :return: a tuple with url and state
         """
         state = state or generate_token()

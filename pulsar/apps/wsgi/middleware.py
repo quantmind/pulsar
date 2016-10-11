@@ -10,8 +10,8 @@ way (for example django wsgi handler).
 
 .. important::
 
-    An asynchronous WSGI middleware is a callble accepting a WSGI
-    ``environ`` and ``start_response`` as the only input paramaters and
+    An asynchronous WSGI middleware is a callable accepting a WSGI
+    ``environ`` and ``start_response`` as the only input parameters and
     it must returns an :ref:`asynchronous iterator <wsgi-async-iter>`
     or nothing.
 

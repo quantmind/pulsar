@@ -88,7 +88,7 @@ except Exception:     # pragma    nocover
 
 
 if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':     # pragma nocover
-    default_selector = (
+    default_loop = (
         'uvloop if available, epoll on linux, '
         'kqueue on mac, select on windows'
     )

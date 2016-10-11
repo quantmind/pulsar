@@ -43,7 +43,7 @@ The :class:`Router` introduces a new element into pulsar WSGI handlers, the
 :ref:`wsgi request <app-wsgi-request>`, a light-weight wrapper of the
 WSGI environ.
 
-For an exaustive example on how to use the :class:`Router` middleware make sure
+For an exhaustive example on how to use the :class:`Router` middleware make sure
 you check out the :ref:`HttpBin example <tutorials-httpbin>`.
 
 .. autoclass:: Router
@@ -68,7 +68,7 @@ File Response
 =====================
 
 High level, battery included function for serving small and large files
-concurrently. Cavet, you app does not need to be asynchronous to use this
+concurrently. Caveat, you app does not need to be asynchronous to use this
 method.
 
 .. autofunction:: file_response
@@ -665,7 +665,7 @@ def file_response(request, filepath, block=None, status_code=None,
 
     :param request: Wsgi request
     :param filepath: full path of file to serve
-    :param block: Optional block size (deafult 1MB)
+    :param block: Optional block size (default 1MB)
     :param status_code: Optional status code (default 200)
     :return: a :class:`~.WsgiResponse` object
     """

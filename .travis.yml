@@ -10,6 +10,7 @@ services:
   - redis-server
 
 install:
+  - apt-get install enchant
   - pip install -r requirements-dev.txt
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then pip install uvloop; fi
 
@@ -17,6 +18,7 @@ script:
   - python setup.py test --coverage -q
   - flake8
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test --coveralls; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then cd docs && make spelling; fi
   # - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test -q --io uv; fi
   - python setup.py bench
 

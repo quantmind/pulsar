@@ -322,7 +322,7 @@ class Actor(EventHandler, Coverage):
     def actorparams(self):
         '''Returns a dictionary of parameters for spawning actors.
 
-        The disctionary is passed to the spawn method when creating new
+        The dictionary is passed to the spawn method when creating new
         actors. Fire the :ref:`on_params actor hook <actor-hooks>`.
         '''
         data = {}

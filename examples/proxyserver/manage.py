@@ -26,7 +26,7 @@ To run with different headers middleware create a new script and do::
     if __name__ == '__main__':
         server(headers_middleware=[...]).start()
 
-Implemenation
+Implementation
 ===========================
 
 .. autoclass:: ProxyServerWsgiHandler

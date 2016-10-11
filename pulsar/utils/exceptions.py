@@ -48,7 +48,7 @@ class MonitorStarted(PulsarException):
 
 class ImproperlyConfigured(PulsarException):
     '''A :class:`PulsarException` raised when an inconsistent configuration
-    has occured.
+    has occurred.
 
     .. attribute:: exit_code
 

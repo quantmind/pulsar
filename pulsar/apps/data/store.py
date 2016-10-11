@@ -1,5 +1,5 @@
 '''
-Tha main component for pulsar datastore clients is the :class:`.Store`
+The main component for pulsar datastore clients is the :class:`.Store`
 class which encapsulates the essential API for communicating and executing
 asynchronous commands on remote servers.
 '''
@@ -441,7 +441,7 @@ def create_store(url, **kw):
 
     :param kw: additional key-valued parameters to pass to the :class:`.Store`
         initialisation method. It can contains parameters such as
-        ``database``, ``user`` and ``password`` to overridexo the
+        ``database``, ``user`` and ``password`` to override the
         ``url`` values. Additional parameters are processed by the
         :meth:`.Store._init` method.
     :return: a :class:`Store`.

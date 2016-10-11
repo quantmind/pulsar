@@ -2,6 +2,7 @@
 #
 import sys
 import os
+
 os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
 p = lambda x : os.path.split(x)[0]
 source_dir = p(os.path.abspath(__file__))
@@ -53,14 +54,17 @@ extensions = ['sphinx.ext.autodoc',
               'pulsarext',
               'redisext']
 
-# Beta version is published in github pages
-if pulsar.VERSION[3] == 'beta':
-    extensions.append('sphinxtogithub')
-    analytics_id = 'UA-3900561-8'
-else:
-    analytics_id = 'UA-3900561-7'
+try:
+    import sphinxcontrib.spelling  # noqa
+    extensions.append('sphinxcontrib.spelling')
+except ImportError:
+    pass
 
-html_theme_options['analytics_id'] = analytics_id
+# Beta version is published in github pages
+if pulsar.VERSION[3] != 'alpha':
+    extensions.append('sphinxtogithub')
+
+html_theme_options['analytics_id'] = 'UA-3900561-7'
 html_context = {'release_version': pulsar.VERSION[3] == 'final'}
 
 # The encoding of source files.

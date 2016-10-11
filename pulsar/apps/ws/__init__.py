@@ -5,7 +5,7 @@ and server. Pulsar implementation uses the WSGI middleware
 :class:`.WebSocket` for the handshake_ and a class derived from
 :class:`.WS` handler for the communication part.
 
-This is a Web Socket handler which echos all received messages
+This is a Web Socket handler which echoes all received messages
 back to the client::
 
     from pulsar.apps import wsgi, ws

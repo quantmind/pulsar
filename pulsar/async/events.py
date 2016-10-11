@@ -230,9 +230,6 @@ class EventHandler(AsyncObject):
 
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.
-
-        The events callbacks can be specified as a single callable or as
-        list/tuple of callabacks or (callback, erroback) tuples.
         '''
         for name in self._events:
             if name in events:

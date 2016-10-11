@@ -1,4 +1,4 @@
-'''This is a substantial module which imporfts several classes and functions
+'''This is a substantial module which imports several classes and functions
 from the standard library in a python 2.6 to python 3.3 compatible fashion.
 On top of that, it implements the :class:`HttpClient` for handling synchronous
 and asynchronous HTTP requests in a pythonic way.
@@ -525,7 +525,7 @@ class Headers:
     def update(self, iterable):
         """Extend the headers with an ``iterable``.
 
-        :param iterable: a dictionary or an iterable over keys, vaues tuples.
+        :param iterable: a dictionary or an iterable over keys, values tuples.
         """
         for key, value in mapping_iterator(iterable):
             self.add_header(key, value)
@@ -533,7 +533,7 @@ class Headers:
     def override(self, iterable):
         '''Extend headers by overriding fields form iterable.
 
-        :param iterable: a dictionary or an iterable over keys, vaues tuples.
+        :param iterable: a dictionary or an iterable over keys, values tuples.
         '''
         seen = set()
         for key, value in mapping_iterator(iterable):
@@ -608,7 +608,7 @@ class Headers:
         return self._headers.get(header_field(key), default)
 
     def has(self, field, value):
-        '''Check if ``value`` is avialble in header ``field``.'''
+        '''Check if ``value`` is available in header ``field``.'''
         value = value.lower()
         for c in self.get_all(field, ()):
             if c.lower() == value:

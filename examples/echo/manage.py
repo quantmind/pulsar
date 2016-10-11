@@ -147,7 +147,7 @@ class Echo(AbstractClient):
 
     :param address: set the :attr:`address` attribute
     :param full_response: set the :attr:`full_response` attribute
-    :param pool_size: used when initialising the connetion :attr:`pool`.
+    :param pool_size: used when initialising the connection :attr:`pool`.
     :param loop: Optional event loop to set the :attr:`_loop` attribute.
 
     .. attribute:: _loop

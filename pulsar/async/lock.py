@@ -35,7 +35,7 @@ class LockBase(ABC):
 
     @abstractmethod
     def locked(self):   # pragma    nocover
-        """Return True if the lock is aquired
+        """Return True if the lock is acquired
         """
         raise
 

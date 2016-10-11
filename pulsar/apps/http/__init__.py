@@ -678,7 +678,7 @@ class HttpResponse(ProtocolConsumer):
         return self.content
 
     def raise_for_status(self):
-        """Raises stored :class:`HTTPError` or :class:`URLError`, if occured.
+        """Raises stored :class:`HTTPError` or :class:`URLError`, if occurred.
         """
         if self.is_error:
             if self.status_code:
@@ -750,8 +750,8 @@ class HttpClient(AbstractClient):
 
     .. attribute:: store_cookies
 
-        If ``True`` it remebers response cookies and send them back to
-        serves.
+        If ``True`` it remembers response cookies and sends them back to
+        servers.
 
         Default: ``True``
 

@@ -9,7 +9,7 @@ The :class:`WsgiRequest` is a thin wrapper around a WSGI ``environ``
 dictionary.
 It contains only the ``environ`` as its private data.
 The :class:`WsgiResponse`, which is available in the
-:class:`WsgiRequest.response` attribute, is an iterable over bytestring with
+:class:`WsgiRequest.response` attribute, is an iterable over bytes with
 several utility methods for manipulating headers and asynchronous content.
 
 

@@ -26,7 +26,7 @@ To use the plugin follow these three steps:
 * Run the test suite with the ``--benchmark`` command line option.
 
 The test class can implement additional methods to fine-tune how the
-benchmark plugin evaluate the perfomance and display results:
+benchmark plugin evaluate the performance and display results:
 
 * When implemented, the ``startUp`` method is invoked before each run
   of a test function.

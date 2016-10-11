@@ -82,7 +82,7 @@ class Root(rpc.PulsarServerCommands):
     '''
     def rpc_dodgy_method(self, request):
         '''This method will fails because the return object is not
-        json serializable.'''
+        json serialisable.'''
         return Calculator
 
     rpc_check_request = RequestCheck()

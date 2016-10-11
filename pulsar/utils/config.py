@@ -779,7 +779,7 @@ class ConfigFile(Global):
     default = 'config.py'
     desc = """\
         The path to a Pulsar config file, where default Settings
-        paramaters can be specified.
+        parameters can be specified.
         """
 
 
@@ -990,7 +990,7 @@ class ExecutionId(Global):
 #    Worker Processes
 section_docs['Worker Processes'] = """
 This group of configuration parameters control the number of actors
-for a given :class:`.Monitor`, the type of concurreny of the server and
+for a given :class:`.Monitor`, the type of concurrency of the server and
 other actor-specific parameters.
 
 They are available to all applications and, unlike global settings,
@@ -1114,7 +1114,7 @@ class WhenExit(Setting):
     type = "callable"
     default = staticmethod(pass_through)
     desc = """\
-        Called just before an actor is garbadge collected.
+        Called just before an actor is garbage collected.
 
         This is a chance to check the actor status if needed.
         """

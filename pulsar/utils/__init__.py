@@ -46,7 +46,7 @@ System info
 
 .. module:: pulsar.utils.tools
 
-checkarity
+Check arity
 ~~~~~~~~~~~~~~~~~
 
 .. autofunction:: checkarity
