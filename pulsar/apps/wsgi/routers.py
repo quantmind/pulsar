@@ -141,7 +141,7 @@ class RouterParam:
 
     .. attribute:: value
 
-        The value associated with this :class:`RouterParam`. THis is the value
+        The value associated with this :class:`RouterParam`. This is the value
         stored in the :class:`Router.parameters` dictionary at key given by
         the class attribute specified in the class definition.
     '''

@@ -182,7 +182,8 @@ In addition, the following options are
 .. _apps-test-sequential:
 
 sequential
-~~~~~~~~~~~~~~~~~~~
+---------------
+
 By default, test functions within a :class:`~unittest.TestCase`
 are run in asynchronous fashion. This means that several test functions
 may be executed at once depending on their return values.
@@ -215,7 +216,8 @@ option should be used::
     python runtests.py --sequential
 
 list labels
-~~~~~~~~~~~~~~~~~~~
+---------------
+
 By passing the ``-l`` or :ref:`--list-labels <setting-list_labels>` flag
 to the command line, the full list of test labels available is displayed::
 
@@ -223,7 +225,8 @@ to the command line, the full list of test labels available is displayed::
 
 
 test timeout
-~~~~~~~~~~~~~~~~~~~
+---------------
+
 When running asynchronous tests, it can be useful to set a cap on how
 long a test function can wait for results. This is what the
 :ref:`--test-timeout <setting-test_timeout>` command line flag does::
@@ -249,7 +252,7 @@ Pulsar ships with two battery-included plugins:
 .. _bench-plugin:
 
 Benchmark
-~~~~~~~~~~~~~
+---------------
 
 .. automodule:: pulsar.apps.test.plugins.bench
 
@@ -257,7 +260,7 @@ Benchmark
 .. _profile-plugin:
 
 Profile
-~~~~~~~~~~~~~
+---------------
 
 .. automodule:: pulsar.apps.test.plugins.profile
 
@@ -266,7 +269,7 @@ API
 =========
 
 Test Suite
-~~~~~~~~~~~~~~~~~~~~~~~
+---------------
 
 .. autoclass:: pulsar.apps.test.TestSuite
    :members:
@@ -274,13 +277,13 @@ Test Suite
 
 
 Test Loader
-~~~~~~~~~~~~~~~~~~~~~~~
+---------------
 
 .. automodule:: pulsar.apps.test.loader
 
 
 Plugin
-~~~~~~~~~~~~~~~~~~~
+---------------
 
 .. autoclass:: pulsar.apps.test.result.Plugin
    :members:
@@ -288,7 +291,7 @@ Plugin
 
 
 Test Runner
-~~~~~~~~~~~~~~~~~~~
+---------------
 
 .. autoclass:: pulsar.apps.test.result.TestRunner
    :members:
@@ -296,7 +299,7 @@ Test Runner
 
 
 Test Result
-~~~~~~~~~~~~~~~~~~~
+---------------
 
 .. autoclass:: pulsar.apps.test.result.TestResult
    :members:
@@ -304,14 +307,14 @@ Test Result
 
 
 Test Plugin
-~~~~~~~~~~~~~~~~~~~
+---------------
 
 .. autoclass:: pulsar.apps.test.plugins.base.TestPlugin
    :members:
    :member-order: bysource
 
 Populate
-~~~~~~~~~~~~~
+---------------
 
 A useful function for populating random data::
 

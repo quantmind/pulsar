@@ -56,6 +56,7 @@ getgrnam
 getpwnam
 github
 Github
+GZip
 google
 greenio
 greenlet
@@ -86,6 +87,8 @@ jquery
 jQuery
 json
 JSON
+html
+Html
 http
 Httpbin
 linting
@@ -111,6 +114,7 @@ Nginx
 OAuth
 odm
 opensource
+org
 outbox
 params
 picklable
@@ -138,6 +142,7 @@ pypi
 pypy
 Pyreadline
 pythonic
+pythonhosted
 pwd
 readme
 redis
@@ -154,6 +159,7 @@ serialisable
 serialisation
 serialise
 serialised
+Setuptools
 skiplist
 Skiplist
 slugify
@@ -194,6 +200,7 @@ Versioning
 Webmail
 websocket
 Websocket
+Werkzeug
 windowsservice
 wilddom
 workflow
