@@ -1,7 +1,5 @@
 language: python
 
-sudo: false
-
 python:
   - 3.5.2
   # - 3.6-dev
@@ -10,7 +8,7 @@ services:
   - redis-server
 
 install:
-  - apt-get install enchant
+  - sudo apt-get install enchant
   - pip install -r requirements-dev.txt
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then pip install uvloop; fi
 
