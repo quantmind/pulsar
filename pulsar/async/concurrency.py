@@ -750,8 +750,6 @@ class ActorMultiProcess(ProcessMixin, Concurrency, Process):
 
 class ActorProcess(ProcessMixin, Concurrency):
     '''Actor on a Operative system process.
-
-    Created using the python multiprocessing module.
     '''
     process = None
 

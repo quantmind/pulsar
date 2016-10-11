@@ -17,7 +17,7 @@ class RedisStoreConnection(Connection):
 
     async def execute(self, *args, **options):
         consumer = self.current_consumer()
-        consumer.start((args, options))
+        await consumer.start((args, options))
         result = await consumer.on_finished
         if isinstance(result, ResponseError):
             raise result.exception
