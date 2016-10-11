@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.config &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>pulsar.utils.config &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -600,6 +600,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nargs</span> <span class="o">=</span> <span class="n">nargs</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">nargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">short</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">short</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">desc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">desc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">desc</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">short</span>
+        <span class="k">if</span> <span class="n">validator</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">validator</span> <span class="o">=</span> <span class="n">validator</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">:</span>
@@ -821,7 +823,7 @@
     <span class="n">default</span> <span class="o">=</span> <span class="s1">&#39;config.py&#39;</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s2">        The path to a Pulsar config file, where default Settings</span>
-<span class="s2">        paramaters can be specified.</span>
+<span class="s2">        parameters can be specified.</span>
 <span class="s2">        &quot;&quot;&quot;</span>
 
 
@@ -1032,7 +1034,7 @@
 <span class="c1">#    Worker Processes</span>
 <span class="n">section_docs</span><span class="p">[</span><span class="s1">&#39;Worker Processes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">This group of configuration parameters control the number of actors</span>
-<span class="s2">for a given :class:`.Monitor`, the type of concurreny of the server and</span>
+<span class="s2">for a given :class:`.Monitor`, the type of concurrency of the server and</span>
 <span class="s2">other actor-specific parameters.</span>
 
 <span class="s2">They are available to all applications and, unlike global settings,</span>
@@ -1059,7 +1061,7 @@
 <span class="k">class</span> <span class="nc">Concurrency</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;concurrency&quot;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s2">&quot;Worker Processes&quot;</span>
-    <span class="n">choices</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;process&#39;</span><span class="p">,</span> <span class="s1">&#39;thread&#39;</span><span class="p">)</span>
+    <span class="n">choices</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;process&#39;</span><span class="p">,</span> <span class="s1">&#39;thread&#39;</span><span class="p">,</span> <span class="s1">&#39;coroutine&#39;</span><span class="p">,</span> <span class="s1">&#39;multi&#39;</span><span class="p">)</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--concurrency&quot;</span><span class="p">]</span>
     <span class="n">default</span> <span class="o">=</span> <span class="s2">&quot;process&quot;</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;The type of concurrency to use.&quot;&quot;&quot;</span>
@@ -1156,7 +1158,7 @@
     <span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;callable&quot;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">pass_through</span><span class="p">)</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        Called just before an actor is garbadge collected.</span>
+<span class="s2">        Called just before an actor is garbage collected.</span>
 
 <span class="s2">        This is a chance to check the actor status if needed.</span>
 <span class="s2">        &quot;&quot;&quot;</span>
@@ -1268,8 +1270,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -1304,7 +1304,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.content &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>pulsar.apps.wsgi.content &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
   
@@ -704,7 +704,7 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="Html.flatatt"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.flatatt">[docs]</a>    <span class="k">def</span> <span class="nf">flatatt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">attr</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Return a string with atributes to add to the tag&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Return a string with attributes to add to the tag&#39;&#39;&#39;</span>
         <span class="n">cs</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr</span>
         <span class="n">classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span>
@@ -816,7 +816,7 @@
 
 <span class="sd">        Optional flag indicating if relative media files should be modified to</span>
 <span class="sd">        end with ``.min.js`` or ``.min.css`` rather than ``.js`` or ``.css``</span>
-<span class="sd">        rispectively.</span>
+<span class="sd">        respectively.</span>
 
 <span class="sd">        Default: ``False``</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -842,7 +842,7 @@
 <div class="viewcode-block" id="Media.absolute_path"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.absolute_path">[docs]</a>    <span class="k">def</span> <span class="nf">absolute_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">minify</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a suitable absolute url for ``path``.</span>
 
-<span class="sd">        If ``path`` :meth:`is_relative` build a sutable url by prepending</span>
+<span class="sd">        If ``path`` :meth:`is_relative` build a suitable url by prepending</span>
 <span class="sd">        the :attr:`media_path` attribute.</span>
 
 <span class="sd">        :return: A url path to insert in a HTML ``link`` or ``script``.</span>
@@ -859,7 +859,10 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">asset_protocol</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;//&#39;</span><span class="p">):</span>
             <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">asset_protocol</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">path</span></div></div>
+            <span class="k">return</span> <span class="n">path</span></div>
+
+    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Links"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Links">[docs]</a><span class="k">class</span> <span class="nc">Links</span><span class="p">(</span><span class="n">Media</span><span class="p">):</span>
@@ -871,11 +874,11 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">mediatype</span> <span class="o">=</span> <span class="s1">&#39;css&#39;</span>
 
-<div class="viewcode-block" id="Links.append"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Links.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">media</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+<div class="viewcode-block" id="Links.insert"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Links.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">media</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                <span class="n">condition</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Append a link to this container.</span>
 
-<span class="sd">        :param href: a string indicating the location of the linked</span>
+<span class="sd">        :param child: a string indicating the location of the linked</span>
 <span class="sd">            document</span>
 <span class="sd">        :param rel: Specifies the relationship between the document</span>
 <span class="sd">            and the linked document. If not given ``stylesheet`` is used.</span>
@@ -886,11 +889,11 @@
 <span class="sd">            displayed. If not given or ``all``, the media is for all devices.</span>
 <span class="sd">        :param kwargs: additional attributes</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">href</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">child</span><span class="p">:</span>
             <span class="n">srel</span> <span class="o">=</span> <span class="s1">&#39;stylesheet&#39;</span>
             <span class="n">stype</span> <span class="o">=</span> <span class="s1">&#39;text/css&#39;</span>
             <span class="n">minify</span> <span class="o">=</span> <span class="n">rel</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">srel</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">stype</span><span class="p">)</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">href</span><span class="p">,</span> <span class="n">minify</span><span class="o">=</span><span class="n">minify</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">minify</span><span class="o">=</span><span class="n">minify</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.css&#39;</span><span class="p">):</span>
                 <span class="n">rel</span> <span class="o">=</span> <span class="n">rel</span> <span class="ow">or</span> <span class="n">srel</span>
                 <span class="nb">type</span> <span class="o">=</span> <span class="nb">type</span> <span class="ow">or</span> <span class="n">stype</span>
@@ -904,9 +907,10 @@
                              <span class="n">value</span><span class="p">,</span> <span class="s1">&#39;&lt;![endif]--&gt;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div></div>
-
-<span class="n">requires</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;require&#39;</span><span class="p">,</span> <span class="s1">&#39;requirejs&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="Scripts"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Scripts">[docs]</a><span class="k">class</span> <span class="nc">Scripts</span><span class="p">(</span><span class="n">Media</span><span class="p">):</span>
@@ -918,7 +922,6 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;wait&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">require</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">paths</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -927,33 +930,20 @@
         <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Html</span><span class="p">(</span><span class="s1">&#39;script&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
 
-<div class="viewcode-block" id="Scripts.append"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Scripts.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Scripts.insert"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Scripts.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;add a new script to the container.</span>
 
-<span class="sd">        :param src: a ``string`` representing an absolute path to the script</span>
+<span class="sd">        :param child: a ``string`` representing an absolute path to the script</span>
 <span class="sd">            or relative path (does not start with ``http`` or ``/``), in which</span>
 <span class="sd">            case the :attr:`Media.media_path` attribute is prepended.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">src</span><span class="p">:</span>
-            <span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">script</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">child</span><span class="p">:</span>
+            <span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">script</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">script</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">script</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Scripts.require_script"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Scripts.require_script">[docs]</a>    <span class="k">def</span> <span class="nf">require_script</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Can be used for requirejs&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">require</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">requires</span><span class="p">],</span>
-                <span class="s1">&#39;paths&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">,</span>
-                <span class="s1">&#39;baseUrl&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">media_path</span><span class="p">,</span>
-                <span class="s1">&#39;minify&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">minified</span><span class="p">,</span>
-                <span class="s1">&#39;waitSeconds&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait</span><span class="p">}</span></div>
-
-    <span class="k">def</span> <span class="nf">do_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">require</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="p">(</span><span class="s1">&#39;&lt;script type=&quot;text/javascript&quot;&gt;</span><span class="se">\n</span><span class="s1">&#39;</span>
-                   <span class="s1">&#39;var require = </span><span class="si">%s</span><span class="s1">;</span><span class="se">\n</span><span class="s1">&#39;</span>
-                   <span class="s1">&#39;&lt;/script&gt;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">require_script</span><span class="p">())</span>
-        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">child</span></div>
+                <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">script</span><span class="p">)</span></div></div>
 
 
 <span class="k">class</span> <span class="nc">Embedded</span><span class="p">(</span><span class="n">Html</span><span class="p">):</span>
@@ -1256,8 +1246,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -1292,7 +1280,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

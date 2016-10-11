@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.mailbox &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>pulsar.async.mailbox &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -103,8 +103,8 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.websocket</span> <span class="kn">import</span> <span class="n">frame_parser</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.string</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">isawaitable</span>
-<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">isawaitable</span><span class="p">,</span> <span class="n">create_future</span><span class="p">,</span> <span class="n">ensure_future</span>
+<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">task</span>
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actor_identity</span><span class="p">,</span> <span class="n">get_proxy</span><span class="p">,</span> <span class="n">get_command</span><span class="p">,</span> <span class="n">ActorProxy</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Protocol</span>
 <span class="kn">from</span> <span class="nn">.clients</span> <span class="kn">import</span> <span class="n">AbstractClient</span>
@@ -175,7 +175,7 @@
                 <span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="n">actor_identity</span><span class="p">(</span><span class="n">target</span><span class="p">),</span>
                 <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="n">args</span> <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">(),</span>
                 <span class="s1">&#39;kwargs&#39;</span><span class="p">:</span> <span class="n">kwargs</span> <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">{}}</span>
-        <span class="n">waiter</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
+        <span class="n">waiter</span> <span class="o">=</span> <span class="n">create_future</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">command</span><span class="o">.</span><span class="n">ack</span><span class="p">:</span>
             <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ack&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">create_aid</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -215,7 +215,7 @@
                 <span class="n">message</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s1">&#39;Could not decode message body: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_on_message</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="n">ensure_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_message</span><span class="p">(</span><span class="n">message</span><span class="p">),</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
 
     <span class="c1">########################################################################</span>
@@ -236,7 +236,6 @@
             <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
                 <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Connection lost with actor&#39;</span><span class="p">)</span>
 
-    <span class="nd">@task</span>
     <span class="n">async</span> <span class="k">def</span> <span class="nf">_on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="n">command</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;command&#39;</span><span class="p">)</span>
@@ -286,14 +285,11 @@
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">):</span>
             <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
-                    <span class="k">raise</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Lost connection with arbiter&#39;</span><span class="p">)</span>
-                    <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span></div>
+            <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
+                <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Lost connection with arbiter&#39;</span><span class="p">)</span>
+                <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="MailboxClient"><a class="viewcode-back" href="../../../tutorials/messages.html#pulsar.async.mailbox.MailboxClient">[docs]</a><span class="k">class</span> <span class="nc">MailboxClient</span><span class="p">(</span><span class="n">AbstractClient</span><span class="p">):</span>
@@ -387,8 +383,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -423,7 +417,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

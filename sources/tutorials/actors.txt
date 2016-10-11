@@ -26,7 +26,7 @@ and therefore no more inputs are read from the command line!
 
 Using command
 ~~~~~~~~~~~~~~~
-We take a look on how to spawn an actor which echos us when
+We take a look on how to spawn an actor which echoes us when
 we send it a message.
 The first method for achieving this is to write an
 :ref:`actor command <actor_commands>`::

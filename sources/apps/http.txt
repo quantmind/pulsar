@@ -174,7 +174,7 @@ This is an event-driven client, therefore streaming support is native.
 The raw stream
 ~~~~~~~~~~~~~~~~~~~~~
 
-The easyiest way to use streaming is to pass the ``stream=True`` parameter
+The easiest way to use streaming is to pass the ``stream=True`` parameter
 during a request and access the :attr:`HttpResponse.raw` attribute.
 For example::
 

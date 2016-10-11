@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.plugins.bench &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>pulsar.apps.test.plugins.bench &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../../test.html" />
    
   
@@ -70,7 +70,7 @@
 <span class="sd">* Run the test suite with the ``--benchmark`` command line option.</span>
 
 <span class="sd">The test class can implement additional methods to fine-tune how the</span>
-<span class="sd">benchmark plugin evaluate the perfomance and display results:</span>
+<span class="sd">benchmark plugin evaluate the performance and display results:</span>
 
 <span class="sd">* When implemented, the ``startUp`` method is invoked before each run</span>
 <span class="sd">  of a test function.</span>
@@ -85,6 +85,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isawaitable</span>
 <span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">TestSuite</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
@@ -121,7 +122,7 @@
                      <span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">%.5f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">mean</span><span class="p">,</span>
                      <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="s1">&#39;{0} %&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">std</span><span class="p">)})</span>
 
-    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">testMethod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">testMethod</span>
         <span class="n">testStartUp</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;startUp&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">testGetTime</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;getTime&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">dt</span><span class="p">:</span> <span class="n">dt</span><span class="p">)</span>
@@ -136,7 +137,9 @@
             <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number</span><span class="p">):</span>
                 <span class="n">testStartUp</span><span class="p">()</span>
                 <span class="n">start</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
-                <span class="n">testMethod</span><span class="p">()</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">testMethod</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+                    <span class="n">await</span> <span class="n">result</span>
                 <span class="n">delta</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
                 <span class="n">dt</span> <span class="o">=</span> <span class="n">testGetTime</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
                 <span class="n">testGetInfo</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
@@ -265,8 +268,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -301,7 +302,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

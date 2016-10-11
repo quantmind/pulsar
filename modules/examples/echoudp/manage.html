@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.echoudp.manage &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>examples.echoudp.manage &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -58,7 +58,7 @@
 
 <span class="sd">    &gt;&gt;&gt; from manage import Echo</span>
 <span class="sd">    &gt;&gt;&gt; echo = Echo((&#39;localhost&#39;,8060))</span>
-<span class="sd">    &gt;&gt;&gt; echo(b&#39;Hello!&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; echo(b&#39;Hello!\n&#39;)</span>
 <span class="sd">    b&#39;Hello!&#39;</span>
 
 <span class="sd">Writing the Client</span>
@@ -82,7 +82,7 @@
 <span class="sd">Implementation</span>
 <span class="sd">==================</span>
 
-<span class="sd">Echo Udp Protocol</span>
+<span class="sd">Echo UDP Protocol</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">.. autoclass:: EchoUdpProtocol</span>
@@ -106,7 +106,7 @@
 
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">DatagramProtocol</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">create_future</span><span class="p">,</span> <span class="n">DatagramProtocol</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_bytes</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">UdpSocketServer</span>
 
@@ -117,32 +117,28 @@
 <span class="sd">    The only difference between client and server is the implementation</span>
 <span class="sd">    of the :meth:`response` method.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">separator</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;</span><span class="se">\r\n\r\n</span><span class="s1">&#39;</span>
+    <span class="n">separator</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
     <span class="sd">&#39;&#39;&#39;A separator for messages.&#39;&#39;&#39;</span>
     <span class="nb">buffer</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;The buffer for long messages&#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="nf">popbuffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-
 <div class="viewcode-block" id="EchoUdpProtocol.datagram_received"><a class="viewcode-back" href="../../../tutorials/udp.html#examples.echoudp.manage.EchoUdpProtocol.datagram_received">[docs]</a>    <span class="k">def</span> <span class="nf">datagram_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Handle data from ``addr``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="ow">and</span> <span class="n">addr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="o">+</span> <span class="n">data</span>
+
         <span class="k">while</span> <span class="n">data</span><span class="p">:</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>    <span class="c1"># we have a full message</span>
                 <span class="n">idx</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
                 <span class="n">chunk</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">:]</span>
-                <span class="nb">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">popbuffer</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="nb">buffer</span> <span class="o">+</span> <span class="n">chunk</span> <span class="k">if</span> <span class="nb">buffer</span> <span class="k">else</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">if</span> <span class="n">addr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">+=</span> <span class="n">data</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">None</span></div>
 
 <div class="viewcode-block" id="EchoUdpProtocol.response"><a class="viewcode-back" href="../../../tutorials/udp.html#examples.echoudp.manage.EchoUdpProtocol.response">[docs]</a>    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Abstract response handler&#39;&#39;&#39;</span>
@@ -154,7 +150,7 @@
 
     <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="ow">is</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="o">=</span> <span class="n">d</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="o">=</span> <span class="n">d</span> <span class="o">=</span> <span class="n">create_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span><span class="n">to_bytes</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">d</span>
 
@@ -179,7 +175,7 @@
     <span class="sd">&#39;&#39;&#39;A client for the echo server.</span>
 
 <span class="sd">    :param address: set the :attr:`address` attribute</span>
-<span class="sd">    :param pool_size: used when initialising the connetion :attr:`pool`.</span>
+<span class="sd">    :param pool_size: used when initialising the connection :attr:`pool`.</span>
 <span class="sd">    :param loop: Optional event loop to set the :attr:`_loop` attribute.</span>
 
 <span class="sd">    .. attribute:: _loop</span>
@@ -288,8 +284,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -324,7 +318,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

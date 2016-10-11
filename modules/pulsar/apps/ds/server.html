@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.ds.server &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>pulsar.apps.ds.server &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" />
    
   
@@ -2186,8 +2186,7 @@
             <span class="k">if</span> <span class="n">exists</span><span class="p">:</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">timeout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">db</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span>
-                    <span class="n">timeout</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">_do_expire</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">_timer</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_signal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NOTIFY_STRING</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="s1">&#39;expire&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -2581,7 +2580,7 @@
     <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">removed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="p">[</span><span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span> <span class="k">for</span> <span class="n">handle</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_signal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">NOTIFY_GENERIC</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;flushdb&#39;</span><span class="p">,</span>
                            <span class="n">dirty</span><span class="o">=</span><span class="n">removed</span><span class="p">)</span>
@@ -2592,7 +2591,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_hit_keys</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_missed_keys</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">return</span> <span class="n">default</span>
@@ -2602,22 +2601,23 @@
 
     <span class="k">def</span> <span class="nf">expire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
-            <span class="n">handle</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">value</span>
         <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span>
-            <span class="n">timeout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_expire</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">timeout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">persist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_hit_keys</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">handle</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">value</span>
             <span class="k">return</span> <span class="bp">True</span>
         <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_hit_keys</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -2628,8 +2628,8 @@
     <span class="k">def</span> <span class="nf">ttl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_hit_keys</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">handle</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">*</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">_when</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">())))</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">*</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">when</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">())))</span>
         <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_hit_keys</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
@@ -2647,9 +2647,9 @@
                 <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
             <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
-                <span class="n">handle</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-                <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
-                <span class="k">return</span> <span class="n">value</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">rem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
@@ -2659,8 +2659,8 @@
             <span class="k">return</span> <span class="mi">1</span>
         <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_hit_keys</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">handle</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_signal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">NOTIFY_GENERIC</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;del&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">return</span> <span class="mi">1</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2669,9 +2669,23 @@
 
     <span class="k">def</span> <span class="nf">_do_expire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
-            <span class="n">handle</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_expired_keys</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">_timer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
+        <span class="n">when</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">timeout</span>
+        <span class="n">handle</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">call_at</span><span class="p">(</span><span class="n">when</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_expire</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">Timer</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">when</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Timer</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">when</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span> <span class="o">=</span> <span class="n">handle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">when</span> <span class="o">=</span> <span class="n">when</span>
 </pre></div>
 
           </div>
@@ -2724,8 +2738,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -2760,7 +2772,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.mixins &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>pulsar.async.mixins &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
   
@@ -42,7 +42,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.async.mixins</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">Future</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">create_future</span>
 
 
 <div class="viewcode-block" id="FlowControl"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.mixins.FlowControl">[docs]</a><span class="k">class</span> <span class="nc">FlowControl</span><span class="p">:</span>
@@ -107,7 +107,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span><span class="p">:</span>
             <span class="n">waiter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_waiter</span>
             <span class="k">assert</span> <span class="n">waiter</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">waiter</span><span class="o">.</span><span class="n">cancelled</span><span class="p">()</span>
-            <span class="n">waiter</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+            <span class="n">waiter</span> <span class="o">=</span> <span class="n">create_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Waiting for write buffer to drain&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_write_waiter</span> <span class="o">=</span> <span class="n">waiter</span></div>
 
@@ -204,8 +204,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -240,7 +238,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

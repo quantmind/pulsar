@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actors API &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>Actors API &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,10 +27,10 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Event API" href="events.html" />
-    <link rel="prev" title="Asynchonous API" href="async.html" />
+    <link rel="prev" title="Asynchronous API" href="async.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -275,12 +275,6 @@ the <a class="reference internal" href="async.html#pulsar.async.futures.AsyncObj
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.async.actor.Actor.terminated_actors">
-<code class="descname">terminated_actors</code><a class="headerlink" href="#pulsar.async.actor.Actor.terminated_actors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dictionary of terminated actors or None</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.async.actor.Actor.registered">
 <code class="descname">registered</code><a class="headerlink" href="#pulsar.async.actor.Actor.registered" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary of registered actors or None</p>
@@ -321,7 +315,7 @@ attribute.</p>
 <dt id="pulsar.async.actor.Actor.actorparams">
 <code class="descname">actorparams</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.actorparams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.actorparams" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dictionary of parameters for spawning actors.</p>
-<p>The disctionary is passed to the spawn method when creating new
+<p>The dictionary is passed to the spawn method when creating new
 actors. Fire the <a class="reference internal" href="../design.html#actor-hooks"><span>on_params actor hook</span></a>.</p>
 </dd></dl>
 
@@ -497,8 +491,8 @@ remote actor.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.async.proxy.ActorProxyMonitor.terminate">
-<code class="descname">terminate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyMonitor.terminate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyMonitor.terminate" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.proxy.ActorProxyMonitor.kill">
+<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyMonitor.kill"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyMonitor.kill" title="Permalink to this definition">¶</a></dt>
 <dd><p>Terminate life of underlying actor.</p>
 </dd></dl>
 
@@ -635,14 +629,6 @@ back with the acknowledgement from the monitor.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.async.concurrency.Concurrency.selector">
-<code class="descname">selector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.selector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.selector" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a selector instance.</p>
-<p>By default it return nothing so that the best handler for the
-system is chosen.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.async.concurrency.Concurrency.setup_event_loop">
 <code class="descname">setup_event_loop</code><span class="sig-paren">(</span><em>actor</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#Concurrency.setup_event_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.Concurrency.setup_event_loop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set up the event loop for <code class="docutils literal"><span class="pre">actor</span></code>.</p>
@@ -710,12 +696,6 @@ the <code class="xref py py-class docutils literal"><span class="pre">Monitor</s
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.async.concurrency.ArbiterConcurrency.before_start">
-<code class="descname">before_start</code><span class="sig-paren">(</span><em>actor</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#ArbiterConcurrency.before_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.ArbiterConcurrency.before_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Daemonise the system if required.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.async.concurrency.ArbiterConcurrency.create_mailbox">
 <code class="descname">create_mailbox</code><span class="sig-paren">(</span><em>actor</em>, <em>loop</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/concurrency.html#ArbiterConcurrency.create_mailbox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.concurrency.ArbiterConcurrency.create_mailbox" title="Permalink to this definition">¶</a></dt>
 <dd><p>Override <a class="reference internal" href="#pulsar.async.concurrency.Concurrency.create_mailbox" title="pulsar.async.concurrency.Concurrency.create_mailbox"><code class="xref py py-meth docutils literal"><span class="pre">Concurrency.create_mailbox()</span></code></a> to create the
@@ -744,7 +724,7 @@ the <code class="xref py py-class docutils literal"><span class="pre">Arbiter</s
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'RUN': 3, 'TERMINATE': 6, 'INACTIVE': 1, 'STOPPING': 4, 'CLOSE': 5, 'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'STARTING': 2}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pulsar.async.consts.</code><code class="descname">ACTOR_STATES</code><em class="property"> = {'TERMINATE': 6, 'STOPPING': 4, 'RUN': 3, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'INACTIVE': 1, 'INITIAL': 0, 'CLOSE': 5, 'STARTING': 2}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>
@@ -830,8 +810,6 @@ periodic task.</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -869,7 +847,7 @@ periodic task.</p>
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

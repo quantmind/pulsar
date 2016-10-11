@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous HTTP client &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>Asynchronous HTTP client &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../index.html" />
     <link rel="next" title="Greenlet Support" href="greenio.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" />
    
@@ -220,7 +220,7 @@ certificates of trusted CAs:</p>
 <p>This is an event-driven client, therefore streaming support is native.</p>
 <div class="section" id="the-raw-stream">
 <h3><a class="toc-backref" href="#id10">The raw stream</a><a class="headerlink" href="#the-raw-stream" title="Permalink to this headline">¶</a></h3>
-<p>The easyiest way to use streaming is to pass the <code class="docutils literal"><span class="pre">stream=True</span></code> parameter
+<p>The easiest way to use streaming is to pass the <code class="docutils literal"><span class="pre">stream=True</span></code> parameter
 during a request and access the <code class="xref py py-attr docutils literal"><span class="pre">HttpResponse.raw</span></code> attribute.
 For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">async</span> <span class="k">def</span> <span class="nf">body_coroutine</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
@@ -416,8 +416,8 @@ requests and the <a class="reference internal" href="#pulsar.apps.http.HttpReque
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpClient.store_cookies">
 <code class="descname">store_cookies</code><a class="headerlink" href="#pulsar.apps.http.HttpClient.store_cookies" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <code class="docutils literal"><span class="pre">True</span></code> it remebers response cookies and send them back to
-serves.</p>
+<dd><p>If <code class="docutils literal"><span class="pre">True</span></code> it remembers response cookies and sends them back to
+servers.</p>
 <p>Default: <code class="docutils literal"><span class="pre">True</span></code></p>
 </dd></dl>
 
@@ -786,7 +786,7 @@ The list is sorted from the oldest to the most recent request.</p>
 <dl class="method">
 <dt id="pulsar.apps.http.HttpResponse.raise_for_status">
 <code class="descname">raise_for_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse.raise_for_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse.raise_for_status" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raises stored <code class="xref py py-class docutils literal"><span class="pre">HTTPError</span></code> or <code class="xref py py-class docutils literal"><span class="pre">URLError</span></code>, if occured.</p>
+<dd><p>Raises stored <code class="xref py py-class docutils literal"><span class="pre">HTTPError</span></code> or <code class="xref py py-class docutils literal"><span class="pre">URLError</span></code>, if occurred.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -849,7 +849,7 @@ The list is sorted from the oldest to the most recent request.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>url</strong> &#8211; base url for OAuth2 requests</li>
 <li><strong>state</strong> &#8211; optional state, if not supplied one is generated</li>
-<li><strong>kwargs</strong> &#8211; additinal paparameters</li>
+<li><strong>kwargs</strong> &#8211; additional parameters</li>
 </ul>
 </td>
 </tr>
@@ -917,8 +917,6 @@ The list is sorted from the oldest to the most recent request.</p>
 <li class="toctree-l1"><a class="reference internal" href="ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -956,7 +954,7 @@ The list is sorted from the oldest to the most recent request.</p>
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

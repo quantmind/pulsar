@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Ver. 1.4.0 - 2016-Aug-04 &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>Ver. 1.4.1 - 2016-Sep-09 &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -40,7 +40,18 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="ver-1-4-0-2016-aug-04">
+  <div class="section" id="ver-1-4-1-2016-sep-09">
+<span id="ver-1-4-1-2016-sep-09"></span><h1>Ver. 1.4.1 - 2016-Sep-09<a class="headerlink" href="#ver-1-4-1-2016-sep-09" title="Permalink to this headline">¶</a></h1>
+<p>This version brings a critical bug fix in the HTTP client Digest authentication flow.
+If you use that feature you need to upgrade now!</p>
+<ul class="simple">
+<li>Critical bug fix in HTTPDigest Authentication #243</li>
+<li>Using pulsar with docker? bind to all network interfaces #241</li>
+<li>Allow for True attributes in HTML content</li>
+<li>Added HTML body scripts <a class="reference external" href="https://github.com/quantmind/pulsar/commit/bde6875d2cca7b0e21a2d358baa76a498e61b5d3">bde6875</a></li>
+</ul>
+</div>
+<div class="section" id="ver-1-4-0-2016-aug-04">
 <span id="ver-1-4-0-2016-aug-04"></span><h1>Ver. 1.4.0 - 2016-Aug-04<a class="headerlink" href="#ver-1-4-0-2016-aug-04" title="Permalink to this headline">¶</a></h1>
 <p>A release which brings several improvements, bug fixes and a minor backward
 compatibility in the asynchronous Redis Lock.
@@ -53,7 +64,7 @@ Importantly, the django pulse application has been moved to its own repo.</p>
 <li>Added <code class="docutils literal"><span class="pre">after_run</span></code> method to actors</li>
 <li>HttpClient bug fix #221 <a class="reference external" href="https://github.com/quantmind/pulsar/commit/92493315d0559e061ca78f2c1631a4d6d34292bb">9249331</a></li>
 <li>Added asynchronous Lock primitive to the async module <a class="reference external" href="https://github.com/quantmind/pulsar/commit/4a10883aaf2ee76bf495035d6f57fe602eaede4d">4a10883</a></li>
-<li>Handle datastor and redis pubsub connections drop with <code class="docutils literal"><span class="pre">connection_lost</span></code> event <a class="reference external" href="https://github.com/quantmind/pulsar/commit/dc322b761f978cb97dabc7809545b296c737db0a">dc322b7</a></li>
+<li>Handle datastore and redis pubsub connections drop with <code class="docutils literal"><span class="pre">connection_lost</span></code> event <a class="reference external" href="https://github.com/quantmind/pulsar/commit/dc322b761f978cb97dabc7809545b296c737db0a">dc322b7</a></li>
 <li>Always decode content as json in JsonProxy (thanks to &#64;wilddom), pull request #233</li>
 </ul>
 </div>
@@ -109,8 +120,6 @@ Importantly, the django pulse application has been moved to its own repo.</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -148,7 +157,7 @@ Importantly, the django pulse application has been moved to its own repo.</p>
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

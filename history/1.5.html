@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Http Bin &mdash; pulsar 1.5.0 documentation</title>
+    <title>Ver. 1.5.0 - 2016-Oct-11 &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -28,9 +28,6 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 1.5.0 documentation" href="../index.html" />
-    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="HTTP Proxy Server" href="proxy.html" />
-    <link rel="prev" title="Deploy Web Applications" href="deploy.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -43,48 +40,29 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="http-bin">
-<span id="tutorials-httpbin"></span><h1>Http Bin<a class="headerlink" href="#http-bin" title="Permalink to this headline">¶</a></h1>
-<p>The code for this example is located in the <a class="reference internal" href="#module-examples.httpbin.manage" title="examples.httpbin.manage"><code class="xref py py-mod docutils literal"><span class="pre">examples.httpbin.manage</span></code></a>
-module.</p>
-<span class="target" id="module-examples.httpbin.manage"></span><p>Pulsar HTTP test application:</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py
-</pre></div>
-</div>
-<div class="section" id="implementation">
-<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="examples.httpbin.manage.HttpBin">
-<em class="property">class </em><code class="descclassname">examples.httpbin.manage.</code><code class="descname">HttpBin</code><span class="sig-paren">(</span><em>rule</em>, <em>*routes</em>, <em>**parameters</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/httpbin/manage.html#HttpBin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.manage.HttpBin" title="Permalink to this definition">¶</a></dt>
-<dd><p>The main <a class="reference internal" href="../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> for the HttpBin application</p>
-<dl class="method">
-<dt id="examples.httpbin.manage.HttpBin.get">
-<code class="descname">get</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/httpbin/manage.html#HttpBin.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.manage.HttpBin.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>The home page of this router</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="examples.httpbin.manage.HttpBin.stats">
-<code class="descname">stats</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/httpbin/manage.html#HttpBin.stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.manage.HttpBin.stats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Live stats for the server.</p>
-<p>Try sending lots of requests</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="server-hooks">
-<h2>Server Hooks<a class="headerlink" href="#server-hooks" title="Permalink to this headline">¶</a></h2>
-<p>This example shows how to use
-<a class="reference internal" href="../settings.html#setting-section-application-hooks"><span>server hooks</span></a> to log each request</p>
-<span class="target" id="module-examples.httpbin.config"></span><dl class="function">
-<dt id="examples.httpbin.config.post_request">
-<code class="descclassname">examples.httpbin.config.</code><code class="descname">post_request</code><span class="sig-paren">(</span><em>response</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/httpbin/config.html#post_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.config.post_request" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handle a post request, <code class="docutils literal"><span class="pre">response</span></code> is an instance of
-<a class="reference internal" href="../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse" title="pulsar.apps.wsgi.server.HttpServerResponse"><code class="xref py py-class docutils literal"><span class="pre">HttpServerResponse</span></code></a></p>
-</dd></dl>
-
-</div>
+  <div class="section" id="ver-1-5-0-2016-oct-11">
+<span id="ver-1-5-0-2016-oct-11"></span><h1>Ver. 1.5.0 - 2016-Oct-11<a class="headerlink" href="#ver-1-5-0-2016-oct-11" title="Permalink to this headline">¶</a></h1>
+<p>This version brings several improvements and enhancements in the internal API.
+It is broadly compatible with the 1.4 series with the exception of the media component in the
+WSGI strings. Importantly, multi-processing is handled directly by asyncio
+rather than the <a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html">multiprocessing</a> module.
+It is still possible to use the <code class="docutils literal"><span class="pre">multiprocessing</span></code> module via <code class="docutils literal"><span class="pre">--concurrency</span> <span class="pre">multi</span></code>
+command line/config flag.
+Support for <a class="reference external" href="https://github.com/MagicStack/uvloop">uvloop</a> has been added.
+To use the this third party event loop, pass the <code class="docutils literal"><span class="pre">--io</span> <span class="pre">uv</span></code> flag in the command line.</p>
+<ul class="simple">
+<li>Several internal changes for better asyncio API support, dropped all private methods</li>
+<li>Process based actors are created using asyncio subprocess API</li>
+<li>Actor based on the multiprocessing module are createdvia the <code class="docutils literal"><span class="pre">multi</span></code> concurrency flag</li>
+<li>Added the <code class="docutils literal"><span class="pre">bench</span></code> setup.py command <a class="reference external" href="https://github.com/quantmind/pulsar/issues/247">#247</a></li>
+<li>Added <code class="docutils literal"><span class="pre">pulsar.create_future</span></code> function, a shortcut for <code class="docutils literal"><span class="pre">loop.create_future</span></code></li>
+<li>Added support for <a class="reference external" href="https://github.com/MagicStack/uvloop">uvloop</a></li>
+<li>Removed tweet example <a class="reference external" href="https://github.com/quantmind/pulsar-twitter">pulsar-twitter</a></li>
+<li>Removed <code class="docutils literal"><span class="pre">require</span></code> script from wsgi media and refactoring <a class="reference external" href="https://github.com/quantmind/pulsar/issues/239">#239</a></li>
+<li>Test.wait only support <code class="docutils literal"><span class="pre">assertRaises</span></code> <a class="reference external" href="https://github.com/quantmind/pulsar/issues/235">#235</a></li>
+<li>Removed <code class="docutils literal"><span class="pre">yield</span> <span class="pre">from</span></code> from all tests</li>
+<li>No more docs in http://pythonhosted.org/pulsar/</li>
+</ul>
 </div>
 
 
@@ -115,12 +93,12 @@ module.</p>
 
 
 <h3>Navigation</h3>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
@@ -165,7 +143,7 @@ module.</p>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
-      <a href="../sources/tutorials/httpbin.txt"
+      <a href="../sources/history/1.5.txt"
           rel="nofollow">Page source</a>
     </div>
 

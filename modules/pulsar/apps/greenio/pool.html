@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.greenio.pool &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>pulsar.apps.greenio.pool &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" />
    
   
@@ -47,7 +47,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">ensure_future</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">get_event_loop</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">create_future</span><span class="p">,</span> <span class="n">ensure_future</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">get_event_loop</span>
 
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">wait</span><span class="p">,</span> <span class="n">GreenletWorker</span><span class="p">,</span> <span class="n">isawaitable</span><span class="p">,</span> <span class="n">getcurrent</span>
 
@@ -117,7 +117,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_green_worker</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">wait</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="n">create_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_put</span><span class="p">((</span><span class="n">future</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
                 <span class="k">return</span> <span class="n">future</span></div>
 
@@ -126,7 +126,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_put</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">wait</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span> <span class="o">=</span> <span class="n">create_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiter</span>
 
     <span class="k">def</span> <span class="nf">getcurrent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -259,8 +259,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -295,7 +293,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

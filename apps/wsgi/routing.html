@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Routing &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>Routing &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" />
@@ -93,8 +93,8 @@ handles <code class="docutils literal"><span class="pre">get</span></code> and <
 The <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> introduces a new element into pulsar WSGI handlers, the
 <a class="reference internal" href="wrappers.html#app-wsgi-request"><span>wsgi request</span></a>, a light-weight wrapper of the
 WSGI environ.</p>
-<p>For an exaustive example on how to use the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> middleware make sure
-you check out the <a class="reference internal" href="../../tutorials/httpbin.html#tutorials-httpbin"><span>HttpBin example</span></a>.</p>
+<p>For an exhaustive example on how to use the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> middleware make
+sure you check out the <a class="reference internal" href="../../tutorials/httpbin.html#tutorials-httpbin"><span>HttpBin example</span></a>.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.routers.Router">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">Router</code><span class="sig-paren">(</span><em>rule</em>, <em>*routes</em>, <em>**parameters</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router" title="Permalink to this definition">¶</a></dt>
@@ -327,7 +327,7 @@ return nothing so that other router can process the url.</p>
 <div class="section" id="file-response">
 <h2><a class="toc-backref" href="#id4">File Response</a><a class="headerlink" href="#file-response" title="Permalink to this headline">¶</a></h2>
 <p>High level, battery included function for serving small and large files
-concurrently. Cavet, you app does not need to be asynchronous to use this
+concurrently. Caveat, you app does not need to be asynchronous to use this
 method.</p>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.routers.file_response">
@@ -349,7 +349,7 @@ method.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>request</strong> &#8211; Wsgi request</li>
 <li><strong>filepath</strong> &#8211; full path of file to serve</li>
-<li><strong>block</strong> &#8211; Optional block size (deafult 1MB)</li>
+<li><strong>block</strong> &#8211; Optional block size (default 1MB)</li>
 <li><strong>status_code</strong> &#8211; Optional status code (default 200)</li>
 </ul>
 </td>
@@ -624,8 +624,6 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
 <li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -663,7 +661,7 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);

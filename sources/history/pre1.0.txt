@@ -310,7 +310,7 @@ Ver. 0.6.0 - 2013-Sep-05
 * **Applications**:
 
   * Added ``flush`` method to the task queue backend.
-    The metod can be used to remove all tasks and empty the task queue.
+    The method can be used to remove all tasks and empty the task queue.
   * Better handling of non-overlapping jobs in a task queue.
   * Added :ref:`when_exit <setting-when_exit>` application hook.
   * Added :ref:`--io option <setting-selector>` for controlling the default

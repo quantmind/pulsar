@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.utils &mdash; pulsar 1.4.1b0 documentation</title>
+    <title>pulsar.apps.test.utils &mdash; pulsar 1.5.0 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.4.1b0',
+        VERSION:     '1.5.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.4.1b0 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" />
    
   
@@ -77,7 +77,7 @@
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span> <span class="n">as_gather</span><span class="p">,</span>
-                    <span class="n">isawaitable</span><span class="p">,</span> <span class="n">format_traceback</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
+                    <span class="n">format_traceback</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
 
 
@@ -170,17 +170,6 @@
             <span class="k">return</span> <span class="n">AsyncAssert</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-
-        <span class="n">async</span> <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="n">await</span> <span class="n">as_gather</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">result</span>
-            <span class="k">return</span> <span class="n">result</span>
-
-        <span class="k">return</span> <span class="n">_</span>
 
     <span class="n">async</span> <span class="k">def</span> <span class="nf">assertRaises</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
@@ -324,8 +313,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
-<ul class="simple">
-</ul>
 
 
 <div id="searchbox" style="display: none" role="search">
@@ -360,7 +347,7 @@
     <script type="text/javascript">
 
       var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-3900561-8']);
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
       _gaq.push(['_setDomainName', 'none']);
       _gaq.push(['_setAllowLinker', true]);
       _gaq.push(['_trackPageview']);
