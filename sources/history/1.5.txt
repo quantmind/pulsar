@@ -11,7 +11,7 @@ To use the this third party event loop, pass the ``--io uv`` flag in the command
 
 * Several internal changes for better asyncio API support, dropped all private methods
 * Process based actors are created using asyncio subprocess API
-* Actor based on the multiprocessing module are createdvia the ``multi`` concurrency flag
+* Actor based on the multiprocessing module are created via the ``multi`` concurrency flag
 * Added the ``bench`` setup.py command [#247](https://github.com/quantmind/pulsar/issues/247)
 * Added ``pulsar.create_future`` function, a shortcut for ``loop.create_future``
 * Added support for [uvloop](https://github.com/MagicStack/uvloop)

@@ -211,6 +211,8 @@ directory.</li>
 <p>All standard <a class="reference internal" href="../settings.html#settings"><span>settings</span></a> can be applied to the test application.
 In addition, the following options are
 <a class="reference internal" href="../settings.html#setting-section-test"><span>test suite specific</span></a>:</p>
+<div class="section" id="sequential">
+<span id="apps-test-sequential"></span><h3>sequential<a class="headerlink" href="#sequential" title="Permalink to this headline">¶</a></h3>
 <p>By default, test functions within a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">TestCase</span></code></a>
 are run in asynchronous fashion. This means that several test functions
 may be executed at once depending on their return values.</p>
@@ -240,11 +242,17 @@ option should be used:</p>
 <div class="highlight-python"><div class="highlight"><pre>python runtests.py --sequential
 </pre></div>
 </div>
+</div>
+<div class="section" id="list-labels">
+<h3>list labels<a class="headerlink" href="#list-labels" title="Permalink to this headline">¶</a></h3>
 <p>By passing the <code class="docutils literal"><span class="pre">-l</span></code> or <a class="reference internal" href="../settings.html#setting-list-labels"><span>&#8211;list-labels</span></a> flag
 to the command line, the full list of test labels available is displayed:</p>
 <div class="highlight-python"><div class="highlight"><pre>python runtests.py -l
 </pre></div>
 </div>
+</div>
+<div class="section" id="test-timeout">
+<h3>test timeout<a class="headerlink" href="#test-timeout" title="Permalink to this headline">¶</a></h3>
 <p>When running asynchronous tests, it can be useful to set a cap on how
 long a test function can wait for results. This is what the
 <a class="reference internal" href="../settings.html#setting-test-timeout"><span>&#8211;test-timeout</span></a> command line flag does:</p>
@@ -252,6 +260,7 @@ long a test function can wait for results. This is what the
 </pre></div>
 </div>
 <p>Set the test timeout to 10 seconds.</p>
+</div>
 </div>
 <div class="section" id="test-plugins">
 <h2>Test Plugins<a class="headerlink" href="#test-plugins" title="Permalink to this headline">¶</a></h2>
@@ -265,7 +274,9 @@ There are two basic rules for plugins:</p>
 <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><code class="xref py py-class docutils literal"><span class="pre">Plugin</span></code></a> interface.</li>
 </ul>
 <p>Pulsar ships with two battery-included plugins:</p>
-<span class="target" id="module-pulsar.apps.test.plugins.bench"></span><p><a class="reference internal" href="#pulsar.apps.test.plugins.bench.BenchMark" title="pulsar.apps.test.plugins.bench.BenchMark"><code class="xref py py-class docutils literal"><span class="pre">BenchMark</span></code></a> is a <a class="reference internal" href="#pulsar.apps.test.plugins.base.TestPlugin" title="pulsar.apps.test.plugins.base.TestPlugin"><code class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></code></a> for benchmarking test functions.</p>
+<div class="section" id="module-pulsar.apps.test.plugins.bench">
+<span id="benchmark"></span><span id="bench-plugin"></span><h3>Benchmark<a class="headerlink" href="#module-pulsar.apps.test.plugins.bench" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="#pulsar.apps.test.plugins.bench.BenchMark" title="pulsar.apps.test.plugins.bench.BenchMark"><code class="xref py py-class docutils literal"><span class="pre">BenchMark</span></code></a> is a <a class="reference internal" href="#pulsar.apps.test.plugins.base.TestPlugin" title="pulsar.apps.test.plugins.base.TestPlugin"><code class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></code></a> for benchmarking test functions.</p>
 <p>To use the plugin follow these three steps:</p>
 <ul>
 <li><p class="first">Included it in the test Suite:</p>
@@ -309,7 +320,10 @@ By default it returns the same time interval.</li>
 <dd><p>Benchmarking addon for pulsar test suite.</p>
 </dd></dl>
 
-<span class="target" id="module-pulsar.apps.test.plugins.profile"></span><p><a class="reference internal" href="#pulsar.apps.test.plugins.profile.Profile" title="pulsar.apps.test.plugins.profile.Profile"><code class="xref py py-class docutils literal"><span class="pre">Profile</span></code></a> is a <a class="reference internal" href="#pulsar.apps.test.plugins.base.TestPlugin" title="pulsar.apps.test.plugins.base.TestPlugin"><code class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></code></a> for profiling
+</div>
+<div class="section" id="module-pulsar.apps.test.plugins.profile">
+<span id="profile"></span><span id="profile-plugin"></span><h3>Profile<a class="headerlink" href="#module-pulsar.apps.test.plugins.profile" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="#pulsar.apps.test.plugins.profile.Profile" title="pulsar.apps.test.plugins.profile.Profile"><code class="xref py py-class docutils literal"><span class="pre">Profile</span></code></a> is a <a class="reference internal" href="#pulsar.apps.test.plugins.base.TestPlugin" title="pulsar.apps.test.plugins.base.TestPlugin"><code class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></code></a> for profiling
 test cases and generating Html reports.
 It uses the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/profile.html#module-cProfile" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">cProfile</span></code></a> module from the standard library.</p>
 <p>To use the plugin follow these two steps:</p>
@@ -333,8 +347,11 @@ It uses the <a class="reference external" href="http://python.readthedocs.org/en
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Test Suite<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.TestSuite">
 <em class="property">class </em><code class="descclassname">pulsar.apps.test.</code><code class="descname">TestSuite</code><span class="sig-paren">(</span><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite" title="Permalink to this definition">¶</a></dt>
@@ -378,7 +395,10 @@ By default it used the standard <a class="reference internal" href="#pulsar.apps
 
 </dd></dl>
 
-<span class="target" id="module-pulsar.apps.test.loader"></span><dl class="class">
+</div>
+<div class="section" id="module-pulsar.apps.test.loader">
+<span id="test-loader"></span><h3>Test Loader<a class="headerlink" href="#module-pulsar.apps.test.loader" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
 <dt id="pulsar.apps.test.loader.TestLoader">
 <em class="property">class </em><code class="descclassname">pulsar.apps.test.loader.</code><code class="descname">TestLoader</code><span class="sig-paren">(</span><em>suite</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/test/loader.html#TestLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.loader.TestLoader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classes used by the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><code class="xref py py-class docutils literal"><span class="pre">TestSuite</span></code></a> to aggregate tests
@@ -428,6 +448,9 @@ If not provided no tags will be excluded.</li>
 
 </dd></dl>
 
+</div>
+<div class="section" id="plugin">
+<h3>Plugin<a class="headerlink" href="#plugin" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.result.Plugin">
 <em class="property">class </em><code class="descclassname">pulsar.apps.test.result.</code><code class="descname">Plugin</code><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin" title="Permalink to this definition">¶</a></dt>
@@ -553,6 +576,9 @@ finished.</p>
 
 </dd></dl>
 
+</div>
+<div class="section" id="test-runner">
+<h3>Test Runner<a class="headerlink" href="#test-runner" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.result.TestRunner">
 <em class="property">class </em><code class="descclassname">pulsar.apps.test.result.</code><code class="descname">TestRunner</code><span class="sig-paren">(</span><em>plugins</em>, <em>stream</em>, <em>writercls=None</em>, <em>descriptions=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner" title="Permalink to this definition">¶</a></dt>
@@ -578,6 +604,9 @@ in the test process domain.</p>
 
 </dd></dl>
 
+</div>
+<div class="section" id="test-result">
+<h3>Test Result<a class="headerlink" href="#test-result" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.result.TestResult">
 <em class="property">class </em><code class="descclassname">pulsar.apps.test.result.</code><code class="descname">TestResult</code><span class="sig-paren">(</span><em>descriptions=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestResult" title="Permalink to this definition">¶</a></dt>
@@ -630,6 +659,9 @@ object via the <code class="xref py py-attr docutils literal"><span class="pre">
 
 </dd></dl>
 
+</div>
+<div class="section" id="test-plugin">
+<h3>Test Plugin<a class="headerlink" href="#test-plugin" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.plugins.base.TestPlugin">
 <em class="property">class </em><code class="descclassname">pulsar.apps.test.plugins.base.</code><code class="descname">TestPlugin</code><a class="reference internal" href="../modules/pulsar/apps/test/plugins/base.html#TestPlugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.plugins.base.TestPlugin" title="Permalink to this definition">¶</a></dt>
@@ -684,6 +716,9 @@ as class attributes.</p>
 
 </dd></dl>
 
+</div>
+<div class="section" id="populate">
+<h3>Populate<a class="headerlink" href="#populate" title="Permalink to this headline">¶</a></h3>
 <p>A useful function for populating random data:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">populate</span>
 
@@ -757,10 +792,11 @@ and <code class="docutils literal"><span class="pre">end</span></code></p>
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="module-pulsar.apps.test.utils">
 <span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-pulsar.apps.test.utils" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="sequential">
-<h3>sequential<a class="headerlink" href="#sequential" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3>sequential<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="pulsar.apps.test.utils.sequential">
 <code class="descclassname">pulsar.apps.test.utils.</code><code class="descname">sequential</code><span class="sig-paren">(</span><em>cls</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#sequential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.sequential" title="Permalink to this definition">¶</a></dt>
