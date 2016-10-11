@@ -43,8 +43,8 @@ The :class:`Router` introduces a new element into pulsar WSGI handlers, the
 :ref:`wsgi request <app-wsgi-request>`, a light-weight wrapper of the
 WSGI environ.
 
-For an exhaustive example on how to use the :class:`Router` middleware make sure
-you check out the :ref:`HttpBin example <tutorials-httpbin>`.
+For an exhaustive example on how to use the :class:`Router` middleware make
+sure you check out the :ref:`HttpBin example <tutorials-httpbin>`.
 
 .. autoclass:: Router
    :members:
