@@ -1,5 +1,6 @@
 import binascii
 import time
+import json
 import unittest
 import asyncio
 import datetime
@@ -30,6 +31,15 @@ class StringProtocol:
 
     def decode(self, message):
         return message.decode('utf-8')
+
+
+class JsonProtocol:
+
+    def encode(self, message):
+        return json.dumps(message)
+
+    def decode(self, message):
+        return json.loads(message.decode('utf-8'))
 
 
 class StoreMixin:
@@ -1189,6 +1199,19 @@ class RedisCommands(StoreMixin):
         channel, message = await listener.get()
         self.assertEqual(channel, 'chat')
         self.assertEqual(message, b'Hello')
+
+    async def test_publish_event(self):
+        pubsub = self.client.pubsub(protocol=JsonProtocol())
+        listener = Listener()
+        pubsub.add_client(listener)
+        await pubsub.subscribe('chat2')
+        result = await pubsub.publish_event('chat2', 'room1', 'Hello')
+        self.assertTrue(result >= 0)
+        channel, message = await listener.get()
+        self.assertEqual(channel, 'chat2')
+        self.assertEqual(message['channel'], 'chat2')
+        self.assertEqual(message['event'], 'room1')
+        self.assertEqual(message['data'], 'Hello')
 
     async def test_pattern_subscribe(self):
         # switched off for redis. Issue #95

@@ -314,6 +314,15 @@ class PubSub(EventHandler):
         """
         return self._protocol
 
+    def publish_event(self, channel, event, message):
+        '''Publish a new event ``message`` to a ``channel``.
+        '''
+        assert self._protocol is not None, "Protocol required"
+        msg = {'event': event, 'channel': channel}
+        if message:
+            msg['data'] = message
+        return self.publish(channel, msg)
+
     def publish(self, channel, message):
         '''Publish a new ``message`` to a ``channel``.
         '''
