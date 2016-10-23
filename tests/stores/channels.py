@@ -84,6 +84,19 @@ class ChannelsTests:
         self.assertEqual(len(args), 3)
         self.assertEqual(args[1], channels)
 
+    async def test_unregister(self):
+        channels = self.channels()
+
+        def fire(_, event, data):
+            return data
+
+        channel = await channels.register('test4', '*', fire)
+        self.assertEqual(len(channel), 1)
+        self.assertEqual(len(channels), 1)
+        channel = await channels.unregister('test4', '*', fire)
+        self.assertEqual(len(channel), 0)
+        self.assertEqual(len(channels), 0)
+
     def _log_error(self, coro, *args, **kwargs):
         coro.switch((args, kwargs))
 

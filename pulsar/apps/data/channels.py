@@ -137,6 +137,17 @@ class Channels(PubSubClient, Connector):
             self.channels[channel.name] = channel
             await channel.connect()
         channel.register(event, callback)
+        return channel
+
+    async def unregister(self, channel_name, event, callback):
+        name = channel_name.lower()
+        channel = self.channels.get(name)
+        if channel:
+            channel.unregister(event, callback)
+            if not channel:
+                await channel.disconnect()
+                self.channels.pop(name)
+        return channel
 
     async def close(self):
         self.pubsub.remove_callback('connection_lost', self._connection_lost)
@@ -220,6 +231,15 @@ class Channel:
     def __repr__(self):
         return repr(self.callbacks)
 
+    def __len__(self):
+        return len(self.callbacks)
+
+    def __contains__(self, regex):
+        return regex in self.callbacks
+
+    def __iter__(self):
+        return iter(self.channels.values())
+
     def __call__(self, message):
         event = message.pop('event', '')
         data = message.get('data')
@@ -241,6 +261,12 @@ class Channel:
             channel_name = channels.prefixed(self.name)
             await self.channels.pubsub.subscribe(channel_name)
 
+    async def disconnect(self):
+        channels = self.channels
+        if channels.status == StatusType.connected:
+            channel_name = channels.prefixed(self.name)
+            await self.channels.pubsub.unsubscribe(channel_name)
+
     def register(self, event, callback):
         """Register a ``callback`` for ``event``
         """
@@ -254,3 +280,12 @@ class Channel:
             entry.callbacks.append(callback)
 
         return entry
+
+    def unregister(self, event, callback):
+        regex = redis_to_py_pattern(event)
+        entry = self.callbacks.get(regex)
+        if entry:
+            if callback in entry.callbacks:
+                entry.callbacks.remove(callback)
+                if not entry.callbacks:
+                    self.callbacks.pop(regex)
