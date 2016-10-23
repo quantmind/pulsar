@@ -16,9 +16,17 @@ class Tester:
 
 class ChannelsTests:
 
-    def channels(self):
-        return Channels(self.store.pubsub(protocol=Json()),
-                        namespace=self.namespace())
+    def channels(self, **kw):
+        return Channels(self.store.pubsub(protocol=Json()), **kw)
+
+    def test_channels_dns(self):
+        channels = self.channels()
+        self.assertEqual(channels.namespace, '%s_' % self.namespace())
+        channels = self.channels(namespace='foo')
+        self.assertEqual(channels.namespace, 'foo_')
+        channels = self.channels(namespace='foo_')
+        self.assertEqual(channels.namespace, 'foo_')
+        self.assertTrue(str(channels).endswith('?namespace=foo_'))
 
     async def test_channels(self):
         channels = self.channels()

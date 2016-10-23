@@ -73,7 +73,7 @@ class Store(metaclass=ABCMeta):
         self._password = password
         self._urlparams = {}
         self._init(**kw)
-        self._dns = self._buildurl()
+        self._dns = self.buildurl()
 
     @property
     def name(self):
@@ -88,7 +88,7 @@ class Store(metaclass=ABCMeta):
     @database.setter
     def database(self, value):
         self._database = value
-        self._dns = self._buildurl()
+        self._dns = self.buildurl()
 
     @property
     def encoding(self):
@@ -100,6 +100,11 @@ class Store(metaclass=ABCMeta):
     def dns(self):
         '''Domain name server'''
         return self._dns
+
+    @property
+    def urlparams(self):
+        """url parameters in dns query"""
+        return self._urlparams
 
     @classmethod
     def register(cls):
@@ -145,7 +150,7 @@ class Store(metaclass=ABCMeta):
         '''Internal initialisation'''
         pass
 
-    def _buildurl(self, **kw):
+    def buildurl(self, **kw):
         pre = ''
         if self._user:
             if self._password:
@@ -160,8 +165,8 @@ class Store(metaclass=ABCMeta):
             host = '%s:%s' % host
         host = '%s%s' % (pre, host)
         path = '/%s' % self._database if self._database else ''
-        kw.update(self._urlparams)
-        query = urlencode(kw)
+        self._urlparams.update(kw)
+        query = urlencode(self._urlparams)
         scheme = self._name
         if self._scheme:
             scheme = '%s+%s' % (self._scheme, scheme)

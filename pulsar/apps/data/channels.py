@@ -77,7 +77,14 @@ class Channels(PubSubClient, Connector):
         self._connection_error = False
         self.channels = OrderedDict()
         self.logger = logger or LOGGER
-        self.namespace = '%s_' % (namespace or DEFAULT_NAMESPACE).lower()
+        self.namespace = (
+            namespace or
+            pubsub.store.urlparams.get('namespace') or
+            DEFAULT_NAMESPACE
+        ).lower()
+        if not self.namespace.endswith('_'):
+            self.namespace = '%s_' % self.namespace
+        self.dns = pubsub.store.buildurl(namespace=self.namespace)
         self.status_channel = (status_channel or DEFAULT_CHANNEL).lower()
         self.status = StatusType.initialised
         self.pubsub = pubsub
@@ -89,7 +96,7 @@ class Channels(PubSubClient, Connector):
         return self.pubsub._loop
 
     def __repr__(self):
-        return '%s/%s' % (self.pubsub.store.dns, self.prefixed('*'))
+        return self.dns
 
     __str__ = __repr__
 
