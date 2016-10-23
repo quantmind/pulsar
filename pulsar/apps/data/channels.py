@@ -49,13 +49,32 @@ class Json:
             raise ProtocolError('Invalid JSON') from exc
 
 
-class Channels(PubSubClient):
+class Connector:
+
+    def __new__(cls, *args, **kw):
+        o = super().__new__(cls)
+        o.connection_error = False
+        return o
+
+    def connection_ok(self):
+        if self.connection_error:
+            self.logger.warning(
+                'connection with %s established - all good',
+                self
+            )
+            self.connection_error = False
+        else:
+            return True
+
+
+class Channels(PubSubClient, Connector):
     """Manage channels for publish/subscribe
     """
 
     def __init__(self, pubsub, namespace=None, status_channel=None,
                  logger=None):
         assert pubsub.protocol, "protocol required for channels"
+        self._connection_error = False
         self.channels = OrderedDict()
         self.logger = logger or LOGGER
         self.namespace = '%s_' % (namespace or DEFAULT_NAMESPACE).lower()
@@ -70,7 +89,9 @@ class Channels(PubSubClient):
         return self.pubsub._loop
 
     def __repr__(self):
-        return repr(self.channels)
+        return '%s/%s' % (self.pubsub.store.dns, self.prefixed('*'))
+
+    __str__ = __repr__
 
     def __len__(self):
         return len(self.channels)
@@ -117,7 +138,7 @@ class Channels(PubSubClient):
         self.status = StatusType.closed
         await self.pubsub.close()
 
-    def publish(self, channel, event, data=None):
+    async def publish(self, channel, event, data=None):
         """Publish a new ``event` on a ``channel``
         :param channel: channel name
         :param event: event name
@@ -127,8 +148,17 @@ class Channels(PubSubClient):
         msg = {'event': event, 'channel': channel}
         if data:
             msg['data'] = data
-        channel = self.prefixed(channel)
-        return self.pubsub.publish(channel, msg)
+        try:
+            await self.pubsub.publish(self.prefixed(channel), msg)
+        except ConnectionRefusedError:
+            self.connection_error = True
+            self.logger.critical(
+                '%s cannot publish on "%s" channel - connection error',
+                self,
+                channel
+            )
+        else:
+            self.connection_ok()
 
     def prefixed(self, name):
         if not name.startswith(self.namespace):
@@ -193,7 +223,12 @@ class Channel:
             if match:
                 match = match.group()
                 for callback in callbacks:
-                    callback(self, match, data)
+                    try:
+                        callback(self, match, data)
+                    except Exception:
+                        self.channels.logger.exception(
+                            'callback exception: channel "%s" event "%s"',
+                            self.name, event)
 
     async def connect(self):
         channels = self.channels
