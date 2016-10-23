@@ -5,7 +5,7 @@ import os
 from .utils.version import get_version
 
 
-VERSION = (1, 5, 1, 'final', 0)
+VERSION = (1, 5, 2, 'final', 0)
 
 __version__ = version = get_version(VERSION)
 
