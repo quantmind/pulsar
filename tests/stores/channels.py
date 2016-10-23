@@ -53,6 +53,27 @@ class ChannelsTests:
         await channels.close()
         self.assertEqual(channels.status, StatusType.closed)
 
+    async def test_fail_subscribe(self):
+        channels = self.channels()
+        original, warning, critical = self._patch(
+            channels, channels.pubsub, 'subscribe'
+        )
+        await channels.connect()
+        args, kw = await critical.end
+        self.assertEqual(len(args), 3)
+        self.assertEqual(args[1], channels)
+        self.assertEqual(args[2], 2)
+        critical.end = create_future()
+        args, kw = await critical.end
+        self.assertEqual(len(args), 3)
+        self.assertEqual(args[1], channels)
+        self.assertEqual(args[2], 2.25)
+        channels.pubsub.subscribe = original
+        args, kw = await warning.end
+        self.assertEqual(len(args), 3)
+        self.assertEqual(args[1], channels)
+        self.assertEqual(args[2], channels.status_channel)
+
     async def test_fail_publish(self):
         channels = self.channels()
         original, warning, critical = self._patch(

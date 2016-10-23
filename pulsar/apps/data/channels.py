@@ -186,6 +186,7 @@ class Channels(PubSubClient, Connector):
             )
             await gather(*[c.connect() for c in self.channels.values()])
         except ConnectionRefusedError:
+            self.status = StatusType.disconnected
             next_time = backoff(next_time) if next_time else RECONNECT_LAG
             self.logger.critical(
                 '%s cannot subscribe - connection error - '
@@ -194,7 +195,7 @@ class Channels(PubSubClient, Connector):
                 next_time
             )
             self._loop.call_later(next_time,
-                                  self._loop.make_task,
+                                  self._loop.create_task,
                                   self.connect(next_time))
 
 
