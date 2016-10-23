@@ -109,6 +109,11 @@ class Channels(PubSubClient, Connector):
             if channel:
                 channel(message)
 
+    def lock(self, name, **kwargs):
+        """Global distributed lock
+        """
+        return self.pubsub.store.client().lock(self.prefixed(name), **kwargs)
+
     async def connect(self, next_time=None):
         if self.status in can_connect:
             loop = self._loop
@@ -170,8 +175,7 @@ class Channels(PubSubClient, Connector):
 
     def _connection_lost(self, *args):
         self.status = StatusType.disconnected
-        self.fire_event('connection_lost')
-        self.connect()
+        self._loop.create_task(self.connect())
 
     async def _connect(self, next_time):
         try:
