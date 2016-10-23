@@ -18,12 +18,15 @@ class TestRedisStore(RedisCommands,
     store = None
 
     @classmethod
+    def namespace(cls):
+        return cls.__name__.lower()
+
+    @classmethod
     def setUpClass(cls):
         addr = cls.cfg.redis_server
         if not addr.startswith('redis://'):
             addr = 'redis://%s' % cls.cfg.redis_server
-        namespace = cls.__name__.lower()
-        cls.store = create_store(addr, pool_size=3, namespace=namespace)
+        cls.store = create_store(addr, pool_size=3, namespace=cls.namespace())
         cls.client = cls.store.client()
 
     async def test_script(self):
