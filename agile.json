@@ -15,11 +15,5 @@
                 "{{ python }} setup.py sdist bdist_wheel upload"
             ]
         }
-    },
-    "tasks": {
-        "release": {
-            "description": "make a new release to github",
-            "command": ["python", "github:pulsar"]
-        }
     }
 }
