@@ -4,18 +4,17 @@ from pulsar.apps.data import RedisScript
 
 from tests.stores.test_pulsards import unittest, RedisCommands, create_store
 from tests.stores.lock import RedisLockTests
+from tests.stores.channels import ChannelsTests
 
 
 OK = check_server('redis')
 
 
 @unittest.skipUnless(OK, 'Requires a running Redis server')
-class RedisDbTest(RedisCommands, RedisLockTests):
-    pass
-
-
-@unittest.skipUnless(OK, 'Requires a running redis server')
-class TestRedisStore(RedisDbTest, unittest.TestCase):
+class TestRedisStore(RedisCommands,
+                     RedisLockTests,
+                     ChannelsTests,
+                     unittest.TestCase):
     store = None
 
     @classmethod

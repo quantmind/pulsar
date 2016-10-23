@@ -6,7 +6,7 @@ asynchronous commands on remote servers.
 from abc import ABCMeta, abstractmethod
 from urllib.parse import urlsplit, parse_qsl, urlunparse, urlencode
 
-from pulsar import ImproperlyConfigured, Producer, EventHandler
+from pulsar import ImproperlyConfigured, Producer, EventHandler, ProtocolError
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
 
@@ -393,7 +393,11 @@ class PubSub(EventHandler):
         channel = to_string(response[0])
         message = response[1]
         if self._protocol:
-            message = self._protocol.decode(message)
+            try:
+                message = self._protocol.decode(message)
+            except ProtocolError:
+                self.logger.exception('Could not decode message')
+                return
         for client in self._clients:
             try:
                 client(channel, message)
