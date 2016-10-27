@@ -24,7 +24,7 @@ module which responds with ``Hello World!`` for every request::
 
     def hello(environ, start_response):
         data = b"Hello World!"
-        response_headers = [('Content-type','text/plain'),
+        response_headers = [('Content-type', 'text/plain'),
                             ('Content-Length', str(len(data)))]
         start_response("200 OK", response_headers)
         return [data]
