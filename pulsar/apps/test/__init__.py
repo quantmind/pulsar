@@ -67,24 +67,14 @@ For a list different options/parameters which can be used when running tests.
 Writing a Test Case
 ===========================
 Only subclasses of  :class:`~unittest.TestCase` are collected by this
-application.
-When running a test, pulsar looks for two extra method: ``_pre_setup`` and
-``_post_teardown``. If the former is available, it is run just before the
-:meth:`~unittest.TestCase.setUp` method while if the latter is available,
-it is run just after the :meth:`~unittest.TestCase.tearDown` method.
-In addition, if the :meth:`~unittest.TestCase.setUpClass`
-class methods is available, it is run just before
-all tests functions are run and the :meth:`~unittest.TestCase.tearDownClass`,
-if available, is run just after all tests functions are run.
-
-An example test case::
+application. An example test case::
 
     import unittest
 
     class MyTest(unittest.TestCase):
 
-        def test_async_test(self):
-            result = yield maybe_async_function()
+        async def test_async_test(self):
+            result = await async_function()
             self.assertEqual(result, ...)
 
         def test_simple_test(self):
@@ -92,8 +82,9 @@ An example test case::
 
 .. note::
 
-    Test functions are asynchronous, when they return a generator or a
-    :class:`~asyncio.Future`, synchronous, when they return anything else.
+    Test functions are asynchronous, when they are coroutine functions or
+    return a :class:`~asyncio.Future`, synchronous, when they
+    return anything else.
 
 .. _apps-test-loading:
 
@@ -119,8 +110,6 @@ an ``object`` as
 
 with this in mind:
 
-* Directories that aren't packages are not inspected. This means that if a
-  directory does not have a ``__init__.py`` file, it won't be inspected.
 * Any class that is a :class:`~unittest.TestCase` subclass is collected.
 * If an ``object`` starts with ``_`` or ``.`` it won't be collected,
   nor will any ``objects`` it contains.
