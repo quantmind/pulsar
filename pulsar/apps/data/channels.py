@@ -1,6 +1,7 @@
 import re
 import logging
 import json
+from functools import wraps
 from enum import Enum
 from asyncio import gather
 from collections import namedtuple, OrderedDict
@@ -230,7 +231,6 @@ class Channels(Connector, PubSubClient):
                 self,
                 self.status_channel
             )
-            await gather(*[c.connect() for c in self.channels.values()])
         except ConnectionRefusedError:
             self.status = StatusType.disconnected
             next_time = backoff(next_time) if next_time else RECONNECT_LAG
@@ -243,6 +243,21 @@ class Channels(Connector, PubSubClient):
             self._loop.call_later(next_time,
                                   self._loop.create_task,
                                   self.connect(next_time))
+        else:
+            await gather(*[c.connect() for c in self.channels.values()])
+
+
+def safe_execution(method):
+
+    @wraps(method)
+    async def _(self, *args, **kwargs):
+        try:
+            await method(self, *args, **kwargs)
+        except ConnectionRefusedError:
+            self.channels.status = StatusType.disconnected
+            await self.channels.connect()
+
+    return _
 
 
 class Channel:
@@ -286,12 +301,14 @@ class Channel:
                             'callback exception: channel "%s" event "%s"',
                             self.name, event)
 
+    @safe_execution
     async def connect(self):
         channels = self.channels
         if channels.status == StatusType.connected:
             channel_name = channels.prefixed(self.name)
             await self.channels.pubsub.subscribe(channel_name)
 
+    @safe_execution
     async def disconnect(self):
         channels = self.channels
         if channels.status == StatusType.connected:
