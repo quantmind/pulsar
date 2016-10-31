@@ -50,7 +50,7 @@ class Json:
 
 
 class Connector:
-    namespace_delimiter = '-'
+    namespace_delimiter = '_'
 
     def __init__(self, store, namespace=None):
         self.connection_error = False
