@@ -61,7 +61,7 @@ class ChannelsTests:
         await channels.close()
         self.assertEqual(channels.status, StatusType.closed)
 
-    async def __test_fail_subscribe(self):
+    async def test_fail_subscribe(self):
         channels = self.channels()
         original, warning, critical = self._patch(
             channels, channels.pubsub, 'subscribe'
