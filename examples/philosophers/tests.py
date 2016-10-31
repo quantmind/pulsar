@@ -9,12 +9,10 @@ from examples.philosophers.manage import DiningPhilosophers
 
 class TestPhylosophers(unittest.TestCase):
     app_cfg = None
-    concurrency = 'thread'
 
     @classmethod
     async def setUpClass(cls):
-        app = DiningPhilosophers(name='plato',
-                                 concurrency=cls.concurrency)
+        app = DiningPhilosophers(name='plato', concurrency='thread')
         cls.app_cfg = await send('arbiter', 'run', app)
 
     @test_timeout(60)
@@ -25,7 +23,7 @@ class TestPhylosophers(unittest.TestCase):
             all = []
             for data in info.get('workers', []):
                 p = data.get('philosopher')
-                if p:
+                if p and p.get('eaten', 0) > 0:
                     all.append(p)
             if len(all) == 5:
                 break

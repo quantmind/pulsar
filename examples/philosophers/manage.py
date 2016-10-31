@@ -54,9 +54,10 @@ Implementation
 import os
 import random
 import json
+from asyncio import ensure_future
 
 import pulsar
-from pulsar import command, task
+from pulsar import command
 
 # WEB INTERFACE
 media_libraries = {
@@ -187,23 +188,10 @@ class DiningPhilosophers(pulsar.Application):
             self.thinking += 1
         self.pickup_fork(philosopher)
 
-    @task
-    async def pickup_fork(self, philosopher):
-        '''The philosopher has fewer than two forks.
-
-        Check if forks are available.
-        '''
-        fork = await philosopher.send(philosopher.monitor, 'pickup_fork',
-                                      philosopher.number)
-        if fork:
-            forks = self.forks
-            if fork in forks:
-                philosopher.logger.error('Got fork %s. I already have it',
-                                         fork)
-            else:
-                philosopher.logger.debug('Got fork %s.', fork)
-                forks.append(fork)
-        philosopher._loop.call_soon(self.take_action, philosopher)
+    def pickup_fork(self, philosopher):
+        """Pick up a fork
+        """
+        ensure_future(self._pickup_fork(philosopher), loop=philosopher._loop)
 
     def release_forks(self, philosopher):
         '''The ``philosopher`` has just eaten and is ready to release both
@@ -232,6 +220,19 @@ class DiningPhilosophers(pulsar.Application):
                 break
         number = min(avail) if avail else len(monitor.managed_actors) + 1
         params.update({'name': 'Philosopher %s' % number, 'number': number})
+
+    async def _pickup_fork(self, philosopher):
+        fork = await philosopher.send(philosopher.monitor, 'pickup_fork',
+                                      philosopher.number)
+        if fork:
+            forks = self.forks
+            if fork in forks:
+                philosopher.logger.error('Got fork %s. I already have it',
+                                         fork)
+            else:
+                philosopher.logger.debug('Got fork %s.', fork)
+                forks.append(fork)
+        philosopher._loop.call_soon(self.take_action, philosopher)
 
 
 if __name__ == '__main__':

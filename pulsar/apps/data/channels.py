@@ -192,17 +192,25 @@ class Channels(Connector, PubSubClient):
         else:
             self.connection_ok()
 
-    async def close(self):
-        self.pubsub.remove_callback('connection_lost', self._connection_lost)
-        self.status = StatusType.closed
-        await self.pubsub.close()
-
     async def connect(self, next_time=None):
+        """Connect with pubsub store
+
+        :return: a coroutine and therefore it must be awaited
+        """
         if self.status in can_connect:
             loop = self._loop
             if loop.is_running():
                 self.status = StatusType.connecting
                 await self._connect(next_time)
+
+    async def close(self):
+        """Close channels and underlying pubsub handler
+
+        :return: a coroutine and therefore it must be awaited
+        """
+        self.pubsub.remove_callback('connection_lost', self._connection_lost)
+        self.status = StatusType.closed
+        await self.pubsub.close()
 
     def create_channel(self, name):
         return Channel(self, name)
