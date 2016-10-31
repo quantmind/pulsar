@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #
+# make spelling SPHINXBUILD="pyenv exec sphinx-build"
 import sys
 import os
 
