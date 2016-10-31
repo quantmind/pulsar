@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 from pulsar import send, new_event_loop, get_application, get_actor
@@ -6,6 +7,7 @@ from pulsar.apps.test import dont_run_with_thread
 from examples.echoudp.manage import server, Echo, EchoUdpServerProtocol
 
 
+@unittest.skipUnless(sys.version_info < (3, 6), "Skip for python 3.6")
 class TestEchoUdpServerThread(unittest.TestCase):
     concurrency = 'thread'
     server_cfg = None

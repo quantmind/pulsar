@@ -29,7 +29,7 @@ can_connect = frozenset((StatusType.initialised, StatusType.disconnected))
 
 
 RECONNECT_LAG = 2
-DEFAULT_NAMESPACE = 'pulsar'
+DEFAULT_NAMESPACE = ''
 DEFAULT_CHANNEL = 'server'
 
 
@@ -50,11 +50,32 @@ class Json:
 
 
 class Connector:
+    namespace_delimiter = '-'
 
-    def __new__(cls, *args, **kw):
-        o = super().__new__(cls)
-        o.connection_error = False
-        return o
+    def __init__(self, store, namespace=None):
+        self.connection_error = False
+        self.namespace = (
+            namespace or
+            store.urlparams.get('namespace') or
+            DEFAULT_NAMESPACE
+        ).lower()
+        if (self.namespace and not
+                self.namespace.endswith(self.namespace_delimiter)):
+            self.namespace = '%s%s' % (
+                self.namespace, self.namespace_delimiter
+            )
+        self.dns = store.buildurl(namespace=self.namespace)
+
+    def __repr__(self):
+        return self.dns
+
+    def __str__(self):
+        return self.__repr__()
+
+    def prefixed(self, name):
+        if self.namespace and not name.startswith(self.namespace):
+            name = '%s%s' % (self.namespace, name)
+        return name
 
     def connection_ok(self):
         if self.connection_error:
@@ -67,24 +88,16 @@ class Connector:
             return True
 
 
-class Channels(PubSubClient, Connector):
+class Channels(Connector, PubSubClient):
     """Manage channels for publish/subscribe
     """
 
     def __init__(self, pubsub, namespace=None, status_channel=None,
                  logger=None):
         assert pubsub.protocol, "protocol required for channels"
-        self._connection_error = False
+        super().__init__(pubsub.store, namespace=namespace)
         self.channels = OrderedDict()
         self.logger = logger or LOGGER
-        self.namespace = (
-            namespace or
-            pubsub.store.urlparams.get('namespace') or
-            DEFAULT_NAMESPACE
-        ).lower()
-        if not self.namespace.endswith('_'):
-            self.namespace = '%s_' % self.namespace
-        self.dns = pubsub.store.buildurl(namespace=self.namespace)
         self.status_channel = (status_channel or DEFAULT_CHANNEL).lower()
         self.status = StatusType.initialised
         self.pubsub = pubsub
@@ -94,11 +107,6 @@ class Channels(PubSubClient, Connector):
     @property
     def _loop(self):
         return self.pubsub._loop
-
-    def __repr__(self):
-        return self.dns
-
-    __str__ = __repr__
 
     def __len__(self):
         return len(self.channels)
@@ -195,11 +203,6 @@ class Channels(PubSubClient, Connector):
             if loop.is_running():
                 self.status = StatusType.connecting
                 await self._connect(next_time)
-
-    def prefixed(self, name):
-        if not name.startswith(self.namespace):
-            name = '%s%s' % (self.namespace, name)
-        return name
 
     def create_channel(self, name):
         return Channel(self, name)

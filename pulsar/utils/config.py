@@ -600,7 +600,13 @@ class Setting(metaclass=SettingMeta):
         If ``default`` is ``True`` set also the :attr:`default` value.
         """
         if hasattr(self.validator, '__call__'):
-            val = self.validator(val)
+            try:
+                val = self.validator(val)
+            except Exception as exc:
+                raise type(exc)(
+                    'Could not validate value for "%s" setting: %s' %
+                    (self.name, exc)
+                ) from None
         self.value = val
         self.imported = imported
         if default:
