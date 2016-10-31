@@ -3,6 +3,7 @@ from .store import (
     parse_store_url, create_store, register_store, data_stores,
     NoSuchStore
 )
+from .channels import Channels
 from . import redis     # noqa
 from .pulsards import start_store
 
@@ -18,5 +19,6 @@ __all__ = [
     'register_store',
     'data_stores',
     'NoSuchStore',
-    'start_store'
+    'start_store',
+    'Channels'
 ]

@@ -248,14 +248,14 @@ class RedisClient:
         return self.execute('incrbyfloat', key, ammount)
 
     def set(self, name, value, ex=None, px=None, nx=False, xx=False):
-        """
-        Set the value at key ``name`` to ``value``
-        ``ex`` sets an expire flag on key ``name`` for ``ex`` seconds.
-        ``px`` sets an expire flag on key ``name`` for ``px`` milliseconds.
-        ``nx`` if set to True, set the value at key ``name`` to ``value`` if it
-            does not already exist.
-        ``xx`` if set to True, set the value at key ``name`` to ``value`` if it
-            already exists.
+        """Set the value at key ``name`` to ``value``
+
+        :param ex: sets an expire flag on key ``name`` for ``ex`` seconds.
+        :param px: sets an expire flag on key ``name`` for ``px`` milliseconds.
+        :param nx: if set to True, set the value at key ``name`` to ``value``
+            if it does not already exist.
+        :param xx: if set to True, set the value at key ``name`` to ``value``
+            if it already exists.
         """
         pieces = [name, value]
         if ex:

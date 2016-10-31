@@ -48,6 +48,23 @@ class Command:
 
 
 class Store(metaclass=ABCMeta):
+    '''Base class for an asynchronous :ref:`data stores <data-stores>`.
+
+    A :class:`.Store` should not be created directly, the high level
+    :func:`.create_store` function should be used instead.
+
+    .. attribute:: _host
+
+        The remote host, tuple or string
+
+    .. attribute:: _user
+
+        The user name
+
+    .. attribute:: _password
+
+        The user password
+    '''
     _scheme = None
     registered = False
     default_manager = None
@@ -165,24 +182,10 @@ class Store(metaclass=ABCMeta):
 
 
 class RemoteStore(Producer, Store):
-    '''Base class for an asynchronous :ref:`data stores <data-stores>`.
+    '''Base class for remote :ref:`data stores <data-stores>`.
 
     It is an :class:`.Producer` for accessing and retrieving
-    data from remote data servers such as redis, couchdb and so forth.
-    A :class:`Store` should not be created directly, the high level
-    :func:`.create_store` function should be used instead.
-
-    .. attribute:: _host
-
-        The remote host, tuple or string
-
-    .. attribute:: _user
-
-        The user name
-
-    .. attribute:: _password
-
-        The user password
+    data from remote data servers such as redis.
     '''
     MANY_TIMES_EVENTS = ('request',)
 
@@ -206,12 +209,12 @@ class RemoteStore(Producer, Store):
         raise NotImplementedError
 
     def client(self):
-        '''Get a client for the Store if implemented
+        '''Get a client for this store if implemented
         '''
         raise NotImplementedError
 
     def pubsub(self, **kw):
-        '''Obtain a :class:`PubSub` handler for the Store if implemented
+        '''Obtain a :class:`.PubSub` handler for this store if implemented
         '''
         raise NotImplementedError
 
@@ -249,7 +252,7 @@ class RemoteStore(Producer, Store):
 
 
 class PubSubClient:
-    '''Interface for a client of :class:`PubSub` handler.
+    '''Interface for a client of :class:`.PubSub` handler.
 
     Instances of this :class:`Client` are callable object and are
     called once a new message has arrived from a subscribed channel.
@@ -265,8 +268,8 @@ class PubSubClient:
 class PubSub(EventHandler):
     '''A Publish/Subscriber interface.
 
-    A :class:`PubSub` handler is never initialised directly, instead,
-    the :meth:`~Store.pubsub` method of a data :class:`.Store`
+    A :class:`.PubSub` handler is never initialised directly, instead,
+    the :meth:`~.RemoteStore.pubsub` method of a data :class:`.RemoteStore`
     is used.
 
     To listen for messages one adds clients to the handler::

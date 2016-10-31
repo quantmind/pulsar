@@ -98,3 +98,10 @@ Store
 .. autoclass:: Store
    :members:
    :member-order: bysource
+
+RemoteStore
+~~~~~~~~~~~~~~~
+
+.. autoclass:: RemoteStore
+   :members:
+   :member-order: bysource

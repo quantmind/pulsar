@@ -13,14 +13,6 @@ ActorTestMixin
    :member-order: bysource
 
 
-AsyncAssert
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: AsyncAssert
-   :members:
-   :member-order: bysource
-
-
 check server
 ~~~~~~~~~~~~~~~~~~
 

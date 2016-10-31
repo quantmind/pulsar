@@ -1,4 +1,4 @@
-'''
+"""
 This example illustrates how to write a UDP Echo server and client pair.
 The code for this example is located in the :mod:`examples.echoudp.manage`
 module.
@@ -13,8 +13,8 @@ To run the server::
 Open a new shell, in this directory, launch python and type::
 
     >>> from manage import Echo
-    >>> echo = Echo(('localhost',8060))
-    >>> echo(b'Hello!\n')
+    >>> echo = Echo(('localhost', 8060))
+    >>> echo(b'Hello!\\n')
     b'Hello!'
 
 Writing the Client
@@ -60,7 +60,7 @@ Echo Server
 
 .. autofunction:: server
 
-'''
+"""
 import pulsar
 from pulsar import Pool, create_future, DatagramProtocol
 from pulsar.utils.pep import to_bytes

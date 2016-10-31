@@ -167,8 +167,9 @@ intersphinx_mapping = {
     'python': ('http://python.readthedocs.org/en/latest/', None),
 }
 
-extlinks = {'django': ('https://www.djangoproject.com/', None),
-            'postgresql': ('http://www.postgresql.org/', None),
-            'sqlalchemy': ('http://www.sqlalchemy.org/', None),
-            'greenlet': ('http://greenlet.readthedocs.org/', None),
-            'psycopg2coroutine': ('http://pythonhosted.org/psycopg2/advanced.html#support-for-coroutine-libraries', None)}
+extlinks = {
+    'django': ('https://www.djangoproject.com/%s', ''),
+    'postgresql': ('http://www.postgresql.org/%s', ''),
+    'sqlalchemy': ('http://www.sqlalchemy.org/%s', ''),
+    'greenlet': ('http://greenlet.readthedocs.org/%s', '')
+}

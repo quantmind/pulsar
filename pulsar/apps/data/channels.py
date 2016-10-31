@@ -121,21 +121,17 @@ class Channels(PubSubClient, Connector):
         """
         return self.pubsub.store.client().lock(self.prefixed(name), **kwargs)
 
-    async def connect(self, next_time=None):
-        if self.status in can_connect:
-            loop = self._loop
-            if loop.is_running():
-                self.status = StatusType.connecting
-                await self._connect(next_time)
-
     async def register(self, channel_name, event, callback):
-        """Register a callback to ``channel_name`` and ``event``
+        """Register a callback to ``channel_name`` and ``event``.
+
         A prefix will be added to the channel name if not already available or
         the prefix is an empty string
+
         :param channel_name: channel name
         :param event: event name
         :param callback: callback to execute when event on channel occurs
-        :return: the list of channels subscribed
+        :return: a coroutine which results in the channel where the callback
+            was registered
         """
         name = channel_name.lower()
         channel = self.channels.get(name)
@@ -147,6 +143,15 @@ class Channels(PubSubClient, Connector):
         return channel
 
     async def unregister(self, channel_name, event, callback):
+        """Safely unregister a callback from the list of ``event``
+        callbacks for ``channel_name``.
+
+        :param channel_name: channel name
+        :param event: event name
+        :param callback: callback to execute when event on channel occurs
+        :return: a coroutine which results in the channel object where the
+            ``callback`` was removed (if found)
+        """
         name = channel_name.lower()
         channel = self.channels.get(name)
         if channel:
@@ -156,17 +161,13 @@ class Channels(PubSubClient, Connector):
                 self.channels.pop(name)
         return channel
 
-    async def close(self):
-        self.pubsub.remove_callback('connection_lost', self._connection_lost)
-        self.status = StatusType.closed
-        await self.pubsub.close()
-
     async def publish(self, channel, event, data=None):
-        """Publish a new ``event` on a ``channel``
+        """Publish a new ``event`` on a ``channel``
+
         :param channel: channel name
         :param event: event name
         :param data: optional payload to include in the event
-        :param user: optional user to include in the event
+        :return: a coroutine and therefore it must be awaited
         """
         msg = {'event': event, 'channel': channel}
         if data:
@@ -182,6 +183,18 @@ class Channels(PubSubClient, Connector):
             )
         else:
             self.connection_ok()
+
+    async def close(self):
+        self.pubsub.remove_callback('connection_lost', self._connection_lost)
+        self.status = StatusType.closed
+        await self.pubsub.close()
+
+    async def connect(self, next_time=None):
+        if self.status in can_connect:
+            loop = self._loop
+            if loop.is_running():
+                self.status = StatusType.connecting
+                await self._connect(next_time)
 
     def prefixed(self, name):
         if not name.startswith(self.namespace):
