@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.greenio.utils &mdash; pulsar 1.5.0 documentation</title>
+    <title>pulsar.apps.greenio.utils &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../../index.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" />
    
+  <link rel="stylesheet" href="../../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,11 +47,11 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.greenio.utils</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">isawaitable</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">isawaitable</span>
 
-<span class="kn">from</span> <span class="nn">greenlet</span> <span class="kn">import</span> <span class="n">greenlet</span><span class="p">,</span> <span class="n">getcurrent</span>
+<span class="kn">from</span> <span class="nn">greenlet</span> <span class="k">import</span> <span class="n">greenlet</span><span class="p">,</span> <span class="n">getcurrent</span>
 
 
 <span class="k">class</span> <span class="nc">MustBeInChildGreenlet</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
@@ -58,7 +63,7 @@
     <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="wait"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.utils.wait">[docs]</a><span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">must_be_child</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="wait"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.utils.wait">[docs]</a><span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">must_be_child</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Wait for a possible asynchronous value to complete.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">current</span> <span class="o">=</span> <span class="n">getcurrent</span><span class="p">()</span>
@@ -68,21 +73,21 @@
     <span class="k">return</span> <span class="n">parent</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">parent</span> <span class="k">else</span> <span class="n">value</span></div>
 
 
-<div class="viewcode-block" id="run_in_greenlet"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.utils.run_in_greenlet">[docs]</a><span class="k">def</span> <span class="nf">run_in_greenlet</span><span class="p">(</span><span class="nb">callable</span><span class="p">):</span>
+<div class="viewcode-block" id="run_in_greenlet"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.utils.run_in_greenlet">[docs]</a><span class="k">def</span> <span class="nf">run_in_greenlet</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Decorator to run a ``callable`` on a new greenlet.</span>
 
 <span class="sd">    A ``callable`` decorated with this decorator returns a coroutine</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nd">@wraps</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">green</span> <span class="o">=</span> <span class="n">greenlet</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">green</span> <span class="o">=</span> <span class="n">greenlet</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
         <span class="c1"># switch to the new greenlet</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># back to the parent</span>
         <span class="k">while</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
             <span class="c1"># keep on switching back to the greenlet if we get a Future</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="n">await</span> <span class="n">result</span><span class="p">))</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">switch</span><span class="p">((</span><span class="k">await</span> <span class="n">result</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 
@@ -109,10 +114,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -138,6 +145,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
@@ -146,14 +159,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -164,8 +174,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

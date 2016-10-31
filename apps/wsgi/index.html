@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI &mdash; pulsar 1.5.0 documentation</title>
+    <title>WSGI &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,15 +27,20 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../../index.html" />
-    <link rel="next" title="WSGI Server" href="intro.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../index.html" />
+    <link rel="next" title="Asynchronous WSGI" href="async.html" />
     <link rel="prev" title="Socket Servers" href="../socket.html" />
    
+  <link rel="stylesheet" href="../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -44,19 +49,13 @@
             
   <div class="section" id="wsgi">
 <span id="apps-wsgi"></span><h1>WSGI<a class="headerlink" href="#wsgi" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="intro.html#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><code class="xref py py-mod docutils literal"><span class="pre">wsgi</span></code></a> module implements a <a class="reference internal" href="intro.html#wsgi-server"><span>web server</span></a>
-and several web <a class="reference internal" href="async.html#wsgi-handlers"><span>application handlers</span></a> which
-conform with pulsar <a class="reference internal" href="async.html#wsgi-async"><span>WSGI asynchronous specification</span></a>.
+<p>The <a class="reference internal" href="server.html#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><code class="xref py py-mod docutils literal"><span class="pre">wsgi</span></code></a> module implements a <a class="reference internal" href="server.html#wsgi-server"><span class="std std-ref">web server</span></a>
+and several web <a class="reference internal" href="async.html#wsgi-handlers"><span class="std std-ref">application handlers</span></a> which
+conform with pulsar <a class="reference internal" href="async.html#wsgi-async"><span class="std std-ref">WSGI asynchronous specification</span></a>.
 In addition, the module contains several utilities which facilitate the
 development of server side asynchronous web applications.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">WSGI Server</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#id2">WSGI Server</a></li>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#http-protocol-consumer">HTTP Protocol Consumer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#testing-wsgi-environ">Testing WSGI Environ</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="async.html">Asynchronous WSGI</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="async.html#introduction">Introduction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="async.html#application-handlers">Application handlers</a></li>
@@ -64,6 +63,12 @@ development of server side asynchronous web applications.</p>
 <li class="toctree-l2"><a class="reference internal" href="async.html#wsgihandler">WsgiHandler</a></li>
 <li class="toctree-l2"><a class="reference internal" href="async.html#lazy-wsgi-handler">Lazy Wsgi Handler</a></li>
 <li class="toctree-l2"><a class="reference internal" href="async.html#pulsar-variables">Pulsar Variables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">WSGI Server</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="server.html#id2">WSGI Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#http-protocol-consumer">HTTP Protocol Consumer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#testing-wsgi-environ">Testing WSGI Environ</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="routing.html">Routing</a><ul>
@@ -133,10 +138,12 @@ development of server side asynchronous web applications.</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -156,12 +163,18 @@ development of server side asynchronous web applications.</p>
 </ul>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../socket.html">Socket Servers</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">WSGI</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">WSGI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../data/index.html">Data Stores</a></li>
 </ul>
@@ -170,14 +183,11 @@ development of server side asynchronous web applications.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -188,8 +198,8 @@ development of server side asynchronous web applications.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../../sources/apps/wsgi/index.txt"

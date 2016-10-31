@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Http Bin &mdash; pulsar 1.5.0 documentation</title>
+    <title>Http Bin &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="HTTP Proxy Server" href="proxy.html" />
     <link rel="prev" title="Deploy Web Applications" href="deploy.html" />
    
+  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -48,7 +53,7 @@
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.httpbin.manage" title="examples.httpbin.manage"><code class="xref py py-mod docutils literal"><span class="pre">examples.httpbin.manage</span></code></a>
 module.</p>
 <span class="target" id="module-examples.httpbin.manage"></span><p>Pulsar HTTP test application:</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
 </div>
 <div class="section" id="implementation">
@@ -76,12 +81,12 @@ module.</p>
 <div class="section" id="server-hooks">
 <h2>Server Hooks<a class="headerlink" href="#server-hooks" title="Permalink to this headline">¶</a></h2>
 <p>This example shows how to use
-<a class="reference internal" href="../settings.html#setting-section-application-hooks"><span>server hooks</span></a> to log each request</p>
+<a class="reference internal" href="../settings.html#setting-section-application-hooks"><span class="std std-ref">server hooks</span></a> to log each request</p>
 <span class="target" id="module-examples.httpbin.config"></span><dl class="function">
 <dt id="examples.httpbin.config.post_request">
 <code class="descclassname">examples.httpbin.config.</code><code class="descname">post_request</code><span class="sig-paren">(</span><em>response</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/httpbin/config.html#post_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.config.post_request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handle a post request, <code class="docutils literal"><span class="pre">response</span></code> is an instance of
-<a class="reference internal" href="../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse" title="pulsar.apps.wsgi.server.HttpServerResponse"><code class="xref py py-class docutils literal"><span class="pre">HttpServerResponse</span></code></a></p>
+<a class="reference internal" href="../apps/wsgi/server.html#pulsar.apps.wsgi.server.HttpServerResponse" title="pulsar.apps.wsgi.server.HttpServerResponse"><code class="xref py py-class docutils literal"><span class="pre">HttpServerResponse</span></code></a></p>
 </dd></dl>
 
 </div>
@@ -106,10 +111,12 @@ module.</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -135,6 +142,12 @@ module.</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
@@ -143,14 +156,11 @@ module.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -161,8 +171,8 @@ module.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../sources/tutorials/httpbin.txt"

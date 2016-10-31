@@ -1,0 +1,380 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Publish/Subscribe &#8212; pulsar 1.6.0b1 documentation</title>
+    
+    <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.6.0b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../index.html" />
+    <link rel="up" title="Data Stores" href="index.html" />
+    <link rel="prev" title="Available Clients" href="stores.html" />
+   
+  <link rel="stylesheet" href="../../static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="publish-subscribe">
+<span id="apps-pubsub"></span><h1>Publish/Subscribe<a class="headerlink" href="#publish-subscribe" title="Permalink to this headline">¶</a></h1>
+<p>A data <a class="reference internal" href="clients.html#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> can implement the <a class="reference internal" href="clients.html#pulsar.apps.data.store.RemoteStore.pubsub" title="pulsar.apps.data.store.RemoteStore.pubsub"><code class="xref py py-meth docutils literal"><span class="pre">pubsub()</span></code></a> method to return
+a valid <a class="reference internal" href="#pulsar.apps.data.PubSub" title="pulsar.apps.data.PubSub"><code class="xref py py-class docutils literal"><span class="pre">PubSub</span></code></a> handler.</p>
+<div class="section" id="channels">
+<h2>Channels<a class="headerlink" href="#channels" title="Permalink to this headline">¶</a></h2>
+<p>Channels are an high level object which uses a <a class="reference internal" href="#pulsar.apps.data.PubSub" title="pulsar.apps.data.PubSub"><code class="xref py py-class docutils literal"><span class="pre">PubSub</span></code></a> handler to manage
+events on channels. They are useful for:</p>
+<ul class="simple">
+<li>Reducing the number of channels to subscribe to by introducing channel events</li>
+<li>Manage registration and un-registration to channel events</li>
+<li>Handle reconnection with exponential back-off</li>
+</ul>
+</div>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pubsub">
+<h3>PubSub<a class="headerlink" href="#pubsub" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.data.PubSub">
+<em class="property">class </em><code class="descclassname">pulsar.apps.data.</code><code class="descname">PubSub</code><span class="sig-paren">(</span><em>store</em>, <em>protocol=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Publish/Subscriber interface.</p>
+<p>A <a class="reference internal" href="#pulsar.apps.data.PubSub" title="pulsar.apps.data.PubSub"><code class="xref py py-class docutils literal"><span class="pre">PubSub</span></code></a> handler is never initialised directly, instead,
+the <a class="reference internal" href="clients.html#pulsar.apps.data.store.RemoteStore.pubsub" title="pulsar.apps.data.store.RemoteStore.pubsub"><code class="xref py py-meth docutils literal"><span class="pre">pubsub()</span></code></a> method of a data <a class="reference internal" href="clients.html#pulsar.apps.data.store.RemoteStore" title="pulsar.apps.data.store.RemoteStore"><code class="xref py py-class docutils literal"><span class="pre">RemoteStore</span></code></a>
+is used.</p>
+<p>To listen for messages one adds clients to the handler:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">do_somethind</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">pubsub</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
+<span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">do_somethind</span><span class="p">)</span>
+<span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s1">&#39;mychannel&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can add as many listening clients as you like. Clients are functions
+which receive two parameters only, the <code class="docutils literal"><span class="pre">channel</span></code> sending the message
+and the <code class="docutils literal"><span class="pre">message</span></code>.</p>
+<p>A <code class="xref py py-class docutils literal"><span class="pre">PubSub</span></code> handler can be used to publish messages too:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;mychannel&#39;</span><span class="p">,</span> <span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>An additional <code class="docutils literal"><span class="pre">protocol</span></code> object can be supplied. The protocol must
+implement the <code class="docutils literal"><span class="pre">encode</span></code> and <code class="docutils literal"><span class="pre">decode</span></code> methods.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.data.PubSub.protocol">
+<code class="descname">protocol</code><a class="headerlink" href="#pulsar.apps.data.PubSub.protocol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Protocol of this pubsub handler</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.publish_event">
+<code class="descname">publish_event</code><span class="sig-paren">(</span><em>channel</em>, <em>event</em>, <em>message</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.publish_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.publish_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publish a new event <code class="docutils literal"><span class="pre">message</span></code> to a <code class="docutils literal"><span class="pre">channel</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.publish">
+<code class="descname">publish</code><span class="sig-paren">(</span><em>channel</em>, <em>message</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.publish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publish a new <code class="docutils literal"><span class="pre">message</span></code> to a <code class="docutils literal"><span class="pre">channel</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>*channels</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of subscribers (not counting clients
+subscribed to patterns) for the specified channels.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.channels">
+<code class="descname">channels</code><span class="sig-paren">(</span><em>pattern=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.channels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists the currently active channels.</p>
+<p>An active channel is a Pub/Sub channel with one ore more subscribers
+(not including clients subscribed to patterns).
+If no <code class="docutils literal"><span class="pre">pattern</span></code> is specified, all the channels are listed,
+otherwise if <code class="docutils literal"><span class="pre">pattern</span></code> is specified only channels matching the
+specified glob-style pattern are listed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.psubscribe">
+<code class="descname">psubscribe</code><span class="sig-paren">(</span><em>pattern</em>, <em>*patterns</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.psubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.psubscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subscribe to a list of <code class="docutils literal"><span class="pre">patterns</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.punsubscribe">
+<code class="descname">punsubscribe</code><span class="sig-paren">(</span><em>*channels</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.punsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.punsubscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unsubscribe from a list of <code class="docutils literal"><span class="pre">patterns</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.subscribe">
+<code class="descname">subscribe</code><span class="sig-paren">(</span><em>channel</em>, <em>*channels</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.subscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.subscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subscribe to a list of <code class="docutils literal"><span class="pre">channels</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.unsubscribe">
+<code class="descname">unsubscribe</code><span class="sig-paren">(</span><em>*channels</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.unsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.unsubscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-subscribe from a list of <code class="docutils literal"><span class="pre">channels</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop listening for messages.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.add_client">
+<code class="descname">add_client</code><span class="sig-paren">(</span><em>client</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.add_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.add_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new <code class="docutils literal"><span class="pre">client</span></code> to the set of all <code class="xref py py-attr docutils literal"><span class="pre">clients</span></code>.</p>
+<p>Clients must be callable accepting two parameters, the channel and
+the message. When a new message is received
+from the publisher, the <code class="xref py py-meth docutils literal"><span class="pre">broadcast()</span></code> method will notify all
+<code class="xref py py-attr docutils literal"><span class="pre">clients</span></code> via the <code class="docutils literal"><span class="pre">callable</span></code> method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.remove_client">
+<code class="descname">remove_client</code><span class="sig-paren">(</span><em>client</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.remove_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.remove_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove <em>client</em> from the set of all <code class="xref py py-attr docutils literal"><span class="pre">clients</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.PubSub.broadcast">
+<code class="descname">broadcast</code><span class="sig-paren">(</span><em>response</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#PubSub.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.PubSub.broadcast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Broadcast <code class="docutils literal"><span class="pre">message</span></code> to all <code class="xref py py-attr docutils literal"><span class="pre">clients</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="id1">
+<h3>Channels<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.data.Channels">
+<em class="property">class </em><code class="descclassname">pulsar.apps.data.</code><code class="descname">Channels</code><span class="sig-paren">(</span><em>pubsub</em>, <em>namespace=None</em>, <em>status_channel=None</em>, <em>logger=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/channels.html#Channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.Channels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manage channels for publish/subscribe</p>
+<dl class="method">
+<dt id="pulsar.apps.data.Channels.lock">
+<code class="descname">lock</code><span class="sig-paren">(</span><em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/channels.html#Channels.lock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.Channels.lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Global distributed lock</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.Channels.register">
+<code class="descname">register</code><span class="sig-paren">(</span><em>channel_name</em>, <em>event</em>, <em>callback</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/channels.html#Channels.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.Channels.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a callback to <code class="docutils literal"><span class="pre">channel_name</span></code> and <code class="docutils literal"><span class="pre">event</span></code>.</p>
+<p>A prefix will be added to the channel name if not already available or
+the prefix is an empty string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>channel_name</strong> &#8211; channel name</li>
+<li><strong>event</strong> &#8211; event name</li>
+<li><strong>callback</strong> &#8211; callback to execute when event on channel occurs</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a coroutine which results in the channel where the callback
+was registered</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.Channels.unregister">
+<code class="descname">unregister</code><span class="sig-paren">(</span><em>channel_name</em>, <em>event</em>, <em>callback</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/channels.html#Channels.unregister"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.Channels.unregister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Safely unregister a callback from the list of <code class="docutils literal"><span class="pre">event</span></code>
+callbacks for <code class="docutils literal"><span class="pre">channel_name</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>channel_name</strong> &#8211; channel name</li>
+<li><strong>event</strong> &#8211; event name</li>
+<li><strong>callback</strong> &#8211; callback to execute when event on channel occurs</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a coroutine which results in the channel object where the
+<code class="docutils literal"><span class="pre">callback</span></code> was removed (if found)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.data.Channels.publish">
+<code class="descname">publish</code><span class="sig-paren">(</span><em>channel</em>, <em>event</em>, <em>data=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/channels.html#Channels.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.Channels.publish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publish a new <code class="docutils literal"><span class="pre">event</span></code> on a <code class="docutils literal"><span class="pre">channel</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>channel</strong> &#8211; channel name</li>
+<li><strong>event</strong> &#8211; event name</li>
+<li><strong>data</strong> &#8211; optional payload to include in the event</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a coroutine and therefore it must be awaited</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">Concurrent framework for python 3.5 and above.</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgement.html">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pics.html">Pics</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#module-pulsar.apps.test.utils">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Data Stores</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2011-2016, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../../sources/apps/data/pubsub.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+    
+  </body>
+</html>

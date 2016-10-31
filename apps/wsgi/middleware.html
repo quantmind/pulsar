@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Middleware &mdash; pulsar 1.5.0 documentation</title>
+    <title>Asynchronous Middleware &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Response Middleware" href="response.html" />
     <link rel="prev" title="WSGI Wrappers" href="wrappers.html" />
    
+  <link rel="stylesheet" href="../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -46,23 +51,23 @@
   <div class="section" id="module-pulsar.apps.wsgi.middleware">
 <span id="asynchronous-middleware"></span><span id="wsgi-middleware"></span><h1>Asynchronous Middleware<a class="headerlink" href="#module-pulsar.apps.wsgi.middleware" title="Permalink to this headline">¶</a></h1>
 <p>A WSGI Middleware is a function or callable object similar to a
-<a class="reference internal" href="async.html#wsgi-handlers"><span>WSGI application handlers</span></a>
+<a class="reference internal" href="async.html#wsgi-handlers"><span class="std std-ref">WSGI application handlers</span></a>
 with the only difference that it can return nothing (<code class="docutils literal"><span class="pre">None</span></code>).</p>
 <p>Middleware can be used in conjunction with a
-<a class="reference internal" href="async.html#wsgi-handler"><span>WsgiHandler</span></a> or any
+<a class="reference internal" href="async.html#wsgi-handler"><span class="std std-ref">WsgiHandler</span></a> or any
 other handler which iterate through a list of middleware in a similar
 way (for example django wsgi handler).</p>
 <div class="admonition important">
 <p class="first admonition-title">Important</p>
 <p class="last">An asynchronous WSGI middleware is a callable accepting a WSGI
 <code class="docutils literal"><span class="pre">environ</span></code> and <code class="docutils literal"><span class="pre">start_response</span></code> as the only input parameters and
-it must returns an <a class="reference internal" href="async.html#wsgi-async-iter"><span>asynchronous iterator</span></a>
+it must returns an <a class="reference internal" href="async.html#wsgi-async-iter"><span class="std std-ref">asynchronous iterator</span></a>
 or nothing.</p>
 </div>
 <p>The two most important wsgi middleware in pulsar are:</p>
 <ul class="simple">
-<li>the <a class="reference internal" href="routing.html#wsgi-router"><span>Router</span></a> for serving dynamic web applications</li>
-<li>the <a class="reference internal" href="routing.html#wsgi-media-router"><span>MediaRouter</span></a> for serving static files</li>
+<li>the <a class="reference internal" href="routing.html#wsgi-router"><span class="std std-ref">Router</span></a> for serving dynamic web applications</li>
+<li>the <a class="reference internal" href="routing.html#wsgi-media-router"><span class="std std-ref">MediaRouter</span></a> for serving static files</li>
 </ul>
 <p>In addition, pulsar provides with the following four middlewares which don&#8217;t
 serve requests, instead they perform initialisation and sanity checks.</p>
@@ -130,10 +135,12 @@ executor.</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -159,6 +166,12 @@ executor.</p>
 <li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../data/index.html">Data Stores</a></li>
 </ul>
@@ -167,14 +180,11 @@ executor.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -185,8 +195,8 @@ executor.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../../sources/apps/wsgi/middleware.txt"

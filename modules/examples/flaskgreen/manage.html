@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.flaskgreen.manage &mdash; pulsar 1.5.0 documentation</title>
+    <title>examples.flaskgreen.manage &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
+  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,7 +47,7 @@
           <div class="body" role="main">
             
   <h1>Source code for examples.flaskgreen.manage</h1><div class="highlight"><pre>
-<span class="sd">&quot;&quot;&quot;This script demonstrates the use synchronous web frameworks such as flask_</span>
+<span></span><span class="sd">&quot;&quot;&quot;This script demonstrates the use synchronous web frameworks such as flask_</span>
 <span class="sd">in the context of asynchronous responses. It uses pulsar the :mod:`.greenio`</span>
 <span class="sd">module to run flask on a pool of greenlet.</span>
 
@@ -80,27 +85,27 @@
 
 <span class="sd">.. _flask: http://flask.pocoo.org/</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
 
-<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">make_response</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="k">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">make_response</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">wsgi</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">AbstractClient</span><span class="p">,</span> <span class="n">ProtocolError</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">AbstractClient</span><span class="p">,</span> <span class="n">ProtocolError</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="k">import</span> <span class="n">SocketServer</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">MultiApp</span><span class="p">,</span> <span class="n">Config</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">WSGIServer</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">MultiApp</span><span class="p">,</span> <span class="n">Config</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="k">import</span> <span class="n">WSGIServer</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.apps.greenio</span> <span class="kn">import</span> <span class="n">GreenPool</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.greenio.wsgi</span> <span class="kn">import</span> <span class="n">GreenWSGI</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.greenio</span> <span class="k">import</span> <span class="n">GreenPool</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.greenio.wsgi</span> <span class="k">import</span> <span class="n">GreenWSGI</span>
 
 
 <span class="k">class</span> <span class="nc">EchoProtocol</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
     <span class="n">separator</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;</span><span class="se">\r\n\r\n</span><span class="s1">&#39;</span>
     <span class="sd">&#39;&#39;&#39;A separator for messages.&#39;&#39;&#39;</span>
-    <span class="nb">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;&#39;</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;&#39;</span>
     <span class="sd">&#39;&#39;&#39;The buffer for long messages&#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -143,9 +148,9 @@
     <span class="sd">&quot;&quot;&quot;A client for the echo server to be used by the Flask application</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">EchoProtocol</span><span class="p">)</span>
-    <span class="n">address</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">address</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">appname</span><span class="p">,</span> <span class="n">wait</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">appname</span><span class="p">,</span> <span class="n">wait</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_name</span> <span class="o">=</span> <span class="n">appname</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait</span> <span class="o">=</span> <span class="n">wait</span>
@@ -157,31 +162,31 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="c1"># get the address of the echo application</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">:</span>
-            <span class="n">app</span> <span class="o">=</span> <span class="n">await</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_application</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_name</span><span class="p">)</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_application</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">connection</span><span class="p">:</span>
             <span class="n">consumer</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
             <span class="n">consumer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-            <span class="n">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+            <span class="k">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
             <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">buffer</span></div>
 
 
 <span class="k">def</span> <span class="nf">FlaskApp</span><span class="p">(</span><span class="n">echo</span><span class="p">):</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
-    <span class="nd">@app.errorhandler</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+    <span class="nd">@app</span><span class="o">.</span><span class="n">errorhandler</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">not_found</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;404 Page&quot;</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
 
-    <span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
     <span class="k">def</span> <span class="nf">home</span><span class="p">():</span>
         <span class="k">return</span> <span class="s2">&quot;Try any other url for an echo&quot;</span>
 
-    <span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/&lt;path&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/&lt;path&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
     <span class="k">def</span> <span class="nf">add_org</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
         <span class="n">a</span> <span class="o">=</span> <span class="n">echo</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
         <span class="k">return</span> <span class="s2">&quot;Flask Url : </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">a</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
@@ -192,7 +197,7 @@
 <div class="viewcode-block" id="FlaskSite"><a class="viewcode-back" href="../../../tutorials/flaskgreen.html#examples.flaskgreen.manage.FlaskSite">[docs]</a><span class="k">class</span> <span class="nc">FlaskSite</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">LazyWsgi</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Configure a flask_ application to run on a :class:`.GreenPool`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">green_pool</span> <span class="o">=</span> <span class="n">GreenPool</span><span class="p">()</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.cfg&#39;</span><span class="p">]</span>
         <span class="n">echo_app_name</span> <span class="o">=</span> <span class="s1">&#39;echo_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">name</span>
@@ -207,12 +212,12 @@
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="s1">&#39;:8080&#39;</span><span class="p">,</span> <span class="n">echo_bind</span><span class="o">=</span><span class="s1">&#39;:8060&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">WSGIServer</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="n">FlaskSite</span><span class="p">())</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">SocketServer</span><span class="p">,</span> <span class="s1">&#39;echo&#39;</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="n">EchoServerProtocol</span><span class="p">,</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">WSGIServer</span><span class="p">,</span> <span class="n">callable</span><span class="o">=</span><span class="n">FlaskSite</span><span class="p">())</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">SocketServer</span><span class="p">,</span> <span class="s1">&#39;echo&#39;</span><span class="p">,</span> <span class="n">callable</span><span class="o">=</span><span class="n">EchoServerProtocol</span><span class="p">,</span>
                            <span class="n">echo_connection_made</span><span class="o">=</span><span class="n">log_connection</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">log_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">log_connection</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
         <span class="n">connection</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Got a new connection to echo server!&#39;</span><span class="p">)</span>
 
@@ -239,10 +244,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -268,6 +275,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
@@ -276,14 +289,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -294,8 +304,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

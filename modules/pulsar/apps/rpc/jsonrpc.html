@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.rpc.jsonrpc &mdash; pulsar 1.5.0 documentation</title>
+    <title>pulsar.apps.rpc.jsonrpc &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../../index.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" />
    
+  <link rel="stylesheet" href="../../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,19 +47,19 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.rpc.jsonrpc</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">sys</span>
+<span></span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">as_coroutine</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span> <span class="n">ensure_future</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.string</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.tools</span> <span class="kn">import</span> <span class="n">checkarity</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">Json</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.http</span> <span class="kn">import</span> <span class="n">HttpClient</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">as_coroutine</span><span class="p">,</span> <span class="n">new_event_loop</span><span class="p">,</span> <span class="n">ensure_future</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.string</span> <span class="k">import</span> <span class="n">gen_unique_id</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.tools</span> <span class="k">import</span> <span class="n">checkarity</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="k">import</span> <span class="n">Json</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.http</span> <span class="k">import</span> <span class="n">HttpClient</span>
 
-<span class="kn">from</span> <span class="nn">.handlers</span> <span class="kn">import</span> <span class="n">RpcHandler</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">exception</span>
+<span class="kn">from</span> <span class="nn">.handlers</span> <span class="k">import</span> <span class="n">RpcHandler</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">exception</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;JSONRPC&#39;</span><span class="p">,</span> <span class="s1">&#39;JsonProxy&#39;</span><span class="p">,</span> <span class="s1">&#39;JsonBatchProxy&#39;</span><span class="p">]</span>
@@ -82,11 +87,11 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ensure_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_execute_request</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_execute_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_execute_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">await</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">body_data</span><span class="p">())</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">body_data</span><span class="p">())</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="n">res</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_error_and_status</span><span class="p">(</span><span class="n">InvalidRequest</span><span class="p">(</span>
                 <span class="n">status</span><span class="o">=</span><span class="mi">415</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s1">&#39;Content-Type must be application/json&#39;</span><span class="p">))</span>
@@ -96,17 +101,17 @@
                 <span class="n">status</span> <span class="o">=</span> <span class="mi">200</span>
 
                 <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">each</span><span class="p">)</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
                 <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">res</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                <span class="n">res</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
 
         <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status</span>
         <span class="k">return</span> <span class="n">Json</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">proc</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">exc_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span>
                     <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;jsonrpc&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="ow">or</span>
@@ -122,7 +127,7 @@
                 <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">params</span> <span class="ow">or</span> <span class="p">()),</span> <span class="p">{}</span>
             <span class="c1">#</span>
             <span class="n">proc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_handler</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;method&#39;</span><span class="p">))</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">proc</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">proc</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">exc</span>
             <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
@@ -137,9 +142,9 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="ow">and</span> <span class="n">proc</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="n">checkarity</span><span class="p">(</span><span class="n">proc</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">discount</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="kc">None</span>
 
-            <span class="n">rpc_id</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span>
+            <span class="n">rpc_id</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 
             <span class="n">res</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_error_and_status</span><span class="p">(</span>
                 <span class="n">result</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">rpc_id</span><span class="o">=</span><span class="n">rpc_id</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="n">exc_info</span><span class="p">)</span>
@@ -153,11 +158,11 @@
 
         <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">status</span>
 
-    <span class="k">def</span> <span class="nf">_get_error_and_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rpc_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                              <span class="n">exc_info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_get_error_and_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rpc_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                              <span class="n">exc_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">rpc_id</span><span class="p">,</span> <span class="s1">&#39;jsonrpc&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">}</span>
 
-        <span class="n">code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s1">&#39;fault_code&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s1">&#39;fault_code&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">code</span><span class="p">:</span>
             <span class="n">code</span> <span class="o">=</span> <span class="o">-</span><span class="mi">32602</span> <span class="k">if</span> <span class="n">msg</span> <span class="k">else</span> <span class="o">-</span><span class="mi">32603</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;JSON RPC exception&#39;</span>
@@ -236,16 +241,16 @@
     <span class="n">default_version</span> <span class="o">=</span> <span class="s1">&#39;2.0&#39;</span>
     <span class="n">default_timeout</span> <span class="o">=</span> <span class="mi">30</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">full_response</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">http</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-                 <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">full_response</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">http</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sync</span> <span class="o">=</span> <span class="n">sync</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">=</span> <span class="n">url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_version</span> <span class="o">=</span> <span class="n">version</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">default_version</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_full_response</span> <span class="o">=</span> <span class="n">full_response</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">http</span><span class="p">:</span>
-            <span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_timeout</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_timeout</span>
             <span class="k">if</span> <span class="n">sync</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">loop</span><span class="p">:</span>
                 <span class="n">loop</span> <span class="o">=</span> <span class="n">new_event_loop</span><span class="p">()</span>
             <span class="n">http</span> <span class="o">=</span> <span class="n">HttpClient</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
@@ -279,11 +284,11 @@
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">JsonCall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_data</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">is_ascii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">==</span> <span class="s1">&#39;ascii&#39;</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="n">is_ascii</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
-        <span class="n">resp</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">body</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">body</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_response</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">resp</span>
         <span class="k">else</span><span class="p">:</span>
@@ -376,11 +381,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="n">resp</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">b</span><span class="s1">&#39;[&#39;</span> <span class="o">+</span> <span class="n">b</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="s1">&#39;]&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_response</span><span class="p">:</span>
@@ -404,11 +409,11 @@
                 <span class="k">yield</span> <span class="n">BatchResponse</span><span class="p">(</span>
                     <span class="nb">id</span><span class="o">=</span><span class="n">resp</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span>
                     <span class="n">result</span><span class="o">=</span><span class="n">JsonBatchProxy</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="p">),</span>
-                    <span class="n">exception</span><span class="o">=</span><span class="bp">None</span>
+                    <span class="n">exception</span><span class="o">=</span><span class="kc">None</span>
                 <span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="n">BatchResponse</span><span class="p">(</span>
-                    <span class="nb">id</span><span class="o">=</span><span class="n">resp</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span> <span class="n">result</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="n">err</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="n">resp</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span> <span class="n">result</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="n">err</span>
                 <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -433,10 +438,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -462,6 +469,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
@@ -470,14 +483,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -488,8 +498,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

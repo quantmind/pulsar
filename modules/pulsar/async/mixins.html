@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.mixins &mdash; pulsar 1.5.0 documentation</title>
+    <title>pulsar.async.mixins &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
+  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,7 +47,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.async.mixins</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">create_future</span>
+<span></span><span class="kn">from</span> <span class="nn">.access</span> <span class="k">import</span> <span class="n">create_future</span>
 
 
 <div class="viewcode-block" id="FlowControl"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.mixins.FlowControl">[docs]</a><span class="k">class</span> <span class="nc">FlowControl</span><span class="p">:</span>
@@ -51,10 +56,10 @@
 <span class="sd">    This implements the protocol methods :meth:`pause_writing`,</span>
 <span class="sd">    :meth:`resume_writing`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_paused</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">_write_waiter</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_paused</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">_write_waiter</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low_limit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">high_limit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low_limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">high_limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_low_limit</span> <span class="o">=</span> <span class="n">low_limit</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_high_limit</span> <span class="o">=</span> <span class="n">high_limit</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;connection_made&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_flow_limits</span><span class="p">)</span>
@@ -69,44 +74,44 @@
 <span class="sd">        :meth:`resume_writing` is called first.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">pause_reading</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="FlowControl.resume_writing"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.mixins.FlowControl.resume_writing">[docs]</a>    <span class="k">def</span> <span class="nf">resume_writing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="FlowControl.resume_writing"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.mixins.FlowControl.resume_writing">[docs]</a>    <span class="k">def</span> <span class="nf">resume_writing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Resume writing.</span>
 
 <span class="sd">        Successive calls to this method will fails unless</span>
 <span class="sd">        :meth:`pause_writing` is called first.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">waiter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_waiter</span>
-        <span class="k">if</span> <span class="n">waiter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_write_waiter</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">waiter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_waiter</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">waiter</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">exc</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="n">waiter</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">exc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">waiter</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">waiter</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">resume_reading</span><span class="p">()</span></div>
 
     <span class="c1"># INTERNAL CALLBACKS</span>
-    <span class="k">def</span> <span class="nf">_set_flow_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_set_flow_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">set_write_buffer_limits</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_low_limit</span><span class="p">,</span>
                                                     <span class="bp">self</span><span class="o">.</span><span class="n">_high_limit</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_wakeup_waiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_wakeup_waiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># Wake up the writer if currently paused.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resume_writing</span><span class="p">(</span><span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_make_write_waiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_make_write_waiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># callback for the after_write event</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span><span class="p">:</span>
             <span class="n">waiter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_waiter</span>
-            <span class="k">assert</span> <span class="n">waiter</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">waiter</span><span class="o">.</span><span class="n">cancelled</span><span class="p">()</span>
+            <span class="k">assert</span> <span class="n">waiter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">waiter</span><span class="o">.</span><span class="n">cancelled</span><span class="p">()</span>
             <span class="n">waiter</span> <span class="o">=</span> <span class="n">create_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Waiting for write buffer to drain&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_write_waiter</span> <span class="o">=</span> <span class="n">waiter</span></div>
@@ -115,18 +120,18 @@
 <div class="viewcode-block" id="Timeout"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.mixins.Timeout">[docs]</a><span class="k">class</span> <span class="nc">Timeout</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;Adds a timeout for idle connections to protocols</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">_timeout</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_timeout_handler</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_timeout</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_timeout_handler</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span>
 
-    <span class="nd">@timeout.setter</span>
+    <span class="nd">@timeout</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Set a new :attr:`timeout` for this protocol</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;connection_made&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_timeout</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_timeout</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;before_write&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_timeout</span><span class="p">)</span>
@@ -134,24 +139,24 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;data_received&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_timeout</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;data_processed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="ow">or</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_add_timeout</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_timeout</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="c1"># INTERNALS</span>
     <span class="k">def</span> <span class="nf">_timed_out</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Closed idle </span><span class="si">%s</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_add_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_add_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">closed</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_timeout</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_timeout_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">,</span>
                                                               <span class="bp">self</span><span class="o">.</span><span class="n">_timed_out</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_cancel_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_cancel_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout_handler</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_timeout_handler</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_timeout_handler</span> <span class="o">=</span> <span class="bp">None</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_timeout_handler</span> <span class="o">=</span> <span class="kc">None</span></div>
 </pre></div>
 
           </div>
@@ -172,10 +177,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -201,6 +208,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apps/test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apps/data/index.html">Data Stores</a></li>
 </ul>
@@ -209,14 +222,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -227,8 +237,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

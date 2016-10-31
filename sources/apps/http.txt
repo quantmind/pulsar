@@ -58,7 +58,7 @@ You can attach parameters to the ``url`` by passing the
     response.url   // 'http://bla.com?page=2&key=foo'
 
 
-You can also pass a list of items as a value:
+You can also pass a list of items as a value::
 
    params = {key1': 'value1', 'key2': ['value2', 'value3']}
    response = sessions.get('http://bla.com', params=params)
@@ -380,7 +380,7 @@ HTTP Response
    :member-order: bysource
 
 
-.. _module:: pulsar.apps.http.oauth
+.. module:: pulsar.apps.http.oauth
 
 OAuth1
 ~~~~~~~~~~~~~~~~~~

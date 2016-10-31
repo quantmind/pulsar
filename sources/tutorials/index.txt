@@ -40,6 +40,7 @@ These sections cover **pulsar internals** for the curious reader.
    :maxdepth: 1
 
    actors
+   command
    coroutine
    messages
    events

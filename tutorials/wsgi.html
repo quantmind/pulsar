@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI &mdash; pulsar 1.5.0 documentation</title>
+    <title>WSGI &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Deploy Web Applications" href="deploy.html" />
     <link rel="prev" title="Echo Server and Client" href="clients.html" />
    
+  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -52,13 +57,13 @@ if not you should read <a class="reference external" href="http://www.python.org
 <p>All pulsar needs to set-up a WSGI server is the callable of your
 application. We start by creating a script, called <code class="docutils literal"><span class="pre">managed.py</span></code>
 which will be used to run your server:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">wsgi</span>
 
 <span class="k">def</span> <span class="nf">callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="o">...</span>
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -66,7 +71,7 @@ which will be used to run your server:</p>
 <span id="multi-wsgi"></span><h2>Multiple Process<a class="headerlink" href="#multiple-process" title="Permalink to this headline">¶</a></h2>
 <p>When serving lots of requests, an asynchronous single-process server may not be
 enough. To add power, you can run the server using 2 or more process (workers):</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py --workers 4
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">workers</span> <span class="mi">4</span>
 </pre></div>
 </div>
 <p>Multi-process servers are only available for:</p>
@@ -74,7 +79,7 @@ enough. To add power, you can run the server using 2 or more process (workers):<
 <li>Posix systems.</li>
 <li>Windows running python 3.3 or above.</li>
 </ul>
-<p>Check <a class="reference internal" href="../apps/socket.html#socket-server-concurrency"><span>multi-process socket servers</span></a>
+<p>Check <a class="reference internal" href="../apps/socket.html#socket-server-concurrency"><span class="std std-ref">multi-process socket servers</span></a>
 documentation for more information.</p>
 </div>
 <div class="section" id="blocking-middleware">
@@ -97,33 +102,33 @@ which needs to process the body of the HTTP request (such as POST methods)</li>
 executor (threading pool) of the actor serving the request.</li>
 </ul>
 <p>A pulsar friendly WSGI handler for a <code class="docutils literal"><span class="pre">callable</span></code> can take the following form:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">wsgi</span>
 
 <span class="k">def</span> <span class="nf">callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="o">...</span>
 
 <span class="n">wsgi_handler</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">wsgi</span><span class="o">.</span><span class="n">wait_for_body_middleware</span><span class="p">,</span>
-                                 <span class="n">wsgi</span><span class="o">.</span><span class="n">middleware_in_executor</span><span class="p">(</span><span class="nb">callable</span><span class="p">)])</span>
+                                 <span class="n">wsgi</span><span class="o">.</span><span class="n">middleware_in_executor</span><span class="p">(</span><span class="n">callable</span><span class="p">)])</span>
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">wsgi_handler</span><span class="p">())</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>To control the number of thread workers in the event loop executor, one uses the
-<a class="reference internal" href="../settings.html#setting-thread-workers"><span>thread-workers</span></a> option. For example, the
+<a class="reference internal" href="../settings.html#setting-thread-workers"><span class="std std-ref">thread-workers</span></a> option. For example, the
 following command:</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py -w 4 --thread-workers 10
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">w</span> <span class="mi">4</span> <span class="o">--</span><span class="n">thread</span><span class="o">-</span><span class="n">workers</span> <span class="mi">10</span>
 </pre></div>
 </div>
-<p>will run four <a class="reference internal" href="../design.html#concurrency"><span>process based actors</span></a>, each with
+<p>will run four <a class="reference internal" href="../design.html#concurrency"><span class="std std-ref">process based actors</span></a>, each with
 an executor with up to 10 threads.</p>
 </div>
 <div class="section" id="serving-more-than-one-application">
 <h2>Serving More than one application<a class="headerlink" href="#serving-more-than-one-application" title="Permalink to this headline">¶</a></h2>
 <p>You can serve as many applications, on different addresses, as you like.
 For example, our <code class="docutils literal"><span class="pre">manage.py</span></code> script could be:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">arbiter</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">arbiter</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">wsgi</span>
 
 <span class="k">def</span> <span class="nf">callable1</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="o">...</span>
@@ -160,10 +165,12 @@ For example, our <code class="docutils literal"><span class="pre">manage.py</spa
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -189,6 +196,12 @@ For example, our <code class="docutils literal"><span class="pre">manage.py</spa
 <li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
@@ -197,14 +210,11 @@ For example, our <code class="docutils literal"><span class="pre">manage.py</spa
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -215,8 +225,8 @@ For example, our <code class="docutils literal"><span class="pre">manage.py</spa
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../sources/tutorials/wsgi.txt"

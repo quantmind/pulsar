@@ -81,7 +81,7 @@ Logging
 log level
 ~~~~~~~~~~~~~~~~
 
-Pulsar uses the :ref:`log-level <setting-loglevel>` setting to control
+Pulsar uses the :ref:`log-level <setting-log_level>` setting to control
 logging level on the command line or on your :ref:`config <setting-config>`
 file::
 

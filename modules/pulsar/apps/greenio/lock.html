@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.greenio.lock &mdash; pulsar 1.5.0 documentation</title>
+    <title>pulsar.apps.greenio.lock &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../../../../index.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../apps.html" />
    
+  <link rel="stylesheet" href="../../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,14 +47,14 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.greenio.lock</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">threading</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span></span><span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">deque</span>
 
-<span class="kn">from</span> <span class="nn">greenlet</span> <span class="kn">import</span> <span class="n">getcurrent</span>
+<span class="kn">from</span> <span class="nn">greenlet</span> <span class="k">import</span> <span class="n">getcurrent</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">create_future</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">create_future</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">MustBeInChildGreenlet</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">MustBeInChildGreenlet</span>
 
 
 <div class="viewcode-block" id="GreenLock"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.lock.GreenLock">[docs]</a><span class="k">class</span> <span class="nc">GreenLock</span><span class="p">:</span>
@@ -59,17 +64,18 @@
 <span class="sd">    A primitive lock is in one of two states, &#39;locked&#39; or &#39;unlocked&#39;.</span>
 
 <span class="sd">    It is created in the unlocked state. It has two basic methods,</span>
-<span class="sd">    :meth:`.acquire` and :meth:`.release. When the state is unlocked,</span>
-<span class="sd">    :meth:`.acquire` changes the state to locked and returns immediately.</span>
+<span class="sd">    :meth:`~GreenLock.acquire` and :meth:`~GreenLock.release`.</span>
+<span class="sd">    When the state is unlocked, :meth:`~GreenLock.acquire` changes the</span>
+<span class="sd">    state to locked and returns immediately.</span>
 
-<span class="sd">    When the state is locked, :meth:`.acquire` blocks the current greenlet</span>
-<span class="sd">    until a call to :meth:`.release` changes it to unlocked,</span>
-<span class="sd">    then the :meth:`.acquire` call resets it to locked and returns.</span>
+<span class="sd">    When the state is locked, :meth:`~GreenLock.acquire` blocks the current</span>
+<span class="sd">    greenlet until a call to :meth:`~GreenLock.release` changes it to unlocked,</span>
+<span class="sd">    then the :meth:`~GreenLock.acquire` call resets it to locked and returns.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_local</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
 
 <div class="viewcode-block" id="GreenLock.locked"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.lock.GreenLock.locked">[docs]</a>    <span class="k">def</span> <span class="nf">locked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -77,13 +83,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span></div>
 
-<div class="viewcode-block" id="GreenLock.acquire"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.lock.GreenLock.acquire">[docs]</a>    <span class="k">def</span> <span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="GreenLock.acquire"><a class="viewcode-back" href="../../../../apps/greenio.html#pulsar.apps.greenio.lock.GreenLock.acquire">[docs]</a>    <span class="k">def</span> <span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Acquires the lock if in the unlocked state otherwise switch</span>
 <span class="sd">        back to the parent coroutine.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">green</span> <span class="o">=</span> <span class="n">getcurrent</span><span class="p">()</span>
         <span class="n">parent</span> <span class="o">=</span> <span class="n">green</span><span class="o">.</span><span class="n">parent</span>
-        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">MustBeInChildGreenlet</span><span class="p">(</span><span class="s1">&#39;GreenLock.acquire in main greenlet&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span><span class="p">:</span>
@@ -106,8 +112,8 @@
             <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="p">:</span>
                 <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">future</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
-                    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="bp">None</span>
+                    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">locked</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;release unlocked lock&#39;</span><span class="p">)</span></div>
 
@@ -137,10 +143,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -166,6 +174,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../apps/test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../apps/data/index.html">Data Stores</a></li>
 </ul>
@@ -174,14 +188,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -192,8 +203,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

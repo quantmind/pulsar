@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Routing &mdash; pulsar 1.5.0 documentation</title>
+    <title>Routing &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
-    <link rel="prev" title="Asynchronous WSGI" href="async.html" />
+    <link rel="prev" title="WSGI Server" href="server.html" />
    
+  <link rel="stylesheet" href="../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -63,7 +68,7 @@ Pulsar provides a flexible integrated
 routing system you can use for that. It works by creating a
 <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> instance with its own <code class="docutils literal"><span class="pre">rule</span></code> and, optionally, additional
 sub-routers for handling additional urls:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Page</span><span class="p">(</span><span class="n">Router</span><span class="p">):</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Page</span><span class="p">(</span><span class="n">Router</span><span class="p">):</span>
     <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">((</span><span class="s1">&#39;text/html&#39;</span><span class="p">,</span>
                                           <span class="s1">&#39;text/plain&#39;</span><span class="p">,</span>
                                           <span class="s1">&#39;application/json&#39;</span><span class="p">))</span>
@@ -88,18 +93,18 @@ sub-routers for handling additional urls:</p>
 </div>
 <div class="section" id="router">
 <span id="wsgi-router"></span><h2><a class="toc-backref" href="#id2">Router</a><a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
-<p>The <a class="reference internal" href="middleware.html#wsgi-middleware"><span>middleware</span></a> constructed in the snippet above
+<p>The <a class="reference internal" href="middleware.html#wsgi-middleware"><span class="std std-ref">middleware</span></a> constructed in the snippet above
 handles <code class="docutils literal"><span class="pre">get</span></code> and <code class="docutils literal"><span class="pre">post</span></code> methods at the <code class="docutils literal"><span class="pre">/bla</span></code> url.
 The <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> introduces a new element into pulsar WSGI handlers, the
-<a class="reference internal" href="wrappers.html#app-wsgi-request"><span>wsgi request</span></a>, a light-weight wrapper of the
+<a class="reference internal" href="wrappers.html#app-wsgi-request"><span class="std std-ref">wsgi request</span></a>, a light-weight wrapper of the
 WSGI environ.</p>
 <p>For an exhaustive example on how to use the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> middleware make
-sure you check out the <a class="reference internal" href="../../tutorials/httpbin.html#tutorials-httpbin"><span>HttpBin example</span></a>.</p>
+sure you check out the <a class="reference internal" href="../../tutorials/httpbin.html#tutorials-httpbin"><span class="std std-ref">HttpBin example</span></a>.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.routers.Router">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">Router</code><span class="sig-paren">(</span><em>rule</em>, <em>*routes</em>, <em>**parameters</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="middleware.html#wsgi-middleware"><span>WSGI middleware</span></a> to handle client requests
-on multiple <a class="reference internal" href="#apps-wsgi-route"><span>routes</span></a>.</p>
+<dd><p>A <a class="reference internal" href="middleware.html#wsgi-middleware"><span class="std std-ref">WSGI middleware</span></a> to handle client requests
+on multiple <a class="reference internal" href="#apps-wsgi-route"><span class="std std-ref">routes</span></a>.</p>
 <p>The user must implement the HTTP methods
 required by the application. For example if the route needs to
 serve a <code class="docutils literal"><span class="pre">GET</span></code> request, the <code class="docutils literal"><span class="pre">get(self,</span> <span class="pre">request)</span></code> method must
@@ -155,7 +160,7 @@ types, otherwise an HTTP <code class="docutils literal"><span class="pre">415</s
 <dd><p>Optional function which wraps all handlers of this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a>.
 The function must accept two parameters, the original handler
 and the <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest" title="pulsar.apps.wsgi.wrappers.WsgiRequest"><code class="xref py py-class docutils literal"><span class="pre">WsgiRequest</span></code></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">response_wrapper</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">response_wrapper</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
     <span class="o">...</span>
     <span class="k">return</span> <span class="n">handler</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 </pre></div>
@@ -334,7 +339,7 @@ method.</p>
 <code class="descclassname">pulsar.apps.wsgi.routers.</code><code class="descname">file_response</code><span class="sig-paren">(</span><em>request</em>, <em>filepath</em>, <em>block=None</em>, <em>status_code=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>cache_control=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#file_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.file_response" title="Permalink to this definition">¶</a></dt>
 <dd><p>Utility for serving a local file</p>
 <p>Typical usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">wsgi</span>
 
 <span class="k">class</span> <span class="nc">MyRouter</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">):</span>
 
@@ -393,19 +398,19 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <p class="last">copyright (c) 2011 by the Werkzeug Team. License BSD</p>
 </div>
 <p>A <a class="reference internal" href="#pulsar.apps.wsgi.route.Route" title="pulsar.apps.wsgi.route.Route"><code class="xref py py-class docutils literal"><span class="pre">Route</span></code></a> is a class for relative url paths:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">r1</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;bla&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">r1</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;bla&#39;</span><span class="p">)</span>
 <span class="n">r2</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;bla/foo&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Integers:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c1"># accept any integer</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># accept any integer</span>
 <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;&lt;int:size&gt;&#39;</span><span class="p">)</span>
 <span class="c1"># accept an integer between 1 and 200 only</span>
 <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;&lt;int(min=1,max=200):size&gt;&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Paths:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c1"># accept any path (including slashes)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># accept any path (including slashes)</span>
 <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;&lt;path:pages&gt;&#39;</span><span class="p">)</span>
 <span class="n">Route</span><span class="p">(</span><span class="s1">&#39;&lt;path:pages&gt;/edit&#39;</span><span class="p">)</span>
 </pre></div>
@@ -417,7 +422,7 @@ module in <a class="reference external" href="https://github.com/mitsuhiko/werkz
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.route.</code><code class="descname">route</code><span class="sig-paren">(</span><em>rule=None</em>, <em>method=None</em>, <em>defaults=None</em>, <em>position=None</em>, <em>re=False</em>, <em>**parameters</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/route.html#route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.route.route" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator to create a child route from a <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> method.</p>
 <p>Typical usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">Router</span><span class="p">,</span> <span class="n">route</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="k">import</span> <span class="n">Router</span><span class="p">,</span> <span class="n">route</span>
 
 <span class="k">class</span> <span class="nc">View</span><span class="p">(</span><span class="n">Router</span><span class="p">):</span>
 
@@ -446,7 +451,7 @@ the order will be given by the position of each method in the
 <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><code class="xref py py-class docutils literal"><span class="pre">Router</span></code></a> class.</p>
 <p>The decorated method are stored in the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.rule_methods" title="pulsar.apps.wsgi.routers.Router.rule_methods"><code class="xref py py-attr docutils literal"><span class="pre">Router.rule_methods</span></code></a> class
 attribute.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">)</span>
 <span class="go">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">View</span><span class="o">.</span><span class="n">rule_methods</span><span class="p">[</span><span class="s1">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rule</span>
 <span class="go">/foo</span>
@@ -458,7 +463,7 @@ attribute.</p>
 <span class="go">&#39;post&#39;</span>
 </pre></div>
 </div>
-<p>Check the <a class="reference internal" href="../../tutorials/httpbin.html#tutorials-httpbin"><span>HttpBin example</span></a>
+<p>Check the <a class="reference internal" href="../../tutorials/httpbin.html#tutorials-httpbin"><span class="std std-ref">HttpBin example</span></a>
 for a sample usage.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -592,10 +597,12 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -621,6 +628,12 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
 <li class="toctree-l1"><a class="reference internal" href="../http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../data/index.html">Data Stores</a></li>
 </ul>
@@ -629,14 +642,11 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -647,8 +657,8 @@ the root route and <code class="docutils literal"><span class="pre">None</span><
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../../sources/apps/wsgi/routing.txt"

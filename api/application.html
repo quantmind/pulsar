@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Application API &mdash; pulsar 1.5.0 documentation</title>
+    <title>Application API &#8212; pulsar 1.6.0b1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.0',
+        VERSION:     '1.6.0b1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.0 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Tools" href="utilities.html" />
     <link rel="prev" title="Protocols/Transports API" href="protocols.html" />
    
+  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -78,7 +83,7 @@ needs parsing.</li>
 attribute.</li>
 <li><strong>params</strong> &#8211; a dictionary of configuration parameters which
 overrides the defaults and the <a class="reference internal" href="#pulsar.apps.Configurator.cfg" title="pulsar.apps.Configurator.cfg"><code class="xref py py-attr docutils literal"><span class="pre">cfg</span></code></a> class attribute.
-They will be overwritten by a <a class="reference internal" href="../settings.html#setting-config"><span>config file</span></a>
+They will be overwritten by a <a class="reference internal" href="../settings.html#setting-config"><span class="std std-ref">config file</span></a>
 or command line arguments.</li>
 </ul>
 </td>
@@ -122,13 +127,35 @@ If set as class attribute it will be replaced during initialisation.</p>
 Evaluated during initialization via the <a class="reference internal" href="#pulsar.apps.Configurator.python_path" title="pulsar.apps.Configurator.python_path"><code class="xref py py-meth docutils literal"><span class="pre">python_path()</span></code></a> method.</p>
 </dd></dl>
 
-<dl class="classmethod">
-<dt id="pulsar.apps.Configurator.create_config">
-<em class="property">classmethod </em><code class="descname">create_config</code><span class="sig-paren">(</span><em>params</em>, <em>prefix=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.create_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.create_config" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new <a class="reference internal" href="utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><code class="xref py py-class docutils literal"><span class="pre">Config</span></code></a> container.</p>
-<p>Invoked during initialisation, it overrides defaults
-with <code class="docutils literal"><span class="pre">params</span></code> and apply the <code class="docutils literal"><span class="pre">prefix</span></code> to non global
-settings.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.Configurator.version">
+<code class="descname">version</code><a class="headerlink" href="#pulsar.apps.Configurator.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version of this <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.Configurator.root_dir">
+<code class="descname">root_dir</code><a class="headerlink" href="#pulsar.apps.Configurator.root_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root directory of this <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar.apps.Configurator"><code class="xref py py-class docutils literal"><span class="pre">Configurator</span></code></a>.</p>
+<p>Evaluated from the <a class="reference internal" href="#pulsar.apps.Configurator.script" title="pulsar.apps.Configurator.script"><code class="xref py py-attr docutils literal"><span class="pre">script</span></code></a> attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Configurator.python_path">
+<code class="descname">python_path</code><span class="sig-paren">(</span><em>script</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.python_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.python_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called during initialisation to obtain the <code class="docutils literal"><span class="pre">script</span></code> name.</p>
+<p>If <code class="docutils literal"><span class="pre">script</span></code> does not evaluate to <code class="docutils literal"><span class="pre">True</span></code> it is evaluated from
+the <code class="docutils literal"><span class="pre">__main__</span></code> import. Returns the real path of the python
+script which runs the application.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Configurator.on_config">
+<code class="descname">on_config</code><span class="sig-paren">(</span><em>arbiter</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.on_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.on_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Callback when configuration is loaded.</p>
+<p>This is a chance to do applications specific checks before the
+concurrent machinery is put into place.</p>
+<p>If it returns <code class="docutils literal"><span class="pre">False</span></code> the application will abort.</p>
 </dd></dl>
 
 <dl class="method">
@@ -147,44 +174,22 @@ overriding order is the following:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.Configurator.on_config">
-<code class="descname">on_config</code><span class="sig-paren">(</span><em>arbiter</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.on_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.on_config" title="Permalink to this definition">¶</a></dt>
-<dd><p>Callback when configuration is loaded.</p>
-<p>This is a chance to do applications specific checks before the
-concurrent machinery is put into place.</p>
-<p>If it returns <code class="docutils literal"><span class="pre">False</span></code> the application will abort.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.Configurator.python_path">
-<code class="descname">python_path</code><span class="sig-paren">(</span><em>script</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.python_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.python_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called during initialisation to obtain the <code class="docutils literal"><span class="pre">script</span></code> name.</p>
-<p>If <code class="docutils literal"><span class="pre">script</span></code> does not evaluate to <code class="docutils literal"><span class="pre">True</span></code> it is evaluated from
-the <code class="docutils literal"><span class="pre">__main__</span></code> import. Returns the real path of the python
-script which runs the application.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.Configurator.root_dir">
-<code class="descname">root_dir</code><a class="headerlink" href="#pulsar.apps.Configurator.root_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Root directory of this <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar.apps.Configurator"><code class="xref py py-class docutils literal"><span class="pre">Configurator</span></code></a>.</p>
-<p>Evaluated from the <a class="reference internal" href="#pulsar.apps.Configurator.script" title="pulsar.apps.Configurator.script"><code class="xref py py-attr docutils literal"><span class="pre">script</span></code></a> attribute.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.Configurator.start">
 <code class="descname">start</code><span class="sig-paren">(</span><em>exit=True</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoked the application callable method and start
 the <code class="docutils literal"><span class="pre">arbiter</span></code> if it wasn&#8217;t already started.</p>
-<p>It returns a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called back once the
+<p>It returns a <a class="reference external" href="http://python.readthedocs.io/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> called back once the
 application/applications are running. It returns <code class="docutils literal"><span class="pre">None</span></code> if
 called more than once.</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="pulsar.apps.Configurator.version">
-<code class="descname">version</code><a class="headerlink" href="#pulsar.apps.Configurator.version" title="Permalink to this definition">¶</a></dt>
-<dd><p>Version of this <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a></p>
+<dl class="classmethod">
+<dt id="pulsar.apps.Configurator.create_config">
+<em class="property">classmethod </em><code class="descname">create_config</code><span class="sig-paren">(</span><em>params</em>, <em>prefix=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.create_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.create_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new <a class="reference internal" href="utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><code class="xref py py-class docutils literal"><span class="pre">Config</span></code></a> container.</p>
+<p>Invoked during initialisation, it overrides defaults
+with <code class="docutils literal"><span class="pre">params</span></code> and apply the <code class="docutils literal"><span class="pre">prefix</span></code> to non global
+settings.</p>
 </dd></dl>
 
 </dd></dl>
@@ -245,7 +250,7 @@ the <a class="reference internal" href="actor.html#pulsar.async.actor.get_actor"
 <code class="docutils literal"><span class="pre">arbiter</span></code>, otherwise this call is no-op.</p>
 <p>If no actor is available, it means this application starts
 pulsar engine by creating the <code class="docutils literal"><span class="pre">arbiter</span></code> with its
-<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><span>global settings</span></a>
+<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><span class="std std-ref">global settings</span></a>
 copied to the arbiter <a class="reference internal" href="utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><code class="xref py py-class docutils literal"><span class="pre">Config</span></code></a> container.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -258,6 +263,36 @@ has fired it.</td>
 </table>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pulsar.apps.Application.stream">
+<code class="descname">stream</code><a class="headerlink" href="#pulsar.apps.Application.stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Actor stream handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Application.stop">
+<code class="descname">stop</code><span class="sig-paren">(</span><em>actor=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the application</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Application.worker_start">
+<code class="descname">worker_start</code><span class="sig-paren">(</span><em>worker</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Added to the <code class="docutils literal"><span class="pre">start</span></code> <a class="reference internal" href="../design.html#actor-hooks"><span class="std std-ref">worker hook</span></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Application.worker_info">
+<code class="descname">worker_info</code><span class="sig-paren">(</span><em>worker</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook to add additional entries to the worker <code class="docutils literal"><span class="pre">info</span></code> dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Application.worker_stopping">
+<code class="descname">worker_stopping</code><span class="sig-paren">(</span><em>worker</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_stopping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_stopping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Added to the <code class="docutils literal"><span class="pre">stopping</span></code> <a class="reference internal" href="../design.html#actor-hooks"><span class="std std-ref">worker hook</span></a>.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.apps.Application.actorparams">
 <code class="descname">actorparams</code><span class="sig-paren">(</span><em>monitor</em>, <em>params=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.actorparams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.actorparams" title="Permalink to this definition">¶</a></dt>
@@ -265,15 +300,15 @@ has fired it.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.Application.monitor_info">
-<code class="descname">monitor_info</code><span class="sig-paren">(</span><em>monitor</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Hook to add additional entries to the monitor <code class="docutils literal"><span class="pre">info</span></code> dictionary.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.Application.monitor_start">
 <code class="descname">monitor_start</code><span class="sig-paren">(</span><em>monitor</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Callback by the monitor when starting.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Application.monitor_info">
+<code class="descname">monitor_info</code><span class="sig-paren">(</span><em>monitor</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook to add additional entries to the monitor <code class="docutils literal"><span class="pre">info</span></code> dictionary.</p>
 </dd></dl>
 
 <dl class="method">
@@ -289,36 +324,6 @@ has fired it.</td>
 at each event loop.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pulsar.apps.Application.stop">
-<code class="descname">stop</code><span class="sig-paren">(</span><em>actor=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.stop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stop the application</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.Application.stream">
-<code class="descname">stream</code><a class="headerlink" href="#pulsar.apps.Application.stream" title="Permalink to this definition">¶</a></dt>
-<dd><p>Actor stream handler.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.Application.worker_info">
-<code class="descname">worker_info</code><span class="sig-paren">(</span><em>worker</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Hook to add additional entries to the worker <code class="docutils literal"><span class="pre">info</span></code> dictionary.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.Application.worker_start">
-<code class="descname">worker_start</code><span class="sig-paren">(</span><em>worker</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Added to the <code class="docutils literal"><span class="pre">start</span></code> <a class="reference internal" href="../design.html#actor-hooks"><span>worker hook</span></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.Application.worker_stopping">
-<code class="descname">worker_stopping</code><span class="sig-paren">(</span><em>worker</em>, <em>exc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_stopping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_stopping" title="Permalink to this definition">¶</a></dt>
-<dd><p>Added to the <code class="docutils literal"><span class="pre">stopping</span></code> <a class="reference internal" href="../design.html#actor-hooks"><span>worker hook</span></a>.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -329,36 +334,36 @@ at each event loop.</p>
 <em class="property">class </em><code class="descclassname">pulsar.apps.</code><code class="descname">MultiApp</code><span class="sig-paren">(</span><em>name=None</em>, <em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>argv=None</em>, <em>parse_console=True</em>, <em>script=None</em>, <em>cfg=None</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#MultiApp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.MultiApp" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><code class="xref py py-class docutils literal"><span class="pre">MultiApp</span></code></a> is a tool for creating several <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a>
 and starting them at once.</p>
-<p>It makes sure all <a class="reference internal" href="../settings.html#settings"><span>settings</span></a> for the
+<p>It makes sure all <a class="reference internal" href="../settings.html#settings"><span class="std std-ref">settings</span></a> for the
 applications created are available in the command line.</p>
 <p><a class="reference internal" href="#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><code class="xref py py-class docutils literal"><span class="pre">MultiApp</span></code></a> derives from <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar.apps.Configurator"><code class="xref py py-class docutils literal"><span class="pre">Configurator</span></code></a> and therefore
 supports all its configuration utilities,
 <a class="reference internal" href="#pulsar.apps.MultiApp.build" title="pulsar.apps.MultiApp.build"><code class="xref py py-meth docutils literal"><span class="pre">build()</span></code></a> is the only method which must be implemented by
 subclasses.</p>
 <p>A minimal example usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pulsar</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pulsar</span>
 
 <span class="k">class</span> <span class="nc">Server</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">MultiApp</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">TaskQueue</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">WSGIserver</span><span class="p">,</span> <span class="s2">&quot;rpc&quot;</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=...</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">WSGIserver</span><span class="p">,</span> <span class="s2">&quot;web&quot;</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=...</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">WSGIserver</span><span class="p">,</span> <span class="s2">&quot;rpc&quot;</span><span class="p">,</span> <span class="n">callable</span><span class="o">=...</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">WSGIserver</span><span class="p">,</span> <span class="s2">&quot;web&quot;</span><span class="p">,</span> <span class="n">callable</span><span class="o">=...</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="method">
-<dt id="pulsar.apps.MultiApp.apps">
-<code class="descname">apps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#MultiApp.apps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.MultiApp.apps" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> for this <a class="reference internal" href="#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><code class="xref py py-class docutils literal"><span class="pre">MultiApp</span></code></a>.</p>
-<p>The list is lazily loaded from the <a class="reference internal" href="#pulsar.apps.MultiApp.build" title="pulsar.apps.MultiApp.build"><code class="xref py py-meth docutils literal"><span class="pre">build()</span></code></a> method.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="pulsar.apps.MultiApp.build">
 <code class="descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#MultiApp.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.MultiApp.build" title="Permalink to this definition">¶</a></dt>
 <dd><p>Virtual method, must be implemented by subclasses and return an
 iterable over results obtained from calls to the
 <a class="reference internal" href="#pulsar.apps.MultiApp.new_app" title="pulsar.apps.MultiApp.new_app"><code class="xref py py-meth docutils literal"><span class="pre">new_app()</span></code></a> method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.MultiApp.apps">
+<code class="descname">apps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#MultiApp.apps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.MultiApp.apps" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> for this <a class="reference internal" href="#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><code class="xref py py-class docutils literal"><span class="pre">MultiApp</span></code></a>.</p>
+<p>The list is lazily loaded from the <a class="reference internal" href="#pulsar.apps.MultiApp.build" title="pulsar.apps.MultiApp.build"><code class="xref py py-meth docutils literal"><span class="pre">build()</span></code></a> method.</p>
 </dd></dl>
 
 <dl class="method">
@@ -375,7 +380,7 @@ as the number of <a class="reference internal" href="#pulsar.apps.Application" t
 <li><strong>App</strong> &#8211; an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> class.</li>
 <li><strong>prefix</strong> &#8211; The prefix to use for the application,
 the prefix is appended to
-the application <a class="reference internal" href="../settings.html#settings"><span>config parameters</span></a> and to the
+the application <a class="reference internal" href="../settings.html#settings"><span class="std std-ref">config parameters</span></a> and to the
 application name. Each call to this method must use a different
 value of for this parameter. It can be <code class="docutils literal"><span class="pre">None</span></code>.</li>
 <li><strong>callable</strong> &#8211; optional callable (function of object) used during
@@ -401,7 +406,7 @@ an instance of <em>App</em>.</li>
 <dt id="pulsar.apps.get_application">
 <code class="descclassname">pulsar.apps.</code><code class="descname">get_application</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/apps.html#get_application"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.get_application" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><code class="xref py py-class docutils literal"><span class="pre">Application</span></code></a> associated with <code class="docutils literal"><span class="pre">name</span></code> if available.</p>
-<p>This function may return an <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><span>asynchronous component</span></a>.
+<p>This function may return an <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><span class="std std-ref">asynchronous component</span></a>.
 The application name is set during initialisation. Check the
 <a class="reference internal" href="#pulsar.apps.Configurator.name" title="pulsar.apps.Configurator.name"><code class="xref py py-attr docutils literal"><span class="pre">Configurator.name</span></code></a> attribute for more information.</p>
 </dd></dl>
@@ -411,7 +416,7 @@ The application name is set during initialisation. Check the
 <span id="id2"></span><h2>When monitor start<a class="headerlink" href="#when-monitor-start" title="Permalink to this headline">¶</a></h2>
 <p>The application framework provides a way for adding hooks which are executed
 every time a new application starts. A hook is registered by:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">when_monitor_start</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">when_monitor_start</span>
 
 <span class="k">def</span> <span class="nf">myhook</span><span class="p">(</span><span class="n">monitor</span><span class="p">):</span>
     <span class="o">...</span>
@@ -420,7 +425,7 @@ every time a new application starts. A hook is registered by:</p>
 </pre></div>
 </div>
 <p>By default, the list of hooks only contains a callback to start the
-<a class="reference internal" href="../settings.html#setting-data-store"><span>default data store</span></a> if it needs to.</p>
+<a class="reference internal" href="../settings.html#setting-data-store"><span class="std std-ref">default data store</span></a> if it needs to.</p>
 </div>
 </div>
 
@@ -443,10 +448,12 @@ every time a new application starts. A hook is registered by:</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -472,6 +479,12 @@ every time a new application starts. A hook is registered by:</p>
 <li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#integration">Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#running-tests">Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#options">Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#test-plugins">Test Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#api">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html#module-pulsar.apps.test.utils">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
 </ul>
@@ -480,14 +493,11 @@ every time a new application starts. A hook is registered by:</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -498,8 +508,8 @@ every time a new application starts. A hook is registered by:</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../sources/api/application.txt"
