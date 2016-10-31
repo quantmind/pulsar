@@ -36,17 +36,18 @@ from .log import configured_logger
 from .pep import to_bytes
 
 
-__all__ = ['Config',
-           'Setting',
-           'ordered_settings',
-           'validate_string',
-           'validate_callable',
-           'validate_bool',
-           'validate_list',
-           'validate_dict',
-           'validate_pos_int',
-           'validate_pos_float',
-           'make_optparse_options']
+__all__ = [
+    'Config',
+    'Setting',
+    'ordered_settings',
+    'validate_string',
+    'validate_callable',
+    'validate_bool',
+    'validate_list',
+    'validate_dict',
+    'validate_pos_int',
+    'validate_pos_float'
+]
 
 LOGGER = logging.getLogger('pulsar.config')
 
@@ -738,23 +739,6 @@ def validate_callable(arity):
             raise TypeError("Value must have an arity of: %s" % arity)
         return val
     return _validate_callable
-
-
-def make_optparse_options(apps=None, exclude=None, include=None, **override):
-    """Create a tuple of optparse options."""
-    from optparse import make_option
-
-    class AddOptParser(list):
-        def add_argument(self, *args, **kwargs):
-            if 'const' in kwargs:
-                kwargs['action'] = 'store_const'
-                kwargs.pop('type')
-            self.append(make_option(*args, **kwargs))
-
-    config = Config(apps=apps, exclude=exclude, include=include, **override)
-    parser = AddOptParser()
-    config.add_to_parser(parser)
-    return tuple(parser)
 
 
 ############################################################################
