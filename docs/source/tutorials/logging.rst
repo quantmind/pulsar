@@ -4,10 +4,12 @@
 Logging
 ==================
 
-Pulsar provides several :ref:`settings <settings>` for managing the python logging module and display information when running. These configuration parameters can be specified both on the command line
+Pulsar provides several :ref:`settings <settings>` for managing the python
+logging module and display information when running.
+These configuration parameters can be specified both on the command line
 or in the :ref:`config <setting-config>` file of your application.
 
-The :ref:`log-level <setting-loglevel>` sets levels of loggers, for example::
+The :ref:`log-level <setting-log_level>` sets levels of loggers, for example::
 
 	python script.py --log-level debug
 

@@ -67,15 +67,6 @@ All registered data stores are stored in the ``data_stores`` dictionary::
 Pulsar provides two implementations, the redis client and the pulsards client.
 
 
-.. _apps-pubsub:
-
-Publish/Subscribe
-=====================
-
-A :class:`.Store` can implement the :meth:`~Store.pubsub` method to return
-a valid :class:`.PubSub` handler.
-
-
 API
 ============
 
@@ -105,21 +96,5 @@ Store
 ~~~~~~~~~~~~~~~
 
 .. autoclass:: Store
-   :members:
-   :member-order: bysource
-
-
-Command
-~~~~~~~~~~~~~~~
-
-.. autoclass:: Command
-   :members:
-   :member-order: bysource
-
-
-PubSub
-~~~~~~~~~~~~~~~
-
-.. autoclass:: PubSub
    :members:
    :member-order: bysource

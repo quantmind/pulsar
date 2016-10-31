@@ -1,3 +1,5 @@
+:orphan:
+
 Changelog Pre Pulsar 1.0
 ============================
 
@@ -85,7 +87,7 @@ Ver. 0.8.2 - 2014-May-30
   This avoids several logging errors when a connection is dropped
 * Added utilities to execute :postgresql:`PostgreSql <>` queries via
   psycopg2_ in asynchronous mode via the :mod:`~pulsar.apps.greenio` module.
-* :ref:`Django pulse application <apps-pulse>` can be run asynchronously
+* Django pulse application can be run asynchronously
   when using PostgreSql database.
   It requires the :greenlet:`greenlet module <>`
 * Added :attr:`.Head.embedded_js` for adding javascript code directly in the
@@ -195,7 +197,7 @@ Ver. 0.8.0 - 2014-Mar-06
   * The :mod:`pulsar.apps.pubsub` has been removed. Publish/subscribe
     implementations are now available in the new :mod:`pulsar.apps.data` module.
   * The ``Backend`` class has been removed.
-  * Improved :ref:`django example <tutorials-django>` with possibility to
+  * Improved django example with possibility to
     choose different data stores for messages.
   * Removed the twisted integration module and moved it to the example directory.
     The integration is not tested enough and therefore cannot be part of the
@@ -230,10 +232,10 @@ Ver. 0.7.3 - 2013-Dec-12
 Ver. 0.7.2 - 2013-Oct-16
 ---------------------------------------------------
 * A bug fix release.
-* Must upgrade if using the :ref:`django pulse <apps-pulse>` application.
+* Must upgrade if using the django pulse application.
 * Use ujson_ if installed.
 * Fixed :ref:`wait for body middleware <wait-for-body-middleware>`.
-* Fixed :ref:`django pulse <apps-pulse>` application when the client request
+* Fixed django pulse application when the client request
   has body to load.
 * **821 regression tests**, **91% coverage**.
 
@@ -313,11 +315,11 @@ Ver. 0.6.0 - 2013-Sep-05
     The method can be used to remove all tasks and empty the task queue.
   * Better handling of non-overlapping jobs in a task queue.
   * Added :ref:`when_exit <setting-when_exit>` application hook.
-  * Added :ref:`--io option <setting-selector>` for controlling the default
+  * Added ``--io`` option for controlling the default
     selector from python :mod:`selectors` module.
   * Critical bug fix in python 3 WSGI server.
   * Added ``full_route`` and ``rule`` attributes to wsgi Router.
-  * Added :ref:`--show_leaks option <setting-show_leaks>`
+  * Added ``--show_leaks`` option
     for showing a memory leak report after a test run.
   * Added :ref:`-e, --exclude-labels option <setting-exclude_labels>`
     for excluding labels in a test run.
@@ -400,7 +402,7 @@ Ver. 0.5.0 - 2013-May-22
   * Refactoring of asynchronous :mod:`pulsar.apps.test` application.
   * Added :ref:`Publish/Subscribe application <apps-pubsub>`. The application
     is used in the :ref:`web chat <tutorials-chat>` example.
-  * Added :ref:`django application <apps-pulse>` for running a django_
+  * Added django application for running a django_
     site using pulsar.
   * :func:`~pulsar.apps.get_application` returns a :ref:`coroutine <coroutine>`
     so that it can be used in any process domain.

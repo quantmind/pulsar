@@ -13,8 +13,8 @@ development of server side asynchronous web applications.
 .. toctree::
    :maxdepth: 2
 
-   intro
    async
+   server
    routing
    wrappers
    middleware

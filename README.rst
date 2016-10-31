@@ -153,8 +153,9 @@ uses them to add additional functionalities or improve performance:
 
 * greenlet_: required by the `pulsar.apps.greenio`_ module and useful for
   developing implicit asynchronous applications
-* uvloop_: if available it is the default event loop for pulsar actors. To
-  use a different loop use the ``event_loop`` (``--io``) configuration variable
+* uvloop_: if available it is possible to use it as the default event loop
+  for actors by passing ``--io uv`` in the command line (or ``event_loop="uv"``
+  in the config file)
 * setproctitle_: if installed, pulsar can use it to change the processes names
   of the running application
 * psutil_: if installed, a ``system`` key is available in the dictionary

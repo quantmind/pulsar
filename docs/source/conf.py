@@ -6,7 +6,7 @@ import os
 os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
 p = lambda x : os.path.split(x)[0]
 source_dir = p(os.path.abspath(__file__))
-ext_dir = os.path.join(source_dir,'_ext')
+ext_dir = os.path.join(source_dir, '_ext')
 docs_dir = p(source_dir)
 base_dir = p(docs_dir)
 sys.path.insert(0, base_dir)
@@ -87,6 +87,9 @@ exclude_trees = ['_build']
 exclude_trees = []
 html_additional_pages = {
 }
+
+exclude_patterns = ['history/*.md']
+suppress_warnings = ['image.nonlocal_uri']
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []

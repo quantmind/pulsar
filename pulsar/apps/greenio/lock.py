@@ -15,12 +15,13 @@ class GreenLock:
     A primitive lock is in one of two states, 'locked' or 'unlocked'.
 
     It is created in the unlocked state. It has two basic methods,
-    :meth:`.acquire` and :meth:`.release. When the state is unlocked,
-    :meth:`.acquire` changes the state to locked and returns immediately.
+    :meth:`~GreenLock.acquire` and :meth:`~GreenLock.release`.
+    When the state is unlocked, :meth:`~GreenLock.acquire` changes the
+    state to locked and returns immediately.
 
-    When the state is locked, :meth:`.acquire` blocks the current greenlet
-    until a call to :meth:`.release` changes it to unlocked,
-    then the :meth:`.acquire` call resets it to locked and returns.
+    When the state is locked, :meth:`~GreenLock.acquire` blocks the current
+    greenlet until a call to :meth:`~GreenLock.release` changes it to unlocked,
+    then the :meth:`~GreenLock.acquire` call resets it to locked and returns.
     """
     def __init__(self, loop=None):
         self._loop = loop or get_event_loop()

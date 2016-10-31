@@ -1,9 +1,12 @@
-import pulsar
+from asyncio import ensure_future
 
-names = ['john', 'luca', 'jo', 'alex']
+from pulsar import arbiter, command, spawn, send
 
 
-@pulsar.command()
+names = ['john', 'luca', 'carl', 'jo', 'alex']
+
+
+@command()
 def greetme(request, message):
     echo = 'Hello {}!'.format(message['name'])
     request.actor.logger.info(echo)
@@ -13,25 +16,23 @@ def greetme(request, message):
 class Greeter:
 
     def __init__(self):
-        cfg = pulsar.Config()
-        cfg.parse_command_line()
-        a = pulsar.arbiter(cfg=cfg)
-        self.cfg = a.cfg
+        a = arbiter()
         self._loop = a._loop
-        self._loop.call_later(1, pulsar.ensure_future, self())
+        self._loop.call_later(1, self)
         a.start()
 
-    async def __call__(self, a=None):
+    def __call__(self, a=None):
+        ensure_future(self._work(a))
+
+    async def _work(self, a=None):
         if a is None:
-            a = await pulsar.spawn(name='greeter')
+            a = await spawn(name='greeter')
         if names:
             name = names.pop()
-            self._loop.logger.info("Hi! I'm %s" % name)
-            await pulsar.send(a, 'greetme', {'name': name})
-            self._loop.call_later(1, pulsar.ensure_future, self(a))
+            await send(a, 'greetme', {'name': name})
+            self._loop.call_later(1, self, a)
         else:
-            pulsar.arbiter().stop()
-
+            arbiter().stop()
 
 if __name__ == '__main__':
     Greeter()
