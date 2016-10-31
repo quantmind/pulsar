@@ -2,7 +2,7 @@ language: python
 
 python:
   - 3.5.2
-  # - 3.6-dev
+  - 3.6-dev
 
 services:
   - redis-server
