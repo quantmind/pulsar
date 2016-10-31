@@ -51,31 +51,11 @@ Implementation
 .. _philosophers: http://en.wikipedia.org/wiki/Dining_philosophers_problem
 
 '''
-import os
 import random
-import json
 from asyncio import ensure_future
 
 import pulsar
 from pulsar import command
-
-# WEB INTERFACE
-media_libraries = {
-    "d3": "//cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3",
-    "jquery": "//code.jquery.com/jquery-1.11.0",
-    "require": "//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require"
-    }
-ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
-FAVICON = os.path.join(ASSET_DIR, 'favicon.ico')
-
-
-class WsProtocol:
-
-    def encode(self, message):
-        return json.dumps(message)
-
-    def decode(self, message):
-        return json.loads(message)
 
 
 ###########################################################################
@@ -235,5 +215,5 @@ class DiningPhilosophers(pulsar.Application):
         philosopher._loop.call_soon(self.take_action, philosopher)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':      # pragma    nocover
     DiningPhilosophers().start()

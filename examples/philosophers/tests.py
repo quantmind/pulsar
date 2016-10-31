@@ -12,7 +12,7 @@ class TestPhylosophers(unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        app = DiningPhilosophers(name='plato', concurrency='thread')
+        app = DiningPhilosophers(name='plato')
         cls.app_cfg = await send('arbiter', 'run', app)
 
     @test_timeout(60)
