@@ -235,10 +235,10 @@ file in the top distribution directory for the full license text.
 .. _`pulsar.apps.greenio`: https://github.com/quantmind/pulsar/tree/master/pulsar/apps/greenio
 .. _`pulsar.apps.pulse`: https://github.com/quantmind/pulsar/tree/master/pulsar/apps/pulse
 .. _HttpClient: http://quantmind.github.io/pulsar/apps/http.html
-.. _`Data stores`: http://pythonhosted.org/pulsar/apps/data/index.html
+.. _`Data stores`: http://quantmind.github.io/pulsar/apps/data/index.html
 .. _`Task queue consumers`: https://github.com/quantmind/pulsar-queue
 .. _`Async botocore`: https://github.com/quantmind/pulsar-cloud
 .. _`django integration`: https://github.com/quantmind/pulsar-django
 .. _`python-pulsar`: http://stackoverflow.com/questions/tagged/python-pulsar
-.. _`Web Sockets`: http://pythonhosted.org/pulsar/apps/websockets.html
+.. _`Web Sockets`: http://quantmind.github.io/pulsar/apps/websockets.html
 .. _uvloop: https://github.com/MagicStack/uvloop

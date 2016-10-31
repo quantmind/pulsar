@@ -2,9 +2,9 @@
 
 .. module:: pulsar.apps.test
 
-===========
+##############
 Test Suite
-===========
+##############
 
 The :class:`TestSuite` is a testing framework for both synchronous and
 asynchronous applications and for running tests in parallel
@@ -13,7 +13,7 @@ It is used for testing pulsar but it can be used
 as a test suite for any other library.
 
 .. contents::
-   :depth: 2
+   :depth: 3
 
 .. _apps-test-intro:
 

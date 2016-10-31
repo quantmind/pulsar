@@ -52,17 +52,14 @@ extensions = ['sphinx.ext.autodoc',
               #'pulsar.utils.docs.html',
               'alabaster',
               'pulsarext',
-              'redisext']
+              'redisext',
+              'sphinxtogithub']
 
 try:
     import sphinxcontrib.spelling  # noqa
     extensions.append('sphinxcontrib.spelling')
 except ImportError:
     pass
-
-# Beta version is published in github pages
-if pulsar.VERSION[3] != 'alpha':
-    extensions.append('sphinxtogithub')
 
 html_theme_options['analytics_id'] = 'UA-3900561-7'
 html_context = {'release_version': pulsar.VERSION[3] == 'final'}
