@@ -459,7 +459,7 @@ def create_store(url, **kw):
     dotted_path = data_stores.get(scheme)
     if not dotted_path:
         raise NoSuchStore('%s store not available' % scheme)
-    store_class = module_attribute(dotted_path)
+    store_class = module_attribute(dotted_path, safe=True)
     if not store_class:
         raise ImproperlyConfigured('"%s" store not available' % dotted_path)
     if not store_class.registered:

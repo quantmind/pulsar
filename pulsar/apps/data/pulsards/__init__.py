@@ -11,4 +11,4 @@ class PulsarStore(store.RedisStore):
     pass
 
 
-register_store('pulsar', 'pulsar.apps.data.PulsarStore')
+register_store('pulsar', 'pulsar.apps.data.pulsards:PulsarStore')

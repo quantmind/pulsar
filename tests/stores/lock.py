@@ -1,7 +1,6 @@
 import asyncio
 
-from pulsar import ensure_future
-from pulsar.apps.data import LockError
+from pulsar import ensure_future, LockError
 
 
 class RedisLockTests:

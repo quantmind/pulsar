@@ -1,6 +1,6 @@
 from pulsar import HAS_C_EXTENSIONS
 from pulsar.apps.test import check_server
-from pulsar.apps.data import RedisScript
+from pulsar.apps.data.redis import RedisScript
 
 from tests.stores.test_pulsards import unittest, RedisCommands, create_store
 from tests.stores.lock import RedisLockTests
