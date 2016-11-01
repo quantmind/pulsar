@@ -136,7 +136,7 @@ property. By default it recursively loads test files inside the
 Test labels
 ======================
 
-To run a specify label::
+To run a specific label::
 
     python runtests.py <label>
 
@@ -147,6 +147,11 @@ When using the setuptools_ integration::
 To list all labels::
 
     python setup.py test -l
+
+It is also possible to run a single test function within a label::
+
+   python setup.py test -a <label>.<test_function_name>
+
 
 .. _test-suite-options:
 
@@ -184,15 +189,6 @@ the :func:`.sequential` decorator::
     class MyTestCase(unittest.TestCase):
         ...
 
-Using the ``sequential`` option, does not mean only one test function
-is executed by the :class:`.TestSuite` at a given time. Indeed, several
-:class:`~unittest.TestCase` are executed at the same time and therefore
-each one of the may have one test function running.
-
-In order to run only one test function at any time, the ``sequential``
-option should be used::
-
-    python runtests.py --sequential
 
 list labels
 ==================
@@ -213,6 +209,7 @@ long a test function can wait for results. This is what the
     python runtests.py --test-timeout 10
 
 Set the test timeout to 10 seconds.
+Test timeout is only meaningful for asynchronous test function.
 
 ==================
 Test Plugins

@@ -86,7 +86,6 @@ exclude_trees = []
 html_additional_pages = {
 }
 
-exclude_patterns = ['history/*.md']
 suppress_warnings = ['image.nonlocal_uri']
 
 # Add any paths that contain custom themes here, relative to this directory.

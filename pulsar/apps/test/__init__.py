@@ -137,25 +137,11 @@ class TestSuite(pulsar.Application):
     Each task is a group of test methods in a python TestCase class.
 
     :parameter modules: An iterable over modules where to look for tests.
-        Alternatively it can be a callable returning the iterable over modules.
-        For example::
-
-            suite = TestSuite(modules=('regression',
-                                       ('examples','tests'),
-                                       ('apps','test_*')))
-
-            def get_modules(suite):
-                ...
-
-            suite = TestSuite(modules=get_modules)
-
         If not provided it is set as default to ``["tests"]`` which loads all
         python module from the tests module in a recursive fashion.
         Check the the :class:`.TestLoader` for detailed information.
-
-    :parameter result_class: Optional class for collecting test results.
-        By default it used the standard :class:`.TestResult`.
-    :parameter plugins: Optional list of :class:`.TestPlugin` instances.
+    :parameter plugins: Optional list of dotted path to
+        :class:`.TestPlugin` classes.
     '''
     name = 'test'
     cfg = pulsar.Config(
