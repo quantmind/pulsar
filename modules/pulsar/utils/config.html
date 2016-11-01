@@ -85,17 +85,18 @@
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="k">import</span> <span class="n">to_bytes</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Config&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;Setting&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;ordered_settings&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;validate_string&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;validate_callable&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;validate_bool&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;validate_list&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;validate_dict&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;validate_pos_int&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;validate_pos_float&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;make_optparse_options&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;Config&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Setting&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ordered_settings&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;validate_string&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;validate_callable&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;validate_bool&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;validate_list&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;validate_dict&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;validate_pos_int&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;validate_pos_float&#39;</span>
+<span class="p">]</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;pulsar.config&#39;</span><span class="p">)</span>
 
@@ -648,7 +649,13 @@
 <span class="sd">        If ``default`` is ``True`` set also the :attr:`default` value.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">,</span> <span class="s1">&#39;__call__&#39;</span><span class="p">):</span>
-            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)(</span>
+                    <span class="s1">&#39;Could not validate value for &quot;</span><span class="si">%s</span><span class="s1">&quot; setting: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+                <span class="p">)</span> <span class="kn">from</span> <span class="nn">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">imported</span> <span class="o">=</span> <span class="n">imported</span>
         <span class="k">if</span> <span class="n">default</span><span class="p">:</span>
@@ -787,23 +794,6 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Value must have an arity of: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">arity</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span>
     <span class="k">return</span> <span class="n">_validate_callable</span>
-
-
-<span class="k">def</span> <span class="nf">make_optparse_options</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">override</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a tuple of optparse options.&quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">optparse</span> <span class="k">import</span> <span class="n">make_option</span>
-
-    <span class="k">class</span> <span class="nc">AddOptParser</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
-        <span class="k">def</span> <span class="nf">add_argument</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="k">if</span> <span class="s1">&#39;const&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;store_const&#39;</span>
-                <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">make_option</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
-
-    <span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="n">apps</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">exclude</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="o">**</span><span class="n">override</span><span class="p">)</span>
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">AddOptParser</span><span class="p">()</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">add_to_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
 
 
 <span class="c1">############################################################################</span>

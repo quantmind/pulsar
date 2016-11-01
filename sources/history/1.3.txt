@@ -1,0 +1,95 @@
+## Ver. 1.3.6 - 2016-Jul-09
+
+Redis Lock bug fix and enhancement
+
+* Critical bug fix in Redis Lock, the sleep method was not awaited when acquiring the lock
+* Redis lock is an asynchronous context manager
+
+
+## Ver. 1.3.5 - 2016-Jul-01
+
+Bug fixes and improvements
+
+* Pyreadline compatibility for windows #230
+* Use ``router.SkipRoute`` to abort route serving [36204b4](https://github.com/quantmind/pulsar/commit/36204b4b1727956266fb2d7c21b36a7377bff696)
+* Removed silence from events and fixed #228, [26193f5](https://github.com/quantmind/pulsar/commit/26193f5c9454689fd073dca57459332ef5cb84a5)
+* Allow MediaRouter to serve only files matching a set of extensions [a3312c7](https://github.com/quantmind/pulsar/commit/a3312c74b109f1326a9e933c9efdfc66eea34f4d)
+
+
+## Ver. 1.3.4 - 2016-Jun-17
+
+Minor release which adds the ability to run a single test function from the test suite.
+
+* ``full_url`` is a standalone function [794e6a0](https://github.com/quantmind/pulsar/commit/794e6a0afb22e6dd2c87c7ad26d7f2b9b7cf61db)
+* Test suite can run specific test function in a given tag. Fixes #224 [550b0a5](https://github.com/quantmind/pulsar/commit/550b0a5d6a12044480a5baddf6b3d2f0b25c0b32)
+
+
+## Ver. 1.3.3 - 2016-Jun-06
+
+A critical bug fix for the WSGI server and several important fixes in internals.
+
+* Critical bug fix in HEAD HTTP response - remove the content but not the content related headers [74438a7](https://github.com/quantmind/pulsar/commit/74438a735e661d3dcec4937606b095f2fe87eb31)
+* No longer add ``Connection`` header if HTTP version is 1.1 and the value is keep-alive
+* Http head test [6d33410](https://github.com/quantmind/pulsar/commit/6d334104295d200f16550e334915c2298f3934ab)
+* Http client is now an asynchronous context manager [1c01fc7](https://github.com/quantmind/pulsar/commit/1c01fc755b044eeed57939197e397f89e4a2e650)
+* Server does not hang when using the ``--reload`` flag and Ctrl-C
+* Removed finish event from AbstractClient, no longer used
+* Actor is set to STOPPED state when the event loop is stopped [f2afe03](https://github.com/quantmind/pulsar/commit/f2afe03a290aed9e4f918750c9e7421513fcf4d4)
+* Link to actor image in README.rst
+
+
+## Ver. 1.3.2 - 2016-May-20
+
+Bug fix release
+
+* **Critical bug fix** in add_header [4bf5d9c](https://github.com/quantmind/pulsar/commit/4bf5d9c0c004bfd7084992f384d112b06450a820)
+* Bug fix in test application when multiple test classes present in a single file [e2576b8](https://github.com/quantmind/pulsar/commit/e2576b8fa476c89cba61cdccced6d2e6e4b7e038)
+
+
+## Ver. 1.3.1 - 2016-May-17
+
+Minor release with on bug fix only
+
+* Don't wrap wsgi.input with GreenBody if it is already wrapped [d66ddb8](https://github.com/quantmind/pulsar/commit/d66ddb80fed4a620fb768526c445203dee8f02ce)
+
+
+## Ver. 1.3.0 - 2016-May-12
+
+This is a backward incompatible version which works for python 3.5 and above.
+The async/await syntax has been adopted in the whole codebase. It brings
+several improvements in the API as well as bug fixes.
+
+### Core
+* Tidy up cython extensions, No more python 2 checks
+* Cython is no longer required when installing C extensions
+* Better dev version to avoid warning in command line for #213 [6d369f0](https://github.com/quantmind/pulsar/commit/6d369f0a4f4defcbc3083769d2fb0082cc8badb3)
+* Hindi pulsar, need double check [c83e178](https://github.com/quantmind/pulsar/commit/c83e1786a7ef7a0ef9870f59e19f9b4099673d5d)
+* Overwrite pid file if the pid is stale, fixes [#218](https://github.com/quantmind/pulsar/issues/218), [00195c4](https://github.com/quantmind/pulsar/commit/00195c4dca1c709698a09c0cbf297d9858e90b06)
+* Regression fix in ``get_application`` [#220](https://github.com/quantmind/pulsar/issues/220)
+
+### HttpClient
+* HttpClient support ``json`` parameter for easily posting JSON data [5256dc9](https://github.com/quantmind/pulsar/commit/5256dc90b185f525c5728445f3554c6fe68ce4e8)
+* Http client stream with sync and async iterators [e2f12de](https://github.com/quantmind/pulsar/commit/e2f12dea6fd46dd8eb17a4fd2728301a96dec7b6)
+* Use [certifi][] library if available
+* urlparams replaced by ``params``, same as requests [08fed42](https://github.com/quantmind/pulsar/commit/08fed4292675a84bef9f4433b05876573f84c4e0)
+* Don't raise error when content_type is given and data is bytes [18424cc](https://github.com/quantmind/pulsar/commit/18424cc03d1017c585cd2efed34f7b4616b52e4a)
+* Verify parameter in http client. Fixes #191 [4611261](https://github.com/quantmind/pulsar/commit/46112618701e83f2c2de2d37391d2f5efe28b2ad)
+
+### WSGI
+* Removed AsyncString proxy to String [f484062](https://github.com/quantmind/pulsar/commit/f484062f2f539ac4ea522ad3b1051d1e5778cd95)
+* Renamed async object to wait in test classes [cbbc1a5](https://github.com/quantmind/pulsar/commit/cbbc1a5fbccc70e9f849df42ddfa9da5b301840c)
+* Refactored import file function [6bb5df0](https://github.com/quantmind/pulsar/commit/6bb5df0aef5b86cf221916efa9ead30caaaef5fa)
+
+### GreenIO
+* Added ``GreenHttp`` [e8a1fd4](https://github.com/quantmind/pulsar/commit/e8a1fd4f994c4733f44968fa5df922fa12bb930c)
+
+### Tests
+* Overall refactoring of the test suite.
+* The ``runtests`` script has been removed. tests are now run using ``setup.py`` [#213](https://github.com/quantmind/pulsar/issues/213)
+* The ``pulsar_test`` package is included in the installation. It gives access to the ``pulsar_test.Test`` class for running tests using pulsar test suite
+* Added tests for flaskgreen and fixed bug in multiapp config [9bf37b1](https://github.com/quantmind/pulsar/commit/9bf37b16b6b3cd42737edc50f979df4310b51e08)
+* Versioning support [pep440](https://www.python.org/dev/peps/pep-0440/) for alpha and beta releases [468daa2](https://github.com/quantmind/pulsar/commit/468daa2da55ac9628215b93340d19d553e451e62)
+* Don't run slugify test if unidecode package is not installed. Fixes [#206](https://github.com/quantmind/pulsar/issues/206)
+
+
+[certifi]: https://certifi.io

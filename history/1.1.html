@@ -1,0 +1,249 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Ver. 1.1.3 - 2016-Feb-19 &#8212; pulsar 1.6.0b1 documentation</title>
+    
+    <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.6.0b1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
+   
+  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ver-1-1-3-2016-feb-19">
+<span id="ver-1-1-3-2016-feb-19"></span><h1>Ver. 1.1.3 - 2016-Feb-19<a class="headerlink" href="#ver-1-1-3-2016-feb-19" title="Permalink to this headline">¶</a></h1>
+<p>Make sure the <code class="docutils literal"><span class="pre">asyncio.coroutine</span></code> decorator is used by all pulsar coroutines
+This allows to use pulsar to write python 3.5 compatible code with the
+<code class="docutils literal"><span class="pre">async/await</span></code> syntax. <a class="reference external" href="https://github.com/quantmind/pulsar/commit/709f9ff0e9df9858100a9b2e2ef154ad57391a07">709f9ff</a></p>
+<div class="section" id="documentation">
+<span id="documentation"></span><h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Mcve reference in the readme <a class="reference external" href="https://github.com/quantmind/pulsar/commit/b49434d3e9a0f016e6b7630bdbfab0327ab3b002">b49434d</a></li>
+<li>Removed CHANGELOG.rst from the top level directory and created a folder inside
+the docs which contains a list of minor releases</li>
+<li>Started using markdown in documentation. <a class="reference external" href="https://github.com/quantmind/pulsar/commit/6b208259b5937fd0e4468dcb263e2f365df86a66">6b20825</a></li>
+</ul>
+</div>
+<div class="section" id="http">
+<span id="http"></span><h2>Http<a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Better keep-alive management of HTTP connections <a class="reference external" href="https://github.com/quantmind/pulsar/commit/df1be4bc4347b7d71de677bc73d5b8c9085d90f7">df1be4b</a></li>
+<li>Http client uses the base class connection method rather than using a
+different one <a class="reference external" href="https://github.com/quantmind/pulsar/commit/b5848289bb0605ebe97d1179260b47d9889a9887">b584828</a></li>
+<li>The http response object has the links attribute which return a parsed
+Links headers dictionary. Code from python requests <a class="reference external" href="https://github.com/quantmind/pulsar/commit/023ca508d2ecd222924e0e1087ea88a6cbbaadda">023ca50</a></li>
+</ul>
+</div>
+<div class="section" id="wsgi">
+<span id="wsgi"></span><h2>Wsgi<a class="headerlink" href="#wsgi" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Use file_response function in MediaMixin.serve_file method <a class="reference external" href="https://github.com/quantmind/pulsar/commit/c012af1855c704d352dec3a045911e7b1a14f572">c012af1</a></li>
+<li>FileRouter is now a proxy for MediaRouter</li>
+</ul>
+</div>
+</div>
+<div class="section" id="ver-1-1-2-2016-feb-04">
+<span id="ver-1-1-2-2016-feb-04"></span><h1>Ver. 1.1.2 - 2016-Feb-04<a class="headerlink" href="#ver-1-1-2-2016-feb-04" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Removed <code class="docutils literal"><span class="pre">release</span></code> application and created a <a class="reference external" href="https://github.com/quantmind/pulsar-agile">new repository</a> for it</li>
+<li><code class="docutils literal"><span class="pre">wait</span></code> method in <code class="docutils literal"><span class="pre">greenio</span></code> app accepts an extra parameter for checking if in child greenlet</li>
+<li>Specialised <code class="docutils literal"><span class="pre">MustBeInChildGreenlet</span></code> error for functions which should be called on a child greenlet</li>
+<li>Critical bug fix in <code class="docutils literal"><span class="pre">pubsub</span></code> subscribe method for Redis backend</li>
+<li>Added an asynchronous <code class="docutils literal"><span class="pre">wsgi.file_wrapper</span></code> to the WSGI environment</li>
+<li>Added <code class="docutils literal"><span class="pre">file_response</span></code> utility to serve local files</li>
+<li>Introduced <code class="docutils literal"><span class="pre">pulsar.ensure_future</span></code> in place of <code class="docutils literal"><span class="pre">pulsar.async</span></code></li>
+</ul>
+</div>
+<div class="section" id="ver-1-1-1-2016-jan-06">
+<span id="ver-1-1-1-2016-jan-06"></span><h1>Ver. 1.1.1 - 2016-Jan-06<a class="headerlink" href="#ver-1-1-1-2016-jan-06" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Full support for python 3.5</li>
+<li>Pulsar <strong>1.1.x</strong> is the last minor release (&#8220;major.minor.micro&#8221;) to support python 3.4</li>
+<li>From pulsar <strong>1.2.x</strong>, support for python 3.4 will be dropped and the new
+<a class="reference external" href="https://www.python.org/dev/peps/pep-0492/#specification">async-await</a> syntax will be used in the whole codebase</li>
+</ul>
+<div class="section" id="core">
+<span id="core"></span><h2>Core<a class="headerlink" href="#core" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Added CI for python 3.5</li>
+<li>Added <code class="docutils literal"><span class="pre">debug</span></code> properties to all <code class="docutils literal"><span class="pre">AsyncObject</span></code>. The property returns the event loop
+debug mode flag</li>
+</ul>
+</div>
+<div class="section" id="http">
+<span id="id1"></span><h2>Http<a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Backward incompatible changes with API much closer to <a class="reference external" href="http://docs.python-requests.org/">requests</a> and far better support for streaming both uploads and downloads</li>
+<li>Added <code class="docutils literal"><span class="pre">content</span></code> attribute to <code class="docutils literal"><span class="pre">HttpResponse</span></code>, in line with <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+<li>Ability to pass <code class="docutils literal"><span class="pre">stream=True</span></code> during a request, same API as python <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+<li>Added the <code class="docutils literal"><span class="pre">raw</span></code> property to the Http Response, it can be used in conjunction with
+<code class="docutils literal"><span class="pre">stream</span></code> to stream http data. Similar API to <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+<li>Renamed <code class="docutils literal"><span class="pre">proxy_info</span></code> to <code class="docutils literal"><span class="pre">proxies</span></code>, same API as python <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+<li>You can now pass <code class="docutils literal"><span class="pre">proxies</span></code> dictionary during a request</li>
+<li>Stream uploads by passing a generator as <code class="docutils literal"><span class="pre">data</span></code> parameter</li>
+<li>Better websocket upgrade process</li>
+<li>Tidy up <code class="docutils literal"><span class="pre">CONNECT</span></code> request url (for tunneling)</li>
+<li>Added tests for proxyserver example using <a class="reference external" href="http://docs.python-requests.org/">requests</a></li>
+</ul>
+</div>
+<div class="section" id="wsgi">
+<span id="id2"></span><h2>Wsgi<a class="headerlink" href="#wsgi" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Both <code class="docutils literal"><span class="pre">wsgi</span></code> and <code class="docutils literal"><span class="pre">http</span></code> apps use the same <code class="docutils literal"><span class="pre">pulsar.utils.httpurl.http_chunks</span></code>
+function for transfer-encoding <code class="docutils literal"><span class="pre">chunked</span></code></li>
+<li><code class="docutils literal"><span class="pre">render_error</span></code> escapes the Exception message to prevent <a class="reference external" href="https://en.wikipedia.org/wiki/Cross-site_scripting">XSS</a></li>
+</ul>
+</div>
+<div class="section" id="datastore">
+<span id="datastore"></span><h2>Datastore<a class="headerlink" href="#datastore" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Better <code class="docutils literal"><span class="pre">pulsards_url</span></code> function, default value form <code class="docutils literal"><span class="pre">cfg.data_store</span></code></li>
+<li><code class="docutils literal"><span class="pre">key_value_save</span></code> set to empty list by default (no persistence)</li>
+</ul>
+</div>
+<div class="section" id="examples">
+<span id="examples"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Refactored proxy server example</li>
+<li>Updated django chat example so that warning are no longer issued</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../static/pulsar-logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">Concurrent framework for python 3.5 and above.</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../acknowledgement.html">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pics.html">Pics</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps/socket.html">Socket Servers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/wsgi/index.html">WSGI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/rpc.html">JSON-RPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/websockets.html">WebSockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/http.html">Asynchronous HTTP client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/greenio.html">Greenlet Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/test.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/ds.html">Pulsar Data Store Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps/data/index.html">Data Stores</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2011-2016, Luca Sbardella.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../sources/history/1.1.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-3900561-7']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+    
+  </body>
+</html>

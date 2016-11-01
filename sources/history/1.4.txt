@@ -1,0 +1,26 @@
+## Ver. 1.4.1 - 2016-Sep-09
+
+This version brings a critical bug fix in the HTTP client Digest authentication flow.
+If you use that feature you need to upgrade now!
+
+* Critical bug fix in HTTPDigest Authentication #243
+* Using pulsar with docker? bind to all network interfaces #241
+* Allow for True attributes in HTML content
+* Added HTML body scripts [bde6875](https://github.com/quantmind/pulsar/commit/bde6875d2cca7b0e21a2d358baa76a498e61b5d3)
+
+
+## Ver. 1.4.0 - 2016-Aug-04
+
+A release which brings several improvements, bug fixes and a minor backward
+compatibility in the asynchronous Redis Lock.
+Importantly, the django pulse application has been moved to its own repo.
+
+* Django ``pulse`` application has been moved to its own repo [pulsar-django](https://github.com/quantmind/pulsar-django)
+* Refactored the close method in TcpServer
+* Added ``closed`` property to green pool
+* Better stopping of monitors
+* Added ``after_run`` method to actors
+* HttpClient bug fix #221 [9249331](https://github.com/quantmind/pulsar/commit/92493315d0559e061ca78f2c1631a4d6d34292bb)
+* Added asynchronous Lock primitive to the async module [4a10883](https://github.com/quantmind/pulsar/commit/4a10883aaf2ee76bf495035d6f57fe602eaede4d)
+* Handle datastore and redis pubsub connections drop with `connection_lost` event [dc322b7](https://github.com/quantmind/pulsar/commit/dc322b761f978cb97dabc7809545b296c737db0a)
+* Always decode content as json in JsonProxy (thanks to @wilddom), pull request #233

@@ -50,6 +50,7 @@
 <span></span><span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">gather</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span><span class="p">,</span> <span class="n">OrderedDict</span>
@@ -60,7 +61,7 @@
 <span class="kn">from</span> <span class="nn">.store</span> <span class="k">import</span> <span class="n">PubSubClient</span>
 
 
-<span class="n">regex_callbacks</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;regex_callbacks&#39;</span><span class="p">,</span> <span class="s1">&#39;regex callbacks&#39;</span><span class="p">)</span>
+<span class="n">regex_callbacks</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;regex_callbacks&#39;</span><span class="p">,</span> <span class="s1">&#39;code regex callbacks&#39;</span><span class="p">)</span>
 
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;pulsar.channels&#39;</span><span class="p">)</span>
@@ -78,12 +79,17 @@
 
 
 <span class="n">RECONNECT_LAG</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">DEFAULT_NAMESPACE</span> <span class="o">=</span> <span class="s1">&#39;pulsar&#39;</span>
+<span class="n">DEFAULT_NAMESPACE</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 <span class="n">DEFAULT_CHANNEL</span> <span class="o">=</span> <span class="s1">&#39;server&#39;</span>
 
 
 <span class="k">def</span> <span class="nf">backoff</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">value</span> <span class="o">+</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">CallbackError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception which allow for a clean callback removal</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">Json</span><span class="p">:</span>
@@ -92,18 +98,41 @@
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s1">&#39;Invalid JSON&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s1">&#39;Invalid JSON&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">None</span>
 
 
 <span class="k">class</span> <span class="nc">Connector</span><span class="p">:</span>
+    <span class="n">namespace_delimiter</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="n">o</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">)</span>
-        <span class="n">o</span><span class="o">.</span><span class="n">connection_error</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">return</span> <span class="n">o</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection_error</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">namespace</span> <span class="ow">or</span>
+            <span class="n">store</span><span class="o">.</span><span class="n">urlparams</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;namespace&#39;</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="n">DEFAULT_NAMESPACE</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span> <span class="ow">and</span> <span class="ow">not</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace_delimiter</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">namespace_delimiter</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dns</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">buildurl</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dns</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">prefixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">name</span>
 
     <span class="k">def</span> <span class="nf">connection_ok</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection_error</span><span class="p">:</span>
@@ -116,24 +145,16 @@
             <span class="k">return</span> <span class="kc">True</span>
 
 
-<div class="viewcode-block" id="Channels"><a class="viewcode-back" href="../../../../apps/data/pubsub.html#pulsar.apps.data.Channels">[docs]</a><span class="k">class</span> <span class="nc">Channels</span><span class="p">(</span><span class="n">PubSubClient</span><span class="p">,</span> <span class="n">Connector</span><span class="p">):</span>
+<div class="viewcode-block" id="Channels"><a class="viewcode-back" href="../../../../apps/data/pubsub.html#pulsar.apps.data.Channels">[docs]</a><span class="k">class</span> <span class="nc">Channels</span><span class="p">(</span><span class="n">Connector</span><span class="p">,</span> <span class="n">PubSubClient</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Manage channels for publish/subscribe</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pubsub</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">status_channel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">pubsub</span><span class="o">.</span><span class="n">protocol</span><span class="p">,</span> <span class="s2">&quot;protocol required for channels&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_connection_error</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">pubsub</span><span class="o">.</span><span class="n">store</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="n">LOGGER</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">namespace</span> <span class="ow">or</span>
-            <span class="n">pubsub</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">urlparams</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;namespace&#39;</span><span class="p">)</span> <span class="ow">or</span>
-            <span class="n">DEFAULT_NAMESPACE</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dns</span> <span class="o">=</span> <span class="n">pubsub</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">buildurl</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status_channel</span> <span class="o">=</span> <span class="p">(</span><span class="n">status_channel</span> <span class="ow">or</span> <span class="n">DEFAULT_CHANNEL</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">StatusType</span><span class="o">.</span><span class="n">initialised</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span> <span class="o">=</span> <span class="n">pubsub</span>
@@ -143,11 +164,6 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">_loop</span>
-
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dns</span>
-
-    <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
 
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span>
@@ -233,22 +249,25 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connection_ok</span><span class="p">()</span></div>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">remove_callback</span><span class="p">(</span><span class="s1">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection_lost</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">StatusType</span><span class="o">.</span><span class="n">closed</span>
-        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<div class="viewcode-block" id="Channels.connect"><a class="viewcode-back" href="../../../../apps/data/pubsub.html#pulsar.apps.data.Channels.connect">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">next_time</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Connect with pubsub store</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">next_time</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="sd">        :return: a coroutine and therefore it must be awaited</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">can_connect</span><span class="p">:</span>
             <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
             <span class="k">if</span> <span class="n">loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">StatusType</span><span class="o">.</span><span class="n">connecting</span>
-                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">(</span><span class="n">next_time</span><span class="p">)</span>
+                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">(</span><span class="n">next_time</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">prefixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">):</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">name</span>
+<div class="viewcode-block" id="Channels.close"><a class="viewcode-back" href="../../../../apps/data/pubsub.html#pulsar.apps.data.Channels.close">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Close channels and underlying pubsub handler</span>
+
+<span class="sd">        :return: a coroutine and therefore it must be awaited</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">remove_callback</span><span class="p">(</span><span class="s1">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection_lost</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">StatusType</span><span class="o">.</span><span class="n">closed</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">create_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -268,7 +287,6 @@
                 <span class="bp">self</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">status_channel</span>
             <span class="p">)</span>
-            <span class="k">await</span> <span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
         <span class="k">except</span> <span class="ne">ConnectionRefusedError</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">StatusType</span><span class="o">.</span><span class="n">disconnected</span>
             <span class="n">next_time</span> <span class="o">=</span> <span class="n">backoff</span><span class="p">(</span><span class="n">next_time</span><span class="p">)</span> <span class="k">if</span> <span class="n">next_time</span> <span class="k">else</span> <span class="n">RECONNECT_LAG</span>
@@ -280,7 +298,22 @@
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="n">next_time</span><span class="p">,</span>
                                   <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_task</span><span class="p">,</span>
-                                  <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">next_time</span><span class="p">))</span></div>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">next_time</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span></div>
+
+
+<span class="k">def</span> <span class="nf">safe_execution</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ConnectionRefusedError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">StatusType</span><span class="o">.</span><span class="n">disconnected</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">_</span>
 
 
 <span class="k">class</span> <span class="nc">Channel</span><span class="p">:</span>
@@ -312,24 +345,29 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="n">event</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">regex</span><span class="p">,</span> <span class="n">callbacks</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
                 <span class="n">match</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">callbacks</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="p">):</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">CallbackError</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_callback</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
                     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_callback</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
                             <span class="s1">&#39;callback exception: channel &quot;</span><span class="si">%s</span><span class="s1">&quot; event &quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
                             <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
 
+    <span class="nd">@safe_execution</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span>
         <span class="k">if</span> <span class="n">channels</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">StatusType</span><span class="o">.</span><span class="n">connected</span><span class="p">:</span>
             <span class="n">channel_name</span> <span class="o">=</span> <span class="n">channels</span><span class="o">.</span><span class="n">prefixed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">channel_name</span><span class="p">)</span>
 
+    <span class="nd">@safe_execution</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span>
         <span class="k">if</span> <span class="n">channels</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">StatusType</span><span class="o">.</span><span class="n">connected</span><span class="p">:</span>
@@ -342,8 +380,8 @@
         <span class="n">regex</span> <span class="o">=</span> <span class="n">redis_to_py_pattern</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
         <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">regex</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="p">:</span>
-            <span class="n">entry</span> <span class="o">=</span> <span class="n">regex_callbacks</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">regex</span><span class="p">),</span> <span class="p">[])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">regex</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">regex_callbacks</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">regex</span><span class="p">),</span> <span class="p">[])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">code</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry</span>
 
         <span class="k">if</span> <span class="n">callback</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
             <span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
@@ -354,10 +392,13 @@
         <span class="n">regex</span> <span class="o">=</span> <span class="n">redis_to_py_pattern</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
         <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">regex</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">entry</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
-                <span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">regex</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_remove_callback</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_remove_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">code</span><span class="p">)</span>
 </pre></div>
 
           </div>
