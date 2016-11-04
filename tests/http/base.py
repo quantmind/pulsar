@@ -306,6 +306,21 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(data['files'], {'test': ['simple file']})
         self.assertEqual(data['args']['numero'], ['1', '2'])
 
+    async def test_upload_large_files(self):
+        from asyncio.streams import _DEFAULT_LIMIT
+        http = self._client
+        files = {'test': 'A'*(_DEFAULT_LIMIT + 1024)}
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = await http.put(self.httpbin('upload'), data=data,
+                                  files=files)
+        self.assertEqual(response.status_code, 200)
+        ct = response.request.headers['content-type']
+        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
+        data = response.json()
+        self.assertEqual(data['files'], files)
+        self.assertEqual(data['args']['numero'], ['1', '2'])
+
     def test_HttpResponse(self):
         r = HttpResponse(loop=get_event_loop())
         self.assertEqual(r.request, None)

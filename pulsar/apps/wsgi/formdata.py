@@ -77,6 +77,14 @@ class HttpBodyReader:
         self.can_continue()
         return self.reader.readexactly(n)
 
+    @property
+    def limit(self):
+        return self.reader._limit
+
+    def readuntil(self, separator):
+        self.can_continue()
+        return self.reader.readuntil(separator)
+
 
 def parse_form_data(environ, stream=None, **kw):
     '''Parse form data from an environ dict and return a (forms, files) tuple.
@@ -181,7 +189,10 @@ class MultipartDecoder(FormDecoder):
                     current = None
 
             while 1:
-                line = await fp.readline()
+                try:
+                    line = await fp.readuntil(b'\n')
+                except asyncio.streams.LimitOverrunError as e:
+                    line = await fp.read(fp.limit)
                 line = line or lastpart
                 if line.startswith(sep):
                     terminator = line.rstrip()
