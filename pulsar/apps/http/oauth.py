@@ -1,7 +1,6 @@
 try:
     from oauthlib import oauth1, oauth2
-    from oauthlib.common import generate_token
-except ImportError:
+except ImportError:     # pragma    nocover
     oauth1 = None
     oauth2 = None
 
@@ -49,15 +48,3 @@ class OAuth2(auth.Auth):
         for key, value in mapping_iterator(headers):
             r.add_header(key, value)
         r.url = url
-
-    def prepare_request_uri(self, url, state=None, **kwargs):
-        """Prepare the request uri and return a tuple with url and state
-
-        :param url: base url for OAuth2 requests
-        :param state: optional state, if not supplied one is generated
-        :param kwargs: additional parameters
-        :return: a tuple with url and state
-        """
-        state = state or generate_token()
-        url = self.client.prepare_request_uri(url, state=state, **kwargs)
-        return url, state

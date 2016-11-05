@@ -158,11 +158,10 @@ def parse_cache_control_header(value, on_update=None, cls=None):
 
     :param value: a cache control header to be parsed.
     :param on_update: an optional callable that is called every time a value
-                      on the :class:`~werkzeug.datastructures.CacheControl`
-                      object is changed.
-    :param cls: the class for the returned object.  By default
-                :class:`pulsar.apps.wsgi.structures.RequestCacheControl` is
-                used.
+        on the :class:`~.CacheControl`
+        object is changed.
+    :param cls: the class for the returned object.
+        By default :class:`~.RequestCacheControl` is used.
     :return: a `cls` object.
     """
     if cls is None:

@@ -418,7 +418,7 @@ Ver. 0.5.0 - 2013-May-22
   * New Webmail example application using twisted
     IMAP4 protocol implementation.
 
-* Added :class:`.FrozenDict`.
+* Added ``FrozenDict``.
 * **444 regression tests**, **87% coverage**.
 
 Ver. 0.4.6 - 2013-Feb-8
