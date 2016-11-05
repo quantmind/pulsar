@@ -100,14 +100,14 @@ to be implemented in an elegant and efficient way.
 Out of the box it is shipped with the the following:
 
 * Socket servers
-* WSGI server
+* `Asynchronous WSGI server`_
 * HttpClient_
 * JSON-RPC_
 * `Web Sockets`_
-* Test suite
+* `Asynchronous Test suite`_
 * `Data stores`_ (with async Redis client)
 * `Task queue consumers`_
-* `Async botocore`_
+* `Asynchronous botocore`_
 * `django integration`_
 
 .. _examples:
@@ -237,8 +237,10 @@ file in the top distribution directory for the full license text.
 .. _HttpClient: http://quantmind.github.io/pulsar/apps/http.html
 .. _`Data stores`: http://quantmind.github.io/pulsar/apps/data/index.html
 .. _`Task queue consumers`: https://github.com/quantmind/pulsar-queue
-.. _`Async botocore`: https://github.com/quantmind/pulsar-cloud
+.. _`Asynchronous botocore`: https://github.com/quantmind/pulsar-cloud
 .. _`django integration`: https://github.com/quantmind/pulsar-django
 .. _`python-pulsar`: http://stackoverflow.com/questions/tagged/python-pulsar
 .. _`Web Sockets`: http://quantmind.github.io/pulsar/apps/websockets.html
 .. _uvloop: https://github.com/MagicStack/uvloop
+.. _`Asynchronous WSGI server`: http://quantmind.github.io/pulsar/apps/wsgi/index.html
+.. _`Asynchronous Test suite`: http://quantmind.github.io/pulsar/apps/test.html
