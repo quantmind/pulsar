@@ -14,9 +14,10 @@ from . import auth
 class OAuth1(auth.Auth):
     '''Add OAuth1 authentication to pulsar :class:`.HttpClient`
     '''
+    available = bool(oauth1)
 
     def __init__(self, client_id=None, client=None, **kw):
-        if oauth1 is None:
+        if oauth1 is None:  # pragma    nocover
             raise ImproperlyConfigured('%s requires oauthlib' %
                                        self.__class__.__name__)
         self._client = client or oauth1.Client(client_id, **kw)
@@ -31,10 +32,12 @@ class OAuth1(auth.Auth):
 
 
 class OAuth2(auth.Auth):
-    '''Add OAuth2 authentication to pulsar :class:`.HttpClient`'''
+    """Add OAuth2 authentication to pulsar :class:`.HttpClient`
+    """
+    available = bool(oauth2)
 
     def __init__(self, client_id=None, client=None, **kw):
-        if oauth2 is None:
+        if oauth2 is None:  # pragma    nocover
             raise ImproperlyConfigured('%s requires oauthlib' %
                                        self.__class__.__name__)
         self.client = client or oauth2.WebApplicationClient(client_id, **kw)

@@ -1,6 +1,8 @@
 import unittest
 
-from pulsar.apps.http import HttpClient, HttpRequest, parse_qsl, urlparse
+from pulsar.apps.http import (
+    HttpClient, HttpRequest, parse_qsl, urlparse, OAuth1, OAuth2
+)
 
 
 class TestClientCornerCases(unittest.TestCase):
@@ -33,3 +35,31 @@ class TestClientCornerCases(unittest.TestCase):
         http = HttpClient()
         request = HttpRequest(http, 'http://bla.com?k', 'get')
         self.assertEqual(request.url, 'http://bla.com?k=')
+
+    @unittest.skipUnless(OAuth1.available, 'oauthlib not available')
+    async def test_oauth1(self):
+        oauth = OAuth1(
+            'random',
+            client_secret='xxxxxxx',
+            resource_owner_key='xxxxxxx',
+            resource_owner_secret='xxxxxxx'
+        )
+        http = HttpClient()
+        await http.post(
+            'https://api.github.com/gists/public',
+            pre_request=oauth
+        )
+
+    @unittest.skipUnless(OAuth2.available, 'oauthlib not available')
+    async def test_oauth2(self):
+        oauth = OAuth2(
+            'random',
+            client_secret='xxxxxxx',
+            resource_owner_key='xxxxxxx',
+            resource_owner_secret='xxxxxxx'
+        )
+        http = HttpClient()
+        await http.post(
+            'https://api.github.com/gists/public',
+            pre_request=oauth
+        )
