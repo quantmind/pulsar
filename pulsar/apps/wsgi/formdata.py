@@ -1,6 +1,8 @@
 import email.parser
 import asyncio
-from http.client import HTTPMessage, _MAXLINE, _MAXHEADERS
+import json
+
+from http.client import HTTPMessage, _MAXHEADERS
 from io import BytesIO
 from urllib.parse import parse_qs
 from base64 import b64encode
@@ -8,15 +10,11 @@ from functools import reduce
 from cgi import valid_boundary, parse_header
 
 from pulsar import HttpException, BadRequest, isawaitable, ensure_future
-from pulsar.utils.system import json
+from pulsar.utils.system import convert_bytes
 from pulsar.utils.structures import MultiValueDict, mapping_iterator
 from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
                                   JSON_CONTENT_TYPES, parse_options_header)
 
-
-ONEMB = 2**20
-# Default max size for body when not streaming
-DEFAULT_MAXSIZE = 10*ONEMB
 
 FORM_ENCODED_TYPES = ('application/x-www-form-urlencoded',
                       'application/x-url-encoded')
@@ -34,9 +32,10 @@ class HttpBodyReader:
     _expect_sent = None
     _waiting = None
 
-    def __init__(self, headers, parser, transport, **kw):
+    def __init__(self, headers, parser, transport, limit, **kw):
         self.headers = headers
         self.parser = parser
+        self.limit = limit
         self.reader = asyncio.StreamReader(**kw)
         self.reader.set_transport(transport)
         self.feed_data = self.reader.feed_data
@@ -69,9 +68,14 @@ class HttpBodyReader:
         self.can_continue()
         return self.reader.read(n=n)
 
-    def readline(self):
-        self.can_continue()
-        return self.reader.readline()
+    async def readline(self):
+        try:
+            line = await self.reader.readuntil(b'\n')
+        except asyncio.streams.LimitOverrunError as exc:
+            line = await self.read(exc.consumed) + await self.readline()
+            if len(line) > self.limit:
+                raise_large_body_error(self.limit)
+        return line
 
     def readexactly(self, n):
         self.can_continue()
@@ -123,6 +127,7 @@ class FormDecoder:
         self.environ = environ
         self.options = options
         self.stream = stream
+        self.limit = environ['pulsar.cfg'].stream_buffer
         self.result = (MultiValueDict(), MultiValueDict())
 
     @property
@@ -163,17 +168,13 @@ class MultipartDecoder(FormDecoder):
 
         while terminator != lastpart:
             nbytes = -1
-            data = None
             current = None
 
             if terminator:
                 headers = await parse_headers(fp)
                 current = MultipartPart(self, headers)
 
-                if nbytes > 0:
-                    data = await fp.read(nbytes)
-                else:
-                    data = b''
+                data = await fp.read(nbytes) if nbytes > 0 else b''
 
                 if current.name:
                     current.feed_data(data)
@@ -181,8 +182,7 @@ class MultipartDecoder(FormDecoder):
                     current = None
 
             while 1:
-                line = await fp.readline()
-                line = line or lastpart
+                line = await fp.readline() or lastpart
                 if line.startswith(sep):
                     terminator = line.rstrip()
                     if terminator in (nextpart, lastpart):
@@ -201,10 +201,8 @@ class MultipartDecoder(FormDecoder):
 class BytesDecoder(FormDecoder):
 
     def parse(self, mem_limit=None, **kw):
-        mem_limit = mem_limit or DEFAULT_MAXSIZE
-        if self.content_length > mem_limit:
-            raise HttpException("Request to big. Increase MAXMEM.",
-                                status=LARGE_BODY_CODE)
+        if self.content_length > self.limit:
+            raise_large_body_error(self.limit)
         inp = self.environ.get('wsgi.input') or BytesIO()
         data = inp.read()
 
@@ -359,8 +357,6 @@ async def parse_headers(fp, _class=HTTPMessage):
     headers = []
     while True:
         line = await fp.readline()
-        if len(line) > _MAXLINE:
-            raise HttpException("header line")
         headers.append(line)
         if len(headers) > _MAXHEADERS:
             raise HttpException("got more than %d headers" % _MAXHEADERS)
@@ -368,6 +364,14 @@ async def parse_headers(fp, _class=HTTPMessage):
             break
     hstring = b''.join(headers).decode('iso-8859-1')
     return email.parser.Parser(_class=_class).parsestr(hstring)
+
+
+def raise_large_body_error(limit):
+    raise HttpException(
+        "Request content length too large. Limit is %s" %
+        convert_bytes(limit),
+        status=LARGE_BODY_CODE
+    )
 
 
 class BytesProducer:

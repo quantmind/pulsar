@@ -246,6 +246,7 @@ class HttpServerResponse(ProtocolConsumer):
                 self._body_reader = HttpBodyReader(headers,
                                                    parser,
                                                    self.transport,
+                                                   self.cfg.stream_buffer,
                                                    loop=self._loop)
                 ensure_future(self._response(self.wsgi_environ()),
                               loop=self._loop)

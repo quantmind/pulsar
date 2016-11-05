@@ -62,6 +62,7 @@ class TestHttpClientBase:
             s = server(bind='127.0.0.1:0', concurrency=concurrency,
                        name='httpbin-%s' % cls.__name__.lower(),
                        keep_alive=30, key_file=key_file, cert_file=cert_file,
+                       stream_buffer=2**18,
                        workers=1)
             cfg = await send('arbiter', 'run', s)
             cls.app = cfg.app()
@@ -305,6 +306,32 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = response.json()
         self.assertEqual(data['files'], {'test': ['simple file']})
         self.assertEqual(data['args']['numero'], ['1', '2'])
+
+    async def test_upload_large_files(self):
+        from asyncio.streams import _DEFAULT_LIMIT
+        http = self._client
+        file_data = 'A' * _DEFAULT_LIMIT + 'B' * 1024
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = await http.put(self.httpbin('upload'), data=data,
+                                  files={'test': file_data})
+        self.assertEqual(response.status_code, 200)
+        ct = response.request.headers['content-type']
+        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
+        data = response.json()
+        self.assertEqual(data['files']['test'][0], file_data)
+        self.assertEqual(data['args']['numero'], ['1', '2'])
+
+    async def test_upload_too_large_files(self):
+        http = self._client
+        file_data = 'A' * (2 ** 18 + 2 ** 12)
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = await http.put(self.httpbin('upload'), data=data,
+                                  files={'test': file_data})
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.content,
+                         b'Request content length too large. Limit is 256.0KB')
 
     def test_HttpResponse(self):
         r = HttpResponse(loop=get_event_loop())

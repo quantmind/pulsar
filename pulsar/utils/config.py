@@ -976,6 +976,19 @@ class ExecutionId(Global):
     """
 
 
+class StreamBuffer(Global):
+    name = "stream_buffer"
+    flags = ["--stream-buffer"]
+    validator = validate_pos_int
+    type = int
+    default = 2 ** 24
+    desc = """Buffer limit for stream readers
+
+    When data in buffer exceeds this size, the framework throws buffer
+    limit errors
+    """
+
+
 ############################################################################
 #    Worker Processes
 section_docs['Worker Processes'] = """
