@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.utils &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>pulsar.apps.wsgi.utils &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
-  <link rel="stylesheet" href="../../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,7 +42,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.wsgi.utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">The :mod:`pulsar.apps.wsgi.utils` module include several utilities used</span>
 <span class="sd">by various components in the :ref:`wsgi application &lt;apps-wsgi&gt;`</span>
 <span class="sd">&#39;&#39;&#39;</span>
@@ -55,21 +50,21 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">textwrap</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
-<span class="kn">from</span> <span class="nn">email.utils</span> <span class="k">import</span> <span class="n">formatdate</span>
-<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="k">import</span> <span class="n">parse_qsl</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">formatdate</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">parse_qsl</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">format_traceback</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="k">import</span> <span class="n">json</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="k">import</span> <span class="n">MultiValueDict</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.html</span> <span class="k">import</span> <span class="n">escape</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="k">import</span> <span class="n">to_string</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="k">import</span> <span class="p">(</span><span class="n">has_empty_content</span><span class="p">,</span> <span class="n">REDIRECT_CODES</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">format_traceback</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">MultiValueDict</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.html</span> <span class="kn">import</span> <span class="n">escape</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">has_empty_content</span><span class="p">,</span> <span class="n">REDIRECT_CODES</span><span class="p">,</span>
                                   <span class="n">HTTPError</span><span class="p">,</span> <span class="n">parse_dict_header</span><span class="p">,</span>
                                   <span class="n">JSON_CONTENT_TYPES</span><span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">.structures</span> <span class="k">import</span> <span class="n">Accept</span><span class="p">,</span> <span class="n">RequestCacheControl</span>
-<span class="kn">from</span> <span class="nn">.content</span> <span class="k">import</span> <span class="n">Html</span><span class="p">,</span> <span class="n">HtmlDocument</span>
+<span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">Accept</span><span class="p">,</span> <span class="n">RequestCacheControl</span>
+<span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="n">Html</span><span class="p">,</span> <span class="n">HtmlDocument</span>
 
 
 <span class="n">DEFAULT_RESPONSE_CONTENT_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;text/html&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span>
@@ -92,10 +87,10 @@
 <span class="s1">}</span>
 <span class="s1">&#39;&#39;&#39;</span>
 
-<span class="n">_RequestClass</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_RequestClass</span> <span class="o">=</span> <span class="bp">None</span>
 
 
-<span class="k">def</span> <span class="nf">wsgi_request</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">app_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">urlargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">wsgi_request</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">app_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">urlargs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">global</span> <span class="n">_RequestClass</span>
     <span class="k">return</span> <span class="n">_RequestClass</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">app_handler</span><span class="o">=</span><span class="n">app_handler</span><span class="p">,</span> <span class="n">urlargs</span><span class="o">=</span><span class="n">urlargs</span><span class="p">)</span>
 
@@ -105,9 +100,9 @@
     <span class="n">_RequestClass</span> <span class="o">=</span> <span class="n">RequestClass</span>
 
 
-<span class="k">def</span> <span class="nf">log_wsgi_info</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">log_wsgi_info</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pulsar.logged&#39;</span><span class="p">):</span>
-        <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.logged&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.logged&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span> <span class="k">else</span> <span class="s1">&#39; - </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">exc</span>
         <span class="n">log</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> - </span><span class="si">%s%s</span><span class="s1">&#39;</span><span class="p">,</span>
             <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;REQUEST_METHOD&#39;</span><span class="p">),</span>
@@ -116,7 +111,7 @@
             <span class="n">status</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="cookie_date"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.cookie_date">[docs]</a><span class="k">def</span> <span class="nf">cookie_date</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="cookie_date"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.cookie_date">[docs]</a><span class="k">def</span> <span class="nf">cookie_date</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Formats the time to ensure compatibility with Netscape&#39;s cookie</span>
 <span class="sd">    standard.</span>
 
@@ -132,11 +127,11 @@
     <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1"> GMT&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">rfcdate</span><span class="p">[:</span><span class="mi">7</span><span class="p">],</span> <span class="n">rfcdate</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">11</span><span class="p">],</span> <span class="n">rfcdate</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">25</span><span class="p">])</span></div>
 
 
-<div class="viewcode-block" id="set_cookie"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.set_cookie">[docs]</a><span class="k">def</span> <span class="nf">set_cookie</span><span class="p">(</span><span class="n">cookies</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expires</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span>
-               <span class="n">domain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">secure</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">httponly</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="set_cookie"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.set_cookie">[docs]</a><span class="k">def</span> <span class="nf">set_cookie</span><span class="p">(</span><span class="n">cookies</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">expires</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span>
+               <span class="n">domain</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">secure</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">httponly</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Set a cookie key into the cookies dictionary *cookies*.&#39;&#39;&#39;</span>
     <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-    <span class="k">if</span> <span class="n">expires</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">expires</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expires</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
             <span class="n">now</span> <span class="o">=</span> <span class="p">(</span><span class="n">expires</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">expires</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">)</span> <span class="k">if</span> <span class="n">expires</span><span class="o">.</span><span class="n">tzinfo</span> <span class="k">else</span>
                    <span class="n">expires</span><span class="o">.</span><span class="n">utcnow</span><span class="p">())</span>
@@ -146,29 +141,29 @@
             <span class="c1"># then the date string).</span>
             <span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="c1"># Just set max_age - the max_age logic will set expires.</span>
-            <span class="n">expires</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">expires</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="n">max_age</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="o">.</span><span class="n">days</span> <span class="o">*</span> <span class="mi">86400</span> <span class="o">+</span> <span class="n">delta</span><span class="o">.</span><span class="n">seconds</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;expires&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">expires</span>
-    <span class="k">if</span> <span class="n">max_age</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">max_age</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;max-age&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_age</span>
         <span class="c1"># IE requires expires, so set it if hasn&#39;t been already.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">expires</span><span class="p">:</span>
             <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;expires&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cookie_date</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">max_age</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
-    <span class="k">if</span> <span class="n">domain</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">domain</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;domain&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain</span>
     <span class="k">if</span> <span class="n">secure</span><span class="p">:</span>
-        <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;secure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;secure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="k">if</span> <span class="n">httponly</span><span class="p">:</span>
-        <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;httponly&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
+        <span class="n">cookies</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;httponly&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span></div>
 
 
 <span class="n">_accept_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?&#39;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="parse_accept_header"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.parse_accept_header">[docs]</a><span class="k">def</span> <span class="nf">parse_accept_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_accept_header"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.parse_accept_header">[docs]</a><span class="k">def</span> <span class="nf">parse_accept_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parses an HTTP Accept-* header.  This does not implement a complete</span>
 <span class="sd">    valid algorithm but one that supports at least value and quality</span>
 <span class="sd">    extraction.</span>
@@ -185,10 +180,10 @@
 <span class="sd">                         :class:`Accept` or a subclass thereof)</span>
 <span class="sd">    :return: an instance of `cls`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">cls</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">cls</span> <span class="o">=</span> <span class="n">Accept</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">_accept_re</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="n">quality</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -200,30 +195,29 @@
     <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="parse_cache_control_header"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.parse_cache_control_header">[docs]</a><span class="k">def</span> <span class="nf">parse_cache_control_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">on_update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_cache_control_header"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.parse_cache_control_header">[docs]</a><span class="k">def</span> <span class="nf">parse_cache_control_header</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">on_update</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parse a cache control header.  The RFC differs between response and</span>
 <span class="sd">    request cache control, this method does not.  It&#39;s your responsibility</span>
 <span class="sd">    to not use the wrong control statements.</span>
 
 <span class="sd">    :param value: a cache control header to be parsed.</span>
 <span class="sd">    :param on_update: an optional callable that is called every time a value</span>
-<span class="sd">                      on the :class:`~werkzeug.datastructures.CacheControl`</span>
-<span class="sd">                      object is changed.</span>
-<span class="sd">    :param cls: the class for the returned object.  By default</span>
-<span class="sd">                :class:`pulsar.apps.wsgi.structures.RequestCacheControl` is</span>
-<span class="sd">                used.</span>
+<span class="sd">        on the :class:`~.CacheControl`</span>
+<span class="sd">        object is changed.</span>
+<span class="sd">    :param cls: the class for the returned object.</span>
+<span class="sd">        By default :class:`~.RequestCacheControl` is used.</span>
 <span class="sd">    :return: a `cls` object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">cls</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">cls</span> <span class="o">=</span> <span class="n">RequestCacheControl</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_update</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">on_update</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">parse_dict_header</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">on_update</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_gen_query</span><span class="p">(</span><span class="n">query_string</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
     <span class="c1"># keep_blank_values=True</span>
-    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parse_qsl</span><span class="p">((</span><span class="n">query_string</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parse_qsl</span><span class="p">((</span><span class="n">query_string</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="bp">True</span><span class="p">):</span>
         <span class="k">yield</span> <span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">),</span>
                <span class="n">to_string</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">))</span>
 
@@ -269,15 +263,15 @@
         <span class="n">exc_info</span> <span class="o">=</span> <span class="n">exc</span>
         <span class="n">exc</span> <span class="o">=</span> <span class="n">exc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">exc_info</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">request</span> <span class="o">=</span> <span class="n">wsgi_request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
-    <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">handle_wsgi_error</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">handle_wsgi_error</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">HTTPError</span><span class="p">):</span>
         <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">code</span> <span class="ow">or</span> <span class="mi">500</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s1">&#39;headers&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">())</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s1">&#39;headers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">())</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
     <span class="k">if</span> <span class="n">status</span> <span class="o">&gt;=</span> <span class="mi">500</span><span class="p">:</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> - @ </span><span class="si">%s</span><span class="s1">.</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">first_line</span><span class="p">,</span>
@@ -285,15 +279,15 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">log_wsgi_info</span><span class="p">(</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">)</span> <span class="ow">or</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">REDIRECT_CODES</span><span class="p">:</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;html_document&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;html_document&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">renderer</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;error.handler&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">render_error</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">content</span> <span class="o">=</span> <span class="n">renderer</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;Error while rendering error&#39;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;Error while rendering error&#39;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s1">&#39;text/plain&#39;</span>
             <span class="n">content</span> <span class="o">=</span> <span class="s1">&#39;Critical server error&#39;</span>
         <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">response</span><span class="p">:</span>
@@ -304,13 +298,13 @@
 <div class="viewcode-block" id="render_error"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.render_error">[docs]</a><span class="k">def</span> <span class="nf">render_error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Default renderer for errors.&#39;&#39;&#39;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pulsar.cfg&#39;</span><span class="p">)</span>
-    <span class="n">debug</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">debug</span> <span class="k">if</span> <span class="n">cfg</span> <span class="k">else</span> <span class="kc">False</span>
+    <span class="n">debug</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">debug</span> <span class="k">if</span> <span class="n">cfg</span> <span class="k">else</span> <span class="bp">False</span>
     <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">content_type</span><span class="p">:</span>
         <span class="n">content_type</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;default.content_type&#39;</span><span class="p">)</span>
         <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">content_types</span><span class="o">.</span><span class="n">best_match</span><span class="p">(</span>
             <span class="n">content_type</span> <span class="ow">or</span> <span class="n">DEFAULT_RESPONSE_CONTENT_TYPES</span><span class="p">)</span>
-    <span class="n">content_type</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">content_type</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">content_type</span><span class="p">:</span>
         <span class="n">content_type</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">content_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">is_html</span> <span class="o">=</span> <span class="n">content_type</span> <span class="o">==</span> <span class="s1">&#39;text/html&#39;</span>
@@ -321,9 +315,9 @@
         <span class="n">msg</span> <span class="o">=</span> <span class="n">escape</span><span class="p">(</span><span class="n">error_messages</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span> <span class="ow">or</span> <span class="n">exc</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">is_html</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">                &lt;h1&gt;</span><span class="si">{0[reason]}</span><span class="s2">&lt;/h1&gt;</span>
-<span class="s2">                </span><span class="si">{0[msg]}</span><span class="s2"></span>
-<span class="s2">                &lt;h3&gt;</span><span class="si">{0[version]}</span><span class="s2">&lt;/h3&gt;</span>
+<span class="s2">                &lt;h1&gt;{0[reason]}&lt;/h1&gt;</span>
+<span class="s2">                {0[msg]}</span>
+<span class="s2">                &lt;h3&gt;{0[version]}&lt;/h3&gt;</span>
 <span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">({</span><span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="s2">&quot;msg&quot;</span><span class="p">:</span> <span class="n">msg</span><span class="p">,</span>
                          <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SERVER_SOFTWARE&#39;</span><span class="p">]})</span>
     <span class="c1">#</span>
@@ -378,12 +372,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -417,11 +409,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -432,8 +427,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

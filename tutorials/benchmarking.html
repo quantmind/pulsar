@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Benchmarking &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>Benchmarking &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="C Extensions" href="cextensions.html" />
     <link rel="prev" title="Synchronous Components" href="sync.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -52,9 +47,9 @@
 <h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="test-concurrency">
 <h2>Test Concurrency<a class="headerlink" href="#test-concurrency" title="Permalink to this headline">¶</a></h2>
-<p>The simplest way to benchmark pulsar is to use the <a class="reference internal" href="httpbin.html#tutorials-httpbin"><span class="std std-ref">HttpBin</span></a>
+<p>The simplest way to benchmark pulsar is to use the <a class="reference internal" href="httpbin.html#tutorials-httpbin"><span>HttpBin</span></a>
 example application. It is a web server responding to several urls:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">b</span> <span class="p">:</span><span class="mi">9060</span>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py -b :9060
 </pre></div>
 </div>
 <div class="section" id="test-streaming">
@@ -63,18 +58,18 @@ example application. It is a web server responding to several urls:</p>
 first url parameter repeated by the second url parameter.</p>
 <p>For example, this measure the download speed when streaming chunks of 4KB 1,048,576 times
 for a total of 4GB of data:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">9060</span><span class="o">/</span><span class="n">stream</span><span class="o">/</span><span class="mi">4096</span><span class="o">/</span><span class="mi">1048576</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">null</span>
-  <span class="o">%</span> <span class="n">Total</span>    <span class="o">%</span> <span class="n">Received</span> <span class="o">%</span> <span class="n">Xferd</span>  <span class="n">Average</span> <span class="n">Speed</span>   <span class="n">Time</span>    <span class="n">Time</span>     <span class="n">Time</span>  <span class="n">Current</span>
-                                 <span class="n">Dload</span>  <span class="n">Upload</span>   <span class="n">Total</span>   <span class="n">Spent</span>    <span class="n">Left</span>  <span class="n">Speed</span>
-<span class="mi">100</span> <span class="mi">4096</span><span class="n">M</span>    <span class="mi">0</span> <span class="mi">4096</span><span class="n">M</span>    <span class="mi">0</span>     <span class="mi">0</span>  <span class="mf">87.8</span><span class="n">M</span>      <span class="mi">0</span> <span class="o">--</span><span class="p">:</span><span class="o">--</span><span class="p">:</span><span class="o">--</span>  <span class="mi">0</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">46</span> <span class="o">--</span><span class="p">:</span><span class="o">--</span><span class="p">:</span><span class="o">--</span> <span class="mf">73.1</span><span class="n">M</span>
+<div class="highlight-python"><div class="highlight"><pre>curl http://localhost:9060/stream/4096/1048576 &gt; /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 4096M    0 4096M    0     0  87.8M      0 --:--:--  0:00:46 --:--:-- 73.1M
 </pre></div>
 </div>
 <p>The download speed is relatively slow considering the test is on localhost.
 However, when switching the two numbers:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">9060</span><span class="o">/</span><span class="n">stream</span><span class="o">/</span><span class="mi">1048576</span><span class="o">/</span><span class="mi">4096</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">null</span>
-  <span class="o">%</span> <span class="n">Total</span>    <span class="o">%</span> <span class="n">Received</span> <span class="o">%</span> <span class="n">Xferd</span>  <span class="n">Average</span> <span class="n">Speed</span>   <span class="n">Time</span>    <span class="n">Time</span>     <span class="n">Time</span>  <span class="n">Current</span>
-                                 <span class="n">Dload</span>  <span class="n">Upload</span>   <span class="n">Total</span>   <span class="n">Spent</span>    <span class="n">Left</span>  <span class="n">Speed</span>
-<span class="mi">100</span> <span class="mi">4096</span><span class="n">M</span>    <span class="mi">0</span> <span class="mi">4096</span><span class="n">M</span>    <span class="mi">0</span>     <span class="mi">0</span>   <span class="mi">658</span><span class="n">M</span>      <span class="mi">0</span> <span class="o">--</span><span class="p">:</span><span class="o">--</span><span class="p">:</span><span class="o">--</span>  <span class="mi">0</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">06</span> <span class="o">--</span><span class="p">:</span><span class="o">--</span><span class="p">:</span><span class="o">--</span>  <span class="mi">673</span><span class="n">M</span>
+<div class="highlight-python"><div class="highlight"><pre>curl http://localhost:9060/stream/1048576/4096 &gt; /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 4096M    0 4096M    0     0   658M      0 --:--:--  0:00:06 --:--:--  673M
 </pre></div>
 </div>
 <p>We have a download speed almost 10 times higher. Why?</p>
@@ -96,19 +91,19 @@ the more responsive (in term of concurrent connections) the server will be.</p>
 <p>Testing pulsar with <a class="reference external" href="http://ha.ckers.org/slowloris/">slowloris</a> is a great way to check the performance under
 low bandwidth yet greedy clients.</p>
 <p>check the file limits with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ulimit</span> <span class="o">-</span><span class="n">a</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ulimit</span> <span class="o">-</span><span class="n">a</span>
 </pre></div>
 </div>
 <p>and set:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ulimit</span> <span class="o">-</span><span class="n">n</span> <span class="mi">1000</span>
+<div class="highlight-python"><div class="highlight"><pre>ulimit -n 1000
 </pre></div>
 </div>
 <p>Check <a class="reference external" href="http://ha.ckers.org/slowloris/">slowloris</a> usage with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">perldoc</span> <span class="n">slowloris</span><span class="o">.</span><span class="n">pl</span>
+<div class="highlight-python"><div class="highlight"><pre>perldoc slowloris.pl
 </pre></div>
 </div>
 <p>To test for slow bandwidth greedy clients:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">slowloris</span><span class="o">.</span><span class="n">pl</span> <span class="o">-</span><span class="n">dns</span> <span class="n">www</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span> <span class="o">-</span><span class="n">port</span> <span class="mi">80</span> <span class="o">-</span><span class="n">timeout</span> <span class="mi">30</span> <span class="o">-</span><span class="n">num</span> <span class="mi">1000</span>
+<div class="highlight-python"><div class="highlight"><pre>./slowloris.pl -dns www.example.com -port 80 -timeout 30 -num 1000
 </pre></div>
 </div>
 </div>
@@ -118,11 +113,11 @@ low bandwidth yet greedy clients.</p>
 measuring the speed of the python event loop and parsing with respect
 a superfast C implementation like redis.</p>
 <p>First lunch the pulsar <code class="docutils literal"><span class="pre">ds</span></code> example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py
 </pre></div>
 </div>
 <p>Than use the <code class="docutils literal"><span class="pre">redis-benchmark</span></code> executable, for example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">redis</span><span class="o">-</span><span class="n">benchmark</span> <span class="o">-</span><span class="n">t</span> <span class="nb">set</span> <span class="o">-</span><span class="n">n</span> <span class="mi">1000000</span> <span class="o">-</span><span class="n">d</span> <span class="mi">20</span> <span class="o">-</span><span class="n">c</span> <span class="mi">100</span> <span class="o">-</span><span class="n">p</span> <span class="mi">6410</span>
+<div class="highlight-python"><div class="highlight"><pre>./redis-benchmark -t set -n 1000000 -d 20 -c 100 -p 6410
 </pre></div>
 </div>
 <p>Test the set command with 100 concurrent clients with a payload of 20 bytes,
@@ -151,12 +146,10 @@ a superfast C implementation like redis.</p>
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -190,11 +183,14 @@ a superfast C implementation like redis.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -205,8 +201,8 @@ a superfast C implementation like redis.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/tutorials/benchmarking.txt"

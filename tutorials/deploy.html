@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Deploy Web Applications &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>Deploy Web Applications &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Http Bin" href="httpbin.html" />
     <link rel="prev" title="WSGI" href="wsgi.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -58,7 +53,7 @@ another HTTP server such as <a class="reference external" href="http://nginx.org
 <p>The best way to deploy web apps using pulsar wsgi http server is
 to use nginx as reverse proxy server to pulsar server.</p>
 <p>For example, this minimal configuration does the trick:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>server {
+<div class="highlight-python"><div class="highlight"><pre>server {
     listen 80;
     server_name example.org;
     access_log  /var/log/nginx/example.log;
@@ -75,11 +70,11 @@ to use nginx as reverse proxy server to pulsar server.</p>
 </div>
 <p>Link the configuration file to the nginx site_enabled directory
 (usually in <code class="docutils literal"><span class="pre">/etc/nginx/site_enabled</span></code>):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">ln</span> <span class="o">-</span><span class="n">s</span> <span class="n">site</span><span class="o">.</span><span class="n">conf</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">nginx</span><span class="o">/</span><span class="n">sites</span><span class="o">-</span><span class="n">enabled</span><span class="o">/</span><span class="n">site</span><span class="o">.</span><span class="n">conf</span>
+<div class="highlight-python"><div class="highlight"><pre>sudo ln -s site.conf /etc/nginx/sites-enabled/site.conf
 </pre></div>
 </div>
 <p>and <a class="reference external" href="http://wiki.nginx.org/CommandLine">reload nginx</a>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">nginx</span> <span class="o">-</span><span class="n">s</span> <span class="n">reload</span>
+<div class="highlight-python"><div class="highlight"><pre>nginx -s reload
 </pre></div>
 </div>
 </div>
@@ -111,12 +106,10 @@ how it works.</p>
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -150,11 +143,14 @@ how it works.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -165,8 +161,8 @@ how it works.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/tutorials/deploy.txt"

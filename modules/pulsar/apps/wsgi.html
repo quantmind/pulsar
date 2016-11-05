@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>pulsar.apps.wsgi &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
-  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,7 +42,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.wsgi</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;This is the most important :ref:`pulsar application &lt;application-api&gt;`.</span>
+<span class="sd">&quot;&quot;&quot;This is the most important :ref:`pulsar application &lt;application-api&gt;`.</span>
 <span class="sd">The server is a specialized :ref:`socket server &lt;apps-socket&gt;`</span>
 <span class="sd">for web applications conforming with the python web server</span>
 <span class="sd">gateway interface (`WSGI 1.0.1`_).</span>
@@ -73,7 +68,7 @@
 
 <span class="sd">    def hello(environ, start_response):</span>
 <span class="sd">        data = b&quot;Hello World!&quot;</span>
-<span class="sd">        response_headers = [(&#39;Content-type&#39;,&#39;text/plain&#39;),</span>
+<span class="sd">        response_headers = [(&#39;Content-type&#39;, &#39;text/plain&#39;),</span>
 <span class="sd">                            (&#39;Content-Length&#39;, str(len(data)))]</span>
 <span class="sd">        start_response(&quot;200 OK&quot;, response_headers)</span>
 <span class="sd">        return [data]</span>
@@ -104,26 +99,26 @@
 <span class="sd">.. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/</span>
 <span class="sd">.. _`c10k problem`: http://en.wikipedia.org/wiki/C10k_problem</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="k">import</span> <span class="n">SocketServer</span><span class="p">,</span> <span class="n">Connection</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span><span class="p">,</span> <span class="n">Connection</span>
 
-<span class="kn">from</span> <span class="nn">.html</span> <span class="k">import</span> <span class="n">HtmlVisitor</span>
-<span class="kn">from</span> <span class="nn">.content</span> <span class="k">import</span> <span class="p">(</span><span class="n">String</span><span class="p">,</span> <span class="n">Html</span><span class="p">,</span> <span class="n">Json</span><span class="p">,</span> <span class="n">HtmlDocument</span><span class="p">,</span> <span class="n">Links</span><span class="p">,</span> <span class="n">Scripts</span><span class="p">,</span> <span class="n">Media</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">.html</span> <span class="kn">import</span> <span class="n">HtmlVisitor</span>
+<span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="p">(</span><span class="n">String</span><span class="p">,</span> <span class="n">Html</span><span class="p">,</span> <span class="n">Json</span><span class="p">,</span> <span class="n">HtmlDocument</span><span class="p">,</span> <span class="n">Links</span><span class="p">,</span> <span class="n">Scripts</span><span class="p">,</span> <span class="n">Media</span><span class="p">,</span>
                       <span class="n">html_factory</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.middleware</span> <span class="k">import</span> <span class="p">(</span><span class="n">clean_path_middleware</span><span class="p">,</span> <span class="n">authorization_middleware</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">.middleware</span> <span class="kn">import</span> <span class="p">(</span><span class="n">clean_path_middleware</span><span class="p">,</span> <span class="n">authorization_middleware</span><span class="p">,</span>
                          <span class="n">wait_for_body_middleware</span><span class="p">,</span> <span class="n">middleware_in_executor</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.response</span> <span class="k">import</span> <span class="n">AccessControl</span><span class="p">,</span> <span class="n">GZipMiddleware</span>
-<span class="kn">from</span> <span class="nn">.wrappers</span> <span class="k">import</span> <span class="n">EnvironMixin</span><span class="p">,</span> <span class="n">WsgiResponse</span><span class="p">,</span> <span class="n">WsgiRequest</span><span class="p">,</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">.server</span> <span class="k">import</span> <span class="n">HttpServerResponse</span><span class="p">,</span> <span class="n">test_wsgi_environ</span><span class="p">,</span> <span class="n">AbortWsgi</span>
-<span class="kn">from</span> <span class="nn">.route</span> <span class="k">import</span> <span class="n">route</span><span class="p">,</span> <span class="n">Route</span>
-<span class="kn">from</span> <span class="nn">.handlers</span> <span class="k">import</span> <span class="n">WsgiHandler</span><span class="p">,</span> <span class="n">LazyWsgi</span>
-<span class="kn">from</span> <span class="nn">.routers</span> <span class="k">import</span> <span class="p">(</span><span class="n">Router</span><span class="p">,</span> <span class="n">MediaRouter</span><span class="p">,</span> <span class="n">MediaMixin</span><span class="p">,</span> <span class="n">RouterParam</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">.response</span> <span class="kn">import</span> <span class="n">AccessControl</span><span class="p">,</span> <span class="n">GZipMiddleware</span>
+<span class="kn">from</span> <span class="nn">.wrappers</span> <span class="kn">import</span> <span class="n">EnvironMixin</span><span class="p">,</span> <span class="n">WsgiResponse</span><span class="p">,</span> <span class="n">WsgiRequest</span><span class="p">,</span> <span class="n">cached_property</span>
+<span class="kn">from</span> <span class="nn">.server</span> <span class="kn">import</span> <span class="n">HttpServerResponse</span><span class="p">,</span> <span class="n">test_wsgi_environ</span><span class="p">,</span> <span class="n">AbortWsgi</span>
+<span class="kn">from</span> <span class="nn">.route</span> <span class="kn">import</span> <span class="n">route</span><span class="p">,</span> <span class="n">Route</span>
+<span class="kn">from</span> <span class="nn">.handlers</span> <span class="kn">import</span> <span class="n">WsgiHandler</span><span class="p">,</span> <span class="n">LazyWsgi</span>
+<span class="kn">from</span> <span class="nn">.routers</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Router</span><span class="p">,</span> <span class="n">MediaRouter</span><span class="p">,</span> <span class="n">MediaMixin</span><span class="p">,</span> <span class="n">RouterParam</span><span class="p">,</span>
                       <span class="n">file_response</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.auth</span> <span class="k">import</span> <span class="n">HttpAuthenticate</span><span class="p">,</span> <span class="n">parse_authorization_header</span>
-<span class="kn">from</span> <span class="nn">.formdata</span> <span class="k">import</span> <span class="n">parse_form_data</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="p">(</span><span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">render_error_debug</span><span class="p">,</span> <span class="n">wsgi_request</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">HttpAuthenticate</span><span class="p">,</span> <span class="n">parse_authorization_header</span>
+<span class="kn">from</span> <span class="nn">.formdata</span> <span class="kn">import</span> <span class="n">parse_form_data</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span><span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">render_error_debug</span><span class="p">,</span> <span class="n">wsgi_request</span><span class="p">,</span>
                     <span class="n">set_wsgi_request_class</span><span class="p">,</span> <span class="n">dump_environ</span><span class="p">,</span> <span class="n">HOP_HEADERS</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -218,12 +213,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -257,11 +250,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -272,8 +268,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

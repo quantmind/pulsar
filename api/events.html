@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Event API &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>Event API &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Protocols/Transports API" href="protocols.html" />
     <link rel="prev" title="Actors API" href="actor.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -54,7 +49,7 @@
 <p>The <a class="reference internal" href="#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><code class="xref py py-class docutils literal"><span class="pre">EventHandler</span></code></a> class is for creating objects with events.
 These events can occur once only during the life of an <a class="reference internal" href="#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><code class="xref py py-class docutils literal"><span class="pre">EventHandler</span></code></a>
 or can occur several times. Check the
-<a class="reference internal" href="../tutorials/events.html#event-handling"><span class="std std-ref">event dispatching tutorial</span></a> for an overview.</p>
+<a class="reference internal" href="../tutorials/events.html#event-handling"><span>event dispatching tutorial</span></a> for an overview.</p>
 <div class="section" id="abstract-event">
 <h2>Abstract Event<a class="headerlink" href="#abstract-event" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -138,7 +133,7 @@ method are executed first.</p>
 <dl class="class">
 <dt id="pulsar.async.events.EventHandler">
 <em class="property">class </em><code class="descclassname">pulsar.async.events.</code><code class="descname">EventHandler</code><span class="sig-paren">(</span><em>loop=None</em>, <em>one_time_events=None</em>, <em>many_times_events=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler" title="Permalink to this definition">¶</a></dt>
-<dd><p>A Mixin for handling events on <a class="reference internal" href="../design.html#async-object"><span class="std std-ref">async objects</span></a>.</p>
+<dd><p>A Mixin for handling events on <a class="reference internal" href="../design.html#async-object"><span>async objects</span></a>.</p>
 <p>It handles <a class="reference internal" href="#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> events and <a class="reference internal" href="#pulsar.async.events.Event" title="pulsar.async.events.Event"><code class="xref py py-class docutils literal"><span class="pre">Event</span></code></a> that occur
 several times.</p>
 <dl class="attribute">
@@ -172,7 +167,7 @@ several times.</p>
 <dd><p>Register a <code class="docutils literal"><span class="pre">callback</span></code> with <code class="docutils literal"><span class="pre">event</span></code>.</p>
 <p>The callback must be a callable accepting one positional parameter
 and at least the <code class="docutils literal"><span class="pre">exc</span></code> optional parameter:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">ext</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">ext</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="o">...</span>
 
 <span class="n">o</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
@@ -228,7 +223,7 @@ not fired before.</li>
 event handler.</li>
 <li><strong>kwargs</strong> &#8211; optional key-valued parameters to pass to the event
 handler. Can only be used for
-<a class="reference internal" href="../tutorials/events.html#many-times-event"><span class="std std-ref">many times events</span></a>.</li>
+<a class="reference internal" href="../tutorials/events.html#many-times-event"><span>many times events</span></a>.</li>
 </ul>
 </td>
 </tr>
@@ -242,7 +237,7 @@ handler. Can only be used for
 <dl class="method">
 <dt id="pulsar.async.events.EventHandler.copy_many_times_events">
 <code class="descname">copy_many_times_events</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler.copy_many_times_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler.copy_many_times_events" title="Permalink to this definition">¶</a></dt>
-<dd><p>Copy <a class="reference internal" href="../tutorials/events.html#many-times-event"><span class="std std-ref">many times events</span></a> from  <code class="docutils literal"><span class="pre">other</span></code>.</p>
+<dd><p>Copy <a class="reference internal" href="../tutorials/events.html#many-times-event"><span>many times events</span></a> from  <code class="docutils literal"><span class="pre">other</span></code>.</p>
 <p>All many times events of <code class="docutils literal"><span class="pre">other</span></code> are copied to this handler
 provided the events handlers already exist.</p>
 </dd></dl>
@@ -271,12 +266,10 @@ provided the events handlers already exist.</p>
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -310,11 +303,14 @@ provided the events handlers already exist.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -325,8 +321,8 @@ provided the events handlers already exist.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/api/events.txt"

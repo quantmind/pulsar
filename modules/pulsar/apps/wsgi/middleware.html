@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.middleware &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>pulsar.apps.wsgi.middleware &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
-  <link rel="stylesheet" href="../../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,7 +42,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.wsgi.middleware</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">A WSGI Middleware is a function or callable object similar to a</span>
 <span class="sd">:ref:`WSGI application handlers &lt;wsgi-handlers&gt;`</span>
 <span class="sd">with the only difference that it can return nothing (``None``).</span>
@@ -98,16 +93,16 @@
 
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">as_coroutine</span><span class="p">,</span> <span class="n">get_event_loop</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="k">import</span> <span class="n">BytesIO</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">as_coroutine</span><span class="p">,</span> <span class="n">get_event_loop</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
-<span class="kn">from</span> <span class="nn">.auth</span> <span class="k">import</span> <span class="n">parse_authorization_header</span>
+<span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">parse_authorization_header</span>
 
 
-<div class="viewcode-block" id="clean_path_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.clean_path_middleware">[docs]</a><span class="k">def</span> <span class="nf">clean_path_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="clean_path_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.clean_path_middleware">[docs]</a><span class="k">def</span> <span class="nf">clean_path_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Clean url from double slashes and redirect if needed.&#39;&#39;&#39;</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="s1">&#39;//&#39;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
@@ -120,7 +115,7 @@
         <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">HttpRedirect</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="authorization_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.authorization_middleware">[docs]</a><span class="k">def</span> <span class="nf">authorization_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="authorization_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.authorization_middleware">[docs]</a><span class="k">def</span> <span class="nf">authorization_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Parse the ``HTTP_AUTHORIZATION`` key in the ``environ``.</span>
 
 <span class="sd">    If available, set the ``http.authorization`` key in ``environ`` with</span>
@@ -128,13 +123,13 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;http.authorization&#39;</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">code</span> <span class="o">=</span> <span class="s1">&#39;HTTP_AUTHORIZATION&#39;</span>
         <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
             <span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">parse_authorization_header</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="n">code</span><span class="p">])</span></div>
 
 
-<div class="viewcode-block" id="wait_for_body_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.wait_for_body_middleware">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">wait_for_body_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="wait_for_body_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.wait_for_body_middleware">[docs]</a><span class="n">async</span> <span class="k">def</span> <span class="nf">wait_for_body_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Use this middleware to wait for the full body.</span>
 
 <span class="sd">    This middleware wait for the full body to be received before letting</span>
@@ -143,7 +138,7 @@
 <span class="sd">    Useful when using synchronous web-frameworks such as :django:`django &lt;&gt;`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]:</span>
-        <span class="n">chunk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">await</span> <span class="n">as_coroutine</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
         <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span></div>
 
 
@@ -156,7 +151,7 @@
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">middleware</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">get_event_loop</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">middleware</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">middleware</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_</span></div>
 </pre></div>
@@ -179,12 +174,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -218,11 +211,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -233,8 +229,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

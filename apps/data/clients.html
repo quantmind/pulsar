@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Datastore Clients &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>Datastore Clients &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="next" title="Available Clients" href="stores.html" />
     <link rel="prev" title="Data Stores" href="index.html" />
    
-  <link rel="stylesheet" href="../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -56,8 +51,8 @@ asynchronous commands on remote servers.</p>
 <div class="section" id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
 <p>To create a data <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> client one uses the <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><code class="xref py py-func docutils literal"><span class="pre">create_store()</span></code></a>
-function with a valid <a class="reference internal" href="#connection-string"><span class="std std-ref">connection string</span></a>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="k">import</span> <span class="n">create_store</span>
+function with a valid <a class="reference internal" href="#connection-string"><span>connection string</span></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">create_store</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s1">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">name</span>
 <span class="go">&#39;redis&#39;</span>
@@ -69,7 +64,7 @@ function with a valid <a class="reference internal" href="#connection-string"><s
 </div>
 <p>Additional parameters can be passed via the connection string or as key-valued
 parameters. For example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s1">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">,</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="s1">&#39;redis://user:password@127.0.0.1:6500/11&#39;</span><span class="p">,</span>
 <span class="go">                         namespace=&#39;test_&#39;)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">dns</span>
 <span class="go">&#39;redis://user:password@127.0.0.1:6500/11?namespace=test_&#39;</span>
@@ -80,7 +75,7 @@ parameters. For example:</p>
 <p>The connection string is a way to specify the various parameters for the
 data store connection. All <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> support a connection string
 of the form:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>&lt;scheme&gt;://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;/&lt;database&gt;?param1=...&amp;param2=...
+<div class="highlight-python"><div class="highlight"><pre>&lt;scheme&gt;://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;/&lt;database&gt;?param1=...&amp;param2=...
 </pre></div>
 </div>
 <p>where:</p>
@@ -102,7 +97,7 @@ to be covered:</p>
 <li><code class="xref py py-meth docutils literal"><span class="pre">execute()</span></code> to execute a command on the store server</li>
 </ul>
 <p>All registered data stores are stored in the <code class="docutils literal"><span class="pre">data_stores</span></code> dictionary:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="k">import</span> <span class="n">data_stores</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">data_stores</span>
 </pre></div>
 </div>
 <p>Pulsar provides two implementations, the redis client and the pulsards client.</p>
@@ -124,12 +119,12 @@ object which can be used to interact with the backend database.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>url</strong> &#8211; <p>a valid <code class="docutils literal"><span class="pre">url</span></code> takes the following forms:</p>
-<p><a class="reference internal" href="stores.html#store-pulsar"><span class="std std-ref">Pulsar datastore</span></a>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pulsar</span><span class="p">:</span><span class="o">//</span><span class="n">user</span><span class="p">:</span><span class="n">password</span><span class="nd">@127</span><span class="o">.</span><span class="mf">0.0</span><span class="o">.</span><span class="mi">1</span><span class="p">:</span><span class="mi">6410</span>
+<p><a class="reference internal" href="stores.html#store-pulsar"><span>Pulsar datastore</span></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre>pulsar://user:password@127.0.0.1:6410
 </pre></div>
 </div>
-<p><a class="reference internal" href="stores.html#store-redis"><span class="std std-ref">Redis</span></a>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>redis://user:password@127.0.0.1:6500/11?namespace=testdb
+<p><a class="reference internal" href="stores.html#store-redis"><span>Redis</span></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre>redis://user:password@127.0.0.1:6500/11?namespace=testdb
 </pre></div>
 </div>
 </li>
@@ -175,7 +170,7 @@ can be found at the python <code class="docutils literal"><span class="pre">dott
 <dl class="class">
 <dt id="pulsar.apps.data.store.Store">
 <em class="property">class </em><code class="descclassname">pulsar.apps.data.store.</code><code class="descname">Store</code><span class="sig-paren">(</span><em>name</em>, <em>host</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#Store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.Store" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for an asynchronous <a class="reference internal" href="#data-stores"><span class="std std-ref">data stores</span></a>.</p>
+<dd><p>Base class for an asynchronous <a class="reference internal" href="#data-stores"><span>data stores</span></a>.</p>
 <p>A <a class="reference internal" href="#pulsar.apps.data.store.Store" title="pulsar.apps.data.store.Store"><code class="xref py py-class docutils literal"><span class="pre">Store</span></code></a> should not be created directly, the high level
 <a class="reference internal" href="#pulsar.apps.data.store.create_store" title="pulsar.apps.data.store.create_store"><code class="xref py py-func docutils literal"><span class="pre">create_store()</span></code></a> function should be used instead.</p>
 <dl class="attribute">
@@ -257,7 +252,7 @@ database with <a class="reference internal" href="#pulsar.apps.data.store.Store.
 <dl class="class">
 <dt id="pulsar.apps.data.store.RemoteStore">
 <em class="property">class </em><code class="descclassname">pulsar.apps.data.store.</code><code class="descname">RemoteStore</code><span class="sig-paren">(</span><em>name</em>, <em>host</em>, <em>loop=None</em>, <em>protocol_factory=None</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/data/store.html#RemoteStore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.store.RemoteStore" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for remote <a class="reference internal" href="#data-stores"><span class="std std-ref">data stores</span></a>.</p>
+<dd><p>Base class for remote <a class="reference internal" href="#data-stores"><span>data stores</span></a>.</p>
 <p>It is an <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><code class="xref py py-class docutils literal"><span class="pre">Producer</span></code></a> for accessing and retrieving
 data from remote data servers such as redis.</p>
 <dl class="method">
@@ -359,12 +354,10 @@ data from remote data servers such as redis.</p>
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -398,11 +391,14 @@ data from remote data servers such as redis.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -413,8 +409,8 @@ data from remote data servers such as redis.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../../sources/apps/data/clients.txt"

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Ver. 1.5.3 - 2016-Oct-31 &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>Ver. 1.5.4 - 2016-Nov-05 &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,25 +27,33 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="ver-1-5-3-2016-oct-31">
+  <div class="section" id="ver-1-5-4-2016-nov-05">
+<span id="ver-1-5-4-2016-nov-05"></span><h1>Ver. 1.5.4 - 2016-Nov-05<a class="headerlink" href="#ver-1-5-4-2016-nov-05" title="Permalink to this headline">¶</a></h1>
+<p>This release is important if you need to upload large files via HTTP.
+The new <code class="docutils literal"><span class="pre">stream_buffer</span></code> configuration parameter helps you in this respect.</p>
+<ul class="simple">
+<li>Added <code class="docutils literal"><span class="pre">stream_buffer</span></code> configuration parameter for controlling the maximum size of stream buffers
+<a class="reference external" href="https://github.com/quantmind/pulsar/commit/14d6f2e7d1f54795ab5fe8f15ed97dd5eb6f62c5">14d6f2e</a></li>
+<li>Allow for clean removal of callbacks in channels by raising the <code class="docutils literal"><span class="pre">CallbackError</span></code> exception
+<a class="reference external" href="https://github.com/quantmind/pulsar/commit/d7b9ff177f76abd5c08859319571dcabe852cf9b">d7b9ff1</a></li>
+<li>Documentation fixes</li>
+<li>OAuth test coverage</li>
+</ul>
+</div>
+<div class="section" id="ver-1-5-3-2016-oct-31">
 <span id="ver-1-5-3-2016-oct-31"></span><h1>Ver. 1.5.3 - 2016-Oct-31<a class="headerlink" href="#ver-1-5-3-2016-oct-31" title="Permalink to this headline">¶</a></h1>
 <p>This is a minor release with documentation fixes and channels improvements.</p>
 <ul class="simple">
@@ -114,12 +122,10 @@ To use the this third party event loop, pass the <code class="docutils literal">
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -153,11 +159,14 @@ To use the this third party event loop, pass the <code class="docutils literal">
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -168,8 +177,8 @@ To use the this third party event loop, pass the <code class="docutils literal">
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/history/1.5.txt"

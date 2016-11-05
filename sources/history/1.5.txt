@@ -1,3 +1,16 @@
+## Ver. 1.5.4 - 2016-Nov-05
+
+This release is important if you need to upload large files via HTTP.
+The new ``stream_buffer`` configuration parameter helps you in this respect.
+
+* Added ``stream_buffer`` configuration parameter for controlling the maximum size of stream buffers
+  [14d6f2e](https://github.com/quantmind/pulsar/commit/14d6f2e7d1f54795ab5fe8f15ed97dd5eb6f62c5)
+* Allow for clean removal of callbacks in channels by raising the ``CallbackError`` exception
+  [d7b9ff1](https://github.com/quantmind/pulsar/commit/d7b9ff177f76abd5c08859319571dcabe852cf9b)
+* Documentation fixes
+* OAuth test coverage
+
+
 ## Ver. 1.5.3 - 2016-Oct-31
 
 This is a minor release with documentation fixes and channels improvements.

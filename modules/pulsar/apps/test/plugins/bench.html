@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.plugins.bench &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>pulsar.apps.test.plugins.bench &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../../../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../../test.html" />
    
-  <link rel="stylesheet" href="../../../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,7 +42,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.test.plugins.bench</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">:class:`.BenchMark` is a :class:`.TestPlugin` for benchmarking test functions.</span>
 
 <span class="sd">To use the plugin follow these three steps:</span>
@@ -90,12 +85,12 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">inspect</span> <span class="k">import</span> <span class="n">isawaitable</span>
-<span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestSuite</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isawaitable</span>
+<span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">TestSuite</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 
-<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">WrapTest</span><span class="p">,</span> <span class="n">TestPlugin</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">WrapTest</span><span class="p">,</span> <span class="n">TestPlugin</span>
 
 <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s2">&quot;win32&quot;</span><span class="p">:</span>  <span class="c1"># pragma    nocover</span>
     <span class="n">default_timer</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span>
@@ -103,8 +98,8 @@
     <span class="n">default_timer</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span>
 
 
-<span class="n">BENCHMARK_TEMPLATE</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{0[name]}</span><span class="s1">: repeated </span><span class="si">{0[repeat]}</span><span class="s1">(x</span><span class="si">{0[times]}</span><span class="s1">) times, &#39;</span>
-                      <span class="s1">&#39;average </span><span class="si">{0[mean]}</span><span class="s1"> secs, stdev </span><span class="si">{0[std]}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">BENCHMARK_TEMPLATE</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;{0[name]}: repeated {0[repeat]}(x{0[times]}) times, &#39;</span>
+                      <span class="s1">&#39;average {0[mean]} secs, stdev {0[std]}&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">simple</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
@@ -125,11 +120,11 @@
         <span class="n">info</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;repeat&#39;</span><span class="p">:</span> <span class="n">repeat</span><span class="p">,</span>
                      <span class="s1">&#39;times&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
                      <span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">%.5f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">mean</span><span class="p">,</span>
-                     <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> %&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">std</span><span class="p">)})</span>
+                     <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="s1">&#39;{0} %&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">std</span><span class="p">)})</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">testMethod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">testMethod</span>
-        <span class="n">testStartUp</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;startUp&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">testStartUp</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;startUp&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">testGetTime</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;getTime&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">dt</span><span class="p">:</span> <span class="n">dt</span><span class="p">)</span>
         <span class="n">testGetInfo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;getInfo&#39;</span><span class="p">,</span> <span class="n">simple</span><span class="p">)</span>
         <span class="n">testGetSummary</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;getSummary&#39;</span><span class="p">,</span> <span class="n">simple</span><span class="p">)</span>
@@ -144,7 +139,7 @@
                 <span class="n">start</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">testMethod</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">isawaitable</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
-                    <span class="k">await</span> <span class="n">result</span>
+                    <span class="n">await</span> <span class="n">result</span>
                 <span class="n">delta</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
                 <span class="n">dt</span> <span class="o">=</span> <span class="n">testGetTime</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
                 <span class="n">testGetInfo</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
@@ -168,25 +163,25 @@
                                   <span class="s1">&#39;when benchmarking.&#39;</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">loadTestsFromTestCase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_cls</span><span class="p">):</span>
-        <span class="n">bench</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test_cls</span><span class="p">,</span> <span class="s1">&#39;__benchmark__&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">bench</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test_cls</span><span class="p">,</span> <span class="s1">&#39;__benchmark__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">benchmark</span> <span class="o">!=</span> <span class="n">bench</span><span class="p">:</span>  <span class="c1"># skip the loading</span>
             <span class="k">return</span> <span class="n">TestSuite</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">before_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="p">:</span>
-            <span class="n">method_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;_testMethodName&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">method_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;_testMethodName&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">method_name</span><span class="p">:</span>
-                <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="n">bench</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;__benchmark__&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="n">bench</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;__benchmark__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">bench</span> <span class="ow">and</span> <span class="n">method</span><span class="p">:</span>
-                    <span class="n">bench</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="s1">&#39;__benchmark__&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+                    <span class="n">bench</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="s1">&#39;__benchmark__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">bench</span><span class="p">:</span>
                     <span class="n">number</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;__number__&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
                     <span class="k">return</span> <span class="n">BenchTest</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">repeat</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">addSuccess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">benchmark</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;bench_info&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;bench_info&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="c1"># if result and self.stream.showAll:</span>
             <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
                 <span class="n">stream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="s1">&#39;benchmark&#39;</span><span class="p">)</span>
@@ -195,7 +190,7 @@
                 <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
                 <span class="n">stream</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">addSuccess</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
-                <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">addError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_msg</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s1">&#39;ERROR&#39;</span><span class="p">)</span>
@@ -220,7 +215,7 @@
             <span class="n">stream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="s1">&#39;benchmark&#39;</span><span class="p">)</span>
             <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span>
             <span class="n">stream</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-            <span class="k">return</span> <span class="kc">True</span></div>
+            <span class="k">return</span> <span class="bp">True</span></div>
 </pre></div>
 
           </div>
@@ -241,12 +236,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -280,11 +273,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -295,8 +291,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WebSockets &#8212; pulsar 1.6.0b1 documentation</title>
+    <title>WebSockets &mdash; pulsar 1.5.4 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.6.0b1',
+        VERSION:     '1.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,20 +27,15 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.6.0b1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous HTTP client" href="http.html" />
     <link rel="prev" title="JSON-RPC" href="rpc.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -57,7 +52,7 @@ and server. Pulsar implementation uses the WSGI middleware
 <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><code class="xref py py-class docutils literal"><span class="pre">WS</span></code></a> handler for the communication part.</p>
 <p>This is a Web Socket handler which echoes all received messages
 back to the client:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">ws</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">ws</span>
 
 <span class="k">class</span> <span class="nc">EchoWS</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
 
@@ -66,9 +61,9 @@ back to the client:</p>
 </pre></div>
 </div>
 <p>To create a valid <a class="reference internal" href="#pulsar.apps.ws.websocket.WebSocket" title="pulsar.apps.ws.websocket.WebSocket"><code class="xref py py-class docutils literal"><span class="pre">WebSocket</span></code></a> middleware initialise as follow:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">wm</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s1">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">EchoWS</span><span class="p">())</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">wm</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s1">&#39;/bla&#39;</span><span class="p">,</span> <span class="n">EchoWS</span><span class="p">())</span>
 <span class="n">app</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">(</span><span class="n">middleware</span><span class="o">=</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">wm</span><span class="p">))</span>
-<span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">app</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="section" id="api">
@@ -285,12 +280,10 @@ are bytes.</li>
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -312,7 +305,7 @@ are bytes.</li>
 <li class="toctree-l1"><a class="reference internal" href="socket.html">Socket Servers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wsgi/index.html">WSGI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rpc.html">JSON-RPC</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">WebSockets</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">WebSockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="http.html">Asynchronous HTTP client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="greenio.html">Greenlet Support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test.html">Test Suite</a></li>
@@ -324,11 +317,14 @@ are bytes.</li>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -339,8 +335,8 @@ are bytes.</li>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/apps/websockets.txt"
