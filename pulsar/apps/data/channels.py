@@ -99,22 +99,20 @@ class Connector:
 class Channels(Connector, PubSubClient):
     """Manage channels for publish/subscribe
     """
+    statusType = StatusType
 
-    def __init__(self, pubsub, namespace=None, status_channel=None,
+    def __init__(self, store, namespace=None, status_channel=None,
                  logger=None):
-        assert pubsub.protocol, "protocol required for channels"
-        super().__init__(pubsub.store, namespace=namespace)
+        super().__init__(store, namespace=namespace)
+        self.store = store
         self.channels = OrderedDict()
         self.logger = logger or LOGGER
         self.status_channel = (status_channel or DEFAULT_CHANNEL).lower()
-        self.status = StatusType.initialised
-        self.pubsub = pubsub
-        self.pubsub.bind_event('connection_lost', self._connection_lost)
-        self.pubsub.add_client(self)
+        self.status = self.statusType.initialised
 
     @property
     def _loop(self):
-        return self.pubsub._loop
+        return self.store._loop
 
     def __len__(self):
         return len(self.channels)
@@ -131,11 +129,6 @@ class Channels(Connector, PubSubClient):
             channel = self.channels.get(name)
             if channel:
                 channel(message)
-
-    def lock(self, name, **kwargs):
-        """Global distributed lock
-        """
-        return self.pubsub.store.client().lock(self.prefixed(name), **kwargs)
 
     async def register(self, channel_name, event, callback):
         """Register a callback to ``channel_name`` and ``event``.
@@ -177,31 +170,8 @@ class Channels(Connector, PubSubClient):
                 self.channels.pop(name)
         return channel
 
-    async def publish(self, channel, event, data=None):
-        """Publish a new ``event`` on a ``channel``
-
-        :param channel: channel name
-        :param event: event name
-        :param data: optional payload to include in the event
-        :return: a coroutine and therefore it must be awaited
-        """
-        msg = {'event': event, 'channel': channel}
-        if data:
-            msg['data'] = data
-        try:
-            await self.pubsub.publish(self.prefixed(channel), msg)
-        except ConnectionRefusedError:
-            self.connection_error = True
-            self.logger.critical(
-                '%s cannot publish on "%s" channel - connection error',
-                self,
-                channel
-            )
-        else:
-            self.connection_ok()
-
     async def connect(self, next_time=None):
-        """Connect with pubsub store
+        """Connect with store
 
         :return: a coroutine and therefore it must be awaited
         """
@@ -211,27 +181,40 @@ class Channels(Connector, PubSubClient):
                 self.status = StatusType.connecting
                 await self._connect(next_time)
 
+    async def publish(self, channel, event, data=None):
+        """Publish a new ``event`` on a ``channel``
+        :param channel: channel name
+        :param event: event name
+        :param data: optional payload to include in the event
+        :return: a coroutine and therefore it must be awaited
+        """
+        raise NotImplementedError
+
+    async def subscribe(self, channel):
+        raise NotImplementedError
+
+    async def unsubscribe(self, channel):
+        raise NotImplementedError
+
     async def close(self):
-        """Close channels and underlying pubsub handler
+        """Close channels and underlying store handler
 
         :return: a coroutine and therefore it must be awaited
         """
-        self.pubsub.remove_callback('connection_lost', self._connection_lost)
-        self.status = StatusType.closed
-        await self.pubsub.close()
+        self.status = self.statusType.closed
 
     def create_channel(self, name):
         return Channel(self, name)
 
-    def _connection_lost(self, *args):
-        self.status = StatusType.disconnected
+    def connection_lost(self, *args):
+        self.status = self.statusType.disconnected
         self._loop.create_task(self.connect())
 
     async def _connect(self, next_time):
         try:
             # register
             self.status = StatusType.connecting
-            await self.pubsub.subscribe(self.prefixed(self.status_channel))
+            await self.subscribe(self.status_channel)
             self.status = StatusType.connected
             self.logger.warning(
                 '%s ready and listening for events on %s - all good',
@@ -315,15 +298,13 @@ class Channel:
     async def connect(self):
         channels = self.channels
         if channels.status == StatusType.connected:
-            channel_name = channels.prefixed(self.name)
-            await self.channels.pubsub.subscribe(channel_name)
+            await self.channels.subscribe(self)
 
     @safe_execution
     async def disconnect(self):
         channels = self.channels
         if channels.status == StatusType.connected:
-            channel_name = channels.prefixed(self.name)
-            await self.channels.pubsub.unsubscribe(channel_name)
+            await self.channels.unsubscribe(self)
 
     def register(self, event, callback):
         """Register a ``callback`` for ``event``

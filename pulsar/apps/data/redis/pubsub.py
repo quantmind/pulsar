@@ -2,7 +2,7 @@ from functools import partial
 from asyncio import gather
 
 from pulsar import Protocol
-from pulsar.apps.data import PubSub
+from pulsar.apps.data import PubSub, Channels, PubSubClient
 
 
 class PubsubProtocol(Protocol):
@@ -100,3 +100,59 @@ class RedisPubSub(PubSub):
     def _conn_lost(self, con, exc=None):
         self._connection = None
         self.fire_event('connection_lost')
+
+
+class RedisChannels(Channels, PubSubClient):
+    """Manage redis channels-events
+    """
+    def __init__(self, pubsub, **kw):
+        assert pubsub.protocol, "protocol required for channels"
+        super().__init__(pubsub.store, **kw)
+        self.pubsub = pubsub
+        self.pubsub.bind_event('connection_lost', self._connection_lost)
+        self.pubsub.add_client(self)
+
+    def lock(self, name, **kwargs):
+        """Global distributed lock
+        """
+        return self.pubsub.store.client().lock(self.prefixed(name), **kwargs)
+
+    async def publish(self, channel, event, data=None):
+        """Publish a new ``event`` on a ``channel``
+
+        :param channel: channel name
+        :param event: event name
+        :param data: optional payload to include in the event
+        :return: a coroutine and therefore it must be awaited
+        """
+        msg = {'event': event, 'channel': channel}
+        if data:
+            msg['data'] = data
+        try:
+            await self.pubsub.publish(self.prefixed(channel), msg)
+        except ConnectionRefusedError:
+            self.connection_error = True
+            self.logger.critical(
+                '%s cannot publish on "%s" channel - connection error',
+                self,
+                channel
+            )
+        else:
+            self.connection_ok()
+
+    async def subscribe(self, channel):
+        channel_name = self.prefixed(channel.name)
+        await self.pubsub.subscribe(channel_name)
+
+    async def unsubscribe(self, channel):
+        channel_name = self.prefixed(channel.name)
+        await self.pubsub.unsubscribe(channel_name)
+
+    async def close(self):
+        """Close channels and underlying pubsub handler
+
+        :return: a coroutine and therefore it must be awaited
+        """
+        self.pubsub.remove_callback('connection_lost', self._connection_lost)
+        self.status = self.statusType.closed
+        await self.pubsub.close()

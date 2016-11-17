@@ -218,6 +218,11 @@ class RemoteStore(Producer, Store):
         '''
         raise NotImplementedError
 
+    def channels(self, **kw):
+        '''Obtain a :class:`.Channels` handler for this store if implemented
+        '''
+        raise NotImplementedError
+
     def close(self):
         '''Close all open connections
         '''

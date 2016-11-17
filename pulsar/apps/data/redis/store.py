@@ -6,7 +6,7 @@ from pulsar.apps.data import RemoteStore
 from pulsar.apps.ds import redis_parser
 
 from .client import RedisClient, Pipeline, Consumer, ResponseError
-from .pubsub import RedisPubSub
+from .pubsub import RedisPubSub, RedisChannels
 
 
 class RedisStoreConnection(Connection):
@@ -78,6 +78,9 @@ class RedisStore(RemoteStore):
 
     def pubsub(self, protocol=None):
         return RedisPubSub(self, protocol=protocol)
+
+    def channels(self, protocol=None, **kw):
+        return RedisChannels(self.pubsub(protocol=protocol), **kw)
 
     def ping(self):
         return self.client().ping()
