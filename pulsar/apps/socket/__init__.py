@@ -363,12 +363,9 @@ class UdpSocketServer(SocketServer):
         transport, _ = await loop.create_datagram_endpoint(
             asyncio.DatagramProtocol, address)
         sock = transport.get_extra_info('socket')
+        transport._sock = DummySock()
+        transport.close()
         self.monitor_sockets(monitor, [sock])
-        # TODO: if we don't do this the socket get closed for some reason
-        try:
-            del transport._sock
-        except AttributeError:
-            pass
 
     def actorparams(self, monitor, params):
         params.update({'sockets': monitor.sockets})
@@ -401,3 +398,9 @@ class UdpSocketServer(SocketServer):
                 server.bind_event(event, callback)
         await server.create_endpoint()
         return server
+
+
+class DummySock:
+
+    def close(self):
+        pass

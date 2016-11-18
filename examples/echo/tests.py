@@ -153,12 +153,20 @@ class TestEchoServerProcess(TestEchoServerThread):
         self.assertEqual(result, b'ciao luca')
 
     #    TEST SYNCHRONOUS CLIENT
-    def test_sync_echo(self):
+    async def test_sync_echo(self):
+        loop = get_event_loop()
+        await loop.run_in_executor(None, self._test_sync_echo)
+
+    async def test_sync_close(self):
+        loop = get_event_loop()
+        await loop.run_in_executor(None, self._test_sync_close)
+
+    def _test_sync_echo(self):
         echo = self.sync_client()
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
 
-    async def test_sync_close(self):
+    def _test_sync_close(self):
         # TODO: fix this. Issue #251
         echo = self.sync_client()
         self.assertEqual(echo(b'ciao!'), b'ciao!')

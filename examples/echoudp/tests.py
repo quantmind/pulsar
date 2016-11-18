@@ -1,11 +1,15 @@
 import unittest
 
-from pulsar import send, new_event_loop, get_application, get_actor
+from pulsar import (
+    send, new_event_loop, get_application, get_actor, get_event_loop
+)
 from pulsar.apps.test import dont_run_with_thread
 
 from examples.echoudp.manage import server, Echo, EchoUdpServerProtocol
 
 
+@unittest.skipIf(get_actor().cfg.event_loop == 'uv',
+                 "uvloop does not work with udp servers")
 class TestEchoUdpServerThread(unittest.TestCase):
     concurrency = 'thread'
     server_cfg = None
@@ -50,7 +54,7 @@ class TestEchoUdpServerThread(unittest.TestCase):
 
 @dont_run_with_thread
 @unittest.skipIf(get_actor().cfg.event_loop == 'uv',
-                 "uvloop does not work for multiprocessing udp servers")
+                 "uvloop does not work with udp servers")
 class TestEchoUdpServerProcess(TestEchoUdpServerThread):
     concurrency = 'process'
 
@@ -62,7 +66,11 @@ class TestEchoUdpServerProcess(TestEchoUdpServerThread):
         self.assertEqual(result, b'ciao luca')
 
     #    TEST SYNCHRONOUS CLIENT
-    def test_sync_echo(self):
+    async def test_sync_echo(self):
+        loop = get_event_loop()
+        await loop.run_in_executor(None, self._test_sync_echo)
+
+    def _test_sync_echo(self):
         echo = self.sync_client()
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
