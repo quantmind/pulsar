@@ -1002,7 +1002,8 @@ class HttpClient(AbstractClient):
             if (not headers or
                     not keep_alive(response.request.version, headers) or
                     response.status_code == 101 or
-                    # response.request.stream or
+                    # if response is done stream is not relevant
+                    response.request.stream and not response.done() or
                     self.close_connections):
                 conn.detach()
 

@@ -174,18 +174,6 @@ class ProtocolConsumer(EventHandler):
         future.add_done_callback(self._abort_request)
         raise AbortRequest
 
-    async def _start(self):
-        try:
-            await self.fire_event('pre_request')
-        except AbortEvent:
-            self.logger.debug('Abort request %s', self.request)
-        else:
-            if self._request is not None:
-                try:
-                    self.start_request()
-                except Exception as exc:
-                    self.finished(exc=exc)
-
     def connection_lost(self, exc):
         """Called by the :attr:`connection` when the transport is closed.
 
@@ -201,8 +189,11 @@ class ProtocolConsumer(EventHandler):
     def finished(self, *arg, **kw):
         """Fire the ``post_request`` event if it wasn't already fired.
         """
-        if not self.event('post_request').fired():
+        if not self.done():
             return self.fire_event('post_request', *arg, **kw)
+
+    def done(self):
+        return self.event('post_request').fired()
 
     def write(self, data):
         """Delegate writing to the underlying :class:`.Connection`
@@ -214,6 +205,18 @@ class ProtocolConsumer(EventHandler):
             return c.write(data)
         else:
             raise RuntimeError('No connection')
+
+    async def _start(self):
+        try:
+            await self.fire_event('pre_request')
+        except AbortEvent:
+            self.logger.debug('Abort request %s', self.request)
+        else:
+            if self._request is not None:
+                try:
+                    self.start_request()
+                except Exception as exc:
+                    self.finished(exc=exc)
 
     def _data_received(self, data):
         # Called by Connection, it updates the counters and invoke

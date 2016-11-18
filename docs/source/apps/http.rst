@@ -65,29 +65,44 @@ You can also pass a list of items as a value::
    response.url   // http://bla.com?key1=value1&key2=value2&key2=value3
 
 
-Posting simple data
-=============================
+Post data
+=============
+
+Simple data
+~~~~~~~~~~~~~~~~~
 
 Posting data is as simple as passing the ``data`` parameter::
 
     sessions.post(..., data={'entry1': 'bla', 'entry2': 'doo'})
 
 
-Posting JSON data
-=============================
+JSON data
+~~~~~~~~~~~~~~~~~
 
 Posting data is as simple as passing the ``data`` parameter::
 
     sessions.post(..., json={'entry1': 'bla', 'entry2': 'doo'})
 
-Posting file data
-=============================
+File data
+~~~~~~~~~~~~~~~~~
 
 Posting data is as simple as passing the ``data`` parameter::
 
     files = {'file': open('report.xls', 'rb')}
     sessions.post(..., files=files)
 
+
+Streaming data
+~~~~~~~~~~~~~~~~~~~~~~
+
+It is possible to post streaming data too. Streaming data can be a simple
+generator::
+
+   sessions.post(..., data=(b'blabla' for _ in range(10)))
+
+or a coroutine::
+
+   sessions.post(..., data=(b'blabla' for _ in range(10)))
 
 
 .. _http-cookie:
@@ -233,10 +248,24 @@ The websocket response is obtained by::
 
     ws = await sessions.get('ws://...', websocket_handler=Echo())
 
+
+Client Options
+===================
+
+Several options are available to customise how the HTTP client works
+
+Pool size
+~~~~~~~~~~~~~
+
+The HTTP client maintain :attr:`~.HTTPClient.connections _pools` with remote hosts.
+The parameter which control the
+pool size for each domain is :attr:`~.HTTPClient.pool_size` which is set
+to 10 by default.
+
 .. _http-redirects:
 
 Redirects
-=============================
+~~~~~~~~~~~~~~~~
 
 By default Requests will perform location redirection for all verbs except HEAD.
 
@@ -255,8 +284,9 @@ redirection handling with the ``allow_redirects`` parameter::
    response.status_code    # 301
    response.history        # []
 
+
 Decompression
-=====================
+~~~~~~~~~~~~~~~~~~~
 
 Decompression of the response body is automatic.
 To disable decompression pass the ``decompress`` parameter to a request::
@@ -273,17 +303,17 @@ Alternatively, the ``decompress`` flag can be set at session level::
    response.text()         # UnicodeDecodeError: 'utf-8' codec can't decode byte 0x8b in position 1: invalid start byte
 
 
-
-
 Synchronous Mode
-=====================
+~~~~~~~~~~~~~~~~~~~~~~
 
-Can be used in :ref:`synchronous mode <tutorials-synchronous>`::
+Can be used in :ref:`synchronous mode <tutorials-synchronous>` if the loop
+did not start, alternatively it is possible to use it in synchronous mode on a
+new thread::
 
     sessions = HttpClient(loop=new_event_loop())
 
 Events
-==============
+~~~~~~~~~~~~
 :ref:`Events <event-handling>` control the behaviour of the
 :class:`.HttpClient` when certain conditions occur. They are useful for
 handling standard HTTP event such as :ref:`redirects <http-redirects>`,
