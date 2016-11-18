@@ -48,8 +48,9 @@ class TestTestLoader(unittest.TestCase):
         modules = dict(app.loader.test_files(
             ['suite.loader.test_load_test_function']))
         self.assertEqual(len(modules), 1)
-        self.assertTrue('suite.loader' in modules)
-        self.assertEqual(modules['suite.loader'][1], 'test_load_test_function')
+        module = modules.get('suite.loader.test_load_test_function')
+        self.assertTrue(module)
+        self.assertEqual(module[1], 'test_load_test_function')
 
     async def test_load_bad_test_function(self):
         app = await get_application('test')

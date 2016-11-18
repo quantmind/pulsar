@@ -90,7 +90,7 @@ class TestLoader:
             tag += '.' + b
             yield tag
 
-    def _check_tag(self, tag, import_tags, exclude_tags):
+    def _check_tag(self, tag, include_tags, exclude_tags, is_file):
         '''Return ``True`` if ``tag`` is in ``import_tags``.'''
         if exclude_tags:
             alltags = list(self._all_tags(tag))
@@ -98,26 +98,23 @@ class TestLoader:
                 for bit in alltags:
                     if bit == exclude_tag:
                         return
-        if import_tags:
+        if include_tags:
             con_continue = False
             found = set()
-            all_tags = list(self._all_tags(tag))
 
-            for import_tag in import_tags:
-                all_i_tags = list(self._all_tags(import_tag))
-                function_tag, import_tag = None, all_i_tags[-1]
-                bits = import_tag.split('.')
-                if len(all_i_tags) > 1 and bits[-1].startswith('test'):
-                    function_tag, import_tag = import_tag, all_i_tags[-2]
+            all_tags = reversed(list(self._all_tags(tag)))
 
-                # import tag in tags
-                if import_tag in all_tags:
-                    if function_tag:
-                        found.add(function_tag)
+            for tags in include_tags:
+                for tag in all_tags:
+                    try:
+                        index = tags.index(tag)
+                    except ValueError:
+                        continue
                     else:
-                        found.update(all_tags[all_tags.index(import_tag):])
-                elif tag in all_i_tags:
-                    con_continue = True
+                        con_continue = True
+                        if is_file:
+                            found.update(tags[index+1:])
+                        break
 
             return found or con_continue
         else:
@@ -150,6 +147,10 @@ class TestLoader:
         """
         if tags is None:
             tags = []
+            if include_tags:
+                include_tags = [
+                    list(self._all_tags(tag)) for tag in include_tags
+                    ]
 
         for mod_name in os.listdir(path):
             if skip_module(mod_name):
@@ -167,17 +168,17 @@ class TestLoader:
             tag = '.'.join(m_tags)
 
             if tag or is_file:
-                found = self._check_tag(tag, include_tags, exclude_tags)
+                found = self._check_tag(
+                    tag, include_tags, exclude_tags, is_file
+                )
                 if not found:
                     continue
-                if isinstance(found, set) and is_file:
+                if isinstance(found, set):
                     for ttag in list(found):
                         test_function = ttag[len(tag)+1:]
                         if test_function.startswith('test'):
-                            found.remove(ttag)
                             yield ttag, (mod_path, test_function)
-                    if not found:
-                        continue
+                    continue
 
             if is_file:
                 yield tag, (mod_path, None)
