@@ -11,3 +11,4 @@ requests
 certifi
 recommonmark
 sphinxcontrib-spelling
+uvloop

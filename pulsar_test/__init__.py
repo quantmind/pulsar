@@ -25,6 +25,7 @@ class Test(orig.test):
     ])
     user_options = [
         ('list-labels', 'l', 'List all test labels without performing tests'),
+        ('debug', None, 'Turn on debug'),
         ('coverage', None, 'Collect code coverage from all spawn actors'),
         ('coveralls', None, 'Publish coverage to coveralls'),
         ('sequential', None, 'Run test functions sequentially'),
@@ -35,7 +36,9 @@ class Test(orig.test):
         ('test-plugins=', None, 'Test plugins'),
         ('test-modules=', None, 'Modules where to look for tests'),
         ('pulsar-args=', 'a',
-         "Additional arguments to pass to pulsar test suite")]
+         "Additional arguments to pass to pulsar test suite")
+    ]
+    boolean_options = ['debug', 'sequential', 'coverage', 'coveralls']
 
     def initialize_options(self):
         for name, _, _ in self.user_options:
@@ -47,7 +50,13 @@ class Test(orig.test):
             attr = self._slugify(name)
             value = getattr(self, attr)
             if value and name in self.list_options:
-                value = shlex.split(value)
+                value_list = []
+                for v in shlex.split(value):
+                    for v in v.split(','):
+                        v = v.strip()
+                        if v:
+                            value_list.append(v)
+                value = value_list
                 setattr(self, attr, value)
             if value is not None:
                 param_name = OPTION_MAP.get(attr, attr)

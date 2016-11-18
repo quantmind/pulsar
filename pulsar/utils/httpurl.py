@@ -1181,7 +1181,7 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
             body.write(('Content-Disposition: form-data; name="%s"\r\n'
                         % (fieldname)).encode(charset))
             body.write(b'Content-Type: text/plain\r\n\r\n')
-        data = body.write(to_bytes(data))
+        body.write(to_bytes(data))
         body.write(b'\r\n')
     body.write(('--%s--\r\n' % (boundary)).encode(charset))
     content_type = 'multipart/form-data; boundary=%s' % boundary

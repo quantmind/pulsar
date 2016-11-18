@@ -34,5 +34,6 @@ class Greeter:
         else:
             arbiter().stop()
 
+
 if __name__ == '__main__':
     Greeter()

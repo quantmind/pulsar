@@ -57,4 +57,5 @@ def _start_store(monitor):
     if not isinstance(app, PulsarDS) and app.cfg.data_store:
         return start_store(app, app.cfg.data_store)
 
+
 when_monitor_start.append(_start_store)

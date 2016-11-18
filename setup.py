@@ -77,7 +77,8 @@ meta = dict(
     packages=find_packages(include=['pulsar', 'pulsar.*', 'pulsar_test']),
     entry_points={
         "distutils.commands": [
-            "pulsar_test = pulsar_test:Test"
+            "pulsar_test = pulsar_test:Test",
+            "bench = pulsar_test:Bench"
         ]
     },
     classifiers=[

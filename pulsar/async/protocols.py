@@ -318,9 +318,9 @@ class PulsarProtocol(EventHandler, FlowControl):
         """``True`` if the :attr:`transport` is closed.
         """
         if self._transport:
-            if not getattr(self._transport, '_closing', False):
-                return False
-            return True
+            if hasattr(self._transport, 'is_closing'):
+                return self._transport.is_closing()
+            return False
         return True
 
     def close(self):

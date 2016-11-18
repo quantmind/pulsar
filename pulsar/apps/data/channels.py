@@ -147,7 +147,7 @@ class Channels(Connector, PubSubClient):
         if channel is None:
             channel = self.create_channel(name)
             self.channels[channel.name] = channel
-            await channel.connect()
+        await self.subscribe(channel, event)
         channel.register(event, callback)
         return channel
 
@@ -190,7 +190,9 @@ class Channels(Connector, PubSubClient):
         """
         raise NotImplementedError
 
-    async def subscribe(self, channel):
+    async def subscribe(self, channel, event=None):
+        """Subscribe to the remote server
+        """
         raise NotImplementedError
 
     async def unsubscribe(self, channel):

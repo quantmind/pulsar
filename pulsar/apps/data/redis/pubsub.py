@@ -140,7 +140,7 @@ class RedisChannels(Channels, PubSubClient):
         else:
             self.connection_ok()
 
-    async def subscribe(self, channel):
+    async def subscribe(self, channel, event=None):
         channel_name = self.prefixed(channel.name)
         await self.pubsub.subscribe(channel_name)
 

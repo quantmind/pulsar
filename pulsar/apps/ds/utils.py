@@ -139,6 +139,7 @@ class Null:
     def __lt__(self, other):
         return False
 
+
 null = Null()
 
 
