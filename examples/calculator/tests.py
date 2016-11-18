@@ -2,7 +2,7 @@
 import unittest
 import types
 
-from pulsar import send
+from pulsar import send, get_event_loop
 from pulsar.apps import rpc, http
 from pulsar.apps.test import dont_run_with_thread
 
@@ -249,7 +249,10 @@ class TestRpcOnProcess(TestRpcOnThread):
         self.assertEqual(response, 'pong')
 
     # Synchronous client
-    def test_sync_ping(self):
+    async def test_sync_ping(self):
+        await get_event_loop().run_in_executor(None, self._test_sync_ping)
+
+    def _test_sync_ping(self):
         sync = rpc.JsonProxy(self.uri, sync=True)
         self.assertEqual(sync.ping(), 'pong')
         self.assertEqual(sync.ping(), 'pong')

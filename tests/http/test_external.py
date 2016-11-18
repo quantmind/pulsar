@@ -18,7 +18,6 @@ class ExternalBase(base.TestHttpClientBase):
 
     async def test_header_links_and_close(self):
         client = self.client()
-        print(client._loop)
         baseurl = 'https://api.github.com/gists/public'
         response = await client.get(baseurl)
         if response.status_code == 403:

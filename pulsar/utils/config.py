@@ -792,7 +792,7 @@ class HttpProxyServer(Global):
 class HttpKeepAlive(Global):
     name = "http_keep_alive"
     flags = ["--http-keep-alive"]
-    default = 15
+    default = 70
     desc = """\
         Keep HTTP connections alive for this number of seconds
         """
