@@ -99,16 +99,27 @@ class TestLoader:
                     if bit == exclude_tag:
                         return
         if import_tags:
-            found = []
-            alltags = list(self._all_tags(tag))
+            con_continue = False
+            found = set()
+            all_tags = list(self._all_tags(tag))
+
             for import_tag in import_tags:
-                allitags = list(self._all_tags(import_tag))
-                for bit in alltags:
-                    if bit == import_tag:
-                        return True
-                    elif bit in allitags:
-                        found.extend(allitags[allitags.index(bit)+1:])
-            return found
+                all_i_tags = list(self._all_tags(import_tag))
+                function_tag, import_tag = None, all_i_tags[-1]
+                bits = import_tag.split('.')
+                if len(all_i_tags) > 1 and bits[-1].startswith('test'):
+                    function_tag, import_tag = import_tag, all_i_tags[-2]
+
+                # import tag in tags
+                if import_tag in all_tags:
+                    if function_tag:
+                        found.add(function_tag)
+                    else:
+                        found.update(all_tags[all_tags.index(import_tag):])
+                elif tag in all_i_tags:
+                    con_continue = True
+
+            return found or con_continue
         else:
             return True
 
@@ -159,12 +170,14 @@ class TestLoader:
                 found = self._check_tag(tag, include_tags, exclude_tags)
                 if not found:
                     continue
-                if isinstance(found, list) and is_file:
-                    for ttag in found:
+                if isinstance(found, set) and is_file:
+                    for ttag in list(found):
                         test_function = ttag[len(tag)+1:]
                         if test_function.startswith('test'):
+                            found.remove(ttag)
                             yield ttag, (mod_path, test_function)
-                    continue
+                    if not found:
+                        continue
 
             if is_file:
                 yield tag, (mod_path, None)

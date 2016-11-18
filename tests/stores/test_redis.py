@@ -1,5 +1,5 @@
 from pulsar import HAS_C_EXTENSIONS
-from pulsar.apps.test import check_server
+from pulsar.apps.test import check_server, skipUnless
 from pulsar.apps.data.redis import RedisScript
 
 from tests.stores.test_pulsards import unittest, RedisCommands, create_store
@@ -10,7 +10,7 @@ from tests.stores.channels import ChannelsTests
 OK = check_server('redis')
 
 
-@unittest.skipUnless(OK, 'Requires a running Redis server')
+@skipUnless(OK, 'Requires a running Redis server')
 class TestRedisStore(RedisCommands,
                      RedisLockTests,
                      ChannelsTests,
@@ -55,6 +55,6 @@ class TestRedisStore(RedisCommands,
         self.assertEqual(result[1], [b'first', b'second', b'third'])
 
 
-@unittest.skipUnless(OK and HAS_C_EXTENSIONS, 'Requires cython extensions')
+@skipUnless(OK and HAS_C_EXTENSIONS, 'Requires cython extensions')
 class TestRedisStorePyParser(TestRedisStore):
     pass

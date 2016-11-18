@@ -107,7 +107,7 @@ class Channels(Connector, PubSubClient):
         self.store = store
         self.channels = OrderedDict()
         self.logger = logger or LOGGER
-        self.status_channel = (status_channel or DEFAULT_CHANNEL).lower()
+        self.status_channel = self.channel(status_channel or DEFAULT_CHANNEL)
         self.status = self.statusType.initialised
 
     @property
@@ -130,44 +130,39 @@ class Channels(Connector, PubSubClient):
             if channel:
                 channel(message)
 
-    async def register(self, channel_name, event, callback):
+    async def register(self, channel, event, callback):
         """Register a callback to ``channel_name`` and ``event``.
 
         A prefix will be added to the channel name if not already available or
         the prefix is an empty string
 
-        :param channel_name: channel name
+        :param channel: channel name
         :param event: event name
         :param callback: callback to execute when event on channel occurs
         :return: a coroutine which results in the channel where the callback
             was registered
         """
-        name = channel_name.lower()
-        channel = self.channels.get(name)
-        if channel is None:
-            channel = self.create_channel(name)
-            self.channels[channel.name] = channel
-        await self.subscribe(channel, event)
+        channel = self.channel(channel)
+        await self._subscribe(channel, event)
         channel.register(event, callback)
         return channel
 
-    async def unregister(self, channel_name, event, callback):
+    async def unregister(self, channel, event, callback):
         """Safely unregister a callback from the list of ``event``
         callbacks for ``channel_name``.
 
-        :param channel_name: channel name
+        :param channel: channel name
         :param event: event name
         :param callback: callback to execute when event on channel occurs
         :return: a coroutine which results in the channel object where the
             ``callback`` was removed (if found)
         """
-        name = channel_name.lower()
-        channel = self.channels.get(name)
+        channel = self.channel(channel, create=False)
         if channel:
             channel.unregister(event, callback)
             if not channel:
                 await channel.disconnect()
-                self.channels.pop(name)
+                self.channels.pop(channel.name)
         return channel
 
     async def connect(self, next_time=None):
@@ -190,12 +185,12 @@ class Channels(Connector, PubSubClient):
         """
         raise NotImplementedError
 
-    async def subscribe(self, channel, event=None):
+    async def _subscribe(self, channel, event=None):
         """Subscribe to the remote server
         """
         raise NotImplementedError
 
-    async def unsubscribe(self, channel):
+    async def _unsubscribe(self, channel):
         raise NotImplementedError
 
     async def close(self):
@@ -205,10 +200,15 @@ class Channels(Connector, PubSubClient):
         """
         self.status = self.statusType.closed
 
-    def create_channel(self, name):
-        return Channel(self, name)
+    def channel(self, name, create=True):
+        name = name.lower()
+        channel = self.channels.get(name)
+        if channel is None and create:
+            channel = Channel(self, name)
+            self.channels[channel.name] = channel
+        return channel
 
-    def connection_lost(self, *args):
+    def _connection_lost(self, *args):
         self.status = self.statusType.disconnected
         self._loop.create_task(self.connect())
 
@@ -216,7 +216,7 @@ class Channels(Connector, PubSubClient):
         try:
             # register
             self.status = StatusType.connecting
-            await self.subscribe(self.status_channel)
+            await self._subscribe(self.status_channel)
             self.status = StatusType.connected
             self.logger.warning(
                 '%s ready and listening for events on %s - all good',
@@ -236,7 +236,8 @@ class Channels(Connector, PubSubClient):
                                   self._loop.create_task,
                                   self.connect(next_time))
         else:
-            await gather(*[c.connect() for c in self.channels.values()])
+            await gather(*[c.connect() for c in self.channels.values()
+                           if c.name != self.status_channel.name])
 
 
 def safe_execution(method):
@@ -300,13 +301,13 @@ class Channel:
     async def connect(self):
         channels = self.channels
         if channels.status == StatusType.connected:
-            await self.channels.subscribe(self)
+            await self.channels._subscribe(self)
 
     @safe_execution
     async def disconnect(self):
         channels = self.channels
         if channels.status == StatusType.connected:
-            await self.channels.unsubscribe(self)
+            await self.channels._unsubscribe(self)
 
     def register(self, event, callback):
         """Register a ``callback`` for ``event``

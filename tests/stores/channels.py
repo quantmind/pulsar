@@ -1,7 +1,7 @@
 import asyncio
 
 from pulsar import create_future
-from pulsar.apps.data.channels import Channels, StatusType, Json
+from pulsar.apps.data.channels import StatusType, Json
 
 
 class Tester:
@@ -17,7 +17,9 @@ class Tester:
 class ChannelsTests:
 
     def channels(self, **kw):
-        return Channels(self.store.pubsub(protocol=Json()), **kw)
+        if 'protocols' not in kw:
+            kw['protocol'] = Json()
+        return self.store.channels(**kw)
 
     def test_channels_dns(self):
         channels = self.channels()
@@ -28,20 +30,19 @@ class ChannelsTests:
         self.assertEqual(channels.namespace, 'foo_')
         self.assertTrue(str(channels).endswith('?namespace=foo_'))
 
-    async def test_channels(self):
+    async def test_channels_properties(self):
         channels = self.channels()
         self.assertTrue(channels.pubsub)
-        self.assertTrue(channels.status_channel)
+        self.assertEqual(len(channels.status_channel), 0)
         self.assertEqual(channels.status, StatusType.initialised)
-        self.assertFalse(channels)
-        self.assertEqual(list(channels), [])
+        self.assertTrue(len(channels), 1)
         await channels.register('foo', '*', lambda c, e, d: d)
         self.assertTrue(channels)
-        self.assertEqual(len(channels), 1)
+        self.assertEqual(len(channels), 2)
         self.assertTrue('foo' in channels)
         self.assertEqual(channels.status, StatusType.initialised)
 
-    async def test_wildcard(self):
+    async def test_channels_wildcard(self):
         channels = self.channels()
 
         future = asyncio.Future()
@@ -56,7 +57,7 @@ class ChannelsTests:
         await channels.publish('test1', 'boom', 'ciao!')
         result = await future
         self.assertEqual(result, 'boom')
-        self.assertEqual(len(channels), 1)
+        self.assertEqual(len(channels), 2)
         self.assertTrue(repr(channels))
         await channels.close()
         self.assertEqual(channels.status, StatusType.closed)
@@ -82,7 +83,7 @@ class ChannelsTests:
         self.assertEqual(args[1], channels)
         self.assertEqual(args[2], channels.status_channel)
 
-    async def test_fail_publish(self):
+    async def test_channels_fail_publish(self):
         channels = self.channels()
         original, warning, critical = self._patch(
             channels, channels.pubsub, 'publish'
@@ -92,7 +93,7 @@ class ChannelsTests:
         self.assertEqual(len(args), 3)
         self.assertEqual(args[1], channels)
 
-    async def test_unregister(self):
+    async def test_channels_unregister(self):
         channels = self.channels()
 
         def fire(_, event, data):
@@ -100,10 +101,10 @@ class ChannelsTests:
 
         channel = await channels.register('test4', '*', fire)
         self.assertEqual(len(channel), 1)
-        self.assertEqual(len(channels), 1)
+        self.assertEqual(len(channels), 2)
         channel = await channels.unregister('test4', '*', fire)
         self.assertEqual(len(channel), 0)
-        self.assertEqual(len(channels), 0)
+        self.assertEqual(len(channels), 1)
 
     def _log_error(self, coro, *args, **kwargs):
         coro.switch((args, kwargs))

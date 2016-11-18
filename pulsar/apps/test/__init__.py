@@ -9,7 +9,8 @@ from .result import Plugin, TestStream, TestRunner, TestResult
 from .plugins.base import WrapTest, TestPlugin, validate_plugin_list
 from .loader import TestLoader
 from .utils import (sequential, ActorTestMixin, AsyncAssert, check_server,
-                    test_timeout, dont_run_with_thread, TestFailure)
+                    test_timeout, dont_run_with_thread, TestFailure,
+                    skipUnless)
 from .wsgi import HttpTestClient
 from .runner import Runner
 
@@ -30,7 +31,8 @@ __all__ = ['populate',
            'TestFailure',
            'check_server',
            'test_timeout',
-           'dont_run_with_thread']
+           'dont_run_with_thread',
+           'skipUnless']
 
 
 pyver = '%s.%s' % (sys.version_info[:2])

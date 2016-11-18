@@ -98,7 +98,7 @@ class Runner:
         seq = getattr(test_cls, '_sequential_execution', cfg.sequential)
         test_timeout = get_test_timeout(test_cls, cfg.test_timeout)
         try:
-            if skip_test(test_cls):
+            if await skip_test(test_cls):
                 raise SkipTest(skip_reason(test_cls))
             await self._run(test_cls.setUpClass, test_timeout)
         except SkipTest as exc:
@@ -160,7 +160,7 @@ class Runner:
         runner.startTest(test)
         test_name = test._testMethodName
         method = getattr(test, test_name)
-        if skip_test(method):
+        if await skip_test(method):
             reason = skip_reason(method)
             runner.addSkip(test, reason)
         else:
@@ -176,21 +176,30 @@ class Runner:
 
     async def _run_safe(self, test, method_name, test_timeout, error=None):
         self._check_abort()
+        exc = None
         try:
             method = getattr(test, method_name)
             coro = method()
             # a coroutine
             if isawaitable(coro):
                 test_timeout = get_test_timeout(method, test_timeout)
-                await asyncio.wait_for(coro, test_timeout, loop=self._loop)
+                exc = await asyncio.wait_for(
+                    store_trace(coro),
+                    test_timeout,
+                    loop=self._loop
+                )
             elif isgenerator(coro):
                 raise InvalidTestFunction('test function returns a generator')
         except SkipTest as exc:
             self.runner.addSkip(test, str(exc))
+            exc = None
         except Exception as exc:
-            if not error:
-                error = TestFailure(exc)
-                self.add_failure(test, error, expecting_failure(method))
+            exc = TestFailure(exc)
+
+        if exc and not error:
+            error = exc
+            self.add_failure(test, error, expecting_failure(method))
+
         return error
 
     def add_failure(self, test, failure, expecting_failure=False):
@@ -209,3 +218,10 @@ class Runner:
             runner.addFailure(test, failure)
         else:
             runner.addError(test, failure)
+
+
+async def store_trace(coro):
+    try:
+        await coro
+    except Exception as exc:
+        return TestFailure(exc)

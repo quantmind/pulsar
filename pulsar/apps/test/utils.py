@@ -24,16 +24,37 @@ import unittest
 import asyncio
 
 import pulsar
-from pulsar import (get_actor, send, new_event_loop, as_gather,
-                    format_traceback, ImproperlyConfigured)
+from pulsar import (
+    get_actor, send, as_gather,
+    format_traceback, ImproperlyConfigured
+)
 from pulsar.apps.data import create_store
 
 
 LOGGER = logging.getLogger('pulsar.test')
 
 
-def skip_test(o):
-    return getattr(o, '__unittest_skip__', False)
+def skipUnless(condition, reason):
+    """
+    Skip a test unless the condition is true.
+    """
+    if hasattr(condition, '__call__'):
+        def decorator(test_item):
+            test_item.__unittest_async_skip_unless__ = condition
+            test_item.__unittest_skip_why__ = reason
+            return test_item
+
+        return decorator
+    else:
+        return unittest.skipUnless(condition, reason)
+
+
+async def skip_test(o):
+    if hasattr(o, '__unittest_async_skip_unless__'):
+        skip = not await o.__unittest_async_skip_unless__()
+    else:
+        skip = getattr(o, '__unittest_skip__', False)
+    return skip
 
 
 def skip_reason(o):
@@ -174,28 +195,28 @@ class ActorTestMixin:
         return self.stop_actors()
 
 
-def check_server(name):
-    '''Check if server ``name`` is available at the address specified
-    ``<name>_server`` config value.
+class check_server:
 
-    :rtype: boolean
-    '''
-    cfg = get_actor().cfg
-    addr = cfg.get('%s_server' % name)
-    if addr:
-        if ('%s://' % name) not in addr:
-            addr = '%s://%s' % (name, addr)
-        try:
-            sync_store = create_store(addr, loop=new_event_loop())
-        except ImproperlyConfigured:
+    def __init__(self, name):
+        self.name = name
+
+    async def __call__(self):
+        cfg = get_actor().cfg
+        addr = cfg.get('%s_server' % self.name)
+        if addr:
+            if ('%s://' % self.name) not in addr:
+                addr = '%s://%s' % (self.name, addr)
+            try:
+                sync_store = create_store(addr)
+            except ImproperlyConfigured:
+                return False
+            try:
+                await sync_store.ping()
+                return True
+            except Exception:
+                return False
+        else:
             return False
-        try:
-            sync_store._loop.run_until_complete(sync_store.ping())
-            return True
-        except Exception:
-            return False
-    else:
-        return False
 
 
 def dont_run_with_thread(obj):

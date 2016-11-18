@@ -148,7 +148,10 @@ class Plugin:
 
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
-        teststr = '%s.%s' % (test.tag, test)
+        teststr = test.tag
+        if teststr.endswith(test._testMethodName):
+            teststr = teststr[:-len(test._testMethodName)-1]
+        teststr = '%s.%s' % (teststr, test)
         if self.descriptions and doc_first_line:
             return '\n'.join((teststr, doc_first_line))
         else:
