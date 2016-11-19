@@ -17,6 +17,9 @@ __all__ = ['ProtocolConsumer',
            'AbortRequest']
 
 
+CLOSE_TIMEOUT = 3
+
+
 class AbortRequest(AbortEvent):
     pass
 
@@ -262,6 +265,7 @@ class PulsarProtocol(EventHandler, FlowControl):
 
     _transport = None
     _address = None
+    _closed = None
 
     def __init__(self, loop, session=1, producer=None, logger=None, **kw):
         super().__init__(loop)
@@ -332,18 +336,20 @@ class PulsarProtocol(EventHandler, FlowControl):
         Return the ``connection_lost`` event which can be used to wait
         for complete transport closure.
         """
-        if self._transport:
-            if self.debug:
-                self.logger.debug('Closing connection %s', self)
-            if self._transport.can_write_eof():
+        if not self._closed:
+            if self._transport:
+                if self.debug:
+                    self.logger.debug('Closing connection %s', self)
+                if self._transport.can_write_eof():
+                    try:
+                        self._transport.write_eof()
+                    except Exception:
+                        pass
                 try:
-                    self._transport.write_eof()
+                    self._transport.close()
                 except Exception:
                     pass
-            try:
-                self._transport.close()
-            except Exception:
-                pass
+            self._closed = ensure_future(self._close())
         return self.event('connection_lost')
 
     def abort(self):
@@ -380,6 +386,16 @@ class PulsarProtocol(EventHandler, FlowControl):
         if self._producer:
             info.update(self._producer.info())
         return info
+
+    async def _close(self):
+        try:
+            await asyncio.wait_for(
+                self.event('connection_lost'),
+                CLOSE_TIMEOUT
+            )
+        except asyncio.TimeoutError:
+            self.logger.warning('Abort connection %s', self)
+            self.abort()
 
 
 class Protocol(PulsarProtocol, asyncio.Protocol):
