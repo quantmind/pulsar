@@ -57,3 +57,11 @@ class TestTestLoader(unittest.TestCase):
         modules = dict(app.loader.test_files(
             ['suite.loader.load_test_function']))
         self.assertEqual(len(modules), 0)
+
+    async def test_load_two_labels(self):
+        app = await get_application('test')
+        modules = dict(app.loader.test_files(
+            ['wsgi.route', 'wsgi.router']))
+        self.assertEqual(len(modules), 2)
+        self.assertTrue('wsgi.route' in modules)
+        self.assertTrue('wsgi.router' in modules)

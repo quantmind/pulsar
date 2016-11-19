@@ -98,14 +98,13 @@ class TestLoader:
                 for bit in alltags:
                     if bit == exclude_tag:
                         return
+
         if include_tags:
             con_continue = False
+            all_tags = list(self._all_tags(tag))
             found = set()
-
-            all_tags = reversed(list(self._all_tags(tag)))
-
-            for tags in include_tags:
-                for tag in all_tags:
+            for tag in reversed(all_tags):
+                for tags in include_tags:
                     try:
                         index = tags.index(tag)
                     except ValueError:
@@ -113,7 +112,10 @@ class TestLoader:
                     else:
                         con_continue = True
                         if is_file:
-                            found.update(tags[index+1:])
+                            remaining = tags[index+1:]
+                            if not remaining:
+                                return True
+                            found.update(remaining)
                         break
 
             return found or con_continue
