@@ -90,10 +90,9 @@ class DummyConnectionPool:
 
 
 class HttpTestClient(http.HttpClient):
-    """Useful :class:`pulsar.apps.http.HttpClient` for wsgi server
-    handlers.
+    """A test client for http requests to a WSGI server handlers.
 
-    .. attribute:: wsgi_handler
+    .. attribute:: wsgi
 
         The WSGI server handler to test
     """

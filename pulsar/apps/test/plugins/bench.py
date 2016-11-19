@@ -3,14 +3,6 @@
 
 To use the plugin follow these three steps:
 
-* Included it in the test Suite::
-
-    from pulsar.apps.test import TestSuite
-    from pulsar.apps.test.plugins import bench
-
-    def suite():
-        TestSuite(..., plugins=(..., bench.BenchMark()))
-
 * Flag a ``unittest.TestCase`` class with the ``__benchmark__ = True``
   class attribute::
 
@@ -24,6 +16,12 @@ To use the plugin follow these three steps:
               ...
 
 * Run the test suite with the ``--benchmark`` command line option.
+
+Alternatively, you can use the ``bench`` command from your ``setup.py`` file.
+Simply add the ``bench`` entry in the ``setup.cfg``.
+
+[bench]
+test_modules = tests/bench
 
 The test class can implement additional methods to fine-tune how the
 benchmark plugin evaluate the performance and display results:

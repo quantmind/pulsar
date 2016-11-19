@@ -212,6 +212,21 @@ Set the test timeout to 10 seconds.
 Test timeout is only meaningful for asynchronous test function.
 
 ==================
+Http TestClient
+==================
+
+The :class:`.HttpTestClient` can be used to test ``wsgi`` middleware without going
+through socket connections.
+
+To use the client in a test function::
+
+   async def test_my_wsgi_test(self):
+      http = HttpTestClient(self, wsgi)
+      response = await http.get('http://bla.com/...')
+
+The host part of the url is irrelevant, it can be anything you like.
+
+==================
 Test Plugins
 ==================
 A :class:`.TestPlugin` is a way to extend the test suite with additional
@@ -286,6 +301,14 @@ Test Plugin
 ==================
 
 .. autoclass:: pulsar.apps.test.plugins.base.TestPlugin
+   :members:
+   :member-order: bysource
+
+
+Http Test Client
+==================
+
+.. autoclass:: pulsar.apps.test.wsgi.HttpTestClient
    :members:
    :member-order: bysource
 
