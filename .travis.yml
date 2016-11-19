@@ -19,7 +19,6 @@ script:
   # - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test -q --io uv; fi
   - python setup.py bench
   - python setup.py bench --io uv
-  - python setup.py test --io uv
   - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then cd docs && make spelling; fi
 
 
