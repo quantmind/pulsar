@@ -156,7 +156,7 @@ class ProtocolConsumer(EventHandler):
         conn = self._connection
         if not conn:
             raise RuntimeError('Cannot start new request. No connection.')
-        if not conn._transport:
+        if not conn.transport:
             raise RuntimeError('%s has no transport.' % conn)
         conn._processed += 1
         if conn._producer:
