@@ -890,7 +890,7 @@ class HttpParser:
         # detect now if body is sent by chunks.
         clen = self._headers.get('Content-Length')
         if 'Transfer-Encoding' in self._headers:
-            te = self._headers['Transfer-Encoding'][0].lower()
+            te = self._headers['Transfer-Encoding'].lower()
             self._chunked = (te == 'chunked')
         else:
             self._chunked = False
@@ -900,7 +900,7 @@ class HttpParser:
             clen = 0
         elif clen is not None:
             try:
-                clen = int(clen[0])
+                clen = int(clen)
             except ValueError:
                 clen = None
             else:
@@ -914,7 +914,7 @@ class HttpParser:
         #
         # detect encoding and set decompress object
         if self.decompress and 'Content-Encoding' in self._headers:
-            encoding = self._headers['Content-Encoding'][0]
+            encoding = self._headers['Content-Encoding']
             if encoding == "gzip":
                 self.__decompress_obj = zlib.decompressobj(16+zlib.MAX_WBITS)
                 self.__decompress_first_try = False

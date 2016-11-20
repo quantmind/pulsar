@@ -4,6 +4,7 @@ from asyncio import Transport
 
 from pulsar.apps import http
 from pulsar.apps.wsgi import HttpServerResponse
+from pulsar.utils.httpurl import http_parser
 
 
 __all__ = ['HttpTestClient']
@@ -47,20 +48,36 @@ class DummyConnection(Transport):
     def current_consumer(self):
         consumer = http.HttpResponse(self._loop)
         consumer._connection = self
-        server_side = HttpServerResponse(
-            self._producer.wsgi, self._producer.test.cfg, loop=self._loop
-        )
-        server_side._connection = DummyServerConnection(
-            server_side, consumer, self.address
-        )
-        consumer.server_side = server_side
+        consumer.server_side = None
+
+        if self._producer.wsgi:
+            server_side = HttpServerResponse(
+                self._producer.wsgi, self._producer.test.cfg, loop=self._loop
+            )
+            server_side._connection = DummyServerConnection(
+                server_side, consumer, self.address
+            )
+            consumer.server_side = server_side
+
+        else:
+            consumer.server_side = None
+            consumer.message = b''
+            consumer.in_parser = http_parser(kind=0)
+
         consumer.connection_made(self)
         self._current_consumer = consumer
         return consumer
 
     def write(self, chunk):
-        server_side = self._current_consumer.server_side
-        server_side.data_received(chunk)
+        consumer = self._current_consumer
+        server_side = consumer.server_side
+        if server_side:
+            server_side.data_received(chunk)
+        else:
+            consumer.message += chunk
+            assert consumer.in_parser.execute(chunk, len(chunk)) == len(chunk)
+            if consumer.in_parser.is_message_complete():
+                consumer.finished()
 
 
 class DummyServerConnection(Transport):
@@ -99,7 +116,7 @@ class HttpTestClient(http.HttpClient):
     client_version = 'Pulsar-Http-Test-Client'
     connection_pool = DummyConnectionPool
 
-    def __init__(self, test, wsgi, **kwargs):
+    def __init__(self, test=None, wsgi=None, **kwargs):
         self.test = test
         self.wsgi = wsgi
         super().__init__(**kwargs)
