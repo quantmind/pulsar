@@ -61,12 +61,15 @@ from .html import capfirst
 #
 # The http_parser has several bugs, therefore it is switched off
 hasextensions = False
+CHttpParser = None
 try:
-    from http_parser.parser import HttpParser as _Http_Parser
+    from http_parser.parser import HttpParser as CHttpParser
 
     hasextensions = True
 except ImportError:
-    _Http_Parser = None
+    pass
+
+_Http_Parser = CHttpParser
 
 
 def setDefaultHttpParser(parser):   # pragma    nocover
@@ -102,6 +105,20 @@ URI_SAFE_CHARS = URI_RESERVED_CHARS + '%~'
 HEADER_TOKEN_CHARS = frozenset("!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                '^_`abcdefghijklmnopqrstuvwxyz|~')
 MAX_CHUNK_SIZE = 65536
+
+# ###################################################    CONTENT TYPES
+JSON_CONTENT_TYPES = ('application/json',
+                      'application/javascript',
+                      'text/json',
+                      'text/x-json')
+# ###################################################    REQUEST METHODS
+ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
+ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
+REDIRECT_CODES = (301, 302, 303, 305, 307)
+NO_CONTENT_CODES = frozenset((204, 304))
+
+CRLF = '\r\n'
+LWS = '\r\n '
 
 
 def escape(s):
@@ -216,18 +233,6 @@ def remove_double_slash(route):
     return route
 
 
-# ###################################################    CONTENT TYPES
-JSON_CONTENT_TYPES = ('application/json',
-                      'application/javascript',
-                      'text/json',
-                      'text/x-json')
-# ###################################################    REQUEST METHODS
-ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
-ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
-REDIRECT_CODES = (301, 302, 303, 305, 307)
-NO_CONTENT_CODES = frozenset((204, 304))
-
-
 def has_empty_content(status, method=None):
     """204, 304 and 1xx codes have no content, same for HEAD requests"""
     return (status in NO_CONTENT_CODES or
@@ -240,75 +245,12 @@ def is_succesful(status):
     return status >= 200 and status < 300
 
 
-# ###################################################    HTTP HEADERS
-WEBSOCKET_VERSION = (8, 13)
-HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
-                                       'Pragma', 'Trailer',
-                                       'Transfer-Encoding',
-                                       'Upgrade', 'Sec-WebSocket-Extensions',
-                                       'Sec-WebSocket-Protocol',
-                                       'Via', 'Warning')),
-                 # The request-header fields allow the client to pass
-                 # additional information about the request, and about the
-                 # client to the server.
-                 'request': frozenset(('Accept', 'Accept-Charset',
-                                       'Accept-Encoding', 'Accept-Language',
-                                       'Authorization',
-                                       'Cookie', 'Expect', 'From',
-                                       'Host', 'If-Match', 'If-Modified-Since',
-                                       'If-None-Match', 'If-Range',
-                                       'If-Unmodified-Since', 'Max-Forwards',
-                                       'Proxy-Authorization', 'Range',
-                                       'Referer',
-                                       'Sec-WebSocket-Key',
-                                       'Sec-WebSocket-Version',
-                                       'TE',
-                                       'User-Agent',
-                                       'X-Requested-With')),
-                 # The response-header fields allow the server to pass
-                 # additional information about the response which cannot be
-                 # placed in the Status- Line.
-                 'response': frozenset(('Accept-Ranges',
-                                        'Age',
-                                        'ETag',
-                                        'Location',
-                                        'Proxy-Authenticate',
-                                        'Retry-After',
-                                        'Sec-WebSocket-Accept',
-                                        'Server',
-                                        'Set-Cookie',
-                                        'Set-Cookie2',
-                                        'Vary',
-                                        'WWW-Authenticate',
-                                        'X-Frame-Options')),
-                 'entity': frozenset(('Allow', 'Content-Encoding',
-                                      'Content-Language', 'Content-Length',
-                                      'Content-Location', 'Content-MD5',
-                                      'Content-Range', 'Content-Type',
-                                      'Expires', 'Last-Modified'))}
-
-CLIENT_HEADER_FIELDS = HEADER_FIELDS['general'].union(
-    HEADER_FIELDS['entity'], HEADER_FIELDS['request'])
-SERVER_HEADER_FIELDS = HEADER_FIELDS['general'].union(
-    HEADER_FIELDS['entity'], HEADER_FIELDS['response'])
-ALL_HEADER_FIELDS = CLIENT_HEADER_FIELDS.union(SERVER_HEADER_FIELDS)
-ALL_HEADER_FIELDS_DICT = dict(((k.lower(), k) for k in ALL_HEADER_FIELDS))
-CRLF = '\r\n'
-LWS = '\r\n '
-TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
-                      'server': SERVER_HEADER_FIELDS,
-                      'both': ALL_HEADER_FIELDS}
-
-header_type = {0: 'client', 1: 'server', 2: 'both'}
-header_type_to_int = dict(((v, k) for k, v in header_type.items()))
-
-
 def capheader(name):
     return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
 
 
-def header_field(name, headers=None, strict=False):
-    '''Return a header `name` in Camel case.
+def header_field(name):
+    """Return a header `name` in Camel case.
 
     For example::
 
@@ -316,16 +258,8 @@ def header_field(name, headers=None, strict=False):
         header_field('accept-charset') == 'Accept-Charset'
 
     If ``header_set`` is given, only return headers included in the set.
-    '''
-    name = name.lower()
-    if name.startswith('x-') or not strict:
-        return capheader(name)
-    else:
-        header = ALL_HEADER_FIELDS_DICT.get(name)
-        if header and headers:
-            return header if header in headers else None
-        else:
-            return header
+    """
+    return capheader(name.lower())
 
 
 #    HEADERS UTILITIES
@@ -496,23 +430,13 @@ class Headers:
             headers = cls(headers=headers)
         return headers
 
-    def __init__(self, headers=None, kind='server', strict=False):
-        if isinstance(kind, int):
-            kind = header_type.get(kind, 'both')
-        else:
-            kind = str(kind).lower()
-        self.kind = kind
-        self.strict = strict
-        self.all_headers = TYPE_HEADER_FIELDS.get(self.kind)
-        if not self.all_headers:
-            self.kind = 'both'
-            self.all_headers = TYPE_HEADER_FIELDS[self.kind]
-        self._headers = {}
-        if headers is not None:
-            self.update(headers)
+    def __init__(self, *args, **kwargs):
+        self._headers = OrderedDict()
+        if args or kwargs:
+            self.update(*args, **kwargs)
 
     def __repr__(self):
-        return '%s %s' % (self.kind, self._headers.__repr__())
+        return self._headers.__repr__()
 
     def __str__(self):
         return '\r\n'.join(self._ordered())
@@ -523,16 +447,18 @@ class Headers:
     def __len__(self):
         return len(self._headers)
 
-    @property
-    def kind_number(self):
-        return header_type_to_int.get(self.kind)
-
-    def update(self, iterable):
+    def update(self, *args, **kwargs):
         """Extend the headers with an ``iterable``.
 
         :param iterable: a dictionary or an iterable over keys, values tuples.
         """
-        for key, value in mapping_iterator(iterable):
+        if len(args) == 1:
+            for key, value in mapping_iterator(args[0]):
+                self.add_header(key, value)
+        elif args:
+            raise TypeError('update expected at most 1 arguments, got %d' %
+                            len(args))
+        for key, value in kwargs.items():
             self.add_header(key, value)
 
     def override(self, iterable):
@@ -550,7 +476,7 @@ class Headers:
                 self[key] = value
 
     def copy(self):
-        return self.__class__(self, kind=self.kind, strict=self.strict)
+        return self.__class__(self)
 
     def __contains__(self, key):
         return header_field(key) in self._headers
@@ -567,7 +493,7 @@ class Headers:
         self._headers.__delitem__(header_field(key))
 
     def __setitem__(self, key, value):
-        key = header_field(key, self.all_headers, self.strict)
+        key = header_field(key)
         if key and value:
             if not isinstance(value, list):
                 value = header_values(key, value)
@@ -644,7 +570,7 @@ class Headers:
         :param values: a string value or a list/tuple of strings values
             for header ``key``
         '''
-        key = header_field(key, self.all_headers, self.strict)
+        key = header_field(key)
         if key and values:
             if not isinstance(values, (tuple, list)):
                 values = header_values(key, values)
@@ -659,7 +585,7 @@ class Headers:
 
         If ``value`` is provided, it removes only that value if found.
         '''
-        key = header_field(key, self.all_headers, self.strict)
+        key = header_field(key)
         if key:
             if value:
                 value = value.lower()
@@ -690,27 +616,8 @@ class Headers:
                     yield k, value
 
     def _ordered(self):
-        hf = HEADER_FIELDS
-        hj = HEADER_FIELDS_JOINER
-        dj = ', '
-        order = (('general', []), ('request', []),
-                 ('response', []), ('entity', []))
-        headers = self._headers
-        for key in headers:
-            for name, group in order:
-                if key in hf[name]:
-                    group.append(key)
-                    break
-            if key not in group:    # non-standard header
-                group.append(key)
-        for _, group in order:
-            for k in group:
-                joiner = hj.get(k, dj)
-                if not joiner:
-                    for header in headers[k]:
-                        yield "%s: %s" % (k, header)
-                else:
-                    yield "%s: %s" % (k, joiner.join(headers[k]))
+        for key, header in self:
+            yield "%s: %s" % (key, header)
         yield ''
         yield ''
 
@@ -765,7 +672,7 @@ class HttpParser:
         self._query_string = None
         self._kind = kind
         self._fragment = None
-        self._headers = OrderedDict()
+        self._headers = Headers()
         self._chunked = False
         self._body = []
         self._trailers = None
@@ -979,10 +886,7 @@ class HttpParser:
             while len(lines) and lines[0].startswith((" ", "\t")):
                 value.append(lines.popleft())
             value = ''.join(value).rstrip()
-            if name in self._headers:
-                self._headers[name].append(value)
-            else:
-                self._headers[name] = [value]
+            self._headers.add_header(name, value)
         # detect now if body is sent by chunks.
         clen = self._headers.get('Content-Length')
         if 'Transfer-Encoding' in self._headers:
