@@ -32,6 +32,7 @@ from . import system
 from .string import camel_to_dash
 from .internet import parse_address
 from .importer import import_system_file
+from .httpurl import setDefaultHttpParser, HttpParser
 from .log import configured_logger
 from .pep import to_bytes
 
@@ -787,6 +788,20 @@ class HttpProxyServer(Global):
             os.environ['https_proxy'] = self.value
             os.environ['ws_proxy'] = self.value
             os.environ['wss_proxy'] = self.value
+
+
+class HttpPyParser(Global):
+    flags = ["--http-py-parser"]
+    validator = validate_bool
+    action = "store_true"
+    default = False
+    desc = """\
+        Set the python parser as default (for testing).
+        """
+
+    def on_start(self):
+        if self.value:
+            setDefaultHttpParser(HttpParser)
 
 
 class HttpKeepAlive(Global):

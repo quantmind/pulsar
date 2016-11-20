@@ -29,6 +29,7 @@ class Test(orig.test):
         ('coverage', None, 'Collect code coverage from all spawn actors'),
         ('coveralls', None, 'Publish coverage to coveralls'),
         ('sequential', None, 'Run test functions sequentially'),
+        ('http-py-parser', None, 'Set the python parser as default'),
         ('test-timeout=', None, 'Timeout for asynchronous tests'),
         ('log-level=', None, 'Logging level'),
         ('io=', None, 'Event Loop'),
@@ -38,7 +39,6 @@ class Test(orig.test):
         ('pulsar-args=', 'a',
          "Additional arguments to pass to pulsar test suite")
     ]
-    boolean_options = ['debug', 'sequential', 'coverage', 'coveralls']
 
     def initialize_options(self):
         for name, _, _ in self.user_options:
