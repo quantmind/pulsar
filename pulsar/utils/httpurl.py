@@ -427,7 +427,7 @@ class Headers:
     @classmethod
     def make(cls, headers):
         if not isinstance(headers, cls):
-            headers = cls(headers=headers)
+            headers = cls(headers)
         return headers
 
     def __init__(self, *args, **kwargs):

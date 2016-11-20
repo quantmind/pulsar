@@ -360,8 +360,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(request.has_header('Accept-Encoding'))
         self.assertTrue(request.has_header('User-Agent'))
         self.assertFalse(request.has_header('foo'))
-        self.assertEqual(request.headers.kind, 'client')
-        self.assertEqual(request.unredirected_headers.kind, 'client')
 
     async def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
