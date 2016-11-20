@@ -12,3 +12,4 @@ certifi
 recommonmark
 sphinxcontrib-spelling
 uvloop
+http-parser

@@ -61,7 +61,12 @@ from .html import capfirst
 #
 # The http_parser has several bugs, therefore it is switched off
 hasextensions = False
-_Http_Parser = None
+try:
+    from http_parser.parser import HttpParser as _Http_Parser
+
+    hasextensions = True
+except ImportError:
+    _Http_Parser = None
 
 
 def setDefaultHttpParser(parser):   # pragma    nocover
@@ -743,7 +748,7 @@ class HttpParser:
 
     2011 (c) Benoit Chesneau <benoitc@e-engura.org>
     '''
-    def __init__(self, kind=2, decompress=False, method=None):
+    def __init__(self, kind=2, decompress=False):
         self.decompress = decompress
         # errors vars
         self.errno = None
@@ -751,7 +756,7 @@ class HttpParser:
         # protected variables
         self._buf = []
         self._version = None
-        self._method = method
+        self._method = None
         self._status_code = None
         self._status = None
         self._reason = None

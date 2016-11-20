@@ -65,3 +65,17 @@ class TestTestLoader(unittest.TestCase):
         self.assertEqual(len(modules), 2)
         self.assertTrue('wsgi.route' in modules)
         self.assertTrue('wsgi.router' in modules)
+
+    async def test_load_http_client_test(self):
+        app = await get_application('test')
+        modules = dict(app.loader.test_files(
+            ['http.client.test_home_page_head']))
+        self.assertEqual(len(modules), 1)
+        load = modules['http.client.test_home_page_head']
+        self.assertTrue(load[0].endswith('/tests/http/test_client.py'))
+        self.assertEqual(load[1], 'test_home_page_head')
+
+    async def test_load_http(self):
+        app = await get_application('test')
+        modules = dict(app.loader.test_files(['http']))
+        self.assertEqual(len(modules), 10)

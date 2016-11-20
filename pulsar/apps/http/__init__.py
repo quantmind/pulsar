@@ -330,9 +330,10 @@ class HttpRequest(RequestBase):
         return '%s %s %s' % (self.method, url, self.version)
 
     def new_parser(self):
-        self.parser = self.client.http_parser(kind=1,
-                                              decompress=self.decompress,
-                                              method=self.method)
+        self.parser = self.client.http_parser(
+            kind=1, decompress=self.decompress
+        )
+        return self.parser
 
     def is_chunked(self):
         return self.body and 'content-length' not in self.headers
@@ -719,7 +720,7 @@ class HttpResponse(ProtocolConsumer):
                         if not self.event('on_headers').fired():
                             self.fire_event('on_headers')
                         if (not self.event('post_request').fired() and
-                                request.parser.is_message_complete()):
+                                self.is_message_complete()):
                             self.finished()
             else:
                 raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
@@ -728,6 +729,15 @@ class HttpResponse(ProtocolConsumer):
 
     def write_body(self):
         self.request.write_body(self.transport)
+
+    def is_message_complete(self):
+        request = self.request
+        return (
+            request.parser.is_message_complete() or (
+                request.parser.is_headers_complete() and
+                request.method == 'HEAD'
+            )
+        )
 
 
 class HttpClient(AbstractClient):

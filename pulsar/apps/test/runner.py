@@ -175,8 +175,8 @@ class Runner:
         runner.stopTest(test)
 
     async def _run_safe(self, test, method_name, test_timeout, error=None):
-        self._check_abort()
         exc = None
+        self._check_abort()
         try:
             method = getattr(test, method_name)
             coro = method()
@@ -193,8 +193,8 @@ class Runner:
         except SkipTest as exc:
             self.runner.addSkip(test, str(exc))
             exc = None
-        except Exception as exc:
-            exc = TestFailure(exc)
+        except Exception as x:
+            exc = TestFailure(x)
 
         if exc and not error:
             error = exc
