@@ -142,6 +142,7 @@ class TestWebSocket(unittest.TestCase):
         handler = Echo(c._loop)
         ws = await c.get(self.ws_uri, websocket_handler=handler)
         self.assertEqual(ws.event('post_request').fired(), 0)
+        ws.write('data')
         message = await handler.get()
         self.assertTrue(message)
 

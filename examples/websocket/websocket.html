@@ -33,6 +33,10 @@
               }
             };
         //
+        ws.onopen = function (e) {
+            ws.send('data');
+        };
+        //
         ws.onmessage = function (e) {
           //alert('got ' + e.data);
           try {
