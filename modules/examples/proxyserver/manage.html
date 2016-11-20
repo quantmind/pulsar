@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.proxyserver.manage &mdash; pulsar 1.5.4 documentation</title>
+    <title>examples.proxyserver.manage &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
+  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,7 +47,7 @@
           <div class="body" role="main">
             
   <h1>Source code for examples.proxyserver.manage</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;An asynchronous multi-process `HTTP proxy server`_. It works for both</span>
+<span></span><span class="sd">&#39;&#39;&#39;An asynchronous multi-process `HTTP proxy server`_. It works for both</span>
 <span class="sd">``http`` and ``https`` (tunneled) requests.</span>
 
 
@@ -81,14 +86,14 @@
 <span class="sd">.. _`HTTP proxy server`: http://en.wikipedia.org/wiki/Proxy_server</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ensure_future</span><span class="p">,</span> <span class="n">create_future</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">http</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.http.plugins</span> <span class="kn">import</span> <span class="n">noerror</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span><span class="p">,</span> <span class="n">ENCODE_BODY_METHODS</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_property</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ensure_future</span><span class="p">,</span> <span class="n">create_future</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">http</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.http.plugins</span> <span class="k">import</span> <span class="n">noerror</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="k">import</span> <span class="n">Headers</span><span class="p">,</span> <span class="n">ENCODE_BODY_METHODS</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="k">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_property</span>
 
 
 <span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="s1">&#39;Pulsar-proxy-server/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">version</span>
@@ -110,14 +115,14 @@
 <span class="sd">    An headers middleware is a callable which accepts two parameters, the wsgi</span>
 <span class="sd">    *environ* dictionary and the *headers* container.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers_middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers_middleware</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers_middleware</span> <span class="o">=</span> <span class="n">headers_middleware</span> <span class="ow">or</span> <span class="p">[]</span>
 
     <span class="nd">@local_property</span>
     <span class="k">def</span> <span class="nf">http_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The :class:`.HttpClient` used by this proxy middleware for</span>
 <span class="sd">        accessing upstream resources&#39;&#39;&#39;</span>
-        <span class="n">client</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">(</span><span class="n">decompress</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">store_cookies</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">(</span><span class="n">decompress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">store_cookies</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">client</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">client</span>
 
@@ -142,18 +147,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span> <span class="o">=</span> <span class="n">start_response</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="n">create_future</span><span class="p">()</span>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Perform the Http request to the upstream server</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">request_headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">()</span>
         <span class="n">environ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span>
         <span class="n">method</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REQUEST_METHOD&#39;</span><span class="p">]</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">ENCODE_BODY_METHODS</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">DataIterator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">http</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi</span><span class="o">.</span><span class="n">http_client</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">await</span> <span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span>
+            <span class="k">await</span> <span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span>
                                <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;RAW_URI&#39;</span><span class="p">],</span>
                                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
                                <span class="n">headers</span><span class="o">=</span><span class="n">request_headers</span><span class="p">,</span>
@@ -188,7 +193,7 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
 
     <span class="nd">@noerror</span>
-    <span class="k">def</span> <span class="nf">pre_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">pre_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Start the tunnel.</span>
 
 <span class="sd">        This is a callback fired once a connection with upstream server is</span>
@@ -211,10 +216,10 @@
             <span class="n">response</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;data_processed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_processed</span><span class="p">)</span>
             <span class="n">response</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_request</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">data_processed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">data_processed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.connection&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">post_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">post_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">AbortWsgi</span><span class="p">())</span>
 
 
@@ -239,11 +244,11 @@
 
 <span class="sd">        Connection to the downstream client or upstream server.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">headers</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">status_code</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">http_request</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">status_code</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">http_request</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tunnel</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tunnel</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span> <span class="o">=</span> <span class="n">tunnel</span>
 
@@ -260,15 +265,15 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">closed</span><span class="p">:</span>
                 <span class="k">raise</span>
 
-    <span class="k">def</span> <span class="nf">_close_tunnel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_close_tunnel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">closed</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tunnel</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;proxy-server&#39;</span><span class="p">,</span> <span class="n">headers_middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-           <span class="n">server_software</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;proxy-server&#39;</span><span class="p">,</span> <span class="n">headers_middleware</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">server_software</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Function to Create a WSGI Proxy Server.&#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">headers_middleware</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">headers_middleware</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">headers_middleware</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_forwarded_for</span><span class="p">]</span>
     <span class="n">wsgi_proxy</span> <span class="o">=</span> <span class="n">ProxyServerWsgiHandler</span><span class="p">(</span><span class="n">headers_middleware</span><span class="p">)</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;server_software&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">server_software</span> <span class="ow">or</span> <span class="n">SERVER_SOFTWARE</span>
@@ -297,10 +302,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -334,14 +341,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -352,8 +356,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

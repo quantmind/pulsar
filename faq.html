@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>FAQ &mdash; pulsar 1.5.4 documentation</title>
+    <title>FAQ &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,15 +27,20 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="index.html" />
     <link rel="next" title="Pulsar Advantage" href="advantage.html" />
     <link rel="prev" title="Design" href="design.html" />
    
+  <link rel="stylesheet" href="static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -79,19 +84,19 @@
 <h2><a class="toc-backref" href="#id2">General</a><a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="what-is-pulsar">
 <h3><a class="toc-backref" href="#id3">What is pulsar?</a><a class="headerlink" href="#what-is-pulsar" title="Permalink to this headline">¶</a></h3>
-<p>Check the <a class="reference internal" href="overview.html#intro-overview"><span>overview</span></a>.</p>
+<p>Check the <a class="reference internal" href="overview.html#intro-overview"><span class="std std-ref">overview</span></a>.</p>
 </div>
 <div class="section" id="why-should-i-use-pulsar">
 <h3><a class="toc-backref" href="#id4">Why should I use pulsar?</a><a class="headerlink" href="#why-should-i-use-pulsar" title="Permalink to this headline">¶</a></h3>
-<p>Check the <a class="reference internal" href="advantage.html#pulsar-advantage"><span>pulsar advantage</span></a>.</p>
+<p>Check the <a class="reference internal" href="advantage.html#pulsar-advantage"><span class="std std-ref">pulsar advantage</span></a>.</p>
 </div>
 <div class="section" id="what-is-an-actor">
 <h3><a class="toc-backref" href="#id5">What is an actor?</a><a class="headerlink" href="#what-is-an-actor" title="Permalink to this headline">¶</a></h3>
-<p>Check the <a class="reference internal" href="design.html#design-actor"><span>actor design documentation</span></a>.</p>
+<p>Check the <a class="reference internal" href="design.html#design-actor"><span class="std std-ref">actor design documentation</span></a>.</p>
 </div>
 <div class="section" id="how-pulsar-handle-asynchronous-data">
 <h3><a class="toc-backref" href="#id6">How pulsar handle asynchronous data?</a><a class="headerlink" href="#how-pulsar-handle-asynchronous-data" title="Permalink to this headline">¶</a></h3>
-<p>Check the <a class="reference internal" href="tutorials/coroutine.html#tutorials-coroutine"><span>asynchronous components documentation</span></a>.</p>
+<p>Check the <a class="reference internal" href="tutorials/coroutine.html#tutorials-coroutine"><span class="std std-ref">asynchronous components documentation</span></a>.</p>
 </div>
 <div class="section" id="how-is-pulsar-different-from-twisted">
 <h3><a class="toc-backref" href="#id7">How is pulsar different from Twisted?</a><a class="headerlink" href="#how-is-pulsar-different-from-twisted" title="Permalink to this headline">¶</a></h3>
@@ -118,7 +123,7 @@ file descriptors and therefore its core implementation is not too dissimilar.</p
 <h2><a class="toc-backref" href="#id9">Socket Servers</a><a class="headerlink" href="#socket-servers" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="can-i-run-a-web-server-with-multiple-process">
 <h3><a class="toc-backref" href="#id10">Can I run a web-server with multiple process?</a><a class="headerlink" href="#can-i-run-a-web-server-with-multiple-process" title="Permalink to this headline">¶</a></h3>
-<p>Yes you can, both posix and windows, Check <a class="reference internal" href="tutorials/wsgi.html#multi-wsgi"><span>wsgi in multi process</span></a>.</p>
+<p>Yes you can, both posix and windows, Check <a class="reference internal" href="tutorials/wsgi.html#multi-wsgi"><span class="std std-ref">wsgi in multi process</span></a>.</p>
 </div>
 </div>
 <div class="section" id="wsgi-server">
@@ -126,28 +131,28 @@ file descriptors and therefore its core implementation is not too dissimilar.</p
 <div class="section" id="is-pulsar-wsgi-server-pep-3333-compliant">
 <h3><a class="toc-backref" href="#id12">Is pulsar WSGI server pep 3333 compliant?</a><a class="headerlink" href="#is-pulsar-wsgi-server-pep-3333-compliant" title="Permalink to this headline">¶</a></h3>
 <p>Yes it is, to the best of our knowledge. If you find an issue,
-please <a class="reference internal" href="overview.html#contributing"><span>file a bug report</span></a>.</p>
+please <a class="reference internal" href="overview.html#contributing"><span class="std std-ref">file a bug report</span></a>.</p>
 </div>
 <div class="section" id="is-a-wsgi-response-asynchronous">
 <h3><a class="toc-backref" href="#id13">Is a WSGI response asynchronous?</a><a class="headerlink" href="#is-a-wsgi-response-asynchronous" title="Permalink to this headline">¶</a></h3>
 <p>It depends on the WSGI application serving the request. Blocking application
 such as django or flask can be made more pulsar-friendly by using the
 <a class="reference internal" href="apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.middleware_in_executor" title="pulsar.apps.wsgi.middleware.middleware_in_executor"><code class="xref py py-func docutils literal"><span class="pre">middleware_in_executor()</span></code></a> utility as explained in the
-<a class="reference internal" href="tutorials/wsgi.html#blocking-wsgi"><span>wsgi tutorial</span></a>.</p>
+<a class="reference internal" href="tutorials/wsgi.html#blocking-wsgi"><span class="std std-ref">wsgi tutorial</span></a>.</p>
 </div>
 </div>
 <div class="section" id="logging">
 <h2><a class="toc-backref" href="#id14">Logging</a><a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="log-level">
 <h3><a class="toc-backref" href="#id15">log level</a><a class="headerlink" href="#log-level" title="Permalink to this headline">¶</a></h3>
-<p>Pulsar uses the <a class="reference internal" href="settings.html#setting-log-level"><span>log-level</span></a> setting to control
-logging level on the command line or on your <a class="reference internal" href="settings.html#setting-config"><span>config</span></a>
+<p>Pulsar uses the <a class="reference internal" href="settings.html#setting-log-level"><span class="std std-ref">log-level</span></a> setting to control
+logging level on the command line or on your <a class="reference internal" href="settings.html#setting-config"><span class="std std-ref">config</span></a>
 file:</p>
-<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level debug
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">script</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">log</span><span class="o">-</span><span class="n">level</span> <span class="n">debug</span>
 </pre></div>
 </div>
 <p>Did you know you can pass several namespaces to <code class="docutils literal"><span class="pre">--log-level</span></code>:</p>
-<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level debug asyncio.warning
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">script</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">log</span><span class="o">-</span><span class="n">level</span> <span class="n">debug</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">warning</span>
 </pre></div>
 </div>
 </div>
@@ -156,7 +161,7 @@ file:</p>
 <h2><a class="toc-backref" href="#id16">Internals</a><a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="how-is-inter-actor-message-passing-implemented">
 <h3><a class="toc-backref" href="#id17">How is inter-actor message passing implemented?</a><a class="headerlink" href="#how-is-inter-actor-message-passing-implemented" title="Permalink to this headline">¶</a></h3>
-<p>Check the <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><span>actor messages documentation</span></a>.</p>
+<p>Check the <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><span class="std std-ref">actor messages documentation</span></a>.</p>
 </div>
 </div>
 </div>
@@ -180,10 +185,12 @@ file:</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -192,7 +199,7 @@ file:</p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design.html">Design</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">FAQ</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advantage.html">Pulsar Advantage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials &amp; Topics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
@@ -217,14 +224,11 @@ file:</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -235,8 +239,8 @@ file:</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="sources/faq.txt"

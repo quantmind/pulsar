@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Synchronous Components &mdash; pulsar 1.5.4 documentation</title>
+    <title>Synchronous Components &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Benchmarking" href="benchmarking.html" />
     <link rel="prev" title="Signal Handling" href="signal.html" />
    
+  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,7 +52,7 @@
 <span id="tutorials-synchronous"></span><h1>Synchronous Components<a class="headerlink" href="#synchronous-components" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="../api/async.html#pulsar.async.futures.AsyncObject" title="pulsar.async.futures.AsyncObject"><code class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></code></a> are used everywhere in pulsar.
 These objects expose the <code class="docutils literal"><span class="pre">_loop</span></code> attribute as discussed in the
-<a class="reference internal" href="../design.html#async-object"><span>design documentation</span></a>.</p>
+<a class="reference internal" href="../design.html#async-object"><span class="std std-ref">design documentation</span></a>.</p>
 <p>Normally, the <code class="docutils literal"><span class="pre">_loop</span></code> is a running event loop controlled by an
 <a class="reference internal" href="../api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><code class="xref py py-class docutils literal"><span class="pre">Actor</span></code></a>.
 In this case, all operations which requires the loop, are carried out
@@ -56,20 +61,20 @@ asynchronously as one would expect.</p>
 <a class="reference internal" href="../api/async.html#pulsar.async.futures.AsyncObject" title="pulsar.async.futures.AsyncObject"><code class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></code></a> which behaves in a synchronous fashion.
 Pulsar achieves this by using a new event loop for that object.
 For example, this statement creates a synchronous <a class="reference internal" href="../apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><code class="xref py py-class docutils literal"><span class="pre">HttpClient</span></code></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">new_event_loop</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">http</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">new_event_loop</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">http</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">new_event_loop</span><span class="p">())</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">()</span>
 <span class="go">False</span>
 </pre></div>
 </div>
 <p>You can now execute synchronous requests:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://pypi.python.org/pypi/pulsar/json&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://pypi.python.org/pypi/pulsar/json&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Under the hood, pulsar treats a synchronous request exactly in the same way as
 an asynchronous one with the only difference that the
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.6)"><span class="xref std std-ref">event loop</span></a>
+<a class="reference external" href="http://python.readthedocs.io/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.6)"><span class="xref std std-ref">event loop</span></a>
 is always used via the <code class="xref py py-meth docutils literal"><span class="pre">run_until_complete()</span></code>
 method to wait for the response to be available.</p>
 </div>
@@ -93,10 +98,12 @@ method to wait for the response to be available.</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -130,14 +137,11 @@ method to wait for the response to be available.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -148,8 +152,8 @@ method to wait for the response to be available.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../sources/tutorials/sync.txt"

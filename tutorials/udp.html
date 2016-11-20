@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Udp Server and Client &mdash; pulsar 1.5.4 documentation</title>
+    <title>Udp Server and Client &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Logging" href="logging.html" />
     <link rel="prev" title="Pulsar-ds" href="pulsards.html" />
    
+  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -51,11 +56,11 @@ module.</p>
 <div class="section" id="run-the-example">
 <h2>Run The example<a class="headerlink" href="#run-the-example" title="Permalink to this headline">¶</a></h2>
 <p>To run the server:</p>
-<div class="highlight-python"><div class="highlight"><pre>python manage.py
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
 </div>
 <p>Open a new shell, in this directory, launch python and type:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">manage</span> <span class="kn">import</span> <span class="n">Echo</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">manage</span> <span class="k">import</span> <span class="n">Echo</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">echo</span> <span class="o">=</span> <span class="n">Echo</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">echo</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;Hello!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="go">b&#39;Hello!&#39;</span>
@@ -87,6 +92,18 @@ The <a class="reference internal" href="#examples.echoudp.manage.EchoUdpProtocol
 <dd><p>A base <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.DatagramProtocol" title="pulsar.async.protocols.DatagramProtocol"><code class="xref py py-class docutils literal"><span class="pre">DatagramProtocol</span></code></a> for UDP echo clients and servers.</p>
 <p>The only difference between client and server is the implementation
 of the <a class="reference internal" href="#examples.echoudp.manage.EchoUdpProtocol.response" title="examples.echoudp.manage.EchoUdpProtocol.response"><code class="xref py py-meth docutils literal"><span class="pre">response()</span></code></a> method.</p>
+<dl class="attribute">
+<dt id="examples.echoudp.manage.EchoUdpProtocol.separator">
+<code class="descname">separator</code><em class="property"> = b'\n'</em><a class="headerlink" href="#examples.echoudp.manage.EchoUdpProtocol.separator" title="Permalink to this definition">¶</a></dt>
+<dd><p>A separator for messages.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="examples.echoudp.manage.EchoUdpProtocol.buffer">
+<code class="descname">buffer</code><em class="property"> = None</em><a class="headerlink" href="#examples.echoudp.manage.EchoUdpProtocol.buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>The buffer for long messages</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="examples.echoudp.manage.EchoUdpProtocol.datagram_received">
 <code class="descname">datagram_received</code><span class="sig-paren">(</span><em>data</em>, <em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/examples/echoudp/manage.html#EchoUdpProtocol.datagram_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echoudp.manage.EchoUdpProtocol.datagram_received" title="Permalink to this definition">¶</a></dt>
@@ -189,10 +206,12 @@ method decorators such as <a class="reference internal" href="../api/async.html#
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -226,14 +245,11 @@ method decorators such as <a class="reference internal" href="../api/async.html#
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -244,8 +260,8 @@ method decorators such as <a class="reference internal" href="../api/async.html#
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../sources/tutorials/udp.txt"

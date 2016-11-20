@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.events &mdash; pulsar 1.5.4 documentation</title>
+    <title>pulsar.async.events &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
+  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,13 +47,13 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.async.events</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
 
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">InvalidStateError</span><span class="p">,</span> <span class="n">ensure_future</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">InvalidStateError</span><span class="p">,</span> <span class="n">ensure_future</span>
 
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">_EVENT_LOOP_CLASSES</span>
-<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">future_result_exc</span><span class="p">,</span> <span class="n">AsyncObject</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="k">import</span> <span class="n">_EVENT_LOOP_CLASSES</span>
+<span class="kn">from</span> <span class="nn">.futures</span> <span class="k">import</span> <span class="n">future_result_exc</span><span class="p">,</span> <span class="n">AsyncObject</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;EventHandler&#39;</span><span class="p">,</span> <span class="s1">&#39;Event&#39;</span><span class="p">,</span> <span class="s1">&#39;OneTime&#39;</span><span class="p">,</span> <span class="s1">&#39;AbortEvent&#39;</span><span class="p">]</span>
@@ -63,12 +68,12 @@
 <div class="viewcode-block" id="AbstractEvent"><a class="viewcode-back" href="../../../api/events.html#pulsar.async.events.AbstractEvent">[docs]</a><span class="k">class</span> <span class="nc">AbstractEvent</span><span class="p">(</span><span class="n">AsyncObject</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Abstract event handler</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_handlers</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_handlers</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_fired</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span>
 
@@ -105,7 +110,7 @@
 <div class="viewcode-block" id="Event"><a class="viewcode-back" href="../../../api/events.html#pulsar.async.events.Event">[docs]</a><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">AbstractEvent</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The default implementation of :class:`AbstractEvent`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
@@ -129,9 +134,9 @@
 <span class="sd">    This event handler is a subclass of :class:`.Future`.</span>
 <span class="sd">    Implemented mainly for the one time events of the :class:`EventHandler`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">loop</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_processing</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_processing</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -140,7 +145,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span>
 
@@ -152,7 +157,7 @@
             <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span> <span class="o">=</span> <span class="n">future_result_exc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="p">{})</span></div>
 
-<div class="viewcode-block" id="OneTime.fire"><a class="viewcode-back" href="../../../api/events.html#pulsar.async.events.OneTime.fire">[docs]</a>    <span class="k">def</span> <span class="nf">fire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="OneTime.fire"><a class="viewcode-back" href="../../../api/events.html#pulsar.async.events.OneTime.fire">[docs]</a>    <span class="k">def</span> <span class="nf">fire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The callback handlers registered via the :meth:~AbstractEvent.bind`</span>
 <span class="sd">        method are executed first.</span>
 
@@ -169,9 +174,9 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_processing</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_processing</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">hnd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">hnd</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -189,7 +194,7 @@
                     <span class="n">result</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span>
                         <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
                     <span class="k">return</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_processing</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_processing</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
@@ -207,8 +212,8 @@
     <span class="sd">&#39;&#39;&#39;Event names which occur once only.&#39;&#39;&#39;</span>
     <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">()</span>
     <span class="sd">&#39;&#39;&#39;Event names which occur several times.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">one_time_events</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">many_times_events</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">one_time_events</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">many_times_events</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">_EVENT_LOOP_CLASSES</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span>
         <span class="n">one</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span>
@@ -344,10 +349,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -381,14 +388,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -399,8 +403,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

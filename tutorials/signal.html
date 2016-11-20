@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Signal Handling &mdash; pulsar 1.5.4 documentation</title>
+    <title>Signal Handling &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Synchronous Components" href="sync.html" />
     <link rel="prev" title="Events" href="events.html" />
    
+  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -49,7 +54,7 @@
 <h2>Handling of SIGTERM<a class="headerlink" href="#handling-of-sigterm" title="Permalink to this headline">¶</a></h2>
 <p>The SIGTERM signals tells pulsar to shutdown gracefully. When this signal is
 received, the arbiter schedules a shutdown very similar to the one performed
-when the <a class="reference internal" href="../design.html#actor-stop-command"><span>stop command</span></a> is called.
+when the <a class="reference internal" href="../design.html#actor-stop-command"><span class="std std-ref">stop command</span></a> is called.
 The scheduled shutdown starts ASAP,</p>
 </div>
 </div>
@@ -73,10 +78,12 @@ The scheduled shutdown starts ASAP,</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -110,14 +117,11 @@ The scheduled shutdown starts ASAP,</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -128,8 +132,8 @@ The scheduled shutdown starts ASAP,</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../sources/tutorials/signal.txt"

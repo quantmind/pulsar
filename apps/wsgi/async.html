@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous WSGI &mdash; pulsar 1.5.4 documentation</title>
+    <title>Asynchronous WSGI &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Server" href="server.html" />
     <link rel="prev" title="WSGI" href="index.html" />
    
+  <link rel="stylesheet" href="../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -67,17 +72,17 @@ the application object must return an iterable yielding zero or more bytes.</p>
 </div>
 <div class="section" id="application-handlers">
 <span id="wsgi-handlers"></span><h2>Application handlers<a class="headerlink" href="#application-handlers" title="Permalink to this headline">¶</a></h2>
-<p>An asynchronous <a class="reference internal" href="#wsgi-handlers"><span>application handler</span></a> must conform
+<p>An asynchronous <a class="reference internal" href="#wsgi-handlers"><span class="std std-ref">application handler</span></a> must conform
 with the standard <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification with the following two
 exceptions:</p>
 <ul class="simple">
 <li>It can return an awaitable object</li>
 <li>If it returns an awaitable object, this object must result in an
-<a class="reference internal" href="#wsgi-async-iter"><span>asynchronous iterable</span></a>.</li>
+<a class="reference internal" href="#wsgi-async-iter"><span class="std std-ref">asynchronous iterable</span></a>.</li>
 </ul>
 <p>An awaitable object is an object that can be used in an await expression.
-Can be a coroutine or an object with an <a class="reference external" href="http://python.readthedocs.org/en/latest/reference/datamodel.html#object.__await__" title="(in Python v3.6)"><code class="xref py py-meth docutils literal"><span class="pre">__await__()</span></code></a> method
-(a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> for example). See also <a class="reference external" href="https://www.python.org/dev/peps/pep-0492/">PEP 492</a>.
+Can be a coroutine or an object with an <a class="reference external" href="http://python.readthedocs.io/en/latest/reference/datamodel.html#object.__await__" title="(in Python v3.6)"><code class="xref py py-meth docutils literal"><span class="pre">__await__()</span></code></a> method
+(a <a class="reference external" href="http://python.readthedocs.io/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> for example). See also <a class="reference external" href="https://www.python.org/dev/peps/pep-0492/">PEP 492</a>.
 Pulsar is shipped with two WSGI application handlers documented below.</p>
 </div>
 <div class="section" id="asynchronous-iterable">
@@ -85,7 +90,7 @@ Pulsar is shipped with two WSGI application handlers documented below.</p>
 <p>An asynchronous iterable is an iterable over a combination of <code class="docutils literal"><span class="pre">bytes</span></code> and/or
 awaitable objects which result in <code class="docutils literal"><span class="pre">bytes</span></code>.
 For example this could be an asynchronous iterable:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">simple_async</span><span class="p">():</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">simple_async</span><span class="p">():</span>
     <span class="k">yield</span> <span class="n">b</span><span class="s1">&#39;hello&#39;</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
     <span class="n">c</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
@@ -97,10 +102,10 @@ For example this could be an asynchronous iterable:</p>
 <div class="section" id="wsgihandler">
 <span id="wsgi-lazy-handler"></span><h2>WsgiHandler<a class="headerlink" href="#wsgihandler" title="Permalink to this headline">¶</a></h2>
 <p>The first application handler is the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><code class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></code></a>
-which is a step above the <a class="reference internal" href="../../tutorials/hello.html#tutorials-hello-world"><span>hello callable</span></a>
+which is a step above the <a class="reference internal" href="../../tutorials/hello.html#tutorials-hello-world"><span class="std std-ref">hello callable</span></a>
 in the tutorial. It accepts two iterables, a list of
-<a class="reference internal" href="middleware.html#wsgi-middleware"><span>wsgi middleware</span></a> and an optional list of
-<a class="reference internal" href="response.html#wsgi-response-middleware"><span>response middleware</span></a>.</p>
+<a class="reference internal" href="middleware.html#wsgi-middleware"><span class="std std-ref">wsgi middleware</span></a> and an optional list of
+<a class="reference internal" href="response.html#wsgi-response-middleware"><span class="std std-ref">response middleware</span></a>.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.handlers.</code><code class="descname">WsgiHandler</code><span class="sig-paren">(</span><em>middleware=None</em>, <em>response_middleware=None</em>, <em>async=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#WsgiHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="Permalink to this definition">¶</a></dt>
@@ -108,7 +113,7 @@ in the tutorial. It accepts two iterables, a list of
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler.middleware">
 <code class="descname">middleware</code><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler.middleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of <a class="reference internal" href="middleware.html#wsgi-middleware"><span>asynchronous WSGI middleware</span></a> callables
+<dd><p>List of <a class="reference internal" href="middleware.html#wsgi-middleware"><span class="std std-ref">asynchronous WSGI middleware</span></a> callables
 which accept <code class="docutils literal"><span class="pre">environ</span></code> and <code class="docutils literal"><span class="pre">start_response</span></code> as arguments.
 The order matter, since the response returned by the callable
 is the non <code class="docutils literal"><span class="pre">None</span></code> value returned by a middleware.</p>
@@ -118,13 +123,13 @@ is the non <code class="docutils literal"><span class="pre">None</span></code> v
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler.response_middleware">
 <code class="descname">response_middleware</code><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler.response_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of functions of the form:</p>
-<div class="highlight-python"><div class="highlight"><pre>def ..(environ, response):
+<div class="highlight-default"><div class="highlight"><pre><span></span>def ..(environ, response):
     ...
 </pre></div>
 </div>
-<p>where <code class="docutils literal"><span class="pre">response</span></code> is a <a class="reference internal" href="wrappers.html#wsgi-response"><span>WsgiResponse</span></a>.
+<p>where <code class="docutils literal"><span class="pre">response</span></code> is a <a class="reference internal" href="wrappers.html#wsgi-response"><span class="std std-ref">WsgiResponse</span></a>.
 Pulsar contains some
-<a class="reference internal" href="response.html#wsgi-response-middleware"><span>response middlewares</span></a>.</p>
+<a class="reference internal" href="response.html#wsgi-response-middleware"><span class="std std-ref">response middlewares</span></a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -135,7 +140,7 @@ Pulsar contains some
 <dl class="class">
 <dt id="pulsar.apps.wsgi.handlers.LazyWsgi">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.handlers.</code><code class="descname">LazyWsgi</code><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#LazyWsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#wsgi-handlers"><span>wsgi handler</span></a> which loads the actual
+<dd><p>A <a class="reference internal" href="#wsgi-handlers"><span class="std std-ref">wsgi handler</span></a> which loads the actual
 handler the first time it is called.</p>
 <p>Subclasses must implement the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi.setup" title="pulsar.apps.wsgi.handlers.LazyWsgi.setup"><code class="xref py py-meth docutils literal"><span class="pre">setup()</span></code></a> method.
 Useful when working in multiprocessing mode when the application
@@ -148,7 +153,7 @@ causing serialisation issues.</p>
 <dd><p>The setup function for this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="pulsar.apps.wsgi.handlers.LazyWsgi"><code class="xref py py-class docutils literal"><span class="pre">LazyWsgi</span></code></a>.</p>
 <p>Called once only the first time this application handler is invoked.
 This <strong>must</strong> be implemented by subclasses and <strong>must</strong> return a
-<a class="reference internal" href="#wsgi-handlers"><span>wsgi application handler</span></a>.</p>
+<a class="reference internal" href="#wsgi-handlers"><span class="std std-ref">wsgi application handler</span></a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -163,7 +168,7 @@ This <strong>must</strong> be implemented by subclasses and <strong>must</strong
 </ul>
 <p>The event loop serving the application can be retrieved from the connection
 via the <code class="docutils literal"><span class="pre">_loop</span></code> attribute:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">loop</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.connection&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">_loop</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">loop</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;pulsar.connection&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">_loop</span>
 </pre></div>
 </div>
 </div>
@@ -188,10 +193,12 @@ via the <code class="docutils literal"><span class="pre">_loop</span></code> att
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -225,14 +232,11 @@ via the <code class="docutils literal"><span class="pre">_loop</span></code> att
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -243,8 +247,8 @@ via the <code class="docutils literal"><span class="pre">_loop</span></code> att
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../../sources/apps/wsgi/async.txt"

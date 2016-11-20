@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar 1.5.4 documentation</title>
+    <title>Overview &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,15 +27,20 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" />
    
+  <link rel="stylesheet" href="static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -78,7 +83,7 @@ socket, wsgi, websocket, redis, json-rpc</td>
 </table>
 <p>An example of a web server written with <code class="docutils literal"><span class="pre">pulsar</span></code> which responds with
 &#8220;Hello World!&#8221; for every request:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">wsgi</span>
 
 <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;Hello World!</span><span class="se">\n</span><span class="s1">&#39;</span>
@@ -91,7 +96,7 @@ socket, wsgi, websocket, redis, json-rpc</td>
 
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Pulsar&#8217;s goal is to provide an easy way to build scalable network programs.
@@ -102,11 +107,11 @@ notified when a new connection is made, and then it goes to sleep.</p>
 <p>Pulsar uses the <a class="reference external" href="https://docs.python.org/3/library/asyncio.html">asyncio</a> module from the standard python
 library and it can be configured to run in multi-processing mode.</p>
 <p>Another example of pulsar framework is the asynchronous <a class="reference external" href="http://quantmind.github.io/pulsar/apps/http.html">HttpClient</a>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre>from pulsar.apps import http
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="k">import</span> <span class="n">http</span>
 
-async with http.HttpClient() as session:
-    response1 = await session.get(&#39;https://github.com/timeline.json&#39;)
-    response2 = await session.get(&#39;https://api.github.com/emojis.json&#39;)
+<span class="k">async</span> <span class="k">with</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+    <span class="n">response1</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span>
+    <span class="n">response2</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://api.github.com/emojis.json&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The http client maintains connections alive (by default 15 seconds) and therefore
@@ -116,7 +121,7 @@ asynchronous <code class="docutils literal"><span class="pre">with</span></code>
 <div class="section" id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar has no hard dependencies, install via pip:</p>
-<div class="highlight-python"><div class="highlight"><pre>pip install pulsar
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">pulsar</span>
 </pre></div>
 </div>
 <p>or download the tarball from <a class="reference external" href="http://pypi.python.org/pypi/pulsar">pypi</a>.</p>
@@ -191,15 +196,15 @@ certifi if it is present on the system</li>
 <div class="section" id="running-tests">
 <h2>Running Tests<a class="headerlink" href="#running-tests" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar test suite uses the pulsar test application. To run tests:</p>
-<div class="highlight-python"><div class="highlight"><pre>python setup.py test
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">test</span>
 </pre></div>
 </div>
 <p>For options and help type:</p>
-<div class="highlight-python"><div class="highlight"><pre>python setup.py test --help
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">test</span> <span class="o">--</span><span class="n">help</span>
 </pre></div>
 </div>
 <p><a class="reference external" href="https://pypi.python.org/pypi/flake8">flake8</a> check (requires flake8 package):</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">flake8</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">flake8</span>
 </pre></div>
 </div>
 </div>
@@ -251,17 +256,19 @@ file in the top distribution directory for the full license text.</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
 
 
 
 
+
 <h3>Navigation</h3>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design.html">Design</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advantage.html">Pulsar Advantage</a></li>
@@ -288,14 +295,11 @@ file in the top distribution directory for the full license text.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -306,8 +310,8 @@ file in the top distribution directory for the full license text.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="sources/overview.txt"

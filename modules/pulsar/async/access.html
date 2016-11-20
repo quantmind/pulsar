@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.access &mdash; pulsar 1.5.4 documentation</title>
+    <title>pulsar.async.access &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
+  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,22 +47,22 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.async.access</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">os</span>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="k">import</span> <span class="n">ThreadPoolExecutor</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">current_thread</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">current_thread</span>
 
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Future</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">Future</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">Global</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">current_process</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="k">import</span> <span class="n">Global</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="k">import</span> <span class="n">current_process</span>
 
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">ensure_future</span>
-<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isawaitable</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">ensure_future</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="k">import</span> <span class="n">isawaitable</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get_event_loop&#39;</span><span class="p">,</span>
@@ -84,7 +89,7 @@
 <span class="n">CANCELLED_ERRORS</span> <span class="o">=</span> <span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">,)</span>
 
 
-<span class="k">def</span> <span class="nf">reraise</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">reraise</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">__traceback__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">tb</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">value</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span>
     <span class="k">raise</span> <span class="n">value</span>
@@ -94,7 +99,7 @@
     <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Future</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">create_future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">create_future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="n">loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">loop</span><span class="o">.</span><span class="n">create_future</span><span class="p">()</span>
@@ -119,7 +124,7 @@
 
 <span class="k">for</span> <span class="n">selector</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Epoll&#39;</span><span class="p">,</span> <span class="s1">&#39;Kqueue&#39;</span><span class="p">,</span> <span class="s1">&#39;Poll&#39;</span><span class="p">,</span> <span class="s1">&#39;Select&#39;</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Selector&#39;</span> <span class="o">%</span> <span class="n">selector</span>
-    <span class="n">selector_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">selectors</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">selector_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">selectors</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">selector_class</span><span class="p">:</span>
         <span class="n">EVENT_LOOPS</span><span class="p">[</span><span class="n">selector</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="n">make_loop_factory</span><span class="p">(</span><span class="n">selector_class</span><span class="p">)</span>
 
@@ -139,7 +144,7 @@
 <span class="k">elif</span> <span class="n">EVENT_LOOPS</span><span class="p">:</span>
     <span class="n">default_loop</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">EVENT_LOOPS</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="n">default_loop</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">default_loop</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="k">if</span> <span class="n">default_loop</span><span class="p">:</span>
@@ -159,20 +164,20 @@
 <span class="n">new_event_loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">new_event_loop</span>
 
 
-<span class="k">def</span> <span class="nf">is_mainthread</span><span class="p">(</span><span class="n">thread</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">is_mainthread</span><span class="p">(</span><span class="n">thread</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Check if thread is the main thread.</span>
 
 <span class="sd">    If ``thread`` is not supplied check the current thread</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">thread</span> <span class="o">=</span> <span class="n">thread</span> <span class="k">if</span> <span class="n">thread</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">current_thread</span><span class="p">()</span>
+    <span class="n">thread</span> <span class="o">=</span> <span class="n">thread</span> <span class="k">if</span> <span class="n">thread</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">current_thread</span><span class="p">()</span>
     <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">thread</span><span class="p">,</span> <span class="n">threading</span><span class="o">.</span><span class="n">_MainThread</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">logger</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">logger</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">loop</span> <span class="ow">or</span> <span class="n">get_event_loop</span><span class="p">(),</span> <span class="s1">&#39;logger&#39;</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">process_data</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">process_data</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Fetch the current process local data dictionary.</span>
 
 <span class="sd">    If ``name`` is not ``None`` it returns the value at``name``,</span>
@@ -185,7 +190,7 @@
     <span class="k">return</span> <span class="n">loc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="n">loc</span>
 
 
-<span class="k">def</span> <span class="nf">thread_data</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">NOTHING</span><span class="p">,</span> <span class="n">ct</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">thread_data</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">NOTHING</span><span class="p">,</span> <span class="n">ct</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Set or retrieve an attribute ``name`` from thread ``ct``.</span>
 
 <span class="sd">    If ``ct`` is not given used the current thread. If ``value``</span>
@@ -222,8 +227,8 @@
         <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span>
 
 
-<span class="k">def</span> <span class="nf">cfg_value</span><span class="p">(</span><span class="n">setting</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">cfg_value</span><span class="p">(</span><span class="n">setting</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">setting</span><span class="p">)</span>
@@ -240,12 +245,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_local</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">l</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">current_process</span><span class="p">(),</span> <span class="s1">&#39;_event_loop_policy&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">l</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">current_process</span><span class="p">(),</span> <span class="s1">&#39;_event_loop_policy&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">l</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_local</span> <span class="o">=</span> <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Local</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">l</span>
 
-    <span class="nd">@_local.setter</span>
+    <span class="nd">@_local</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="n">current_process</span><span class="p">()</span><span class="o">.</span><span class="n">_event_loop_policy</span> <span class="o">=</span> <span class="n">v</span>
 
@@ -253,7 +258,7 @@
         <span class="n">loop</span> <span class="o">=</span> <span class="n">EVENT_LOOPS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]()</span>
         <span class="n">loop</span><span class="o">.</span><span class="n">set_default_executor</span><span class="p">(</span><span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
-            <span class="n">loop</span><span class="o">.</span><span class="n">set_debug</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">loop</span><span class="o">.</span><span class="n">set_debug</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">loop</span>
 </pre></div>
 
@@ -275,10 +280,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -312,14 +319,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -330,8 +334,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Events &mdash; pulsar 1.5.4 documentation</title>
+    <title>Events &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Signal Handling" href="signal.html" />
     <link rel="prev" title="Actor messages" href="messages.html" />
    
+  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -52,18 +57,18 @@ be used to attach events to a class. Event are implemented in the
 <div class="section" id="many-times-event">
 <span id="id1"></span><h2>Many times event<a class="headerlink" href="#many-times-event" title="Permalink to this headline">¶</a></h2>
 <p>An event handler is created simply:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>You can bind callbacks to an event:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">say_hello</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Hello </span><span class="si">%s</span><span class="s1">!&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">say_hello</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hello </span><span class="si">%s</span><span class="s1">!&#39;</span><span class="p">)</span>
 
 <span class="n">event</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">say_hello</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>and you can fire it:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">event</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">event</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
 <span class="go">Hello None!</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">event</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="s1">&#39;luca&#39;</span><span class="p">)</span>
 <span class="go">Hello luca!</span>
@@ -77,13 +82,13 @@ referred to this type of event as a <strong>may times event</strong>.</p>
 <p>As the name says, the <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> is a special event which
 can be fired once only. Firing a <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> event multiple
 times will cause an <code class="xref py py-class docutils literal"><span class="pre">InavlidStateError</span></code> to be raised.</p>
-<p>A <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> event is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> and
+<p>A <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><code class="xref py py-class docutils literal"><span class="pre">OneTime</span></code></a> event is a specialised <a class="reference external" href="http://python.readthedocs.io/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Future</span></code></a> and
 therefore you can yield it in a coroutine to wait until it get fired.</p>
 </div>
 <div class="section" id="event-handler">
 <h2>Event handler<a class="headerlink" href="#event-handler" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="../api/events.html#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><code class="xref py py-class docutils literal"><span class="pre">EventHandler</span></code></a> mixin adds event handling methods to python classes:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pulsar</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pulsar</span>
 
 <span class="k">class</span> <span class="nc">Events</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">EventHandler</span><span class="p">):</span>
     <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;finish&#39;</span><span class="p">)</span>
@@ -92,12 +97,12 @@ therefore you can yield it in a coroutine to wait until it get fired.</p>
 </div>
 <p>To fire an event, one uses the <a class="reference internal" href="../api/events.html#pulsar.async.events.EventHandler.fire_event" title="pulsar.async.events.EventHandler.fire_event"><code class="xref py py-meth docutils literal"><span class="pre">fire_event()</span></code></a> method with
 first positional argument given by the event name:</p>
-<div class="highlight-python"><div class="highlight"><pre>&gt;&gt; o = Events()
-&gt;&gt; o.fire_event(&#39;start&#39;)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">o</span> <span class="o">=</span> <span class="n">Events</span><span class="p">()</span>
+<span class="o">&gt;&gt;</span> <span class="n">o</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Optionally, it is possible to pass one additional parameter:</p>
-<div class="highlight-python"><div class="highlight"><pre>&gt;&gt; o.fire_event(&#39;start&#39;, &#39;hello&#39;)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">o</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;hello&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Adding event callbacks is done via the <a class="reference internal" href="../api/events.html#pulsar.async.events.EventHandler.bind_event" title="pulsar.async.events.EventHandler.bind_event"><code class="xref py py-meth docutils literal"><span class="pre">bind_event()</span></code></a>
@@ -105,7 +110,7 @@ method. The method accept two parameters, the event name and a callable
 accepting one parameters, the caller which fires the event or the
 optional positional parameter passed to the <a class="reference internal" href="../api/events.html#pulsar.async.events.EventHandler.fire_event" title="pulsar.async.events.EventHandler.fire_event"><code class="xref py py-meth docutils literal"><span class="pre">fire_event()</span></code></a>
 method mentioned above:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">start_handler</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">start_handler</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
     <span class="o">...</span>
 
 <span class="n">o</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="n">start_handler</span><span class="p">)</span>
@@ -133,10 +138,12 @@ method mentioned above:</p>
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -170,14 +177,11 @@ method mentioned above:</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -188,8 +192,8 @@ method mentioned above:</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../sources/tutorials/events.txt"

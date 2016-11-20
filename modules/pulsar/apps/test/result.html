@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.result &mdash; pulsar 1.5.4 documentation</title>
+    <title>pulsar.apps.test.result &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../../index.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" />
    
+  <link rel="stylesheet" href="../../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,12 +47,12 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.test.result</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">unittest</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span></span><span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="k">import</span> <span class="n">AttributeDictionary</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">TestFailure</span><span class="p">,</span> <span class="n">LOGGER</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">TestFailure</span><span class="p">,</span> <span class="n">LOGGER</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Plugin&#39;</span><span class="p">,</span>
@@ -61,7 +66,7 @@
 
 
 <span class="k">def</span> <span class="nf">def_return_val</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
-    <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <div class="viewcode-block" id="Plugin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin">[docs]</a><span class="k">class</span> <span class="nc">Plugin</span><span class="p">:</span>
@@ -71,14 +76,14 @@
 <span class="sd">    example the :class:`.TestRunner` itself,</span>
 <span class="sd">    the :class:`.TestResult` and the :class:`.TestPlugin`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&#39;&#39;&#39;An optional result&#39;&#39;&#39;</span>
-    <span class="n">stream</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&#39;&#39;&#39;handle for writing text on the default output.</span>
 
 <span class="sd">    Set by the :class:`.TestRunner` at runtime.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">descriptions</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">descriptions</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Plugin.configure"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called once just after construction of a :class:`.TestRunner`</span>
@@ -192,7 +197,10 @@
 
     <span class="k">def</span> <span class="nf">getDescription</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
         <span class="n">doc_first_line</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">shortDescription</span><span class="p">()</span>
-        <span class="n">teststr</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">test</span><span class="p">)</span>
+        <span class="n">teststr</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">tag</span>
+        <span class="k">if</span> <span class="n">teststr</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">_testMethodName</span><span class="p">):</span>
+            <span class="n">teststr</span> <span class="o">=</span> <span class="n">teststr</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">_testMethodName</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">teststr</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">teststr</span><span class="p">,</span> <span class="n">test</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span> <span class="ow">and</span> <span class="n">doc_first_line</span><span class="p">:</span>
             <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">teststr</span><span class="p">,</span> <span class="n">doc_first_line</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
@@ -204,13 +212,13 @@
     <span class="n">separator1</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span> <span class="o">*</span> <span class="mi">70</span>
     <span class="n">separator2</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span> <span class="o">*</span> <span class="mi">70</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">descriptions</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">descriptions</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">stream</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">result</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span> <span class="o">=</span> <span class="n">descriptions</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">showAll</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dots</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">showAll</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dots</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
         <span class="n">verbosity</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">verbosity</span>
@@ -252,7 +260,7 @@
 
     <span class="k">def</span> <span class="nf">addSkip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">showAll</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s2">&quot;skipped {0!r}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reason</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s2">&quot;skipped </span><span class="si">{0!r}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reason</span><span class="p">))</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dots</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
@@ -276,7 +284,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">printErrorList</span><span class="p">(</span><span class="s1">&#39;ERROR&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">printErrorList</span><span class="p">(</span><span class="s1">&#39;FAIL&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">failures</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">printErrorList</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flavour</span><span class="p">,</span> <span class="n">errors</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">test</span><span class="p">,</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
@@ -322,7 +330,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="TestResult"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.TestResult">[docs]</a><span class="k">class</span> <span class="nc">TestResult</span><span class="p">(</span><span class="n">Plugin</span><span class="p">):</span>
@@ -331,7 +339,7 @@
 <span class="sd">    Each :class:`.Plugin` can access the :class:`.TestRunner` ``result``</span>
 <span class="sd">    object via the :attr:`~Plugin.result` attribute.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descriptions</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descriptions</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span> <span class="o">=</span> <span class="n">descriptions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_testsRun</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">=</span> <span class="mi">0</span>
@@ -395,7 +403,7 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">failures</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span></div></div>
 
 
-<span class="k">def</span> <span class="nf">testsafe</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">return_val</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">testsafe</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">return_val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">return_val</span><span class="p">:</span>
         <span class="n">return_val</span> <span class="o">=</span> <span class="n">def_return_val</span>
 
@@ -403,7 +411,7 @@
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">c</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">return_val</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>       <span class="c1"># pragma    nocover</span>
                 <span class="n">LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Unhadled error in </span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
@@ -413,7 +421,7 @@
 <div class="viewcode-block" id="TestRunner"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.TestRunner">[docs]</a><span class="k">class</span> <span class="nc">TestRunner</span><span class="p">(</span><span class="n">Plugin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`.Plugin` for asynchronously running tests.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugins</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">writercls</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">descriptions</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugins</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">writercls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">descriptions</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span> <span class="o">=</span> <span class="n">descriptions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">writercls</span> <span class="o">=</span> <span class="n">writercls</span> <span class="ow">or</span> <span class="n">TestStream</span>
@@ -450,7 +458,7 @@
         <span class="sd">&#39;&#39;&#39;Load all ``test`` functions for the ``test_cls``</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">testsafe</span><span class="p">(</span><span class="s1">&#39;loadTestsFromTestCase&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="p">)(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_cls</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">loadTestsFromTestCase</span><span class="p">(</span><span class="n">test_cls</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">c</span></div>
@@ -476,7 +484,7 @@
 <span class="sd">        in the test process domain.&#39;&#39;&#39;</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
             <span class="n">local</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">local</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">local</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">after_test_function_run</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">)</span></div></div>
 </pre></div>
 
@@ -498,10 +506,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -535,14 +545,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -553,8 +560,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

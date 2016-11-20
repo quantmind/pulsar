@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Utilities &mdash; pulsar 1.5.4 documentation</title>
+    <title>Utilities &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,16 +27,21 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="JSON-RPC" href="../rpc.html" />
     <link rel="prev" title="Asynchronous Content" href="content.html" />
    
+  <link rel="stylesheet" href="../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,9 +52,9 @@
 <h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="http-parsers">
 <h2>HTTP Parsers<a class="headerlink" href="#http-parsers" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar ships with its own <a class="reference internal" href="../../api/utilities.html#tools-http-parser"><span>HTTP parser</span></a> used by
-both server and the <a class="reference internal" href="../http.html#apps-http"><span>HTTP client</span></a>. Headers are collected using
-the <a class="reference internal" href="../../api/utilities.html#tools-http-headers"><span>Headers data structure</span></a> which exposes a
+<p>Pulsar ships with its own <a class="reference internal" href="../../api/utilities.html#tools-http-parser"><span class="std std-ref">HTTP parser</span></a> used by
+both server and the <a class="reference internal" href="../http.html#apps-http"><span class="std std-ref">HTTP client</span></a>. Headers are collected using
+the <a class="reference internal" href="../../api/utilities.html#tools-http-headers"><span class="std std-ref">Headers data structure</span></a> which exposes a
 list/dictionary-type interface.</p>
 </div>
 <div class="section" id="module-pulsar.apps.wsgi.auth">
@@ -97,7 +102,7 @@ not given, otherwise an <code class="xref py py-class docutils literal"><span cl
 <p>All <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><code class="xref py py-class docutils literal"><span class="pre">Accept</span></code></a> objects work similar to a list but provide extra
 functionality for working with the data.  Containment checks are
 normalised to the rules of that header:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">CharsetAccept</span><span class="p">([(</span><span class="s1">&#39;ISO-8859-1&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)])</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">CharsetAccept</span><span class="p">([(</span><span class="s1">&#39;ISO-8859-1&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">best</span>
 <span class="go">&#39;ISO-8859-1&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="s1">&#39;iso-8859-1&#39;</span> <span class="ow">in</span> <span class="n">a</span>
@@ -109,7 +114,7 @@ normalised to the rules of that header:</p>
 </pre></div>
 </div>
 <p>To get the quality for an item you can use normal item lookup:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;utf-8&#39;</span><span class="p">])</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;utf-8&#39;</span><span class="p">])</span>
 <span class="go">0.7</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="p">([</span><span class="s1">&#39;utf7&#39;</span><span class="p">])</span>
 <span class="go">0</span>
@@ -158,7 +163,7 @@ the one is returned that comes first.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.structures.Accept.index">
 <code class="descname">index</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the position of an entry or raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#ValueError" title="(in Python v3.6)"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code></a>.</p>
+<dd><p>Get the position of an entry or raise <a class="reference external" href="http://python.readthedocs.io/en/latest/library/exceptions.html#ValueError" title="(in Python v3.6)"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -168,7 +173,7 @@ the one is returned that comes first.</p>
 </tbody>
 </table>
 <div class="versionchanged">
-<p><span class="versionmodified">Changed in version 0.5: </span>This used to raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#IndexError" title="(in Python v3.6)"><code class="xref py py-exc docutils literal"><span class="pre">IndexError</span></code></a>, which was inconsistent
+<p><span class="versionmodified">Changed in version 0.5: </span>This used to raise <a class="reference external" href="http://python.readthedocs.io/en/latest/library/exceptions.html#IndexError" title="(in Python v3.6)"><code class="xref py py-exc docutils literal"><span class="pre">IndexError</span></code></a>, which was inconsistent
 with the list API.</p>
 </div>
 </dd></dl>
@@ -238,7 +243,7 @@ content types.</p>
 <div class="section" id="module-pulsar.apps.wsgi.utils">
 <span id="miscellaneous"></span><h2>Miscellaneous<a class="headerlink" href="#module-pulsar.apps.wsgi.utils" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="#module-pulsar.apps.wsgi.utils" title="pulsar.apps.wsgi.utils"><code class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi.utils</span></code></a> module include several utilities used
-by various components in the <a class="reference internal" href="index.html#apps-wsgi"><span>wsgi application</span></a></p>
+by various components in the <a class="reference internal" href="index.html#apps-wsgi"><span class="std std-ref">wsgi application</span></a></p>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.utils.cookie_date">
 <code class="descclassname">pulsar.apps.wsgi.utils.</code><code class="descname">cookie_date</code><span class="sig-paren">(</span><em>epoch_seconds=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#cookie_date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.cookie_date" title="Permalink to this definition">¶</a></dt>
@@ -375,10 +380,12 @@ By default <code class="xref py py-class docutils literal"><span class="pre">Req
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -412,14 +419,11 @@ By default <code class="xref py py-class docutils literal"><span class="pre">Req
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -430,8 +434,8 @@ By default <code class="xref py py-class docutils literal"><span class="pre">Req
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="../../sources/apps/wsgi/tools.txt"

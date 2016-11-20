@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.routers &mdash; pulsar 1.5.4 documentation</title>
+    <title>pulsar.apps.wsgi.routers &#8212; pulsar 1.5.5 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '1.5.4',
+        VERSION:     '1.5.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,14 +27,19 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 1.5.4 documentation" href="../../../../index.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" />
    
+  <link rel="stylesheet" href="../../../../static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -42,7 +47,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.wsgi.routers</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;</span>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
 
 <span class="sd">.. contents::</span>
 <span class="sd">    :local:</span>
@@ -131,25 +136,25 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">stat</span>
 <span class="kn">import</span> <span class="nn">mimetypes</span>
-<span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">parsedate_tz</span><span class="p">,</span> <span class="n">mktime_tz</span>
+<span class="kn">from</span> <span class="nn">email.utils</span> <span class="k">import</span> <span class="n">parsedate_tz</span><span class="p">,</span> <span class="n">mktime_tz</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">http_date</span><span class="p">,</span> <span class="n">CacheControl</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.slugify</span> <span class="kn">import</span> <span class="n">slugify</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">digest</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">MethodNotAllowed</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="k">import</span> <span class="n">http_date</span><span class="p">,</span> <span class="n">CacheControl</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.slugify</span> <span class="k">import</span> <span class="n">slugify</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="k">import</span> <span class="n">digest</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">MethodNotAllowed</span>
 
-<span class="kn">from</span> <span class="nn">.route</span> <span class="kn">import</span> <span class="n">Route</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">wsgi_request</span>
-<span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="n">Html</span>
+<span class="kn">from</span> <span class="nn">.route</span> <span class="k">import</span> <span class="n">Route</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">wsgi_request</span>
+<span class="kn">from</span> <span class="nn">.content</span> <span class="k">import</span> <span class="n">Html</span>
 
 
 <span class="k">def</span> <span class="nf">get_roule_methods</span><span class="p">(</span><span class="n">attrs</span><span class="p">):</span>
     <span class="n">rule_methods</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">code</span><span class="p">,</span> <span class="nb">callable</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">code</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="s1">&#39;__call__&#39;</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">code</span><span class="p">,</span> <span class="n">callable</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">code</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">callable</span><span class="p">,</span> <span class="s1">&#39;__call__&#39;</span><span class="p">):</span>
             <span class="k">continue</span>
-        <span class="n">rule_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="s1">&#39;rule_method&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">rule_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">callable</span><span class="p">,</span> <span class="s1">&#39;rule_method&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rule_method</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="n">rule_methods</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">code</span><span class="p">,</span> <span class="n">rule_method</span><span class="p">))</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rule_methods</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
@@ -189,7 +194,7 @@
 <span class="sd">        stored in the :class:`Router.parameters` dictionary at key given by</span>
 <span class="sd">        the class attribute specified in the class definition.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span></div>
 
 
@@ -281,12 +286,12 @@
 
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">_creation_count</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_parent</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">SkipRoute</span> <span class="o">=</span> <span class="n">SkipRoute</span>
 
-    <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
-    <span class="n">response_wrapper</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+    <span class="n">response_content_types</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">response_wrapper</span> <span class="o">=</span> <span class="n">RouterParam</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="o">*</span><span class="n">routes</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">):</span>
         <span class="n">Router</span><span class="o">.</span><span class="n">_creation_count</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -367,11 +372,11 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_route</span><span class="o">.</span><span class="n">url</span><span class="p">(</span><span class="o">**</span><span class="n">urlargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Router.getparam"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.getparam">[docs]</a>    <span class="k">def</span> <span class="nf">getparam</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Router.getparam"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.getparam">[docs]</a>    <span class="k">def</span> <span class="nf">getparam</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;A parameter in this :class:`.Router`</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">parents</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">getparam</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">parents</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -385,14 +390,14 @@
 <span class="sd">        If the ``name`` is not available, retrieve it from the</span>
 <span class="sd">        :attr:`parent` :class:`Router` if it exists.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">available</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
-            <span class="n">available</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">available</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">_get_default</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -407,7 +412,7 @@
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_route</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;/&#39;</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="n">router_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -418,12 +423,12 @@
             <span class="k">except</span> <span class="n">SkipRoute</span><span class="p">:</span>
                 <span class="k">pass</span>
 
-<div class="viewcode-block" id="Router.resolve"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">urlargs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Router.resolve"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">urlargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Resolve a path and return a ``(handler, urlargs)`` tuple or</span>
 <span class="sd">        ``None`` if the path could not be resolved.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>  <span class="c1"># no match</span>
                 <span class="k">return</span>
         <span class="k">elif</span> <span class="s1">&#39;__remaining__&#39;</span> <span class="ow">in</span> <span class="n">match</span><span class="p">:</span>
@@ -434,7 +439,7 @@
         <span class="c1">#</span>
         <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
             <span class="n">view_args</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">urlargs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">view_args</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">view_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">return</span> <span class="n">view_args</span></div>
 
@@ -447,16 +452,16 @@
         <span class="n">method</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="n">request</span><span class="o">.</span><span class="n">set_response_content_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_content_types</span><span class="p">)</span>
 
-        <span class="nb">callable</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">callable</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">callable</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">callable</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">MethodNotAllowed</span>
 
         <span class="n">response_wrapper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_wrapper</span>
         <span class="k">if</span> <span class="n">response_wrapper</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">response_wrapper</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="n">response_wrapper</span><span class="p">(</span><span class="n">callable</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">callable</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Router.add_child"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.add_child">[docs]</a>    <span class="k">def</span> <span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Router.add_child"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.add_child">[docs]</a>    <span class="k">def</span> <span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add a new :class:`Router` to the :attr:`routes` list.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="n">Router</span><span class="p">),</span> <span class="s1">&#39;Not a valid Router&#39;</span>
@@ -473,7 +478,7 @@
         <span class="k">if</span> <span class="n">router</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
             <span class="n">router</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">remove_child</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
         <span class="n">router</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">self</span>
-        <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">router</span><span class="p">)</span>
@@ -483,7 +488,7 @@
         <span class="sd">&#39;&#39;&#39;remove a :class:`Router` from the :attr:`routes` list.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">router</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
-            <span class="n">router</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span></div>
+            <span class="n">router</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="Router.get_route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.get_route">[docs]</a>    <span class="k">def</span> <span class="nf">get_route</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get a child :class:`Router` by its :attr:`name`.</span>
@@ -516,10 +521,10 @@
         <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="k">while</span> <span class="n">parent</span> <span class="ow">and</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">router</span><span class="p">:</span>
             <span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_parent</span>
-        <span class="k">return</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span></div>
+        <span class="k">return</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
-<div class="viewcode-block" id="Router.make_router"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.make_router">[docs]</a>    <span class="k">def</span> <span class="nf">make_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                    <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+<div class="viewcode-block" id="Router.make_router"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.make_router">[docs]</a>    <span class="k">def</span> <span class="nf">make_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create a new :class:`.Router` from a ``rule`` and parameters.</span>
 
 <span class="sd">        This method is used during initialisation when building child</span>
@@ -552,7 +557,7 @@
 <span class="k">class</span> <span class="nc">MediaMixin</span><span class="p">:</span>
     <span class="n">cache_control</span> <span class="o">=</span> <span class="n">CacheControl</span><span class="p">(</span><span class="n">maxage</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">serve_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">serve_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">file_response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">fullpath</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status_code</span><span class="p">,</span>
                              <span class="n">cache_control</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_control</span><span class="p">)</span>
 
@@ -606,9 +611,9 @@
 
 <span class="sd">        The default file to serve when a directory is requested.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">show_indexes</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-                 <span class="n">default_suffix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">default_file</span><span class="o">=</span><span class="s1">&#39;index.html&#39;</span><span class="p">,</span>
-                 <span class="n">serve_only</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show_indexes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">default_suffix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_file</span><span class="o">=</span><span class="s1">&#39;index.html&#39;</span><span class="p">,</span>
+                 <span class="n">serve_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/&lt;path:path&gt;&#39;</span> <span class="o">%</span> <span class="n">rule</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_serve_only</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">serve_only</span> <span class="ow">or</span> <span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_default_suffix</span> <span class="o">=</span> <span class="n">default_suffix</span>
@@ -634,19 +639,19 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serve_only</span><span class="p">:</span>
 
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">fullpath</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_file</span><span class="p">:</span>
-                <span class="nb">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_file</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="nb">file</span><span class="p">):</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_file</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
                         <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/&#39;</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-                    <span class="n">fullpath</span> <span class="o">=</span> <span class="nb">file</span>
+                    <span class="n">fullpath</span> <span class="o">=</span> <span class="n">file</span>
             <span class="c1">#</span>
             <span class="c1"># Check for missing suffix</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_suffix</span><span class="p">:</span>
                 <span class="n">ext</span> <span class="o">=</span> <span class="s1">&#39;.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_suffix</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">fullpath</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ext</span><span class="p">):</span>
-                    <span class="nb">file</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="nb">file</span><span class="p">):</span>
-                        <span class="n">fullpath</span> <span class="o">=</span> <span class="nb">file</span>
+                    <span class="n">file</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fullpath</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
+                        <span class="n">fullpath</span> <span class="o">=</span> <span class="n">file</span>
 
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">fullpath</span><span class="p">):</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_indexes</span><span class="p">:</span>
@@ -666,7 +671,7 @@
 
 <span class="k">def</span> <span class="nf">modified_since</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span>
         <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">r&quot;^([^;]+)(; length=([0-9]+))?$&quot;</span><span class="p">,</span>
                            <span class="n">header</span><span class="p">,</span>
@@ -680,7 +685,7 @@
         <span class="k">pass</span>
 
 
-<span class="k">def</span> <span class="nf">was_modified_since</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mtime</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">was_modified_since</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mtime</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Check if an item was modified since the user last downloaded it</span>
 
 <span class="sd">    :param header: the value of the ``If-Modified-Since`` header.</span>
@@ -690,12 +695,12 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">header_mtime</span> <span class="o">=</span> <span class="n">modified_since</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">header_mtime</span> <span class="ow">and</span> <span class="n">header_mtime</span> <span class="o">&lt;=</span> <span class="n">mtime</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">False</span>
-    <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
 
-<div class="viewcode-block" id="file_response"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.file_response">[docs]</a><span class="k">def</span> <span class="nf">file_response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                  <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cache_control</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="file_response"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.file_response">[docs]</a><span class="k">def</span> <span class="nf">file_response</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">content_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_control</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Utility for serving a local file</span>
 
 <span class="sd">    Typical usage::</span>
@@ -725,9 +730,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">content_type</span><span class="p">:</span>
                 <span class="n">content_type</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
-            <span class="nb">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
             <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;content-length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">file_wrapper</span><span class="p">(</span><span class="nb">file</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">file_wrapper</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
             <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span>
             <span class="n">response</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="n">encoding</span>
             <span class="k">if</span> <span class="n">status_code</span><span class="p">:</span>
@@ -759,10 +764,12 @@
 
 
 
+
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
+
 
 
 
@@ -796,14 +803,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -814,8 +818,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 
