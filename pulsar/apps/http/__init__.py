@@ -251,7 +251,7 @@ class HttpRequest(RequestBase):
         self.client = client
         self.method = method.upper()
         self.inp_params = inp_params or {}
-        self.unredirected_headers = Headers(kind='client')
+        self.unredirected_headers = Headers()
         self.history = history
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
@@ -708,21 +708,23 @@ class HttpResponse(ProtocolConsumer):
         # request.parser my change (100-continue)
         # Always invoke it via request
         try:
-            if request.parser.execute(data, len(data)) == len(data):
-                if request.parser.is_headers_complete():
-                    status_code = request.parser.get_status_code()
-                    if (request.headers.has('expect', '100-continue') and
-                            status_code == 100):
-                        request.new_parser()
-                        self.write_body()
-                    else:
-                        self._status_code = status_code
-                        if not self.event('on_headers').fired():
-                            self.fire_event('on_headers')
-                        if (not self.event('post_request').fired() and
-                                self.is_message_complete()):
-                            self.finished()
-            else:
+            len_data = len(data)
+            parsed = request.parser.execute(data, len_data)
+            if request.parser.is_headers_complete():
+                status_code = request.parser.get_status_code()
+                if (request.headers.has('expect', '100-continue') and
+                        status_code == 100):
+                    request.new_parser()
+                    self.write_body()
+                else:
+                    self._status_code = status_code
+                    if not self.event('on_headers').fired():
+                        self.fire_event('on_headers')
+                    if (not self.event('post_request').fired() and
+                            self.is_message_complete()):
+                        parsed = len_data
+                        self.finished()
+            if parsed != len_data:
                 raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
         except Exception as exc:
             self.finished(exc=exc)
@@ -809,12 +811,10 @@ class HttpClient(AbstractClient):
         ('Connection', 'Keep-Alive'),
         ('Accept', '*/*'),
         ('Accept-Encoding', 'deflate'),
-        ('Accept-Encoding', 'gzip')),
-        kind='client')
+        ('Accept-Encoding', 'gzip')))
     DEFAULT_TUNNEL_HEADERS = Headers((
         ('Connection', 'Keep-Alive'),
-        ('Proxy-Connection', 'Keep-Alive')),
-        kind='client')
+        ('Proxy-Connection', 'Keep-Alive')))
     request_parameters = ('max_redirects', 'decompress',
                           'websocket_handler', 'version',
                           'verify', 'stream')

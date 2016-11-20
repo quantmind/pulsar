@@ -155,7 +155,7 @@ class WsgiResponse:
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
-        self.headers = Headers(response_headers, kind='server')
+        self.headers = Headers(response_headers or ())
         self.content = content
         self._can_store_cookies = can_store_cookies
         if content_type is not None:

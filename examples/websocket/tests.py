@@ -2,10 +2,9 @@
 import unittest
 import asyncio
 
-from pulsar import send, new_event_loop, HAS_C_EXTENSIONS
+from pulsar import send, HAS_C_EXTENSIONS
 from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
-from pulsar.apps.test import dont_run_with_thread
 
 from examples.websocket.manage import server, frame_parser
 
@@ -32,10 +31,10 @@ class Echo(WS):
         self.queue.put_nowait('CLOSE')
 
 
-class TestWebSocketThread(unittest.TestCase):
+class TestWebSocket(unittest.TestCase):
     pyparser = False
     app_cfg = None
-    concurrency = 'thread'
+    concurrency = 'process'
 
     @classmethod
     async def setUpClass(cls):
@@ -148,26 +147,5 @@ class TestWebSocketThread(unittest.TestCase):
 
 
 @unittest.skipUnless(HAS_C_EXTENSIONS, "Requires C extensions")
-class TestWebSocketPyParser(TestWebSocketThread):
+class TestWebSocketPyParser(TestWebSocket):
     pyparser = True
-    concurrency = 'process'
-
-
-@dont_run_with_thread
-class TestWebSocketProcess(TestWebSocketThread):
-    concurrency = 'process'
-
-    def __test_close_sync(self):
-        loop = new_event_loop()
-        c = self.http(loop=loop)
-        handler = Echo(loop)
-        ws = c.get(self.ws_echo, websocket_handler=handler)
-        self.assertEqual(ws.event('post_request').fired(), 0)
-        self.assertEqual(ws._loop, loop)
-        self.assertFalse(ws._loop.is_running())
-        ws.write('send close 1001')
-        message = ws._loop.run_until_complete(handler.get())
-        self.assertEqual(message, 'CLOSE')
-        self.assertTrue(ws.close_reason)
-        self.assertEqual(ws.close_reason[0], 1001)
-        self.assertTrue(ws._connection.closed)

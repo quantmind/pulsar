@@ -242,7 +242,7 @@ class HttpServerResponse(ProtocolConsumer):
         processed = parser.execute(data, len(data))
         if parser.is_headers_complete():
             if not self._body_reader:
-                headers = Headers(parser.get_headers(), kind='client')
+                headers = Headers(parser.get_headers())
                 self._body_reader = HttpBodyReader(headers,
                                                    parser,
                                                    self.transport,
