@@ -10,7 +10,20 @@ from pulsar.utils.httpurl import http_parser
 __all__ = ['HttpTestClient']
 
 
-class DummyConnection(Transport):
+class DummyTransport(Transport):
+
+    @property
+    def transport(self):
+        return self
+
+    def close(self):
+        pass
+
+    def abort(self):
+        pass
+
+
+class DummyConnection(DummyTransport):
     """A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
 
     .. attribute:: client
@@ -37,10 +50,6 @@ class DummyConnection(Transport):
     @property
     def _loop(self):
         return self._producer._loop
-
-    @property
-    def transport(self):
-        return self
 
     def detach(self, discard=True):
         pass
@@ -80,17 +89,13 @@ class DummyConnection(Transport):
                 consumer.finished()
 
 
-class DummyServerConnection(Transport):
+class DummyServerConnection(DummyTransport):
 
     def __init__(self, server, response, address):
         super().__init__({'sockname': ('127.0.0.1', 1234)})
         self.address = address
         self._current_consumer = server
         self.response = response
-
-    @property
-    def transport(self):
-        return self
 
     def write(self, chunk):
         self.response.data_received(chunk)

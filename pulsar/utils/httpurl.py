@@ -246,6 +246,7 @@ def is_succesful(status):
 
 
 def capheader(name):
+    name = name.replace('_', '-')
     return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
 
 
