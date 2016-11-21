@@ -144,7 +144,7 @@ class RedisChannels(Channels, PubSubClient):
         channel_name = self.prefixed(channel.name)
         await self.pubsub.subscribe(channel_name)
 
-    async def _unsubscribe(self, channel):
+    async def _unsubscribe(self, channel, event=None):
         channel_name = self.prefixed(channel.name)
         await self.pubsub.unsubscribe(channel_name)
 

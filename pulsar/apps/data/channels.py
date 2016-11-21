@@ -12,7 +12,7 @@ from pulsar.apps.ds import redis_to_py_pattern
 from .store import PubSubClient
 
 
-regex_callbacks = namedtuple('regex_callbacks', 'code regex callbacks')
+event_callbacks = namedtuple('event_callbacks', 'name pattern regex callbacks')
 
 
 LOGGER = logging.getLogger('pulsar.channels')
@@ -143,8 +143,8 @@ class Channels(Connector, PubSubClient):
             was registered
         """
         channel = self.channel(channel)
-        await self._subscribe(channel, event)
-        channel.register(event, callback)
+        event = channel.register(event, callback)
+        await channel.connect(event.name)
         return channel
 
     async def unregister(self, channel, event, callback):
@@ -208,6 +208,11 @@ class Channels(Connector, PubSubClient):
             self.channels[channel.name] = channel
         return channel
 
+    def event_pattern(self, event):
+        """Channel pattern for an event name
+        """
+        return redis_to_py_pattern(event)
+
     def _connection_lost(self, *args):
         self.status = self.statusType.disconnected
         self._loop.create_task(self.connect())
@@ -265,7 +270,13 @@ class Channel:
     def __init__(self, channels, name):
         self.channels = channels
         self.name = name
-        self.callbacks = {}
+        self.callbacks = OrderedDict()
+
+    @property
+    def events(self):
+        """List of event names this channel is registered with
+        """
+        return tuple((e.name for e in self.callbacks.values()))
 
     def __repr__(self):
         return repr(self.callbacks)
@@ -273,8 +284,8 @@ class Channel:
     def __len__(self):
         return len(self.callbacks)
 
-    def __contains__(self, regex):
-        return regex in self.callbacks
+    def __contains__(self, pattern):
+        return pattern in self.callbacks
 
     def __iter__(self):
         return iter(self.channels.values())
@@ -298,10 +309,10 @@ class Channel:
                             self.name, event)
 
     @safe_execution
-    async def connect(self):
+    async def connect(self, event=None):
         channels = self.channels
         if channels.status == StatusType.connected:
-            await self.channels._subscribe(self)
+            await self.channels._subscribe(self, event)
 
     @safe_execution
     async def disconnect(self):
@@ -312,11 +323,11 @@ class Channel:
     def register(self, event, callback):
         """Register a ``callback`` for ``event``
         """
-        regex = redis_to_py_pattern(event)
-        entry = self.callbacks.get(regex)
+        pattern = self.channels.event_pattern(event)
+        entry = self.callbacks.get(pattern)
         if not entry:
-            entry = regex_callbacks(regex, re.compile(regex), [])
-            self.callbacks[entry.code] = entry
+            entry = event_callbacks(event, pattern, re.compile(pattern), [])
+            self.callbacks[entry.pattern] = entry
 
         if callback not in entry.callbacks:
             entry.callbacks.append(callback)
@@ -324,13 +335,14 @@ class Channel:
         return entry
 
     def unregister(self, event, callback):
-        regex = redis_to_py_pattern(event)
-        entry = self.callbacks.get(regex)
+        pattern = self.channels.event_pattern(event)
+        entry = self.callbacks.get(pattern)
         if entry:
-            self._remove_callback(entry, callback)
+            return self._remove_callback(entry, callback)
 
     def _remove_callback(self, entry, callback):
         if callback in entry.callbacks:
             entry.callbacks.remove(callback)
             if not entry.callbacks:
-                self.callbacks.pop(entry.code)
+                self.callbacks.pop(entry.pattern)
+            return entry
