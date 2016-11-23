@@ -627,7 +627,7 @@ class WsgiRequest(EnvironMixin):
             path = remove_double_slash('%s/%s' % (self.path, path))
         return iri_to_uri(path, query)
 
-    def absolute_uri(self, location=None, scheme=None):
+    def absolute_uri(self, location=None, scheme=None, **query):
         """Builds an absolute URI from ``location`` and variables
         available in this request.
 
@@ -635,7 +635,7 @@ class WsgiRequest(EnvironMixin):
         :meth:`full_path`.
         """
         if not is_absolute_uri(location):
-            location = self.full_path(location)
+            location = self.full_path(location, **query)
             if not scheme:
                 scheme = self.is_secure and 'https' or 'http'
             base = '%s://%s' % (scheme, self.get_host())
