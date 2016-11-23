@@ -228,7 +228,7 @@ class Channels(Connector, PubSubClient):
                 self,
                 self.status_channel
             )
-        except ConnectionRefusedError:
+        except ConnectionError:
             self.status = StatusType.disconnected
             next_time = backoff(next_time) if next_time else RECONNECT_LAG
             self.logger.critical(
@@ -251,7 +251,7 @@ def safe_execution(method):
     async def _(self, *args, **kwargs):
         try:
             await method(self, *args, **kwargs)
-        except ConnectionRefusedError:
+        except ConnectionError:
             self.channels.status = StatusType.disconnected
             await self.channels.connect()
 

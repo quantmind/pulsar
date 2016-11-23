@@ -105,7 +105,7 @@ class LockError(RuntimeError):
 
 
 # #################################################################### HTTP
-class HttpRequestException(IOError):
+class HttpRequestException(ConnectionError):
     "Base for all HTTP related errors"
     def __init__(self, *args, **kwargs):
         """
