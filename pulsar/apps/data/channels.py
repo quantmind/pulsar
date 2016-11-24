@@ -296,7 +296,7 @@ class Channel:
     def __call__(self, message):
         event = message.pop('event', '')
         data = message.get('data')
-        self.fi
+        self.fire(event, data)
 
     def fire(self, event, data=None):
         for entry in tuple(self.callbacks.values()):
