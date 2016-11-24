@@ -594,7 +594,7 @@ class HttpResponse(ProtocolConsumer):
         if self.status_code:
             return not is_succesful(self.status_code)
         else:
-            return False
+            return self.done()
 
     @property
     def ok(self):
@@ -685,8 +685,7 @@ class HttpResponse(ProtocolConsumer):
             if self.status_code:
                 raise HttpRequestException(response=self)
             else:
-                raise HttpConnectionError(response=self,
-                                          msg=self.on_finished.result.error)
+                raise HttpConnectionError(response=self)
 
     def info(self):
         """Required by python CookieJar.

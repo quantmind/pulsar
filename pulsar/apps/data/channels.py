@@ -114,6 +114,9 @@ class Channels(Connector, PubSubClient):
     def _loop(self):
         return self.store._loop
 
+    def __repr__(self):
+        return self.store.__repr__()
+
     def __len__(self):
         return len(self.channels)
 
@@ -226,7 +229,7 @@ class Channels(Connector, PubSubClient):
             self.logger.warning(
                 '%s ready and listening for events on %s - all good',
                 self,
-                self.status_channel
+                self.status_channel.name
             )
         except ConnectionError:
             self.status = StatusType.disconnected
@@ -291,8 +294,11 @@ class Channel:
         return iter(self.channels.values())
 
     def __call__(self, message):
-        event = message.pop('event', '')
+        event = message.get('event', '')
         data = message.get('data')
+        self.fire(event, data)
+
+    def fire(self, event, data=None):
         for entry in tuple(self.callbacks.values()):
             match = entry.regex.match(event)
             if match:
