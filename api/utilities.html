@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tools &#8212; pulsar 1.5.5 documentation</title>
+    <title>Tools &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Exceptions" href="exceptions.html" />
     <link rel="prev" title="Application API" href="application.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -71,17 +66,17 @@ Several opensource efforts have been used as source of snippets:</p>
 <span id="tools-http-headers"></span><h3>HTTP Headers<a class="headerlink" href="#http-headers" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.utils.httpurl.Headers">
-<em class="property">class </em><code class="descclassname">pulsar.utils.httpurl.</code><code class="descname">Headers</code><span class="sig-paren">(</span><em>headers=None</em>, <em>kind='server'</em>, <em>strict=False</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.utils.httpurl.</code><code class="descname">Headers</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Utility for managing HTTP headers for both clients and servers.</p>
 <p>It has a dictionary like interface with few extra functions to facilitate
 the insertion of multiple header values. Header fields are
 <strong>case insensitive</strong>, therefore doing:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="p">[</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1050&#39;</span>
 </pre></div>
 </div>
 <p>is equivalent to</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="p">[</span><span class="s1">&#39;content-length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1050&#39;</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="p">[</span><span class="s1">&#39;content-length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1050&#39;</span>
 </pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -111,7 +106,7 @@ response-header fields, and ending with the entity-header fields.</p>
 non-standard header fields.</p>
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.update">
-<code class="descname">update</code><span class="sig-paren">(</span><em>iterable</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.update" title="Permalink to this definition">¶</a></dt>
+<code class="descname">update</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extend the headers with an <code class="docutils literal"><span class="pre">iterable</span></code>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -142,7 +137,7 @@ non-standard header fields.</p>
 <code class="descname">get</code><span class="sig-paren">(</span><em>key</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the field value at <code class="docutils literal"><span class="pre">key</span></code> as comma separated values.</p>
 <p>For example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="k">import</span> <span class="n">Headers</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;gzip&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;deflate&#39;</span><span class="p">)</span>
@@ -150,7 +145,7 @@ non-standard header fields.</p>
 </pre></div>
 </div>
 <p>results in:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="s1">&#39;gzip, deflate&#39;</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="s1">&#39;gzip, deflate&#39;</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -162,7 +157,7 @@ non-standard header fields.</p>
 string separated by comma (which is returned by the
 <a class="reference internal" href="#pulsar.utils.httpurl.Headers.get" title="pulsar.utils.httpurl.Headers.get"><code class="xref py py-meth docutils literal"><span class="pre">get()</span></code></a> method).</p>
 <p>For example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="k">import</span> <span class="n">Headers</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;gzip&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;accept-encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;deflate&#39;</span><span class="p">)</span>
@@ -170,7 +165,7 @@ string separated by comma (which is returned by the
 </pre></div>
 </div>
 <p>results in:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;gzip&#39;</span><span class="p">,</span> <span class="s1">&#39;deflate&#39;</span><span class="p">]</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="s1">&#39;gzip&#39;</span><span class="p">,</span> <span class="s1">&#39;deflate&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -184,7 +179,7 @@ string separated by comma (which is returned by the
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.clear">
 <code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.clear" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as <a class="reference external" href="http://python.readthedocs.io/en/latest/library/stdtypes.html#dict.clear" title="(in Python v3.6)"><code class="xref py py-meth docutils literal"><span class="pre">dict.clear()</span></code></a>, it removes all headers.</p>
+<dd><p>Same as <a class="reference external" href="http://python.readthedocs.org/en/latest/library/stdtypes.html#dict.clear" title="(in Python v3.6)"><code class="xref py py-meth docutils literal"><span class="pre">dict.clear()</span></code></a>, it removes all headers.</p>
 </dd></dl>
 
 <dl class="method">
@@ -234,7 +229,7 @@ for header <code class="docutils literal"><span class="pre">key</span></code></l
 <span id="tools-http-parser"></span><h3>HTTP Parser<a class="headerlink" href="#http-parser" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.utils.httpurl.HttpParser">
-<em class="property">class </em><code class="descclassname">pulsar.utils.httpurl.</code><code class="descname">HttpParser</code><span class="sig-paren">(</span><em>kind=2</em>, <em>decompress=False</em>, <em>method=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pulsar.utils.httpurl.</code><code class="descname">HttpParser</code><span class="sig-paren">(</span><em>kind=2</em>, <em>decompress=False</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>A python HTTP parser.</p>
 <p>Original code from <a class="reference external" href="https://github.com/benoitc/http-parser">https://github.com/benoitc/http-parser</a></p>
 <p>2011 (c) Benoit Chesneau &lt;<a class="reference external" href="mailto:benoitc&#37;&#52;&#48;e-engura&#46;org">benoitc<span>&#64;</span>e-engura<span>&#46;</span>org</a>&gt;</p>
@@ -416,20 +411,20 @@ attribute by exposing the <a class="reference internal" href="#pulsar.utils.conf
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>description</strong> &#8211; description used when parsing the command line,
-same usage as in the <a class="reference external" href="http://python.readthedocs.io/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></code></a> class.</li>
+same usage as in the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></code></a> class.</li>
 <li><strong>epilog</strong> &#8211; epilog used when parsing the command line, same usage
-as in the <a class="reference external" href="http://python.readthedocs.io/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></code></a> class.</li>
+as in the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></code></a> class.</li>
 <li><strong>version</strong> &#8211; version used when parsing the command line, same usage
-as in the <a class="reference external" href="http://python.readthedocs.io/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></code></a> class.</li>
+as in the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></code></a> class.</li>
 <li><strong>apps</strong> &#8211; list of application namespaces to include in the
 <a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><code class="xref py py-attr docutils literal"><span class="pre">settings</span></code></a> dictionary. For example if <code class="docutils literal"><span class="pre">apps</span></code> is set to
 <code class="docutils literal"><span class="pre">['socket',</span> <span class="pre">'test']</span></code>, the
-<a class="reference internal" href="../settings.html#setting-section-socket-servers"><span class="std std-ref">socket server</span></a> and
-<a class="reference internal" href="../settings.html#setting-section-test"><span class="std std-ref">task queue</span></a> settings are
+<a class="reference internal" href="../settings.html#setting-section-socket-servers"><span>socket server</span></a> and
+<a class="reference internal" href="../settings.html#setting-section-test"><span>task queue</span></a> settings are
 loaded in addition to the standard
-<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><span class="std std-ref">global settings</span></a>,
-<a class="reference internal" href="../settings.html#setting-section-worker-processes"><span class="std std-ref">worker settings</span></a> and
-<a class="reference internal" href="../settings.html#setting-section-application-hooks"><span class="std std-ref">hook settings</span></a>.</li>
+<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><span>global settings</span></a>,
+<a class="reference internal" href="../settings.html#setting-section-worker-processes"><span>worker settings</span></a> and
+<a class="reference internal" href="../settings.html#setting-section-application-hooks"><span>hook settings</span></a>.</li>
 </ul>
 </td>
 </tr>
@@ -541,7 +536,7 @@ settings via the <a class="reference internal" href="#pulsar.utils.config.Settin
 <dt id="pulsar.utils.config.Config.address">
 <code class="descname">address</code><a class="headerlink" href="#pulsar.utils.config.Config.address" title="Permalink to this definition">¶</a></dt>
 <dd><p>An address to bind to, only available if a
-<a class="reference internal" href="../settings.html#setting-bind"><span class="std std-ref">bind</span></a> setting has been added to this
+<a class="reference internal" href="../settings.html#setting-bind"><span>bind</span></a> setting has been added to this
 <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><code class="xref py py-class docutils literal"><span class="pre">Config</span></code></a> container.</p>
 </dd></dl>
 
@@ -550,7 +545,7 @@ settings via the <a class="reference internal" href="#pulsar.utils.config.Settin
 <code class="descname">copy</code><span class="sig-paren">(</span><em>name=None</em>, <em>prefix=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A copy of this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><code class="xref py py-class docutils literal"><span class="pre">Config</span></code></a> container.</p>
 <p>If <code class="docutils literal"><span class="pre">prefix</span></code> is given, it prefixes all non
-<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><span class="std std-ref">global settings</span></a>
+<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><span>global settings</span></a>
 with it. Used when multiple applications are loaded.</p>
 </dd></dl>
 
@@ -568,7 +563,7 @@ with it. Used when multiple applications are loaded.</p>
 <dl class="class">
 <dt id="pulsar.utils.config.Setting">
 <em class="property">class </em><code class="descclassname">pulsar.utils.config.</code><code class="descname">Setting</code><span class="sig-paren">(</span><em>name=None</em>, <em>flags=None</em>, <em>action=None</em>, <em>type=None</em>, <em>default=None</em>, <em>nargs=None</em>, <em>desc=None</em>, <em>validator=None</em>, <em>app=None</em>, <em>meta=None</em>, <em>choices=None</em>, <em>const=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class for creating <a class="reference internal" href="../settings.html#settings"><span class="std std-ref">pulsar settings</span></a>.</p>
+<dd><p>Class for creating <a class="reference internal" href="../settings.html#settings"><span>pulsar settings</span></a>.</p>
 <p>Most parameters can be specified on the command line,
 all of them on a <code class="docutils literal"><span class="pre">config</span></code> file.</p>
 <dl class="attribute">
@@ -606,7 +601,7 @@ all of them on a <code class="docutils literal"><span class="pre">config</span><
 <dt id="pulsar.utils.config.Setting.is_global">
 <code class="descname">is_global</code><em class="property"> = False</em><a class="headerlink" href="#pulsar.utils.config.Setting.is_global" title="Permalink to this definition">¶</a></dt>
 <dd><p><code class="docutils literal"><span class="pre">True</span></code> only for
-<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><span class="std std-ref">global settings</span></a>.</p>
+<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><span>global settings</span></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -637,7 +632,7 @@ at the command line</p>
 <dl class="attribute">
 <dt id="pulsar.utils.config.Setting.meta">
 <code class="descname">meta</code><em class="property"> = None</em><a class="headerlink" href="#pulsar.utils.config.Setting.meta" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same usage as <code class="docutils literal"><span class="pre">metavar</span></code> in the python <a class="reference external" href="http://python.readthedocs.io/en/latest/library/argparse.html#module-argparse" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">argparse</span></code></a> module. It is
+<dd><p>Same usage as <code class="docutils literal"><span class="pre">metavar</span></code> in the python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/argparse.html#module-argparse" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">argparse</span></code></a> module. It is
 the name for the argument in usage message.</p>
 </dd></dl>
 
@@ -677,7 +672,7 @@ the value to validate.</p>
 <dt id="pulsar.utils.config.Setting.section">
 <code class="descname">section</code><em class="property"> = None</em><a class="headerlink" href="#pulsar.utils.config.Setting.section" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setting section, used for creating the
-<a class="reference internal" href="../settings.html#settings"><span class="std std-ref">settings documentation</span></a>.</p>
+<a class="reference internal" href="../settings.html#settings"><span>settings documentation</span></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -755,12 +750,12 @@ be a string or a two elements tuple (for a tcp address) and <code class="docutil
 dictionary of parameters. The <code class="docutils literal"><span class="pre">default_port</span></code> parameter can be used to
 set the port if a port is not available in the <code class="docutils literal"><span class="pre">connection_string</span></code>.</p>
 <p>For example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_connection_string</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9080&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_connection_string</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9080&#39;</span><span class="p">)</span>
 <span class="go">(&#39;http&#39;, (&#39;127.0.0.1&#39;, 9080), {})</span>
 </pre></div>
 </div>
 <p>and this example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_connection_string</span><span class="p">(</span><span class="s1">&#39;redis://127.0.0.1:6379?db=3&amp;password=bla&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_connection_string</span><span class="p">(</span><span class="s1">&#39;redis://127.0.0.1:6379?db=3&amp;password=bla&#39;</span><span class="p">)</span>
 <span class="go">(&#39;redis&#39;, (&#39;127.0.0.1&#39;, 6379), {&#39;db&#39;: &#39;3&#39;, &#39;password&#39;: &#39;bla&#39;})</span>
 </pre></div>
 </div>
@@ -909,7 +904,7 @@ absolute score is the right most closest index with score less than
 <code class="descname">remove_range</code><span class="sig-paren">(</span><em>start</em>, <em>end</em>, <em>callback=None</em><span class="sig-paren">)</span><a class="reference internal" href="../modules/pulsar/utils/structures/skiplist.html#Skiplist.remove_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist.remove_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove a range by rank.</p>
 <p>This is equivalent to perform:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">l</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">del</span> <span class="n">l</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>on a python list.
@@ -1229,12 +1224,10 @@ path at the front of <code class="docutils literal"><span class="pre">sys.path</
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -1268,11 +1261,14 @@ path at the front of <code class="docutils literal"><span class="pre">sys.path</
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -1283,8 +1279,8 @@ path at the front of <code class="docutils literal"><span class="pre">sys.path</
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/api/utilities.txt"

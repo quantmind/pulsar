@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.proxy &#8212; pulsar 1.5.5 documentation</title>
+    <title>pulsar.async.proxy &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
-  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,13 +42,13 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.async.proxy</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">CommandNotFound</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="k">import</span> <span class="n">default_timer</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">CommandNotFound</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">default_timer</span>
 
 <span class="kn">import</span> <span class="nn">signal</span>
 
-<span class="kn">from</span> <span class="nn">.futures</span> <span class="k">import</span> <span class="n">create_future</span><span class="p">,</span> <span class="n">chain_future</span>
-<span class="kn">from</span> <span class="nn">.consts</span> <span class="k">import</span> <span class="n">ACTOR_ACTION_TIMEOUT</span>
+<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">create_future</span><span class="p">,</span> <span class="n">chain_future</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">ACTOR_ACTION_TIMEOUT</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ActorProxy&#39;</span><span class="p">,</span>
@@ -65,14 +60,14 @@
 <span class="n">global_commands_table</span> <span class="o">=</span> <span class="p">{}</span>
 
 
-<span class="k">def</span> <span class="nf">get_proxy</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">get_proxy</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ActorProxy</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">obj</span>
     <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;proxy&#39;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">get_proxy</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">proxy</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">safe</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot; is not an actor or actor proxy.&#39;</span> <span class="o">%</span> <span class="n">obj</span><span class="p">)</span>
 
@@ -95,7 +90,7 @@
 <span class="sd">    :parameter ack: ``True`` if the command acknowledge the sender with a</span>
 <span class="sd">        response. Usually is set to ``True`` (which is also the default value).</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ack</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ack</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ack</span> <span class="o">=</span> <span class="n">ack</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
@@ -111,10 +106,10 @@
         <span class="k">return</span> <span class="n">command_function</span></div>
 
 
-<span class="k">def</span> <span class="nf">actor_proxy_future</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">actor_proxy_future</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="bp">self</span> <span class="o">=</span> <span class="n">create_future</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="n">future</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="n">future</span> <span class="ow">is</span> <span class="bp">None</span>
         <span class="n">aid</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">aid</span> <span class="o">=</span> <span class="n">aid</span><span class="o">.</span><span class="n">aid</span>
     <span class="k">else</span><span class="p">:</span>
@@ -154,7 +149,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">aid</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">aid</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">cfg</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">impl</span><span class="p">,</span> <span class="s1">&#39;address&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">impl</span><span class="p">,</span> <span class="s1">&#39;address&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">(</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
@@ -165,7 +160,7 @@
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
-        <span class="n">o</span> <span class="o">=</span> <span class="n">get_proxy</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">get_proxy</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">o</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span> <span class="o">==</span> <span class="n">o</span><span class="o">.</span><span class="n">aid</span>
 
     <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
@@ -201,15 +196,15 @@
 <span class="sd">        :class:`.MailboxProtocol` instance and it is used</span>
 <span class="sd">        by the :func:`.send` function to send messages to the remote actor.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">monitor</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">monitor</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impl</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">impl</span> <span class="o">=</span> <span class="n">impl</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mailbox</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spawning_start</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stopping_start</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mailbox</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spawning_start</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stopping_start</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">impl</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -236,11 +231,11 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">kill</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGKILL</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sig</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sig</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">sig</span> <span class="o">=</span> <span class="n">sig</span> <span class="ow">or</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIGTERM</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">kill</span><span class="p">(</span><span class="n">sig</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ActorProxyMonitor.join"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor.join">[docs]</a>    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ActorProxyMonitor.join"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.proxy.ActorProxyMonitor.join">[docs]</a>    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Wait until the underlying actor terminates.</span>
 
 <span class="sd">        If ``timeout`` is provided, it raises an exception if the timeout</span>
@@ -258,15 +253,15 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">mailbox</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">default_timer</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">spawning_start</span> <span class="o">&gt;</span> <span class="n">ACTOR_ACTION_TIMEOUT</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">should_terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopping_start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopping_start</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">stopping_start</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
-            <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="bp">False</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">dt</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopping_start</span>
-            <span class="k">return</span> <span class="n">dt</span> <span class="k">if</span> <span class="n">dt</span> <span class="o">&gt;=</span> <span class="n">ACTOR_ACTION_TIMEOUT</span> <span class="k">else</span> <span class="kc">False</span></div>
+            <span class="k">return</span> <span class="n">dt</span> <span class="k">if</span> <span class="n">dt</span> <span class="o">&gt;=</span> <span class="n">ACTOR_ACTION_TIMEOUT</span> <span class="k">else</span> <span class="bp">False</span></div>
 </pre></div>
 
           </div>
@@ -287,12 +282,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -326,11 +319,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -341,8 +337,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

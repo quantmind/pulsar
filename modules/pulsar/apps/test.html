@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test &#8212; pulsar 1.5.5 documentation</title>
+    <title>pulsar.apps.test &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" />
    
-  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,21 +42,21 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.test</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="k">import</span> <span class="n">lazyproperty</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="k">import</span> <span class="n">section_docs</span><span class="p">,</span> <span class="n">TestOption</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">lazyproperty</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span><span class="p">,</span> <span class="n">TestOption</span>
 
-<span class="kn">from</span> <span class="nn">.populate</span> <span class="k">import</span> <span class="n">populate</span><span class="p">,</span> <span class="n">random_string</span>
-<span class="kn">from</span> <span class="nn">.result</span> <span class="k">import</span> <span class="n">Plugin</span><span class="p">,</span> <span class="n">TestStream</span><span class="p">,</span> <span class="n">TestRunner</span><span class="p">,</span> <span class="n">TestResult</span>
-<span class="kn">from</span> <span class="nn">.plugins.base</span> <span class="k">import</span> <span class="n">WrapTest</span><span class="p">,</span> <span class="n">TestPlugin</span><span class="p">,</span> <span class="n">validate_plugin_list</span>
-<span class="kn">from</span> <span class="nn">.loader</span> <span class="k">import</span> <span class="n">TestLoader</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="p">(</span><span class="n">sequential</span><span class="p">,</span> <span class="n">ActorTestMixin</span><span class="p">,</span> <span class="n">AsyncAssert</span><span class="p">,</span> <span class="n">check_server</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">.populate</span> <span class="kn">import</span> <span class="n">populate</span><span class="p">,</span> <span class="n">random_string</span>
+<span class="kn">from</span> <span class="nn">.result</span> <span class="kn">import</span> <span class="n">Plugin</span><span class="p">,</span> <span class="n">TestStream</span><span class="p">,</span> <span class="n">TestRunner</span><span class="p">,</span> <span class="n">TestResult</span>
+<span class="kn">from</span> <span class="nn">.plugins.base</span> <span class="kn">import</span> <span class="n">WrapTest</span><span class="p">,</span> <span class="n">TestPlugin</span><span class="p">,</span> <span class="n">validate_plugin_list</span>
+<span class="kn">from</span> <span class="nn">.loader</span> <span class="kn">import</span> <span class="n">TestLoader</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span><span class="n">sequential</span><span class="p">,</span> <span class="n">ActorTestMixin</span><span class="p">,</span> <span class="n">AsyncAssert</span><span class="p">,</span> <span class="n">check_server</span><span class="p">,</span>
                     <span class="n">test_timeout</span><span class="p">,</span> <span class="n">dont_run_with_thread</span><span class="p">,</span> <span class="n">TestFailure</span><span class="p">,</span>
                     <span class="n">skipUnless</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.wsgi</span> <span class="k">import</span> <span class="n">HttpTestClient</span>
-<span class="kn">from</span> <span class="nn">.runner</span> <span class="k">import</span> <span class="n">Runner</span>
+<span class="kn">from</span> <span class="nn">.wsgi</span> <span class="kn">import</span> <span class="n">HttpTestClient</span>
+<span class="kn">from</span> <span class="nn">.runner</span> <span class="kn">import</span> <span class="n">Runner</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;populate&#39;</span><span class="p">,</span>
@@ -141,7 +136,7 @@
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;list_labels&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-l&#39;</span><span class="p">,</span> <span class="s1">&#39;--list-labels&#39;</span><span class="p">]</span>
     <span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;store_true&#39;</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;List all test labels without performing tests.&quot;&quot;&quot;</span>
 
@@ -150,7 +145,7 @@
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;sequential&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--sequential&#39;</span><span class="p">]</span>
     <span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;store_true&#39;</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Run test functions sequentially.&quot;&quot;&quot;</span>
 
@@ -158,7 +153,7 @@
 <span class="k">class</span> <span class="nc">Coveralls</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--coveralls&#39;</span><span class="p">]</span>
     <span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;store_true&#39;</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Publish coverage to coveralls.&quot;&quot;&quot;</span>
 
@@ -212,7 +207,7 @@
         <span class="n">stream</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">stream</span>
         <span class="k">if</span> <span class="n">loader</span><span class="o">.</span><span class="n">abort_message</span><span class="p">:</span>
             <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">abort_message</span><span class="p">))</span>
-            <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="bp">False</span>
 
         <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">list_labels</span><span class="p">:</span>    <span class="c1"># pragma    nocover</span>
@@ -227,12 +222,12 @@
             <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">tags</span><span class="p">(</span><span class="n">tags</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exclude_labels</span><span class="p">):</span>
                 <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
             <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="bp">False</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">coveralls</span><span class="p">:</span>    <span class="c1"># pragma nocover</span>
-            <span class="kn">from</span> <span class="nn">pulsar.apps.test.cov</span> <span class="k">import</span> <span class="n">coveralls</span>
+            <span class="kn">from</span> <span class="nn">pulsar.apps.test.cov</span> <span class="kn">import</span> <span class="n">coveralls</span>
             <span class="n">coveralls</span><span class="p">()</span>
-            <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="bp">False</span>
 
 <div class="viewcode-block" id="TestSuite.monitor_start"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When the monitor starts load all test classes into the queue&#39;&#39;&#39;</span>
@@ -274,12 +269,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -313,11 +306,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -328,8 +324,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

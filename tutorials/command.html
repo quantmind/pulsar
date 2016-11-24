@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Using command &#8212; pulsar 1.5.5 documentation</title>
+    <title>Using command &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Asynchronous Components" href="coroutine.html" />
     <link rel="prev" title="The Arbiter" href="actors.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -53,10 +48,10 @@
 <p>We take a look on how to spawn an actor which echoes us when
 we send it a message.
 The first method for achieving this is to write an
-<a class="reference internal" href="../design.html#actor-commands"><span class="std std-ref">actor command</span></a>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">ensure_future</span>
+<a class="reference internal" href="../design.html#actor-commands"><span>actor command</span></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">ensure_future</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">arbiter</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">spawn</span><span class="p">,</span> <span class="n">send</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">arbiter</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">spawn</span><span class="p">,</span> <span class="n">send</span>
 
 
 <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;john&#39;</span><span class="p">,</span> <span class="s1">&#39;luca&#39;</span><span class="p">,</span> <span class="s1">&#39;carl&#39;</span><span class="p">,</span> <span class="s1">&#39;jo&#39;</span><span class="p">,</span> <span class="s1">&#39;alex&#39;</span><span class="p">]</span>
@@ -64,7 +59,7 @@ The first method for achieving this is to write an
 
 <span class="nd">@command</span><span class="p">()</span>
 <span class="k">def</span> <span class="nf">greetme</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-    <span class="n">echo</span> <span class="o">=</span> <span class="s1">&#39;Hello </span><span class="si">{}</span><span class="s1">!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+    <span class="n">echo</span> <span class="o">=</span> <span class="s1">&#39;Hello {}!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
     <span class="n">request</span><span class="o">.</span><span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">echo</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">echo</span>
 
@@ -77,15 +72,15 @@ The first method for achieving this is to write an
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="n">a</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">ensure_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_work</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_work</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="k">await</span> <span class="n">spawn</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;greeter&#39;</span><span class="p">)</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_work</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">await</span> <span class="n">spawn</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;greeter&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">names</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-            <span class="k">await</span> <span class="n">send</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s1">&#39;greetme&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
+            <span class="n">await</span> <span class="n">send</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s1">&#39;greetme&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">arbiter</span><span class="p">()</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
@@ -115,12 +110,10 @@ The first method for achieving this is to write an
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -154,11 +147,14 @@ The first method for achieving this is to write an
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -169,8 +165,8 @@ The first method for achieving this is to write an
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/tutorials/command.txt"

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Logging &#8212; pulsar 1.5.5 documentation</title>
+    <title>Logging &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="The Arbiter" href="actors.html" />
     <link rel="prev" title="Udp Server and Client" href="udp.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -50,17 +45,17 @@
             
   <div class="section" id="logging">
 <span id="tutorials-logging"></span><h1>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h1>
-<p>Pulsar provides several <a class="reference internal" href="../settings.html#settings"><span class="std std-ref">settings</span></a> for managing the python
+<p>Pulsar provides several <a class="reference internal" href="../settings.html#settings"><span>settings</span></a> for managing the python
 logging module and display information when running.
 These configuration parameters can be specified both on the command line
-or in the <a class="reference internal" href="../settings.html#setting-config"><span class="std std-ref">config</span></a> file of your application.</p>
-<p>The <a class="reference internal" href="../settings.html#setting-log-level"><span class="std std-ref">log-level</span></a> sets levels of loggers, for example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">script</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">log</span><span class="o">-</span><span class="n">level</span> <span class="n">debug</span>
+or in the <a class="reference internal" href="../settings.html#setting-config"><span>config</span></a> file of your application.</p>
+<p>The <a class="reference internal" href="../settings.html#setting-log-level"><span>log-level</span></a> sets levels of loggers, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level debug
 </pre></div>
 </div>
 <p>Set the log level for the <code class="docutils literal"><span class="pre">pulsar.*</span></code> loggers to <code class="docutils literal"><span class="pre">DEBUG</span></code>.</p>
 <p>You can pass several namespaces to the command, for example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">script</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">log</span><span class="o">-</span><span class="n">level</span> <span class="n">warning</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">wsgi</span><span class="o">.</span><span class="n">debug</span>
+<div class="highlight-python"><div class="highlight"><pre>python script.py --log-level warning pulsar.wsgi.debug
 </pre></div>
 </div>
 </div>
@@ -84,12 +79,10 @@ or in the <a class="reference internal" href="../settings.html#setting-config"><
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -123,11 +116,14 @@ or in the <a class="reference internal" href="../settings.html#setting-config"><
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -138,8 +134,8 @@ or in the <a class="reference internal" href="../settings.html#setting-config"><
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/tutorials/logging.txt"

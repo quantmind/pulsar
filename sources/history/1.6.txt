@@ -1,0 +1,27 @@
+## Ver. 1.6.1 - 2016-Nov-24
+
+Minor release with few improvements in the HTTPClient and ``Channels``
+
+* ``HttpResponse.is_error`` is ``True`` when no status_code is available and the response is done
+* ``HttpRequestException`` derives from ConnectionError
+* Added query to request absolute_uri
+* Channels improvements
+
+
+## Ver. 1.6.0 - 2016-Nov-20
+
+A new series with improvements in the HTTP client and server.
+Broadly compatible with the 1.5 series with exception of headers definitions and actors
+based on ``multiprocessing`` module (both have been removed because not used).
+This version brings a **critical bug** fix for HTTP responses with non standard
+values in body or content headers
+
+* New ``is_message_complete`` method in ``HttpResponse``
+* Critical bug fix for HTTP response with body when they should not have it.
+  Disregard the body and content headers [#257](https://github.com/quantmind/pulsar/pull/257)
+* If [http-request](https://github.com/benoitc/http-parser) module is installed, use its C parser as default HTTP parser.
+  The python parser can still be used by passing ``--http-py-parser`` flag in the command line
+* Removed headers definitions, no longer used [#222](https://github.com/quantmind/pulsar/issues/222)
+* Removed actors based on ``multiprocessing`` module, not needed [a9cc662](https://github.com/quantmind/pulsar/commit/a9cc6623230ffc04c4ed0236ae33efb7bbb21060)
+* Tests run with both python and C http-parser
+* **Fully compatible with python 3.5 & 3.6**

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.data.redis.store &#8212; pulsar 1.5.5 documentation</title>
+    <title>pulsar.apps.data.redis.store &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../../../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../../apps.html" />
    
-  <link rel="stylesheet" href="../../../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,15 +42,15 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.data.redis.store</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">get_actor</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="k">import</span> <span class="n">to_string</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="k">import</span> <span class="n">RemoteStore</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="k">import</span> <span class="n">redis_parser</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">get_actor</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">RemoteStore</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="kn">import</span> <span class="n">redis_parser</span>
 
-<span class="kn">from</span> <span class="nn">.client</span> <span class="k">import</span> <span class="n">RedisClient</span><span class="p">,</span> <span class="n">Pipeline</span><span class="p">,</span> <span class="n">Consumer</span><span class="p">,</span> <span class="n">ResponseError</span>
-<span class="kn">from</span> <span class="nn">.pubsub</span> <span class="k">import</span> <span class="n">RedisPubSub</span><span class="p">,</span> <span class="n">RedisChannels</span>
+<span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">RedisClient</span><span class="p">,</span> <span class="n">Pipeline</span><span class="p">,</span> <span class="n">Consumer</span><span class="p">,</span> <span class="n">ResponseError</span>
+<span class="kn">from</span> <span class="nn">.pubsub</span> <span class="kn">import</span> <span class="n">RedisPubSub</span><span class="p">,</span> <span class="n">RedisChannels</span>
 
 
 <span class="k">class</span> <span class="nc">RedisStoreConnection</span><span class="p">(</span><span class="n">Connection</span><span class="p">):</span>
@@ -64,18 +59,18 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_producer</span><span class="o">.</span><span class="n">_parser_class</span><span class="p">()</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
         <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
-        <span class="k">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">start</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">options</span><span class="p">))</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+        <span class="n">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">start</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">options</span><span class="p">))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ResponseError</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">result</span><span class="o">.</span><span class="n">exception</span>
         <span class="k">return</span> <span class="n">result</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">execute_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">execute_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
         <span class="n">consumer</span><span class="o">.</span><span class="n">start</span><span class="p">((</span><span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="p">,</span> <span class="p">[]))</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ResponseError</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">result</span><span class="o">.</span><span class="n">exception</span>
         <span class="k">return</span> <span class="n">result</span>
@@ -87,18 +82,18 @@
     <span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">RedisStoreConnection</span><span class="p">,</span> <span class="n">Consumer</span><span class="p">)</span>
     <span class="n">supported_queries</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">((</span><span class="s1">&#39;filter&#39;</span><span class="p">,</span> <span class="s1">&#39;exclude&#39;</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parser_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-              <span class="n">decode_responses</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parser_class</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+              <span class="n">decode_responses</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_decode_responses</span> <span class="o">=</span> <span class="n">decode_responses</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">parser_class</span><span class="p">:</span>
             <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
-            <span class="n">pyparser</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">redis_py_parser</span> <span class="k">if</span> <span class="n">actor</span> <span class="k">else</span> <span class="kc">False</span>
+            <span class="n">pyparser</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">redis_py_parser</span> <span class="k">if</span> <span class="n">actor</span> <span class="k">else</span> <span class="bp">False</span>
             <span class="n">parser_class</span> <span class="o">=</span> <span class="n">redis_parser</span><span class="p">(</span><span class="n">pyparser</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_parser_class</span> <span class="o">=</span> <span class="n">parser_class</span>
         <span class="k">if</span> <span class="n">namespace</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_urlparams</span><span class="p">[</span><span class="s1">&#39;namespace&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">namespace</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="n">pool_size</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loaded_scripts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -125,40 +120,40 @@
         <span class="sd">&#39;&#39;&#39;Get a :class:`.Pipeline` for the Store&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">Pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">RedisPubSub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">RedisChannels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">ping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">()</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">connection</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">result</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">execute_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">execute_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute_pipeline</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute_pipeline</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">result</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">protocol_factory</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_protocol</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_host</span>
-            <span class="n">transport</span><span class="p">,</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span>
+            <span class="n">transport</span><span class="p">,</span> <span class="n">connection</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span>
                 <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Could not connect to </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
                                       <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">:</span>
-            <span class="k">await</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;AUTH&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">)</span>
+            <span class="n">await</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;AUTH&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">:</span>
-            <span class="k">await</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">)</span>
+            <span class="n">await</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">connection</span>
 
     <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -173,7 +168,7 @@
 
     <span class="k">def</span> <span class="nf">basekey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">)</span>
-        <span class="n">postfix</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">to_string</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="n">postfix</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">to_string</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">))</span>
         <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">postfix</span><span class="p">)</span> <span class="k">if</span> <span class="n">postfix</span> <span class="k">else</span> <span class="n">key</span>
 
 <div class="viewcode-block" id="RedisStore.meta"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.store.RedisStore.meta">[docs]</a>    <span class="k">def</span> <span class="nf">meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meta</span><span class="p">):</span>
@@ -208,12 +203,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -247,11 +240,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -262,8 +258,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

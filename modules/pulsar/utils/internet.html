@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.internet &#8212; pulsar 1.5.5 documentation</title>
+    <title>pulsar.utils.internet &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
-  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,20 +42,20 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.utils.internet</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">socket</span>
-<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="k">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">urlencode</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">urlencode</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">select</span> <span class="k">import</span> <span class="n">poll</span><span class="p">,</span> <span class="n">POLLIN</span>
+    <span class="kn">from</span> <span class="nn">select</span> <span class="kn">import</span> <span class="n">poll</span><span class="p">,</span> <span class="n">POLLIN</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma    nocover</span>
-    <span class="n">poll</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">poll</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">select</span> <span class="k">import</span> <span class="n">select</span>
+        <span class="kn">from</span> <span class="nn">select</span> <span class="kn">import</span> <span class="n">select</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma    nocover</span>
-        <span class="n">select</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">select</span> <span class="o">=</span> <span class="bp">False</span>
 
 
-<span class="kn">from</span> <span class="nn">.string</span> <span class="k">import</span> <span class="n">native_str</span>
+<span class="kn">from</span> <span class="nn">.string</span> <span class="kn">import</span> <span class="n">native_str</span>
 
 
 <div class="viewcode-block" id="parse_address"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.internet.parse_address">[docs]</a><span class="k">def</span> <span class="nf">parse_address</span><span class="p">(</span><span class="n">netloc</span><span class="p">,</span> <span class="n">default_port</span><span class="o">=</span><span class="mi">8000</span><span class="p">):</span>
@@ -72,7 +67,7 @@
         <span class="k">return</span> <span class="n">netloc</span>
     <span class="c1">#</span>
     <span class="n">netloc</span> <span class="o">=</span> <span class="n">native_str</span><span class="p">(</span><span class="n">netloc</span><span class="p">)</span>
-    <span class="n">auth</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">auth</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="c1"># Check if auth is available</span>
     <span class="k">if</span> <span class="s1">&#39;@&#39;</span> <span class="ow">in</span> <span class="n">netloc</span><span class="p">:</span>
         <span class="n">auth</span><span class="p">,</span> <span class="n">netloc</span> <span class="o">=</span> <span class="n">netloc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;@&#39;</span><span class="p">)</span>
@@ -150,24 +145,24 @@
 <div class="viewcode-block" id="is_socket_closed"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.internet.is_socket_closed">[docs]</a><span class="k">def</span> <span class="nf">is_socket_closed</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Check if socket ``sock`` is closed.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">sock</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">True</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">poll</span><span class="p">:</span>    <span class="c1"># pragma nocover</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">select</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">return</span> <span class="bp">False</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">select</span><span class="p">([</span><span class="n">sock</span><span class="p">],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="mf">0.0</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">True</span>
         <span class="c1"># This version is better on platforms that support it.</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">poll</span><span class="p">()</span>
         <span class="n">p</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">POLLIN</span><span class="p">)</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">fno</span><span class="p">,</span> <span class="n">ev</span><span class="p">)</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mf">0.0</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">fno</span> <span class="o">==</span> <span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">():</span>
                 <span class="c1"># Either data is buffered (bad), or the connection is dropped.</span>
-                <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">True</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span></div>
+        <span class="k">return</span> <span class="bp">True</span></div>
 
 
 <div class="viewcode-block" id="close_socket"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.internet.close_socket">[docs]</a><span class="k">def</span> <span class="nf">close_socket</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
@@ -183,7 +178,7 @@
             <span class="k">pass</span></div>
 
 
-<span class="k">def</span> <span class="nf">nice_address</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">nice_address</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
         <span class="n">address</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">address</span><span class="p">[:</span><span class="mi">2</span><span class="p">]))</span>
     <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span> <span class="k">if</span> <span class="n">family</span> <span class="k">else</span> <span class="n">address</span>
@@ -208,7 +203,7 @@
         <span class="kn">import</span> <span class="nn">ssl</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLSocket</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span></div>
+        <span class="k">return</span> <span class="bp">False</span></div>
 </pre></div>
 
           </div>
@@ -229,12 +224,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -268,11 +261,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -283,8 +279,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

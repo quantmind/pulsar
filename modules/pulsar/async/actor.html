@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.actor &#8212; pulsar 1.5.5 documentation</title>
+    <title>pulsar.async.actor &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
-  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,21 +42,21 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.async.actor</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">current_thread</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">current_thread</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="k">import</span> <span class="n">HaltServer</span><span class="p">,</span> <span class="n">CommandError</span><span class="p">,</span> <span class="n">MonitorStarted</span><span class="p">,</span> <span class="n">system</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="k">import</span> <span class="n">WritelnDecorator</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HaltServer</span><span class="p">,</span> <span class="n">CommandError</span><span class="p">,</span> <span class="n">MonitorStarted</span><span class="p">,</span> <span class="n">system</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">WritelnDecorator</span>
 
-<span class="kn">from</span> <span class="nn">.events</span> <span class="k">import</span> <span class="n">EventHandler</span>
-<span class="kn">from</span> <span class="nn">.proxy</span> <span class="k">import</span> <span class="n">ActorProxy</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">,</span> <span class="n">actor_identity</span>
-<span class="kn">from</span> <span class="nn">.mailbox</span> <span class="k">import</span> <span class="n">command_in_context</span>
-<span class="kn">from</span> <span class="nn">.access</span> <span class="k">import</span> <span class="n">get_actor</span>
-<span class="kn">from</span> <span class="nn">.cov</span> <span class="k">import</span> <span class="n">Coverage</span>
-<span class="kn">from</span> <span class="nn">.consts</span> <span class="k">import</span> <span class="n">ACTOR_STATES</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">EventHandler</span>
+<span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">ActorProxy</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">,</span> <span class="n">actor_identity</span>
+<span class="kn">from</span> <span class="nn">.mailbox</span> <span class="kn">import</span> <span class="n">command_in_context</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span>
+<span class="kn">from</span> <span class="nn">.cov</span> <span class="kn">import</span> <span class="n">Coverage</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;is_actor&#39;</span><span class="p">,</span> <span class="s1">&#39;send&#39;</span><span class="p">,</span> <span class="s1">&#39;spawn&#39;</span><span class="p">,</span>
@@ -233,10 +228,10 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;stopping&#39;</span><span class="p">)</span>
     <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;on_info&#39;</span><span class="p">,</span> <span class="s1">&#39;on_params&#39;</span><span class="p">,</span> <span class="s1">&#39;periodic_task&#39;</span><span class="p">)</span>
-    <span class="n">exit_code</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">mailbox</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">monitor</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">next_periodic_task</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">exit_code</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">mailbox</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">monitor</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">next_periodic_task</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impl</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">INITIAL</span>
@@ -248,7 +243,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
         <span class="n">hooks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">MANY_TIMES_EVENTS</span><span class="p">):</span>
-            <span class="n">hook</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">hook</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">hook</span><span class="p">:</span>
                 <span class="n">hooks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">hook</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -315,7 +310,7 @@
     <span class="c1">#######################################################################</span>
     <span class="c1">#    HIGH LEVEL API METHODS</span>
     <span class="c1">#######################################################################</span>
-<div class="viewcode-block" id="Actor.start"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Actor.start"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">exit</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called after forking to start the actor&#39;s life.</span>
 
 <span class="sd">        This is where logging is configured, the :attr:`mailbox` is</span>
@@ -325,7 +320,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">INITIAL</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">before_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_exit</span> <span class="o">=</span> <span class="n">exit</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_exit</span> <span class="o">=</span> <span class="nb">exit</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">STARTING</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">()</span></div>
 
@@ -358,7 +353,7 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Actor.stop"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Actor.stop"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Gracefully stop the :class:`Actor`.</span>
 
 <span class="sd">        Implemented by the :meth:`.Concurrency.stop` method of the :attr:`impl`</span>
@@ -426,13 +421,13 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">is_process</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">pickle</span><span class="o">.</span><span class="n">PicklingError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> - Cannot pickle Actor instances&#39;</span>
+        <span class="k">raise</span> <span class="n">pickle</span><span class="o">.</span><span class="n">PicklingError</span><span class="p">(</span><span class="s1">&#39;{0} - Cannot pickle Actor instances&#39;</span>
                                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
     <span class="c1">#######################################################################</span>
     <span class="c1">#    INTERNALS</span>
     <span class="c1">#######################################################################</span>
-<div class="viewcode-block" id="Actor.get_actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.get_actor">[docs]</a>    <span class="k">def</span> <span class="nf">get_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aid</span><span class="p">,</span> <span class="n">check_monitor</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Actor.get_actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.get_actor">[docs]</a>    <span class="k">def</span> <span class="nf">get_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aid</span><span class="p">,</span> <span class="n">check_monitor</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Given an actor unique id return the actor proxy.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">aid</span> <span class="o">=</span> <span class="n">actor_identity</span><span class="p">(</span><span class="n">aid</span><span class="p">)</span>
@@ -470,8 +465,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s1">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span></div>
 
-    <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="n">exc</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">exc</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">initial</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">when_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -487,7 +482,7 @@
             <span class="k">pass</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_remove_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_remove_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">_remove_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="n">log</span><span class="p">)</span></div>
 </pre></div>
 
@@ -509,12 +504,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -548,11 +541,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -563,8 +559,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

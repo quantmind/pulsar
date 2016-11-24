@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>HTTP Proxy Server &#8212; pulsar 1.5.5 documentation</title>
+    <title>HTTP Proxy Server &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="JSON-RPC Calculator" href="calculator.html" />
     <link rel="prev" title="Http Bin" href="httpbin.html" />
    
-  <link rel="stylesheet" href="../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -62,7 +57,7 @@ an empty list, the proxy passes requests and responses unmodified.
 This is an implementation for a forward-proxy which can be used
 to retrieve any type of source from the Internet.</p>
 <p>To run the server:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py
 </pre></div>
 </div>
 <p>An header middleware is a callable which receives the wsgi <em>environ</em> and
@@ -74,7 +69,7 @@ the list of request <em>headers</em>. By default the example uses:</p>
 </dd></dl>
 
 <p>To run with different headers middleware create a new script and do:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">proxyserver.manage</span> <span class="k">import</span> <span class="n">server</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">proxyserver.manage</span> <span class="kn">import</span> <span class="n">server</span>
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">server</span><span class="p">(</span><span class="n">headers_middleware</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">])</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -122,12 +117,10 @@ accessing upstream resources</p>
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -161,11 +154,14 @@ accessing upstream resources</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -176,8 +172,8 @@ accessing upstream resources</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../sources/tutorials/proxy.txt"

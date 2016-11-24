@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tutorials &amp; Topics &mdash; pulsar 1.6.1 documentation</title>
+    <title>Ver. 1.6.1 - 2016-Nov-24 &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -28,8 +28,6 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 1.6.1 documentation" href="../index.html" />
-    <link rel="next" title="Hello World!" href="hello.html" />
-    <link rel="prev" title="Pulsar Advantage" href="../advantage.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -42,47 +40,34 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <span class="target" id="module-examples"></span><div class="section" id="tutorials-topics">
-<span id="tutorials"></span><h1>Tutorials &amp; Topics<a class="headerlink" href="#tutorials-topics" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="id1">
-<h2>Tutorials<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>Most of the material presented in the these tutorials is based on the
-<a class="reference internal" href="#module-examples" title="examples"><code class="xref py py-mod docutils literal"><span class="pre">examples</span></code></a> module in the <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar distribution</a>.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="hello.html">Hello World!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="clients.html">Echo Server and Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="wsgi.html">WSGI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="deploy.html">Deploy Web Applications</a></li>
-<li class="toctree-l1"><a class="reference internal" href="httpbin.html">Http Bin</a></li>
-<li class="toctree-l1"><a class="reference internal" href="proxy.html">HTTP Proxy Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="calculator.html">JSON-RPC Calculator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="chat.html">Websocket Chat Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="flaskgreen.html">Green Flask</a></li>
-<li class="toctree-l1"><a class="reference internal" href="philosophers.html">Dining Philosophers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pulsards.html">Pulsar-ds</a></li>
-<li class="toctree-l1"><a class="reference internal" href="udp.html">Udp Server and Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a></li>
+  <div class="section" id="ver-1-6-1-2016-nov-24">
+<span id="ver-1-6-1-2016-nov-24"></span><h1>Ver. 1.6.1 - 2016-Nov-24<a class="headerlink" href="#ver-1-6-1-2016-nov-24" title="Permalink to this headline">¶</a></h1>
+<p>Minor release with few improvements in the HTTPClient and <code class="docutils literal"><span class="pre">Channels</span></code></p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">HttpResponse.is_error</span></code> is <code class="docutils literal"><span class="pre">True</span></code> when no status_code is available and the response is done</li>
+<li><code class="docutils literal"><span class="pre">HttpRequestException</span></code> derives from ConnectionError</li>
+<li>Added query to request absolute_uri</li>
+<li>Channels improvements</li>
 </ul>
 </div>
-</div>
-<div class="section" id="topics">
-<h2>Topics<a class="headerlink" href="#topics" title="Permalink to this headline">¶</a></h2>
-<p>These sections cover <strong>pulsar internals</strong> for the curious reader.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="actors.html">The Arbiter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command.html">Using command</a></li>
-<li class="toctree-l1"><a class="reference internal" href="coroutine.html">Asynchronous Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="messages.html">Actor messages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Events</a></li>
-<li class="toctree-l1"><a class="reference internal" href="signal.html">Signal Handling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sync.html">Synchronous Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cextensions.html">C Extensions</a></li>
+<div class="section" id="ver-1-6-0-2016-nov-20">
+<span id="ver-1-6-0-2016-nov-20"></span><h1>Ver. 1.6.0 - 2016-Nov-20<a class="headerlink" href="#ver-1-6-0-2016-nov-20" title="Permalink to this headline">¶</a></h1>
+<p>A new series with improvements in the HTTP client and server.
+Broadly compatible with the 1.5 series with exception of headers definitions and actors
+based on <code class="docutils literal"><span class="pre">multiprocessing</span></code> module (both have been removed because not used).
+This version brings a <strong>critical bug</strong> fix for HTTP responses with non standard
+values in body or content headers</p>
+<ul class="simple">
+<li>New <code class="docutils literal"><span class="pre">is_message_complete</span></code> method in <code class="docutils literal"><span class="pre">HttpResponse</span></code></li>
+<li>Critical bug fix for HTTP response with body when they should not have it.
+Disregard the body and content headers <a class="reference external" href="https://github.com/quantmind/pulsar/pull/257">#257</a></li>
+<li>If <a class="reference external" href="https://github.com/benoitc/http-parser">http-request</a> module is installed, use its C parser as default HTTP parser.
+The python parser can still be used by passing <code class="docutils literal"><span class="pre">--http-py-parser</span></code> flag in the command line</li>
+<li>Removed headers definitions, no longer used <a class="reference external" href="https://github.com/quantmind/pulsar/issues/222">#222</a></li>
+<li>Removed actors based on <code class="docutils literal"><span class="pre">multiprocessing</span></code> module, not needed <a class="reference external" href="https://github.com/quantmind/pulsar/commit/a9cc6623230ffc04c4ed0236ae33efb7bbb21060">a9cc662</a></li>
+<li>Tests run with both python and C http-parser</li>
+<li><strong>Fully compatible with python 3.5 &amp; 3.6</strong></li>
 </ul>
-</div>
-</div>
 </div>
 
 
@@ -113,12 +98,12 @@
 
 
 <h3>Navigation</h3>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design.html">Design</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../advantage.html">Pulsar Advantage</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Tutorials &amp; Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials &amp; Topics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../settings.html">Settings</a></li>
@@ -163,7 +148,7 @@
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
-      <a href="../sources/tutorials/index.txt"
+      <a href="../sources/history/1.6.txt"
           rel="nofollow">Page source</a>
     </div>
 

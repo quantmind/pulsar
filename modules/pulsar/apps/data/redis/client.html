@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.data.redis.client &#8212; pulsar 1.5.5 documentation</title>
+    <title>pulsar.apps.data.redis.client &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../../../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../../apps.html" />
    
-  <link rel="stylesheet" href="../../../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,16 +42,16 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.apps.data.redis.client</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="k">import</span> <span class="n">to_string</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="k">import</span> <span class="n">mapping_iterator</span><span class="p">,</span> <span class="n">Zset</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="k">import</span> <span class="n">COMMANDS_INFO</span><span class="p">,</span> <span class="n">CommandError</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">mapping_iterator</span><span class="p">,</span> <span class="n">Zset</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.ds</span> <span class="kn">import</span> <span class="n">COMMANDS_INFO</span><span class="p">,</span> <span class="n">CommandError</span>
 
-<span class="kn">from</span> <span class="nn">.pubsub</span> <span class="k">import</span> <span class="n">RedisPubSub</span>
-<span class="kn">from</span> <span class="nn">.lock</span> <span class="k">import</span> <span class="n">Lock</span>
+<span class="kn">from</span> <span class="nn">.pubsub</span> <span class="kn">import</span> <span class="n">RedisPubSub</span>
+<span class="kn">from</span> <span class="nn">.lock</span> <span class="kn">import</span> <span class="n">Lock</span>
 
 <span class="n">str_or_bytes</span> <span class="o">=</span> <span class="p">(</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
 
@@ -88,13 +83,13 @@
     <span class="k">return</span> <span class="n">merged</span>
 
 
-<span class="k">def</span> <span class="nf">pairs_to_object</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">pairs_to_object</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">factory</span> <span class="ow">or</span> <span class="nb">dict</span><span class="p">)(</span><span class="nb">zip</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">it</span><span class="p">))</span>
 
 
-<span class="k">def</span> <span class="nf">values_to_object</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">values_to_object</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">factory</span> <span class="ow">or</span> <span class="nb">dict</span><span class="p">)(</span><span class="nb">zip</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">response</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">response</span>
@@ -131,7 +126,7 @@
     <span class="k">return</span> <span class="n">info</span>
 
 
-<span class="k">def</span> <span class="nf">values_to_zset</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">values_to_zset</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">withscores</span><span class="p">:</span>
         <span class="n">it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Zset</span><span class="p">(((</span><span class="nb">float</span><span class="p">(</span><span class="n">score</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">it</span><span class="p">)))</span>
@@ -139,7 +134,7 @@
         <span class="k">return</span> <span class="n">response</span>
 
 
-<span class="k">def</span> <span class="nf">sort_return_tuples</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">sort_return_tuples</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    If ``groups`` is specified, return the response as a list of</span>
 <span class="sd">    n-element tuples with n being the value found in options[&#39;groups&#39;]</span>
@@ -149,7 +144,7 @@
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">response</span><span class="p">[</span><span class="n">i</span><span class="p">::</span><span class="n">groups</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">groups</span><span class="p">)]))</span>
 
 
-<span class="k">def</span> <span class="nf">pubsub_callback</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">subcommand</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">pubsub_callback</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">subcommand</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">subcommand</span> <span class="o">==</span> <span class="s1">&#39;numsub&#39;</span><span class="p">:</span>
         <span class="n">it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">k</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">it</span><span class="p">)))</span>
@@ -169,10 +164,10 @@
             <span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span> <span class="o">==</span> <span class="n">b</span><span class="s1">&#39;OK&#39;</span>
         <span class="p">),</span>
         <span class="n">string_keys_to_dict</span><span class="p">(</span><span class="s1">&#39;SORT&#39;</span><span class="p">,</span> <span class="n">sort_return_tuples</span><span class="p">),</span>
-        <span class="n">string_keys_to_dict</span><span class="p">(</span><span class="s1">&#39;BLPOP BRPOP&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span> <span class="ow">and</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">string_keys_to_dict</span><span class="p">(</span><span class="s1">&#39;BLPOP BRPOP&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span> <span class="ow">and</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">None</span><span class="p">),</span>
         <span class="n">string_keys_to_dict</span><span class="p">(</span><span class="s1">&#39;SMEMBERS SDIFF SINTER SUNION&#39;</span><span class="p">,</span> <span class="nb">set</span><span class="p">),</span>
         <span class="n">string_keys_to_dict</span><span class="p">(</span><span class="s1">&#39;INCRBYFLOAT HINCRBYFLOAT ZINCRBY ZSCORE&#39;</span><span class="p">,</span>
-                            <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">v</span><span class="p">),</span>
+                            <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">v</span><span class="p">),</span>
         <span class="n">string_keys_to_dict</span><span class="p">(</span><span class="s1">&#39;ZRANGE ZRANGEBYSCORE ZREVRANGE ZREVRANGEBYSCORE&#39;</span><span class="p">,</span>
                             <span class="n">values_to_zset</span><span class="p">),</span>
         <span class="n">string_keys_to_dict</span><span class="p">(</span><span class="s1">&#39;EXISTS EXPIRE EXPIREAT PEXPIRE PEXPIREAT &#39;</span>
@@ -210,7 +205,7 @@
         <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">False</span><span class="p">:</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
                         <span class="n">cmnd</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
                         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">cmnd</span><span class="p">,</span>
@@ -220,11 +215,11 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>   <span class="c1"># pipeline</span>
                 <span class="n">commands</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="p">,</span> <span class="n">responses</span> <span class="o">=</span> <span class="n">request</span>
-                <span class="k">while</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="k">while</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">False</span><span class="p">:</span>
                     <span class="n">responses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">responses</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">commands</span><span class="p">):</span>
-                    <span class="n">error</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="bp">None</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="n">responses</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="p">[]</span>
                     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
@@ -277,26 +272,26 @@
     <span class="c1"># special commands</span>
 
     <span class="c1"># STRINGS</span>
-    <span class="k">def</span> <span class="nf">decrby</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">ammount</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">decrby</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ammount</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;decr&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;decrby&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="p">)</span>
     <span class="n">decr</span> <span class="o">=</span> <span class="n">decrby</span>
 
-    <span class="k">def</span> <span class="nf">incrby</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">ammount</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">incrby</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ammount</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;incr&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;incrby&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="p">)</span>
     <span class="n">incr</span> <span class="o">=</span> <span class="n">incrby</span>
 
-    <span class="k">def</span> <span class="nf">incrbyfloat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">ammount</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">incrbyfloat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ammount</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">ammount</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;incrbyfloat&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ammount</span><span class="p">)</span>
 
-<div class="viewcode-block" id="RedisClient.set"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.client.RedisClient.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ex</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">px</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nx</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xx</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="RedisClient.set"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.client.RedisClient.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ex</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">px</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nx</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">xx</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set the value at key ``name`` to ``value``</span>
 
 <span class="sd">        :param ex: sets an expire flag on key ``name`` for ``ex`` seconds.</span>
@@ -336,7 +331,7 @@
 
     <span class="c1"># LISTS</span>
     <span class="k">def</span> <span class="nf">blpop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">timeout</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">str_or_bytes</span><span class="p">):</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">keys</span><span class="p">]</span>
@@ -346,7 +341,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;BLPOP&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">brpop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">timeout</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">str_or_bytes</span><span class="p">):</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">keys</span><span class="p">]</span>
@@ -356,7 +351,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;BRPOP&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">brpoplpush</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">timeout</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;BRPOPLPUSH&#39;</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
 
@@ -390,7 +385,7 @@
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZADD&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">pieces</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">zinterstore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">des</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">zinterstore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">des</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">numkeys</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
         <span class="n">pieces</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">weights</span><span class="p">:</span>
@@ -401,7 +396,7 @@
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aggregate</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZINTERSTORE&#39;</span><span class="p">,</span> <span class="n">des</span><span class="p">,</span> <span class="n">numkeys</span><span class="p">,</span> <span class="o">*</span><span class="n">pieces</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">zunionstore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">des</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">zunionstore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">des</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">numkeys</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
         <span class="n">pieces</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">weights</span><span class="p">:</span>
@@ -412,15 +407,15 @@
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aggregate</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZUNIONSTORE&#39;</span><span class="p">,</span> <span class="n">des</span><span class="p">,</span> <span class="n">numkeys</span><span class="p">,</span> <span class="o">*</span><span class="n">pieces</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">zrange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">zrange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">withscores</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZRANGE&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span>
-                                        <span class="n">b</span><span class="s1">&#39;WITHSCORES&#39;</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                                        <span class="n">b</span><span class="s1">&#39;WITHSCORES&#39;</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZRANGE&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">zrangebyscore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                      <span class="n">count</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">zrangebyscore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                      <span class="n">count</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">pieces</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">withscores</span><span class="p">:</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;WITHSCORES&#39;</span><span class="p">)</span>
@@ -431,15 +426,15 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZRANGEBYSCORE&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="o">*</span><span class="n">pieces</span><span class="p">,</span>
                                     <span class="n">withscores</span><span class="o">=</span><span class="n">withscores</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">zrevrange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">zrevrange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">withscores</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZREVRANGE&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span>
-                                        <span class="s1">&#39;WITHSCORES&#39;</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                                        <span class="s1">&#39;WITHSCORES&#39;</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZRANGE&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">zrevrangebyscore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                         <span class="n">count</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">zrevrangebyscore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="n">count</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">pieces</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">withscores</span><span class="p">:</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;WITHSCORES&#39;</span><span class="p">)</span>
@@ -450,14 +445,14 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;ZREVRANGEBYSCORE&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="o">*</span><span class="n">pieces</span><span class="p">,</span>
                                     <span class="n">withscores</span><span class="o">=</span><span class="n">withscores</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval</span><span class="p">(</span><span class="s1">&#39;eval&#39;</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">evalsha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sha</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">evalsha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sha</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval</span><span class="p">(</span><span class="s1">&#39;evalsha&#39;</span><span class="p">,</span> <span class="n">sha</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
 
-<div class="viewcode-block" id="RedisClient.sort"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.client.RedisClient.sort">[docs]</a>    <span class="k">def</span> <span class="nf">sort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-             <span class="n">desc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="RedisClient.sort"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.client.RedisClient.sort">[docs]</a>    <span class="k">def</span> <span class="nf">sort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+             <span class="n">desc</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Sort and return the list, set or sorted set at ``key``.</span>
 
 <span class="sd">        ``start`` and ``num`` allow for paging through the sorted data</span>
@@ -481,19 +476,19 @@
 <span class="sd">            values fetched from the arguments to ``get``.</span>
 
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="p">((</span><span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">num</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span>
-                <span class="p">(</span><span class="n">num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">num</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="p">(</span><span class="n">num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">start</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="n">CommandError</span><span class="p">(</span><span class="s2">&quot;``start`` and ``num`` must both be specified&quot;</span><span class="p">)</span>
 
         <span class="n">pieces</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">by</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">by</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;BY&#39;</span><span class="p">)</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">by</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;LIMIT&#39;</span><span class="p">)</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">get</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">get</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="c1"># If get is a string assume we want to get a single value.</span>
             <span class="c1"># Otherwise assume it&#39;s an interable and we want to get multiple</span>
             <span class="c1"># values. We can&#39;t just iterate blindly because strings are</span>
@@ -509,7 +504,7 @@
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;DESC&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">alpha</span><span class="p">:</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;ALPHA&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">store</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">store</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;STORE&#39;</span><span class="p">)</span>
             <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
 
@@ -519,7 +514,7 @@
                                    <span class="s1">&#39;must be specified and contain at least &#39;</span>
                                    <span class="s1">&#39;two keys&#39;</span><span class="p">)</span>
 
-        <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;groups&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">get</span><span class="p">)</span> <span class="k">if</span> <span class="n">groups</span> <span class="k">else</span> <span class="kc">None</span><span class="p">}</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;groups&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">get</span><span class="p">)</span> <span class="k">if</span> <span class="n">groups</span> <span class="k">else</span> <span class="bp">None</span><span class="p">}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;SORT&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">pieces</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">lock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
@@ -534,7 +529,7 @@
                                  <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">name</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-        <span class="n">all_args</span> <span class="o">=</span> <span class="n">keys</span> <span class="k">if</span> <span class="n">keys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">()</span>
+        <span class="n">all_args</span> <span class="o">=</span> <span class="n">keys</span> <span class="k">if</span> <span class="n">keys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">()</span>
         <span class="n">num_keys</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_args</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
             <span class="n">all_args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="n">all_args</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
@@ -555,7 +550,7 @@
     <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">command_stack</span> <span class="o">=</span> <span class="p">[]</span>
 
-<div class="viewcode-block" id="Pipeline.commit"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.client.Pipeline.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Pipeline.commit"><a class="viewcode-back" href="../../../../../apps/data/stores.html#pulsar.apps.data.redis.client.Pipeline.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Send commands to redis.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">cmds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="p">([((</span><span class="s1">&#39;multi&#39;</span><span class="p">,),</span> <span class="p">{})],</span>
@@ -585,12 +580,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -624,11 +617,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -639,8 +635,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 

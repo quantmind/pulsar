@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Response Middleware &#8212; pulsar 1.5.5 documentation</title>
+    <title>Response Middleware &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,21 +27,16 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous Content" href="content.html" />
     <link rel="prev" title="Asynchronous Middleware" href="middleware.html" />
    
-  <link rel="stylesheet" href="../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -51,8 +46,8 @@
   <div class="section" id="module-pulsar.apps.wsgi.response">
 <span id="id1"></span><span id="response-middleware"></span><h1>Response Middleware<a class="headerlink" href="#module-pulsar.apps.wsgi.response" title="Permalink to this headline">¶</a></h1>
 <p id="wsgi-response-middleware">Response middleware are callable objects which can be used in conjunction
-with pulsar <a class="reference internal" href="async.html#wsgi-handler"><span class="std std-ref">WsgiHandler</span></a>.
-They must return a <a class="reference internal" href="wrappers.html#wsgi-response"><span class="std std-ref">WsgiResponse</span></a> which can be the
+with pulsar <a class="reference internal" href="async.html#wsgi-handler"><span>WsgiHandler</span></a>.
+They must return a <a class="reference internal" href="wrappers.html#wsgi-response"><span>WsgiResponse</span></a> which can be the
 same as the one passed to the callable or a brand new one.</p>
 <div class="section" id="interface">
 <h2>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h2>
@@ -60,8 +55,8 @@ same as the one passed to the callable or a brand new one.</p>
 <dt id="pulsar.apps.wsgi.response.ResponseMiddleware">
 <em class="property">class </em><code class="descclassname">pulsar.apps.wsgi.response.</code><code class="descname">ResponseMiddleware</code><a class="reference internal" href="../../modules/pulsar/apps/wsgi/response.html#ResponseMiddleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.response.ResponseMiddleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for response middlewares.</p>
-<p>A response middleware is used by a <a class="reference internal" href="async.html#wsgi-handler"><span class="std std-ref">WsgiHandler</span></a>,
-it is a callable used to manipulate a <a class="reference internal" href="wrappers.html#wsgi-response"><span class="std std-ref">WsgiResponse</span></a>.</p>
+<p>A response middleware is used by a <a class="reference internal" href="async.html#wsgi-handler"><span>WsgiHandler</span></a>,
+it is a callable used to manipulate a <a class="reference internal" href="wrappers.html#wsgi-response"><span>WsgiResponse</span></a>.</p>
 <p>The focus of this class is the <a class="reference internal" href="#pulsar.apps.wsgi.response.ResponseMiddleware.execute" title="pulsar.apps.wsgi.response.ResponseMiddleware.execute"><code class="xref py py-meth docutils literal"><span class="pre">execute()</span></code></a> method where
 the middleware logic is implemented.</p>
 <dl class="method">
@@ -139,12 +134,10 @@ response header.</p>
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -178,11 +171,14 @@ response header.</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -193,8 +189,8 @@ response header.</p>
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
       <a href="../../sources/apps/wsgi/response.txt"

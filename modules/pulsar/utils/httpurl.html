@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.httpurl &#8212; pulsar 1.5.5 documentation</title>
+    <title>pulsar.utils.httpurl &mdash; pulsar 1.6.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5.5',
+        VERSION:     '1.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -27,19 +27,14 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="top" title="pulsar 1.5.5 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 1.6.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
    
-  <link rel="stylesheet" href="../../../static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
-  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
@@ -47,7 +42,7 @@
           <div class="body" role="main">
             
   <h1>Source code for pulsar.utils.httpurl</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;This is a substantial module which imports several classes and functions</span>
+<span class="sd">&#39;&#39;&#39;This is a substantial module which imports several classes and functions</span>
 <span class="sd">from the standard library in a python 2.6 to python 3.3 compatible fashion.</span>
 <span class="sd">On top of that, it implements the :class:`HttpClient` for handling synchronous</span>
 <span class="sd">and asynchronous HTTP requests in a pythonic way.</span>
@@ -92,25 +87,33 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">string</span>
 <span class="kn">import</span> <span class="nn">mimetypes</span>
-<span class="kn">from</span> <span class="nn">hashlib</span> <span class="k">import</span> <span class="n">sha1</span><span class="p">,</span> <span class="n">md5</span>
-<span class="kn">from</span> <span class="nn">uuid</span> <span class="k">import</span> <span class="n">uuid4</span>
-<span class="kn">from</span> <span class="nn">email.utils</span> <span class="k">import</span> <span class="n">formatdate</span>
-<span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="n">BytesIO</span>
+<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span><span class="p">,</span> <span class="n">md5</span>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
+<span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">formatdate</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 <span class="kn">import</span> <span class="nn">zlib</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">urllib</span> <span class="k">import</span> <span class="n">request</span> <span class="k">as</span> <span class="n">urllibr</span>
-<span class="kn">from</span> <span class="nn">http</span> <span class="k">import</span> <span class="n">client</span> <span class="k">as</span> <span class="n">httpclient</span>
-<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="k">import</span> <span class="n">quote</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">splitport</span>
-<span class="kn">from</span> <span class="nn">http.cookiejar</span> <span class="k">import</span> <span class="n">CookieJar</span><span class="p">,</span> <span class="n">Cookie</span>
-<span class="kn">from</span> <span class="nn">http.cookies</span> <span class="k">import</span> <span class="n">SimpleCookie</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span> <span class="k">as</span> <span class="n">urllibr</span>
+<span class="kn">from</span> <span class="nn">http</span> <span class="kn">import</span> <span class="n">client</span> <span class="k">as</span> <span class="n">httpclient</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">quote</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">splitport</span>
+<span class="kn">from</span> <span class="nn">http.cookiejar</span> <span class="kn">import</span> <span class="n">CookieJar</span><span class="p">,</span> <span class="n">Cookie</span>
+<span class="kn">from</span> <span class="nn">http.cookies</span> <span class="kn">import</span> <span class="n">SimpleCookie</span>
 
-<span class="kn">from</span> <span class="nn">.structures</span> <span class="k">import</span> <span class="n">mapping_iterator</span>
-<span class="kn">from</span> <span class="nn">.string</span> <span class="k">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">to_string</span>
-<span class="kn">from</span> <span class="nn">.html</span> <span class="k">import</span> <span class="n">capfirst</span>
+<span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">mapping_iterator</span>
+<span class="kn">from</span> <span class="nn">.string</span> <span class="kn">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">.html</span> <span class="kn">import</span> <span class="n">capfirst</span>
 <span class="c1">#</span>
 <span class="c1"># The http_parser has several bugs, therefore it is switched off</span>
-<span class="n">hasextensions</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="n">_Http_Parser</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">hasextensions</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">CHttpParser</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">http_parser.parser</span> <span class="kn">import</span> <span class="n">HttpParser</span> <span class="k">as</span> <span class="n">CHttpParser</span>
+
+    <span class="n">hasextensions</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="n">_Http_Parser</span> <span class="o">=</span> <span class="n">CHttpParser</span>
 
 
 <span class="k">def</span> <span class="nf">setDefaultHttpParser</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>   <span class="c1"># pragma    nocover</span>
@@ -146,6 +149,20 @@
 <span class="n">HEADER_TOKEN_CHARS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="s2">&quot;!#$%&amp;&#39;*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;</span>
                                <span class="s1">&#39;^_`abcdefghijklmnopqrstuvwxyz|~&#39;</span><span class="p">)</span>
 <span class="n">MAX_CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
+
+<span class="c1"># ###################################################    CONTENT TYPES</span>
+<span class="n">JSON_CONTENT_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;application/json&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;application/javascript&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;text/json&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;text/x-json&#39;</span><span class="p">)</span>
+<span class="c1"># ###################################################    REQUEST METHODS</span>
+<span class="n">ENCODE_URL_METHODS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;HEAD&#39;</span><span class="p">,</span> <span class="s1">&#39;OPTIONS&#39;</span><span class="p">])</span>
+<span class="n">ENCODE_BODY_METHODS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="s1">&#39;TRACE&#39;</span><span class="p">])</span>
+<span class="n">REDIRECT_CODES</span> <span class="o">=</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">305</span><span class="p">,</span> <span class="mi">307</span><span class="p">)</span>
+<span class="n">NO_CONTENT_CODES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">((</span><span class="mi">204</span><span class="p">,</span> <span class="mi">304</span><span class="p">))</span>
+
+<span class="n">CRLF</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span>
+<span class="n">LWS</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1"> &#39;</span>
 
 
 <span class="k">def</span> <span class="nf">escape</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
@@ -191,13 +208,13 @@
     <span class="k">return</span> <span class="n">quote</span><span class="p">(</span><span class="n">unquote_unreserved</span><span class="p">(</span><span class="n">uri</span><span class="p">),</span> <span class="n">safe</span><span class="o">=</span><span class="n">URI_SAFE_CHARS</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">iri_to_uri</span><span class="p">(</span><span class="n">iri</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">iri_to_uri</span><span class="p">(</span><span class="n">iri</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Convert an Internationalised Resource Identifier (IRI) portion</span>
 <span class="sd">    to a URI portion that is suitable for inclusion in a URL.</span>
 <span class="sd">    This is the algorithm from section 3.1 of RFC 3987.</span>
 <span class="sd">    Returns an ASCII native string containing the encoded result.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">iri</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">iri</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">iri</span>
     <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="n">iri</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">?</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">iri</span><span class="p">,</span> <span class="s1">&#39;latin1&#39;</span><span class="p">),</span>
@@ -207,7 +224,7 @@
 
 <span class="k">def</span> <span class="nf">host_and_port</span><span class="p">(</span><span class="n">host</span><span class="p">):</span>
     <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">splitport</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">host</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">port</span><span class="p">)</span> <span class="k">if</span> <span class="n">port</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">host</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">port</span><span class="p">)</span> <span class="k">if</span> <span class="n">port</span> <span class="k">else</span> <span class="bp">None</span>
 
 
 <span class="k">def</span> <span class="nf">default_port</span><span class="p">(</span><span class="n">scheme</span><span class="p">):</span>
@@ -234,7 +251,7 @@
 
 <span class="k">def</span> <span class="nf">get_hostport</span><span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">full_host</span><span class="p">):</span>
     <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">host_and_port</span><span class="p">(</span><span class="n">full_host</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">i</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
         <span class="n">j</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">&#39;]&#39;</span><span class="p">)</span>         <span class="c1"># ipv6 addresses have [...]</span>
         <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">j</span><span class="p">:</span>
@@ -260,19 +277,7 @@
     <span class="k">return</span> <span class="n">route</span>
 
 
-<span class="c1"># ###################################################    CONTENT TYPES</span>
-<span class="n">JSON_CONTENT_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;application/json&#39;</span><span class="p">,</span>
-                      <span class="s1">&#39;application/javascript&#39;</span><span class="p">,</span>
-                      <span class="s1">&#39;text/json&#39;</span><span class="p">,</span>
-                      <span class="s1">&#39;text/x-json&#39;</span><span class="p">)</span>
-<span class="c1"># ###################################################    REQUEST METHODS</span>
-<span class="n">ENCODE_URL_METHODS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;HEAD&#39;</span><span class="p">,</span> <span class="s1">&#39;OPTIONS&#39;</span><span class="p">])</span>
-<span class="n">ENCODE_BODY_METHODS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="s1">&#39;TRACE&#39;</span><span class="p">])</span>
-<span class="n">REDIRECT_CODES</span> <span class="o">=</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">305</span><span class="p">,</span> <span class="mi">307</span><span class="p">)</span>
-<span class="n">NO_CONTENT_CODES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">((</span><span class="mi">204</span><span class="p">,</span> <span class="mi">304</span><span class="p">))</span>
-
-
-<span class="k">def</span> <span class="nf">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;204, 304 and 1xx codes have no content, same for HEAD requests&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">status</span> <span class="ow">in</span> <span class="n">NO_CONTENT_CODES</span> <span class="ow">or</span>
             <span class="mi">100</span> <span class="o">&lt;=</span> <span class="n">status</span> <span class="o">&lt;</span> <span class="mi">200</span> <span class="ow">or</span>
@@ -284,75 +289,13 @@
     <span class="k">return</span> <span class="n">status</span> <span class="o">&gt;=</span> <span class="mi">200</span> <span class="ow">and</span> <span class="n">status</span> <span class="o">&lt;</span> <span class="mi">300</span>
 
 
-<span class="c1"># ###################################################    HTTP HEADERS</span>
-<span class="n">WEBSOCKET_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">)</span>
-<span class="n">HEADER_FIELDS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;general&#39;</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">((</span><span class="s1">&#39;Cache-Control&#39;</span><span class="p">,</span> <span class="s1">&#39;Connection&#39;</span><span class="p">,</span> <span class="s1">&#39;Date&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Pragma&#39;</span><span class="p">,</span> <span class="s1">&#39;Trailer&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Transfer-Encoding&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Upgrade&#39;</span><span class="p">,</span> <span class="s1">&#39;Sec-WebSocket-Extensions&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Sec-WebSocket-Protocol&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Via&#39;</span><span class="p">,</span> <span class="s1">&#39;Warning&#39;</span><span class="p">)),</span>
-                 <span class="c1"># The request-header fields allow the client to pass</span>
-                 <span class="c1"># additional information about the request, and about the</span>
-                 <span class="c1"># client to the server.</span>
-                 <span class="s1">&#39;request&#39;</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">((</span><span class="s1">&#39;Accept&#39;</span><span class="p">,</span> <span class="s1">&#39;Accept-Charset&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Accept-Encoding&#39;</span><span class="p">,</span> <span class="s1">&#39;Accept-Language&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Authorization&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Cookie&#39;</span><span class="p">,</span> <span class="s1">&#39;Expect&#39;</span><span class="p">,</span> <span class="s1">&#39;From&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Host&#39;</span><span class="p">,</span> <span class="s1">&#39;If-Match&#39;</span><span class="p">,</span> <span class="s1">&#39;If-Modified-Since&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;If-None-Match&#39;</span><span class="p">,</span> <span class="s1">&#39;If-Range&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;If-Unmodified-Since&#39;</span><span class="p">,</span> <span class="s1">&#39;Max-Forwards&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Proxy-Authorization&#39;</span><span class="p">,</span> <span class="s1">&#39;Range&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Referer&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Sec-WebSocket-Key&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;Sec-WebSocket-Version&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;TE&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span>
-                                       <span class="s1">&#39;X-Requested-With&#39;</span><span class="p">)),</span>
-                 <span class="c1"># The response-header fields allow the server to pass</span>
-                 <span class="c1"># additional information about the response which cannot be</span>
-                 <span class="c1"># placed in the Status- Line.</span>
-                 <span class="s1">&#39;response&#39;</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">((</span><span class="s1">&#39;Accept-Ranges&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Age&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;ETag&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Location&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Proxy-Authenticate&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Retry-After&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Sec-WebSocket-Accept&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Server&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Set-Cookie&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Set-Cookie2&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;Vary&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;WWW-Authenticate&#39;</span><span class="p">,</span>
-                                        <span class="s1">&#39;X-Frame-Options&#39;</span><span class="p">)),</span>
-                 <span class="s1">&#39;entity&#39;</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">((</span><span class="s1">&#39;Allow&#39;</span><span class="p">,</span> <span class="s1">&#39;Content-Encoding&#39;</span><span class="p">,</span>
-                                      <span class="s1">&#39;Content-Language&#39;</span><span class="p">,</span> <span class="s1">&#39;Content-Length&#39;</span><span class="p">,</span>
-                                      <span class="s1">&#39;Content-Location&#39;</span><span class="p">,</span> <span class="s1">&#39;Content-MD5&#39;</span><span class="p">,</span>
-                                      <span class="s1">&#39;Content-Range&#39;</span><span class="p">,</span> <span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span>
-                                      <span class="s1">&#39;Expires&#39;</span><span class="p">,</span> <span class="s1">&#39;Last-Modified&#39;</span><span class="p">))}</span>
-
-<span class="n">CLIENT_HEADER_FIELDS</span> <span class="o">=</span> <span class="n">HEADER_FIELDS</span><span class="p">[</span><span class="s1">&#39;general&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
-    <span class="n">HEADER_FIELDS</span><span class="p">[</span><span class="s1">&#39;entity&#39;</span><span class="p">],</span> <span class="n">HEADER_FIELDS</span><span class="p">[</span><span class="s1">&#39;request&#39;</span><span class="p">])</span>
-<span class="n">SERVER_HEADER_FIELDS</span> <span class="o">=</span> <span class="n">HEADER_FIELDS</span><span class="p">[</span><span class="s1">&#39;general&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
-    <span class="n">HEADER_FIELDS</span><span class="p">[</span><span class="s1">&#39;entity&#39;</span><span class="p">],</span> <span class="n">HEADER_FIELDS</span><span class="p">[</span><span class="s1">&#39;response&#39;</span><span class="p">])</span>
-<span class="n">ALL_HEADER_FIELDS</span> <span class="o">=</span> <span class="n">CLIENT_HEADER_FIELDS</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">SERVER_HEADER_FIELDS</span><span class="p">)</span>
-<span class="n">ALL_HEADER_FIELDS_DICT</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ALL_HEADER_FIELDS</span><span class="p">))</span>
-<span class="n">CRLF</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span>
-<span class="n">LWS</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1"> &#39;</span>
-<span class="n">TYPE_HEADER_FIELDS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;client&#39;</span><span class="p">:</span> <span class="n">CLIENT_HEADER_FIELDS</span><span class="p">,</span>
-                      <span class="s1">&#39;server&#39;</span><span class="p">:</span> <span class="n">SERVER_HEADER_FIELDS</span><span class="p">,</span>
-                      <span class="s1">&#39;both&#39;</span><span class="p">:</span> <span class="n">ALL_HEADER_FIELDS</span><span class="p">}</span>
-
-<span class="n">header_type</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;client&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;both&#39;</span><span class="p">}</span>
-<span class="n">header_type_to_int</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">header_type</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
-
-
 <span class="k">def</span> <span class="nf">capheader</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="n">capfirst</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="n">b</span><span class="p">))</span>
 
 
-<span class="k">def</span> <span class="nf">header_field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a header `name` in Camel case.</span>
+<span class="k">def</span> <span class="nf">header_field</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a header `name` in Camel case.</span>
 
 <span class="sd">    For example::</span>
 
@@ -360,22 +303,14 @@
 <span class="sd">        header_field(&#39;accept-charset&#39;) == &#39;Accept-Charset&#39;</span>
 
 <span class="sd">    If ``header_set`` is given, only return headers included in the set.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;x-&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">strict</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">capheader</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">header</span> <span class="o">=</span> <span class="n">ALL_HEADER_FIELDS_DICT</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">header</span> <span class="ow">and</span> <span class="n">headers</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">header</span> <span class="k">if</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">header</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">capheader</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
 
 
 <span class="c1">#    HEADERS UTILITIES</span>
 <span class="n">HEADER_FIELDS_JOINER</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Cookie&#39;</span><span class="p">:</span> <span class="s1">&#39;; &#39;</span><span class="p">,</span>
-                        <span class="s1">&#39;Set-Cookie&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-                        <span class="s1">&#39;Set-Cookie2&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+                        <span class="s1">&#39;Set-Cookie&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+                        <span class="s1">&#39;Set-Cookie2&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
 
 
 <span class="k">def</span> <span class="nf">split_comma</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
@@ -398,7 +333,7 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">quote_header_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">extra_chars</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">allow_token</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">quote_header_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">extra_chars</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">allow_token</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Quote a header value if necessary.</span>
 
 <span class="sd">    :param value: the value to quote.</span>
@@ -414,7 +349,7 @@
     <span class="k">return</span> <span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\\\</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">unquote_header_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">is_filename</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">unquote_header_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">is_filename</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Unquotes a header value.</span>
 
 <span class="sd">    Reversal of :func:`quote_header_value`. This does not use the real</span>
@@ -462,7 +397,7 @@
     <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">parse_http_list</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="s1">&#39;=&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
-            <span class="n">result</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">continue</span>
         <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
@@ -471,7 +406,7 @@
     <span class="k">return</span> <span class="n">result</span>
 
 
-<span class="n">_special</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="s1">&#39;()&lt;&gt;@,;:</span><span class="se">\\</span><span class="s1">&quot;/[]?=</span><span class="si">{}</span><span class="s1"> </span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">_special</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="s1">&#39;()&lt;&gt;@,;:</span><span class="se">\\</span><span class="s1">&quot;/[]?={} </span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="n">_re_special</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%s</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="n">_special</span><span class="p">)</span>
 <span class="n">_qstr</span> <span class="o">=</span> <span class="s1">&#39;&quot;(?:</span><span class="se">\\\\</span><span class="s1">.|[^&quot;])*&quot;&#39;</span>  <span class="c1"># Quoted string</span>
 <span class="n">_value</span> <span class="o">=</span> <span class="s1">&#39;(?:[^</span><span class="si">%s</span><span class="s1">]+|</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_special</span><span class="p">,</span> <span class="n">_qstr</span><span class="p">)</span>  <span class="c1"># Save or quoted string</span>
@@ -479,7 +414,7 @@
 <span class="n">_re_option</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">_option</span><span class="p">)</span>  <span class="c1"># key=value part of an Content-Type header</span>
 
 
-<span class="k">def</span> <span class="nf">header_unquote</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">header_unquote</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">val</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;:</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="ow">or</span> <span class="n">val</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\\\\</span><span class="s1">&#39;</span><span class="p">:</span>
@@ -488,7 +423,7 @@
     <span class="k">return</span> <span class="n">val</span>
 
 
-<span class="k">def</span> <span class="nf">parse_options_header</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">parse_options_header</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="s1">&#39;;&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">header</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="p">{}</span>
     <span class="n">ctype</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -537,26 +472,16 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">make</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
-            <span class="n">headers</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span><span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">headers</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="n">kind</span> <span class="o">=</span> <span class="n">header_type</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="s1">&#39;both&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">kind</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">kind</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">strict</span> <span class="o">=</span> <span class="n">strict</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span> <span class="o">=</span> <span class="n">TYPE_HEADER_FIELDS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span> <span class="o">=</span> <span class="n">TYPE_HEADER_FIELDS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="n">headers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="ow">or</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">__repr__</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ordered</span><span class="p">())</span>
@@ -567,16 +492,18 @@
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">kind_number</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">header_type_to_int</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
-
-<div class="viewcode-block" id="Headers.update"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+<div class="viewcode-block" id="Headers.update"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Extend the headers with an ``iterable``.</span>
 
 <span class="sd">        :param iterable: a dictionary or an iterable over keys, values tuples.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping_iterator</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping_iterator</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;update expected at most 1 arguments, got </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span>
+                            <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Headers.override"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.override">[docs]</a>    <span class="k">def</span> <span class="nf">override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
@@ -594,7 +521,7 @@
                 <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
 
     <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span>
@@ -603,7 +530,7 @@
         <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="n">joiner</span> <span class="o">=</span> <span class="n">HEADER_FIELDS_JOINER</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">joiner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">joiner</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">joiner</span> <span class="o">=</span> <span class="s1">&#39;; &#39;</span>
         <span class="k">return</span> <span class="n">joiner</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
@@ -611,13 +538,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">__delitem__</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">value</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">header_values</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
-<div class="viewcode-block" id="Headers.get"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Headers.get"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get the field value at ``key`` as comma separated values.</span>
 
 <span class="sd">        For example::</span>
@@ -637,7 +564,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">default</span></div>
 
-<div class="viewcode-block" id="Headers.get_all"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.get_all">[docs]</a>    <span class="k">def</span> <span class="nf">get_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Headers.get_all"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.get_all">[docs]</a>    <span class="k">def</span> <span class="nf">get_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get the values at header ``key`` as a list rather than a</span>
 <span class="sd">        string separated by comma (which is returned by the</span>
 <span class="sd">        :meth:`get` method).</span>
@@ -661,8 +588,8 @@
         <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="p">()):</span>
             <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">return</span> <span class="kc">False</span></div>
+                <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="bp">False</span></div>
 
     <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
@@ -688,7 +615,7 @@
 <span class="sd">        :param values: a string value or a list/tuple of strings values</span>
 <span class="sd">            for header ``key``</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">values</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
                 <span class="n">values</span> <span class="o">=</span> <span class="n">header_values</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
@@ -698,17 +625,17 @@
                     <span class="n">current</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">current</span></div>
 
-<div class="viewcode-block" id="Headers.remove_header"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.remove_header">[docs]</a>    <span class="k">def</span> <span class="nf">remove_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Headers.remove_header"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.remove_header">[docs]</a>    <span class="k">def</span> <span class="nf">remove_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Remove the header at ``key``.</span>
 
 <span class="sd">        If ``value`` is provided, it removes only that value if found.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
                 <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span>
-                <span class="n">removed</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">removed</span> <span class="o">=</span> <span class="bp">None</span>
                 <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
                         <span class="n">removed</span> <span class="o">=</span> <span class="n">v</span>
@@ -716,7 +643,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span>
                 <span class="k">return</span> <span class="n">removed</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Headers.flat"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.flat">[docs]</a>    <span class="k">def</span> <span class="nf">flat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Full headers bytes representation&#39;&#39;&#39;</span>
@@ -734,27 +661,8 @@
                     <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">_ordered</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">hf</span> <span class="o">=</span> <span class="n">HEADER_FIELDS</span>
-        <span class="n">hj</span> <span class="o">=</span> <span class="n">HEADER_FIELDS_JOINER</span>
-        <span class="n">dj</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span>
-        <span class="n">order</span> <span class="o">=</span> <span class="p">((</span><span class="s1">&#39;general&#39;</span><span class="p">,</span> <span class="p">[]),</span> <span class="p">(</span><span class="s1">&#39;request&#39;</span><span class="p">,</span> <span class="p">[]),</span>
-                 <span class="p">(</span><span class="s1">&#39;response&#39;</span><span class="p">,</span> <span class="p">[]),</span> <span class="p">(</span><span class="s1">&#39;entity&#39;</span><span class="p">,</span> <span class="p">[]))</span>
-        <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">hf</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
-                    <span class="n">group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-                    <span class="k">break</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>    <span class="c1"># non-standard header</span>
-                <span class="n">group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
-                <span class="n">joiner</span> <span class="o">=</span> <span class="n">hj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dj</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">joiner</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
-                        <span class="k">yield</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">yield</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">joiner</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">headers</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">header</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
         <span class="k">yield</span> <span class="s1">&#39;&#39;</span>
         <span class="k">yield</span> <span class="s1">&#39;&#39;</span></div>
 
@@ -764,8 +672,8 @@
 <span class="c1">###############################################################################</span>
 <span class="n">METHOD_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;[A-Z0-9$-_.]{3,20}&quot;</span><span class="p">)</span>
 <span class="n">VERSION_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;HTTP/(\d+).(\d+)&quot;</span><span class="p">)</span>
-<span class="n">STATUS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;(\d</span><span class="si">{3}</span><span class="s2">)\s*(\w*)&quot;</span><span class="p">)</span>
-<span class="n">HEADER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;[</span><span class="se">\x00</span><span class="s2">-</span><span class="se">\x1F\x7F</span><span class="s2">()&lt;&gt;@,;:\[\]=</span><span class="si">{}</span><span class="s2"> </span><span class="se">\t\\\\\&quot;</span><span class="s2">]&quot;</span><span class="p">)</span>
+<span class="n">STATUS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;(\d{3})\s*(\w*)&quot;</span><span class="p">)</span>
+<span class="n">HEADER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;[</span><span class="se">\x00</span><span class="s2">-</span><span class="se">\x1F\x7F</span><span class="s2">()&lt;&gt;@,;:\[\]={} </span><span class="se">\t\\\\\&quot;</span><span class="s2">]&quot;</span><span class="p">)</span>
 
 <span class="c1"># errors</span>
 <span class="n">BAD_FIRST_LINE</span> <span class="o">=</span> <span class="mi">0</span>
@@ -792,38 +700,38 @@
 
 <span class="sd">    2011 (c) Benoit Chesneau &lt;benoitc@e-engura.org&gt;</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">decompress</span> <span class="o">=</span> <span class="n">decompress</span>
         <span class="c1"># errors vars</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">errno</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errno</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">errstr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="c1"># protected variables</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_version</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_method</span> <span class="o">=</span> <span class="n">method</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_status</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_reason</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_query_string</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_version</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_method</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_status</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reason</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_query_string</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span> <span class="o">=</span> <span class="n">kind</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fragment</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fragment</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_body</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trailers</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_clen</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_trailers</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clen</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="c1"># private events</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__on_firstline</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__on_firstline</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="c1"># decompress</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="bp">True</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -857,7 +765,7 @@
         <span class="sd">&quot;&quot;&quot; return last chunk of the parsed body&quot;&quot;&quot;</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_body</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_body</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">return</span> <span class="n">body</span></div>
 
 <div class="viewcode-block" id="HttpParser.is_headers_complete"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser.is_headers_complete">[docs]</a>    <span class="k">def</span> <span class="nf">is_headers_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -883,20 +791,20 @@
     <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
         <span class="c1"># end of body can be passed manually by putting a length of 0</span>
         <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="k">return</span> <span class="n">length</span>
         <span class="c1">#</span>
         <span class="n">data</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="c1"># start to parse</span>
         <span class="n">nb_parsed</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_firstline</span><span class="p">:</span>
                 <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
                     <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">__on_firstline</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__on_firstline</span> <span class="o">=</span> <span class="bp">True</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">])</span>
                     <span class="n">first_line</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">),</span>
                                            <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
@@ -914,7 +822,7 @@
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">to_parse</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">)</span>
                     <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_headers</span><span class="p">(</span><span class="n">to_parse</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
                         <span class="k">return</span> <span class="n">length</span>
                     <span class="n">nb_parsed</span> <span class="o">=</span> <span class="n">nb_parsed</span> <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">to_parse</span><span class="p">)</span> <span class="o">-</span> <span class="n">ret</span><span class="p">)</span>
                 <span class="k">except</span> <span class="n">InvalidHeader</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -922,17 +830,17 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">errstr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
                     <span class="k">return</span> <span class="n">nb_parsed</span>
             <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span> <span class="o">=</span> <span class="bp">True</span>
                 <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
                     <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s1">&#39;&#39;</span>
                 <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_body</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">length</span>
                 <span class="k">elif</span> <span class="n">ret</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">ret</span>
                 <span class="k">elif</span> <span class="n">ret</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="bp">True</span>
                     <span class="k">return</span> <span class="n">length</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">nb_parsed</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">ret</span><span class="p">)</span>
@@ -953,23 +861,23 @@
         <span class="k">except</span> <span class="n">InvalidRequestLine</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">errno</span> <span class="o">=</span> <span class="n">BAD_FIRST_LINE</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">errstr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">_parse_response_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
-        <span class="n">bits</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InvalidRequestLine</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 
         <span class="c1"># version</span>
         <span class="n">matchv</span> <span class="o">=</span> <span class="n">VERSION_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">matchv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">matchv</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InvalidRequestLine</span><span class="p">(</span><span class="s2">&quot;Invalid HTTP version: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_version</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">matchv</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">matchv</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
 
         <span class="c1"># status</span>
         <span class="n">matchs</span> <span class="o">=</span> <span class="n">STATUS_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">matchs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">matchs</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InvalidRequestLine</span><span class="p">(</span><span class="s2">&quot;Invalid status %&quot;</span> <span class="o">%</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_status</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -977,7 +885,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_reason</span> <span class="o">=</span> <span class="n">matchs</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_parse_request_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
-        <span class="n">bits</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InvalidRequestLine</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
         <span class="c1"># Method</span>
@@ -992,18 +900,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_fragment</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">fragment</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
         <span class="c1"># Version</span>
         <span class="n">match</span> <span class="o">=</span> <span class="n">VERSION_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InvalidRequestLine</span><span class="p">(</span><span class="s2">&quot;Invalid HTTP version: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">bits</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_version</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
 
     <span class="k">def</span> <span class="nf">_parse_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">data</span> <span class="o">==</span> <span class="n">b</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">return</span> <span class="mi">0</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;</span><span class="se">\r\n\r\n</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># we don&#39;t have all headers</span>
-            <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="bp">False</span>
         <span class="n">chunk</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
         <span class="c1"># Split lines on \r\n keeping the \r\n on each line</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="n">deque</span><span class="p">((</span><span class="s1">&#39;</span><span class="si">%s</span><span class="se">\r\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">chunk</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">)))</span>
@@ -1023,48 +931,45 @@
             <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="ow">and</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)):</span>
                 <span class="n">value</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lines</span><span class="o">.</span><span class="n">popleft</span><span class="p">())</span>
             <span class="n">value</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="c1"># detect now if body is sent by chunks.</span>
         <span class="n">clen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="s1">&#39;Transfer-Encoding&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">:</span>
-            <span class="n">te</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s1">&#39;Transfer-Encoding&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">te</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s1">&#39;Transfer-Encoding&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="p">(</span><span class="n">te</span> <span class="o">==</span> <span class="s1">&#39;chunked&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="c1">#</span>
         <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span>
         <span class="k">if</span> <span class="n">status</span> <span class="ow">and</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method</span><span class="p">):</span>
             <span class="n">clen</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">elif</span> <span class="n">clen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">clen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">clen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">clen</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">clen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">clen</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                <span class="n">clen</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">clen</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">clen</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># ignore nonsensical negative lengths</span>
-                    <span class="n">clen</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">clen</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="c1">#</span>
-        <span class="k">if</span> <span class="n">clen</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">clen</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">maxsize</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clen</span> <span class="o">=</span> <span class="n">clen</span>
         <span class="c1">#</span>
         <span class="c1"># detect encoding and set decompress object</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompress</span> <span class="ow">and</span> <span class="s1">&#39;Content-Encoding&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">:</span>
-            <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s1">&#39;Content-Encoding&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s1">&#39;Content-Encoding&#39;</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s2">&quot;gzip&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="n">zlib</span><span class="o">.</span><span class="n">decompressobj</span><span class="p">(</span><span class="mi">16</span><span class="o">+</span><span class="n">zlib</span><span class="o">.</span><span class="n">MAX_WBITS</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="k">elif</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s2">&quot;deflate&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="n">zlib</span><span class="o">.</span><span class="n">decompressobj</span><span class="p">()</span>
 
         <span class="n">rest</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="mi">4</span><span class="p">:]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="p">[</span><span class="n">rest</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__on_headers_complete</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_begin</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_parse_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1072,22 +977,22 @@
         <span class="c1">#</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span><span class="p">:</span>
             <span class="c1">#</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clen</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clen</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">:</span>    <span class="c1"># message complete only for servers</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="o">-=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
                 <span class="c1"># maybe decompress</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-                <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">True</span>
                 <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__on_message_complete</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="k">return</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -1098,13 +1003,13 @@
                 <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
             <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">size</span>
-            <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">size</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">size</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
             <span class="n">body_part</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">rest</span><span class="p">[:</span><span class="n">size</span><span class="p">],</span> <span class="n">rest</span><span class="p">[</span><span class="n">size</span><span class="p">:]</span>
 
             <span class="c1"># maybe decompress</span>
             <span class="n">body_part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decompress</span><span class="p">(</span><span class="n">body_part</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_partial_body</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body_part</span><span class="p">)</span>
             <span class="n">rest</span> <span class="o">=</span> <span class="n">rest</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="p">[</span><span class="n">rest</span><span class="p">]</span> <span class="k">if</span> <span class="n">rest</span> <span class="k">else</span> <span class="p">[]</span>
@@ -1113,7 +1018,7 @@
     <span class="k">def</span> <span class="nf">_parse_chunk_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
         <span class="n">line</span><span class="p">,</span> <span class="n">rest_chunk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="mi">2</span><span class="p">:]</span>
         <span class="n">chunk_size</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
@@ -1122,7 +1027,7 @@
             <span class="k">raise</span> <span class="n">InvalidChunkSize</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">chunk_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_parse_trailers</span><span class="p">(</span><span class="n">rest_chunk</span><span class="p">)</span>
-            <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">return</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">rest_chunk</span>
 
     <span class="k">def</span> <span class="nf">_parse_trailers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -1132,7 +1037,7 @@
 
     <span class="k">def</span> <span class="nf">_decompress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="n">deco</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span>
-        <span class="k">if</span> <span class="n">deco</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">deco</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">deco</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1142,7 +1047,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="n">zlib</span><span class="o">.</span><span class="n">decompressobj</span><span class="p">(</span><span class="o">-</span><span class="n">zlib</span><span class="o">.</span><span class="n">MAX_WBITS</span><span class="p">)</span>
                     <span class="n">deco</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span>
                     <span class="n">data</span> <span class="o">=</span> <span class="n">deco</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_first_try</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">return</span> <span class="n">data</span></div>
 
 
@@ -1197,7 +1102,7 @@
     <span class="k">return</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="s1">&#39;application/octet-stream&#39;</span>
 
 
-<span class="k">def</span> <span class="nf">encode_multipart_formdata</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">boundary</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">charset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">encode_multipart_formdata</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">boundary</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">charset</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Encode a dictionary of ``fields`` using the multipart/form-data format.</span>
 
 <span class="sd">    :param fields:</span>
@@ -1214,7 +1119,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">charset</span> <span class="o">=</span> <span class="n">charset</span> <span class="ow">or</span> <span class="s1">&#39;utf-8&#39;</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">boundary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">boundary</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">boundary</span> <span class="o">=</span> <span class="n">choose_boundary</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">fieldname</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping_iterator</span><span class="p">(</span><span class="n">fields</span><span class="p">):</span>
         <span class="n">body</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="s1">&#39;--</span><span class="si">%s</span><span class="se">\r\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">boundary</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">charset</span><span class="p">))</span>
@@ -1245,7 +1150,7 @@
     <span class="k">return</span> <span class="n">sha1</span><span class="p">(</span><span class="n">to_bytes</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">http_date</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">http_date</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Formats the time to match the RFC1123 date format as specified by HTTP</span>
 <span class="sd">    RFC2616 section 3.3.1.</span>
@@ -1256,7 +1161,7 @@
 
 <span class="sd">    Outputs a string in the format &#39;Wdy, DD Mon YYYY HH:MM:SS GMT&#39;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">formatdate</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="p">,</span> <span class="n">usegmt</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">formatdate</span><span class="p">(</span><span class="n">epoch_seconds</span><span class="p">,</span> <span class="n">usegmt</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 
 <span class="c1"># ################################################################# COOKIES</span>
@@ -1270,16 +1175,16 @@
         <span class="n">version</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
         <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">port</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
         <span class="n">domain</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
         <span class="n">path</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span>
-        <span class="n">secure</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">expires</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">discard</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">comment_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">rest</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;HttpOnly&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
-        <span class="n">rfc2109</span><span class="o">=</span><span class="kc">False</span><span class="p">,)</span>
+        <span class="n">secure</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">expires</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">discard</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">comment_url</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">rest</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;HttpOnly&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">},</span>
+        <span class="n">rfc2109</span><span class="o">=</span><span class="bp">False</span><span class="p">,)</span>
     <span class="n">badargs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">badargs</span><span class="p">:</span>
         <span class="n">err</span> <span class="o">=</span> <span class="s1">&#39;create_cookie() got unexpected keyword arguments: </span><span class="si">%s</span><span class="s1">&#39;</span>
@@ -1344,7 +1249,7 @@
 <span class="sd">    Checks to see if the response has a given header name in its Vary header.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">has_header</span><span class="p">(</span><span class="s1">&#39;Vary&#39;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">False</span>
     <span class="n">vary_headers</span> <span class="o">=</span> <span class="n">cc_delim_re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;Vary&#39;</span><span class="p">])</span>
     <span class="n">existing_headers</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">header</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">vary_headers</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">header_query</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">existing_headers</span>
@@ -1359,16 +1264,16 @@
 <span class="sd">    Specifies the maximum amount of time that a representation will be</span>
 <span class="sd">    considered fresh.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxage</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">private</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">must_revalidate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">proxy_revalidate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">nostore</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxage</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">private</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">must_revalidate</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">proxy_revalidate</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">nostore</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">maxage</span> <span class="o">=</span> <span class="n">maxage</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">private</span> <span class="o">=</span> <span class="n">private</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">must_revalidate</span> <span class="o">=</span> <span class="n">must_revalidate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proxy_revalidate</span> <span class="o">=</span> <span class="n">proxy_revalidate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nostore</span> <span class="o">=</span> <span class="n">nostore</span>
 
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">etag</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">etag</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nostore</span><span class="p">:</span>
             <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;cache-control&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;no-store, no-cache, must-revalidate,&#39;</span>
                                         <span class="s1">&#39; max-age=0&#39;</span><span class="p">)</span>
@@ -1400,7 +1305,7 @@
     <span class="k">return</span> <span class="n">head</span> <span class="o">+</span> <span class="n">chunk</span> <span class="o">+</span> <span class="n">b</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span>
 
 
-<span class="k">def</span> <span class="nf">http_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">finish</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">http_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">finish</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MAX_CHUNK_SIZE</span><span class="p">:</span>
         <span class="n">chunk</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">:]</span>
         <span class="k">yield</span> <span class="n">chunk_encoding</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
@@ -1459,12 +1364,10 @@
 
 
 
-
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=quantmind&repo=pulsar&type=watch&count=true&size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
-
 
 
 
@@ -1498,11 +1401,14 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -1513,8 +1419,8 @@
       &copy;2011-2016, Luca Sbardella.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
 
