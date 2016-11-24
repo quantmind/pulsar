@@ -115,7 +115,7 @@ class Channels(Connector, PubSubClient):
         return self.store._loop
 
     def __repr__(self):
-        return self.store.__repr__()
+        return self.dns
 
     def __len__(self):
         return len(self.channels)
@@ -294,9 +294,9 @@ class Channel:
         return iter(self.channels.values())
 
     def __call__(self, message):
-        event = message.get('event', '')
+        event = message.pop('event', '')
         data = message.get('data')
-        self.fire(event, data)
+        self.fi
 
     def fire(self, event, data=None):
         for entry in tuple(self.callbacks.values()):
