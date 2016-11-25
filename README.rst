@@ -1,4 +1,4 @@
-.. image:: https://pulsar.fluidily.com/assets/images/pulsar-banner.png
+.. image:: https://pulsar.fluidily.com/assets/images/pulsar-banner-600.svg
    :alt: Pulsar
    :width: 300
 
