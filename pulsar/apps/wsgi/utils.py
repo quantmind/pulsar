@@ -35,6 +35,7 @@ HOP_HEADERS = frozenset(('connection',
                          'upgrade')
                         )
 
+pulsar_cache = 'pulsar.cache'
 LOGGER = logging.getLogger('pulsar.wsgi')
 error_css = '''
 .pulsar-error {
@@ -54,6 +55,13 @@ def wsgi_request(environ, app_handler=None, urlargs=None):
 def set_wsgi_request_class(RequestClass):
     global _RequestClass
     _RequestClass = RequestClass
+
+
+def get_logger(environ):
+    cache = environ.get(pulsar_cache)
+    if cache:
+        return cache.logger or LOGGER
+    return LOGGER
 
 
 def log_wsgi_info(log, environ, status, exc=None):
@@ -223,6 +231,8 @@ def handle_wsgi_error(environ, exc):
     request = wsgi_request(environ)
     request.cache.handle_wsgi_error = True
     response = request.response
+    logger = get_logger(environ)
+    #
     if isinstance(exc, HTTPError):
         response.status_code = exc.code or 500
     else:
@@ -230,10 +240,10 @@ def handle_wsgi_error(environ, exc):
         response.headers.update(getattr(exc, 'headers', None) or ())
     status = response.status_code
     if status >= 500:
-        LOGGER.critical('%s - @ %s.\n%s', exc, request.first_line,
+        logger.critical('%s - @ %s.\n%s', exc, request.first_line,
                         dump_environ(environ), exc_info=exc_info)
     else:
-        log_wsgi_info(LOGGER.warning, environ, response.status, exc)
+        log_wsgi_info(logger.warning, environ, response.status, exc)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         response.content_type = None
         response.content = None
@@ -243,7 +253,7 @@ def handle_wsgi_error(environ, exc):
         try:
             content = renderer(request, exc)
         except Exception:
-            LOGGER.critical('Error while rendering error', exc_info=True)
+            logger.critical('Error while rendering error', exc_info=True)
             response.content_type = 'text/plain'
             content = 'Critical server error'
         if content is not response:

@@ -67,7 +67,7 @@ from pulsar.utils.httpurl import (Headers, SimpleCookie,
 
 from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, set_cookie, query_dict,
-                    parse_accept_header, LOGGER)
+                    parse_accept_header, LOGGER, pulsar_cache)
 from .structures import ContentAccept, CharsetAccept, LanguageAccept
 from .formdata import parse_form_data
 
@@ -347,9 +347,10 @@ class EnvironMixin:
 
     def __init__(self, environ, name=None):
         self.environ = environ
-        if 'pulsar.cache' not in environ:
-            environ['pulsar.cache'] = AttributeDictionary()
+        if pulsar_cache not in environ:
+            environ[pulsar_cache] = AttributeDictionary()
             self.cache.mixins = {}
+            self.cache.logger = LOGGER
         if name:
             self.cache.mixins[name] = self
 
@@ -359,7 +360,7 @@ class EnvironMixin:
         pulsar-specific data stored in the :attr:`environ` at
         the wsgi-extension key ``pulsar.cache``
         """
-        return self.environ['pulsar.cache']
+        return self.environ[pulsar_cache]
 
     @property
     def connection(self):
@@ -482,6 +483,14 @@ class WsgiRequest(EnvironMixin):
         """The :ref:`config container <settings>` of the server
         """
         return self.cache.cfg
+
+    @property
+    def logger(self):
+        """logger
+
+        Allow for injection of different logger
+        """
+        return self.cache.logger
 
     @cached_property
     def response(self):
