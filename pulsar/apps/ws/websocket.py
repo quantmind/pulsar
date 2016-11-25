@@ -140,6 +140,7 @@ class WebSocket(wsgi.Router):
         if not headers_parser:
             raise HttpException(status=404)
         headers, parser = headers_parser
+        self.protocol_class.request = request
         response = request.response
         response.status_code = 101
         response.content = b''
