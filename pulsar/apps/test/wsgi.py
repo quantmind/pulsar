@@ -34,9 +34,10 @@ class DummyConnection(DummyTransport):
 
         The *server* connection for this :attr:`client`
     """
-    def __init__(self, producer, address):
+    def __init__(self, producer, address, ssl=None):
         super().__init__()
         self.address = address
+        self.ssl = ssl
         self._producer = producer
         self._processed = 0
         self._current_consumer = None
@@ -128,3 +129,8 @@ class HttpTestClient(http.HttpClient):
 
     async def create_connection(self, address, ssl=None):
         return DummyConnection(self, address)
+
+    def get_headers(self, request, headers):
+        headers = super().get_headers(request, headers)
+        headers['X-Forwarded-Proto'] = request.key[0]
+        return headers

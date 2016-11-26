@@ -88,6 +88,7 @@ HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
 parse_http_list = urllibr.parse_http_list
 
+tls_schemes = ('https', 'wss')
 
 # ###################################################    URI & IRI SUFF
 #

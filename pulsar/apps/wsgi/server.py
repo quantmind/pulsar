@@ -26,7 +26,7 @@ from pulsar import (reraise, HttpException, ProtocolError, isawaitable,
                     BadRequest)
 from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, has_empty_content, http_parser,
-                                  iri_to_uri, http_chunks)
+                                  iri_to_uri, http_chunks, tls_schemes)
 
 from pulsar.async.protocols import ProtocolConsumer
 
@@ -129,6 +129,8 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
         if header == 'x-forwarded-for':
             forward = value
         elif header == "x-forwarded-protocol" and value == "ssl":
+            url_scheme = "https"
+        elif header == "x-forwarded-proto" and value in tls_schemes:
             url_scheme = "https"
         elif header == "x-forwarded-ssl" and value == "on":
             url_scheme = "https"

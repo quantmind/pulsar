@@ -644,7 +644,8 @@ class WsgiRequest(EnvironMixin):
         :meth:`full_path`.
         """
         if not is_absolute_uri(location):
-            location = self.full_path(location, **query)
+            if location or location is None:
+                location = self.full_path(location, **query)
             if not scheme:
                 scheme = self.is_secure and 'https' or 'http'
             base = '%s://%s' % (scheme, self.get_host())

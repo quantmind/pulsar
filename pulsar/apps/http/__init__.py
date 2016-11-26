@@ -35,7 +35,7 @@ from pulsar.utils.httpurl import (http_parser, encode_multipart_formdata,
                                   Headers, get_environ_proxies, is_succesful,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, http_chunks,
-                                  parse_options_header,
+                                  parse_options_header, tls_schemes,
                                   parse_header_links,
                                   JSON_CONTENT_TYPES)
 
@@ -54,7 +54,6 @@ __all__ = ['HttpRequest', 'HttpResponse', 'HttpClient', 'HTTPDigestAuth',
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
-tls_schemes = ('https', 'wss')
 
 LOGGER = logging.getLogger('pulsar.http')
 FORM_URL_ENCODED = 'application/x-www-form-urlencoded'
@@ -267,8 +266,8 @@ class HttpRequest(RequestBase):
         if auth and not isinstance(auth, Auth):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
-        self.headers = client._get_headers(headers)
         self.url = full_url(url, params, method=self.method)
+        self.headers = client.get_headers(self, headers)
         self.body = self._encode_body(data, files, json)
         self._set_proxy(proxies, ignored)
         cookies = cookiejar_from_dict(client.cookies, cookies)
@@ -1022,7 +1021,7 @@ class HttpClient(AbstractClient):
             response = await self._request(method, url, **params)
         return response
 
-    def _get_headers(self, headers=None):
+    def get_headers(self, request, headers):
         # Returns a :class:`Header` obtained from combining
         # :attr:`headers` with *headers*. Can handle websocket requests.
         d = self.headers.copy()
