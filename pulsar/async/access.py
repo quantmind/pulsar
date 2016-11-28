@@ -10,7 +10,7 @@ from threading import current_thread
 from asyncio import Future
 
 from pulsar.utils.config import Global
-from pulsar.utils.system import current_process
+from pulsar.utils.system import current_process, platform
 
 from asyncio import ensure_future
 from inspect import isawaitable
@@ -73,11 +73,16 @@ def make_loop_factory(selector):
     return loop_factory
 
 
-for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
-    name = '%sSelector' % selector
-    selector_class = getattr(asyncio.selectors, name, None)
-    if selector_class:
-        EVENT_LOOPS[selector.lower()] = make_loop_factory(selector_class)
+if platform.type == 'win':  # pragma    nocover
+    EVENT_LOOPS['proactor'] = asyncio.ProactorEventLoop
+    EVENT_LOOPS['select'] = asyncio.SelectorEventLoop
+
+else:
+    for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
+        name = '%sSelector' % selector
+        selector_class = getattr(asyncio.selectors, name, None)
+        if selector_class:
+            EVENT_LOOPS[selector.lower()] = make_loop_factory(selector_class)
 
 
 try:    # add uvloop if available
