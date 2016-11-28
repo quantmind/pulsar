@@ -1,5 +1,3 @@
-import signal
-
 from pulsar.utils import autoreload
 from pulsar import system
 
@@ -58,12 +56,3 @@ class ProcessMixin:
         else:
             actor.logger.debug('Close event loop')
             actor._loop.close()
-
-
-def signal_from_exitcode(sig):
-    if sig in QUIT:
-        sig = signal.SIGQUIT
-    return sig
-
-
-QUIT = set((signal.SIGINT, signal.SIGQUIT))
