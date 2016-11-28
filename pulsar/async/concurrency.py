@@ -23,7 +23,7 @@ from .protocols import TcpServer
 from .actor import Actor
 from .consts import (ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY,
                      MONITOR_TASK_PERIOD)
-from .process import ProcessMixin, signal_from_exitcode
+from .process import ProcessMixin
 
 __all__ = ['arbiter']
 
@@ -399,7 +399,7 @@ class MonitorMixin:
     def _close_actors(self, monitor):
         #
         # Close all managed actors at once and wait for completion
-        sig = signal_from_exitcode(monitor.exit_code)
+        sig = monitor.exit_code
         for worker in self.managed_actors.values():
             worker.stop(sig)
 
