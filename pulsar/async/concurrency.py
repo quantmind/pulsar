@@ -399,18 +399,23 @@ class MonitorMixin:
     def _close_actors(self, monitor):
         #
         # Close all managed actors at once and wait for completion
-        sig = monitor.exit_code
-        for worker in self.managed_actors.values():
-            worker.stop(sig)
-
         waiter = create_future(monitor._loop)
+        if self.managed_actors:
+            sig = monitor.exit_code
+            for worker in self.managed_actors.values():
+                worker.stop(sig)
 
-        def _check(_, **kw):
-            if not self.managed_actors:
-                monitor.remove_callback('periodic_task', _check)
-                waiter.set_result(None)
+            waiter = create_future(monitor._loop)
 
-        monitor.bind_event('periodic_task', _check)
+            def _check(_, **kw):
+                if not self.managed_actors:
+                    monitor.remove_callback('periodic_task', _check)
+                    waiter.set_result(None)
+
+            monitor.bind_event('periodic_task', _check)
+        else:
+            waiter.set_result(None)
+
         return waiter
 
     def _remove_actor(self, monitor, actor, log=True):

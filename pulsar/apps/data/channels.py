@@ -240,9 +240,10 @@ class Channels(Connector, PubSubClient):
                 self,
                 next_time
             )
-            self._loop.call_later(next_time,
-                                  self._loop.create_task,
-                                  self.connect(next_time))
+            self._loop.call_later(
+                next_time,
+                lambda: self._loop.create_task(self.connect(next_time))
+            )
         else:
             await gather(*[c.connect() for c in self.channels.values()
                            if c.name != self.status_channel.name])

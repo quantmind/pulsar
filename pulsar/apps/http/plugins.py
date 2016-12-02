@@ -100,6 +100,9 @@ class WebSocketClient(WebSocketProtocol):
     def headers(self):
         return self.handshake.headers
 
+    def raise_for_status(self):
+        pass
+
     def __getattr__(self, name):
         if not name.startswith('__'):
             return getattr(self.handshake, name)
