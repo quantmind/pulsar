@@ -393,7 +393,7 @@ class MonitorMixin:
                 for worker in self.managed_actors.values():
                     age = worker.impl.age
                     if age < kage:
-                        w, kage = w, age
+                        w, kage = worker, age
                 self.manage_actor(monitor, w, True)
 
     def _close_actors(self, monitor):
