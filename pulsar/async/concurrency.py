@@ -129,7 +129,14 @@ class Concurrency:
         '''Set up the event loop for ``actor``.
         '''
         actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
-        loop = asyncio.get_event_loop()
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            if self.cfg and self.cfg.concurrency == 'thread':
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            else:
+                raise
         if not hasattr(loop, 'logger'):
             loop.logger = actor._logger
         actor.mailbox = self.create_mailbox(actor, loop)
