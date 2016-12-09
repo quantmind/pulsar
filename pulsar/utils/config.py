@@ -166,15 +166,9 @@ class Config:
         for k, setting in self.settings.items():
             yield k, setting.value
 
-    def __getstate__(self):
-        return self.__dict__.copy()
-
     def __setstate__(self, state):
-        for k, v in state.items():
-            self.__dict__[k] = v
-        config = getattr(self, 'config', None)
-        if config:
-            self.import_from_module(config)
+        # required to avoid circular reference
+        self.__dict__.update(state)
 
     def __getattr__(self, name):
         try:
@@ -292,7 +286,7 @@ class Config:
                     if valid_config_value(val):
                         unknowns.append((k, val))
                 else:
-                    self.set(kl, val, True, True)
+                    self.set(kl, val, True, imported=True)
         return unknowns
 
     def parse_command_line(self, argv=None):
@@ -507,10 +501,11 @@ class Setting(metaclass=SettingMeta):
     It provided it must be a function accepting one positional argument,
     the value to validate."""
     value = None
-    imported = False
     """The actual value for this setting."""
     default = None
     """The default value for this setting."""
+    imported = False
+    """Was the value imported and set from the config file?"""
     nargs = None
     """The number of command-line arguments that should be consumed"""
     const = None
@@ -571,7 +566,7 @@ class Setting(metaclass=SettingMeta):
             self.order = 1000 + self.__class__.creation_count
         self.modified = False
 
-    def __getstate__(self):
+    def ____getstate__(self):
         data = self.__dict__.copy()
         if self.imported:
             data.pop('imported', None)

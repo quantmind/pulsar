@@ -5,7 +5,7 @@ import asyncio
 import pickle
 from time import time
 from collections import OrderedDict
-from multiprocessing import current_process
+from multiprocessing import Process, current_process
 from multiprocessing.reduction import ForkingPickler
 
 import pulsar
@@ -129,14 +129,7 @@ class Concurrency:
         '''Set up the event loop for ``actor``.
         '''
         actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            if self.cfg and self.cfg.concurrency == 'thread':
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            else:
-                raise
+        loop = asyncio.get_event_loop()
         if not hasattr(loop, 'logger'):
             loop.logger = actor._logger
         actor.mailbox = self.create_mailbox(actor, loop)
@@ -741,6 +734,23 @@ class ActorThread(Concurrency, Thread):
         run_actor(self)
 
 
+class ActorMultiProcess(ProcessMixin, Concurrency, Process):
+    '''Actor on a Operative system process.
+    Created using the python multiprocessing module.
+    '''
+    def run(self):  # pragma    nocover
+        # The coverage for this process has not yet started
+        try:
+            from asyncio.events import _set_running_loop
+            _set_running_loop(None)
+        except ImportError:
+            pass
+        run_actor(self)
+
+    def kill(self, sig):
+        system.kill(self.pid, sig)
+
+
 class ActorProcess(ProcessMixin, Concurrency):
     '''Actor on a Operative system process.
     '''
@@ -805,7 +815,8 @@ concurrency_models = {
     'monitor': MonitorConcurrency,
     'coroutine': ActorCoroutine,
     'thread': ActorThread,
-    'process': ActorProcess
+    'process': ActorProcess,
+    'multi': ActorMultiProcess
 }
 
 

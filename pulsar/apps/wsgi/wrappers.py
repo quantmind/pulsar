@@ -692,7 +692,7 @@ class FileWrapper:
     """WSGI File wrapper class.
 
     Available directly from the ``wsgi.file_wrapper`` key in the WSGI environ
-    dictionary. Alternatively one can use the :func:`~file_response`
+    dictionary. Alternatively one can use the :func:`~.file_response`
     high level function for serving local files.
     """
     def __init__(self, file, block=None):
