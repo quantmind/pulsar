@@ -758,7 +758,7 @@ class ActorMultiProcess(ProcessMixin, Concurrency, Process):
         system.kill(self.pid, sig)
 
 
-class ActorProcess(ProcessMixin, Concurrency):
+class ActorSubProcess(ProcessMixin, Concurrency):
     '''Actor on a Operative system process.
     '''
     process = None
@@ -822,8 +822,8 @@ concurrency_models = {
     'monitor': MonitorConcurrency,
     'coroutine': ActorCoroutine,
     'thread': ActorThread,
-    'process': ActorProcess,
-    'multi': ActorMultiProcess
+    'process': ActorMultiProcess,
+    'subprocess': ActorSubProcess
 }
 
 

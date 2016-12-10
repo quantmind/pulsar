@@ -74,8 +74,8 @@ def make_loop_factory(selector):
 
 
 if platform.type == 'win':  # pragma    nocover
-    EVENT_LOOPS['proactor'] = asyncio.ProactorEventLoop
     EVENT_LOOPS['select'] = asyncio.SelectorEventLoop
+    EVENT_LOOPS['proactor'] = asyncio.ProactorEventLoop
 
 else:
     for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):

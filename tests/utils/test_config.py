@@ -25,11 +25,11 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg1.post_fork(worker), worker)
 
     def testFunctionFromConfigFile(self):
-        # TODO, fails in pypy for some odd reasons
         worker = get_actor()
         cfg = config()
         self.assertEqual(cfg.connection_made(worker), None)
-        self.assertEqual(cfg.import_from_module(os.path.dirname(__file__))[0],
+        module_name = 'tests.utils'
+        self.assertEqual(cfg.import_from_module(module_name)[0],
                          ('foo', 5))
         self.assertEqual(cfg.connection_made(worker), worker)
         cfg1 = pickle.loads(pickle.dumps(cfg))
