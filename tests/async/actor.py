@@ -26,7 +26,7 @@ class ActorTest(ActorTestMixin):
         self.assertTrue('actor' in info)
         ainfo = info['actor']
         self.assertEqual(ainfo['is_process'],
-                         self.concurrency in ('process', 'multi'))
+                         self.concurrency in ('process', 'subprocess'))
 
     async def test_simple_spawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
