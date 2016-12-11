@@ -23,8 +23,7 @@ init:
 
 install:
   - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install -r requirements-dev-win.txt"
+  - "%WITH_COMPILER% %PYTHON%/python -m pip install -r requirements-dev-win.txt"
 
-test_script:
-  - "%WITH_COMPILER% %PYTHON%/python setup.py flake8"
+test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py test"
