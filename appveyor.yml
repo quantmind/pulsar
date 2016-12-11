@@ -1,0 +1,29 @@
+os: Visual Studio 2015
+
+environment:
+
+  matrix:
+    # Pre-installed Python versions, which Appveyor may upgrade to
+    # a later point release.
+
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "32"
+
+    # 64 bits
+
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "64"
+      ARCH: x86_64
+      VS_VER: "2015"
+
+init:
+  - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
+
+install:
+  - "%WITH_COMPILER% %PYTHON%/python -V"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install -r requirements-dev.txt"
+
+test_script:
+  - "%WITH_COMPILER% %PYTHON%/python setup.py test"
