@@ -30,7 +30,7 @@ class Coverage:
                     p._coverage.start()
                 config_file = self.coverage.config_file
                 os.environ['COVERAGE_PROCESS_START'] = config_file
-            elif self.cfg.concurrency == 'process':
+            elif self.cfg.concurrency == 'subprocess':
                 coverage.process_startup()
 
     def stop_coverage(self):
