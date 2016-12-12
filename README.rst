@@ -6,7 +6,7 @@
 |
 
 :Badges: |license|  |pyversions| |status| |pypiversion|
-:Master CI: |master-build|_ |coverage-master|
+:Master CI: |master-build|_ |coverage-master| |appveyor|
 :Documentation: http://quantmind.github.io/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -35,6 +35,8 @@
   :target: https://coveralls.io/github/quantmind/pulsar?branch=master
 .. |coverage-dev| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=dev
   :target: https://coveralls.io/github/quantmind/pulsar?branch=dev
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/w2ip01j07qm161ei?svg=true
+    :target: https://ci.appveyor.com/project/lsbardel/pulsar
 
 
 An example of a web server written with ``pulsar`` which responds with
