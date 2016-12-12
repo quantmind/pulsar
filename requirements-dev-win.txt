@@ -1,7 +1,6 @@
 flake8
 cython
 greenlet
-unidecode
 flask
 oauthlib
 requests
