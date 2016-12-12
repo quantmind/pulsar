@@ -1,8 +1,6 @@
 import os
 
 from pulsar.apps.http import SSLError, HttpClient
-from pulsar.apps.test import skipUnless
-from pulsar.utils.system import platform
 
 from tests.http import base
 
@@ -10,7 +8,6 @@ from tests.http import base
 crt = os.path.join(os.path.dirname(__file__), 'ca_bundle')
 
 
-@skipUnless(platform.type != 'win', 'Hangs on appveyor - need fixing')
 class TestTlsHttpClient(base.TestHttpClient):
     with_tls = True
 
