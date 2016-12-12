@@ -17,6 +17,9 @@ init:
 install:
   - "%WITH_COMPILER% %PYTHON%/python -V"
   - "%WITH_COMPILER% %PYTHON%/python -m pip install -r requirements-dev-win.txt"
+  - cmd: nuget install redis-64 -excludeversion
+  - cmd: redis-64\redis-server.exe --service-install
+  - cmd: redis-64\redis-server.exe --service-start
 
 build: off
 
