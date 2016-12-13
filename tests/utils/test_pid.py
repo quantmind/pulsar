@@ -4,6 +4,7 @@ import unittest
 from pulsar import send
 from pulsar.apps.test import ActorTestMixin
 from pulsar.utils.tools import Pidfile
+from pulsar.utils.system import platform
 
 
 class TestPidfile(ActorTestMixin, unittest.TestCase):
@@ -33,6 +34,7 @@ class TestPidfile(ActorTestMixin, unittest.TestCase):
         p.unlink()
         self.assertFalse(os.path.exists(p.fname))
 
+    @unittest.skipUnless(platform != 'win', 'This fails in windows')
     def test_stale_pid(self):
         p = Pidfile()
         p.create(798797)
