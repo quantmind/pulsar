@@ -24,7 +24,7 @@ install:
 build: off
 
 test_script:
-  - "%WITH_COMPILER% %PYTHON%/python setup.py test --sequential"
+  - "%WITH_COMPILER% %PYTHON%/python setup.py test -q"
 
 notifications:
   - provider: Email

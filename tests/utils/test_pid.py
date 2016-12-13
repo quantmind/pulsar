@@ -7,6 +7,7 @@ from pulsar.utils.tools import Pidfile
 from pulsar.utils.system import platform
 
 
+@unittest.skipUnless(platform.type != 'win', 'This fails in windows')
 class TestPidfile(ActorTestMixin, unittest.TestCase):
     concurrency = 'process'
 
@@ -34,7 +35,6 @@ class TestPidfile(ActorTestMixin, unittest.TestCase):
         p.unlink()
         self.assertFalse(os.path.exists(p.fname))
 
-    @unittest.skipUnless(platform.type != 'win', 'This fails in windows')
     def test_stale_pid(self):
         p = Pidfile()
         p.create(798797)
