@@ -67,7 +67,7 @@ class TestTestLoader(unittest.TestCase):
         self.assertTrue('wsgi.route' in modules)
         self.assertTrue('wsgi.router' in modules)
 
-    @unittest.skipUnless(platform != 'win', 'This fails in windows')
+    @unittest.skipUnless(platform.type != 'win', 'This fails in windows')
     async def test_load_http_client_test(self):
         app = await get_application('test')
         modules = dict(app.loader.test_files(
