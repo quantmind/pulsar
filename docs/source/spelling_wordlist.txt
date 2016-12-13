@@ -94,6 +94,7 @@ Html
 http
 Httpbin
 linting
+linux
 localhost
 lua
 Mcve
@@ -136,6 +137,7 @@ prepend
 Prepend
 prepended
 prepending
+proactor
 protocolconsumer
 proxy
 proxyserver
