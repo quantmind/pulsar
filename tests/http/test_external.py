@@ -5,6 +5,9 @@ from pulsar import get_actor
 from tests.http import base
 
 
+cfg = get_actor().cfg
+
+
 class ExternalBase(base.TestHttpClientBase):
     with_httpbin = False
 
@@ -43,20 +46,19 @@ class ProxyExternal(ExternalBase):
         self.assertEqual(response.status_code, 200)
 
 
-@unittest.skipUnless(get_actor().cfg.http_proxy == '',
-                     'Requires no external proxy')
+@unittest.skipUnless(cfg.http_proxy == '', 'Requires no external proxy')
 class Test_HttpClient_NoProxy_External(ExternalBase, unittest.TestCase):
     '''Test external URI when no global proxy server is present.
     '''
 
 
-@unittest.skipUnless(get_actor().cfg.http_proxy == '',
+@unittest.skipUnless(cfg.http_proxy == '' and cfg.event_loop != 'uv',
                      'Requires no external proxy')
 class Test_HttpClient_Proxy_External(ProxyExternal, unittest.TestCase):
     with_proxy = True
 
 
-@unittest.skipUnless(get_actor().cfg.http_proxy, 'Requires external proxy')
+@unittest.skipUnless(cfg.http_proxy, 'Requires external proxy')
 class Test_HttpClient_ExternalProxy_External(ProxyExternal,
                                              unittest.TestCase):
     pass
