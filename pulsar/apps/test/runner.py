@@ -190,8 +190,8 @@ class Runner:
                 )
             elif isgenerator(coro):
                 raise InvalidTestFunction('test function returns a generator')
-        except SkipTest as exc:
-            self.runner.addSkip(test, str(exc))
+        except SkipTest as x:
+            self.runner.addSkip(test, str(x))
             exc = None
         except Exception as x:
             exc = TestFailure(x)
