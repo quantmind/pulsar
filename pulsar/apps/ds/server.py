@@ -188,8 +188,7 @@ class PulsarDS(SocketServer):
 
     def monitor_start(self, monitor):
         cfg = self.cfg
-        workers = min(1, cfg.workers)
-        cfg.set('workers', workers)
+        cfg.set('workers', 0)
         return super().monitor_start(monitor)
 
 

@@ -1244,7 +1244,6 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
     async def setUpClass(cls):
         server = PulsarDS(name=cls.__name__.lower(),
                           bind='127.0.0.1:0',
-                          concurrency=cls.cfg.concurrency,
                           redis_py_parser=cls.redis_py_parser)
         cls.app_cfg = await pulsar.send('arbiter', 'run', server)
         cls.pulsards_uri = 'pulsar://%s:%s' % cls.app_cfg.addresses[0]
