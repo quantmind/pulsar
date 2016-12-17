@@ -116,7 +116,6 @@ import socket
 from math import log
 from random import lognormvariate
 from functools import partial
-import asyncio
 try:
     import ssl
 except ImportError:     # pragma    nocover
@@ -224,7 +223,6 @@ class SocketServer(pulsar.Application):
         number of workers to 0.
         '''
         cfg = self.cfg
-        loop = monitor._loop
         if (not pulsar.platform.has_multiProcessSocket or
                 cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
@@ -243,34 +241,20 @@ class SocketServer(pulsar.Application):
                                            cfg.key_file)
         # First create the sockets
         try:
-            server = await loop.create_server(asyncio.Protocol, *address)
+            server = await self.create_server(monitor, address)
         except socket.error as e:
-            raise ImproperlyConfigured(e)
+            raise ImproperlyConfigured(e) from None
         else:
-            self.monitor_sockets(monitor, server.sockets)
-
-    def monitor_sockets(self, monitor, sockets):
-        addresses = []
-        loop = monitor._loop
-        for sock in sockets:
-            address = sock.getsockname()
-            addresses.append(address)
-            self.logger.debug('Created socket %r', address)
-            fd = sock.fileno()
-            try:
-                loop.remove_reader(fd)
-            except NotImplementedError:
-                pass
-        monitor.sockets = sockets
-        self.cfg.addresses = addresses
+            monitor.servers[self.name] = server
+            self.cfg.addresses = server.addresses
 
     def actorparams(self, monitor, params):
-        params['sockets'] = monitor.sockets
+        params['sockets'] = monitor.servers[self.name].sockets
 
     async def worker_start(self, worker, exc=None):
         '''Start the worker by invoking the :meth:`create_server` method.
         '''
-        if not exc:
+        if not exc and self.name not in worker.servers:
             server = await self.create_server(worker)
             server.bind_event('stop', lambda _, **kw: worker.stop())
             worker.servers[self.name] = server
@@ -298,23 +282,26 @@ class SocketServer(pulsar.Application):
         return TcpServer(*args, **kw)
 
     #   INTERNALS
-    async def create_server(self, worker):
+    async def create_server(self, worker, address=None):
         '''Create the Server which will listen for requests.
 
         :return: a :class:`.TcpServer`.
         '''
-        sockets = worker.sockets
+        sockets = worker.sockets if not address else None
         cfg = self.cfg
         max_requests = cfg.max_requests
         if max_requests:
             max_requests = int(lognormvariate(log(max_requests), 0.2))
-        server = self.server_factory(self.protocol_factory(),
-                                     worker._loop,
-                                     sockets=sockets,
-                                     max_requests=max_requests,
-                                     keep_alive=cfg.keep_alive,
-                                     name=self.name,
-                                     logger=self.logger)
+        server = self.server_factory(
+            self.protocol_factory(),
+            worker._loop,
+            sockets=sockets,
+            address=address,
+            max_requests=max_requests,
+            keep_alive=cfg.keep_alive,
+            name=self.name,
+            logger=self.logger
+        )
         for event in ('connection_made', 'pre_request', 'post_request',
                       'connection_lost'):
             callback = getattr(cfg, event)
@@ -356,7 +343,6 @@ class UdpSocketServer(SocketServer):
         number of workers to 0.
         '''
         cfg = self.cfg
-        loop = monitor._loop
         if (not pulsar.platform.has_multiProcessSocket or
                 cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
@@ -364,16 +350,9 @@ class UdpSocketServer(SocketServer):
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
         address = parse_address(self.cfg.address)
-        # First create the sockets
-        transport, _ = await loop.create_datagram_endpoint(
-            asyncio.DatagramProtocol, address)
-        sock = transport.get_extra_info('socket')
-        transport._sock = DummySock()
-        transport.close()
-        self.monitor_sockets(monitor, [sock])
-
-    def actorparams(self, monitor, params):
-        params.update({'sockets': monitor.sockets})
+        server = await self.create_server(monitor, address)
+        monitor.servers[self.name] = server
+        self.cfg.addresses = server.addresses
 
     def server_factory(self, *args, **kw):
         '''By default returns a new :class:`.DatagramServer`.
@@ -381,18 +360,20 @@ class UdpSocketServer(SocketServer):
         return DatagramServer(*args, **kw)
 
     #   INTERNALS
-    async def create_server(self, worker):
+    async def create_server(self, worker, address=None):
         '''Create the Server which will listen for requests.
 
         :return: the server obtained from :meth:`server_factory`.
         '''
+        sockets = worker.sockets if not address else None
         cfg = self.cfg
         max_requests = cfg.max_requests
         if max_requests:
             max_requests = int(lognormvariate(log(max_requests), 0.2))
         server = self.server_factory(self.protocol_factory(),
                                      worker._loop,
-                                     sockets=worker.sockets,
+                                     sockets=sockets,
+                                     address=address,
                                      max_requests=max_requests,
                                      name=self.name,
                                      logger=self.logger)
@@ -403,9 +384,3 @@ class UdpSocketServer(SocketServer):
                 server.bind_event(event, callback)
         await server.create_endpoint()
         return server
-
-
-class DummySock:
-
-    def close(self):
-        pass

@@ -643,6 +643,15 @@ class TcpServer(Producer):
         if self._server is not None:
             return self._server.sockets[0].getsockname()
 
+    @property
+    def addresses(self):
+        return [sock.getsockname() for sock in self.sockets or ()]
+
+    @property
+    def sockets(self):
+        if self._server is not None:
+            return self._server.sockets
+
     async def start_serving(self, backlog=100, sslcontext=None):
         """Start serving.
 
@@ -777,6 +786,20 @@ class DatagramServer(Producer):
         super().__init__(loop, protocol_factory, name=name,
                          max_requests=max_requests, logger=logger)
         self._params = {'address': address, 'sockets': sockets}
+
+    @property
+    def addresses(self):
+        return [sock.getsockname() for sock in self.sockets or ()]
+
+    @property
+    def sockets(self):
+        sockets = []
+        if self._transports is not None:
+            for t in self._transports:
+                sock = t.get_extra_info('socket')
+                if sock:
+                    sockets.append(sock)
+        return sockets
 
     async def create_endpoint(self, **kw):
         """create the server endpoint.
