@@ -91,6 +91,9 @@ class EchoProtocol(pulsar.ProtocolConsumer):
     buffer = b''
     '''The buffer for long messages'''
 
+    def connection_made(self, connection):
+        self.logger.info("Connected from {}".format(connection))
+
     def data_received(self, data):
         '''Implements the :meth:`~.ProtocolConsumer.data_received` method.
 
@@ -124,6 +127,9 @@ class EchoProtocol(pulsar.ProtocolConsumer):
         if rest:
             raise ProtocolError
         return data[:-len(self.separator)]
+
+    def connection_lost(self, connection):
+        self.logger.info("Disconnected from {}".format(connection))
 
 
 class EchoServerProtocol(EchoProtocol):
@@ -213,11 +219,5 @@ def server(name=None, description=None, **kwargs):
     return SocketServer(EchoServerProtocol, name=name,
                         description=description, **kwargs)
 
-
-def log_connection(connection, exc=None):
-    if not exc:
-        connection.logger.info('Got a new connection!')
-
-
 if __name__ == '__main__':  # pragma nocover
-    server(connection_made=log_connection).start()
+    server().start()

@@ -452,6 +452,7 @@ class Connection(Protocol, Timeout):
     def __init__(self, consumer_factory=None, timeout=None, **kw):
         super().__init__(**kw)
         self.bind_event('connection_lost', self._connection_lost)
+        self.bind_event('connection_made', self._connection_made)
         self._processed = 0
         self._current_consumer = None
         self._consumer_factory = consumer_factory
@@ -525,8 +526,7 @@ class Connection(Protocol, Timeout):
             consumer = self._producer.build_consumer(self._consumer_factory)
             assert self._current_consumer is None, 'Consumer is not None'
             self._current_consumer = consumer
-            consumer._connection = self
-            consumer.connection_made(self)
+            self._current_consumer._connection = self
 
     def _connection_lost(self, _, exc=None):
         """It performs these actions in the following order:
@@ -538,7 +538,15 @@ class Connection(Protocol, Timeout):
           :meth:`current_consumer`.
         """
         if self._current_consumer:
-            self._current_consumer.connection_lost(exc)
+            self._current_consumer.connection_lost(self)
+
+    def _connection_made(self, _, exc=None):
+        '''Handler connection_made event in ProtocolConsumer
+           or in its subclass'''
+
+        self.current_consumer()
+        if self._current_consumer:
+            self._current_consumer.connection_made(self)
 
 
 class Producer(EventHandler):
