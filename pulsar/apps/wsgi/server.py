@@ -16,7 +16,7 @@ import sys
 import time
 import os
 import io
-from asyncio import wait_for, ensure_future, sleep
+from asyncio import wait_for, sleep
 from wsgiref.handlers import format_date_time
 from urllib.parse import urlparse, unquote
 
@@ -248,8 +248,7 @@ class HttpServerResponse(ProtocolConsumer):
                                                    self.transport,
                                                    self.cfg.stream_buffer,
                                                    loop=self._loop)
-                ensure_future(self._response(self.wsgi_environ()),
-                              loop=self._loop)
+                self._loop.create_task(self._response(self.wsgi_environ()))
             body = parser.recv_body()
             if body:
                 self._body_reader.feed_data(body)

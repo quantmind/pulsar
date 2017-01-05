@@ -88,6 +88,7 @@ else:
 try:    # add uvloop if available
     import uvloop
     EVENT_LOOPS['uv'] = uvloop.Loop
+    # Future = uvloop.Future
 except Exception:     # pragma    nocover
     pass
 

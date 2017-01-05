@@ -157,8 +157,7 @@ class MultipartDecoder(FormDecoder):
         self.buffer = bytearray()
 
         if isinstance(inp, HttpBodyReader):
-            return ensure_future(self._consume(inp, boundary),
-                                 loop=inp.reader._loop)
+            return inp.reader._loop.create_task(self._consume(inp, boundary))
         else:
             producer = BytesProducer(inp)
             return producer(self._consume, boundary)

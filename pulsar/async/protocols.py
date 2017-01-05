@@ -3,7 +3,7 @@ from socket import IPPROTO_TCP, TCP_NODELAY
 
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import task, Future, ensure_future
+from .futures import task, Future
 from .events import EventHandler, AbortEvent
 from .mixins import FlowControl, Timeout
 
@@ -165,7 +165,7 @@ class ProtocolConsumer(EventHandler):
             conn._producer._requests_processed = p + 1
         self.bind_event('post_request', self._finished)
         self._request = request
-        return ensure_future(self._start(), loop=self._loop)
+        return self._loop.create_task(self._start())
 
     def abort_request(self):
         """Abort the request.
@@ -350,7 +350,7 @@ class PulsarProtocol(EventHandler, FlowControl):
                     self._transport.close()
                 except Exception:
                     pass
-            self._closed = ensure_future(self._close())
+            self._closed = self._loop.create_task(self._close())
         return self.event('connection_lost')
 
     def abort(self):

@@ -13,14 +13,6 @@ The :class:`WsgiResponse`, which is available in the
 several utility methods for manipulating headers and asynchronous content.
 
 
-Environ Mixin
-=====================
-
-.. autoclass:: EnvironMixin
-   :members:
-   :member-order: bysource
-
-
 .. _app-wsgi-request:
 
 Wsgi Request
@@ -240,7 +232,7 @@ class WsgiResponse:
         This is usually `True` if a generator is passed to the response object.
         """
         try:
-            len(self.content)
+            len(self._content)
         except TypeError:
             return True
         return False
@@ -332,27 +324,26 @@ class WsgiResponse:
         return self.headers[header]
 
 
-class EnvironMixin:
-    """A wrapper around a WSGI_ environ.
-
-    Instances of this class have the :attr:`environ` attribute as their
-    only private data. Every other attribute is stored in the :attr:`environ`
-    itself at the ``pulsar.cache`` wsgi-extension key.
-
-    .. attribute:: environ
-
-        WSGI_ environ dictionary
+class WsgiRequest:
+    """A wsgi request
     """
     __slots__ = ('environ',)
 
-    def __init__(self, environ, name=None):
+    def __init__(self, environ, app_handler=None, urlargs=None):
         self.environ = environ
         if pulsar_cache not in environ:
             environ[pulsar_cache] = AttributeDictionary()
-            self.cache.mixins = {}
             self.cache.logger = LOGGER
-        if name:
-            self.cache.mixins[name] = self
+            self.cache.cfg = environ.get('pulsar.cfg', {})
+        if app_handler:
+            self.cache.app_handler = app_handler
+            self.cache.urlargs = urlargs
+
+    def __repr__(self):
+        return self.path
+
+    def __str__(self):
+        return self.__repr__()
 
     @property
     def cache(self):
@@ -375,33 +366,6 @@ class EnvironMixin:
         c = self.connection
         if c:
             return c._loop
-
-    def __getattr__(self, name):
-        mixin = self.cache.mixins.get(name)
-        if mixin is None:
-            raise AttributeError("'%s' object has no attribute '%s'" %
-                                 (self.__class__.__name__, name))
-        return mixin
-
-    def get(self, key, default=None):
-        """Shortcut to the :attr:`environ` get method."""
-        return self.environ.get(key, default)
-
-
-class WsgiRequest(EnvironMixin):
-    """An :class:`EnvironMixin` for wsgi requests."""
-    def __init__(self, environ, app_handler=None, urlargs=None):
-        super().__init__(environ)
-        self.cache.cfg = environ.get('pulsar.cfg', {})
-        if app_handler:
-            self.cache.app_handler = app_handler
-            self.cache.urlargs = urlargs
-
-    def __repr__(self):
-        return self.path
-
-    def __str__(self):
-        return self.__repr__()
 
     @cached_property
     def first_line(self):
@@ -514,7 +478,7 @@ class WsgiRequest(EnvironMixin):
 
     @property
     def path(self):
-        """Shortcut to the :attr:`~EnvironMixin.environ` ``PATH_INFO`` value.
+        """Shortcut to the :attr:`~.environ` ``PATH_INFO`` value.
         """
         return self.environ.get('PATH_INFO', '/')
 
@@ -538,6 +502,10 @@ class WsgiRequest(EnvironMixin):
             return parse_options_header(content_type)
         else:
             return None, {}
+
+    def get(self, key, default=None):
+        """Shortcut to the :attr:`environ` get method."""
+        return self.environ.get(key, default)
 
     def data_and_files(self, data=True, files=True, stream=None):
         """Retrieve body data.
@@ -588,7 +556,7 @@ class WsgiRequest(EnvironMixin):
     @cached_property
     def url_data(self):
         """A (cached) dictionary containing data from the ``QUERY_STRING``
-        in :attr:`~.EnvironMixin.environ`.
+        in :attr:`~.environ`.
         """
         return query_dict(self.environ.get('QUERY_STRING', ''),
                           encoding=self.encoding)
