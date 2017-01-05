@@ -47,7 +47,7 @@ def reraise(tp, value, tb=None):
 
 
 def isfuture(x):
-    return isinstance(x, Future)
+    return isinstance(x, asyncio.Future)
 
 
 def create_future(loop=None):
@@ -55,7 +55,7 @@ def create_future(loop=None):
     try:
         return loop.create_future()
     except AttributeError:
-        return asyncio.Future(loop=loop)
+        return Future(loop=loop)
 
 
 LOGGER = logging.getLogger('pulsar')

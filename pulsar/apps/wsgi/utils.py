@@ -6,6 +6,9 @@ import time
 import re
 import textwrap
 import logging
+import socket
+from functools import lru_cache
+
 from datetime import datetime, timedelta
 from email.utils import formatdate
 from urllib.parse import parse_qsl
@@ -62,6 +65,11 @@ def get_logger(environ):
     if cache:
         return cache.logger or LOGGER
     return LOGGER
+
+
+@lru_cache(maxsize=1024)
+def server_name(address):
+    return socket.getfqdn(address)
 
 
 def log_wsgi_info(log, environ, status, exc=None):

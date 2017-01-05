@@ -15,7 +15,6 @@ Testing WSGI Environ
 import sys
 import time
 import os
-import socket
 import io
 from asyncio import wait_for, ensure_future, sleep
 from wsgiref.handlers import format_date_time
@@ -24,14 +23,13 @@ from urllib.parse import urlparse, unquote
 import pulsar
 from pulsar import (reraise, HttpException, ProtocolError, isawaitable,
                     BadRequest)
-from pulsar.utils.pep import native_str
 from pulsar.utils.httpurl import (Headers, has_empty_content, http_parser,
                                   iri_to_uri, http_chunks, tls_schemes)
 
 from pulsar.async.protocols import ProtocolConsumer
 
 from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
-                    log_wsgi_info, LOGGER, get_logger)
+                    log_wsgi_info, LOGGER, get_logger, server_name)
 from .formdata import http_protocol, HttpBodyReader
 from .wrappers import FileWrapper, close_object
 
@@ -115,7 +113,7 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
                "wsgi.multithread": False,
                "wsgi.multiprocess": False,
                "SERVER_SOFTWARE": server_software or pulsar.SERVER_SOFTWARE,
-               "REQUEST_METHOD": native_str(parser.get_method()),
+               "REQUEST_METHOD": parser.get_method(),
                "QUERY_STRING": parser.get_query_string(),
                "RAW_URI": raw_uri,
                "SERVER_PROTOCOL": protocol,
@@ -161,7 +159,7 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
         remote = forward
     environ['REMOTE_ADDR'] = remote[0]
     environ['REMOTE_PORT'] = str(remote[1])
-    environ['SERVER_NAME'] = socket.getfqdn(address[0])
+    environ['SERVER_NAME'] = server_name(address[0])
     environ['SERVER_PORT'] = address[1]
     path_info = request_uri.path
     if path_info is not None:
@@ -423,7 +421,7 @@ class HttpServerResponse(ProtocolConsumer):
                 self.write(b'', True)
 
             # client disconnected, end this connection
-            except (IOError, AbortWsgi):
+            except (IOError, AbortWsgi, RuntimeError):
                 self.finished()
             except Exception:
                 if wsgi_request(environ).cache.handle_wsgi_error:
@@ -492,13 +490,13 @@ class HttpServerResponse(ProtocolConsumer):
                                self.headers,
                                self.SERVER_SOFTWARE,
                                https=https,
-                               extra={'pulsar.connection': self.connection,
-                                      'pulsar.cfg': self.cfg,
-                                      'wsgi.multiprocess': multiprocess})
+                               extra=(('pulsar.connection', self.connection),
+                                      ('pulsar.cfg', self.cfg),
+                                      ('wsgi.multiprocess', multiprocess)))
         self.keep_alive = keep_alive(self.headers, self.parser.get_version(),
                                      environ['REQUEST_METHOD'])
-        self.headers.update([('Server', self.SERVER_SOFTWARE),
-                             ('Date', format_date_time(time.time()))])
+        self.headers.update((('Server', self.SERVER_SOFTWARE),
+                             ('Date', format_date_time(time.time()))))
         return environ
 
     def _new_request(self, _, exc=None):
