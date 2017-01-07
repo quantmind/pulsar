@@ -78,24 +78,27 @@ class Timeout:
         if self._timeout is None:
             self.event('connection_made').bind(self._add_timeout)
             self.event('connection_lost').bind(self._cancel_timeout)
-            self.event('before_write').bind(self._cancel_timeout)
-            self.event('after_write').bind(self._add_timeout)
-            self.event('data_received').bind(self._cancel_timeout)
-            self.event('data_processed').bind(self._add_timeout)
         self._timeout = timeout or 0
         self._add_timeout(None)
 
     # INTERNALS
     def _timed_out(self):
+        if self.last_change:
+            gap = self._loop.time() - self.last_change
+            if gap < self._timeout:
+                self._timeout_handler = None
+                return self._add_timeout(None, timeout=self._timeout-gap)
         self.close()
         self.logger.debug('Closed idle %s.', self)
 
-    def _add_timeout(self, _, exc=None, **kw):
+    def _add_timeout(self, _, exc=None, timeout=None):
         if not self.closed:
             self._cancel_timeout(_, exc=exc)
-            if self._timeout and not exc:
-                self._timeout_handler = self._loop.call_later(self._timeout,
-                                                              self._timed_out)
+            timeout = timeout or self._timeout
+            if timeout and not exc:
+                self._timeout_handler = self._loop.call_later(
+                    timeout, self._timed_out
+                )
 
     def _cancel_timeout(self, _, exc=None, **kw):
         if self._timeout_handler:

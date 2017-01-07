@@ -5,7 +5,6 @@ from async_timeout import timeout
 
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import Future
 from .access import LOGGER
 from .events import EventHandler, AbortEvent
 from .mixins import FlowControl, Timeout
@@ -146,14 +145,7 @@ class ProtocolConsumer(EventHandler):
         For server side consumer, this method simply fires the ``pre_request``
         event.
         """
-        if hasattr(self, '_request'):
-            raise RuntimeError('%s already requested %s' %
-                               (self, self._request))
         conn = self._connection
-        if not conn:
-            raise RuntimeError('Cannot start new request. No connection.')
-        if not conn.transport:
-            raise RuntimeError('%s has no transport.' % conn)
         conn._processed += 1
         if conn._producer:
             p = getattr(conn._producer, '_requests_processed', 0)
@@ -196,7 +188,6 @@ class ProtocolConsumer(EventHandler):
         if not hasattr(self, '_request'):
             self.start()
         self._data_received_count += 1
-        self.event('data_received').fire(data=data)
         result = self.data_received(data)
         self.event('data_processed').fire(data=data)
         return result
@@ -291,6 +282,8 @@ class PulsarProtocol(EventHandler, FlowControl):
         for complete transport closure.
         """
         if not self._closed:
+            closed = False
+            event = self.event('connection_lost')
             if self._transport:
                 if self._loop.get_debug():
                     self.logger.debug('Closing connection %s', self)
@@ -301,16 +294,21 @@ class PulsarProtocol(EventHandler, FlowControl):
                         pass
                 try:
                     self._transport.close()
+                    closed = self._loop.create_task(
+                        self._close(event.waiter())
+                    )
                 except Exception:
                     pass
-            self._closed = self._loop.create_task(self._close())
-        return self.event('connection_lost').fire()
+            if not closed:
+                self.event('connection_lost').fire()
+            self._closed = closed or True
 
     def abort(self):
         """Abort by aborting the :attr:`transport`
         """
         if self._transport:
             self._transport.abort()
+        self.event('connection_lost').fire()
 
     def connection_made(self, transport):
         """Sets the :attr:`transport`, fire the ``connection_made`` event
@@ -329,7 +327,7 @@ class PulsarProtocol(EventHandler, FlowControl):
         # let everyone know we have a connection with endpoint
         self.event('connection_made').fire()
 
-    def connection_lost(self, exc=None):
+    def connection_lost(self, _, exc=None):
         """Fires the ``connection_lost`` event.
         """
         self.event('connection_lost').fire()
@@ -344,10 +342,10 @@ class PulsarProtocol(EventHandler, FlowControl):
             info.update(self._producer.info())
         return info
 
-    async def _close(self):
+    async def _close(self, waiter):
         try:
             with timeout(CLOSE_TIMEOUT, loop=self._loop):
-                await self.event('connection_lost')
+                await waiter
         except asyncio.TimeoutError:
             self.logger.warning('Abort connection %s', self)
             self.abort()
@@ -357,6 +355,7 @@ class Protocol(PulsarProtocol, asyncio.Protocol):
     """An :class:`asyncio.Protocol` with :ref:`events <event-handling>`
     """
     _data_received_count = 0
+    last_change = None
 
     def write(self, data):
         """Write ``data`` into the wire.
@@ -375,9 +374,8 @@ class Protocol(PulsarProtocol, asyncio.Protocol):
                                   'transport buffer')
                 t._buffer.extend(data)
             else:
-                self.event('before_write').fire()
                 t.write(data)
-                self.event('after_write').fire()
+            self.last_change = self._loop.time()
             return self._write_waiter or ()
         else:
             raise ConnectionResetError('No Transport')
@@ -436,11 +434,10 @@ class Connection(Protocol, Timeout):
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         """
         self._data_received_count = self._data_received_count + 1
-        self.event('data_received').fire(data=data)
         toprocess = data
         while toprocess:
-            toprocess = self.current_consumer().data_received(data)
-        self.event('data_processed').fire(data=data)
+            toprocess = self.current_consumer()._data_received(data)
+        self.last_change = self._loop.time()
 
     def upgrade(self, consumer_factory):
         """Upgrade the :func:`_consumer_factory` callable.

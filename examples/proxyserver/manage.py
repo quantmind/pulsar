@@ -164,8 +164,8 @@ class TunnelResponse:
             self.future.set_result([b''])
             response.abort_request()
         else:
-            response.bind_event('data_processed', self.data_processed)
-            response.bind_event('post_request', self.post_request)
+            response.event('data_processed').bind(self.data_processed)
+            response.event('post_request').bind(self.post_request)
 
     def data_processed(self, response, data=None, **kw):
         self.environ['pulsar.connection'].write(data)

@@ -56,7 +56,7 @@ from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (
     SimpleCookie, has_empty_content, REDIRECT_CODES,
     ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
-    remove_double_slash, iri_to_uri,is_absolute_uri, parse_options_header
+    remove_double_slash, iri_to_uri, is_absolute_uri, parse_options_header
 )
 
 from .content import HtmlDocument

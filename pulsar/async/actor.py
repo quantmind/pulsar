@@ -1,7 +1,6 @@
 import sys
 import os
 import pickle
-from itertools import chain
 from threading import current_thread
 
 from pulsar import HaltServer, CommandError, MonitorStarted, system

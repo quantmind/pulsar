@@ -185,7 +185,8 @@ class HttpRedirect(HttpException):
     status = 302
 
     def __init__(self, location, status=None, headers=None, **kw):
-        headers = Headers.make(headers)
+        if not isinstance(headers, CIMultiDict):
+            headers = CIMultiDict(headers or ())
         headers['location'] = location
         super().__init__(status=status or self.status, headers=headers, **kw)
 

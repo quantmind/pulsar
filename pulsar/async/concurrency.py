@@ -4,7 +4,6 @@ import itertools
 import asyncio
 import pickle
 from time import time
-from functools import partial
 from collections import OrderedDict
 from multiprocessing import Process, current_process
 from multiprocessing.reduction import ForkingPickler
@@ -228,17 +227,9 @@ class Concurrency:
             #
             actor.exit_code = exit_code
             actor.event('stopping').fire()
-            if actor._loop.is_running():
-                actor.logger.debug('asynchronous stopping')
-
-                # def cbk(_):
-                #     return self._stop_actor(actor)
-
-                # return chain_future(stopping, callback=cbk, errback=cbk)
-            else:
-                if actor.logger:
-                    actor.logger.debug('stopping')
-                return self._stop_actor(actor)
+            if actor.logger:
+                actor.logger.debug('stopping')
+            return self._stop_actor(actor)
         elif actor.stopped():
             return self._stop_actor(actor, True)
 

@@ -82,11 +82,18 @@ class OneTime(Event):
     onetime = True
 
     def fire(self, **kw):
-        if self._handlers:
-            o = self._self
-            self._handlers, handlers = None, self._handlers
-            for hnd in handlers:
-                hnd(o, **kw)
+        o = self._self
+        if o is not None:
+            if self._handlers:
+                self._handlers, handlers = None, self._handlers
+                for hnd in handlers:
+                    hnd(o, **kw)
+            if self._waiter:
+                exc = kw.get('exc')
+                if exc:
+                    self._waiter.set_exception(exc)
+                else:
+                    self._waiter.set_result(o)
             self._self = None
 
     def waiter(self):
