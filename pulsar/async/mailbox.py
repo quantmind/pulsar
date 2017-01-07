@@ -254,7 +254,7 @@ class MailboxClient(AbstractClient):
     protocol_factory = MailboxProtocol
 
     def __init__(self, address, actor, loop):
-        super().__init__(loop)
+        super().__init__(loop=loop)
         self.address = address
         self.name = 'Mailbox for %s' % actor
         self._connection = None

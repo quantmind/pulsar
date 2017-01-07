@@ -4,6 +4,7 @@ import itertools
 import asyncio
 import pickle
 from time import time
+from functools import partial
 from collections import OrderedDict
 from multiprocessing import Process, current_process
 from multiprocessing.reduction import ForkingPickler
@@ -128,7 +129,7 @@ class Concurrency:
     def setup_event_loop(self, actor):
         '''Set up the event loop for ``actor``.
         '''
-        actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
+        actor.logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
@@ -138,7 +139,7 @@ class Concurrency:
             else:
                 raise
         if not hasattr(loop, 'logger'):
-            loop.logger = actor._logger
+            loop.logger = actor.logger
         actor.mailbox = self.create_mailbox(actor, loop)
         return loop
 
@@ -159,10 +160,10 @@ class Concurrency:
             assert actor.state == ACTOR_STATES.STARTING
             if actor.cfg.debug:
                 actor.logger.debug('starting handshake')
-            actor.bind_event('start', self._switch_to_run)
-            actor.bind_event('start', self.periodic_task)
-            actor.bind_event('start', self._acknowledge_start)
-            actor.fire_event('start')
+            actor.event('start').bind(
+                self._switch_to_run,
+                self.periodic_task
+            ).fire()
         except Exception as exc:
             actor.stop(exc)
 
@@ -193,7 +194,7 @@ class Concurrency:
             # if an error occurs, shut down the actor
             ack = actor.send('monitor', 'notify', actor.info())
             add_errback(ack, actor.stop)
-            actor.fire_event('periodic_task')
+            actor.event('periodic_task').fire()
             next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
         else:
             next = 0
@@ -226,14 +227,14 @@ class Concurrency:
                     exit_code = getattr(actor._loop, 'exit_code', 0)
             #
             actor.exit_code = exit_code
-            stopping = actor.fire_event('stopping')
-            if not stopping.done() and actor._loop.is_running():
+            actor.event('stopping').fire()
+            if actor._loop.is_running():
                 actor.logger.debug('asynchronous stopping')
 
-                def cbk(_):
-                    return self._stop_actor(actor)
+                # def cbk(_):
+                #     return self._stop_actor(actor)
 
-                return chain_future(stopping, callback=cbk, errback=cbk)
+                # return chain_future(stopping, callback=cbk, errback=cbk)
             else:
                 if actor.logger:
                     actor.logger.debug('stopping')
@@ -267,12 +268,6 @@ class Concurrency:
         elif exc:
             actor.stop(exc)
 
-    def _acknowledge_start(self, actor, exc=None):
-        if exc is None:
-            actor.logger.info('started')
-        else:
-            actor.stop(exc)
-
     def _remove_actor(self, monitor, actor, log=True):
         raise RuntimeError('Cannot remove actor')
 
@@ -285,7 +280,7 @@ class MonitorMixin:
     def create_actor(self):
         self.managed_actors = {}
         actor = self.actor_class(self)
-        actor.bind_event('on_info', self._info_monitor)
+        actor.event('on_info').bind(self._info_monitor)
         return actor
 
     def start(self):
@@ -412,7 +407,7 @@ class MonitorMixin:
                     monitor.remove_callback('periodic_task', _check)
                     waiter.set_result(None)
 
-            monitor.bind_event('periodic_task', _check)
+            monitor.event('periodic_task').bind(_check)
         else:
             waiter.set_result(None)
 
@@ -451,7 +446,7 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
         return True
 
     def setup_event_loop(self, actor):
-        actor._logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
+        actor.logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
         actor.mailbox = ProxyMailbox(actor)
         loop = actor.mailbox._loop
         loop.call_soon(actor.start)
@@ -479,7 +474,7 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
             elif monitor.cfg.debug:
                 monitor.logger.debug('still stopping')
             #
-            monitor.fire_event('periodic_task')
+            monitor.event('periodic_task').fire()
         #
         if not monitor.closed():
             monitor.next_periodic_task = monitor._loop.call_later(
@@ -524,7 +519,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         actor = super().create_actor()
         self.monitors = OrderedDict()
         self.registered = {self.identity(actor): actor}
-        actor.bind_event('start', self._start_arbiter)
+        actor.event('start').bind(self._start_arbiter)
         return actor
 
     def get_actor(self, actor, aid, check_monitor=True):
@@ -564,13 +559,13 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         '''Override :meth:`.Concurrency.create_mailbox` to create the
         mailbox server.
         '''
-        mailbox = TcpServer(MailboxProtocol, loop, ('127.0.0.1', 0),
-                            name='mailbox')
+        mailbox = TcpServer(MailboxProtocol, address=('127.0.0.1', 0),
+                            loop=loop, name='mailbox')
         # when the mailbox stop, close the event loop too
-        mailbox.bind_event('stop', lambda _, **kw: loop.stop())
-        mailbox.bind_event(
-            'start',
-            lambda _, **kw: loop.call_soon(self.hand_shake, actor))
+        mailbox.event('stop').bind(lambda _, **kw: loop.stop())
+        mailbox.event('start').bind(
+            lambda _, **kw: loop.call_soon(self.hand_shake, actor)
+        )
         return mailbox
 
     def periodic_task(self, actor, **kw):
@@ -590,7 +585,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             if not actor.is_running() and actor.cfg.debug:
                 actor.logger.debug('still stopping')
             #
-            actor.fire_event('periodic_task')
+            actor.event('periodic_task').fire()
 
         if not actor.closed():
             actor.next_periodic_task = actor._loop.call_later(
@@ -673,7 +668,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         if actor.exit_code and actor._exit:
             sys.exit(actor.exit_code)
 
-    def _start_arbiter(self, actor, exc=None):
+    def _start_arbiter(self, actor):
         if not os.environ.get('SERVER_SOFTWARE'):
             os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
         pid_file = actor.cfg.pid_file

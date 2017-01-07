@@ -49,13 +49,15 @@ Wsgi File Wrapper
 from functools import reduce, partial
 from http.client import responses
 
+from multidict import CIMultiDict
+
 from pulsar import isawaitable, chain_future, HttpException, create_future
 from pulsar.utils.structures import AttributeDictionary
-from pulsar.utils.httpurl import (Headers, SimpleCookie,
-                                  has_empty_content, REDIRECT_CODES,
-                                  ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
-                                  remove_double_slash, iri_to_uri,
-                                  is_absolute_uri, parse_options_header)
+from pulsar.utils.httpurl import (
+    SimpleCookie, has_empty_content, REDIRECT_CODES,
+    ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
+    remove_double_slash, iri_to_uri,is_absolute_uri, parse_options_header
+)
 
 from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, set_cookie, query_dict,
@@ -146,9 +148,9 @@ class WsgiResponse:
         self.environ = environ
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
-        self.cookies = SimpleCookie()
-        self.headers = Headers(response_headers or ())
+        self.headers = CIMultiDict(response_headers or ())
         self.content = content
+        self._cookies = None
         self._can_store_cookies = can_store_cookies
         if content_type is not None:
             self.content_type = content_type
@@ -160,6 +162,12 @@ class WsgiResponse:
     @property
     def iterated(self):
         return self._iterated
+
+    @property
+    def cookies(self):
+        if self._cookies is None:
+            self._cookies = SimpleCookie()
+        return self._cookies
 
     @property
     def path(self):
@@ -191,8 +199,8 @@ class WsgiResponse:
                         self.encoding = 'utf-8'
                     content = content.encode(self.encoding)
 
-            if isinstance(content, bytes):
-                content = (content,)
+                if isinstance(content, bytes):
+                    content = (content,)
             self._content = content
         else:
             raise RuntimeError('Cannot set content. Already iterated')
@@ -238,8 +246,7 @@ class WsgiResponse:
         return False
 
     def can_set_cookies(self):
-        if self.status_code < 400:
-            return self._can_store_cookies
+        return self.status_code < 400 and self._can_store_cookies
 
     def length(self):
         if not self.is_streamed:
@@ -292,13 +299,13 @@ class WsgiResponse:
         else:
             if not self.is_streamed:
                 cl = 0
-                for c in self.content:
+                for c in self._content:
                     cl += len(c)
                 if cl == 0 and self.content_type in JSON_CONTENT_TYPES:
                     self._content = (b'{}',)
                     cl = len(self._content[0])
                 headers['Content-Length'] = str(cl)
-            ct = self.content_type
+            ct = headers.get('content-type')
             # content type encoding available
             if self.encoding:
                 ct = ct or 'text/plain'
@@ -308,10 +315,12 @@ class WsgiResponse:
                 headers['Content-Type'] = ct
             if self.method == HEAD:
                 self._content = ()
-        if self.can_set_cookies():
+        # Cookies
+        if (self.status_code < 400 and self._can_store_cookies and
+                self._cookies):
             for c in self.cookies.values():
                 headers.add_header('Set-Cookie', c.OutputString())
-        return list(headers)
+        return list(headers.items())
 
     def has_header(self, header):
         return header in self.headers

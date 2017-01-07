@@ -12,16 +12,6 @@ Several opensource efforts have been used as source of snippets:
 * werkzeug_
 
 
-.. _tools-http-headers:
-
-HTTP Headers
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Headers
-   :members:
-   :member-order: bysource
-
-
 .. _tools-http-parser:
 
 HTTP Parser
@@ -48,12 +38,14 @@ from uuid import uuid4
 from email.utils import formatdate
 from io import BytesIO
 import zlib
-from collections import deque, OrderedDict
+from collections import deque
 from urllib import request as urllibr
 from http import client as httpclient
 from urllib.parse import quote, urlsplit, splitport
 from http.cookiejar import CookieJar, Cookie
 from http.cookies import SimpleCookie
+
+from multidict import CIMultiDict
 
 from .structures import mapping_iterator
 from .string import to_bytes, to_string
@@ -120,6 +112,7 @@ NO_CONTENT_CODES = frozenset((204, 304))
 
 CRLF = '\r\n'
 LWS = '\r\n '
+SEP = ': '
 
 
 def escape(s):
@@ -393,236 +386,10 @@ def parse_options_header(header, options=None):
     return ctype, options
 
 
-class Headers:
-    '''Utility for managing HTTP headers for both clients and servers.
-
-    It has a dictionary like interface with few extra functions to facilitate
-    the insertion of multiple header values. Header fields are
-    **case insensitive**, therefore doing::
-
-        >>> h = Headers()
-        >>> h['Content-Length'] = '1050'
-
-    is equivalent to
-
-        >>> h['content-length'] = '1050'
-
-    :param headers: optional iterable over header field/value pairs.
-    :param kind: optional headers type, one of ``server``, ``client`` or
-        ``both``.
-    :param strict: if ``True`` only valid headers field will be included.
-
-    This :class:`Headers` container maintains an ordering as suggested by
-    http://www.w3.org/Protocols/rfc2616/rfc2616.html:
-
-    .. epigraph::
-
-        The order in which header fields with differing field names are
-        received is not significant. However, it is "good practice" to send
-        general-header fields first, followed by request-header or
-        response-header fields, and ending with the entity-header fields.
-
-        -- rfc2616 section 4.2
-
-    The strict parameter is rarely used and it forces the omission on
-    non-standard header fields.
-    '''
-    @classmethod
-    def make(cls, headers):
-        if not isinstance(headers, cls):
-            headers = cls(headers)
-        return headers
-
-    def __init__(self, *args, **kwargs):
-        self._headers = OrderedDict()
-        if args or kwargs:
-            self.update(*args, **kwargs)
-
-    def __repr__(self):
-        return self._headers.__repr__()
-
-    def __str__(self):
-        return '\r\n'.join(self._ordered())
-
-    def __bytes__(self):
-        return str(self).encode(DEFAULT_CHARSET)
-
-    def __len__(self):
-        return len(self._headers)
-
-    def update(self, *args, **kwargs):
-        """Extend the headers with an ``iterable``.
-
-        :param iterable: a dictionary or an iterable over keys, values tuples.
-        """
-        if len(args) == 1:
-            for key, value in mapping_iterator(args[0]):
-                self.add_header(key, value)
-        elif args:
-            raise TypeError('update expected at most 1 arguments, got %d' %
-                            len(args))
-        for key, value in kwargs.items():
-            self.add_header(key, value)
-
-    def override(self, iterable):
-        '''Extend headers by overriding fields form iterable.
-
-        :param iterable: a dictionary or an iterable over keys, values tuples.
-        '''
-        seen = set()
-        for key, value in mapping_iterator(iterable):
-            key = key.lower()
-            if key in seen:
-                self.add_header(key, value)
-            else:
-                seen.add(key)
-                self[key] = value
-
-    def copy(self):
-        return self.__class__(self)
-
-    def __contains__(self, key):
-        return header_field(key) in self._headers
-
-    def __getitem__(self, key):
-        key = header_field(key)
-        values = self._headers[key]
-        joiner = HEADER_FIELDS_JOINER.get(key, ', ')
-        if joiner is None:
-            joiner = '; '
-        return joiner.join(values)
-
-    def __delitem__(self, key):
-        self._headers.__delitem__(header_field(key))
-
-    def __setitem__(self, key, value):
-        key = header_field(key)
-        if key and value:
-            if not isinstance(value, list):
-                value = header_values(key, value)
-            self._headers[key] = value
-
-    def get(self, key, default=None):
-        '''Get the field value at ``key`` as comma separated values.
-
-        For example::
-
-            >>> from pulsar.utils.httpurl import Headers
-            >>> h = Headers(kind='client')
-            >>> h.add_header('accept-encoding', 'gzip')
-            >>> h.add_header('accept-encoding', 'deflate')
-            >>> h.get('accept-encoding')
-
-        results in::
-
-            'gzip, deflate'
-        '''
-        if key in self:
-            return self.__getitem__(key)
-        else:
-            return default
-
-    def get_all(self, key, default=None):
-        '''Get the values at header ``key`` as a list rather than a
-        string separated by comma (which is returned by the
-        :meth:`get` method).
-
-        For example::
-
-            >>> from pulsar.utils.httpurl import Headers
-            >>> h = Headers(kind='client')
-            >>> h.add_header('accept-encoding', 'gzip')
-            >>> h.add_header('accept-encoding', 'deflate')
-            >>> h.get_all('accept-encoding')
-
-        results in::
-
-            ['gzip', 'deflate']
-        '''
-        return self._headers.get(header_field(key), default)
-
-    def has(self, field, value):
-        '''Check if ``value`` is available in header ``field``.'''
-        value = value.lower()
-        for c in self.get_all(field, ()):
-            if c.lower() == value:
-                return True
-        return False
-
-    def pop(self, key, *args):
-        return self._headers.pop(header_field(key), *args)
-
-    def clear(self):
-        '''Same as :meth:`dict.clear`, it removes all headers.
-        '''
-        self._headers.clear()
-
-    def getheaders(self, key):  # pragma    nocover
-        '''Required by cookielib in python 2.
-
-        If the key is not available, it returns an empty list.
-        '''
-        return self._headers.get(header_field(key), [])
-
-    def add_header(self, key, values):
-        '''Add ``values`` to ``key`` header.
-
-        If the header is already available, append the value to the list.
-
-        :param key: header name
-        :param values: a string value or a list/tuple of strings values
-            for header ``key``
-        '''
-        key = header_field(key)
-        if key and values:
-            if not isinstance(values, (tuple, list)):
-                values = header_values(key, values)
-            current = self._headers.get(key, [])
-            for value in values:
-                if value and value not in current:
-                    current.append(value)
-            self._headers[key] = current
-
-    def remove_header(self, key, value=None):
-        '''Remove the header at ``key``.
-
-        If ``value`` is provided, it removes only that value if found.
-        '''
-        key = header_field(key)
-        if key:
-            if value:
-                value = value.lower()
-                values = self._headers.get(key, [])
-                removed = None
-                for v in values:
-                    if v.lower() == value:
-                        removed = v
-                        values.remove(v)
-                self._headers[key] = values
-                return removed
-            else:
-                return self._headers.pop(key, None)
-
-    def flat(self, version, status):
-        '''Full headers bytes representation'''
-        vs = version + (status, self)
-        return ('HTTP/%s.%s %s\r\n%s' % vs).encode(DEFAULT_CHARSET)
-
-    def __iter__(self):
-        dj = ', '
-        for k, values in self._headers.items():
-            joiner = HEADER_FIELDS_JOINER.get(k, dj)
-            if joiner:
-                yield k, joiner.join(values)
-            else:
-                for value in values:
-                    yield k, value
-
-    def _ordered(self):
-        for key, header in self:
-            yield "%s: %s" % (key, header)
-        yield ''
-        yield ''
+def http_headers_message(headers, version, status):
+    sl = 'HTTP/%s.%s %s' % (version[0], version[1], status)
+    hs = CRLF.join((k + SEP + v for k, v in headers.items()))
+    return (CRLF.join((sl, hs, CRLF))).encode(DEFAULT_CHARSET)
 
 
 ###############################################################################
@@ -675,7 +442,7 @@ class HttpParser:
         self._query_string = None
         self._kind = kind
         self._fragment = None
-        self._headers = Headers()
+        self._headers = CIMultiDict()
         self._chunked = False
         self._body = []
         self._trailers = None
@@ -889,7 +656,7 @@ class HttpParser:
             while len(lines) and lines[0].startswith((" ", "\t")):
                 value.append(lines.popleft())
             value = ''.join(value).rstrip()
-            self._headers.add_header(name, value)
+            self._headers.add(name, value)
         # detect now if body is sent by chunks.
         clen = self._headers.get('Content-Length')
         if 'Transfer-Encoding' in self._headers:

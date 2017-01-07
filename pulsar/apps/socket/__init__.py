@@ -239,7 +239,6 @@ class SocketServer(pulsar.Application):
             if cfg.key_file and not os.path.exists(cfg.key_file):
                 raise ImproperlyConfigured('key_file "%s" does not exist' %
                                            cfg.key_file)
-        # First create the sockets
         try:
             server = await self.create_server(monitor, address)
         except socket.error as e:
@@ -294,7 +293,7 @@ class SocketServer(pulsar.Application):
             max_requests = int(lognormvariate(log(max_requests), 0.2))
         server = self.server_factory(
             self.protocol_factory(),
-            worker._loop,
+            loop=worker._loop,
             sockets=sockets,
             address=address,
             max_requests=max_requests,

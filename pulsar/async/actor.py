@@ -183,7 +183,6 @@ class Actor(EventHandler, Coverage):
         the :attr:`~.AsyncObject.logger`.
     '''
     ONE_TIME_EVENTS = ('start', 'stopping')
-    MANY_TIMES_EVENTS = ('on_info', 'on_params', 'periodic_task')
     exit_code = None
     mailbox = None
     monitor = None
@@ -197,17 +196,13 @@ class Actor(EventHandler, Coverage):
         self.stream = get_stream(self.cfg)
         self.tid = current_thread().ident
         self.pid = os.getpid()
-        hooks = []
-        for name in chain(self.ONE_TIME_EVENTS, self.MANY_TIMES_EVENTS):
-            hook = impl.params.pop(name, None)
-            if hook:
-                hooks.append((name, hook))
         for name, value in impl.params.items():
-            setattr(self, name, value)
+            if name.startswith('on_'):
+                self.event(name[3:]).bind(value)
+            else:
+                setattr(self, name, value)
         del impl.params
-        super().__init__(impl.setup_event_loop(self))
-        for name, hook in hooks:
-            self.bind_event(name, hook)
+        self._loop = impl.setup_event_loop(self)
         try:
             self.cfg.post_fork(self)
         except Exception:   # pragma    nocover
@@ -326,7 +321,7 @@ class Actor(EventHandler, Coverage):
         actors. Fire the :ref:`on_params actor hook <actor-hooks>`.
         '''
         data = {}
-        self.fire_event('on_params', params=data)
+        self.event('on_params').fire(params=data)
         return data
 
     # ##############################################################  STATES
@@ -418,7 +413,7 @@ class Actor(EventHandler, Coverage):
                 'extra': self.extra}
         if isp:
             data['system'] = system.process_info(self.pid)
-        self.fire_event('on_info', info=data)
+        self.event('on_info').fire(info=data)
         return data
 
     def _run(self, initial=True):

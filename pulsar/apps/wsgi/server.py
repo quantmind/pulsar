@@ -16,25 +16,28 @@ import sys
 import time
 import os
 import io
-from asyncio import wait_for, sleep
+from asyncio import sleep
 from wsgiref.handlers import format_date_time
 from urllib.parse import urlparse, unquote
+
+from async_timeout import timeout
+from multidict import CIMultiDict
 
 import pulsar
 from pulsar import (reraise, HttpException, ProtocolError, isawaitable,
                     BadRequest)
-from pulsar.utils.httpurl import (Headers, has_empty_content, http_parser,
-                                  iri_to_uri, http_chunks, tls_schemes)
-
+from pulsar.utils.httpurl import (has_empty_content, http_parser,
+                                  iri_to_uri, http_chunks, tls_schemes,
+                                  http_headers_message)
 from pulsar.async.protocols import ProtocolConsumer
 
-from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS,
+from .utils import (handle_wsgi_error, wsgi_request, HOP_HEADERS, no_hop,
                     log_wsgi_info, LOGGER, get_logger, server_name)
 from .formdata import http_protocol, HttpBodyReader
 from .wrappers import FileWrapper, close_object
 
 
-MAX_TIME_IN_LOOP = 0.2
+MAX_TIME_IN_LOOP = 0.3
 HTTP_1_1 = (1, 1)
 
 
@@ -57,7 +60,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     parser = http_parser(kind=0)
     method = (method or 'GET').upper()
     path = iri_to_uri(path or '/')
-    request_headers = Headers(headers, kind='client')
+    request_headers = CIMultiDict(headers)
     # Add Host if not available
     parsed = urlparse(path)
     if 'host' not in request_headers:
@@ -76,7 +79,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
         params.update(extra)
     return wsgi_environ(stream, parser, request_headers,
                         ('127.0.0.1', 8060), '255.0.1.2:8080',
-                        Headers(), https=https, extra=params)
+                        CIMultiDict(), https=https, extra=params)
 
 
 def wsgi_environ(stream, parser, request_headers, address, client_address,
@@ -120,7 +123,7 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
                "CONTENT_TYPE": ''}
     forward = client_address
     script_name = os.environ.get("SCRIPT_NAME", "")
-    for header, value in request_headers:
+    for header, value in request_headers.items():
         header = header.lower()
         if header in HOP_HEADERS:
             headers[header] = value
@@ -174,7 +177,7 @@ def wsgi_environ(stream, parser, request_headers, address, client_address,
 
 def keep_alive(headers, version, method):
     """ return True if the connection should be kept alive"""
-    conn = set((v.lower() for v in headers.get_all('connection', ())))
+    conn = set(headers.getall('connection', ()))
     if "close" in conn:
         return False
     elif 'upgrade' in conn:
@@ -215,11 +218,11 @@ class HttpServerResponse(ProtocolConsumer):
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
     def __init__(self, wsgi_callable, cfg, server_software=None, loop=None):
-        super().__init__(loop=loop)
+        self._loop = loop
         self.wsgi_callable = wsgi_callable
         self.cfg = cfg
         self.parser = http_parser(kind=0)
-        self.headers = Headers()
+        self.headers = CIMultiDict()
         self.keep_alive = False
         self.SERVER_SOFTWARE = server_software or self.SERVER_SOFTWARE
 
@@ -242,8 +245,7 @@ class HttpServerResponse(ProtocolConsumer):
         processed = parser.execute(data, len(data))
         if parser.is_headers_complete():
             if not self._body_reader:
-                headers = Headers(parser.get_headers())
-                self._body_reader = HttpBodyReader(headers,
+                self._body_reader = HttpBodyReader(parser.get_headers(),
                                                    parser,
                                                    self.transport,
                                                    self.cfg.stream_buffer,
@@ -260,7 +262,7 @@ class HttpServerResponse(ProtocolConsumer):
             if processed < len(data):
                 if not self._buffer:
                     self._buffer = data[processed:]
-                    self.bind_event('post_request', self._new_request)
+                    self.event('post_request').bind(self._new_request)
                 else:
                     self._buffer += data[processed:]
         #
@@ -332,16 +334,7 @@ class HttpServerResponse(ProtocolConsumer):
         self._status = status
         if type(response_headers) is not list:
             raise TypeError("Headers must be a list of name/value tuples")
-        for header, value in response_headers:
-            if header.lower() in HOP_HEADERS:
-                # These features are the exclusive province of this class,
-                # this should be considered a fatal error for an application
-                # to attempt sending them, but we don't raise an error,
-                # just log a warning
-                self.logger.warning('Application passing hop header "%s"',
-                                    header)
-                continue
-            self.headers.add_header(header, value)
+        self.headers.extend(no_hop(response_headers))
         return self.write
 
     def write(self, data, force=False):
@@ -357,8 +350,10 @@ class HttpServerResponse(ProtocolConsumer):
         chunks = []
         if not self._headers_sent:
             tosend = self.get_headers()
-            self._headers_sent = tosend.flat(self.version, self.status)
-            self.fire_event('on_headers')
+            self._headers_sent = http_headers_message(
+                tosend, self.version, self.status
+            )
+            self.event('on_headers').fire()
             chunks.append(self._headers_sent)
         if data:
             if self.chunked:
@@ -380,34 +375,33 @@ class HttpServerResponse(ProtocolConsumer):
         while not done:
             done = True
             try:
-                if exc_info is None:
-                    if (not environ.get('HTTP_HOST') and
-                            environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
-                        raise BadRequest
-                    response = self.wsgi_callable(environ, self.start_response)
-                    if isawaitable(response):
-                        response = await wait_for(response, alive)
-                else:
-                    response = handle_wsgi_error(environ, exc_info)
-                    if isawaitable(response):
-                        response = await wait_for(response, alive)
-                #
-                if exc_info:
-                    self.start_response(response.status,
-                                        response.get_headers(), exc_info)
-                #
-                # Do the actual writing
-                loop = self._loop
-                start = loop.time()
-                for chunk in response:
-                    if isawaitable(chunk):
-                        chunk = await wait_for(chunk, alive)
-                        start = loop.time()
-                    result = self.write(chunk)
-                    if isawaitable(result):
-                        await wait_for(result, alive)
-                        start = loop.time()
+                with timeout(alive, loop=self._loop):
+                    if exc_info is None:
+                        if (not environ.get('HTTP_HOST') and
+                                environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
+                            raise BadRequest
+                        response = self.wsgi_callable(environ,
+                                                      self.start_response)
+                        if isawaitable(response):
+                            response = await response
                     else:
+                        response = handle_wsgi_error(environ, exc_info)
+                        if isawaitable(response):
+                            response = await response
+                    #
+                    if exc_info:
+                        self.start_response(response.status,
+                                            response.get_headers(), exc_info)
+                    #
+                    # Do the actual writing
+                    loop = self._loop
+                    start = loop.time()
+                    for chunk in response:
+                        if isawaitable(chunk):
+                            chunk = await chunk
+                        result = self.write(chunk)
+                        if isawaitable(result):
+                            await result
                         time_in_loop = loop.time() - start
                         if time_in_loop > MAX_TIME_IN_LOOP:
                             get_logger(environ).debug(
@@ -415,29 +409,33 @@ class HttpServerResponse(ProtocolConsumer):
                                 time_in_loop)
                             await sleep(0.1, loop=self._loop)
                             start = loop.time()
-                #
-                # make sure we write headers and last chunk if needed
-                self.write(b'', True)
+                    #
+                    # make sure we write headers and last chunk if needed
+                    result = self.write(b'', True)
+                    if isawaitable(result):
+                        await result
 
             # client disconnected, end this connection
             except (IOError, AbortWsgi, RuntimeError):
-                self.finished()
+                self.event('post_request').fire()
             except Exception:
                 if wsgi_request(environ).cache.handle_wsgi_error:
                     self.keep_alive = False
                     self._write_headers()
                     self.connection.close()
-                    self.finished()
+                    self.event('post_request').fire()
                 else:
                     done = False
                     exc_info = sys.exc_info()
             else:
-                logger = get_logger(environ)
-                log_wsgi_info(logger.info, environ, self.status)
-                self.finished()
+                if loop.get_debug():
+                    logger = get_logger(environ)
+                    log_wsgi_info(logger.info, environ, self.status)
+                    if not self.keep_alive:
+                        logger.debug('No keep alive, closing connection %s',
+                                     self.connection)
+                self.event('post_request').fire()
                 if not self.keep_alive:
-                    logger.debug('No keep alive, closing connection %s',
-                                 self.connection)
                     self.connection.close()
             finally:
                 close_object(response)

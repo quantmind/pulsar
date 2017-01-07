@@ -1,9 +1,10 @@
 import logging
 from functools import reduce
+import asyncio
+
+from async_timeout import timeout
 
 from pulsar.utils.internet import is_socket_closed
-
-import asyncio
 
 from .futures import AsyncObject
 from .protocols import Producer
@@ -123,8 +124,8 @@ class Pool(AsyncObject):
             connection = queue.get_nowait()
         # wait for one to be available
         elif self.in_use + self._connecting >= queue._maxsize:
-            connection = await asyncio.wait_for(queue.get(), self._timeout,
-                                                loop=self._loop)
+            with timeout(self._timeout, loop=self._loop):
+                connection = await queue.get()
         else:   # must create a new connection
             self._connecting += 1
             try:

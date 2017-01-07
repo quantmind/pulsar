@@ -22,6 +22,8 @@ try:
 except ImportError:     # pragma    nocover
     DEFAULT_CA_BUNDLE_PATH = None
 
+from multidict import CIMultiDict
+
 import pulsar
 from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
                     isawaitable, ProtocolConsumer, ensure_future,
@@ -32,7 +34,7 @@ from pulsar.utils.system import json as _json
 from pulsar.utils.pep import to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.httpurl import (http_parser, encode_multipart_formdata,
-                                  Headers, get_environ_proxies, is_succesful,
+                                  get_environ_proxies, is_succesful,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, http_chunks,
                                   parse_options_header, tls_schemes,
@@ -250,7 +252,7 @@ class HttpRequest(RequestBase):
         self.client = client
         self.method = method.upper()
         self.inp_params = inp_params or {}
-        self.unredirected_headers = Headers()
+        self.unredirected_headers = CIMultiDict()
         self.history = history
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
@@ -585,7 +587,7 @@ class HttpResponse(ProtocolConsumer):
     def headers(self):
         if not hasattr(self, '_headers'):
             if self.parser and self.parser.is_headers_complete():
-                self._headers = Headers(self.parser.get_headers())
+                self._headers = CIMultiDict(self.parser.get_headers())
         return getattr(self, '_headers', None)
 
     @property
@@ -805,12 +807,12 @@ class HttpClient(AbstractClient):
 
     It can be overwritten on :meth:`request`.
     """
-    DEFAULT_HTTP_HEADERS = Headers((
+    DEFAULT_HTTP_HEADERS = CIMultiDict((
         ('Connection', 'Keep-Alive'),
         ('Accept', '*/*'),
         ('Accept-Encoding', 'deflate'),
         ('Accept-Encoding', 'gzip')))
-    DEFAULT_TUNNEL_HEADERS = Headers((
+    DEFAULT_TUNNEL_HEADERS = CIMultiDict((
         ('Connection', 'Keep-Alive'),
         ('Proxy-Connection', 'Keep-Alive')))
     request_parameters = ('max_redirects', 'decompress',

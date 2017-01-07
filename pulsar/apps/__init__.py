@@ -106,21 +106,20 @@ async def _get_app(arbiter, name, safe=True):
             return monitor.app
 
 
-async def monitor_start(self, exc=None):
-    start_event = self.start_event
+async def monitor_start(self, start_event, exc=None):
     if exc:
         start_event.set_exception(exc)
         return
     app = self.app
     try:
-        self.bind_event('on_params', monitor_params)
-        self.bind_event('on_info', monitor_info)
-        self.bind_event('stopping', monitor_stopping)
+        self.event('on_params').bind(monitor_params)
+        self.event('on_info').bind(monitor_info)
+        self.event('stopping').bind(monitor_stopping)
         for callback in when_monitor_start:
             coro = callback(self)
             if coro:
                 await coro
-        self.bind_event('periodic_task', app.monitor_task)
+        self.event('periodic_task').bind(app.monitor_task)
         coro = app.monitor_start(self)
         if coro:
             await coro
@@ -169,8 +168,8 @@ def worker_start(self, exc=None):
     if app is None:
         cfg = self.cfg
         self.app = app = cfg.application.from_config(cfg, logger=self.logger)
-    self.bind_event('on_info', app.worker_info)
-    self.bind_event('stopping', app.worker_stopping)
+    self.event('on_info').bind(app.worker_info)
+    self.event('stopping').bind(app.worker_stopping)
     return app.worker_start(self, exc=exc)
 
 
@@ -463,7 +462,7 @@ class Application(Configurator):
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
                 start = create_future(actor._loop)
-                actor.bind_event('start', partial(self._add_monitor, start))
+                actor.event('start').bind(partial(self._add_monitor, start))
                 return start
             else:
                 return
@@ -532,12 +531,15 @@ class Application(Configurator):
                     a.set(s.value)
 
     #   INTERNALS
-    def _add_monitor(self, start, arbiter, exc=None):
-        if not exc:
-            monitor = arbiter.add_monitor(
-                self.name, app=self, cfg=self.cfg,
-                start=monitor_start, start_event=start)
-            self.cfg = monitor.cfg
+    def _add_monitor(self, start, arbiter):
+        loop = arbiter._loop
+        monitor = arbiter.add_monitor(
+            self.name, app=self, cfg=self.cfg,
+            on_start=lambda arg, **kw: loop.create_task(
+                monitor_start(arg, start, **kw)
+            )
+        )
+        self.cfg = monitor.cfg
 
 
 class MultiApp(Configurator):

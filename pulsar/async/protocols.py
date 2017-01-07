@@ -1,9 +1,12 @@
 import asyncio
 from socket import IPPROTO_TCP, TCP_NODELAY
 
+from async_timeout import timeout
+
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import task, Future
+from .futures import Future
+from .access import LOGGER
 from .events import EventHandler, AbortEvent
 from .mixins import FlowControl, Timeout
 
@@ -65,7 +68,6 @@ class ProtocolConsumer(EventHandler):
     _connection = None
     _data_received_count = 0
     ONE_TIME_EVENTS = ('pre_request', 'post_request')
-    MANY_TIMES_EVENTS = ('data_received', 'data_processed')
 
     @property
     def connection(self):
@@ -101,18 +103,11 @@ class ProtocolConsumer(EventHandler):
         if self._connection:
             return self._connection.producer
 
-    @property
-    def on_finished(self):
+    def finished(self, exc=None):
         """Event fired once a full response to a request is received. It is
         the ``post_request`` one time event.
         """
-        return self.event('post_request')
-
-    def connection_made(self, connection):
-        """Called by a :class:`Connection` when it starts using this consumer.
-
-        By default it does nothing.
-        """
+        self.event('post_request').fire(exc=exc)
 
     def data_received(self, data):
         """Called when some data is received.
@@ -163,41 +158,25 @@ class ProtocolConsumer(EventHandler):
         if conn._producer:
             p = getattr(conn._producer, '_requests_processed', 0)
             conn._producer._requests_processed = p + 1
-        self.bind_event('post_request', self._finished)
+        self.event('post_request').bind(self._finished)
         self._request = request
-        return self._loop.create_task(self._start())
+        try:
+            self.event('pre_request').fire()
+        except AbortEvent:
+            self.logger.debug('Abort request %s', request)
+        else:
+            if self._request is not None:
+                try:
+                    self.start_request()
+                except Exception as exc:
+                    self.finished(exc=exc)
 
     def abort_request(self):
         """Abort the request.
 
         This method can be called during the pre-request stage
         """
-        future = self.events['pre_request']
-        if future.done():
-            raise RuntimeError('Request already sent')
-        future.add_done_callback(self._abort_request)
         raise AbortRequest
-
-    def connection_lost(self, exc):
-        """Called by the :attr:`connection` when the transport is closed.
-
-        By default it calls the :meth:`finished` method. It can be overwritten
-        to handle the potential exception ``exc``.
-        """
-        # TODO: decide how to handle connection_lost when no exception occurs
-        # Set the first positional parameter to None so that if the
-        # connection was dropped without exception it returns None
-        # rather than the protocol consumer
-        return self.finished(None)
-
-    def finished(self, *arg, **kw):
-        """Fire the ``post_request`` event if it wasn't already fired.
-        """
-        if not self.done():
-            return self.fire_event('post_request', *arg, **kw)
-
-    def done(self):
-        return self.event('post_request').fired()
 
     def write(self, data):
         """Delegate writing to the underlying :class:`.Connection`
@@ -210,18 +189,6 @@ class ProtocolConsumer(EventHandler):
         else:
             raise RuntimeError('No connection')
 
-    async def _start(self):
-        try:
-            await self.fire_event('pre_request')
-        except AbortEvent:
-            self.logger.debug('Abort request %s', self.request)
-        else:
-            if self._request is not None:
-                try:
-                    self.start_request()
-                except Exception as exc:
-                    self.finished(exc=exc)
-
     def _data_received(self, data):
         # Called by Connection, it updates the counters and invoke
         # the high level data_received method which must be implemented
@@ -229,25 +196,15 @@ class ProtocolConsumer(EventHandler):
         if not hasattr(self, '_request'):
             self.start()
         self._data_received_count += 1
-        self.fire_event('data_received', data=data)
+        self.event('data_received').fire(data=data)
         result = self.data_received(data)
-        self.fire_event('data_processed', data=data)
+        self.event('data_processed').fire(data=data)
         return result
 
     def _finished(self, _, exc=None):
         c = self._connection
         if c and c._current_consumer is self:
             c._current_consumer = None
-
-    @task
-    async def _abort_request(self, fut):
-        exc = fut.exception()
-        for event in self.ONE_TIME_EVENTS:
-            if not self.event(event).fired():
-                try:
-                    await self.fire_event(event, exc=exc)
-                except AbortRequest:
-                    pass
 
 
 class PulsarProtocol(EventHandler, FlowControl):
@@ -268,31 +225,27 @@ class PulsarProtocol(EventHandler, FlowControl):
     _address = None
     _closed = None
 
-    def __init__(self, loop, session=1, producer=None, logger=None, **kw):
-        super().__init__(loop)
-        FlowControl.__init__(self, **kw)
-        self._logger = logger
-        self._session = session
+    def __init__(self, *, loop=None, session=1, producer=None,
+                 low_limit=None, high_limit=None, logger=None, **kw):
+        self.logger = logger or LOGGER
+        self.session = session
+        self._low_limit = low_limit
+        self._high_limit = high_limit
+        self._loop = loop
         self._producer = producer
+        self._low_limit = low_limit
+        self._high_limit = high_limit
+        self.event('connection_made').bind(self._set_flow_limits)
+        self.event('connection_lost').bind(self._wakeup_waiter)
+        self.event('after_write').bind(self._make_write_waiter)
 
     def __repr__(self):
         address = self._address
         if address:
-            return '%s session %s' % (nice_address(address), self._session)
+            return '%s session %s' % (nice_address(address), self.session)
         else:
-            return '<pending> session %s' % self._session
+            return '<pending> session %s' % self.session
     __str__ = __repr__
-
-    @property
-    def session(self):
-        """Connection session number.
-
-        Passed during initialisation by the :attr:`producer`.
-        Usually an integer representing the number of separate connections
-        the producer has processed at the time it created this
-        :class:`Protocol`.
-        """
-        return self._session
 
     @property
     def transport(self):
@@ -339,7 +292,7 @@ class PulsarProtocol(EventHandler, FlowControl):
         """
         if not self._closed:
             if self._transport:
-                if self.debug:
+                if self._loop.get_debug():
                     self.logger.debug('Closing connection %s', self)
                 if self._transport.can_write_eof():
                     try:
@@ -351,7 +304,7 @@ class PulsarProtocol(EventHandler, FlowControl):
                 except Exception:
                     pass
             self._closed = self._loop.create_task(self._close())
-        return self.event('connection_lost')
+        return self.event('connection_lost').fire()
 
     def abort(self):
         """Abort by aborting the :attr:`transport`
@@ -374,14 +327,12 @@ class PulsarProtocol(EventHandler, FlowControl):
         except (OSError, NameError):
             pass
         # let everyone know we have a connection with endpoint
-        self.fire_event('connection_made')
+        self.event('connection_made').fire()
 
     def connection_lost(self, exc=None):
         """Fires the ``connection_lost`` event.
         """
-        if self.debug and not exc:
-            self.logger.debug('Lost connection %s', self)
-        self.fire_event('connection_lost')
+        self.event('connection_lost').fire()
 
     def eof_received(self):
         """The socket was closed from the remote end
@@ -395,10 +346,8 @@ class PulsarProtocol(EventHandler, FlowControl):
 
     async def _close(self):
         try:
-            await asyncio.wait_for(
-                self.event('connection_lost'),
-                CLOSE_TIMEOUT
-            )
+            with timeout(CLOSE_TIMEOUT, loop=self._loop):
+                await self.event('connection_lost')
         except asyncio.TimeoutError:
             self.logger.warning('Abort connection %s', self)
             self.abort()
@@ -426,9 +375,9 @@ class Protocol(PulsarProtocol, asyncio.Protocol):
                                   'transport buffer')
                 t._buffer.extend(data)
             else:
-                self.fire_event('before_write')
+                self.event('before_write').fire()
                 t.write(data)
-                self.fire_event('after_write')
+                self.event('after_write').fire()
             return self._write_waiter or ()
         else:
             raise ConnectionResetError('No Transport')
@@ -457,10 +406,10 @@ class Connection(Protocol, Timeout):
     """
     def __init__(self, consumer_factory=None, timeout=None, **kw):
         super().__init__(**kw)
-        self.bind_event('connection_lost', self._connection_lost)
         self._processed = 0
         self._current_consumer = None
         self._consumer_factory = consumer_factory
+        self.event('connection_lost').bind(self._connection_lost)
         self.timeout = timeout
 
     @property
@@ -487,14 +436,11 @@ class Connection(Protocol, Timeout):
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         """
         self._data_received_count = self._data_received_count + 1
-        self.fire_event('data_received', data=data)
+        self.event('data_received').fire(data=data)
         toprocess = data
         while toprocess:
-            consumer = self.current_consumer()
-            toprocess = consumer._data_received(toprocess)
-            if isinstance(toprocess, Future):
-                break
-        self.fire_event('data_processed', data=data)
+            toprocess = self.current_consumer().data_received(data)
+        self.event('data_processed').fire(data=data)
 
     def upgrade(self, consumer_factory):
         """Upgrade the :func:`_consumer_factory` callable.
@@ -532,7 +478,6 @@ class Connection(Protocol, Timeout):
             assert self._current_consumer is None, 'Consumer is not None'
             self._current_consumer = consumer
             consumer._connection = self
-            consumer.connection_made(self)
 
     def _connection_lost(self, _, exc=None):
         """It performs these actions in the following order:
@@ -544,7 +489,7 @@ class Connection(Protocol, Timeout):
           :meth:`current_consumer`.
         """
         if self._current_consumer:
-            self._current_consumer.connection_lost(exc)
+            self._current_consumer.finished(exc=exc)
 
 
 class Producer(EventHandler):
@@ -559,21 +504,15 @@ class Producer(EventHandler):
         protocol_factory(session, producer, **params)
     """
 
-    def __init__(self, loop=None, protocol_factory=None, name=None,
+    def __init__(self, *, loop=None, protocol_factory=None, name=None,
                  max_requests=None, logger=None):
-        super().__init__(loop or asyncio.get_event_loop())
+        self.logger = logger or LOGGER
+        self._loop = loop or asyncio.get_event_loop()
         self.protocol_factory = protocol_factory or self.protocol_factory
         self._name = name or self.__class__.__name__
         self._requests_processed = 0
-        self._sessions = 0
+        self.sessions = 0
         self._max_requests = max_requests
-        self._logger = logger
-
-    @property
-    def sessions(self):
-        """Total number of protocols created by the :class:`Producer`.
-        """
-        return self._sessions
 
     @property
     def requests_processed(self):
@@ -587,11 +526,11 @@ class Producer(EventHandler):
         This method increase the count of :attr:`sessions` and build
         the protocol passing ``self`` as the producer.
         """
-        self._sessions = self._sessions + 1
+        self.sessions += 1
         kw['session'] = self.sessions
         kw['producer'] = self
         kw['loop'] = self._loop
-        kw['logger'] = self._logger
+        kw['logger'] = self.logger
         return self.protocol_factory(**kw)
 
     def build_consumer(self, consumer_factory):
@@ -603,7 +542,7 @@ class Producer(EventHandler):
         :param consumer_factory: consumer factory to use.
         """
         consumer = consumer_factory(loop=self._loop)
-        consumer._logger = self._logger
+        consumer.logger = self.logger
         consumer.copy_many_times_events(self)
         return consumer
 
@@ -618,16 +557,14 @@ class TcpServer(Producer):
         Available once the :meth:`start_serving` method has returned.
     """
     ONE_TIME_EVENTS = ('start', 'stop')
-    MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'post_request',
-                         'connection_lost')
     _server = None
     _started = None
 
-    def __init__(self, protocol_factory, loop, address=None,
+    def __init__(self, protocol_factory, *, loop=None, address=None,
                  name=None, sockets=None, max_requests=None,
                  keep_alive=None, logger=None):
-        super().__init__(loop, protocol_factory, name=name,
-                         max_requests=max_requests, logger=logger)
+        super().__init__(loop=loop, protocol_factory=protocol_factory,
+                         name=name, max_requests=max_requests, logger=logger)
         self._params = {'address': address, 'sockets': sockets}
         self._keep_alive = max(keep_alive or 0, 0)
         self._concurrent_connections = set()
@@ -698,7 +635,7 @@ class TcpServer(Producer):
                 address = sock.getsockname()
                 self.logger.info('%s serving on %s', self._name,
                                  format_address(address))
-            self._loop.call_soon(self.fire_event, 'start')
+            self._loop.call_soon(self.event('start').fire)
 
     async def close(self):
         """Stop serving the :attr:`.Server.sockets`.
@@ -709,7 +646,7 @@ class TcpServer(Producer):
             coro = self._close_connections()
             if coro:
                 await coro
-            self.fire_event('stop')
+            self.event('stop').fire()
 
     def info(self):
         sockets = []
@@ -732,8 +669,8 @@ class TcpServer(Producer):
         """Override :meth:`Producer.create_protocol`.
         """
         protocol = super().create_protocol(timeout=self._keep_alive)
-        protocol.bind_event('connection_made', self._connection_made)
-        protocol.bind_event('connection_lost', self._connection_lost)
+        protocol.event('connection_made').bind(self._connection_made)
+        protocol.event('connection_lost').bind(self._connection_lost)
         protocol.copy_many_times_events(self)
         if (self._server and self._max_requests and
                 self._sessions >= self._max_requests):
@@ -784,7 +721,6 @@ class DatagramServer(Producer):
     _started = None
 
     ONE_TIME_EVENTS = ('start', 'stop')
-    MANY_TIMES_EVENTS = ('pre_request', 'post_request')
 
     def __init__(self, protocol_factory, loop=None, address=None,
                  name=None, sockets=None, max_requests=None,
@@ -817,40 +753,34 @@ class DatagramServer(Producer):
             address = self._params['address']
             sockets = self._params['sockets']
             del self._params
-            try:
-                transports = []
-                loop = self._loop
-                if sockets:
-                    for sock in sockets:
-                        transport, _ = await loop.create_datagram_endpoint(
-                            self.create_protocol, sock=sock)
-                        transports.append(transport)
-                else:
+            transports = []
+            loop = self._loop
+            if sockets:
+                for sock in sockets:
                     transport, _ = await loop.create_datagram_endpoint(
-                        self.create_protocol, local_addr=address)
+                        self.create_protocol, sock=sock)
                     transports.append(transport)
-                self._transports = transports
-                self._started = loop.time()
-                for transport in self._transports:
-                    address = transport.get_extra_info('sockname')
-                    self.logger.info('%s serving on %s', self._name,
-                                     format_address(address))
-                self.fire_event('start')
-            except Exception as exc:
-                self.logger.exception('Error while starting UDP server')
-                self.fire_event('start', exc=exc)
-                self.fire_event('stop')
+            else:
+                transport, _ = await loop.create_datagram_endpoint(
+                    self.create_protocol, local_addr=address)
+                transports.append(transport)
+            self._transports = transports
+            self._started = loop.time()
+            for transport in self._transports:
+                address = transport.get_extra_info('sockname')
+                self.logger.info('%s serving on %s', self._name,
+                                 format_address(address))
+            self.event('start').fire()
 
     async def close(self):
         """Stop serving the :attr:`.Server.sockets` and close all
         concurrent connections.
         """
-        if not self.fired_event('stop'):
-            transports, self._transports = self._transports, None
-            if transports:
-                for transport in transports:
-                    transport.close()
-            self.fire_event('stop')
+        transports, self._transports = self._transports, None
+        if transports:
+            for transport in transports:
+                transport.close()
+            self.event('stop').fire()
 
     def info(self):
         sockets = []

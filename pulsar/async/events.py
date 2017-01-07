@@ -1,26 +1,34 @@
-from collections import deque
-from functools import partial
+import logging
 
-from asyncio import InvalidStateError, ensure_future
-
-from .access import Future, _EVENT_LOOP_CLASSES
-from .futures import future_result_exc, AsyncObject
+from .access import create_future
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime', 'AbortEvent']
 
 
+LOGGER = logging.getLogger('pulsar.events')
+
+
 class AbortEvent(Exception):
-    '''Use this exception to abort events
-    '''
+    """Use this exception to abort events"""
     pass
 
 
-class AbstractEvent(AsyncObject):
+class Event:
     """Abstract event handler
     """
-    _handlers = None
-    _fired = 0
+    __slots__ = ('name', '_handlers', '_waiter', '_self')
+    onetime = False
+
+    def __init__(self, name, o):
+        self.name = name
+        self._handlers = None
+        self._self = o
+        self._waiter = None
+
+    def __repr__(self):
+        return '%s: %s' % (self.name, self._handlers)
+    __str__ = __repr__
 
     @property
     def handlers(self):
@@ -28,242 +36,95 @@ class AbstractEvent(AsyncObject):
             self._handlers = []
         return self._handlers
 
-    def bind(self, callback):
-        '''Bind a ``callback`` to this event.
-        '''
-        if callback not in self.handlers:
-            self.handlers.append(callback)
-
-    def remove_callback(self, callback):
-        '''Remove a callback from the list
-        '''
+    def bind(self, callback, *callbacks):
+        """Bind a ``callback`` to this event.
+        """
         handlers = self.handlers
-        filtered_callbacks = [f for f in handlers if f != callback]
-        removed_count = len(handlers) - len(filtered_callbacks)
-        if removed_count:
-            self.clear()
-            self._handlers.extend(filtered_callbacks)
-        return removed_count
-
-    def fired(self):
-        '''The number of times this event has fired'''
-        return self._fired
-
-    def fire(self, arg, **kwargs):
-        '''Fire this event.'''
-        raise NotImplementedError
+        if callback not in handlers:
+            handlers.append(callback)
+        if callbacks:
+            for callback in callbacks:
+                if callback not in handlers:
+                    handlers.append(callback)
+        return self
 
     def clear(self):
+        self._handlers = None
+
+    def remove_callback(self, callback):
+        """Remove a callback from the list
+        """
+        handlers = self._handlers
+        if handlers:
+            filtered_callbacks = [f for f in handlers if f != callback]
+            removed_count = len(handlers) - len(filtered_callbacks)
+            if removed_count:
+                self.clear()
+                self._handlers.extend(filtered_callbacks)
+            return removed_count
+
+    def fire(self, **kw):
         if self._handlers:
-            self._handlers[:] = []
-
-
-class Event(AbstractEvent):
-    '''The default implementation of :class:`AbstractEvent`.
-    '''
-    def __init__(self, loop=None, name=None):
-        self._loop = loop
-        self._name = name or self.__class__.__name__.lower()
-
-    def __repr__(self):
-        return '%s: %s' % (self._name, self._handlers)
-    __str__ = __repr__
-
-    def fire(self, arg, **kwargs):
-        self._fired += self._fired + 1
-        if self._handlers:
+            o = self._self
             for hnd in self._handlers:
                 try:
-                    hnd(arg, **kwargs)
+                    hnd(o, **kw)
                 except Exception:
                     self.logger.exception('Exception while firing %s', self)
 
 
-class OneTime(Future, AbstractEvent):
+class OneTime(Event):
     '''An :class:`AbstractEvent` which can be fired once only.
 
     This event handler is a subclass of :class:`.Future`.
     Implemented mainly for the one time events of the :class:`EventHandler`.
     '''
-    def __init__(self, *, loop=None, name=None):
-        super().__init__(loop=loop)
-        self._processing = False
-        self._name = name or self.__class__.__name__.lower()
+    onetime = True
 
-    def __repr__(self):
-        return '%s: %s' % (self._name, super().__repr__())
-    __str__ = __repr__
-
-    @property
-    def handlers(self):
-        if self._handlers is None:
-            self._handlers = deque()
-        return self._handlers
-
-    def bind(self, callback):
-        '''Bind a ``callback`` to this event.
-        '''
-        super().bind(callback)
-        if self._fired and not self._processing:
-            arg, exc = future_result_exc(self)
-            self._process(arg, exc, {})
-
-    def fire(self, arg, exc=None, **kwargs):
-        '''The callback handlers registered via the :meth:~AbstractEvent.bind`
-        method are executed first.
-
-        :param arg: the argument
-        :param exc: optional exception
-        '''
-        if self._fired:
-            raise InvalidStateError('already fired')
-        self._fired = 1
-        self._process(arg, exc, kwargs)
-        return self
-
-    def clear(self):
+    def fire(self, **kw):
         if self._handlers:
-            self._handlers.clear()
+            o = self._self
+            self._handlers, handlers = None, self._handlers
+            for hnd in handlers:
+                hnd(o, **kw)
+            self._self = None
 
-    def _process(self, arg, exc, kwargs, future=None):
-        while self._handlers:
-            self._processing = True
-            hnd = self._handlers.popleft()
-            try:
-                result = hnd(arg, exc=exc, **kwargs)
-            except AbortEvent as e:
-                exc = e
-            except Exception:
-                self.logger.exception('Exception while firing onetime event')
-            else:
-                # If result is a future, resume process once done
-                try:
-                    result = ensure_future(result, loop=self._loop)
-                except TypeError:
-                    pass
-                else:
-                    result.add_done_callback(
-                        partial(self._process, arg, exc, kwargs))
-                    return
-        self._processing = False
-        if not self.done():
-            if exc:
-                self.set_exception(exc)
-            else:
-                self.set_result(arg)
+    def waiter(self):
+        if not self._waiter:
+            self._waiter = create_future()
+        return self._waiter
 
 
-class EventHandler(AsyncObject):
+class EventHandler:
     '''A Mixin for handling events on :ref:`async objects <async-object>`.
 
     It handles :class:`OneTime` events and :class:`Event` that occur
     several times.
     '''
-    ONE_TIME_EVENTS = ()
-    '''Event names which occur once only.'''
-    MANY_TIMES_EVENTS = ()
-    '''Event names which occur several times.'''
-    def __init__(self, loop=None, one_time_events=None,
-                 many_times_events=None):
-        assert isinstance(loop, _EVENT_LOOP_CLASSES)
-        self._loop = loop
-        one = self.ONE_TIME_EVENTS
-        if one_time_events:
-            one = set(one)
-            one.update(one_time_events)
-        events = dict(((name, OneTime(loop=loop, name=name)) for name in one))
-        many = self.MANY_TIMES_EVENTS
-        if many_times_events:
-            many = set(many)
-            many.update(many_times_events)
-        events.update(((name, Event(loop=loop, name=name)) for name in many))
-        self._events = events
-
-    @property
-    def events(self):
-        '''The dictionary of all events.
-        '''
-        return self._events
+    ONE_TIME_EVENTS = None
+    _events = None
 
     def event(self, name):
         '''Returns the :class:`Event` at ``name``.
 
         If no event is registered for ``name`` returns nothing.
         '''
-        return self._events.get(name)
-
-    def fired_event(self, name):
-        event = self._events.get(name)
-        return event._fired if event else 0
-
-    def bind_event(self, name, callback):
-        '''Register a ``callback`` with ``event``.
-
-        The callback must be a callable accepting one positional parameter
-        and at least the ``exc`` optional parameter::
-
-            def callback(arg, ext=None):
-                ...
-
-            o.bind_event('start', callback)
-
-        the instance firing the event or the first positional argument
-        passed to the :meth:`fire_event` method.
-
-        :param name: the event name. If the event is not available a warning
-            message is logged.
-        :param callback: a callable receiving one positional parameter. It
-            can also be a list/tuple of callables.
-        :return: nothing.
-        '''
-        if name not in self._events:
-            self._events[name] = Event()
-        event = self._events[name]
-        event.bind(callback)
-
-    def remove_callback(self, name, callback):
-        '''Remove a ``callback`` from event ``name``
-        '''
-        if name in self._events:
-            event = self._events[name]
-            return event.remove_callback(callback)
+        events = self._events
+        if events is None:
+            self._events = events = dict(((n, OneTime(n, self))
+                                          for n in self.ONE_TIME_EVENTS))
+        if name not in events:
+            events[name] = Event(name, self)
+        return events[name]
 
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.
         '''
-        for name in self._events:
-            if name in events:
-                self.bind_event(name, events[name])
-
-    def fire_event(self, name, *args, **kwargs):
-        """Dispatches ``arg`` or ``self`` to event ``name`` listeners.
-
-        * If event at ``name`` is a one-time event, it makes sure that it was
-          not fired before.
-
-        :param args: optional argument passed as positional parameter to the
-            event handler.
-        :param kwargs: optional key-valued parameters to pass to the event
-            handler. Can only be used for
-            :ref:`many times events <many-times-event>`.
-        :return: the :class:`Event` fired
-        """
-        if not args:
-            arg = self
-        elif len(args) == 1:
-            arg = args[0]
-        else:
-            raise TypeError('fire_event expected at most 1 argument got %s' %
-                            len(args))
-        event = self.event(name)
-        if event:
-            try:
-                event.fire(arg, **kwargs)
-            except InvalidStateError:
-                self.logger.error('Event %s already fired' % name)
-            return event
-        else:
-            self.logger.warning('Unknown event "%s" for %s', name, self)
+        evs = self._events
+        if evs:
+            for event in evs.values():
+                if event.name in events:
+                    event.bind(events[event.name])
 
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.
@@ -271,10 +132,10 @@ class EventHandler(AsyncObject):
         All many times events of ``other`` are copied to this handler
         provided the events handlers already exist.
         '''
-        if isinstance(other, EventHandler):
-            events = self._events
+        events = self._events
+        if events and other._events:
             for name, event in other._events.items():
-                if isinstance(event, Event) and event._handlers:
+                if not event.onetime and event._handlers:
                     ev = events.get(name)
                     # If the event is available add it
                     if ev:

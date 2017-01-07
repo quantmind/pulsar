@@ -3,7 +3,7 @@ A list of all Exception specific to pulsar library.
 '''
 import traceback
 
-from .httpurl import Headers
+from multidict import CIMultiDict
 
 
 __all__ = ['PulsarException',
@@ -166,7 +166,9 @@ class HttpException(PulsarException):
         self.handler = handler
         self.strict = strict
         self.content_type = content_type
-        self._headers = Headers.make(headers)
+        if not isinstance(headers, CIMultiDict):
+            headers = CIMultiDict(headers or ())
+        self._headers = headers
         super().__init__(msg)
 
     @property

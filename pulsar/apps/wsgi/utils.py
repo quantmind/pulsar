@@ -72,6 +72,18 @@ def server_name(address):
     return socket.getfqdn(address)
 
 
+def no_hop(headers):
+    for header, value in headers:
+        if header.lower() in HOP_HEADERS:
+            # These features are the exclusive province of this class,
+            # this should be considered a fatal error for an application
+            # to attempt sending them, but we don't raise an error,
+            # just log a warning
+            LOGGER.warning('Application passing hop header "%s"', header)
+            continue
+        yield header, value
+
+
 def log_wsgi_info(log, environ, status, exc=None):
     if not environ.get('pulsar.logged'):
         environ['pulsar.logged'] = True

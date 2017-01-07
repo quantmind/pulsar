@@ -10,13 +10,6 @@ class FlowControl:
     _paused = False
     _write_waiter = None
 
-    def __init__(self, low_limit=None, high_limit=None, **kw):
-        self._low_limit = low_limit
-        self._high_limit = high_limit
-        self.bind_event('connection_made', self._set_flow_limits)
-        self.bind_event('connection_lost', self._wakeup_waiter)
-        self.bind_event('after_write', self._make_write_waiter)
-
     def pause_writing(self):
         '''Called by the transport when the buffer goes over the
         high-water mark
@@ -83,12 +76,12 @@ class Timeout:
         '''Set a new :attr:`timeout` for this protocol
         '''
         if self._timeout is None:
-            self.bind_event('connection_made', self._add_timeout)
-            self.bind_event('connection_lost', self._cancel_timeout)
-            self.bind_event('before_write', self._cancel_timeout)
-            self.bind_event('after_write', self._add_timeout)
-            self.bind_event('data_received', self._cancel_timeout)
-            self.bind_event('data_processed', self._add_timeout)
+            self.event('connection_made').bind(self._add_timeout)
+            self.event('connection_lost').bind(self._cancel_timeout)
+            self.event('before_write').bind(self._cancel_timeout)
+            self.event('after_write').bind(self._add_timeout)
+            self.event('data_received').bind(self._cancel_timeout)
+            self.event('data_processed').bind(self._add_timeout)
         self._timeout = timeout or 0
         self._add_timeout(None)
 
