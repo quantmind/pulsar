@@ -70,6 +70,9 @@ cdef class Event:
     cpdef object onetime(self):
         return bool(self._onetime)
 
+    cpdef object fired(self):
+        return self._self == None
+
     cpdef list handlers(self):
         return self._handlers
 

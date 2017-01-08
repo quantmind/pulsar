@@ -51,7 +51,7 @@ class FlowControl:
             return
         self.resume_writing(exc=exc)
 
-    def _make_write_waiter(self, _, exc=None):
+    def _make_write_waiter(self):
         # callback for the after_write event
         if self._paused:
             waiter = self._write_waiter

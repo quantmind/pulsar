@@ -255,7 +255,7 @@ class SocketServer(pulsar.Application):
         '''
         if not exc and self.name not in worker.servers:
             server = await self.create_server(worker)
-            server.bind_event('stop', lambda _, **kw: worker.stop())
+            server.event('stop').bind(lambda _, **kw: worker.stop())
             worker.servers[self.name] = server
 
     async def worker_stopping(self, worker, exc=None):
@@ -305,7 +305,7 @@ class SocketServer(pulsar.Application):
                       'connection_lost'):
             callback = getattr(cfg, event)
             if callback != pass_through:
-                server.bind_event(event, callback)
+                server.event(event).bind(callback)
         await server.start_serving(cfg.backlog, sslcontext=self.sslcontext())
         return server
 
@@ -376,10 +376,10 @@ class UdpSocketServer(SocketServer):
                                      max_requests=max_requests,
                                      name=self.name,
                                      logger=self.logger)
-        server.bind_event('stop', lambda _, **kw: worker.stop())
+        server.event('stop').bind(lambda _, **kw: worker.stop())
         for event in ('pre_request', 'post_request'):
             callback = getattr(cfg, event)
             if callback != pass_through:
-                server.bind_event(event, callback)
+                server.event(event).bind(callback)
         await server.create_endpoint()
         return server

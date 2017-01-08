@@ -185,6 +185,7 @@ class Actor(EventHandler, Coverage):
     exit_code = None
     mailbox = None
     monitor = None
+    start_event = None
     next_periodic_task = None
 
     def __init__(self, impl):
@@ -412,7 +413,7 @@ class Actor(EventHandler, Coverage):
                 'extra': self.extra}
         if isp:
             data['system'] = system.process_info(self.pid)
-        self.event('on_info').fire(info=data)
+        self.event('on_info').fire(data=data)
         return data
 
     def _run(self, initial=True):

@@ -14,6 +14,7 @@ from pulsar.utils.system import convert_bytes
 from pulsar.utils.structures import MultiValueDict, mapping_iterator
 from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
                                   JSON_CONTENT_TYPES, parse_options_header)
+from .headers import CONTENT_LENGTH
 
 
 FORM_ENCODED_TYPES = ('application/x-www-form-urlencoded',
@@ -256,7 +257,7 @@ class MultipartPart:
         self.headers = headers
         self._bytes = []
         self._done = False
-        length = headers.get('content-length')
+        length = headers.get(CONTENT_LENGTH)
         content = headers.get('content-disposition')
         if length:
             try:

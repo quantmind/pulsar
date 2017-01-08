@@ -155,7 +155,7 @@ class MailboxProtocol(Protocol):
         self._parser = frame_parser(kind=2, pyparser=True)
         actor = get_actor()
         if actor.is_arbiter():
-            self.bind_event('connection_lost', self._connection_lost)
+            self.event('connection_lost').bind(self._connection_lost)
 
     def request(self, command, sender, target, args, kwargs):
         '''Used by the server to send messages to the client.'''
@@ -270,7 +270,7 @@ class MailboxClient(AbstractClient):
         # the request method
         if self._connection is None:
             self._connection = await self.connect()
-            self._connection.bind_event('connection_lost', self._lost)
+            self._connection.event('connection_lost').bind(self._lost)
         req = Message.command(command, sender, target, args, kwargs)
         self._connection._start(req)
         response = await req.waiter

@@ -60,7 +60,7 @@ By default, the list of hooks only contains a callback to start the
 """
 import os
 import sys
-from inspect import getfile
+from inspect import getfile, isawaitable
 from functools import partial
 from collections import namedtuple, OrderedDict
 import asyncio
@@ -106,7 +106,8 @@ async def _get_app(arbiter, name, safe=True):
             return monitor.app
 
 
-async def monitor_start(self, start_event, exc=None):
+async def monitor_start(self, exc=None):
+    start_event = self.start_event
     if exc:
         start_event.set_exception(exc)
         return
@@ -159,7 +160,7 @@ def monitor_params(self, data=None):
     app = self.app
     data.update({'cfg': app.cfg.clone(),
                  'name': '%s.worker' % app.name,
-                 'start': worker_start})
+                 'on_start': worker_start})
     app.actorparams(self, data)
 
 
@@ -170,7 +171,9 @@ def worker_start(self, exc=None):
         self.app = app = cfg.application.from_config(cfg, logger=self.logger)
     self.event('on_info').bind(app.worker_info)
     self.event('stopping').bind(app.worker_stopping)
-    return app.worker_start(self, exc=exc)
+    coro = app.worker_start(self, exc=exc)
+    if isawaitable(coro):
+        pulsar.ensure_future(coro, loop=self._loop)
 
 
 class Configurator:
@@ -535,8 +538,9 @@ class Application(Configurator):
         loop = arbiter._loop
         monitor = arbiter.add_monitor(
             self.name, app=self, cfg=self.cfg,
+            start_event=start,
             on_start=lambda arg, **kw: loop.create_task(
-                monitor_start(arg, start, **kw)
+                monitor_start(arg, **kw)
             )
         )
         self.cfg = monitor.cfg

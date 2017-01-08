@@ -28,9 +28,10 @@ from pulsar.utils.httpurl import (has_empty_content, http_parser,
                                   iri_to_uri, http_chunks, http_date,
                                   http_headers_message)
 from pulsar.async.protocols import ProtocolConsumer
+from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils import http
 
-from .utils import (handle_wsgi_error, wsgi_request,
+from .utils import (handle_wsgi_error, wsgi_request, pulsar_cache,
                     log_wsgi_info, LOGGER, get_logger, server_name)
 from .formdata import HttpBodyReader
 from .wrappers import FileWrapper, close_object
@@ -46,7 +47,7 @@ except ImportError:
 
 CHARSET = http.CHARSET
 MAX_TIME_IN_LOOP = 0.3
-HTTP_1_1 = (1, 1)
+HTTP_1_0 = '1.0'
 URL_SCHEME = os.environ.get('wsgi.url_scheme', 'http')
 ENVIRON = {
     "wsgi.errors": sys.stderr,
@@ -104,7 +105,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
 def wsgi_environ(stream, version, raw_uri, method,
                  request_headers, address,
                  client_address, headers, server_software=None,
-                 https=False, extra=None):
+                 cache=None, https=False):
     '''Build the WSGI Environment dictionary
 
     :param stream: a wsgi stream object
@@ -114,7 +115,6 @@ def wsgi_environ(stream, version, raw_uri, method,
     :param client_address: client address
     :param headers: container for response headers
     '''
-    protocol = "HTTP/%s" % version
     request_uri = http.parse_url(raw_uri)
     query = request_uri.query or b''
     url_scheme = request_uri.schema
@@ -132,12 +132,17 @@ def wsgi_environ(stream, version, raw_uri, method,
         "REQUEST_METHOD": method,
         "QUERY_STRING": query.decode(CHARSET),
         "RAW_URI": raw_uri.decode(CHARSET),
-        "SERVER_PROTOCOL": protocol,
-        "CONTENT_TYPE": ''
+        "SERVER_PROTOCOL": "HTTP/%s" % version,
+        "CONTENT_TYPE": '',
+        pulsar_cache: cache
     })
     for header, value in request_headers.items():
         if header in HOP_HEADERS:
-            headers[header] = value
+            if header == CONNECTION:
+                if version == HTTP_1_0 or value == 'close':
+                    headers[header] = value
+            else:
+                headers[header] = value
         else:
             hnd = HEADER_WSGI.get(header)
             if hnd and hnd(environ, value):
@@ -148,7 +153,7 @@ def wsgi_environ(stream, version, raw_uri, method,
     if environ['wsgi.url_scheme'] == 'https':
         environ['HTTPS'] = 'on'
     forward = headers.get(X_FORWARDED_FOR)
-    if isinstance(forward, str):
+    if forward:
         # we only took the last one
         # http://en.wikipedia.org/wiki/X-Forwarded-For
         if forward.find(",") >= 0:
@@ -169,8 +174,6 @@ def wsgi_environ(stream, version, raw_uri, method,
         if script_name:
             path_info = path_info.split(script_name, 1)[1]
         environ['PATH_INFO'] = unquote(path_info)
-    if extra:
-        environ.update(extra)
     return environ
 
 
@@ -223,6 +226,7 @@ class HttpServerResponse(ProtocolConsumer):
         self.on_message_complete = self.body_reader.feed_eof
         self.parser = http.HttpRequestParser(self)
         self.keep_alive = False
+        self.request_headers = CIMultiDict()
         self.headers = CIMultiDict()
         self.data_received = self.parser.feed_data
         self.SERVER_SOFTWARE = server_software or self.SERVER_SOFTWARE
@@ -243,7 +247,7 @@ class HttpServerResponse(ProtocolConsumer):
         name = istr(name.decode(CHARSET))
         #if HEADER_RE.search(name):
         #    raise InvalidHeader("invalid header name %s" % name)
-        self.headers[name] = value.decode(CHARSET)
+        self.request_headers[name] = value.decode(CHARSET)
 
     def on_headers_complete(self):
         self.version = self.parser.get_http_version()
@@ -253,7 +257,7 @@ class HttpServerResponse(ProtocolConsumer):
     def on_body(self, body):
         if not self.body_reader.reader:
             self.body_reader.initialise(
-                self.headers, self.parser, self.transport,
+                self.request_headers, self.parser, self.transport,
                 self.cfg.stream_buffer, loop=self._loop
             )
         self.body_reader.feed_data(body)
@@ -463,18 +467,20 @@ class HttpServerResponse(ProtocolConsumer):
         # return a the WSGI environ dictionary
         transport = self.transport
         https = True if transport.get_extra_info('sslcontext') else False
+        cache = AttributeDictionary(
+            logger=LOGGER, connection=self.connection, cfg=self.cfg
+        )
         environ = wsgi_environ(self.body_reader,
                                self.version,
                                self.raw_uri,
                                self.method,
-                               self.headers,
+                               self.request_headers,
                                transport.get_extra_info('sockname'),
                                self.address,
                                self.headers,
                                self.SERVER_SOFTWARE,
-                               https=https,
-                               extra=(('pulsar.connection', self.connection),
-                                      ('pulsar.cfg', self.cfg)))
+                               cache=cache,
+                               https=https)
         self.keep_alive = self.parser.should_keep_alive()
         self.headers[SERVER] = self.SERVER_SOFTWARE
         timestamp = time.time()

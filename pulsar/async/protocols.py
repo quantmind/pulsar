@@ -209,8 +209,6 @@ class PulsarProtocol(EventHandler, FlowControl):
     * ``connection_lost``
     """
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
-    MANY_TIMES_EVENTS = ('data_received', 'data_processed',
-                         'before_write', 'after_write')
 
     _transport = None
     _address = None
@@ -228,7 +226,6 @@ class PulsarProtocol(EventHandler, FlowControl):
         self._high_limit = high_limit
         self.event('connection_made').bind(self._set_flow_limits)
         self.event('connection_lost').bind(self._wakeup_waiter)
-        self.event('after_write').bind(self._make_write_waiter)
 
     def __repr__(self):
         address = self._address
@@ -375,6 +372,7 @@ class Protocol(PulsarProtocol, asyncio.Protocol):
                 t._buffer.extend(data)
             else:
                 t.write(data)
+                self._make_write_waiter()
             self.last_change = self._loop.time()
             return self._write_waiter or ()
         else:
@@ -652,7 +650,7 @@ class TcpServer(Producer):
                   'sockets': sockets,
                   'max_requests': self._max_requests,
                   'keep_alive': self._keep_alive}
-        clients = {'processed_clients': self._sessions,
+        clients = {'processed_clients': self.sessions,
                    'connected_clients': len(self._concurrent_connections),
                    'requests_processed': self._requests_processed}
         if self._server:
@@ -692,14 +690,18 @@ class TcpServer(Producer):
         """
         all = []
         if connection:
-            all.append(connection.event('connection_lost'))
-            connection.close()
+            waiter = connection.event('connection_lost').waiter()
+            if waiter:
+                all.append(waiter)
+                connection.close()
         else:
             connections = list(self._concurrent_connections)
             self._concurrent_connections = set()
             for connection in connections:
-                all.append(connection.event('connection_lost'))
-                connection.close()
+                waiter = connection.event('connection_lost').waiter()
+                if waiter:
+                    all.append(waiter)
+                    connection.close()
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
             return asyncio.wait(all, timeout=timeout, loop=self._loop)

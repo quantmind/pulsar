@@ -142,7 +142,7 @@ class Concurrency:
         actor.mailbox = self.create_mailbox(actor, loop)
         return loop
 
-    def hand_shake(self, actor):
+    def hand_shake(self, actor, run=True):
         '''Perform the hand shake for ``actor``
 
         The hand shake occurs when the ``actor`` is in starting state.
@@ -159,10 +159,9 @@ class Concurrency:
             assert actor.state == ACTOR_STATES.STARTING
             if actor.cfg.debug:
                 actor.logger.debug('starting handshake')
-            start = actor.event('start')
-            start.bind(self._switch_to_run)
-            start.bind(self.periodic_task)
-            start.fire()
+            actor.event('start').fire()
+            if run:
+                self._switch_to_run(actor)
         except Exception as exc:
             actor.stop(exc)
 
@@ -256,6 +255,7 @@ class Concurrency:
     def _switch_to_run(self, actor, exc=None):
         if exc is None and actor.state < ACTOR_STATES.RUN:
             actor.state = ACTOR_STATES.RUN
+            self.periodic_task(actor)
         elif exc:
             actor.stop(exc)
 
@@ -395,7 +395,7 @@ class MonitorMixin:
 
             def _check(_, **kw):
                 if not self.managed_actors:
-                    monitor.remove_callback('periodic_task', _check)
+                    monitor.event('periodic_task').unbind(_check)
                     waiter.set_result(None)
 
             monitor.event('periodic_task').bind(_check)
@@ -413,13 +413,13 @@ class MonitorMixin:
             monitor.monitor._remove_actor(actor, log)
         return removed
 
-    def _info_monitor(self, actor, info=None):
+    def _info_monitor(self, actor, data=None):
         if actor.started():
-            info['actor'].update({'concurrency': actor.cfg.concurrency,
+            data['actor'].update({'concurrency': actor.cfg.concurrency,
                                   'workers': len(self.managed_actors)})
-            info['workers'] = [a.info for a in self.managed_actors.values()
+            data['workers'] = [a.info for a in self.managed_actors.values()
                                if a.info]
-        return info
+        return data
 
     def _register(self, arbiter):
         raise HaltServer('Critical error')
@@ -444,7 +444,13 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
         return loop
 
     def run_actor(self, actor):
-        actor._loop.call_soon(self.hand_shake, actor)
+        if actor.start_event:
+            actor.start_event.add_done_callback(
+                lambda f: self._switch_to_run(actor)
+            )
+            self.hand_shake(actor, False)
+        else:
+            self.hand_shake(actor)
         raise MonitorStarted
 
     def create_mailbox(self, actor, loop):
@@ -672,8 +678,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                 raise HaltServer('ERROR. %s' % str(e), exit_code=2)
             self.pid_file = p
 
-    def _info_monitor(self, actor, info=None):
-        data = info
+    def _info_monitor(self, actor, data=None):
         monitors = {}
         for m in self.monitors.values():
             info = m.info()

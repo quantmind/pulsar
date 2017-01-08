@@ -266,11 +266,13 @@ class AbstractClient(Producer, ClientMixin):
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(address, tuple):
             host, port = address
-            if self.debug:
+            if self._loop.get_debug():
                 self.logger.debug('Create connection %s:%s', host, port)
             _, protocol = await self._loop.create_connection(
                 protocol_factory, host, port, **kw)
-            await protocol.event('connection_made')
+            event = protocol.event('connection_made')
+            if not event.fired():
+                await event.waiter()
         else:
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))

@@ -52,7 +52,6 @@ from http.client import responses
 from multidict import CIMultiDict
 
 from pulsar import isawaitable, chain_future, HttpException, create_future
-from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (
     SimpleCookie, has_empty_content, REDIRECT_CODES, ENCODE_URL_METHODS,
     remove_double_slash, iri_to_uri, is_absolute_uri, parse_options_header
@@ -144,7 +143,7 @@ class WsgiResponse:
         request as well as cookies set during the response.
     """
     _iterated = False
-    _started = False
+    __wsgi_started__ = False
     DEFAULT_STATUS_CODE = 200
 
     def __init__(self, status=None, content=None, response_headers=None,
@@ -162,7 +161,7 @@ class WsgiResponse:
 
     @property
     def started(self):
-        return self._started
+        return self.__wsgi_started__
 
     @property
     def iterated(self):
@@ -211,7 +210,7 @@ class WsgiResponse:
             raise RuntimeError('Cannot set content. Already iterated')
 
     def _get_content_type(self):
-        return self.headers.get('content-type')
+        return self.headers.get(CONTENT_TYPE)
 
     def _set_content_type(self, typ):
         if typ:
@@ -258,19 +257,21 @@ class WsgiResponse:
             return reduce(lambda x, y: x+len(y), self.content, 0)
 
     def start(self, start_response):
-        assert not self._started
-        self._started = True
+        assert not self.__wsgi_started__
+        self.__wsgi_started__ = True
         return start_response(self.status, self.get_headers())
 
     def __iter__(self):
         if self._iterated:
             raise RuntimeError('WsgiResponse can be iterated once only')
-        self._started = True
+        self.__wsgi_started__ = True
         self._iterated = True
-        if self.is_streamed:
-            return wsgi_encoder(self.content, self.encoding or 'utf-8')
+        try:
+            len(self._content)
+        except TypeError:
+            return wsgi_encoder(self._content, self.encoding or 'utf-8')
         else:
-            return iter(self.content)
+            return iter(self._content)
 
     def close(self):
         """Close this response, required by WSGI
@@ -340,10 +341,6 @@ class WsgiRequest:
 
     def __init__(self, environ, app_handler=None, urlargs=None):
         self.environ = environ
-        if pulsar_cache not in environ:
-            environ[pulsar_cache] = AttributeDictionary()
-            self.cache.logger = LOGGER
-            self.cache.cfg = environ.get('pulsar.cfg', {})
         if app_handler:
             self.cache.app_handler = app_handler
             self.cache.urlargs = urlargs

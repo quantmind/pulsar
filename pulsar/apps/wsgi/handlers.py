@@ -53,7 +53,7 @@ class WsgiHandler:
         except Exception as exc:
             response = handle_wsgi_error(environ, exc)
 
-        if isinstance(response, WsgiResponse) and not response.started:
+        if not getattr(response, '__wsgi_started__', True):
             for middleware in self.response_middleware:
                 response = middleware(environ, response) or response
                 if isawaitable(response):
@@ -74,7 +74,7 @@ class WsgiHandler:
         except Exception as exc:
             response = handle_wsgi_error(environ, exc)
 
-        if isinstance(response, WsgiResponse) and not response.started:
+        if not getattr(response, '__wsgi_started__', True):
             for middleware in self.response_middleware:
                 response = middleware(environ, response) or response
             response.start(start_response)
