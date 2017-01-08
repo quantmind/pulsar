@@ -66,7 +66,9 @@ from collections import namedtuple, OrderedDict
 import asyncio
 
 import pulsar
-from pulsar import get_actor, Config, create_future, ImproperlyConfigured
+from pulsar import (
+    ensure_future, get_actor, Config, create_future, ImproperlyConfigured
+)
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
@@ -115,7 +117,9 @@ async def monitor_start(self, exc=None):
     try:
         self.event('on_params').bind(monitor_params)
         self.event('on_info').bind(monitor_info)
+        self.event('stopping').waiter()
         self.event('stopping').bind(monitor_stopping)
+
         for callback in when_monitor_start:
             coro = callback(self)
             if coro:
@@ -138,15 +142,23 @@ async def monitor_start(self, exc=None):
         start_event.set_result(result)
 
 
-async def monitor_stopping(self, exc=None):
+def monitor_stopping(self, exc=None):
+    coros = []
     if not self.cfg.workers:
         coro = self.app.worker_stopping(self)
         if coro:
-            await coro
+            coros.append(coro)
     coro = self.app.monitor_stopping(self)
     if coro:
-        await coro
-    return self
+        coros.append(coro)
+    if coros:
+        ensure_future(asyncio.wait(coros, loop=self._loop))
+
+
+def worker_stopping(self, exc=None):
+    coro = self.app.worker_stopping(self)
+    if coro:
+        ensure_future(coro, loop=self._loop)
 
 
 def monitor_info(self, info=None):
@@ -170,7 +182,7 @@ def worker_start(self, exc=None):
         cfg = self.cfg
         self.app = app = cfg.application.from_config(cfg, logger=self.logger)
     self.event('on_info').bind(app.worker_info)
-    self.event('stopping').bind(app.worker_stopping)
+    self.event('stopping').bind(worker_stopping)
     coro = app.worker_start(self, exc=exc)
     if isawaitable(coro):
         pulsar.ensure_future(coro, loop=self._loop)
