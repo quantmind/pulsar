@@ -1,5 +1,5 @@
 import asyncio
-from socket import IPPROTO_TCP, TCP_NODELAY
+from socket import SOL_SOCKET, SO_KEEPALIVE
 
 from async_timeout import timeout
 
@@ -321,7 +321,7 @@ class PulsarProtocol(EventHandler, FlowControl):
         self._address = addr
         sock = transport.get_extra_info('socket')
         try:
-            sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+            sock.setsockopt(SOL_SOCKET, SO_KEEPALIVE, 1)
         except (OSError, NameError):
             pass
         # let everyone know we have a connection with endpoint

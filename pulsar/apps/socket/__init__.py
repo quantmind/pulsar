@@ -269,11 +269,11 @@ class SocketServer(pulsar.Application):
             except Exception:
                 pass
 
-    def worker_info(self, worker, info):
+    def worker_info(self, worker, data=None):
         server = worker.servers.get(self.name)
-        if server:
-            info['%sserver' % self.name] = server.info()
-        return info
+        if server and data:
+            data['%sserver' % self.name] = server.info()
+        return data
 
     def server_factory(self, *args, **kw):
         '''Create a :class:`.TcpServer`.

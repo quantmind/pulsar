@@ -32,7 +32,7 @@ from . import system
 from .string import camel_to_dash
 from .internet import parse_address
 from .importer import import_system_file
-from .httpurl import setDefaultHttpParser, HttpParser
+from .http import setDefaultHttpParsers
 from .log import configured_logger
 from .pep import to_bytes
 
@@ -796,7 +796,7 @@ class HttpPyParser(Global):
 
     def on_start(self):
         if self.value:
-            setDefaultHttpParser(HttpParser)
+            setDefaultHttpParsers(False)
 
 
 class HttpKeepAlive(Global):

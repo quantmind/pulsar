@@ -155,12 +155,12 @@ def monitor_info(self, info=None):
         self.app.monitor_info(self, info)
 
 
-def monitor_params(self, params=None):
+def monitor_params(self, data=None):
     app = self.app
-    params.update({'cfg': app.cfg.clone(),
-                   'name': '%s.worker' % app.name,
-                   'start': worker_start})
-    app.actorparams(self, params)
+    data.update({'cfg': app.cfg.clone(),
+                 'name': '%s.worker' % app.name,
+                 'start': worker_start})
+    app.actorparams(self, data)
 
 
 def worker_start(self, exc=None):
@@ -488,7 +488,7 @@ class Application(Configurator):
         """Added to the ``start`` :ref:`worker hook <actor-hooks>`."""
         pass
 
-    def worker_info(self, worker, info):
+    def worker_info(self, worker, data=None):
         """Hook to add additional entries to the worker ``info`` dictionary.
         """
         pass
@@ -498,7 +498,7 @@ class Application(Configurator):
         pass
 
     # MONITOR CALLBACKS
-    def actorparams(self, monitor, params=None):
+    def actorparams(self, monitor, data=None):
         """Hook to add additional entries when the monitor spawn new actors.
         """
         pass

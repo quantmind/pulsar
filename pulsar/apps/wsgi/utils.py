@@ -28,15 +28,7 @@ from .content import Html, HtmlDocument
 
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
                                   ) + JSON_CONTENT_TYPES
-HOP_HEADERS = frozenset(('connection',
-                         'keep-alive',
-                         'proxy-authenticate',
-                         'proxy-authorization',
-                         'te',
-                         'trailers',
-                         'transfer-encoding',
-                         'upgrade')
-                        )
+
 
 pulsar_cache = 'pulsar.cache'
 LOGGER = logging.getLogger('pulsar.wsgi')
@@ -70,18 +62,6 @@ def get_logger(environ):
 @lru_cache(maxsize=1024)
 def server_name(address):
     return socket.getfqdn(address)
-
-
-def no_hop(headers):
-    for header, value in headers:
-        if header.lower() in HOP_HEADERS:
-            # These features are the exclusive province of this class,
-            # this should be considered a fatal error for an application
-            # to attempt sending them, but we don't raise an error,
-            # just log a warning
-            LOGGER.warning('Application passing hop header "%s"', header)
-            continue
-        yield header, value
 
 
 def log_wsgi_info(log, environ, status, exc=None):

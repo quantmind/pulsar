@@ -320,7 +320,7 @@ class Actor(EventHandler, Coverage):
         actors. Fire the :ref:`on_params actor hook <actor-hooks>`.
         '''
         data = {}
-        self.event('on_params').fire(params=data)
+        self.event('on_params').fire(data=data)
         return data
 
     # ##############################################################  STATES

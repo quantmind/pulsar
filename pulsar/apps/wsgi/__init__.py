@@ -74,8 +74,9 @@ from .routers import (Router, MediaRouter, MediaMixin, RouterParam,
                       file_response)
 from .auth import HttpAuthenticate, parse_authorization_header
 from .formdata import parse_form_data
+from .headers import HOP_HEADERS
 from .utils import (handle_wsgi_error, render_error_debug, wsgi_request,
-                    set_wsgi_request_class, dump_environ, HOP_HEADERS)
+                    set_wsgi_request_class, dump_environ)
 
 __all__ = [
     # Server

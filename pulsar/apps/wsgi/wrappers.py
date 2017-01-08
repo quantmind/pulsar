@@ -54,8 +54,7 @@ from multidict import CIMultiDict
 from pulsar import isawaitable, chain_future, HttpException, create_future
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (
-    SimpleCookie, has_empty_content, REDIRECT_CODES,
-    ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
+    SimpleCookie, has_empty_content, REDIRECT_CODES, ENCODE_URL_METHODS,
     remove_double_slash, iri_to_uri, is_absolute_uri, parse_options_header
 )
 
@@ -64,11 +63,13 @@ from .utils import (set_wsgi_request_class, set_cookie, query_dict,
                     parse_accept_header, LOGGER, pulsar_cache)
 from .structures import ContentAccept, CharsetAccept, LanguageAccept
 from .formdata import parse_form_data
+from .headers import CONTENT_LENGTH, CONTENT_TYPE, LOCATION, SET_COOKIE
 
 
 HEAD = 'HEAD'
 MAX_BUFFER_SIZE = 2**16
 ONEMB = 2**20
+TEXT_PLAIN = 'text/plain'
 
 
 def redirect(path, code=None, permanent=False):
@@ -76,7 +77,7 @@ def redirect(path, code=None, permanent=False):
         code = 301 if permanent else 302
 
     assert code in REDIRECT_CODES, 'Invalid redirect status code.'
-    return WsgiResponse(code, response_headers=[('location', path)])
+    return WsgiResponse(code, response_headers=[(LOCATION, path)])
 
 
 def cached_property(method):
@@ -96,6 +97,10 @@ def wsgi_encoder(gen, encoding):
             yield data.encode(encoding)
         else:
             yield data
+
+
+def count_len(a, b):
+    return a + len(b)
 
 
 class WsgiResponse:
@@ -210,9 +215,9 @@ class WsgiResponse:
 
     def _set_content_type(self, typ):
         if typ:
-            self.headers['content-type'] = typ
+            self.headers[CONTENT_TYPE] = typ
         else:
-            self.headers.pop('content-type', None)
+            self.headers.pop(CONTENT_TYPE, None)
     content_type = property(_get_content_type, _set_content_type)
 
     @property
@@ -293,34 +298,29 @@ class WsgiResponse:
         """
         headers = self.headers
         if has_empty_content(self.status_code):
-            headers.pop('content-type', None)
-            headers.pop('content-length', None)
+            headers.pop(CONTENT_TYPE, None)
+            headers.pop(CONTENT_LENGTH, None)
             self._content = ()
         else:
             if not self.is_streamed:
-                cl = 0
-                for c in self._content:
-                    cl += len(c)
-                if cl == 0 and self.content_type in JSON_CONTENT_TYPES:
-                    self._content = (b'{}',)
-                    cl = len(self._content[0])
-                headers['Content-Length'] = str(cl)
-            ct = headers.get('content-type')
+                cl = reduce(count_len, self._content, 0)
+                headers[CONTENT_LENGTH] = str(cl)
+            ct = headers.get(CONTENT_TYPE)
             # content type encoding available
             if self.encoding:
-                ct = ct or 'text/plain'
-                if 'charset=' not in ct:
+                ct = ct or TEXT_PLAIN
+                if ';' not in ct:
                     ct = '%s; charset=%s' % (ct, self.encoding)
             if ct:
-                headers['Content-Type'] = ct
+                headers[CONTENT_TYPE] = ct
             if self.method == HEAD:
                 self._content = ()
         # Cookies
         if (self.status_code < 400 and self._can_store_cookies and
                 self._cookies):
             for c in self.cookies.values():
-                headers.add_header('Set-Cookie', c.OutputString())
-        return list(headers.items())
+                headers.add_header(SET_COOKIE, c.OutputString())
+        return headers.items()
 
     def has_header(self, header):
         return header in self.headers

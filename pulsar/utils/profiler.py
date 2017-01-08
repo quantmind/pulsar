@@ -6,7 +6,7 @@ class Profiler:
 
     def __init__(self, sortby=None):
         self.profiler = None
-        self.sortby = sortby or ('time', 'cumulative')
+        self.sortby = sortby or ('cumtime',)
 
     def __enter__(self):
         self.profiler = cProfile.Profile()

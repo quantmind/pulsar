@@ -159,10 +159,10 @@ class Concurrency:
             assert actor.state == ACTOR_STATES.STARTING
             if actor.cfg.debug:
                 actor.logger.debug('starting handshake')
-            actor.event('start').bind(
-                self._switch_to_run,
-                self.periodic_task
-            ).fire()
+            start = actor.event('start')
+            start.bind(self._switch_to_run)
+            start.bind(self.periodic_task)
+            start.fire()
         except Exception as exc:
             actor.stop(exc)
 

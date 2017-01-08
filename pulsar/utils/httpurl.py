@@ -50,6 +50,12 @@ from multidict import CIMultiDict
 from .structures import mapping_iterator
 from .string import to_bytes, to_string
 from .html import capfirst
+
+try:
+    from .lib import http_date, http_headers_message
+except:     # pragma    nocover
+    from wsgiref.handlers import format_date_time as http_date
+    http_headers_message = None
 #
 # The http_parser has several bugs, therefore it is switched off
 hasextensions = False
@@ -105,8 +111,18 @@ JSON_CONTENT_TYPES = ('application/json',
                       'text/json',
                       'text/x-json')
 # ###################################################    REQUEST METHODS
-ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
-ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
+GET = 'GET'
+DELETE = 'DELETE'
+HEAD = 'HEAD'
+OPTIONS = 'OPTIONS'
+PATCH = 'PATCH'
+POST = 'POST'
+PUT = 'PUT'
+TRACE = 'TRACE'
+
+
+ENCODE_URL_METHODS = frozenset([DELETE, GET, HEAD, OPTIONS])
+ENCODE_BODY_METHODS = frozenset([PATCH, POST, PUT, TRACE])
 REDIRECT_CODES = (301, 302, 303, 305, 307)
 NO_CONTENT_CODES = frozenset((204, 304))
 
@@ -231,7 +247,7 @@ def has_empty_content(status, method=None):
     """204, 304 and 1xx codes have no content, same for HEAD requests"""
     return (status in NO_CONTENT_CODES or
             100 <= status < 200 or
-            method == "HEAD")
+            method == HEAD)
 
 
 def is_succesful(status):
@@ -386,10 +402,11 @@ def parse_options_header(header, options=None):
     return ctype, options
 
 
-def http_headers_message(headers, version, status):
-    sl = 'HTTP/%s.%s %s' % (version[0], version[1], status)
-    hs = CRLF.join((k + SEP + v for k, v in headers.items()))
-    return (CRLF.join((sl, hs, CRLF))).encode(DEFAULT_CHARSET)
+if not http_headers_message:
+    def http_headers_message(headers, version, status):
+        sl = 'HTTP/%s %s' % (version, status)
+        hs = CRLF.join((k + SEP + v for k, v in headers.items()))
+        return (CRLF.join((sl, hs, CRLF))).encode(DEFAULT_CHARSET)
 
 
 ###############################################################################
@@ -873,20 +890,6 @@ def hexmd5(x):
 
 def hexsha1(x):
     return sha1(to_bytes(x)).hexdigest()
-
-
-def http_date(epoch_seconds=None):
-    """
-    Formats the time to match the RFC1123 date format as specified by HTTP
-    RFC2616 section 3.3.1.
-
-    Accepts a floating point number expressed in seconds since the epoch, in
-    UTC - such as that outputted by time.time(). If set to None, defaults to
-    the current time.
-
-    Outputs a string in the format 'Wdy, DD Mon YYYY HH:MM:SS GMT'.
-    """
-    return formatdate(epoch_seconds, usegmt=True)
 
 
 # ################################################################# COOKIES

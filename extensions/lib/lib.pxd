@@ -3,6 +3,10 @@ cdef extern from "math.h":
     double log(double x)
     double sqrt(double x)
 
+cdef extern from "http.h":
+    ctypedef int time_t
+    object _http_date(time_t timestamp)
+
 
 cdef double clog2 = log(2.)
 

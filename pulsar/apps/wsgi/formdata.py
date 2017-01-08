@@ -24,25 +24,25 @@ LARGE_BODY_CODE = 403
 
 
 def http_protocol(parser):
-    try:
-        return "HTTP/%s.%s" % parser.get_version()
-    except TypeError:   # pragma nocover
-        version = parser.get_version()
-        return "HTTP/%s" % ".".join(('%s' % v for v in version))
+    return "HTTP/%s" % parser.get_http_version()
 
 
 class HttpBodyReader:
+    reader = None
 
-    def __init__(self, headers, parser, transport, limit, **kw):
+    def initialise(self, headers, parser, transport, limit, **kw):
         self.headers = headers
         self.parser = parser
         self.limit = limit
         self.reader = asyncio.StreamReader(**kw)
         self.reader.set_transport(transport)
         self.feed_data = self.reader.feed_data
-        self.feed_eof = self.reader.feed_eof
         self._expect_sent = None
         self._waiting = None
+
+    def feed_eof(self):
+        if self.reader:
+            self.reader.feed_eof()
 
     def waiting_expect(self):
         '''``True`` when the client is waiting for 100 Continue.
