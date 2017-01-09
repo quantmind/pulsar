@@ -225,7 +225,7 @@ class WsgiResponse:
 
     @property
     def status(self):
-        return '%s %s' % (self.status_code, self.response)
+        return '%s %s' % (self.status_code, responses.get(self.status_code))
 
     def __str__(self):
         return self.status

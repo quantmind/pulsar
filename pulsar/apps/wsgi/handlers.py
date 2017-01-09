@@ -1,8 +1,7 @@
-from pulsar import Http404, isawaitable
+from pulsar import Http404
 from pulsar.utils.log import LocalMixin, local_method
 
 from .utils import handle_wsgi_error
-from .wrappers import WsgiResponse
 
 
 class WsgiHandler:
@@ -43,8 +42,11 @@ class WsgiHandler:
         try:
             for middleware in self.middleware:
                 response = middleware(environ, start_response)
-                if isawaitable(response):
-                    response = await response
+                if response:
+                    try:
+                        response = await response
+                    except TypeError:
+                        pass
                 if response is not None:
                     break
             if response is None:
@@ -55,9 +57,13 @@ class WsgiHandler:
 
         if not getattr(response, '__wsgi_started__', True):
             for middleware in self.response_middleware:
-                response = middleware(environ, response) or response
-                if isawaitable(response):
-                    response = await response
+                result = middleware(environ, response)
+                if result:
+                    try:
+                        response = await result
+                    except TypeError:
+                        response = result
+
             response.start(start_response)
         return response
 

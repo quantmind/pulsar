@@ -1,8 +1,11 @@
 from itertools import starmap
 
+import cython
+
+from lib cimport CRLF
+
 cdef class Task
 
-cdef bytes CRLF = b"\r\n"
 cdef bytes RESPONSE_INTEGER  = b':'
 cdef bytes RESPONSE_STRING  = b'$'
 cdef bytes RESPONSE_ARRAY = b'*'
@@ -145,6 +148,7 @@ cdef class RedisParser:
             return result
 
 
+@cython.internal
 cdef class Task:
     cdef long _length
     cdef Task _next
@@ -170,6 +174,7 @@ cdef class Task:
                 return False
 
 
+@cython.internal
 cdef class ArrayTask(Task):
     cdef list _response
 
