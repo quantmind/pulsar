@@ -15,15 +15,14 @@ Testing WSGI Environ
 import sys
 import os
 import io
-from asyncio import sleep
 from urllib.parse import urlparse
 
 from async_timeout import timeout
 from multidict import CIMultiDict
 
 import pulsar
-from pulsar import isawaitable, BadRequest
-from pulsar.utils.httpurl import http_parser, iri_to_uri
+from pulsar import BadRequest
+from pulsar.utils.httpurl import iri_to_uri
 from pulsar.async.protocols import ProtocolConsumer
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils import http
@@ -160,7 +159,7 @@ class HttpServerResponse(ProtocolConsumer):
                     #
                     # Do the actual writing
                     loop = self._loop
-                    start = loop.time()
+                    # start = loop.time()
                     for chunk in response:
                         try:
                             chunk = await chunk
@@ -170,13 +169,13 @@ class HttpServerResponse(ProtocolConsumer):
                             await wsgi.write(chunk)
                         except TypeError:
                             pass
-                        time_in_loop = loop.time() - start
-                        if time_in_loop > MAX_TIME_IN_LOOP:
-                            get_logger(environ).debug(
-                                'Released the event loop after %.3f seconds',
-                                time_in_loop)
-                            await sleep(0.1, loop=self._loop)
-                            start = loop.time()
+                        # time_in_loop = loop.time() - start
+                        # if time_in_loop > MAX_TIME_IN_LOOP:
+                        #     get_logger(environ).debug(
+                        #         'Released the event loop after %.3f seconds',
+                        #         time_in_loop)
+                        #     await sleep(0.1, loop=self._loop)
+                        #     start = loop.time()
                     #
                     # make sure we write headers and last chunk if needed
                     try:

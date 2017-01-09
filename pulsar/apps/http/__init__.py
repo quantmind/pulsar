@@ -31,9 +31,9 @@ from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
                     cfg_value)
 from pulsar.utils import websocket
 from pulsar.utils.system import json as _json
-from pulsar.utils.pep import to_bytes
+from pulsar.utils.string import to_bytes
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.httpurl import (http_parser, encode_multipart_formdata,
+from pulsar.utils.httpurl import (encode_multipart_formdata,
                                   get_environ_proxies, is_succesful,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, http_chunks,

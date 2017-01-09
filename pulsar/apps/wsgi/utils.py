@@ -13,11 +13,12 @@ from datetime import datetime, timedelta
 from email.utils import formatdate
 from urllib.parse import parse_qsl
 
+from multidict import MultiDict
+
 from pulsar import format_traceback
 from pulsar.utils.system import json
-from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES,
                                   HTTPError, parse_dict_header,
                                   JSON_CONTENT_TYPES)
@@ -188,7 +189,7 @@ def _gen_query(query_string, encoding):
 
 def query_dict(query_string, encoding='utf-8'):
     if query_string:
-        return dict(MultiValueDict(_gen_query(query_string, encoding)).items())
+        return dict(MultiDict(_gen_query(query_string, encoding)).items())
     else:
         return {}
 

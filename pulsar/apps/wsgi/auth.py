@@ -22,7 +22,7 @@ from base64 import b64decode
 from pulsar import HttpException
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
                                   quote_header_value, DEFAULT_CHARSET)
-from pulsar.utils.pep import to_bytes
+from pulsar.utils.string import to_bytes
 
 
 _require_quoting = frozenset(['domain', 'nonce', 'opaque', 'realm'])

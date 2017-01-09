@@ -252,10 +252,6 @@ class WsgiResponse:
     def can_set_cookies(self):
         return self.status_code < 400 and self._can_store_cookies
 
-    def length(self):
-        if not self.is_streamed:
-            return reduce(lambda x, y: x+len(y), self.content, 0)
-
     def start(self, start_response):
         assert not self.__wsgi_started__
         self.__wsgi_started__ = True
@@ -276,9 +272,8 @@ class WsgiResponse:
     def close(self):
         """Close this response, required by WSGI
         """
-        if self.is_streamed:
-            if hasattr(self.content, 'close'):
-                self.content.close()
+        if hasattr(self.content, 'close'):
+            self.content.close()
 
     def set_cookie(self, key, **kwargs):
         """

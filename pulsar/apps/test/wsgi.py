@@ -4,8 +4,6 @@ from asyncio import Transport
 
 from pulsar.apps import http
 from pulsar.apps.wsgi import HttpServerResponse
-from pulsar.utils.httpurl import http_parser
-
 
 __all__ = ['HttpTestClient']
 

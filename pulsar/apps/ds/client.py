@@ -1,9 +1,9 @@
 import time
 from functools import partial
+from collections import OrderedDict
 
 import pulsar
-from pulsar.utils.structures import OrderedDict
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 
 from .parser import CommandError
 

@@ -46,10 +46,23 @@ Zset
    :members:
    :member-order: bysource
 '''
-from collections import *       # noqa
+from .skiplist import Skiplist
+from .zset import Zset
+from .misc import (
+    AttributeDictionary, FrozenDict, Dict, Deque, recursive_update,
+    mapping_iterator, inverse_mapping, aslist
+)
 
-from .skiplist import Skiplist  # noqa
-from .zset import Zset          # noqa
-from .misc import (MultiValueDict, AttributeDictionary, FrozenDict,  # noqa
-                   Dict, Deque, merge_prefix, recursive_update,  # noqa
-                   mapping_iterator, inverse_mapping, aslist)    # noqa
+
+__all__ = [
+    'Skiplist',
+    'Zset',
+    'AttributeDictionary',
+    'FrozenDict',
+    'Dict',
+    'Deque',
+    'recursive_update',
+    'mapping_iterator',
+    'inverse_mapping',
+    'aslist'
+]

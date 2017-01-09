@@ -87,11 +87,11 @@ import os
 import re
 import stat
 import mimetypes
+from collections import OrderedDict
 from functools import partial, lru_cache
 from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl
-from pulsar.utils.structures import OrderedDict
 from pulsar.utils.slugify import slugify
 from pulsar.utils.security import digest
 from pulsar import Http404, MethodNotAllowed
@@ -139,10 +139,6 @@ class Handler:
         self.router = router
         self.handler = handler
         self.urlargs = urlargs
-
-    def __call__(self, environ):
-        request = wsgi_request(environ, self.router, self.urlargs)
-        return self.handler(request)
 
 
 class RouterParam:
@@ -378,11 +374,12 @@ class Router(metaclass=RouterType):
         return self.full_route.__repr__()
 
     def __call__(self, environ, start_response=None):
-        handler = self._get(environ.get('PATH_INFO') or '/',
+        hnd = self._get(environ.get('PATH_INFO') or '/',
                             environ.get('REQUEST_METHOD'))
-        if handler:
+        if hnd:
             try:
-                return handler(environ)
+                request = wsgi_request(environ, hnd.router, hnd.urlargs)
+                return hnd.handler(request)
             except SkipRoute:
                 pass
 

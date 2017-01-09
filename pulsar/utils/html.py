@@ -1,7 +1,7 @@
 '''Utilities for HTML and text manipulation.
 '''
 from .system import json
-from .pep import to_string
+from .string import to_string
 
 
 NOTHING = ('', b'', None)

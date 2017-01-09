@@ -1,7 +1,7 @@
 from functools import partial
 
 from pulsar import Connection, Pool, get_actor
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 from pulsar.apps.data import RemoteStore
 from pulsar.apps.ds import redis_parser
 

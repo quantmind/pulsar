@@ -2,7 +2,7 @@ from itertools import chain
 import datetime
 
 import pulsar
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 from pulsar.utils.structures import mapping_iterator, Zset
 from pulsar.apps.ds import COMMANDS_INFO, CommandError
 

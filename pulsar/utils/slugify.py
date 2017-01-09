@@ -12,7 +12,7 @@ try:
 except ImportError:
     unidecode = None
 
-from .pep import to_string
+from .string import to_string
 
 
 # character entity reference

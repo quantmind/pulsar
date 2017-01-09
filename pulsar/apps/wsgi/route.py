@@ -55,7 +55,7 @@ from collections import namedtuple
 from pulsar import Http404
 from pulsar.utils.httpurl import (iri_to_uri, remove_double_slash,
                                   ENCODE_URL_METHODS, ENCODE_BODY_METHODS)
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 from pulsar.utils.slugify import slugify
 
 

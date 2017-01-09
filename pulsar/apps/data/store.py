@@ -8,7 +8,7 @@ from urllib.parse import urlsplit, parse_qsl, urlunparse, urlencode
 
 from pulsar import ImproperlyConfigured, Producer, EventHandler, ProtocolError
 from pulsar.utils.importer import module_attribute
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 
 
 data_stores = {}

@@ -29,12 +29,11 @@ import types
 
 from pulsar import __version__, SERVER_NAME
 from . import system
-from .string import camel_to_dash
+from .string import camel_to_dash, to_bytes
 from .internet import parse_address
 from .importer import import_system_file
 from .http import setDefaultHttpParsers
 from .log import configured_logger
-from .pep import to_bytes
 
 
 __all__ = [

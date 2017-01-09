@@ -2,12 +2,14 @@
 import time
 import unittest
 
-from pulsar.utils.httpurl import (Headers, CacheControl,
+from pulsar.utils.httpurl import (CacheControl,
                                   urlquote, unquote_unreserved, requote_uri,
                                   remove_double_slash, appendslash, capfirst,
                                   encode_multipart_formdata, http_date,
                                   cookiejar_from_dict)
 from pulsar.apps.http import Auth, HTTPBasicAuth, HTTPDigestAuth
+
+from multidict import CIMultiDict
 
 
 class TestAuth(unittest.TestCase):
@@ -29,7 +31,7 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(auth.options['realm'], 'fake realm')
 
     def test_CacheControl(self):
-        headers = Headers()
+        headers = CIMultiDict()
         c = CacheControl()
         self.assertFalse(c.private)
         self.assertFalse(c.maxage)

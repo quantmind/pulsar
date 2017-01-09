@@ -9,9 +9,11 @@ from base64 import b64encode
 from functools import reduce
 from cgi import valid_boundary, parse_header
 
+from multidict import MultiDict
+
 from pulsar import HttpException, BadRequest, isawaitable, ensure_future
 from pulsar.utils.system import convert_bytes
-from pulsar.utils.structures import MultiValueDict, mapping_iterator
+from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
                                   JSON_CONTENT_TYPES, parse_options_header)
 from .headers import CONTENT_LENGTH
@@ -132,7 +134,7 @@ class FormDecoder:
         self.options = options
         self.stream = stream
         self.limit = environ['pulsar.cfg'].stream_buffer
-        self.result = (MultiValueDict(), MultiValueDict())
+        self.result = (MultiDict(), MultiDict())
 
     @property
     def content_length(self):

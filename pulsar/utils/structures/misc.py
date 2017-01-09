@@ -1,4 +1,3 @@
-from copy import copy
 from itertools import islice
 import collections
 
@@ -29,96 +28,6 @@ def aslist(value):
         return list(value)
     else:
         return [value]
-
-
-class MultiValueDict(dict):
-    """A subclass of dictionary customized to handle multiple
-    values for the same key.
-    """
-    def __init__(self, data=None):
-        super().__init__()
-        if data:
-            self.update(data)
-
-    def __getitem__(self, key):
-        """Returns the data value for this key.
-
-        If the value is a list with only one element, it returns that element,
-        otherwise it returns the list.
-        Raises KeyError if key is not found.
-        """
-        l = super().__getitem__(key)
-        return l[0] if len(l) == 1 else l
-
-    def __setitem__(self, key, value):
-        if key in self:
-            l = super().__getitem__(key)
-            # if value already there don't add it.
-            # I'm not sure this is the correct way of doing thing but
-            # it makes sense not to have repeating items
-            if value not in l:
-                l.append(value)
-        else:
-            super().__setitem__(key, [value])
-
-    def __copy__(self):
-        return self.__class__(((k, v[:]) for k, v in self.lists()))
-
-    def get(self, key, default=None):
-        try:
-            return self[key]
-        except KeyError:
-            return default
-
-    def pop(self, key, *arg):
-        if key in self:
-            l = super().pop(key)
-            return l[0] if len(l) == 1 else l
-        else:
-            return super().pop(key, *arg)
-
-    def getlist(self, key):
-        """Returns the list of values for the passed key."""
-        return super().__getitem__(key)
-
-    def setlist(self, key, _list):
-        if key in self:
-            self.getlist(key).extend(_list)
-        else:
-            _list = aslist(_list)
-            super().__setitem__(key, _list)
-
-    def setdefault(self, key, default=None):
-        if key not in self:
-            self[key] = default
-        return self[key]
-
-    def extend(self, key, values):
-        """Appends an item to the internal list associated with key."""
-        for value in values:
-            self[key] = value
-
-    def items(self):
-        """Returns a generator of (key, value) pairs.
-        """
-        return ((key, self[key]) for key in self)
-
-    def lists(self):
-        """Returns a list of (key, list) pairs."""
-        return super().items()
-
-    def values(self):
-        """Returns a list of the last value on every key list."""
-        return [self[key] for key in self.keys()]
-
-    def copy(self):
-        return copy(self)
-
-    def update(self, elem):
-        if isinstance(elem, Mapping):
-            elem = elem.items()
-        for key, val in elem:
-            self.extend(key, aslist(val))
 
 
 class AttributeDictionary(collections.Mapping):
@@ -288,26 +197,6 @@ class Deque(collections.deque):
         slice = list(islice(self, start, end))
         self.clear()
         self.extend(slice)
-
-
-def merge_prefix(deque, size):
-    """Replace the first entries in a deque of bytes with a single
-string of up to *size* bytes."""
-    if len(deque) == 1 and len(deque[0]) <= size:
-        return
-    prefix = []
-    remaining = size
-    while deque and remaining > 0:
-        chunk = deque.popleft()
-        if len(chunk) > remaining:
-            deque.appendleft(chunk[remaining:])
-            chunk = chunk[:remaining]
-        prefix.append(chunk)
-        remaining -= len(chunk)
-    if prefix:
-        deque.appendleft(b''.join(prefix))
-    elif not deque:
-        deque.appendleft(b'')
 
 
 def recursive_update(target, mapping):

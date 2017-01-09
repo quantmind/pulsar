@@ -38,7 +38,7 @@ from struct import pack, unpack
 from array import array
 from base64 import b64encode
 
-from .pep import to_bytes
+from .string import to_bytes
 from .exceptions import ProtocolError
 from .httpurl import DEFAULT_CHARSET
 

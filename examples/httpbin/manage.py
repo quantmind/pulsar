@@ -30,14 +30,14 @@ from base64 import b64encode
 import pulsar
 from pulsar import (HttpRedirect, HttpException, version, JAPANESE, CHINESE,
                     ensure_future)
-from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
-                                  ENCODE_BODY_METHODS)
+from pulsar.utils.httpurl import ENCODE_URL_METHODS, ENCODE_BODY_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import (route, Html, Json, HtmlDocument, GZipMiddleware,
                               String)
-from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.system import json
+
+from multidict import CIMultiDict, MultiDict
 
 METHODS = frozenset(chain((m.lower() for m in ENCODE_URL_METHODS),
                           (m.lower() for m in ENCODE_BODY_METHODS)))
@@ -75,7 +75,7 @@ class BaseRouter(wsgi.Router):
             data['args'] = dict(request.url_data)
         else:
             args, files = request.data_and_files()
-            jfiles = MultiValueDict()
+            jfiles = MultiDict()
             if files:
                 for name, parts in files.lists():
                     for part in parts:
@@ -84,7 +84,7 @@ class BaseRouter(wsgi.Router):
                         except UnicodeError:
                             part = part.base64()
                         jfiles[name] = part
-            if isinstance(args, MultiValueDict):
+            if isinstance(args, MultiDict):
                 args = dict(args)
 
             data.update((('args', args),
@@ -326,8 +326,8 @@ class Upload(BaseRouter):
         data = {'method': request.method,
                 'headers': headers,
                 'pulsar': self.pulsar_info(request),
-                'args': MultiValueDict(),
-                'files': MultiValueDict()}
+                'args': MultiDict(),
+                'files': MultiDict()}
         request.cache.response_data = data
         await request.data_and_files(stream=partial(self.stream, request))
         data['args'] = dict(data['args'])
