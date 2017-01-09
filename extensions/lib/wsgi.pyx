@@ -223,11 +223,12 @@ cdef class WsgiProtocol:
                 continue
             self.headers.add(header, value)
         self.headers[SERVER] = self.environ['SERVER_SOFTWARE']
-        self.headers[DATE] = _http_date(self.environ['wsgi.timestamp'])
+        ti = int(self.environ['wsgi.timestamp'])
+        self.headers[DATE] = http_date(int(self.environ['wsgi.timestamp']))
         self.keep_alive = self.protocol.parser.should_keep_alive()
         return self.write
 
-    cpdef object write(self, bytes data, object force=False):
+    cpdef object write_list(self, bytes data, object force=False):
         cdef list chunks = None
         cdef dict env = self.environ
         cdef object proto = self.protocol
@@ -247,17 +248,43 @@ cdef class WsgiProtocol:
             if not chunks:
                 chunks = []
             if self.chunked:
-                http_chunks(chunks, data)
+                http_chunks_l(chunks, data)
             else:
                 chunks.append(data)
 
         elif force and self.chunked:
             if not chunks:
                 chunks = []
-            http_chunks(chunks, data, True)
+            http_chunks_l(chunks, data, True)
 
         if chunks:
             return proto._connection.write(b''.join(chunks))
+
+    cpdef object write(self, bytes data, object force=False):
+        cdef bytes chunks = b''
+        cdef dict env = self.environ
+        cdef object proto = self.protocol
+        cdef object tosend
+
+        if not self.headers_sent:
+            self.headers_sent = self.get_headers()
+            chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)
+            for k, v in self.headers_sent.items():
+                chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)
+            chunks += b'\r\n'
+            proto.event('on_headers').fire(data=chunks)
+
+        if data:
+            if self.chunked:
+                chunks = http_chunks(chunks, data)
+            else:
+                chunks += data
+
+        elif force and self.chunked:
+            chunks = http_chunks(chunks, data, True)
+
+        if chunks:
+            return proto._connection.write(chunks)
 
     cdef get_headers(self):
         cdef object headers = self.headers
@@ -292,7 +319,7 @@ cdef class WsgiProtocol:
         return headers
 
 
-cdef void chunk_encoding(list chunks, bytes chunk):
+cdef void chunk_encoding_l(list chunks, bytes chunk):
     '''Write a chunk::
 
         chunk-size(hex) CRLF
@@ -305,19 +332,51 @@ cdef void chunk_encoding(list chunks, bytes chunk):
     chunks.append(CRLF)
 
 
-cdef void http_chunks(list chunks, bytes data, object finish=False):
+cdef void http_chunks_l(list chunks, bytes data, object finish=False):
     cdef bytes chunk
     while len(data) >= MAX_CHUNK_SIZE:
         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
-        chunk_encoding(chunks, chunk)
+        chunk_encoding_l(chunks, chunk)
     if data:
-        chunk_encoding(chunks, data)
+        chunk_encoding_l(chunks, data)
     if finish:
-        chunk_encoding(chunks, data)
+        chunk_encoding_l(chunks, data)
 
 
-cpdef str http_date(int timestamp):
-    return _http_date(timestamp)
+cdef bytes chunk_encoding(bytes total, bytes chunk):
+    '''Write a chunk::
+
+        chunk-size(hex) CRLF
+        chunk-data CRLF
+
+    If the size is 0, this is the last chunk, and an extra CRLF is appended.
+    '''
+    cdef bytes le = ("%X\r\n" % len(chunk)).encode('utf-8')
+    return total + le + chunk
+
+
+cdef bytes http_chunks(bytes chunks, bytes data, object finish=False):
+    cdef bytes chunk
+    while len(data) >= MAX_CHUNK_SIZE:
+        chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
+        chunks = chunk_encoding(chunks, chunk)
+    if data:
+        chunks = chunk_encoding(chunks, data)
+    if finish:
+        chunks = chunk_encoding(chunks, b'')
+    return chunks
+
+
+cdef int _current_time_ = 0
+cdef str _http_date_ = ''
+
+
+cpdef http_date(int timestamp):
+    global _current_time_, _http_date_
+    if _current_time_ != timestamp:
+        _current_time_ = timestamp
+        _http_date_ = _http_date(timestamp)
+    return _http_date_
 
 
 cpdef has_empty_content(int status, str method=None):

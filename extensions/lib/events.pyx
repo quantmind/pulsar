@@ -11,11 +11,6 @@ class AbortEvent(Exception):
 
 
 class EventHandler:
-    '''A Mixin for handling events on :ref:`async objects <async-object>`.
-
-    It handles :class:`OneTime` events and :class:`Event` that occur
-    several times.
-    '''
     ONE_TIME_EVENTS = None
     _events = None
 
@@ -50,8 +45,6 @@ class EventHandler:
 
 
 cdef class Event:
-    """Abstract event handler
-    """
     cdef int _onetime
     cdef str name
     cdef list _handlers
