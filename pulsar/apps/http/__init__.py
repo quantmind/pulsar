@@ -32,8 +32,9 @@ from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
 from pulsar.utils import websocket
 from pulsar.utils.system import json as _json
 from pulsar.utils.string import to_bytes
+from pulsar.utils import http
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.httpurl import (encode_multipart_formdata,
+from pulsar.utils.httpurl import (encode_multipart_formdata, CHARSET,
                                   get_environ_proxies, is_succesful,
                                   get_hostport, cookiejar_from_dict,
                                   host_no_default_port, http_chunks,
@@ -43,16 +44,26 @@ from pulsar.utils.httpurl import (encode_multipart_formdata,
 
 from .plugins import (handle_cookies, WebSocket, Redirect,
                       Tunneling, TooManyRedirects, start_request,
-                      response_content, keep_alive, HTTP11)
+                      keep_alive)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
 from .stream import HttpStream, StreamConsumedError
 
 
-__all__ = ['HttpRequest', 'HttpResponse', 'HttpClient', 'HTTPDigestAuth',
-           'TooManyRedirects', 'Auth', 'OAuth1', 'OAuth2',
-           'HttpStream', 'StreamConsumedError', 'full_url']
+__all__ = [
+    'HttpRequest',
+    'HttpResponse',
+    'HttpClient',
+    'HTTPDigestAuth',
+    'TooManyRedirects',
+    'Auth',
+    'OAuth1',
+    'OAuth2',
+    'HttpStream',
+    'StreamConsumedError',
+    'full_url'
+]
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
@@ -264,7 +275,6 @@ class HttpRequest(RequestBase):
         self.source_address = source_address
         self.stream = stream
         self.verify = verify
-        self.new_parser()
         if auth and not isinstance(auth, Auth):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
@@ -330,11 +340,11 @@ class HttpRequest(RequestBase):
                               p.query, p.fragment))
         return '%s %s %s' % (self.method, url, self.version)
 
-    def new_parser(self):
-        self.parser = self.client.http_parser(
-            kind=1, decompress=self.decompress
-        )
-        return self.parser
+    def new_parser(self, protocol):
+        protocol.headers = CIMultiDict()
+        parser = self.client.http_parser(protocol)
+        protocol.data_received = parser.feed_data
+        return parser
 
     def is_chunked(self):
         return self.body and 'content-length' not in self.headers
@@ -353,7 +363,10 @@ class HttpRequest(RequestBase):
         if self.unredirected_headers:
             headers = self.unredirected_headers.copy()
             headers.update(self.headers)
-        buffer = [first_line.encode('ascii'), b'\r\n',  bytes(headers)]
+        buffer = [first_line.encode('ascii'), b'\r\n']
+        buffer.extend((('%s: %s\r\n' % (name, value)).encode(CHARSET)
+                      for name, value in headers.items()))
+        buffer.append(b'\r\n')
         return b''.join(buffer)
 
     def add_header(self, key, value):
@@ -540,31 +553,23 @@ class HttpResponse(ProtocolConsumer):
     """
     _tunnel_host = None
     _has_proxy = False
-    _content = None
     _data_sent = None
-    _status_code = None
     _cookies = None
     _raw = None
+    content = None
+    headers = None
+    parser = None
+    version = None
+    status_code = None
     request_again = None
     ONE_TIME_EVENTS = ('pre_request', 'on_headers', 'post_request')
 
-    @property
-    def parser(self):
-        request = self.request
-        if request:
-            return request.parser
+    def __init__(self, *, loop=None):
+        self._loop = loop
 
     def __repr__(self):
         return '<Response [%s]>' % (self.status_code or 'None')
     __str__ = __repr__
-
-    @property
-    def status_code(self):
-        """Numeric status code such as 200, 404 and so forth.
-
-        Available once the :attr:`on_headers` has fired.
-        """
-        return self._status_code
 
     @property
     def url(self):
@@ -584,13 +589,6 @@ class HttpResponse(ProtocolConsumer):
             return request.history
 
     @property
-    def headers(self):
-        if not hasattr(self, '_headers'):
-            if self.parser and self.parser.is_headers_complete():
-                self._headers = CIMultiDict(self.parser.get_headers())
-        return getattr(self, '_headers', None)
-
-    @property
     def is_error(self):
         if self.status_code:
             return not is_succesful(self.status_code)
@@ -606,12 +604,6 @@ class HttpResponse(ProtocolConsumer):
         """Dictionary of cookies set by the server or ``None``.
         """
         return self._cookies
-
-    @property
-    def content(self):
-        """Content of the response, in bytes
-        """
-        return response_content(self)
 
     @property
     def raw(self):
@@ -635,33 +627,28 @@ class HttpResponse(ProtocolConsumer):
                 l[key] = link
         return l
 
-    def recv_body(self):
-        """Flush the response body and return it.
-        """
-        return self.parser.recv_body()
-
     def get_status(self):
         code = self.status_code
         if code:
             return '%d %s' % (code, responses.get(code, 'Unknown'))
 
-    def text(self, charset=None, errors=None):
+    @property
+    def text(self):
         """Decode content as a string.
         """
         data = self.content
         if data is not None:
-            if charset is None:
-                ct = self.headers.get('content-type')
-                if ct:
-                    ct, options = parse_options_header(ct)
-                    charset = options.get('charset')
-            return data.decode(charset or 'utf-8', errors or 'strict')
-    content_string = text
+            ct = self.headers.get('content-type')
+            charset = None
+            if ct:
+                ct, options = parse_options_header(ct)
+                charset = options.get('charset')
+            return data.decode(charset or 'utf-8')
 
-    def json(self, charset=None):
+    def json(self):
         """Decode content as a JSON object.
         """
-        return _json.loads(self.text(charset))
+        return _json.loads(self.text())
 
     def decode_content(self):
         """Return the best possible representation of the response body.
@@ -699,47 +686,41 @@ class HttpResponse(ProtocolConsumer):
     # #    PROTOCOL IMPLEMENTATION
     def start_request(self):
         request = self._request
+        self.parser = request.new_parser(self)
         self.transport.write(request.encode())
         if request.headers.get('expect') != '100-continue':
             self.write_body()
 
-    def data_received(self, data):
+    def on_header(self, name, value):
+        self.headers.add(name.decode(CHARSET), value.decode(CHARSET))
+
+    def on_headers_complete(self):
         request = self.request
-        # request.parser my change (100-continue)
-        # Always invoke it via request
-        try:
-            len_data = len(data)
-            parsed = request.parser.execute(data, len_data)
-            if request.parser.is_headers_complete():
-                status_code = request.parser.get_status_code()
-                if (request.headers.has('expect', '100-continue') and
-                        status_code == 100):
-                    request.new_parser()
-                    self.write_body()
-                else:
-                    self._status_code = status_code
-                    if not self.event('on_headers').fired():
-                        self.fire_event('on_headers')
-                    if (not self.event('post_request').fired() and
-                            self.is_message_complete()):
-                        parsed = len_data
-                        self.finished()
-            if parsed != len_data:
-                raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
-        except Exception as exc:
-            self.finished(exc=exc)
+        status_code = self.parser.get_status_code()
+        if (request.headers.get('expect') == '100-continue' and
+                status_code == 100):
+            self.parser = request.new_parser(self)
+            self.write_body()
+        else:
+            self.status_code = status_code
+            self.version = self.parser.get_http_version()
+            self.event('on_headers').fire()
+            if request.method == 'HEAD':
+                self.finished()
+
+    def on_body(self, body):
+        if self.request.stream:
+            self.raw(body)
+        elif self.content is None:
+            self.content = body
+        else:
+            self.content += body
+
+    def on_message_complete(self):
+        self.finished()
 
     def write_body(self):
         self.request.write_body(self.transport)
-
-    def is_message_complete(self):
-        request = self.request
-        return (
-            request.parser.is_message_complete() or (
-                request.parser.is_headers_complete() and
-                request.method == 'HEAD'
-            )
-        )
 
 
 class HttpClient(AbstractClient):
@@ -788,8 +769,6 @@ class HttpClient(AbstractClient):
         Default headers for this :class:`HttpClient`
 
     """
-    MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'on_headers',
-                         'post_request', 'connection_lost')
     protocol_factory = partial(Connection, HttpResponse)
     max_redirects = 10
     """Maximum number of redirects.
@@ -802,7 +781,7 @@ class HttpClient(AbstractClient):
     client_version = pulsar.SERVER_SOFTWARE
     """String for the ``User-Agent`` header.
     """
-    version = HTTP11
+    version = 'HTTP/1.1'
     """Default HTTP request version for this :class:`HttpClient`.
 
     It can be overwritten on :meth:`request`.
@@ -829,8 +808,7 @@ class HttpClient(AbstractClient):
                  loop=None, client_version=None, timeout=None, stream=False,
                  pool_size=10, frame_parser=None, logger=None,
                  close_connections=False, keep_alive=None):
-        super().__init__(loop)
-        self._logger = logger or LOGGER
+        super().__init__(loop=loop, logger=logger or LOGGER)
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
         self.pool_size = pool_size
@@ -857,13 +835,13 @@ class HttpClient(AbstractClient):
             if 'no' not in self.proxies:
                 self.proxies['no'] = ','.join(self.no_proxy)
         self.websocket_handler = websocket_handler
-        self.http_parser = parser or http_parser
+        self.http_parser = parser or http.HttpResponseParser
         self.frame_parser = frame_parser or websocket.frame_parser
         # Add hooks
-        self.bind_event('pre_request', Tunneling(self._loop))
-        self.bind_event('pre_request', WebSocket())
-        self.bind_event('on_headers', handle_cookies)
-        self.bind_event('post_request', Redirect())
+        self.event('pre_request').bind(Tunneling(self._loop))
+        self.event('pre_request').bind(WebSocket())
+        self.event('on_headers').bind(handle_cookies)
+        self.event('post_request').bind(Redirect())
 
     # API
     def connect(self, address):
@@ -1004,16 +982,17 @@ class HttpClient(AbstractClient):
         with conn:
             try:
                 response = await start_request(request, conn)
-                headers = response.headers
+                status_code = response.status_code
             except AbortRequest:
                 response = None
-                headers = None
+                status_code = None
 
-            if (not headers or
-                    not keep_alive(response.request.version, headers) or
-                    response.status_code == 101 or
+            if (not status_code or
+                    not keep_alive(response.version, response.headers) or
+                    status_code == 101 or
                     # if response is done stream is not relevant
-                    response.request.stream and not response.done() or
+                    (response.request.stream and not
+                     response.event('post_request').fired()) or
                     self.close_connections):
                 conn.detach()
 

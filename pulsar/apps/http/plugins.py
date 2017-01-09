@@ -20,26 +20,16 @@ def noerror(callback):
     return _
 
 
-HTTP11 = 'HTTP/1.1'
-
-
 def keep_alive(version, headers):
     """Check if to keep alive an HTTP connection.
 
     If the version is 1.1, we close the connection only if the ``connection``
     header is available and set to ``close``
     """
-    if version == HTTP11:
-        return not headers.has('connection', 'close')
+    if version == '1.1':
+        return not headers.get('connection') == 'close'
     else:
-        return headers.has('connection', 'keep-alive')
-
-
-def response_content(resp, exc=None, **kw):
-    b = resp.parser.recv_body()
-    if b or resp._content is None:
-        resp._content = resp._content + b if resp._content else b
-    return resp._content
+        return headers.get('connection') == 'keep-alive'
 
 
 def _consumer(response, consumer):
@@ -53,16 +43,14 @@ async def start_request(request, conn):
     # bind request-specific events
     response.bind_events(**request.inp_params)
     if request.auth:
-        response.bind_event('pre_request', request.auth)
+        response.event('pre_request').bind(request.auth)
 
     if request.stream:
-        response.bind_event('data_processed', response.raw)
         response.start(request)
-        await response.events['on_headers']
+        await response.event('on_headers').waiter()
     else:
-        response.bind_event('data_processed', response_content)
         response.start(request)
-        await response.on_finished
+        await response.event('post_request').waiter()
 
     if hasattr(response.request_again, '__call__'):
         response = response.request_again(response)

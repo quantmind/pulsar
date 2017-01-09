@@ -4,7 +4,7 @@ from functools import partial
 
 from pulsar import HttpException, ProtocolError, ProtocolConsumer, maybe_async
 from pulsar.utils.string import to_bytes, native_str
-from pulsar.utils.httpurl import DEFAULT_CHARSET
+from pulsar.utils.httpurl import CHARSET
 from pulsar.utils.websocket import frame_parser, parse_close
 from pulsar.apps import wsgi
 
@@ -161,7 +161,7 @@ class WebSocket(wsgi.Router):
         key = environ.get('HTTP_SEC_WEBSOCKET_KEY')
         if key:
             try:
-                ws_key = base64.b64decode(key.encode(DEFAULT_CHARSET))
+                ws_key = base64.b64decode(key.encode(CHARSET))
             except Exception:
                 ws_key = ''
             if len(ws_key) != 16:

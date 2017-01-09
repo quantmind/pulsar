@@ -93,7 +93,7 @@ class BaseRouter(wsgi.Router):
         return data
 
     def getheaders(self, request):
-        headers = Headers(kind='client')
+        headers = CIMultiDict()
         for k in request.environ:
             if k.startswith('HTTP_'):
                 headers[k[5:].replace('_', '-')] = request.environ[k]

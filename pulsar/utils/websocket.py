@@ -40,7 +40,7 @@ from base64 import b64encode
 
 from .string import to_bytes
 from .exceptions import ProtocolError
-from .httpurl import DEFAULT_CHARSET
+from .httpurl import CHARSET
 
 try:
     from .lib import FrameParser as CFrameParser
@@ -82,7 +82,7 @@ def get_version(version):
 
 
 def websocket_key():
-    return b64encode(os.urandom(16)).decode(DEFAULT_CHARSET)
+    return b64encode(os.urandom(16)).decode(CHARSET)
 
 
 class Extension:

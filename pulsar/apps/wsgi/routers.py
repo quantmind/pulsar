@@ -374,8 +374,7 @@ class Router(metaclass=RouterType):
         return self.full_route.__repr__()
 
     def __call__(self, environ, start_response=None):
-        hnd = self._get(environ.get('PATH_INFO') or '/',
-                            environ.get('REQUEST_METHOD'))
+        hnd = self._get(environ['PATH_INFO'] or '/', environ['REQUEST_METHOD'])
         if hnd:
             try:
                 request = wsgi_request(environ, hnd.router, hnd.urlargs)

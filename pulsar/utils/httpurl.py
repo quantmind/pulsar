@@ -1,33 +1,3 @@
-'''This is a substantial module which imports several classes and functions
-from the standard library in a python 2.6 to python 3.3 compatible fashion.
-On top of that, it implements the :class:`HttpClient` for handling synchronous
-and asynchronous HTTP requests in a pythonic way.
-
-It is a thin layer on top of urllib2 in python2 / urllib in Python 3.
-Several opensource efforts have been used as source of snippets:
-
-* http-parser_
-* request_
-* urllib3_
-* werkzeug_
-
-
-.. _tools-http-parser:
-
-HTTP Parser
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: HttpParser
-   :members:
-   :member-order: bysource
-
-
-.. _http-parser: https://github.com/benoitc/http-parser
-.. _urllib3: https://github.com/shazow/urllib3
-.. _request: https://github.com/kennethreitz/requests
-.. _werkzeug: https://github.com/mitsuhiko/werkzeug
-.. _`HTTP cookie`: http://en.wikipedia.org/wiki/HTTP_cookie
-'''
 import os
 import re
 import string
@@ -43,13 +13,16 @@ from http.cookies import SimpleCookie
 
 from .structures import mapping_iterator
 from .string import to_bytes, to_string
-from .html import capfirst
 
 try:
     from .lib import http_date
 except ImportError:
     from wsgiref.handlers import format_date_time as http_date
 
+
+__all__ = [
+    'http_date'
+]
 
 getproxies_environment = urllibr.getproxies_environment
 ascii_letters = string.ascii_letters
@@ -64,7 +37,7 @@ tls_schemes = ('https', 'wss')
 # The reserved URI characters (RFC 3986 - section 2.2)
 # Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
 # http://www.ietf.org/rfc/rfc2616.txt
-DEFAULT_CHARSET = 'ISO-8859-1'
+CHARSET = 'ISO-8859-1'
 URI_GEN_DELIMS = frozenset(':/?#[]@')
 URI_SUB_DELIMS = frozenset("!$&'()*+,;=")
 URI_RESERVED_SET = URI_GEN_DELIMS.union(URI_SUB_DELIMS)
@@ -226,31 +199,6 @@ def is_succesful(status):
     return status >= 200 and status < 300
 
 
-def capheader(name):
-    name = name.replace('_', '-')
-    return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
-
-
-def header_field(name):
-    """Return a header `name` in Camel case.
-
-    For example::
-
-        header_field('connection') == 'Connection'
-        header_field('accept-charset') == 'Accept-Charset'
-
-    If ``header_set`` is given, only return headers included in the set.
-    """
-    return name.lower()
-    # return capheader(name.lower())
-
-
-#    HEADERS UTILITIES
-HEADER_FIELDS_JOINER = {'Cookie': '; ',
-                        'Set-Cookie': None,
-                        'Set-Cookie2': None}
-
-
 def split_comma(value):
     return [v for v in (v.strip() for v in value.split(',')) if v]
 
@@ -261,14 +209,6 @@ def parse_cookies(value):
 
 header_parsers = {'Connection': split_comma,
                   'Cookie': parse_cookies}
-
-
-def header_values(header, value):
-    assert isinstance(value, str)
-    if header in header_parsers:
-        return header_parsers[header](value)
-    else:
-        return [value]
 
 
 def quote_header_value(value, extra_chars='', allow_token=True):

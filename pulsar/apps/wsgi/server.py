@@ -71,7 +71,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     :param params: key valued parameters
     :return: a valid WSGI environ dictionary.
     '''
-    parser = http_parser(kind=0)
+    parser = http.HttpRequestParser()
     method = (method or 'GET').upper()
     path = iri_to_uri(path or '/')
     request_headers = CIMultiDict(headers)

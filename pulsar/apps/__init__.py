@@ -476,9 +476,13 @@ class Application(Configurator):
             if not self.cfg.exc_id:
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
-                start = create_future(actor._loop)
-                actor.event('start').bind(partial(self._add_monitor, start))
-                return start
+                start_event = create_future(actor._loop)
+                start = actor.event('start')
+                if start.fired():
+                    self._add_monitor(start_event, actor)
+                else:
+                    start.bind(partial(self._add_monitor, start_event))
+                return start_event
             else:
                 return
         elif monitor:
@@ -546,11 +550,11 @@ class Application(Configurator):
                     a.set(s.value)
 
     #   INTERNALS
-    def _add_monitor(self, start, arbiter):
+    def _add_monitor(self, start_event, arbiter):
         loop = arbiter._loop
         monitor = arbiter.add_monitor(
             self.name, app=self, cfg=self.cfg,
-            start_event=start,
+            start_event=start_event,
             on_start=lambda arg, **kw: loop.create_task(
                 monitor_start(arg, **kw)
             )

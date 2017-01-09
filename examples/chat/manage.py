@@ -49,7 +49,7 @@ from pulsar.apps.data import create_store, PubSubClient
 from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 from pulsar.apps.ds import pulsards_url
 from pulsar.utils.system import json
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 
 CHAT_DIR = os.path.dirname(__file__)
 

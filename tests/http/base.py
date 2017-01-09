@@ -62,8 +62,7 @@ class TestHttpClientBase:
             s = server(bind='127.0.0.1:0', concurrency=concurrency,
                        name='httpbin-%s' % cls.__name__.lower(),
                        keep_alive=30, key_file=key_file, cert_file=cert_file,
-                       stream_buffer=2**18,
-                       workers=1)
+                       stream_buffer=2**18, workers=1)
             cfg = await send('arbiter', 'run', s)
             cls.app = cfg.app()
             bits = ('https' if cls.with_tls else 'http',) + cfg.addresses[0]

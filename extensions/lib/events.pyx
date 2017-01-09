@@ -80,6 +80,8 @@ cdef class Event:
         """Bind a ``callback`` to this event.
         """
         cdef list handlers = self._handlers
+        if self._self == None:
+            raise RuntimeError('%s already fired, cannot add callbacks' % self)
         if handlers is None:
             handlers = []
             self._handlers = handlers

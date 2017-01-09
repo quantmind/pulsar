@@ -4,6 +4,7 @@ from pulsar import EventHandler, get_event_loop
 
 
 class Handler(EventHandler):
+    ONE_TIME_EVENTS = ('start', 'finish')
 
     def __init__(self, **kw):
         self._loop = get_event_loop()
@@ -12,12 +13,11 @@ class Handler(EventHandler):
 
 class TestFailure(unittest.TestCase):
 
-    async def test_one_time(self):
-        h = Handler(one_time_events=('start', 'finish'))
-        h.bind_event('finish', lambda f, exc=None: 'OK')
-        result = await h.fire_event('finish', 'foo')
-        self.assertTrue(h.event('finish').done())
-        self.assertEqual(result, 'foo')
+    def test_one_time(self):
+        h = Handler()
+        self.assertTrue(h.event('finish').onetime())
+        h.event('finish').fire()
+        self.assertTrue(h.event('finish').fired())
 
     async def test_one_time_error(self):
         h = Handler(one_time_events=('start', 'finish'))

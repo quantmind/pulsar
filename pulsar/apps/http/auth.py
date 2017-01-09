@@ -5,7 +5,7 @@ from base64 import b64encode
 from urllib.parse import urlparse
 
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
-                                  to_string, DEFAULT_CHARSET)
+                                  to_string, CHARSET)
 
 from .plugins import request_again, noerror
 
@@ -45,8 +45,8 @@ class HTTPBasicAuth(Auth):
 
     def header(self):
         b64 = b64encode(('%s:%s' % (
-            self.username, self.password)).encode(DEFAULT_CHARSET))
-        return 'Basic %s' % to_string(b64.strip(), DEFAULT_CHARSET)
+            self.username, self.password)).encode(CHARSET))
+        return 'Basic %s' % to_string(b64.strip(), CHARSET)
 
     def __repr__(self):
         return 'Basic: %s' % self.username

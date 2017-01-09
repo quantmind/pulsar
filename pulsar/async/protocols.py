@@ -10,14 +10,16 @@ from .events import EventHandler, AbortEvent
 from .mixins import FlowControl, Timeout
 
 
-__all__ = ['ProtocolConsumer',
-           'Protocol',
-           'DatagramProtocol',
-           'Connection',
-           'Producer',
-           'TcpServer',
-           'DatagramServer',
-           'AbortRequest']
+__all__ = [
+    'ProtocolConsumer',
+    'Protocol',
+    'DatagramProtocol',
+    'Connection',
+    'Producer',
+    'TcpServer',
+    'DatagramServer',
+    'AbortRequest'
+]
 
 
 CLOSE_TIMEOUT = 3
@@ -158,10 +160,7 @@ class ProtocolConsumer(EventHandler):
             self.logger.debug('Abort request %s', request)
         else:
             if self._request is not None:
-                try:
-                    self.start_request()
-                except Exception as exc:
-                    self.finished(exc=exc)
+                self.start_request()
 
     def abort_request(self):
         """Abort the request.

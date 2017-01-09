@@ -43,9 +43,10 @@ import pulsar
 from pulsar import HttpException, ensure_future, create_future
 from pulsar.apps import wsgi, http
 from pulsar.apps.http.plugins import noerror
-from pulsar.utils.httpurl import Headers, ENCODE_BODY_METHODS
+from pulsar.utils.httpurl import ENCODE_BODY_METHODS
 from pulsar.utils.log import LocalMixin, local_property
 
+from multidict import CIMultiDict
 
 SERVER_SOFTWARE = 'Pulsar-proxy-server/%s' % pulsar.version
 ENVIRON_HEADERS = ('content-type', 'content-length')
@@ -123,7 +124,7 @@ class TunnelResponse:
         modify them via the list of :attr:`headers_middleware`.
         The returned headers will be sent to the target uri.
         '''
-        headers = Headers(kind='client')
+        headers = CIMultiDict()
         for k in self.environ:
             if k.startswith('HTTP_'):
                 head = k[5:].replace('_', '-')

@@ -63,7 +63,7 @@ Echo Server
 """
 import pulsar
 from pulsar import Pool, create_future, DatagramProtocol
-from pulsar.utils.pep import to_bytes
+from pulsar.utils.string import to_bytes
 from pulsar.apps.socket import UdpSocketServer
 
 

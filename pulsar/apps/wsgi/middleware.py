@@ -93,7 +93,7 @@ async def wait_for_body_middleware(environ, start_response=None):
 
     Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
-    if environ['wsgi.input']:
+    if 'wsgi.input' in environ:
         chunk = await as_coroutine(environ['wsgi.input'].read())
         environ['wsgi.input'] = BytesIO(chunk)
 

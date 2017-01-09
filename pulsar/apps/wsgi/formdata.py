@@ -14,7 +14,7 @@ from multidict import MultiDict
 from pulsar import HttpException, BadRequest, isawaitable, ensure_future
 from pulsar.utils.system import convert_bytes
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
+from pulsar.utils.httpurl import (CHARSET, ENCODE_BODY_METHODS,
                                   JSON_CONTENT_TYPES, parse_options_header)
 from .headers import CONTENT_LENGTH
 
@@ -64,7 +64,7 @@ class HttpBodyReader:
             else:
                 msg = '%s 100 Continue\r\n\r\n' % http_protocol(self.parser)
                 self._expect_sent = msg
-                self.reader._transport.write(msg.encode(DEFAULT_CHARSET))
+                self.reader._transport.write(msg.encode(CHARSET))
 
     def fail(self):
         if self.waiting_expect():
