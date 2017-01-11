@@ -43,6 +43,11 @@ LOGGING_CONFIG = {
         'silent': {
             'class': 'pulsar.utils.log.Silence',
         },
+        'console_simple': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'message'
+        },
         'console': {
             'level': 'DEBUG',
             'class': 'pulsar.utils.log.ColoredStream',

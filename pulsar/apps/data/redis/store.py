@@ -1,9 +1,11 @@
 from functools import partial
 
-from pulsar import Connection, Pool, get_actor
-from pulsar.utils.string import to_string
-from pulsar.apps.data import RemoteStore
-from pulsar.apps.ds import redis_parser
+from ....async.protocols import Connection
+from ....async.clients import Pool
+from ....async.access import get_actor
+from ....utils.string import to_string
+from ...ds import redis_parser
+from ..store import RemoteStore
 
 from .client import RedisClient, Pipeline, Consumer, ResponseError
 from .pubsub import RedisPubSub, RedisChannels

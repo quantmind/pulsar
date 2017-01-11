@@ -15,7 +15,7 @@ from urllib.parse import parse_qsl
 
 from multidict import MultiDict
 
-from pulsar import format_traceback
+from pulsar.utils.exceptions import format_traceback
 from pulsar.utils.system import json
 from pulsar.utils.html import escape
 from pulsar.utils.string import to_string
@@ -74,55 +74,6 @@ def log_wsgi_info(log, environ, status, exc=None):
             environ.get('RAW_URI'),
             environ.get('SERVER_PROTOCOL'),
             status, msg)
-
-
-def cookie_date(epoch_seconds=None):
-    """Formats the time to ensure compatibility with Netscape's cookie
-    standard.
-
-    Accepts a floating point number expressed in seconds since the epoch in, a
-    datetime object or a timetuple.  All times in UTC.  The :func:`parse_date`
-    function can be used to parse such a date.
-
-    Outputs a string in the format ``Wdy, DD-Mon-YYYY HH:MM:SS GMT``.
-
-    :param expires: If provided that date is used, otherwise the current.
-    """
-    rfcdate = formatdate(epoch_seconds)
-    return '%s-%s-%s GMT' % (rfcdate[:7], rfcdate[8:11], rfcdate[12:25])
-
-
-def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
-               domain=None, secure=False, httponly=False):
-    '''Set a cookie key into the cookies dictionary *cookies*.'''
-    cookies[key] = value
-    if expires is not None:
-        if isinstance(expires, datetime):
-            now = (expires.now(expires.tzinfo) if expires.tzinfo else
-                   expires.utcnow())
-            delta = expires - now
-            # Add one second so the date matches exactly (a fraction of
-            # time gets lost between converting to a timedelta and
-            # then the date string).
-            delta = delta + timedelta(seconds=1)
-            # Just set max_age - the max_age logic will set expires.
-            expires = None
-            max_age = max(0, delta.days * 86400 + delta.seconds)
-        else:
-            cookies[key]['expires'] = expires
-    if max_age is not None:
-        cookies[key]['max-age'] = max_age
-        # IE requires expires, so set it if hasn't been already.
-        if not expires:
-            cookies[key]['expires'] = cookie_date(time.time() + max_age)
-    if path is not None:
-        cookies[key]['path'] = path
-    if domain is not None:
-        cookies[key]['domain'] = domain
-    if secure:
-        cookies[key]['secure'] = True
-    if httponly:
-        cookies[key]['httponly'] = True
 
 
 _accept_re = re.compile(r'([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?')

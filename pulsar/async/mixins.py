@@ -19,7 +19,7 @@ class FlowControl:
         '''
         assert not self._paused
         self._paused = True
-        self._transport.pause_reading()
+        self.transport.pause_reading()
 
     def resume_writing(self, exc=None):
         '''Resume writing.
@@ -37,13 +37,14 @@ class FlowControl:
                     waiter.set_result(None)
                 else:
                     waiter.set_exception(exc)
-        self._transport.resume_reading()
+        self.transport.resume_reading()
 
     # INTERNAL CALLBACKS
     def _set_flow_limits(self, _, exc=None):
         if not exc:
-            self._transport.set_write_buffer_limits(self._low_limit,
-                                                    self._high_limit)
+            self.transport.set_write_buffer_limits(
+                self._low_limit, self._high_limit
+            )
 
     def _wakeup_waiter(self, _, exc=None):
         # Wake up the writer if currently paused.

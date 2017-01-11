@@ -3,19 +3,16 @@ import os
 import pickle
 from threading import current_thread
 
-from pulsar import HaltServer, CommandError, MonitorStarted, system
-from pulsar.utils.log import WritelnDecorator
+from ..utils.exceptions import HaltServer, CommandError, MonitorStarted
+from ..utils import system
+from ..utils.log import WritelnDecorator
+from ..utils.lib import EventHandler
 
-from .events import EventHandler
 from .proxy import ActorProxy, ActorProxyMonitor, actor_identity
 from .mailbox import command_in_context
 from .access import get_actor
 from .cov import Coverage
 from .consts import ACTOR_STATES
-
-
-__all__ = ['is_actor', 'send', 'spawn',
-           'Actor', 'get_stream']
 
 
 def is_actor(obj):

@@ -54,15 +54,15 @@ import socket
 import pickle
 from collections import namedtuple
 
-from pulsar import ProtocolError, CommandError
-from pulsar.utils.internet import nice_address
-from pulsar.utils.websocket import frame_parser
-from pulsar.utils.string import gen_unique_id
+from ..utils.exceptions import ProtocolError, CommandError
+from ..utils.internet import nice_address
+from ..utils.websocket import frame_parser
+from ..utils.string import gen_unique_id
 
+from .protocols import PulsarProtocol
 from .access import get_actor, isawaitable, create_future
 from .futures import task
 from .proxy import actor_identity, get_proxy, get_command, ActorProxy
-from .protocols import Protocol
 from .clients import AbstractClient
 
 
@@ -144,7 +144,7 @@ class Message:
         return cls(data)
 
 
-class MailboxProtocol(Protocol):
+class MailboxProtocol(PulsarProtocol):
     '''The :class:`.Protocol` for internal message passing between actors.
 
     Encoding and decoding uses the unmasked websocket protocol.

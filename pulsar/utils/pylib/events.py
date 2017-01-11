@@ -121,7 +121,7 @@ class EventHandler:
             events[name] = Event(name, self)
         return events[name]
 
-    def bind_events(self, **events):
+    def bind_events(self, events):
         '''Register all known events found in ``events`` key-valued parameters.
         '''
         evs = self._events

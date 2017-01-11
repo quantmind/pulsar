@@ -6,9 +6,8 @@ from enum import Enum
 from asyncio import gather
 from collections import namedtuple, OrderedDict
 
-from pulsar import ProtocolError
-from pulsar.apps.ds import redis_to_py_pattern
-
+from ...utils.exceptions import ProtocolError
+from ...apps.ds import redis_to_py_pattern
 from .store import PubSubClient
 
 

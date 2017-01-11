@@ -1,4 +1,4 @@
-from pulsar import Http404
+from pulsar.api import Http404
 from pulsar.utils.log import LocalMixin, local_method
 
 from .utils import handle_wsgi_error
@@ -98,7 +98,9 @@ class LazyWsgi(LocalMixin):
     causing serialisation issues.
     '''
     def __call__(self, environ, start_response):
-        return self.handler(environ)(environ, start_response)
+        if not hasattr(self, '_local'):
+            return self.handler(environ)(environ, start_response)
+        return self._local.handler(environ, start_response)
 
     @local_method
     def handler(self, environ=None):

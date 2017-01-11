@@ -10,46 +10,65 @@ class AbortEvent(Exception):
     pass
 
 
-class EventHandler:
+cdef class EventHandler:
     ONE_TIME_EVENTS = None
-    _events = None
 
-    def event(self, str name):
-        '''Returns the :class:`Event` at ``name``.
+    @property
+    def events(self):
+        return self._events
 
-        If no event is registered for ``name`` returns nothing.
-        '''
+    cpdef Event event(self, str name):
+        """Returns the :event at ``name``.
+        """
+        if name is None:
+            raise ValueError('event name must be a string')
         if self._events is None:
             self._events = {}
-            populate_events(self, self._events)
-        return get_event(self, self._events, name)
+            for n in self.ONE_TIME_EVENTS or ():
+                self._events[n] = Event(n, self, 1)
+        if name not in self._events:
+            event = Event(name, self, 0)
+            self._events[name] = event
+        return self._events[name]
 
-    def bind_events(self, **events):
+    cpdef void fire_event(self, str name, exc=None, data=None):
+        if self._events and name in self._events:
+            self._events[name].fire(exc=exc, data=data)
+
+    cpdef void bind_events(self, dict events):
         '''Register all known events found in ``events`` key-valued parameters.
         '''
-        evs = self._events
-        if evs:
+        cdef dict evs = self._events
+        if evs and events:
             for event in evs.values():
                 if event.name in events:
                     event.bind(events[event.name])
 
-    def copy_many_times_events(self, other):
+    cpdef void copy_many_times_events(self, EventHandler other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.
 
         All many times events of ``other`` are copied to this handler
         provided the events handlers already exist.
         '''
-        events = self._events
-        if events and other._events:
-            copy_many_times_events(events, other._events)
+        cdef dict events = self._events
+        cdef dict other_events = other.events if other else None
+        cdef str name
+        cdef Event event
+        cdef list handlers
+        cdef object callback
+
+        if events and other_events:
+            for name, event in other_events.items():
+                handlers = event.handlers()
+                if not event.onetime() and handlers:
+                    ev = events.get(name)
+                    # If the event is available add it
+                    if ev:
+                        for callback in handlers:
+                            ev.bind(callback)
 
 
 cdef class Event:
-    cdef int _onetime
-    cdef str name
-    cdef list _handlers
-    cdef object _self
-    cdef object _waiter
 
     def __cinit__(self, str name, object o, int onetime):
         self.name = name
@@ -78,8 +97,7 @@ cdef class Event:
         if handlers is None:
             handlers = []
             self._handlers = handlers
-        if callback not in handlers:
-            handlers.append(callback)
+        handlers.append(callback)
 
     cpdef void clear(self):
         self._handlers = None
@@ -98,7 +116,7 @@ cdef class Event:
             return removed_count
         return 0
 
-    cpdef void fire(self, object exc=None, object data=None):
+    cpdef void fire(self, exc=None, data=None):
         cdef object o = self._self
         cdef list handlers
 
@@ -126,36 +144,7 @@ cdef class Event:
                     self._waiter.set_result(o)
                 self._waiter = None
 
-    def waiter(self):
+    cpdef object waiter(self):
         if not self._waiter:
             self._waiter = get_event_loop().create_future()
         return self._waiter
-
-
-cdef void populate_events(object self, dict events):
-    cdef tuple ot = self.ONE_TIME_EVENTS or ()
-    for n in ot:
-        events[n] = Event(n, self, 1)
-
-
-cdef object get_event(object self, dict events, str name):
-    if name not in events:
-        event = Event(name, self, 0)
-        events[name] = event
-    return events[name]
-
-
-cdef void copy_many_times_events(dict events, dict other_events):
-    cdef str name
-    cdef Event event
-    cdef list handlers
-    cdef object callback
-
-    for name, event in other_events.items():
-        handlers = event.handlers()
-        if not event.onetime() and handlers:
-            ev = events.get(name)
-            # If the event is available add it
-            if ev:
-                for callback in handlers:
-                    ev.bind(callback)

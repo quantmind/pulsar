@@ -65,10 +65,10 @@ from functools import partial
 from collections import namedtuple, OrderedDict
 import asyncio
 
-import pulsar
-from pulsar import (
-    ensure_future, get_actor, Config, create_future, ImproperlyConfigured
-)
+from ..async.concurrency import arbiter
+from ..async.access import get_actor, create_future
+from ..utils.config import Config
+from ..utils.exceptions import  ImproperlyConfigured
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
@@ -152,7 +152,7 @@ def monitor_stopping(self, exc=None):
     if coro:
         coros.append(coro)
     if coros:
-        ensure_future(asyncio.wait(coros, loop=self._loop))
+        asyncio.ensure_future(asyncio.wait(coros, loop=self._loop))
 
 
 def worker_stopping(self, exc=None):
@@ -185,7 +185,7 @@ def worker_start(self, exc=None):
     self.event('stopping').bind(worker_stopping)
     coro = app.worker_start(self, exc=exc)
     if isawaitable(coro):
-        pulsar.ensure_future(coro, loop=self._loop)
+        ensure_future(coro, loop=self._loop)
 
 
 class Configurator:
@@ -362,11 +362,11 @@ class Configurator:
         called more than once.
         """
         on_start = self()
-        arbiter = pulsar.arbiter()
-        if arbiter and on_start:
-            arbiter.start(exit=exit)
-            if arbiter.exit_code is not None:
-                return arbiter.exit_code
+        actor = arbiter()
+        if actor and on_start:
+            actor.start(exit=exit)
+            if actor.exit_code is not None:
+                return actor.exit_code
         return on_start
 
     @classmethod
@@ -450,7 +450,7 @@ class Application(Configurator):
         """Register this application with the (optional) calling ``actor``.
 
         If an ``actor`` is available (either via the function argument or via
-        the :func:`~pulsar.async.actor.get_actor` function) it must be
+        the :func:`~pulsar.api.get_actor` function) it must be
         ``arbiter``, otherwise this call is no-op.
 
         If no actor is available, it means this application starts
@@ -470,7 +470,7 @@ class Application(Configurator):
             self.cfg.on_start()
             self.logger = self.cfg.configured_logger()
             if not actor:
-                actor = pulsar.arbiter(cfg=self.cfg.clone())
+                actor = arbiter(cfg=self.cfg.clone())
             else:
                 self.update_arbiter_params(actor)
             if not self.cfg.exc_id:
@@ -576,9 +576,9 @@ class MultiApp(Configurator):
 
     A minimal example usage::
 
-        import pulsar
+        import pulsar.api import MultiApp
 
-        class Server(pulsar.MultiApp):
+        class Server(MultiApp):
 
             def build(self):
                 yield self.new_app(TaskQueue)

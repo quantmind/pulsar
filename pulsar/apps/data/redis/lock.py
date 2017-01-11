@@ -1,7 +1,7 @@
 import uuid
 from asyncio import sleep
 
-from pulsar import isawaitable, LockError, LockBase
+from ....async.lock import LockError, LockBase
 
 
 class RedisScript:
@@ -20,8 +20,10 @@ class RedisScript:
             client.store.loaded_scripts.add(self.sha)
 
         result = client.evalsha(self.sha, keys, args)
-        if isawaitable(result):
+        try:
             result = await result
+        except TypeError:
+            pass
         return result
 
 

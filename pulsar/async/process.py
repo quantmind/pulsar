@@ -1,5 +1,5 @@
-from pulsar.utils import autoreload
-from pulsar import system
+from ..utils import autoreload
+from ..utils import system
 
 
 class ProcessMixin:

@@ -10,9 +10,6 @@ from .futures import AsyncObject
 from .protocols import Producer
 
 
-__all__ = ['Pool', 'PoolConnection', 'AbstractClient', 'AbstractUdpClient']
-
-
 logger = logging.getLogger('pulsar.pool')
 
 

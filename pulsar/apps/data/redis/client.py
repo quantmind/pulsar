@@ -1,10 +1,10 @@
 from itertools import chain
 import datetime
 
-import pulsar
-from pulsar.utils.string import to_string
-from pulsar.utils.structures import mapping_iterator, Zset
-from pulsar.apps.ds import COMMANDS_INFO, CommandError
+from ....utils.string import to_string
+from ....utils.structures import mapping_iterator, Zset
+from ....utils.lib import ProtocolConsumer
+from ...ds import COMMANDS_INFO, CommandError
 
 from .pubsub import RedisPubSub
 from .lock import Lock
@@ -111,7 +111,7 @@ def pubsub_callback(response, subcommand=None):
         return response
 
 
-class Consumer(pulsar.ProtocolConsumer):
+class Consumer(ProtocolConsumer):
 
     RESPONSE_CALLBACKS = dict_merge(
         string_keys_to_dict(

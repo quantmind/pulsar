@@ -3,17 +3,13 @@ import threading
 import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
 from collections import OrderedDict
 from threading import current_thread
-
-from asyncio import Future
-
-from pulsar.utils.config import Global
-from pulsar.utils.system import current_process, platform
-
-from asyncio import ensure_future
 from inspect import isawaitable
+from asyncio import Future, ensure_future
+
+from ..utils.config import Global
+from ..utils.system import current_process, platform
 
 
 __all__ = ['get_event_loop',

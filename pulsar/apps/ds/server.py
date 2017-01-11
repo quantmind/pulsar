@@ -51,10 +51,11 @@ from functools import partial, reduce
 from collections import namedtuple
 from itertools import zip_longest
 
-import pulsar
-from pulsar.apps.socket import SocketServer
-from pulsar.utils.config import Global
-from pulsar.utils.structures import Dict, Zset, Deque
+from ..socket import SocketServer
+from ...async.access import get_actor
+from ...async.protocols import TcpServer
+from ...utils.config import Setting, Config
+from ...utils.structures import Dict, Zset, Deque
 
 from .parser import redis_parser
 from .utils import sort_command, count_bytes, and_op, or_op, xor_op, save_data
@@ -67,7 +68,7 @@ DEFAULT_PULSAR_STORE_ADDRESS = '127.0.0.1:6410'
 
 def pulsards_url(address=None):
     if not address:
-        actor = pulsar.get_actor()
+        actor = get_actor()
         if actor:
             address = actor.cfg.data_store
     address = address or DEFAULT_PULSAR_STORE_ADDRESS
@@ -82,19 +83,7 @@ STRING_LIMIT = 2**32
 nan = float('nan')
 
 
-class RedisParserSetting(Global):
-    name = "redis_py_parser"
-    flags = ["--redis-py-parser"]
-    action = "store_true"
-    default = False
-    desc = '''\
-    Use the python redis parser rather the C implementation.
-
-    Mainly used for benchmarking purposes.
-    '''
-
-
-class PulsarDsSetting(pulsar.Setting):
+class PulsarDsSetting(Setting):
     virtual = True
     app = 'pulsards'
     section = "Pulsar data store server"
@@ -158,12 +147,12 @@ class KeyValueFileName(PulsarDsSetting):
     desc = '''The filename where to dump the DB.'''
 
 
-class TcpServer(pulsar.TcpServer):
+class Server(TcpServer):
 
     def __init__(self, cfg, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cfg = cfg
-        self._parser_class = redis_parser(cfg.redis_py_parser)
+        self._parser_class = redis_parser()
         self._key_value_store = Storage(self, cfg)
 
     def info(self):
@@ -176,7 +165,7 @@ class PulsarDS(SocketServer):
     '''A :class:`.SocketServer` serving a pulsar datastore.
     '''
     name = 'pulsards'
-    cfg = pulsar.Config(bind=DEFAULT_PULSAR_STORE_ADDRESS,
+    cfg = Config(bind=DEFAULT_PULSAR_STORE_ADDRESS,
                         keep_alive=0,
                         apps=['socket', 'pulsards'])
 

@@ -20,10 +20,8 @@ from urllib.parse import urlparse
 from async_timeout import timeout
 from multidict import CIMultiDict
 
-import pulsar
-from pulsar import BadRequest
+from pulsar.api import BadRequest
 from pulsar.utils.httpurl import iri_to_uri
-from pulsar.async.protocols import ProtocolConsumer
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils import http
 
@@ -34,8 +32,9 @@ from .wrappers import FileWrapper, close_object
 from .headers import CONTENT_LENGTH
 
 try:
-    from pulsar.utils.lib import WsgiProtocol
+    from pulsar.utils.lib import WsgiProtocol, ProtocolConsumer
 except ImportError:
+    from pulsar.async.protocols import ProtocolConsumer
     WsgiProtocol = None
 
 
@@ -103,34 +102,32 @@ class HttpServerResponse(ProtocolConsumer):
 
         The wsgi callable handling requests.
     '''
-    logger = LOGGER
-    SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
-    def __init__(self, wsgi_callable, cfg, server_software=None, loop=None):
-        self._loop = loop
-        self.wsgi_callable = wsgi_callable
-        self.cfg = cfg
+    def create_request(self):
+        producer = self.producer
         self.body_reader = HttpBodyReader()
-        self.wsgi = WsgiProtocol(
-            self,
-            server_software or self.SERVER_SOFTWARE,
-            AttributeDictionary(logger=LOGGER, cfg=cfg),
-            FileWrapper
-        )
         self.parse_url = http.parse_url
-        self.parser = http.HttpRequestParser(self.wsgi)
-        self.data_received = self.parser.feed_data
+        self.create_parser = http.HttpRequestParser
+        cache = AttributeDictionary(
+            logger=producer.logger,
+            cfg=producer.cfg
+        )
+        wsgi = WsgiProtocol(self, producer.cfg, cache, FileWrapper)
+        self.feed_data = wsgi.parser.feed_data
+        return wsgi
 
     ########################################################################
     #    INTERNALS
     async def _response(self):
-        wsgi = self.wsgi
+        wsgi = self.request
+        cfg = wsgi.cfg
+        wsgi_callable = cfg.callable
         environ = wsgi.environ
         exc_info = None
         response = None
         done = False
-        alive = self.cfg.keep_alive or 15
+        alive = cfg.keep_alive or 15
         #
         while not done:
             done = True
@@ -140,8 +137,7 @@ class HttpServerResponse(ProtocolConsumer):
                         if (not environ.get('HTTP_HOST') and
                                 environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
                             raise BadRequest
-                        response = self.wsgi_callable(environ,
-                                                      wsgi.start_response)
+                        response = wsgi_callable(environ, wsgi.start_response)
                         try:
                             response = await response
                         except TypeError:
@@ -204,7 +200,7 @@ class HttpServerResponse(ProtocolConsumer):
                                      self.connection)
                 self.event('post_request').fire()
                 if not wsgi.keep_alive:
-                    self._connection.close()
+                    self.connection.close()
             finally:
                 close_object(response)
 

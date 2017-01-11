@@ -6,9 +6,10 @@ asynchronous commands on remote servers.
 from abc import ABCMeta, abstractmethod
 from urllib.parse import urlsplit, parse_qsl, urlunparse, urlencode
 
-from pulsar import ImproperlyConfigured, Producer, EventHandler, ProtocolError
-from pulsar.utils.importer import module_attribute
-from pulsar.utils.string import to_string
+from ...utils.exceptions import ImproperlyConfigured, ProtocolError
+from ...utils.lib import Producer, EventHandler
+from ...utils.importer import module_attribute
+from ...utils.string import to_string
 
 
 data_stores = {}

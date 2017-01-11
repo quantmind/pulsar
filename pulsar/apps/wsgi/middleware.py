@@ -49,11 +49,11 @@ Middleware in Executor
 
 '''
 import re
+from io import BytesIO
 from functools import wraps
+from asyncio import get_event_loop
 
-import pulsar
-from pulsar import as_coroutine, get_event_loop
-from pulsar.utils.httpurl import BytesIO
+from pulsar.api import HttpRedirect
 
 from .auth import parse_authorization_header
 
@@ -68,7 +68,7 @@ def clean_path_middleware(environ, start_response=None):
         qs = environ['QUERY_STRING']
         if qs:
             url = '%s?%s' % (url, qs)
-        raise pulsar.HttpRedirect(url)
+        raise HttpRedirect(url)
 
 
 def authorization_middleware(environ, start_response=None):
@@ -94,7 +94,11 @@ async def wait_for_body_middleware(environ, start_response=None):
     Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
     if 'wsgi.input' in environ:
-        chunk = await as_coroutine(environ['wsgi.input'].read())
+        chunk = environ['wsgi.input'].read()
+        try:
+            chunk = await chunk
+        except TypeError:
+            pass
         environ['wsgi.input'] = BytesIO(chunk)
 
 

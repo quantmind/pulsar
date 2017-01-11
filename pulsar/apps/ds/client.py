@@ -2,8 +2,9 @@ import time
 from functools import partial
 from collections import OrderedDict
 
-import pulsar
-from pulsar.utils.string import to_string
+
+from ...utils.string import to_string
+from ...async.protocols import Connection
 
 from .parser import CommandError
 
@@ -130,7 +131,7 @@ class ClientMixin:
         raise NotImplementedError
 
 
-class PulsarStoreClient(pulsar.Protocol, ClientMixin):
+class PulsarStoreClient(Connection, ClientMixin):
     '''Used both by client and server'''
 
     def __init__(self, cfg, *args, **kw):

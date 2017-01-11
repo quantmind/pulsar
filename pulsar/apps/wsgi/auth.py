@@ -19,7 +19,7 @@ import os
 import time
 from base64 import b64decode
 
-from pulsar import HttpException
+from pulsar.api import HttpException
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
                                   quote_header_value, CHARSET)
 from pulsar.utils.string import to_bytes

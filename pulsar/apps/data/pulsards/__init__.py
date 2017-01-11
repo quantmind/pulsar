@@ -4,9 +4,6 @@ from .startds import start_store
 from ..redis import store
 
 
-__all__ = ['start_store']
-
-
 class PulsarStore(store.RedisStore):
     pass
 

@@ -1,50 +1,10 @@
-import os
 import sys
-import time
 from urllib.parse import unquote
 
 import cython
 from multidict import istr, CIMultiDict
 
 from wsgi cimport _http_date
-
-
-cdef bytes CRLF = b'\r\n'
-cdef str CHARSET = 'ISO-8859-1'
-
-cdef str URL_SCHEME = os.environ.get('wsgi.url_scheme', 'http')
-cdef str OS_SCRIPT_NAME = os.environ.get("SCRIPT_NAME", "")
-cdef str PULSAR_CACHE = 'pulsar.cache'
-cdef int MAX_CHUNK_SIZE = 65536
-cdef object TLS_SCHEMES = frozenset(('https', 'wss'))
-cdef object NO_CONTENT_CODES = frozenset((204, 304))
-
-cdef object COOKIE = istr('Cookie')
-cdef object CONNECTION = istr('Connection')
-cdef object CONTENT_LENGTH = istr('Content-Length')
-cdef object CONTENT_TYPE = istr('Content-Type')
-cdef object DATE = istr('Date')
-cdef object HOST = istr('Host')
-cdef object KEEP_ALIVE = istr('Keep-Alive')
-cdef object LOCATION = istr('Location')
-cdef object PROXY_AUTHENTICATE = istr('Proxy-Authenticate')
-cdef object PROXY_AUTHORIZATION = istr('Proxy-Authorization')
-cdef object SCRIPT_NAME = istr("Script_Name")
-cdef object SERVER = istr('Server')
-cdef object SET_COOKIE = istr('Set-Cookie')
-cdef object TE = istr('Te')
-cdef object TRAILERS = istr('Trailers')
-cdef object TRANSFER_ENCODING = istr('Transfer-Encoding')
-cdef object UPGRADE = istr('Upgrade')
-cdef object X_FORWARDED_FOR = istr('X-Forwarded-For')
-cdef object X_FORWARDED_PROTOCOL = istr("X-Forwarded-Protocol")
-cdef object X_FORWARDED_PROTO = istr("X-Forwarded-Proto")
-cdef object X_FORWARDED_SSL = istr("X-Forwarded-Ssl")
-cdef object HOP_HEADERS = frozenset((
-    CONNECTION, KEEP_ALIVE, PROXY_AUTHENTICATE,
-    PROXY_AUTHORIZATION, TE, TRAILERS,
-    TRANSFER_ENCODING, UPGRADE
-))
 
 
 @cython.internal
@@ -81,56 +41,56 @@ cdef class Headers:
 
 
 cdef class WsgiProtocol:
-    cdef public dict environ
-    cdef public object headers
-    cdef public str status
-    cdef public object headers_sent
-    cdef public object keep_alive
-    cdef object header_wsgi
-    cdef object client_address
-    cdef object protocol
-    cdef object parsed_url
-    cdef object chunked
+    cdef readonly:
+        dict environ
+        object headers, headers_sent, chunked, parser, connection, client_address, cfg
+    cdef public:
+        str status
+        object keep_alive
+    cdef object header_wsgi, protocol, parsed_url
 
-    def __init__(self, object protocol, str server_software,
+    def __init__(self, object protocol, object cfg,
                  object cache, object FileWrapper):
+        cdef object connection = protocol.connection
+        cdef object server_address = connection.transport.get_extra_info('sockname')
+        cache.connection = connection
         self.environ = {
-            'wsgi.timestamp': time.time(),
+            'wsgi.timestamp': _current_time_,
             'wsgi.errors': sys.stderr,
             'wsgi.version': (1, 0),
             'wsgi.run_once': False,
             'wsgi.multithread': True,
             'wsgi.multiprocess': True,
             'SCRIPT_NAME': OS_SCRIPT_NAME,
-            'SERVER_SOFTWARE': server_software,
+            'SERVER_SOFTWARE': cfg.server_software,
             'wsgi.file_wrapper': FileWrapper,
             'CONTENT_TYPE': '',
+            'SERVER_NAME': server_address[0],
+            'SERVER_PORT': server_address[1],
             PULSAR_CACHE: cache
         }
+        self.cfg = cfg
         self.headers = CIMultiDict()
         self.protocol = protocol
+        self.connection = connection
+        self.client_address = connection.address
+        self.parser = protocol.create_parser(self)
         self.header_wsgi = Headers()
 
     cpdef void on_url(self, bytes url):
         cdef object proto = self.protocol
-        cdef object connection = proto._connection
-        cdef object transport = connection._transport
+        cdef object transport = self.connection.transport
         cdef object parsed_url = proto.parse_url(url)
         cdef bytes query = parsed_url.query or b''
-        cdef object server_address = transport.get_extra_info('sockname')
         cdef object scheme = 'https' if transport.get_extra_info('sslcontext') else URL_SCHEME
         if parsed_url.schema:
             scheme = parsed_url.schema.decode(CHARSET)
 
         self.parsed_url = parsed_url
-        self.client_address = connection.address
-        self.environ[PULSAR_CACHE].connection = connection
         self.environ.update((
             ('RAW_URI', url.decode(CHARSET)),
-            ('REQUEST_METHOD', proto.parser.get_method().decode(CHARSET)),
+            ('REQUEST_METHOD', self.parser.get_method().decode(CHARSET)),
             ('QUERY_STRING', query.decode(CHARSET)),
-            ('SERVER_NAME', server_address[0]),
-            ('SERVER_PORT', server_address[1]),
             ('wsgi.url_scheme', scheme)
         ))
 
@@ -140,7 +100,7 @@ cdef class WsgiProtocol:
         cdef object hnd
 
         if 'SERVER_PROTOCOL' not in self.environ:
-            self.environ['SERVER_PROTOCOL'] = "HTTP/%s" % self.protocol.parser.get_http_version()
+            self.environ['SERVER_PROTOCOL'] = "HTTP/%s" % self.parser.get_http_version()
 
         if header in HOP_HEADERS:
             if header == CONNECTION:
@@ -155,7 +115,6 @@ cdef class WsgiProtocol:
         self.environ['HTTP_%s' % header.upper().replace('-', '_')] = header_value
 
     cpdef void on_headers_complete(self):
-        cdef object connection = self.protocol._connection
         cdef str forward = self.headers.get(X_FORWARDED_FOR)
         cdef object client_address = self.client_address
         cdef str path_info
@@ -187,7 +146,7 @@ cdef class WsgiProtocol:
         cdef object proto = self.protocol
         if not proto.body_reader.reader:
             proto.body_reader.initialise(
-                self.request_headers, proto.parser, proto.transport,
+                self.request_headers, self.parser, proto.connection.transport,
                 proto.cfg.stream_buffer, loop=proto._loop
             )
         proto.body_reader.feed_data(body)
@@ -223,9 +182,8 @@ cdef class WsgiProtocol:
                 continue
             self.headers.add(header, value)
         self.headers[SERVER] = self.environ['SERVER_SOFTWARE']
-        ti = int(self.environ['wsgi.timestamp'])
-        self.headers[DATE] = http_date(int(self.environ['wsgi.timestamp']))
-        self.keep_alive = self.protocol.parser.should_keep_alive()
+        self.headers[DATE] = http_date(_current_time_)
+        self.keep_alive = self.parser.should_keep_alive()
         return self.write
 
     cpdef object write_list(self, bytes data, object force=False):
@@ -367,14 +325,10 @@ cdef bytes http_chunks(bytes chunks, bytes data, object finish=False):
     return chunks
 
 
-cdef int _current_time_ = 0
-cdef str _http_date_ = ''
-
-
 cpdef http_date(int timestamp):
-    global _current_time_, _http_date_
-    if _current_time_ != timestamp:
-        _current_time_ = timestamp
+    global _http_time_, _http_date_
+    if _http_time_ != timestamp:
+        _http_time_ = timestamp
         _http_date_ = _http_date(timestamp)
     return _http_date_
 

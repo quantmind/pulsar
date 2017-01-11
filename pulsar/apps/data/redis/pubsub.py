@@ -1,11 +1,12 @@
 from functools import partial
 from asyncio import gather
 
-from pulsar import Protocol
-from pulsar.apps.data import PubSub, Channels, PubSubClient
+from ....async.protocols import Connection
+from ..store import PubSub, PubSubClient
+from ..channels import Channels
 
 
-class PubsubProtocol(Protocol):
+class PubsubProtocol(Connection):
 
     def __init__(self, handler, **kw):
         super().__init__(handler._loop, **kw)

@@ -39,7 +39,7 @@ class AttributeDictionary(collections.Mapping):
                                 (self.__class__.__name__, len(iterable)))
             self.update(iterable[0])
         if kwargs:
-            self.update(kwargs)
+            self.__dict__.update(kwargs)
 
     def __repr__(self):
         return repr(self.__dict__)
@@ -74,9 +74,8 @@ class AttributeDictionary(collections.Mapping):
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-    def update(self, iterable):
-        for name, value in mapping_iterator(iterable):
-            setattr(self, name, value)
+    def update(self, *args, **kwargs):
+        self.__dict__.update(*args, **kwargs)
 
     def all(self):
         return self.__dict__

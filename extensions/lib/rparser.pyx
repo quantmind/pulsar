@@ -2,8 +2,6 @@ from itertools import starmap
 
 import cython
 
-from lib cimport CRLF
-
 cdef class Task
 
 cdef bytes RESPONSE_INTEGER  = b':'

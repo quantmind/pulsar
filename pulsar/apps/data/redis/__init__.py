@@ -26,9 +26,9 @@ Redis Pipeline
    :members:
    :member-order: bysource
 '''
-from pulsar.utils.config import Global
-from pulsar.apps.data import register_store
-from pulsar.apps.ds import RedisError, NoScriptError, redis_parser
+from ....utils.config import Global
+from ..store import register_store
+from ...ds import RedisError, NoScriptError, redis_parser
 
 from .store import RedisStore, RedisStoreConnection
 from .client import ResponseError, Consumer, Pipeline

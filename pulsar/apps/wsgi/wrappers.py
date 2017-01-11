@@ -46,23 +46,23 @@ Wsgi File Wrapper
 .. _AJAX: http://en.wikipedia.org/wiki/Ajax_(programming)
 .. _TLS: http://en.wikipedia.org/wiki/Transport_Layer_Security
 """
-from functools import reduce, partial
-from http.client import responses
+from functools import partial
+from inspect import isawaitable
 
-from multidict import CIMultiDict
-
-from pulsar import isawaitable, chain_future, HttpException, create_future
+from pulsar.api import (
+    WsgiResponse, chain_future, HttpException, create_future
+)
 from pulsar.utils.httpurl import (
-    SimpleCookie, has_empty_content, REDIRECT_CODES, ENCODE_URL_METHODS,
+    SimpleCookie, REDIRECT_CODES, ENCODE_URL_METHODS,
     remove_double_slash, iri_to_uri, is_absolute_uri, parse_options_header
 )
 
 from .content import HtmlDocument
-from .utils import (set_wsgi_request_class, set_cookie, query_dict,
+from .utils import (set_wsgi_request_class, query_dict,
                     parse_accept_header, LOGGER, pulsar_cache)
 from .structures import ContentAccept, CharsetAccept, LanguageAccept
 from .formdata import parse_form_data
-from .headers import CONTENT_LENGTH, CONTENT_TYPE, LOCATION, SET_COOKIE
+from .headers import LOCATION
 
 
 HEAD = 'HEAD'
@@ -83,9 +83,10 @@ def cached_property(method):
     name = method.__name__
 
     def _(self):
-        if name not in self.cache:
-            self.cache[name] = method(self)
-        return self.cache[name]
+        cache = self.environ[pulsar_cache]
+        if name not in cache:
+            cache[name] = method(self)
+        return cache[name]
 
     return property(_, doc=method.__doc__)
 
@@ -96,237 +97,6 @@ def wsgi_encoder(gen, encoding):
             yield data.encode(encoding)
         else:
             yield data
-
-
-def count_len(a, b):
-    return a + len(b)
-
-
-class WsgiResponse:
-    """A WSGI response.
-
-    Instances are callable using the standard WSGI call and, importantly,
-    iterable::
-
-        response = WsgiResponse(200)
-
-    A :class:`WsgiResponse` is an iterable over bytes to send back to the
-    requesting client.
-
-    .. attribute:: status_code
-
-        Integer indicating the HTTP status, (i.e. 200)
-
-    .. attribute:: response
-
-        String indicating the HTTP status (i.e. 'OK')
-
-    .. attribute:: status
-
-        String indicating the HTTP status code and response (i.e. '200 OK')
-
-    .. attribute:: content_type
-
-        The content type of this response. Can be ``None``.
-
-    .. attribute:: headers
-
-        The :class:`.Headers` container for this response.
-
-    .. attribute:: environ
-
-        The dictionary of WSGI environment if passed to the constructor.
-
-    .. attribute:: cookies
-
-        A python :class:`SimpleCookie` container of cookies included in the
-        request as well as cookies set during the response.
-    """
-    _iterated = False
-    __wsgi_started__ = False
-    DEFAULT_STATUS_CODE = 200
-
-    def __init__(self, status=None, content=None, response_headers=None,
-                 content_type=None, encoding=None, environ=None,
-                 can_store_cookies=True):
-        self.environ = environ
-        self.status_code = status or self.DEFAULT_STATUS_CODE
-        self.encoding = encoding
-        self.headers = CIMultiDict(response_headers or ())
-        self.content = content
-        self._cookies = None
-        self._can_store_cookies = can_store_cookies
-        if content_type is not None:
-            self.content_type = content_type
-
-    @property
-    def started(self):
-        return self.__wsgi_started__
-
-    @property
-    def iterated(self):
-        return self._iterated
-
-    @property
-    def cookies(self):
-        if self._cookies is None:
-            self._cookies = SimpleCookie()
-        return self._cookies
-
-    @property
-    def path(self):
-        if self.environ:
-            return self.environ.get('PATH_INFO', '')
-
-    @property
-    def method(self):
-        if self.environ:
-            return self.environ.get('REQUEST_METHOD')
-
-    @property
-    def connection(self):
-        if self.environ:
-            return self.environ.get('pulsar.connection')
-
-    @property
-    def content(self):
-        return self._content
-
-    @content.setter
-    def content(self, content):
-        if not self._iterated:
-            if content is None:
-                content = ()
-            else:
-                if isinstance(content, str):
-                    if not self.encoding:   # use utf-8 if not set
-                        self.encoding = 'utf-8'
-                    content = content.encode(self.encoding)
-
-                if isinstance(content, bytes):
-                    content = (content,)
-            self._content = content
-        else:
-            raise RuntimeError('Cannot set content. Already iterated')
-
-    def _get_content_type(self):
-        return self.headers.get(CONTENT_TYPE)
-
-    def _set_content_type(self, typ):
-        if typ:
-            self.headers[CONTENT_TYPE] = typ
-        else:
-            self.headers.pop(CONTENT_TYPE, None)
-    content_type = property(_get_content_type, _set_content_type)
-
-    @property
-    def response(self):
-        return responses.get(self.status_code)
-
-    @property
-    def status(self):
-        return '%s %s' % (self.status_code, responses.get(self.status_code))
-
-    def __str__(self):
-        return self.status
-
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self)
-
-    @property
-    def is_streamed(self):
-        """Check if the response is streamed.
-
-        A streamed response is an iterable with no length information.
-        In this case streamed means that there is no information about
-        the number of iterations.
-
-        This is usually `True` if a generator is passed to the response object.
-        """
-        try:
-            len(self._content)
-        except TypeError:
-            return True
-        return False
-
-    def can_set_cookies(self):
-        return self.status_code < 400 and self._can_store_cookies
-
-    def start(self, start_response):
-        assert not self.__wsgi_started__
-        self.__wsgi_started__ = True
-        return start_response(self.status, self.get_headers())
-
-    def __iter__(self):
-        if self._iterated:
-            raise RuntimeError('WsgiResponse can be iterated once only')
-        self.__wsgi_started__ = True
-        self._iterated = True
-        try:
-            len(self._content)
-        except TypeError:
-            return wsgi_encoder(self._content, self.encoding or 'utf-8')
-        else:
-            return iter(self._content)
-
-    def close(self):
-        """Close this response, required by WSGI
-        """
-        if hasattr(self.content, 'close'):
-            self.content.close()
-
-    def set_cookie(self, key, **kwargs):
-        """
-        Sets a cookie.
-
-        ``expires`` can be a string in the correct format or a
-        ``datetime.datetime`` object in UTC. If ``expires`` is a datetime
-        object then ``max_age`` will be calculated.
-        """
-        set_cookie(self.cookies, key, **kwargs)
-
-    def delete_cookie(self, key, path='/', domain=None):
-        set_cookie(self.cookies, key, max_age=0, path=path, domain=domain,
-                   expires='Thu, 01-Jan-1970 00:00:00 GMT')
-
-    def get_headers(self):
-        """The list of headers for this response
-        """
-        headers = self.headers
-        if has_empty_content(self.status_code):
-            headers.pop(CONTENT_TYPE, None)
-            headers.pop(CONTENT_LENGTH, None)
-            self._content = ()
-        else:
-            if not self.is_streamed:
-                cl = reduce(count_len, self._content, 0)
-                headers[CONTENT_LENGTH] = str(cl)
-            ct = headers.get(CONTENT_TYPE)
-            # content type encoding available
-            if self.encoding:
-                ct = ct or TEXT_PLAIN
-                if ';' not in ct:
-                    ct = '%s; charset=%s' % (ct, self.encoding)
-            if ct:
-                headers[CONTENT_TYPE] = ct
-            if self.method == HEAD:
-                self._content = ()
-        # Cookies
-        if (self.status_code < 400 and self._can_store_cookies and
-                self._cookies):
-            for c in self.cookies.values():
-                headers.add_header(SET_COOKIE, c.OutputString())
-        return headers.items()
-
-    def has_header(self, header):
-        return header in self.headers
-    __contains__ = has_header
-
-    def __setitem__(self, header, value):
-        self.headers[header] = value
-
-    def __getitem__(self, header):
-        return self.headers[header]
 
 
 class WsgiRequest:

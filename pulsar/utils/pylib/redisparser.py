@@ -62,7 +62,7 @@ class ArrayTask:
             return False
 
 
-class Parser:
+class RedisParser:
     '''A python parser for redis.'''
     encoding = None
 

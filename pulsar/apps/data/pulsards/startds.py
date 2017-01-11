@@ -1,8 +1,9 @@
 import asyncio
 
-from pulsar import when_monitor_start, get_application, send
-from pulsar.apps.data import create_store
-from pulsar.apps.ds import PulsarDS
+from ....async.actor import send
+from ... import when_monitor_start, get_application
+from ...ds import PulsarDS
+from ..store import create_store
 
 
 async def start_pulsar_ds(arbiter, host, workers=0):

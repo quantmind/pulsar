@@ -41,7 +41,7 @@ def _consumer(response, consumer):
 async def start_request(request, conn):
     response = conn.current_consumer()
     # bind request-specific events
-    response.bind_events(**request.inp_params)
+    response.bind_events(request.inp_params)
     if request.auth:
         response.event('pre_request').bind(request.auth)
 

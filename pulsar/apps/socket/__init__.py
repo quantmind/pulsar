@@ -121,14 +121,16 @@ try:
 except ImportError:     # pragma    nocover
     ssl = None
 
-import pulsar
-from pulsar import TcpServer, DatagramServer, Connection, ImproperlyConfigured
-from pulsar import as_coroutine
-from pulsar.utils.internet import parse_address
-from pulsar.utils.config import pass_through
+from pulsar import DEFAULT_PORT
+from ...utils.internet import parse_address
+from ...utils.system import platform
+from ...utils.exceptions import ImproperlyConfigured
+from ...utils.config import pass_through, validate_pos_int, Config, Setting
+from ...async.protocols import TcpServer, DatagramServer, Connection
+from .. import Application
 
 
-class SocketSetting(pulsar.Setting):
+class SocketSetting(Setting):
     virtual = True
     app = 'socket'
     section = "Socket Servers"
@@ -138,7 +140,7 @@ class Bind(SocketSetting):
     name = "bind"
     flags = ["-b", "--bind"]
     meta = "ADDRESS"
-    default = "127.0.0.1:{0}".format(pulsar.DEFAULT_PORT)
+    default = "127.0.0.1:{0}".format(DEFAULT_PORT)
     desc = """\
         The socket to bind.
 
@@ -151,7 +153,7 @@ class Bind(SocketSetting):
 class KeepAlive(SocketSetting):
     name = "keep_alive"
     flags = ["--keep-alive"]
-    validator = pulsar.validate_pos_int
+    validator = validate_pos_int
     type = int
     default = 15
     desc = """\
@@ -162,7 +164,7 @@ class KeepAlive(SocketSetting):
 class Backlog(SocketSetting):
     name = "backlog"
     flags = ["--backlog"]
-    validator = pulsar.validate_pos_int
+    validator = validate_pos_int
     type = int
     default = 2048
     desc = """\
@@ -196,7 +198,7 @@ class CertFile(SocketSetting):
     """
 
 
-class SocketServer(pulsar.Application):
+class SocketServer(Application):
     '''A :class:`.Application` which serve application on a socket.
 
     It bind a socket to a given address and listen for requests. The request
@@ -207,7 +209,7 @@ class SocketServer(pulsar.Application):
         The socket address, available once the application has started.
     '''
     name = 'socket'
-    cfg = pulsar.Config(apps=['socket'])
+    cfg = Config(apps=['socket'])
 
     def protocol_factory(self):
         '''Factory of :class:`.ProtocolConsumer` used by the server.
@@ -223,7 +225,7 @@ class SocketServer(pulsar.Application):
         number of workers to 0.
         '''
         cfg = self.cfg
-        if (not pulsar.platform.has_multiProcessSocket or
+        if (not platform.has_multiProcessSocket or
                 cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
         if not cfg.address:
@@ -265,7 +267,7 @@ class SocketServer(pulsar.Application):
         close = getattr(self.cfg.callable, 'close', None)
         if hasattr(close, '__call__'):
             try:
-                await as_coroutine(close())
+                await close()
             except Exception:
                 pass
 
@@ -299,7 +301,8 @@ class SocketServer(pulsar.Application):
             max_requests=max_requests,
             keep_alive=cfg.keep_alive,
             name=self.name,
-            logger=self.logger
+            logger=self.logger,
+            cfg=cfg
         )
         for event in ('connection_made', 'pre_request', 'post_request',
                       'connection_lost'):
@@ -328,7 +331,7 @@ class UdpSocketServer(SocketServer):
         The socket address, available once the application has started.
     '''
     name = 'udpsocket'
-    cfg = pulsar.Config(apps=['socket'])
+    cfg = Config(apps=['socket'])
 
     def protocol_factory(self):
         '''Return the :class:`.DatagramProtocol` factory.
@@ -342,12 +345,12 @@ class UdpSocketServer(SocketServer):
         number of workers to 0.
         '''
         cfg = self.cfg
-        if (not pulsar.platform.has_multiProcessSocket or
+        if (not platform.has_multiProcessSocket or
                 cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
         if not cfg.address:
-            raise pulsar.ImproperlyConfigured('Could not open a socket. '
-                                              'No address to bind to')
+            raise ImproperlyConfigured('Could not open a socket. '
+                                       'No address to bind to')
         address = parse_address(self.cfg.address)
         server = await self.create_server(monitor, address)
         monitor.servers[self.name] = server

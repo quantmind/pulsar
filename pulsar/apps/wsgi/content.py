@@ -145,12 +145,12 @@ import re
 from collections import Mapping
 from functools import partial
 
-from pulsar import HttpException
-from pulsar import multi_async, chain_future, isawaitable
-from pulsar.utils.slugify import slugify
-from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
-from pulsar.utils.string import to_string
-from pulsar.utils.system import json
+from ...utils.exceptions import HttpException
+from ...async.futures import multi_async, chain_future, isawaitable
+from ...utils.slugify import slugify
+from ...utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
+from ...utils.string import to_string
+from ...utils.system import json
 
 from .html import html_visitor, newline
 

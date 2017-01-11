@@ -8,10 +8,12 @@ from urllib.parse import parse_qs
 from base64 import b64encode
 from functools import reduce
 from cgi import valid_boundary, parse_header
+from inspect import isawaitable
+from asyncio import ensure_future
 
 from multidict import MultiDict
 
-from pulsar import HttpException, BadRequest, isawaitable, ensure_future
+from pulsar.api import HttpException, BadRequest
 from pulsar.utils.system import convert_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.httpurl import (CHARSET, ENCODE_BODY_METHODS,
