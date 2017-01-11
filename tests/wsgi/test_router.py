@@ -1,10 +1,10 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 import unittest
 
-import pulsar
-from pulsar import Http404
-from pulsar.apps.wsgi import (Router, RouterParam, route, test_wsgi_environ,
-                              MediaRouter)
+from pulsar.api import Http404, PermissionDenied, create_future
+from pulsar.apps.wsgi import (
+    Router, RouterParam, route, test_wsgi_environ, MediaRouter
+)
 
 from examples.httpbin.manage import HttpBin
 
@@ -27,17 +27,17 @@ class HttpBin2(HttpBin):
 
     @route('get2')
     def get_get(self, request):    # override the get_get handler
-        raise pulsar.Http404
+        raise Http404
 
     @route()
     def async(self, request):
-        future = pulsar.Future()
+        future = create_future()
         future._loop.call_later(0.5, lambda: future.set_result(['Hello!']))
         return future
 
     @route()
     def post_async(self, request):
-        future = pulsar.Future()
+        future = create_future()
         future._loop.call_later(0.5, lambda: future.set_result(['Hello!']))
         return future
 
@@ -227,14 +227,14 @@ class TestRouter(unittest.TestCase):
     def test_response_wrapper(self):
 
         def response_wrapper(callable, response):
-            raise pulsar.PermissionDenied('Test Response Wrapper')
+            raise PermissionDenied('Test Response Wrapper')
 
         router = HttpBin('/', response_wrapper=response_wrapper)
 
         environ = test_wsgi_environ()
         try:
             router(environ, None)
-        except pulsar.PermissionDenied as exc:
+        except PermissionDenied as exc:
             self.assertEqual(str(exc), 'Test Response Wrapper')
         else:
             raise RuntimeError
@@ -242,7 +242,7 @@ class TestRouter(unittest.TestCase):
         environ = test_wsgi_environ('/get')
         try:
             router(environ, None)
-        except pulsar.PermissionDenied as exc:
+        except PermissionDenied as exc:
             self.assertEqual(str(exc), 'Test Response Wrapper')
         else:
             raise RuntimeError

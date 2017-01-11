@@ -1,8 +1,8 @@
 from .utils.exceptions import (
     PulsarException, ImproperlyConfigured, HttpException, HttpRedirect,
     BadRequest, Http401, Http404, HttpConnectionError, HttpGone,
-    HttpRequestException, MethodNotAllowed, HaltServer,
-    SSLError
+    HttpRequestException, MethodNotAllowed, PermissionDenied, HaltServer,
+    SSLError, ProtocolError
 )
 from .utils.config import Config, Setting
 from .utils.lib import (
@@ -12,6 +12,7 @@ from .utils.lib import (
 
 from .async.access import get_actor, create_future, cfg_value
 from .async.actor import is_actor, send, spawn, get_stream
+from .async.proxy import command
 from .async.protocols import (
     Connection, DatagramProtocol, TcpServer, DatagramServer
 )
@@ -50,6 +51,7 @@ __all__ = [
     'cfg_value',
     'arbiter',
     'get_stream',
+    'command',
     #
     'Pool',
     'PoolConnection',
@@ -70,8 +72,10 @@ __all__ = [
     'MethodNotAllowed',
     'Http401',
     'Http404',
+    'PermissionDenied',
     'HttpConnectionError',
     'HttpGone',
     'HttpRequestException',
-    'SSLError'
+    'SSLError',
+    'ProtocolError'
 ]

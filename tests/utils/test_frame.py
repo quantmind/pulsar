@@ -2,7 +2,7 @@ from random import randint
 import struct
 import unittest
 
-from pulsar import ProtocolError, HAS_C_EXTENSIONS
+from pulsar.api import ProtocolError, HAS_C_EXTENSIONS
 from pulsar.utils.websocket import frame_parser, parse_close
 
 

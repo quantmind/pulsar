@@ -4,10 +4,12 @@ from functools import wraps
 import socket
 import unittest
 import asyncio
+from asyncio import get_event_loop
 
 import examples
 
-from pulsar import send, SERVER_SOFTWARE, get_event_loop
+from pulsar import SERVER_SOFTWARE
+from pulsar.api import send
 from pulsar.utils.path import Path
 from pulsar.utils.system import platform
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,

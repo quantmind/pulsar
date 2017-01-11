@@ -1,6 +1,8 @@
 import unittest
+
 from pulsar.apps.wsgi import WsgiResponse
 from pulsar.utils.lib import WsgiResponse as Wsgi
+
 
 common = {
     200: 'OK',

@@ -75,12 +75,13 @@ Echo Server
 '''
 from functools import partial
 
-import pulsar
-from pulsar import Pool, Connection, AbstractClient, ProtocolError
+from pulsar.api import (
+    Pool, Connection, AbstractClient, ProtocolError, ProtocolConsumer
+)
 from pulsar.apps.socket import SocketServer
 
 
-class EchoProtocol(pulsar.ProtocolConsumer):
+class EchoProtocol(ProtocolConsumer):
     '''An echo :class:`~.ProtocolConsumer` for client and servers.
 
     The only difference between client and server is the implementation

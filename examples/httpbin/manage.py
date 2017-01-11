@@ -26,10 +26,10 @@ from functools import partial
 from itertools import repeat, chain
 from random import random
 from base64 import b64encode
+from asyncio import ensure_future
 
-import pulsar
-from pulsar import (HttpRedirect, HttpException, version, JAPANESE, CHINESE,
-                    ensure_future)
+from pulsar import version, JAPANESE, CHINESE
+from pulsar.api import HttpRedirect, HttpException
 from pulsar.utils.httpurl import ENCODE_URL_METHODS, ENCODE_BODY_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws

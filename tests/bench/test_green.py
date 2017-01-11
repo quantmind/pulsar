@@ -1,6 +1,6 @@
 import unittest
 
-from pulsar import send
+from pulsar.api import send
 
 try:
     from pulsar.apps import greenio

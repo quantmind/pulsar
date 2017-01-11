@@ -7,7 +7,8 @@ import traceback
 import unittest
 
 import pulsar
-from pulsar import get_actor, validate_callable
+from pulsar.api import get_actor
+from pulsar.utils.config import validate_callable
 
 from tests.utils import config, post_fork
 

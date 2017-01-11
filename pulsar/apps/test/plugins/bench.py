@@ -41,7 +41,8 @@ import math
 from inspect import isawaitable
 from unittest import TestSuite
 
-import pulsar
+from pulsar.api import Setting
+from pulsar.utils.config import validate_pos_int
 
 from .base import WrapTest, TestPlugin
 
@@ -105,12 +106,13 @@ class BenchMark(TestPlugin):
     '''Benchmarking addon for pulsar test suite.'''
     desc = '''Run benchmarks function flagged with __benchmark__ attribute'''
 
-    repeat = pulsar.Setting(flags=['--repeat'],
-                            type=int,
-                            default=10,
-                            validator=pulsar.validate_pos_int,
-                            desc=('Default number of repetition '
-                                  'when benchmarking.'))
+    repeat = Setting(
+        flags=['--repeat'],
+        type=int,
+        default=10,
+        validator=validate_pos_int,
+        desc='Default number of repetition when benchmarking.'
+    )
 
     def loadTestsFromTestCase(self, test_cls):
         bench = getattr(test_cls, '__benchmark__', False)

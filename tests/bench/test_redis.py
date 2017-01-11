@@ -2,7 +2,7 @@ from random import choice
 import string
 import unittest
 
-from pulsar import HAS_C_EXTENSIONS
+from pulsar.api import HAS_C_EXTENSIONS
 from pulsar.apps.ds import redis_parser
 
 characters = string.ascii_letters + string.digits

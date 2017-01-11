@@ -1,7 +1,7 @@
 '''Tests the tools and utilities in pulsar.utils.'''
 import unittest
 
-from pulsar import system, platform
+from pulsar.utils.system import platform, get_maxfd
 
 
 class TestSystem(unittest.TestCase):
@@ -12,5 +12,5 @@ class TestSystem(unittest.TestCase):
         self.assertFalse(platform.is_winNT)
 
     def test_maxfd(self):
-        m = system.get_maxfd()
+        m = get_maxfd()
         self.assertTrue(m)

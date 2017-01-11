@@ -6,38 +6,6 @@ import traceback
 from multidict import CIMultiDict
 
 
-__all__ = ['PulsarException',
-           'MonitorStarted',
-           'ImproperlyConfigured',
-           'CommandError',
-           'CommandNotFound',
-           'ProtocolError',
-           'EventAlreadyRegistered',
-           'InvalidOperation',
-           'HaltServer',
-           'LockError',
-           #
-           # HTTP client exception
-           'HttpRequestException',
-           'HttpConnectionError',
-           'HttpProxyError',
-           'SSLError',
-           #
-           # HTTP Exceptions
-           'HttpException',
-           'HttpRedirect',
-           'BadRequest',
-           'Http401',
-           'PermissionDenied',
-           'Http404',
-           'MethodNotAllowed',
-           'HttpGone',
-           'Unsupported',
-           'UnprocessableEntity',
-           #
-           'format_traceback']
-
-
 class PulsarException(Exception):
     '''Base class of all Pulsar exceptions.'''
 
@@ -246,3 +214,9 @@ class UnprocessableEntity(HttpException):
 
 def format_traceback(exc):
     return traceback.format_exception(exc.__class__, exc, exc.__traceback__)
+
+
+def reraise(tp, value, tb=None):
+    if value.__traceback__ is not tb:
+        raise value.with_traceback(tb)
+    raise value

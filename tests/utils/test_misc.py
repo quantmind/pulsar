@@ -1,7 +1,7 @@
 import sys
 import unittest
 
-from pulsar import reraise
+from pulsar.utils.exceptions import reraise
 
 
 class TestMiscellaneous(unittest.TestCase):

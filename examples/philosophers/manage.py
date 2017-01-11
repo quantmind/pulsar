@@ -54,13 +54,13 @@ Implementation
 import random
 from asyncio import ensure_future
 
-import pulsar
-from pulsar import command
+from pulsar.api import command, Setting, Config, Application
+from pulsar.utils.config import validate_pos_float
 
 
 ###########################################################################
 #    EXTRA COMMAND LINE PARAMETERS
-class PhilosophersSetting(pulsar.Setting):
+class PhilosophersSetting(Setting):
     virtual = True
     app = 'philosophers'
     section = "Socket Servers"
@@ -68,14 +68,14 @@ class PhilosophersSetting(pulsar.Setting):
 
 class EatingPeriod(PhilosophersSetting):
     flags = ["--eating-period"]
-    validator = pulsar.validate_pos_float
+    validator = validate_pos_float
     default = 2
     desc = """The average period of eating for a philosopher."""
 
 
 class WaitingPeriod(PhilosophersSetting):
     flags = ["--waiting-period"]
-    validator = pulsar.validate_pos_float
+    validator = validate_pos_float
     default = 2
     desc = """The average period of waiting for a missing fork."""
 
@@ -107,10 +107,10 @@ def pickup_fork(request, fork_right):
 
 ############################################################################
 #    DINING PHILOSOPHERS APP
-class DiningPhilosophers(pulsar.Application):
+class DiningPhilosophers(Application):
     description = ('Dining philosophers sit at a table around a bowl of '
                    'spaghetti and waits for available forks.')
-    cfg = pulsar.Config(workers=5, apps=['philosophers'])
+    cfg = Config(workers=5, apps=['philosophers'])
 
     def monitor_start(self, monitor):
         self.not_available_forks = set()

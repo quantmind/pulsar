@@ -2,7 +2,7 @@
 import unittest
 import asyncio
 
-from pulsar import send, HAS_C_EXTENSIONS
+from pulsar.api import send, HAS_C_EXTENSIONS
 from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
 

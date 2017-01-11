@@ -6,10 +6,9 @@ from unittest import mock
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
-import pulsar
+from pulsar.api import http_date, HttpRedirect
 from pulsar.apps import wsgi
 from pulsar.apps import http
-from pulsar.apps.wsgi.utils import cookie_date
 
 
 class WsgiRequestTests(unittest.TestCase):
@@ -133,8 +132,7 @@ class WsgiRequestTests(unittest.TestCase):
         response.set_cookie('max_age', max_age=10)
         max_age_cookie = response.cookies['max_age']
         self.assertEqual(max_age_cookie['max-age'], 10)
-        self.assertEqual(max_age_cookie['expires'],
-                         cookie_date(time.time()+10))
+        self.assertEqual(max_age_cookie['expires'], http_date(time.time()+10))
 
     def test_httponly_cookie(self):
         response = wsgi.WsgiResponse()
@@ -173,7 +171,7 @@ class WsgiRequestTests(unittest.TestCase):
         try:
             wsgi.clean_path_middleware({'PATH_INFO': url,
                                         'QUERY_STRING': 'page=1'}, None)
-        except pulsar.HttpRedirect as e:
+        except HttpRedirect as e:
             url = e.headers[0][1]
             self.assertEqual(url, '/bla/foo?page=1')
 

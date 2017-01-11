@@ -4,7 +4,7 @@ except ImportError:     # pragma    nocover
     oauth1 = None
     oauth2 = None
 
-from pulsar import ImproperlyConfigured
+from pulsar.api import ImproperlyConfigured
 from pulsar.utils.structures import mapping_iterator
 
 from . import auth

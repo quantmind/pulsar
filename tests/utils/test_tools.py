@@ -2,7 +2,8 @@
 import unittest
 from datetime import datetime, date
 
-from pulsar import system, get_actor
+from pulsar.api import get_actor
+from pulsar.utils import system
 from pulsar.utils.tools import checkarity, nice_number, date2timestamp
 from pulsar.utils.importer import py_file, import_modules
 from pulsar.apps.test import sequential

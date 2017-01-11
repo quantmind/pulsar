@@ -26,7 +26,6 @@ __all__ = ['get_event_loop',
            'NOTHING',
            'EVENT_LOOPS',
            'Future',
-           'reraise',
            'isawaitable',
            'ensure_future',
            'CANCELLED_ERRORS']
@@ -34,12 +33,6 @@ __all__ = ['get_event_loop',
 
 _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,)
 CANCELLED_ERRORS = (asyncio.CancelledError,)
-
-
-def reraise(tp, value, tb=None):
-    if value.__traceback__ is not tb:
-        raise value.with_traceback(tb)
-    raise value
 
 
 def isfuture(x):

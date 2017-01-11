@@ -1,6 +1,7 @@
 import unittest
+from asyncio import Future
 
-from pulsar import Future
+from pulsar.api import create_future
 from pulsar.apps import wsgi
 from pulsar.utils.system import json
 
@@ -37,7 +38,7 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(response.render(), json.dumps({'bla': 'ciao'}))
 
     async def test_json_with_async_string2(self):
-        d = Future()
+        d = create_future()
         astr = wsgi.String(d)
         response = wsgi.Json({'bla': astr})
         self.assertEqual(len(response.children), 1)
