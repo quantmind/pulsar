@@ -1,7 +1,8 @@
 '''Tests the "flaskapp" example.'''
 import unittest
 
-from pulsar import send, SERVER_SOFTWARE
+from pulsar import SERVER_SOFTWARE
+from pulsar.api import send
 from pulsar.apps.http import HttpClient
 
 try:

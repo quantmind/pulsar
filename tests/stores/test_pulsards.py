@@ -5,7 +5,7 @@ import unittest
 import asyncio
 import datetime
 
-import pulsar
+from pulsar.api import HAS_C_EXTENSIONS, send
 from pulsar.utils.string import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
@@ -1245,7 +1245,7 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         server = PulsarDS(name=cls.__name__.lower(),
                           bind='127.0.0.1:0',
                           redis_py_parser=cls.redis_py_parser)
-        cls.app_cfg = await pulsar.send('arbiter', 'run', server)
+        cls.app_cfg = await send('arbiter', 'run', server)
         cls.pulsards_uri = 'pulsar://%s:%s' % cls.app_cfg.addresses[0]
         cls.store = cls.create_store('%s/9' % cls.pulsards_uri)
         cls.client = cls.store.client()
@@ -1253,7 +1253,7 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app_cfg is not None:
-            return pulsar.send('arbiter', 'kill_actor', cls.app_cfg.name)
+            return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def test_store_methods(self):
         store = self.create_store('%s/8' % self.pulsards_uri)
@@ -1265,6 +1265,6 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         self.assertTrue(repr(store))
 
 
-@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS, 'Requires cython extensions')
+@unittest.skipUnless(HAS_C_EXTENSIONS, 'Requires cython extensions')
 class TestPulsarStorePyParser(TestPulsarStore):
     redis_py_parser = True

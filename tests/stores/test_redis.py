@@ -1,4 +1,4 @@
-from pulsar import HAS_C_EXTENSIONS
+from pulsar.api import HAS_C_EXTENSIONS
 from pulsar.apps.test import check_server, skipUnless
 from pulsar.apps.data.redis import RedisScript
 

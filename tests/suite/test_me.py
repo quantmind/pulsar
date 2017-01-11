@@ -3,7 +3,8 @@ import unittest
 import asyncio
 
 import pulsar
-from pulsar import send, multi_async
+from pulsar.api import send
+from pulsar.async.futures import multi_async
 from pulsar.apps.test import TestSuite
 from pulsar.apps.test.plugins import profile
 from pulsar.utils.version import get_version

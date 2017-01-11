@@ -2,10 +2,12 @@
 import time
 import unittest
 
+from pulsar.api import http_date
+from pulsar.utils.html import capfirst
 from pulsar.utils.httpurl import (CacheControl,
                                   urlquote, unquote_unreserved, requote_uri,
-                                  remove_double_slash, appendslash, capfirst,
-                                  encode_multipart_formdata, http_date,
+                                  remove_double_slash, appendslash,
+                                  encode_multipart_formdata,
                                   cookiejar_from_dict)
 from pulsar.apps.http import Auth, HTTPBasicAuth, HTTPDigestAuth
 

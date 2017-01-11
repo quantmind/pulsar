@@ -1,7 +1,7 @@
 from random import randint
 import unittest
 
-import pulsar
+from pulsar.api import HAS_C_EXTENSIONS
 from pulsar.apps.ds import (redis_parser, ResponseError, NoScriptError,
                             InvalidResponse)
 
@@ -153,7 +153,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(p.multi_bulk(()), b'*0\r\n')
 
 
-@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS, 'Requires C extensions')
+@unittest.skipUnless(HAS_C_EXTENSIONS, 'Requires C extensions')
 class TestPythonParser(TestParser):
 
     def parser(self):

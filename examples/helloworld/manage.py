@@ -13,7 +13,7 @@ To see all options available type::
 
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''
-from pulsar import MethodNotAllowed
+from pulsar.api import MethodNotAllowed
 from pulsar.apps import wsgi
 
 

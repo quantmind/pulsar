@@ -1,4 +1,4 @@
-from pulsar import Config
+from pulsar.api import Config
 
 
 def connection_made(conn):

@@ -1,8 +1,7 @@
 import unittest
+from asyncio import new_event_loop, get_event_loop
 
-from pulsar import (
-    send, new_event_loop, get_application, get_actor, get_event_loop
-)
+from pulsar.api import send, get_application, get_actor
 from pulsar.apps.test import dont_run_with_thread
 
 from examples.echoudp.manage import server, Echo, EchoUdpServerProtocol

@@ -61,8 +61,7 @@ Echo Server
 .. autofunction:: server
 
 """
-import pulsar
-from pulsar import Pool, create_future, DatagramProtocol
+from pulsar.api import Pool, create_future, DatagramProtocol, AbstractUdpClient
 from pulsar.utils.string import to_bytes
 from pulsar.apps.socket import UdpSocketServer
 
@@ -127,7 +126,7 @@ class EchoUdpServerProtocol(EchoUdpProtocol):
         self._transport.sendto(data, addr)
 
 
-class Echo(pulsar.AbstractUdpClient):
+class Echo(AbstractUdpClient):
     '''A client for the echo server.
 
     :param address: set the :attr:`address` attribute

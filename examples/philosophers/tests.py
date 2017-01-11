@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 
-from pulsar import send
+from pulsar.api import send
 from pulsar.apps.test import test_timeout
 
 from examples.philosophers.manage import DiningPhilosophers

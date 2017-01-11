@@ -2,7 +2,7 @@ from .utils.exceptions import (
     PulsarException, ImproperlyConfigured, HttpException, HttpRedirect,
     BadRequest, Http401, Http404, HttpConnectionError, HttpGone,
     HttpRequestException, MethodNotAllowed, PermissionDenied, HaltServer,
-    SSLError, ProtocolError
+    SSLError, ProtocolError, LockError
 )
 from .utils.config import Config, Setting
 from .utils.lib import (
@@ -77,5 +77,6 @@ __all__ = [
     'HttpGone',
     'HttpRequestException',
     'SSLError',
-    'ProtocolError'
+    'ProtocolError',
+    'LockError'
 ]

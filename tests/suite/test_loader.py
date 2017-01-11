@@ -2,7 +2,7 @@
 import os
 import unittest
 
-from pulsar import get_application
+from pulsar.api import get_application
 from pulsar.utils.system import platform
 
 

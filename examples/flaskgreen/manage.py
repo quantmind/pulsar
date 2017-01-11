@@ -42,18 +42,20 @@ from flask import Flask, make_response
 
 from pulsar.apps import wsgi
 
-import pulsar
-from pulsar import Pool, Connection, AbstractClient, ProtocolError
+
+from pulsar.api import (
+    Pool, Connection, AbstractClient, ProtocolError, Config, MultiApp,
+    ProtocolConsumer, get_application
+)
 from pulsar.apps.socket import SocketServer
 
-from pulsar import MultiApp, Config
 from pulsar.apps.wsgi import WSGIServer
 
 from pulsar.apps.greenio import GreenPool
 from pulsar.apps.greenio.wsgi import GreenWSGI
 
 
-class EchoProtocol(pulsar.ProtocolConsumer):
+class EchoProtocol(ProtocolConsumer):
     separator = b'\r\n\r\n'
     '''A separator for messages.'''
     buffer = b''
@@ -116,7 +118,7 @@ class EchoGreen(AbstractClient):
     async def _call(self, message):
         # get the address of the echo application
         if not self.address:
-            app = await pulsar.get_application(self.app_name)
+            app = await get_application(self.app_name)
             self.address = app.cfg.addresses[0]
         connection = await self.pool.connect()
         with connection:

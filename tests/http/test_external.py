@@ -1,6 +1,6 @@
 import unittest
 
-from pulsar import get_actor
+from pulsar.api import get_actor
 
 from tests.http import base
 
