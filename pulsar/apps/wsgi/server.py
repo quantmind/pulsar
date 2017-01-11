@@ -109,11 +109,8 @@ class HttpServerResponse(ProtocolConsumer):
         self.body_reader = HttpBodyReader()
         self.parse_url = http.parse_url
         self.create_parser = http.HttpRequestParser
-        cache = AttributeDictionary(
-            logger=producer.logger,
-            cfg=producer.cfg
-        )
-        wsgi = WsgiProtocol(self, producer.cfg, cache, FileWrapper)
+        self.cfg = producer.cfg
+        wsgi = WsgiProtocol(self, producer.cfg, FileWrapper)
         self.feed_data = wsgi.parser.feed_data
         return wsgi
 
@@ -194,7 +191,7 @@ class HttpServerResponse(ProtocolConsumer):
             else:
                 if loop.get_debug():
                     logger = get_logger(environ)
-                    log_wsgi_info(logger.info, environ, self.wsgi.status)
+                    log_wsgi_info(logger.info, environ, wsgi.status)
                     if not wsgi.keep_alive:
                         logger.debug('No keep alive, closing connection %s',
                                      self.connection)
@@ -205,7 +202,7 @@ class HttpServerResponse(ProtocolConsumer):
                 close_object(response)
 
     def _write_headers(self):
-        wsgi = self.wsgi
+        wsgi = self.request
         if not wsgi.headers_sent:
             if CONTENT_LENGTH in wsgi.headers:
                 wsgi.headers[CONTENT_LENGTH] = '0'

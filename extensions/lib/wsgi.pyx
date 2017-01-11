@@ -49,11 +49,9 @@ cdef class WsgiProtocol:
         object keep_alive
     cdef object header_wsgi, protocol, parsed_url
 
-    def __init__(self, object protocol, object cfg,
-                 object cache, object FileWrapper):
+    def __init__(self, object protocol, object cfg, object FileWrapper):
         cdef object connection = protocol.connection
         cdef object server_address = connection.transport.get_extra_info('sockname')
-        cache.connection = connection
         self.environ = {
             'wsgi.timestamp': _current_time_,
             'wsgi.errors': sys.stderr,
@@ -67,7 +65,7 @@ cdef class WsgiProtocol:
             'CONTENT_TYPE': '',
             'SERVER_NAME': server_address[0],
             'SERVER_PORT': server_address[1],
-            PULSAR_CACHE: cache
+            PULSAR_CACHE: protocol
         }
         self.cfg = cfg
         self.headers = CIMultiDict()
@@ -146,8 +144,8 @@ cdef class WsgiProtocol:
         cdef object proto = self.protocol
         if not proto.body_reader.reader:
             proto.body_reader.initialise(
-                self.request_headers, self.parser, proto.connection.transport,
-                proto.cfg.stream_buffer, loop=proto._loop
+                self.request_headers, self.parser, self.connection.transport,
+                self.cfg.stream_buffer, loop=proto._loop
             )
         proto.body_reader.feed_data(body)
 
@@ -216,7 +214,7 @@ cdef class WsgiProtocol:
             http_chunks_l(chunks, data, True)
 
         if chunks:
-            return proto._connection.write(b''.join(chunks))
+            return self.connection.write(b''.join(chunks))
 
     cpdef object write(self, bytes data, object force=False):
         cdef bytes chunks = b''
@@ -242,7 +240,7 @@ cdef class WsgiProtocol:
             chunks = http_chunks(chunks, data, True)
 
         if chunks:
-            return proto._connection.write(chunks)
+            return self.connection.write(chunks)
 
     cdef get_headers(self):
         cdef object headers = self.headers

@@ -8,6 +8,23 @@ from multidict import CIMultiDict
 from wsgi cimport _http_date
 
 
+cdef object nocache = object()
+
+
+def wsgi_cached(method):
+    cdef str name = method.__name__
+
+    def _(self):
+        cache = self.environ[PULSAR_CACHE]
+        value = getattr(cache, name, nocache)
+        if value is nocache:
+            setattr(cache, name, method(self))
+            value = getattr(cache, name)
+        return value
+
+    return property(_, doc=method.__doc__)
+
+
 cdef class WsgiResponse:
     cdef public:
         dict environ

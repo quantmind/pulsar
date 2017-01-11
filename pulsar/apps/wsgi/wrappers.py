@@ -50,7 +50,7 @@ from functools import partial
 from inspect import isawaitable
 
 from pulsar.api import (
-    WsgiResponse, chain_future, HttpException, create_future
+    WsgiResponse, chain_future, HttpException, create_future, wsgi_cached
 )
 from pulsar.utils.httpurl import (
     SimpleCookie, REDIRECT_CODES, ENCODE_URL_METHODS,
@@ -59,7 +59,7 @@ from pulsar.utils.httpurl import (
 
 from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, query_dict,
-                    parse_accept_header, LOGGER, pulsar_cache)
+                    parse_accept_header, LOGGER, PULSAR_CACHE)
 from .structures import ContentAccept, CharsetAccept, LanguageAccept
 from .formdata import parse_form_data
 from .headers import LOCATION
@@ -77,18 +77,6 @@ def redirect(path, code=None, permanent=False):
 
     assert code in REDIRECT_CODES, 'Invalid redirect status code.'
     return WsgiResponse(code, response_headers=[(LOCATION, path)])
-
-
-def cached_property(method):
-    name = method.__name__
-
-    def _(self):
-        cache = self.environ[pulsar_cache]
-        if name not in cache:
-            cache[name] = method(self)
-        return cache[name]
-
-    return property(_, doc=method.__doc__)
 
 
 def wsgi_encoder(gen, encoding):
@@ -122,7 +110,7 @@ class WsgiRequest:
         pulsar-specific data stored in the :attr:`environ` at
         the wsgi-extension key ``pulsar.cache``
         """
-        return self.environ[pulsar_cache]
+        return self.environ[PULSAR_CACHE]
 
     @property
     def connection(self):
@@ -138,7 +126,7 @@ class WsgiRequest:
         if c:
             return c._loop
 
-    @cached_property
+    @wsgi_cached
     def first_line(self):
         env = self.environ
         try:
@@ -146,7 +134,7 @@ class WsgiRequest:
         except Exception:
             return '%s %s' % (env.get('REQUEST_METHOD'), env.get('PATH'))
 
-    @cached_property
+    @wsgi_cached
     def content_types(self):
         """List of content types this client supports as a
         :class:`.ContentAccept` object.
@@ -156,7 +144,7 @@ class WsgiRequest:
         return parse_accept_header(self.environ.get('HTTP_ACCEPT'),
                                    ContentAccept)
 
-    @cached_property
+    @wsgi_cached
     def charsets(self):
         """List of charsets this client supports as a
         :class:`.CharsetAccept` object.
@@ -166,7 +154,7 @@ class WsgiRequest:
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_CHARSET'),
                                    CharsetAccept)
 
-    @cached_property
+    @wsgi_cached
     def encodings(self):
         """List of encodings this client supports as
         :class:`.Accept` object.
@@ -177,7 +165,7 @@ class WsgiRequest:
         """
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_ENCODING'))
 
-    @cached_property
+    @wsgi_cached
     def languages(self):
         """List of languages this client accepts as
         :class:`.LanguageAccept` object.
@@ -187,7 +175,7 @@ class WsgiRequest:
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
                                    LanguageAccept)
 
-    @cached_property
+    @wsgi_cached
     def cookies(self):
         """Container of request cookies
         """
@@ -227,7 +215,7 @@ class WsgiRequest:
         """
         return self.cache.logger
 
-    @cached_property
+    @wsgi_cached
     def response(self):
         """The :class:`WsgiResponse` for this client request.
         """
@@ -262,11 +250,11 @@ class WsgiRequest:
         """The request method (uppercase)."""
         return self.environ['REQUEST_METHOD']
 
-    @cached_property
+    @wsgi_cached
     def encoding(self):
         return self.content_type_options[1].get('charset', 'utf-8')
 
-    @cached_property
+    @wsgi_cached
     def content_type_options(self):
         content_type = self.environ.get('CONTENT_TYPE')
         if content_type:
@@ -324,7 +312,7 @@ class WsgiRequest:
         self.cache.data_and_files = data_files
         return self.data_and_files(data, files, stream)
 
-    @cached_property
+    @wsgi_cached
     def url_data(self):
         """A (cached) dictionary containing data from the ``QUERY_STRING``
         in :attr:`~.environ`.
@@ -332,7 +320,7 @@ class WsgiRequest:
         return query_dict(self.environ.get('QUERY_STRING', ''),
                           encoding=self.encoding)
 
-    @cached_property
+    @wsgi_cached
     def html_document(self):
         """Return a cached instance of :class:`.HtmlDocument`."""
         return HtmlDocument()

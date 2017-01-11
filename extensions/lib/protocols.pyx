@@ -125,10 +125,13 @@ cdef class Protocol(EventHandler):
 cdef class ProtocolConsumer(EventHandler):
     ONE_TIME_EVENTS = ('post_request',)
 
-    cdef readonly Protocol connection
-    cdef readonly Producer producer
-    cdef readonly object _loop
-    cdef readonly object request
+    cdef readonly:
+        Protocol connection
+        Producer producer
+        object _loop, request
+
+    cdef public:
+        dict cache
 
     def __cinit__(self, EventHandler connection):
         self.connection = connection
@@ -159,3 +162,6 @@ cdef class ProtocolConsumer(EventHandler):
 
     cpdef void _finished(self, object _, object exc=None):
         self.connection._current_consumer = None
+
+    cpdef object get(self, str attr):
+        return getattr(self, attr, None)

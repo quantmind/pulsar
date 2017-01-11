@@ -67,7 +67,7 @@ from .content import (String, Html, Json, HtmlDocument, Links, Scripts, Media,
 from .middleware import (clean_path_middleware, authorization_middleware,
                          wait_for_body_middleware, middleware_in_executor)
 from .response import AccessControl, GZipMiddleware
-from .wrappers import WsgiResponse, WsgiRequest, cached_property
+from .wrappers import WsgiResponse, WsgiRequest
 from .server import HttpServerResponse, test_wsgi_environ, AbortWsgi
 from .route import route, Route
 from .handlers import WsgiHandler, LazyWsgi
@@ -110,7 +110,6 @@ __all__ = [
     # WSGI Wrappers
     'WsgiResponse',
     'WsgiRequest',
-    'cached_property',
     #
     # WSGI Handlers
     'WsgiHandler',

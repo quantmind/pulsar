@@ -31,7 +31,7 @@ DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
                                   ) + JSON_CONTENT_TYPES
 
 
-pulsar_cache = 'pulsar.cache'
+PULSAR_CACHE = 'pulsar.cache'
 LOGGER = logging.getLogger('pulsar.wsgi')
 error_css = '''
 .pulsar-error {
@@ -54,10 +54,7 @@ def set_wsgi_request_class(RequestClass):
 
 
 def get_logger(environ):
-    cache = environ.get(pulsar_cache)
-    if cache:
-        return cache.logger or LOGGER
-    return LOGGER
+    return getattr(environ.get(PULSAR_CACHE), 'logger', LOGGER)
 
 
 @lru_cache(maxsize=1024)

@@ -6,7 +6,7 @@ from .utils.exceptions import (
 from .utils.config import Config, Setting
 from .utils.lib import (
     HAS_C_EXTENSIONS, EventHandler, ProtocolConsumer, Protocol,
-    WsgiProtocol, WsgiResponse
+    WsgiProtocol, WsgiResponse, wsgi_cached
 )
 
 from .async.access import get_actor, create_future
@@ -31,6 +31,7 @@ __all__ = [
     'Connection',
     'WsgiProtocol',
     'WsgiResponse',
+    'wsgi_cached',
     'Config',
     'Setting',
     #

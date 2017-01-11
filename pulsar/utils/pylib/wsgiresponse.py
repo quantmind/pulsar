@@ -8,6 +8,21 @@ from multidict import CIMultiDict
 from ..httpurl import has_empty_content
 
 
+PULSAR_CACHE = 'pulsar.cache'
+
+
+def cached_property(method):
+    name = method.__name__
+
+    def _(self):
+        cache = self.environ[PULSAR_CACHE]
+        if name not in cache:
+            cache[name] = method(self)
+        return cache[name]
+
+    return property(_, doc=method.__doc__)
+
+
 def count_len(a, b):
     return a + len(b)
 
