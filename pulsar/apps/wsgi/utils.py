@@ -1,16 +1,8 @@
-'''
-The :mod:`pulsar.apps.wsgi.utils` module include several utilities used
-by various components in the :ref:`wsgi application <apps-wsgi>`
-'''
-import time
 import re
 import textwrap
 import logging
 import socket
 from functools import lru_cache
-
-from datetime import datetime, timedelta
-from email.utils import formatdate
 from urllib.parse import parse_qsl
 
 from multidict import MultiDict

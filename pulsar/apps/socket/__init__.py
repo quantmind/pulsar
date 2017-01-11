@@ -302,6 +302,7 @@ class SocketServer(Application):
             keep_alive=cfg.keep_alive,
             name=self.name,
             logger=self.logger,
+            server_software=cfg.server_software,
             cfg=cfg
         )
         for event in ('connection_made', 'pre_request', 'post_request',

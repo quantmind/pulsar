@@ -802,6 +802,7 @@ class HttpKeepAlive(Global):
     name = "http_keep_alive"
     flags = ["--http-keep-alive"]
     default = 70
+    type = int
     desc = """\
         Keep HTTP connections alive for this number of seconds
         """

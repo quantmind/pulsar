@@ -143,5 +143,12 @@ class WSGIServer(SocketServer):
     name = 'wsgi'
     cfg = Config(apps=['socket'], server_software=pulsar.SERVER_SOFTWARE)
 
+    def server_factory(self, *args, **kw):
+        server = super().server_factory(*args, **kw)
+        cfg = self.cfg
+        server.keep_alive = cfg.http_keep_alive
+        server.wsgi_callable = cfg.callable
+        return server
+
     def protocol_factory(self):
         return partial(Connection, HttpServerResponse)

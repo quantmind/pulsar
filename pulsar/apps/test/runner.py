@@ -1,10 +1,10 @@
 import asyncio
-from inspect import isgenerator
+from inspect import isgenerator, isawaitable
 from unittest import SkipTest, TestCase
 
 from async_timeout import timeout
 
-from pulsar import ensure_future, isawaitable, HaltServer
+from pulsar.api import HaltServer
 
 from .utils import (TestFailure, skip_test, skip_reason,
                     expecting_failure, AsyncAssert, get_test_timeout)
@@ -91,7 +91,7 @@ class Runner:
                              len(all_tests), tag, test_cls.__name__)
             self.runner.startTestClass(test_cls)
             coro = self._run_test_cls(test_cls, test_classes, all_tests)
-            ensure_future(coro, loop=self._loop)
+            asyncio.ensure_future(coro, loop=self._loop)
         else:
             self._loop.call_soon(self._next_class, tag, test_classes)
 

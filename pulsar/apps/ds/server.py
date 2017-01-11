@@ -166,8 +166,8 @@ class PulsarDS(SocketServer):
     '''
     name = 'pulsards'
     cfg = Config(bind=DEFAULT_PULSAR_STORE_ADDRESS,
-                        keep_alive=0,
-                        apps=['socket', 'pulsards'])
+                 keep_alive=0,
+                 apps=['socket', 'pulsards'])
 
     def server_factory(self, *args, **kw):
         return TcpServer(self.cfg, *args, **kw)

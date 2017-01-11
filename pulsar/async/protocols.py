@@ -2,9 +2,11 @@ import asyncio
 
 from async_timeout import timeout
 
+import pulsar
+
 from .access import LOGGER
 from .mixins import FlowControl, Timeout
-from ..utils.lib import Protocol, Producer, AbortEvent
+from ..utils.lib import Protocol, Producer
 from ..utils.internet import nice_address, format_address
 
 
@@ -29,10 +31,10 @@ class PulsarProtocol(Protocol, FlowControl, Timeout):
     _data_received_count = 0
     last_change = None
 
-    def __init__(self, consumer_factory, producer, timeout=None,
+    def __init__(self, consumer_factory, producer,
                  low_limit=None, high_limit=None, **kw):
         super().__init__(consumer_factory, producer)
-        self.timeout = timeout
+        self.timeout = producer.keep_alive
         self.logger = producer.logger or LOGGER
         self._low_limit = low_limit
         self._high_limit = high_limit
@@ -48,16 +50,6 @@ class PulsarProtocol(Protocol, FlowControl, Timeout):
         else:
             return '<pending> session %s' % self.session
     __str__ = __repr__
-
-    @property
-    def closed(self):
-        """``True`` if the :attr:`transport` is closed.
-        """
-        if self._transport:
-            if hasattr(self._transport, 'is_closing'):
-                return self._transport.is_closing()
-            return False
-        return True
 
     def close(self):
         """Close by closing the :attr:`transport`
@@ -187,17 +179,19 @@ class TcpServer(Producer):
 
     def __init__(self, protocol_factory, *, loop=None, address=None,
                  name=None, sockets=None, max_requests=None,
-                 keep_alive=None, logger=None, cfg=None):
-        super().__init__(protocol_factory, loop=loop)
+                 keep_alive=None, logger=None, cfg=None,
+                 server_software=None):
+        super().__init__(protocol_factory, loop=loop, name=name)
         self.max_requests = max_requests
+        self.keep_alive = max(keep_alive or 0, 0)
         self.logger = logger or LOGGER
         self.cfg = cfg
+        self.server_software = server_software or pulsar.SERVER_SOFTWARE
         if max_requests:
             self.events('connection_made').bind(self._max_requests)
         self.event('connection_made').bind(self._connection_made)
         self.event('connection_lost').bind(self._connection_lost)
         self._params = {'address': address, 'sockets': sockets}
-        self._keep_alive = max(keep_alive or 0, 0)
         self._concurrent_connections = set()
 
     def __repr__(self):
@@ -285,7 +279,7 @@ class TcpServer(Producer):
         server = {'uptime_in_seconds': up,
                   'sockets': sockets,
                   'max_requests': self._max_requests,
-                  'keep_alive': self._keep_alive}
+                  'keep_alive': self.keep_alive}
         clients = {'processed_clients': self.sessions,
                    'connected_clients': len(self._concurrent_connections),
                    'requests_processed': self._requests_processed}
@@ -309,7 +303,6 @@ class TcpServer(Producer):
             self.logger.info('Reached maximum number of connections %s. '
                              'Stop serving.' % self._max_requests)
             self.close()
-
 
     def _close_connections(self, connection=None, timeout=5):
         """Close ``connection`` if specified, otherwise close all connections.

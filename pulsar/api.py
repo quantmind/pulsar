@@ -1,16 +1,17 @@
 from .utils.exceptions import (
     PulsarException, ImproperlyConfigured, HttpException, HttpRedirect,
     BadRequest, Http401, Http404, HttpConnectionError, HttpGone,
-    HttpRequestException, MethodNotAllowed
+    HttpRequestException, MethodNotAllowed, HaltServer,
+    SSLError
 )
 from .utils.config import Config, Setting
 from .utils.lib import (
     HAS_C_EXTENSIONS, EventHandler, ProtocolConsumer, Protocol,
-    WsgiProtocol, WsgiResponse, wsgi_cached
+    WsgiProtocol, WsgiResponse, wsgi_cached, http_date, AbortEvent
 )
 
-from .async.access import get_actor, create_future
-from .async.actor import is_actor, send, spawn
+from .async.access import get_actor, create_future, cfg_value
+from .async.actor import is_actor, send, spawn, get_stream
 from .async.protocols import (
     Connection, DatagramProtocol, TcpServer, DatagramServer
 )
@@ -29,11 +30,16 @@ __all__ = [
     'ProtocolConsumer',
     'Protocol',
     'Connection',
+    'DatagramProtocol',
+    'TcpServer',
+    'DatagramServer',
     'WsgiProtocol',
     'WsgiResponse',
+    'http_date',
     'wsgi_cached',
     'Config',
     'Setting',
+    'AbortEvent',
     #
     'create_future',
     'chain_future',
@@ -41,7 +47,9 @@ __all__ = [
     'is_actor',
     'send',
     'spawn',
+    'cfg_value',
     'arbiter',
+    'get_stream',
     #
     'Pool',
     'PoolConnection',
@@ -55,6 +63,7 @@ __all__ = [
     #
     'PulsarException',
     'ImproperlyConfigured',
+    'HaltServer',
     'HttpException',
     'HttpRedirect',
     'BadRequest',
@@ -63,5 +72,6 @@ __all__ = [
     'Http404',
     'HttpConnectionError',
     'HttpGone',
-    'HttpRequestException'
+    'HttpRequestException',
+    'SSLError'
 ]

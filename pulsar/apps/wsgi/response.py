@@ -28,13 +28,8 @@ AccessControl
 
 '''
 import re
+from io import BytesIO
 from gzip import GzipFile
-from http.client import responses
-from functools import reduce
-
-from multidict import CIMultiDict
-
-from pulsar.utils.httpurl import BytesIO, has_empty_content, SimpleCookie
 
 
 re_accepts_gzip = re.compile(r'\bgzip\b')

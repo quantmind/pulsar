@@ -91,10 +91,10 @@ from collections import OrderedDict
 from functools import partial, lru_cache
 from email.utils import parsedate_tz, mktime_tz
 
-from pulsar.utils.httpurl import http_date, CacheControl
+from pulsar.utils.httpurl import CacheControl
 from pulsar.utils.slugify import slugify
 from pulsar.utils.security import digest
-from pulsar.api import Http404, MethodNotAllowed
+from pulsar.api import Http404, MethodNotAllowed, http_date
 
 from .route import Route
 from .utils import wsgi_request

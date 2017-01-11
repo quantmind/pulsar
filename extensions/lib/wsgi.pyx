@@ -60,11 +60,11 @@ cdef class WsgiProtocol:
             'wsgi.multithread': True,
             'wsgi.multiprocess': True,
             'SCRIPT_NAME': OS_SCRIPT_NAME,
-            'SERVER_SOFTWARE': cfg.server_software,
+            'SERVER_SOFTWARE': protocol.producer.server_software,
             'wsgi.file_wrapper': FileWrapper,
             'CONTENT_TYPE': '',
             'SERVER_NAME': server_address[0],
-            'SERVER_PORT': server_address[1],
+            'SERVER_PORT': str(server_address[1]),
             PULSAR_CACHE: protocol
         }
         self.cfg = cfg
@@ -180,7 +180,7 @@ cdef class WsgiProtocol:
                 continue
             self.headers.add(header, value)
         self.headers[SERVER] = self.environ['SERVER_SOFTWARE']
-        self.headers[DATE] = http_date(_current_time_)
+        self.headers[DATE] = fast_http_date(_current_time_)
         self.keep_alive = self.parser.should_keep_alive()
         return self.write
 
@@ -323,12 +323,16 @@ cdef bytes http_chunks(bytes chunks, bytes data, object finish=False):
     return chunks
 
 
-cpdef http_date(int timestamp):
+cpdef fast_http_date(int timestamp):
     global _http_time_, _http_date_
     if _http_time_ != timestamp:
         _http_time_ = timestamp
         _http_date_ = _http_date(timestamp)
     return _http_date_
+
+
+cpdef http_date(int timestamp):
+    return _http_date(timestamp)
 
 
 cpdef has_empty_content(int status, str method=None):

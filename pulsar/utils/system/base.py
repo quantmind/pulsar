@@ -11,6 +11,7 @@ __all__ = ['SIG_NAMES',
 
 SIG_NAMES = {}
 
+
 if signal:
     for sig in dir(signal):
         if sig.startswith('SIG') and sig[3] != "_":

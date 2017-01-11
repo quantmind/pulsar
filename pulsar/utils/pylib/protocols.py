@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from socket import SOL_SOCKET, SO_KEEPALIVE
 
 from async_timeout import timeout
@@ -8,11 +9,9 @@ from ..internet import nice_address
 from .events import EventHandler, AbortEvent
 
 
+LOGGER = logging.getLogger('pulsar.protocols')
+
 CLOSE_TIMEOUT = 3
-
-
-class AbortRequest(AbortEvent):
-    pass
 
 
 class ProtocolConsumer(EventHandler):
@@ -134,7 +133,7 @@ class ProtocolConsumer(EventHandler):
 
         This method can be called during the pre-request stage
         """
-        raise AbortRequest
+        raise AbortEvent
 
     def write(self, data):
         """Delegate writing to the underlying :class:`.Connection`

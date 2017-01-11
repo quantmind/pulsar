@@ -36,7 +36,6 @@ benchmark plugin evaluate the performance and display results:
 .. autoclass:: BenchMark
 
 '''
-import sys
 import time
 import math
 from inspect import isawaitable

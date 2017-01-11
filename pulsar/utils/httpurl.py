@@ -14,15 +14,6 @@ from http.cookies import SimpleCookie
 from .structures import mapping_iterator
 from .string import to_bytes, to_string
 
-try:
-    from .lib import http_date
-except ImportError:
-    from wsgiref.handlers import format_date_time as http_date
-
-
-__all__ = [
-    'http_date'
-]
 
 getproxies_environment = urllibr.getproxies_environment
 ascii_letters = string.ascii_letters

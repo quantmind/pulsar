@@ -1,7 +1,9 @@
+import time
 from http.client import responses
 from http.cookies import SimpleCookie
 from functools import reduce
 from datetime import datetime, timedelta
+from wsgiref.handlers import format_date_time as http_date
 
 from multidict import CIMultiDict
 
@@ -186,12 +188,7 @@ class WsgiResponse:
             raise RuntimeError('WsgiResponse can be iterated once only')
         self.__wsgi_started__ = True
         self._iterated = True
-        try:
-            len(self._content)
-        except TypeError:
-            return wsgi_encoder(self._content, self.encoding or 'utf-8')
-        else:
-            return iter(self._content)
+        return iter(self._content)
 
     def close(self):
         """Close this response, required by WSGI
@@ -239,7 +236,7 @@ class WsgiResponse:
         if (self.status_code < 400 and self._can_store_cookies and
                 self._cookies):
             for c in self.cookies.values():
-                headers.add_header(SET_COOKIE, c.OutputString())
+                headers.add_header('set-cookie', c.OutputString())
         return headers.items()
 
     def has_header(self, header):
@@ -251,22 +248,6 @@ class WsgiResponse:
 
     def __getitem__(self, header):
         return self.headers[header]
-
-
-def cookie_date(epoch_seconds=None):
-    """Formats the time to ensure compatibility with Netscape's cookie
-    standard.
-
-    Accepts a floating point number expressed in seconds since the epoch in, a
-    datetime object or a timetuple.  All times in UTC.  The :func:`parse_date`
-    function can be used to parse such a date.
-
-    Outputs a string in the format ``Wdy, DD-Mon-YYYY HH:MM:SS GMT``.
-
-    :param expires: If provided that date is used, otherwise the current.
-    """
-    rfcdate = formatdate(epoch_seconds)
-    return '%s-%s-%s GMT' % (rfcdate[:7], rfcdate[8:11], rfcdate[12:25])
 
 
 def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
@@ -291,7 +272,7 @@ def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
         cookies[key]['max-age'] = max_age
         # IE requires expires, so set it if hasn't been already.
         if not expires:
-            cookies[key]['expires'] = cookie_date(time.time() + max_age)
+            cookies[key]['expires'] = http_date(time.time() + max_age)
     if path is not None:
         cookies[key]['path'] = path
     if domain is not None:

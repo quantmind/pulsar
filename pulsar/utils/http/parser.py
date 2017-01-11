@@ -3,6 +3,8 @@ import sys
 import zlib
 from enum import Enum
 
+from ..exceptions import ProtocolError
+
 
 METHOD_RE = re.compile(b"[A-Z0-9$-_.]{3,20}")
 VERSION_RE = re.compile(b"HTTP/(\d+).(\d+)")
@@ -17,15 +19,15 @@ INVALID_CHUNK = 2
 CHARSET = 'ISO-8859-1'
 
 
-class InvalidRequestLine(Exception):
+class InvalidRequestLine(ProtocolError):
     """error raised when first line is invalid """
 
 
-class InvalidHeader(Exception):
+class InvalidHeader(ProtocolError):
     """error raised on invalid header """
 
 
-class InvalidChunkSize(Exception):
+class InvalidChunkSize(ProtocolError):
     """error raised when we parse an invalid chunk size """
 
 

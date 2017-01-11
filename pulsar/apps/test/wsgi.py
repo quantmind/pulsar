@@ -3,6 +3,7 @@
 from asyncio import Transport
 
 from pulsar.apps import http
+import pulsar.utils.http as httpp
 from pulsar.apps.wsgi import HttpServerResponse
 
 __all__ = ['HttpTestClient']
@@ -70,7 +71,7 @@ class DummyConnection(DummyTransport):
         else:
             consumer.server_side = None
             consumer.message = b''
-            consumer.in_parser = http_parser(kind=0)
+            consumer.in_parser = httpp.HttpRequestParser(self)
 
         consumer.connection_made(self)
         self._current_consumer = consumer

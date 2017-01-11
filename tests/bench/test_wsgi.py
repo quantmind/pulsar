@@ -9,6 +9,7 @@ common = {
     500: 'Internal Server Error'
 }
 
+
 class TestWsgi(unittest.TestCase):
     __benchmark__ = True
     __number__ = 20000

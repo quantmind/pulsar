@@ -1,6 +1,5 @@
 from pulsar.apps.data import register_store
 
-from .startds import start_store
 from ..redis import store
 
 

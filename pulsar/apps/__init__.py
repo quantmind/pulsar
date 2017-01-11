@@ -68,7 +68,7 @@ import asyncio
 from ..async.concurrency import arbiter
 from ..async.access import get_actor, create_future
 from ..utils.config import Config
-from ..utils.exceptions import  ImproperlyConfigured
+from ..utils.exceptions import ImproperlyConfigured
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
@@ -158,7 +158,7 @@ def monitor_stopping(self, exc=None):
 def worker_stopping(self, exc=None):
     coro = self.app.worker_stopping(self)
     if coro:
-        ensure_future(coro, loop=self._loop)
+        asyncio.ensure_future(coro, loop=self._loop)
 
 
 def monitor_info(self, info=None):
@@ -185,7 +185,7 @@ def worker_start(self, exc=None):
     self.event('stopping').bind(worker_stopping)
     coro = app.worker_start(self, exc=exc)
     if isawaitable(coro):
-        ensure_future(coro, loop=self._loop)
+        asyncio.ensure_future(coro, loop=self._loop)
 
 
 class Configurator:

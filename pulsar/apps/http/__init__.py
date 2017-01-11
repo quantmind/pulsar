@@ -25,22 +25,21 @@ except ImportError:     # pragma    nocover
 from multidict import CIMultiDict
 
 import pulsar
-from pulsar import (AbortRequest, AbstractClient, Pool, Connection,
-                    isawaitable, ProtocolConsumer, ensure_future,
-                    HttpRequestException, HttpConnectionError, SSLError,
-                    cfg_value)
+from pulsar.api import (
+    AbortEvent, AbstractClient, Pool, Connection,
+    ProtocolConsumer, HttpRequestException, HttpConnectionError,
+    SSLError, cfg_value
+)
 from pulsar.utils import websocket
 from pulsar.utils.system import json as _json
 from pulsar.utils.string import to_bytes
 from pulsar.utils import http
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.httpurl import (encode_multipart_formdata, CHARSET,
-                                  get_environ_proxies, is_succesful,
-                                  get_hostport, cookiejar_from_dict,
-                                  host_no_default_port, http_chunks,
-                                  parse_options_header, tls_schemes,
-                                  parse_header_links,
-                                  JSON_CONTENT_TYPES)
+from pulsar.utils.httpurl import (
+    encode_multipart_formdata, CHARSET, get_environ_proxies, is_succesful,
+    get_hostport, cookiejar_from_dict, host_no_default_port, http_chunks,
+    parse_options_header, tls_schemes, parse_header_links, JSON_CONTENT_TYPES
+)
 
 from .plugins import (handle_cookies, WebSocket, Redirect,
                       Tunneling, TooManyRedirects, start_request,
@@ -400,8 +399,9 @@ class HttpRequest(RequestBase):
         if not self.body:
             return
         if is_streamed(self.body):
-            ensure_future(self._write_streamed_data(transport),
-                          loop=self._loop)
+            asyncio.ensure_future(
+                self._write_streamed_data(transport), loop=self._loop
+            )
         else:
             self._write_body_data(transport, self.body, True)
 
@@ -504,8 +504,10 @@ class HttpRequest(RequestBase):
 
     async def _write_streamed_data(self, transport):
         for data in self.body:
-            if isawaitable(data):
+            try:
                 data = await data
+            except TypeError:
+                pass
             self._write_body_data(transport, data)
         self._write_body_data(transport, b'', True)
 
@@ -983,7 +985,7 @@ class HttpClient(AbstractClient):
             try:
                 response = await start_request(request, conn)
                 status_code = response.status_code
-            except AbortRequest:
+            except AbortEvent:
                 response = None
                 status_code = None
 

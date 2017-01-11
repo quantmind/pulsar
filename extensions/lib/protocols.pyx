@@ -9,17 +9,18 @@ cdef double TIME_INTERVAL = 0.5
 
 
 cdef class Producer(EventHandler):
-    cdef readonly object protocol_factory
-    cdef readonly int sessions
-    cdef readonly str name
-    cdef readonly object _loop
-    cdef public int requests_processed
+    cdef readonly:
+        object protocol_factory, _loop
+        int sessions
+        str name
+    cdef public int requests_processed, keep_alive
 
     def __init__(self, object protocol_factory, object loop=None,
-                 str name=None):
+                 str name=None, int keep_alive=0):
         self.protocol_factory = protocol_factory
         self.requests_processed = 0
         self.sessions = 0
+        self.keep_alive = keep_alive
         self.name = name or self.__class__.__name__
         self._loop = loop or asyncio.get_event_loop()
         self._time()
@@ -35,6 +36,7 @@ cdef class Producer(EventHandler):
         return protocol
 
     cpdef void _time(self):
+        global _current_time_
         try:
             _current_time_ = int(time())
         finally:
@@ -58,6 +60,14 @@ cdef class Protocol(EventHandler):
         self.data_received_count = 0
         self._loop = producer._loop
         self.event('connection_lost').bind(self._connection_lost)
+
+    @property
+    def closed(self):
+        """``True`` if the :attr:`transport` is closed.
+        """
+        if self.transport:
+            return self.transport.is_closing()
+        return True
 
     cpdef ProtocolConsumer current_consumer(self):
         if self._current_consumer is None:

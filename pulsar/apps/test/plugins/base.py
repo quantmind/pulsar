@@ -1,6 +1,7 @@
-import pulsar
+from pulsar.api import Config, Setting
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.test.result import Plugin
+from pulsar.utils.config import validate_bool
 
 
 __all__ = ['WrapTest', 'TestPlugin']
@@ -58,7 +59,7 @@ class TestPluginMeta(type):
             if isinstance(base, TestPluginMeta):
                 settings.update(base.config.settings)
         for key, setting in list(attrs.items()):
-            if isinstance(setting, pulsar.Setting):
+            if isinstance(setting, Setting):
                 attrs.pop(key)
                 setting.name = setting.name or key.lower()
                 settings[setting.name] = as_test_setting(setting)
@@ -77,20 +78,21 @@ class TestPluginMeta(type):
                     if action is None or action == 'store_true':
                         action = 'store_true'
                         default = False
-                        validator = pulsar.validate_bool
+                        validator = validate_bool
                     elif action == 'store_false':
                         default = True
-                        validator = pulsar.validate_bool
-                setting = pulsar.Setting(name=setting_name,
-                                         desc=attrs.pop('desc', name),
-                                         type=type,
-                                         flags=attrs.pop('flags', [def_flag]),
-                                         action=action,
-                                         default=default,
-                                         validator=validator,
-                                         nargs=nargs)
+                        validator = validate_bool
+                setting = Setting(
+                                name=setting_name,
+                                desc=attrs.pop('desc', name),
+                                type=type,
+                                flags=attrs.pop('flags', [def_flag]),
+                                action=action,
+                                default=default,
+                                validator=validator,
+                                nargs=nargs)
                 settings[setting.name] = as_test_setting(setting)
-        attrs['config'] = pulsar.Config(settings=settings)
+        attrs['config'] = Config(settings=settings)
         return super().__new__(cls, name, bases, attrs)
 
 
@@ -107,9 +109,9 @@ class TestPlugin(Plugin, metaclass=TestPluginMeta):
     for controlling the number of repetitions::
 
         class Bench(TestPlugin):
-            repeat = pulsar.Setting(type=int,
+            repeat = Setting(type=int,
                                 default=1,
-                                validator=pulsar.validate_pos_int,
+                                validator=validate_pos_int,
                                 desc="Default number of repetition")
 
 

@@ -48,12 +48,13 @@ Wsgi File Wrapper
 """
 from functools import partial
 from inspect import isawaitable
+from http.cookies import SimpleCookie
 
 from pulsar.api import (
     WsgiResponse, chain_future, HttpException, create_future, wsgi_cached
 )
 from pulsar.utils.httpurl import (
-    SimpleCookie, REDIRECT_CODES, ENCODE_URL_METHODS,
+    REDIRECT_CODES, ENCODE_URL_METHODS,
     remove_double_slash, iri_to_uri, is_absolute_uri, parse_options_header
 )
 

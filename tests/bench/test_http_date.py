@@ -1,7 +1,7 @@
 import unittest
 from time import time
 
-from pulsar.utils.httpurl import http_date
+from pulsar.api import http_date
 from wsgiref.handlers import format_date_time
 
 

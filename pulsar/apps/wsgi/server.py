@@ -22,11 +22,9 @@ from multidict import CIMultiDict
 
 from pulsar.api import BadRequest
 from pulsar.utils.httpurl import iri_to_uri
-from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils import http
 
-from .utils import (handle_wsgi_error, wsgi_request,
-                    log_wsgi_info, LOGGER, get_logger)
+from .utils import handle_wsgi_error, wsgi_request, log_wsgi_info, get_logger
 from .formdata import HttpBodyReader
 from .wrappers import FileWrapper, close_object
 from .headers import CONTENT_LENGTH
@@ -90,7 +88,7 @@ def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
     stream = io.BytesIO(body or b'')
     if extra:
         params.update(extra)
-    return wsgi_environ(stream, parser, request_headers,
+    return WsgiProtocol(stream, parser, request_headers,
                         ('127.0.0.1', 8060), '255.0.1.2:8080',
                         CIMultiDict(), https=https, extra=params)
 
@@ -118,18 +116,18 @@ class HttpServerResponse(ProtocolConsumer):
     #    INTERNALS
     async def _response(self):
         wsgi = self.request
-        cfg = wsgi.cfg
-        wsgi_callable = cfg.callable
+        producer = self.producer
+        wsgi_callable = producer.wsgi_callable
+        keep_alive = producer.keep_alive
         environ = wsgi.environ
         exc_info = None
         response = None
         done = False
-        alive = cfg.keep_alive or 15
         #
         while not done:
             done = True
             try:
-                with timeout(alive, loop=self._loop):
+                with timeout(keep_alive, loop=self._loop):
                     if exc_info is None:
                         if (not environ.get('HTTP_HOST') and
                                 environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):

@@ -2,7 +2,6 @@ from functools import partial
 
 from ....async.protocols import Connection
 from ....async.clients import Pool
-from ....async.access import get_actor
 from ....utils.string import to_string
 from ...ds import redis_parser
 from ..store import RemoteStore
@@ -43,11 +42,7 @@ class RedisStore(RemoteStore):
     def _init(self, namespace=None, parser_class=None, pool_size=50,
               decode_responses=False, **kwargs):
         self._decode_responses = decode_responses
-        if not parser_class:
-            actor = get_actor()
-            pyparser = actor.cfg.redis_py_parser if actor else False
-            parser_class = redis_parser(pyparser)
-        self._parser_class = parser_class
+        self._parser_class = parser_class or redis_parser()
         if namespace:
             self._urlparams['namespace'] = namespace
         self._pool = Pool(self.connect, pool_size=pool_size, loop=self._loop)

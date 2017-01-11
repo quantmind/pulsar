@@ -23,11 +23,9 @@ import logging
 import unittest
 import asyncio
 
-import pulsar
-from pulsar import (
-    get_actor, send, as_gather,
-    format_traceback, ImproperlyConfigured
-)
+from pulsar.api import get_actor, send, spawn, ImproperlyConfigured
+from pulsar.utils.exceptions import format_traceback
+from pulsar.async.futures import as_gather
 from pulsar.apps.data import create_store
 
 
@@ -177,7 +175,7 @@ class ActorTestMixin:
         '''Spawn a new actor and perform some tests
         '''
         concurrency = concurrency or self.concurrency
-        ad = pulsar.spawn(concurrency=concurrency, **kwargs)
+        ad = spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
         self.assertIsInstance(ad, asyncio.Future)
         proxy = await ad
@@ -223,7 +221,7 @@ def dont_run_with_thread(obj):
     '''Decorator for disabling process based test cases when the test suite
     runs in threading, rather than processing, mode.
     '''
-    actor = pulsar.get_actor()
+    actor = get_actor()
     if actor:
         d = unittest.skipUnless(actor.cfg.concurrency == 'process',
                                 'Run only when concurrency is process')

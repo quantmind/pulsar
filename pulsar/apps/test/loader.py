@@ -9,7 +9,7 @@ import re
 import sys
 import unittest
 
-import pulsar
+from pulsar.api import get_stream
 from pulsar.utils.importer import import_system_file
 
 from .result import TestRunner
@@ -49,7 +49,7 @@ class TestLoader:
     :parameter runner: The :class:`.TestRunner` passed by the test suite.
     '''
     def __init__(self, suite):
-        self.stream = pulsar.get_stream(suite.cfg)
+        self.stream = get_stream(suite.cfg)
         self.runner = TestRunner(suite.cfg.test_plugins, self.stream)
         self.abort_message = self.runner.configure(suite.cfg)
         self.root = suite.root_dir

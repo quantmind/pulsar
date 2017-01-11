@@ -5,7 +5,7 @@ from .store import (
 )
 from .channels import Channels
 from . import redis     # noqa
-from .pulsards import start_store
+from .pulsards.startds import start_store
 
 
 __all__ = [

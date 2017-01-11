@@ -1,8 +1,10 @@
 import sys
 
-import pulsar
+from pulsar.api import Application, Config
 from pulsar.utils.log import lazyproperty
-from pulsar.utils.config import section_docs, TestOption
+from pulsar.utils.config import (
+    section_docs, TestOption, validate_pos_int, validate_list, validate_bool
+)
 
 from .populate import populate, random_string
 from .result import Plugin, TestStream, TestRunner, TestResult
@@ -45,7 +47,7 @@ This section covers configuration parameters used by the
 class TestVerbosity(TestOption):
     name = 'verbosity'
     flags = ['--verbosity']
-    validator = pulsar.validate_pos_int
+    validator = validate_pos_int
     type = int
     default = 1
     desc = """Test verbosity, 0, 1, 2, 3"""
@@ -53,7 +55,7 @@ class TestVerbosity(TestOption):
 
 class TestTimeout(TestOption):
     flags = ['--test-timeout']
-    validator = pulsar.validate_pos_int
+    validator = validate_pos_int
     type = int
     default = 20
     desc = '''\
@@ -64,7 +66,7 @@ class TestTimeout(TestOption):
 class TestLabels(TestOption):
     name = "labels"
     nargs = '*'
-    validator = pulsar.validate_list
+    validator = validate_list
     desc = """\
         Optional test labels to run.
 
@@ -77,7 +79,7 @@ class TestExcludeLabels(TestOption):
     flags = ['-e', '--exclude-labels']
     nargs = '+'
     desc = 'Exclude a group o labels from running.'
-    validator = pulsar.validate_list
+    validator = validate_list
 
 
 class TestSize(TestOption):
@@ -93,7 +95,7 @@ class TestList(TestOption):
     flags = ['-l', '--list-labels']
     action = 'store_true'
     default = False
-    validator = pulsar.validate_bool
+    validator = validate_bool
     desc = """List all test labels without performing tests."""
 
 
@@ -102,7 +104,7 @@ class TestSequential(TestOption):
     flags = ['--sequential']
     action = 'store_true'
     default = False
-    validator = pulsar.validate_bool
+    validator = validate_bool
     desc = """Run test functions sequentially."""
 
 
@@ -110,7 +112,7 @@ class Coveralls(TestOption):
     flags = ['--coveralls']
     action = 'store_true'
     default = False
-    validator = pulsar.validate_bool
+    validator = validate_bool
     desc = """Publish coverage to coveralls."""
 
 
@@ -125,7 +127,7 @@ class TestPlugins(TestOption):
 
 class TestModules(TestOption):
     flags = ['--test-modules']
-    validator = pulsar.validate_list
+    validator = validate_list
     nargs = '+'
     default = []
     desc = '''\
@@ -133,7 +135,7 @@ class TestModules(TestOption):
         '''
 
 
-class TestSuite(pulsar.Application):
+class TestSuite(Application):
     '''An asynchronous test suite which works like a task queue.
 
     Each task is a group of test methods in a python TestCase class.
@@ -146,7 +148,7 @@ class TestSuite(pulsar.Application):
         :class:`.TestPlugin` classes.
     '''
     name = 'test'
-    cfg = pulsar.Config(
+    cfg = Config(
         description='pulsar test suite',
         apps=['test'],
         log_level=['none']

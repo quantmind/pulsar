@@ -1,11 +1,12 @@
 from functools import partial
 from collections import namedtuple
 from copy import copy
+from http.cookies import SimpleCookie
 from urllib.parse import urlparse, urljoin
 
-from pulsar import isawaitable, create_future, PulsarException
+from pulsar.api import create_future, PulsarException
 from pulsar.apps.ws import WebSocketProtocol, WS
-from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri, SimpleCookie
+from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri
 from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
 
 
@@ -54,8 +55,10 @@ async def start_request(request, conn):
 
     if hasattr(response.request_again, '__call__'):
         response = response.request_again(response)
-        if isawaitable(response):
+        try:
             response = await response
+        except TypeError:
+            pass
 
     return response
 
