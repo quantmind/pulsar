@@ -1,8 +1,9 @@
 '''Tests the RPC "calculator" example.'''
 import unittest
 import types
+from asyncio import get_event_loop
 
-from pulsar import send, get_event_loop
+from pulsar.api import send
 from pulsar.apps import rpc, http
 from pulsar.apps.test import dont_run_with_thread
 

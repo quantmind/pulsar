@@ -10,22 +10,25 @@ from .utils.lib import (
     WsgiProtocol, WsgiResponse, wsgi_cached, http_date, AbortEvent
 )
 
-from .async.access import get_actor, create_future, cfg_value
+from .async.access import get_actor, create_future, cfg_value, ensure_future
 from .async.actor import is_actor, send, spawn, get_stream
 from .async.proxy import command
+from .async.lock import Lock, LockBase
 from .async.protocols import (
     Connection, DatagramProtocol, TcpServer, DatagramServer
 )
 from .async.clients import (
     Pool, PoolConnection, AbstractClient, AbstractUdpClient
 )
-from .async.futures import chain_future
+from .async.futures import chain_future, async_while, AsyncObject
 from .async.concurrency import arbiter
 from .apps import Application, MultiApp, get_application
 from .apps.data import data_stores
 
 
 __all__ = [
+    #
+    # Protocols and Config
     'HAS_C_EXTENSIONS',
     'EventHandler',
     'ProtocolConsumer',
@@ -42,8 +45,11 @@ __all__ = [
     'Setting',
     'AbortEvent',
     #
+    # Actor Layer
     'create_future',
+    'ensure_future',
     'chain_future',
+    'async_while',
     'get_actor',
     'is_actor',
     'send',
@@ -52,17 +58,25 @@ __all__ = [
     'arbiter',
     'get_stream',
     'command',
+    'AsyncObject',
     #
+    # Async Clients
     'Pool',
     'PoolConnection',
     'AbstractClient',
     'AbstractUdpClient',
     #
+    # Async Locks
+    'Lock',
+    'LockBase',
+    #
+    # Application Layer
     'Application',
     'MultiApp',
     'get_application',
     'data_stores',
     #
+    # Exceptions
     'PulsarException',
     'ImproperlyConfigured',
     'HaltServer',

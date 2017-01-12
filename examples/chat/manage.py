@@ -40,7 +40,7 @@ Implementation
 import os
 import time
 
-from pulsar import create_future, ensure_future
+from pulsar.api import create_future, ensure_future
 from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,
                               GZipMiddleware)
 from pulsar.apps.ws import WS, WebSocket

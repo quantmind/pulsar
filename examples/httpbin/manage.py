@@ -28,7 +28,7 @@ from random import random
 from base64 import b64encode
 from asyncio import ensure_future
 
-from pulsar import version, JAPANESE, CHINESE
+from pulsar import version, JAPANESE, CHINESE, HINDI
 from pulsar.api import HttpRedirect, HttpException
 from pulsar.utils.httpurl import ENCODE_URL_METHODS, ENCODE_BODY_METHODS
 from pulsar.utils.html import escape
@@ -298,9 +298,9 @@ class HttpBin(BaseRouter):
     def get_pulsar(self, request):
         data = [
             'pulsar',
-            pulsar.JAPANESE,
-            pulsar.CHINESE,
-            pulsar.HINDI
+            JAPANESE,
+            CHINESE,
+            HINDI
         ]
         return Json(data).http_response(request)
 

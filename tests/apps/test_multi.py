@@ -3,7 +3,7 @@ import unittest
 import asyncio
 
 import pulsar
-from pulsar import Config, get_actor
+from pulsar.api import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
 

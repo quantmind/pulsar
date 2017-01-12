@@ -4,16 +4,13 @@ import logging
 import asyncio
 from collections import namedtuple
 
-from pulsar import AsyncObject, as_coroutine, new_event_loop, ensure_future
+from pulsar.api import AsyncObject, ensure_future
 from pulsar.utils.string import gen_unique_id
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
 from pulsar.apps.http import HttpClient
 
 from .handlers import RpcHandler, InvalidRequest, exception
-
-
-__all__ = ['JSONRPC', 'JsonProxy', 'JsonBatchProxy']
 
 
 logger = logging.getLogger('pulsar.jsonrpc')
@@ -42,7 +39,11 @@ class JSONRPC(RpcHandler):
         response = request.response
 
         try:
-            data = await as_coroutine(request.body_data())
+            data = request.body_data()
+            try:
+                data = await data
+            except TypeError:
+                pass
         except ValueError:
             res, status = self._get_error_and_status(InvalidRequest(
                 status=415, msg='Content-Type must be application/json'))
@@ -78,7 +79,11 @@ class JSONRPC(RpcHandler):
                 args, kwargs = tuple(params or ()), {}
             #
             proc = self.get_handler(data.get('method'))
-            result = await as_coroutine(proc(request, *args, **kwargs))
+            result = proc(request, *args, **kwargs)
+            try:
+                result = await result
+            except TypeError:
+                pass
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
@@ -203,7 +208,7 @@ class JsonProxy(AsyncObject):
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
             if sync and not loop:
-                loop = new_event_loop()
+                loop = asyncio.new_event_loop()
             http = HttpClient(timeout=timeout, loop=loop, **kw)
         http.headers['accept'] = 'application/json, text/*; q=0.5'
         http.headers['content-type'] = 'application/json'

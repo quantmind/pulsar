@@ -114,7 +114,7 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client._requests_processed, 5)
         #
         # drop a connection
-        await run_in_loop(client._loop, self._drop_conection, client)
+        self._drop_conection(client)
         #
         result = await gather(client(b'ciao'),
                               client(b'pippo'),
@@ -125,7 +125,7 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.sessions, 3)
         self.assertEqual(client._requests_processed, 8)
         #
-        await run_in_loop(client._loop, client.pool.close)
+        await client.pool.close()
         #
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)

@@ -1,14 +1,10 @@
 import unittest
 
-from pulsar import EventHandler, get_event_loop
+from pulsar.api import EventHandler
 
 
 class Handler(EventHandler):
     ONE_TIME_EVENTS = ('start', 'finish')
-
-    def __init__(self, **kw):
-        self._loop = get_event_loop()
-        super().__init__(self._loop, **kw)
 
 
 class TestFailure(unittest.TestCase):
@@ -20,14 +16,14 @@ class TestFailure(unittest.TestCase):
         self.assertTrue(h.event('finish').fired())
 
     async def test_one_time_error(self):
-        h = Handler(one_time_events=('start', 'finish'))
+        h = Handler()
         h.bind_event('finish', lambda f, exc=None: 'OK'+4)
         result = await h.fire_event('finish', 3)
         self.assertTrue(h.event('finish').done())
         self.assertEqual(result, 3)
 
     async def test_bind_events(self):
-        h = Handler(one_time_events=('start', 'finish'))
+        h = Handler()
         h.bind_events(foo=3, bla=6)
         self.assertFalse(h.events['start'].handlers)
         self.assertFalse(h.events['finish'].handlers)
@@ -39,7 +35,7 @@ class TestFailure(unittest.TestCase):
         self.assertEqual(result, 2)
 
     def test_remove_callback(self):
-        h = Handler(one_time_events=('start', 'finish'))
+        h = Handler()
 
         def cbk(_, **kw):
             return kw

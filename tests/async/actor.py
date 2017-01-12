@@ -1,6 +1,6 @@
 import pulsar
 from pulsar.apps.test import ActorTestMixin
-from pulsar import send, async_while
+from pulsar.api import send, async_while
 
 from tests.async import (add, get_test, spawn_actor_from_actor, close_mailbox,
                          wait_for_stop, check_environ)

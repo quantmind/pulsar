@@ -37,7 +37,6 @@ the :class:`.PulsarServerCommands` handler.
 '''
 from random import normalvariate
 
-from pulsar import as_coroutine
 from pulsar.apps import rpc, wsgi
 from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 
@@ -71,7 +70,7 @@ def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
 class RequestCheck:
 
     async def __call__(self, request, name):
-        data = await as_coroutine(request.body_data())
+        data = await request.async_body_data()
         assert(data['method'] == name)
         return True
 

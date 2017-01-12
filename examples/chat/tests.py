@@ -2,7 +2,7 @@
 import unittest
 import asyncio
 
-from pulsar import send
+from pulsar.api import send
 from pulsar.apps import rpc, http, ws
 from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.system import json

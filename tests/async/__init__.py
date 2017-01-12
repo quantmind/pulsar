@@ -1,8 +1,7 @@
 import signal
 from time import time
 
-import pulsar
-from pulsar import send, spawn, get_application
+from pulsar.api import send, spawn, get_application, create_future, arbiter
 
 
 def add(actor, a, b):
@@ -11,22 +10,22 @@ def add(actor, a, b):
 
 def wait_for_stop(test, aid, terminating=False):
     '''Wait for an actor to stop'''
-    arbiter = pulsar.arbiter()
-    waiter = pulsar.Future(loop=arbiter._loop)
+    actor = arbiter()
+    waiter = create_future(loop=actor._loop)
 
     def remove():
-        test.assertEqual(arbiter.remove_callback('periodic_task', check), 1)
+        test.assertEqual(actor.unbind('periodic_task', check), 1)
         waiter.set_result(None)
 
     def check(caller, **kw):
-        test.assertEqual(caller, arbiter)
+        test.assertEqual(caller, actor)
         if not terminating:
-            test.assertFalse(aid in arbiter.managed_actors)
-        elif aid in arbiter.managed_actors:
+            test.assertFalse(aid in actor.managed_actors)
+        elif aid in actor.managed_actors:
             return
-        arbiter._loop.call_soon(remove)
+        actor._loop.call_soon(remove)
 
-    arbiter.bind_event('periodic_task', check)
+    actor.event('periodic_task').bind(check)
     return waiter
 
 
