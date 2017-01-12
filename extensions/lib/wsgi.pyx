@@ -184,6 +184,36 @@ cdef class WsgiProtocol:
         self.keep_alive = self.parser.should_keep_alive()
         return self.write
 
+    cpdef object write(self, bytes data, object force=False):
+        cdef bytearray buffer = None
+        cdef dict env = self.environ
+        cdef object proto = self.protocol
+        cdef object tosend
+
+        if not self.headers_sent:
+            self.headers_sent = self.get_headers()
+            buffer = bytearray(('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET))
+            for k, v in self.headers_sent.items():
+                buffer.extend(('%s: %s\r\n' % (k, v)).encode(CHARSET))
+            buffer.extend(CRLF)
+            proto.event('on_headers').fire(data=buffer)
+
+        if data:
+            if not buffer:
+                buffer = bytearray()
+            if self.chunked:
+                http_chunks_l(buffer, data)
+            else:
+                buffer.extend(data)
+
+        elif force and self.chunked:
+            if not buffer:
+                buffer = bytearray()
+            http_chunks_l(buffer, data, True)
+
+        if buffer:
+            return self.connection.write(buffer)
+
     cpdef object write_list(self, bytes data, object force=False):
         cdef list chunks = None
         cdef dict env = self.environ
@@ -192,11 +222,9 @@ cdef class WsgiProtocol:
 
         if not self.headers_sent:
             self.headers_sent = self.get_headers()
-            chunks = [('%s %s' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
-            chunks.append(CRLF)
+            chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
             for k, v in self.headers_sent.items():
-                chunks.append(('%s: %s' % (k, v)).encode(CHARSET))
-                chunks.append(CRLF)
+                chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))
             chunks.append(CRLF)
             proto.event('on_headers').fire(data=chunks)
 
@@ -216,7 +244,7 @@ cdef class WsgiProtocol:
         if chunks:
             return self.connection.write(b''.join(chunks))
 
-    cpdef object write(self, bytes data, object force=False):
+    cpdef object write_plus(self, bytes data, object force=False):
         cdef bytes chunks = b''
         cdef dict env = self.environ
         cdef object proto = self.protocol

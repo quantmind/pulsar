@@ -175,3 +175,11 @@ cdef class ProtocolConsumer(EventHandler):
 
     cpdef object get(self, str attr):
         return getattr(self, attr, None)
+
+    cpdef object pop(self, str attr, object default=None):
+        cdef object value = getattr(self, attr, default)
+        try:
+            delattr(self, attr)
+        except AttributeError:
+            pass
+        return value

@@ -9,6 +9,7 @@ from wsgi cimport _http_date
 
 
 cdef object nocache = object()
+cdef tuple EMPTY = ()
 
 
 def wsgi_cached(method):
@@ -43,20 +44,31 @@ cdef class WsgiResponse:
         self.encoding = encoding
         self.can_store_cookies = can_store_cookies
         self.headers = CIMultiDict(response_headers or ())
-        self._content = get_content(self, content)
+        self.set_content(content)
         if content_type:
             self.headers['content-type'] = content_type
+
+    cpdef object set_content(self, object content):
+        if self._iterated:
+            raise RuntimeError('Cannot set content. Already iterated')
+        if content is None:
+            self._content = EMPTY
+        elif isinstance(content, str):
+            if not self.encoding:   # use utf-8 if not set
+                self.encoding = 'utf-8'
+            self._content = content.encode(self.encoding),
+        elif isinstance(content, bytes):
+            self._content = content,
+        else:
+            self._content = content
 
     @property
     def content(self):
         return self._content
 
     @content.setter
-    def content(self, content):
-        if not self._iterated:
-            self._content = get_content(self, content)
-        else:
-            raise RuntimeError('Cannot set content. Already iterated')
+    def content(self, object content):
+        self.set_content(content)
 
     @property
     def content_type(self):
@@ -80,16 +92,16 @@ cdef class WsgiResponse:
         return self._cookies
 
     cpdef object start(self, object start_response):
-        assert not self.__wsgi_started__
-        self.__wsgi_started__ = True
         return start_response(self.status, self.get_headers())
 
     def __iter__(self):
         if self._iterated:
             raise RuntimeError('WsgiResponse can be iterated once only')
         self.__wsgi_started__ = True
-        self._iterated = True
-        return iter(self._content)
+        self._iterated = 1
+        iterable = iter(self._content)
+        self._content = None
+        return iterable
 
     def set_cookie(self, key, **kwargs):
         """
@@ -104,18 +116,30 @@ cdef class WsgiResponse:
         set_cookie(self.cookies, key, max_age=0, path=path, domain=domain,
                    expires='Thu, 01-Jan-1970 00:00:00 GMT')
 
-    cpdef object get_headers(self):
+    cpdef void close(self):
+        """Close this response, required by WSGI
+        """
+        if hasattr(self._content, 'close'):
+            self._content.close()
+
+    cdef object get_headers(self):
         """The list of headers for this response
         """
         cdef headers = self.headers
+        cdef dict environ = self.environ
         cdef int status = self.status_code
         cdef int cl
         cdef str ct
 
+        assert not self.__wsgi_started__
+        self.__wsgi_started__ = True
+        self.headers = None
+        self.environ = None
+
         if status == 204 or status == 304 or 100 <= status < 200:
             headers.pop(CONTENT_TYPE, None)
             headers.pop(CONTENT_LENGTH, None)
-            self._content = ()
+            self._content = EMPTY
         else:
             try:
                 len(self._content)
@@ -131,35 +155,14 @@ cdef class WsgiResponse:
                 if ';' not in ct:
                     ct = '%s; charset=%s' % (ct, self.encoding)
                 headers[CONTENT_TYPE] = ct
-            if self.environ and self.environ['REQUEST_METHOD'] == 'HEAD':
-                self._content = ()
+            if environ and environ['REQUEST_METHOD'] == 'HEAD':
+                self._content = EMPTY
         # Cookies
         if (self.status_code < 400 and self.can_store_cookies and
                 self._cookies):
             for c in self.cookies.values():
                 headers.add_header(SET_COOKIE, c.OutputString())
         return headers.items()
-
-    cpdef void close(self):
-        """Close this response, required by WSGI
-        """
-        if hasattr(self._content, 'close'):
-            self._content.close()
-
-
-cdef object get_content(self, object content):
-    if content is None:
-        return ()
-    else:
-        if isinstance(content, str):
-            if not self.encoding:   # use utf-8 if not set
-                self.encoding = 'utf-8'
-            return content.encode(self.encoding),
-
-        elif isinstance(content, bytes):
-            return content,
-
-        return content
 
 
 cdef int count_len(int a, object b):

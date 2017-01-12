@@ -801,7 +801,7 @@ class HttpPyParser(Global):
 class HttpKeepAlive(Global):
     name = "http_keep_alive"
     flags = ["--http-keep-alive"]
-    default = 70
+    default = 75
     type = int
     desc = """\
         Keep HTTP connections alive for this number of seconds

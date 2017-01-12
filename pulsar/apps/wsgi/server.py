@@ -169,16 +169,13 @@ class HttpServerResponse(ProtocolConsumer):
                         #     start = loop.time()
                     #
                     # make sure we write headers and last chunk if needed
-                    try:
-                        await wsgi.write(b'', True)
-                    except TypeError:
-                        pass
+                    wsgi.write(b'', True)
 
             # client disconnected, end this connection
             except (IOError, AbortWsgi, RuntimeError):
                 self.event('post_request').fire()
             except Exception:
-                if wsgi_request(environ).cache.handle_wsgi_error:
+                if wsgi_request(environ).cache.get('handle_wsgi_error'):
                     wsgi.keep_alive = False
                     self._write_headers()
                     self.connection.close()
@@ -198,6 +195,7 @@ class HttpServerResponse(ProtocolConsumer):
                     self.connection.close()
             finally:
                 close_object(response)
+                self = None
 
     def _write_headers(self):
         wsgi = self.request

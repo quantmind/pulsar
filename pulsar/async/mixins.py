@@ -1,4 +1,4 @@
-from .access import create_future
+DEFAULT_LIMIT = 2**16
 
 
 class FlowControl:
@@ -7,8 +7,37 @@ class FlowControl:
     This implements the protocol methods :meth:`pause_writing`,
     :meth:`resume_writing`.
     """
+    _b_limit = 2*DEFAULT_LIMIT
     _paused = False
-    _write_waiter = None
+    _buffer_size = 0
+    _waiter = None
+
+    def write(self, data):
+        """Write ``data`` into the wire.
+
+        Returns an empty tuple or a :class:`~asyncio.Future` if this
+        protocol has paused writing.
+        """
+        t = self.transport
+        if t:
+            if self._paused:
+                self._buffer.appendleft(data)
+                self._buffer_size += len(data)
+                if self._buffer_size > 2 * self._b_limit:
+                    if self._waiter and not self._waiter.cancelled():
+                        self.logger.warning(
+                            '%s buffer size is %d: limit is %d ',
+                            self._buffer_size, self._b_limit
+                        )
+                    else:
+                        t.pause_reading()
+                        self._waiter = self._loop.create_future()
+            else:
+                t.write(data)
+            self.changed()
+            return self._waiter
+        else:
+            raise ConnectionResetError('No Transport')
 
     def pause_writing(self):
         '''Called by the transport when the buffer goes over the
@@ -19,7 +48,6 @@ class FlowControl:
         '''
         assert not self._paused
         self._paused = True
-        self.transport.pause_reading()
 
     def resume_writing(self, exc=None):
         '''Resume writing.
@@ -29,37 +57,28 @@ class FlowControl:
         '''
         assert self._paused
         self._paused = False
-        waiter = self._write_waiter
+        waiter = self._waiter
         if waiter is not None:
-            self._write_waiter = None
+            self._waiter = None
             if not waiter.done():
                 if exc is None:
                     waiter.set_result(None)
                 else:
                     waiter.set_exception(exc)
-        self.transport.resume_reading()
+            self.transport.resume_reading()
+        if self._buffer:
+            self.write(self._buffer.pop())
 
     # INTERNAL CALLBACKS
     def _set_flow_limits(self, _, exc=None):
         if not exc:
-            self.transport.set_write_buffer_limits(
-                self._low_limit, self._high_limit
-            )
+            self.transport.set_write_buffer_limits(high=self._limit)
 
     def _wakeup_waiter(self, _, exc=None):
         # Wake up the writer if currently paused.
         if not self._paused:
             return
         self.resume_writing(exc=exc)
-
-    def _make_write_waiter(self):
-        # callback for the after_write event
-        if self._paused:
-            waiter = self._write_waiter
-            assert waiter is None or waiter.cancelled()
-            waiter = create_future(self._loop)
-            self.logger.debug('Waiting for write buffer to drain')
-            self._write_waiter = waiter
 
 
 class Timeout:

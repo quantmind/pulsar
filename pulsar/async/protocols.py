@@ -1,11 +1,12 @@
 import asyncio
+from collections import deque
 
 from async_timeout import timeout
 
 import pulsar
 
 from .access import LOGGER
-from .mixins import FlowControl, Timeout
+from .mixins import FlowControl, Timeout, DEFAULT_LIMIT
 from ..utils.lib import Protocol, Producer
 from ..utils.internet import nice_address, format_address
 
@@ -31,15 +32,13 @@ class PulsarProtocol(Protocol, FlowControl, Timeout):
     _data_received_count = 0
     last_change = None
 
-    def __init__(self, consumer_factory, producer,
-                 low_limit=None, high_limit=None, **kw):
+    def __init__(self, consumer_factory, producer, limit=None, **kw):
         super().__init__(consumer_factory, producer)
         self.timeout = producer.keep_alive
         self.logger = producer.logger or LOGGER
-        self._low_limit = low_limit
-        self._high_limit = high_limit
-        self._low_limit = low_limit
-        self._high_limit = high_limit
+        self._limit = limit or DEFAULT_LIMIT
+        self._b_limit = 2*self._limit
+        self._buffer = deque()
         self.event('connection_made').bind(self._set_flow_limits)
         self.event('connection_lost').bind(self._wakeup_waiter)
 
@@ -131,29 +130,6 @@ class Connection(PulsarProtocol, asyncio.Protocol):
 
         number of separate requests processed.
     """
-    def write(self, data):
-        """Write ``data`` into the wire.
-
-        Returns an empty tuple or a :class:`~asyncio.Future` if this
-        protocol has paused writing.
-        """
-        t = self.transport
-        if t:
-            if self._paused:
-                # # Uses private variable once again!
-                # This occurs when the protocol is paused from writing
-                # but another data ready callback is fired in the same
-                # event-loop frame
-                self.logger.debug('protocol cannot write, add data to the '
-                                  'transport buffer')
-                t._buffer.extend(data)
-            else:
-                t.write(data)
-                self._make_write_waiter()
-            self.changed()
-            return self._write_waiter or ()
-        else:
-            raise ConnectionResetError('No Transport')
 
     def info(self):
         info = super().info()
