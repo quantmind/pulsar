@@ -169,9 +169,12 @@ cdef int count_len(int a, object b):
     return a + len(b)
 
 
-cpdef set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
-                  domain=None, secure=False, httponly=False):
-    '''Set a cookie key into the cookies dictionary *cookies*.'''
+cpdef set_cookie(
+        object cookies, str key, value='', max_age=None,
+        expires=None, path='/',
+        domain=None, secure=False, httponly=False):
+    """Set a cookie key into the cookies dictionary
+    """
     cookies[key] = value
     if expires is not None:
         if isinstance(expires, datetime):

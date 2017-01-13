@@ -40,7 +40,9 @@ import logging
 from functools import partial
 
 import pulsar
-from pulsar import HttpException, ensure_future, create_future
+from pulsar.api import (
+    HttpException, ensure_future, create_future, ProtocolConsumer
+)
 from pulsar.apps import wsgi, http
 from pulsar.apps.http.plugins import noerror
 from pulsar.utils.httpurl import ENCODE_BODY_METHODS
@@ -185,7 +187,7 @@ class DataIterator:
         yield self.stream.reader.read()
 
 
-class StreamTunnel(pulsar.ProtocolConsumer):
+class StreamTunnel(ProtocolConsumer):
     ''':class:`.ProtocolConsumer` handling encrypted messages from
     downstream client and upstream server.
 

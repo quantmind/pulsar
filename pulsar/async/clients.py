@@ -6,7 +6,7 @@ from async_timeout import timeout
 
 from pulsar.utils.internet import is_socket_closed
 
-from .futures import AsyncObject
+from .futures import AsyncObject, Bench
 from .protocols import Producer
 
 
@@ -274,6 +274,23 @@ class AbstractClient(Producer, ClientMixin):
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))
         return protocol
+
+    def timeit(self, method, times, *args, **kwargs):
+        '''Useful utility for benchmarking an asynchronous ``method``.
+
+        :param method: the name of the ``method`` to execute
+        :param times: number of times to execute the ``method``
+        :param args: positional arguments to pass to the ``method``
+        :param kwargs: key-valued arguments to pass to the ``method``
+        :return: a :class:`~asyncio.Future` which results in a :class:`Bench`
+            object if successful
+
+        The usage is simple::
+
+            >>> b = self.timeit('asyncmethod', 100)
+        '''
+        bench = Bench(times, loop=self._loop)
+        return bench(getattr(self, method), *args, **kwargs)
 
 
 class AbstractUdpClient(Producer, ClientMixin):

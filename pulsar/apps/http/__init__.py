@@ -771,7 +771,6 @@ class HttpClient(AbstractClient):
         Default headers for this :class:`HttpClient`
 
     """
-    protocol_factory = partial(Connection, HttpResponse)
     max_redirects = 10
     """Maximum number of redirects.
 
@@ -810,7 +809,12 @@ class HttpClient(AbstractClient):
                  loop=None, client_version=None, timeout=None, stream=False,
                  pool_size=10, frame_parser=None, logger=None,
                  close_connections=False, keep_alive=None):
-        super().__init__(loop=loop, logger=logger or LOGGER)
+        super().__init__(
+            partial(Connection, HttpResponse),
+            loop=loop,
+            keep_alive=keep_alive or cfg_value('http_keep_alive')
+        )
+        self.logger = logger or LOGGER
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
         self.pool_size = pool_size
@@ -824,7 +828,6 @@ class HttpClient(AbstractClient):
         self.verify = verify
         self.stream = stream
         self.close_connections = close_connections
-        self.keep_alive = cfg_value('http_keep_alive', keep_alive)
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
@@ -852,7 +855,7 @@ class HttpClient(AbstractClient):
         return self.request('CONNECT', address)
 
     def get(self, url, **kwargs):
-        """Sends a GET request and returns a :class:`HttpResponse` object.
+        """Sends a GET request and returns a :class:`.HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
@@ -861,7 +864,7 @@ class HttpClient(AbstractClient):
         return self.request('GET', url, **kwargs)
 
     def options(self, url, **kwargs):
-        """Sends a OPTIONS request and returns a :class:`HttpResponse` object.
+        """Sends a OPTIONS request and returns a :class:`.HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
@@ -870,7 +873,7 @@ class HttpClient(AbstractClient):
         return self.request('OPTIONS', url, **kwargs)
 
     def head(self, url, **kwargs):
-        """Sends a HEAD request and returns a :class:`HttpResponse` object.
+        """Sends a HEAD request and returns a :class:`.HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
@@ -878,7 +881,7 @@ class HttpClient(AbstractClient):
         return self.request('HEAD', url, **kwargs)
 
     def post(self, url, **kwargs):
-        """Sends a POST request and returns a :class:`HttpResponse` object.
+        """Sends a POST request and returns a :class:`.HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
@@ -887,7 +890,7 @@ class HttpClient(AbstractClient):
         return self.request('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
-        """Sends a PUT request and returns a :class:`HttpResponse` object.
+        """Sends a PUT request and returns a :class:`.HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
@@ -896,7 +899,7 @@ class HttpClient(AbstractClient):
         return self.request('PUT', url, **kwargs)
 
     def patch(self, url, **kwargs):
-        """Sends a PATCH request and returns a :class:`HttpResponse` object.
+        """Sends a PATCH request and returns a :class:`.HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
@@ -905,7 +908,7 @@ class HttpClient(AbstractClient):
         return self.request('PATCH', url, **kwargs)
 
     def delete(self, url, **kwargs):
-        """Sends a DELETE request and returns a :class:`HttpResponse` object.
+        """Sends a DELETE request and returns a :class:`.HttpResponse` object.
 
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
@@ -917,11 +920,11 @@ class HttpClient(AbstractClient):
         """Constructs and sends a request to a remote server.
 
         It returns a :class:`.Future` which results in a
-        :class:`HttpResponse` object.
+        :class:`.HttpResponse` object.
 
         :param method: request method for the :class:`HttpRequest`.
         :param url: URL for the :class:`HttpRequest`.
-        :parameter response: optional pre-existing :class:`HttpResponse` which
+        :parameter response: optional pre-existing :class:`.HttpResponse` which
             starts a new request (for redirects, digest authentication and
             so forth).
         :param params: optional parameters for the :class:`HttpRequest`
@@ -956,10 +959,6 @@ class HttpClient(AbstractClient):
         await self.close()
 
     # INTERNALS
-    def create_protocol(self, **kw):
-        kw['timeout'] = self.keep_alive
-        return super().create_protocol(**kw)
-
     async def _request(self, method, url, **params):
         nparams = params.copy()
         nparams.update(((name, getattr(self, name)) for name in
