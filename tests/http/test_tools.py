@@ -2,7 +2,7 @@
 import time
 import unittest
 
-from pulsar.api import http_date
+from pulsar.utils.lib import http_date
 from pulsar.utils.html import capfirst
 from pulsar.utils.httpurl import (CacheControl,
                                   urlquote, unquote_unreserved, requote_uri,

@@ -1,8 +1,6 @@
 import os
 
-if os.environ.get('pulsar_speedup') == 'no':
-    HAS_C_EXTENSIONS = False
-else:
+if os.environ.get('PULSARPY', 'no') == 'no':
     HAS_C_EXTENSIONS = True
     try:
         from .clib import (
@@ -12,6 +10,9 @@ else:
         )
     except ImportError:
         HAS_C_EXTENSIONS = False
+
+else:
+    HAS_C_EXTENSIONS = False
 
 
 if not HAS_C_EXTENSIONS:

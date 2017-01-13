@@ -6,9 +6,9 @@ from unittest import mock
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
-from pulsar.api import http_date, HttpRedirect
-from pulsar.apps import wsgi
-from pulsar.apps import http
+from pulsar.api import HttpRedirect
+from pulsar.apps import wsgi, http
+from pulsar.utils.lib import http_date
 
 
 class WsgiRequestTests(unittest.TestCase):

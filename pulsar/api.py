@@ -2,12 +2,11 @@ from .utils.exceptions import (
     PulsarException, ImproperlyConfigured, HttpException, HttpRedirect,
     BadRequest, Http401, Http404, HttpConnectionError, HttpGone,
     HttpRequestException, MethodNotAllowed, PermissionDenied, HaltServer,
-    SSLError, ProtocolError, LockError
+    SSLError, ProtocolError, LockError, CommandError
 )
 from .utils.config import Config, Setting
 from .utils.lib import (
-    HAS_C_EXTENSIONS, EventHandler, ProtocolConsumer, Protocol,
-    WsgiProtocol, WsgiResponse, wsgi_cached, http_date, AbortEvent
+    HAS_C_EXTENSIONS, EventHandler, ProtocolConsumer, Protocol, AbortEvent
 )
 
 from .async.access import get_actor, create_future, cfg_value, ensure_future
@@ -20,7 +19,8 @@ from .async.protocols import (
 from .async.clients import (
     Pool, PoolConnection, AbstractClient, AbstractUdpClient
 )
-from .async.futures import chain_future, async_while, AsyncObject
+from .async.futures import chain_future, AsyncObject
+from .async.commands import async_while
 from .async.concurrency import arbiter
 from .apps import Application, MultiApp, get_application
 from .apps.data import data_stores
@@ -37,10 +37,6 @@ __all__ = [
     'DatagramProtocol',
     'TcpServer',
     'DatagramServer',
-    'WsgiProtocol',
-    'WsgiResponse',
-    'http_date',
-    'wsgi_cached',
     'Config',
     'Setting',
     'AbortEvent',
@@ -92,5 +88,6 @@ __all__ = [
     'HttpRequestException',
     'SSLError',
     'ProtocolError',
-    'LockError'
+    'LockError',
+    'CommandError'
 ]

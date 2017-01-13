@@ -3,7 +3,7 @@ import unittest
 import asyncio
 
 import pulsar
-from pulsar.api import send
+from pulsar.api import send, CommandError, get_actor
 from pulsar.async.futures import multi_async
 from pulsar.apps.test import TestSuite
 from pulsar.apps.test.plugins import profile
@@ -23,7 +23,7 @@ async def wait(actor, period=0.5):
 class TestTestWorker(unittest.TestCase):
 
     def test_TestSuiteMonitor(self):
-        arbiter = pulsar.get_actor()
+        arbiter = get_actor()
         self.assertTrue(len(arbiter.monitors) >= 1)
         monitor = arbiter.registered['test']
         app = monitor.app
@@ -31,7 +31,7 @@ class TestTestWorker(unittest.TestCase):
 
     async def test_unknown_send_target(self):
         # The target does not exists
-        await self.wait.assertRaises(pulsar.CommandError, send,
+        await self.wait.assertRaises(CommandError, send,
                                      'vcghdvchdgcvshcd', 'ping')
 
     async def test_multiple_execute(self):

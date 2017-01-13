@@ -2,7 +2,7 @@ from random import randint
 import struct
 import unittest
 
-from pulsar.api import ProtocolError, HAS_C_EXTENSIONS
+from pulsar.api import ProtocolError
 from pulsar.utils.websocket import frame_parser, parse_close
 
 
@@ -188,14 +188,3 @@ class FrameTest(unittest.TestCase):
 
     def test_parse_close(self):
         self.assertRaises(ProtocolError, parse_close, b'o')
-
-
-@unittest.skipUnless(HAS_C_EXTENSIONS, "Requires C extensions")
-class PyFrameTest(FrameTest):
-
-    def parser(self, pyparser=True, **kw):
-        return frame_parser(pyparser=True, **kw)
-
-    def test_parsers(self):
-        import pulsar.utils.websocket as ws
-        self.assertNotEqual(ws.CFrameParser, ws.FrameParser)

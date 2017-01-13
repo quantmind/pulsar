@@ -20,20 +20,15 @@ from urllib.parse import urlparse
 from async_timeout import timeout
 from multidict import CIMultiDict
 
-from pulsar.api import BadRequest
+from pulsar.api import BadRequest, ProtocolConsumer
 from pulsar.utils.httpurl import iri_to_uri
+from pulsar.utils.lib import WsgiProtocol
 from pulsar.utils import http
 
 from .utils import handle_wsgi_error, wsgi_request, log_wsgi_info, get_logger
 from .formdata import HttpBodyReader
 from .wrappers import FileWrapper, close_object
 from .headers import CONTENT_LENGTH
-
-try:
-    from pulsar.utils.lib import WsgiProtocol, ProtocolConsumer
-except ImportError:
-    from pulsar.async.protocols import ProtocolConsumer
-    WsgiProtocol = None
 
 
 CHARSET = http.CHARSET
